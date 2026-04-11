@@ -21,7 +21,7 @@ interface LogoProps {
 export default function Logo({
   className = "",
   variant = "dark",
-  height = 36,
+  height = 56,
 }: LogoProps) {
   const width = Math.round(LOGO_RATIO * height);
   const filterClass =
