@@ -1,41 +1,62 @@
-import Image from "next/image";
-
-// Source asset: 1920x660 (aspect ratio ~2.909:1). Exported from Figma
-// file s8CAdWGmOtp6z7Aqn5LbVz, node 991:726.
-const LOGO_SRC = "/fjarlaekningar-logo.png";
-const LOGO_RATIO = 1920 / 660;
+import { LOGO_MARK, LOGO_WORDMARK } from "./logo-paths";
 
 interface LogoProps {
   className?: string;
   /**
-   * "dark" = full-color logo (cyan mark + black wordmark) for light backgrounds.
-   * "light" = forced-white variant via CSS filter for dark backgrounds (e.g. footer).
-   * TODO: replace the CSS filter with a dedicated white-on-transparent asset
-   * once it's available in Figma.
+   * "dark" = wordmark in foreground color (for light backgrounds, e.g. navbar).
+   * "light" = wordmark in white (for dark backgrounds, e.g. footer).
+   * The mark is always brand cyan in both variants, because the cyan is
+   * the most recognizable piece of the brand and stays visible on either bg.
    */
   variant?: "dark" | "light";
-  /** Rendered height in pixels. Width is derived from the source aspect ratio. */
-  height?: number;
+  /**
+   * Mark (cyan molecular cluster) height in px.
+   * Tight-cropped viewBox is near-square, so width ≈ height.
+   */
+  markHeight?: number;
+  /**
+   * Wordmark ("Fjarlækningar") height in px.
+   * Tight-cropped viewBox is 1181×193 (≈6.12:1), so width ≈ 6.12×height.
+   */
+  wordmarkHeight?: number;
 }
 
 export default function Logo({
   className = "",
   variant = "dark",
-  height = 80,
+  markHeight = 40,
+  wordmarkHeight = 24,
 }: LogoProps) {
-  const width = Math.round(LOGO_RATIO * height);
-  const filterClass =
-    variant === "light" ? "brightness-0 invert" : "";
+  const markWidth = Math.round(markHeight * LOGO_MARK.aspect);
+  const wordmarkWidth = Math.round(wordmarkHeight * LOGO_WORDMARK.aspect);
+  const wordmarkColor = variant === "light" ? "#ffffff" : "#1a1a1a";
 
   return (
-    <Image
-      src={LOGO_SRC}
-      alt="Fjarlækningar"
-      width={width}
-      height={height}
-      priority
-      className={`${filterClass} ${className}`.trim()}
-      style={{ height, width: "auto" }}
-    />
+    <span
+      className={`inline-flex items-center gap-3 ${className}`.trim()}
+      aria-label="Fjarlækningar"
+      role="img"
+    >
+      <svg
+        width={markWidth}
+        height={markHeight}
+        viewBox={LOGO_MARK.viewBox}
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+        className="shrink-0"
+      >
+        <path fill="#00d6ff" fillRule="evenodd" d={LOGO_MARK.d} />
+      </svg>
+      <svg
+        width={wordmarkWidth}
+        height={wordmarkHeight}
+        viewBox={LOGO_WORDMARK.viewBox}
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+        className="shrink-0"
+      >
+        <path fill={wordmarkColor} fillRule="evenodd" d={LOGO_WORDMARK.d} />
+      </svg>
+    </span>
   );
 }
