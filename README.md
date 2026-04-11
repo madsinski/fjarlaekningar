@@ -45,4 +45,9 @@ src/
 
 ## Deployment
 
-Deployed via Vercel. The domain `www.fjarlaekningar.is` should be attached to the Vercel project once DNS is ready.
+Deployed via Vercel — project `madsinskis-projects/fjarlaekningar`.
+
+- Production: https://fjarlaekningar.vercel.app
+- Auto-deploy: pushes to `main` deploy to production; other branches and PRs get preview URLs (GitHub → Vercel integration).
+- Custom domain: `www.fjarlaekningar.is` — not yet attached. Once DNS is ready:
+  `vercel domains add www.fjarlaekningar.is fjarlaekningar`
