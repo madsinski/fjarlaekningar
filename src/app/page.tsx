@@ -110,10 +110,10 @@ export default function Home() {
     <>
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-sky-50 via-white to-teal-50" />
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-cyan-subtle via-white to-brand-cyan-subtle" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
           <div className="max-w-3xl">
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 border border-sky-200 text-xs font-medium text-[var(--primary)] mb-6">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 border border-brand-cyan-muted text-xs font-medium text-[var(--primary-dark)] mb-6">
               <span className="w-2 h-2 rounded-full bg-[var(--primary)]" />
               Fjarlæknisþjónusta á Íslandi
             </span>
@@ -155,9 +155,9 @@ export default function Home() {
             {services.map((s) => (
               <div
                 key={s.title}
-                className="bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-lg hover:border-sky-200 transition-all"
+                className="bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-lg hover:border-brand-cyan transition-all"
               >
-                <div className="w-12 h-12 rounded-xl bg-sky-50 text-[var(--primary)] flex items-center justify-center mb-4">
+                <div className="w-12 h-12 rounded-xl bg-brand-cyan-subtle text-[var(--primary-dark)] flex items-center justify-center mb-4">
                   {s.icon}
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">
@@ -204,7 +204,7 @@ export default function Home() {
             <h2 className="text-3xl sm:text-4xl font-bold">
               Tilbúin(n) í læknisviðtal?
             </h2>
-            <p className="mt-4 text-sky-50 max-w-xl mx-auto">
+            <p className="mt-4 text-brand-cyan-subtle max-w-xl mx-auto">
               Skráðu þig inn í sjúklingagáttina og bókaðu tíma. Einfalt, öruggt
               og í flestum tilvikum samdægurs.
             </p>
@@ -212,7 +212,7 @@ export default function Home() {
               <MedaliaButton
                 size="lg"
                 label="Opna sjúklingagátt"
-                className="bg-white !text-[var(--primary)] hover:!bg-sky-50"
+                className="bg-white !text-[var(--primary-dark)] hover:!bg-brand-cyan-subtle"
               />
             </div>
           </div>

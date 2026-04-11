@@ -1,14 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f4f7fb;
-  --foreground: #0f172a;
-  --primary: #0d6e9f;
-  --primary-dark: #0a577d;
-  --accent: #14b8a6;
+  /* ─── Brand cyan (from Figma palette — this is the logo color) ─── */
+  --brand-cyan: #00d6ff;          /* Electric brand cyan — logo mark, decorative accents */
+  --brand-cyan-muted: #80ebff;    /* Mid tint */
+  --brand-cyan-subtle: #e6fbff;   /* Very light — gradient backgrounds */
+
+  /* ─── Primary interactive (buttons, links, focus) ─── */
+  /* Using the two deepest palette shades so text sits on a darker surface.
+     Note: #00a8cc + white text = ~2.9:1 — decorative/large text only.
+     For body-sized white text use --primary-dark (3.8:1, AA Large). */
+  --primary: #00a8cc;             /* Mid-deep cyan */
+  --primary-dark: #0488a4;        /* Deepest palette cyan — hover/active */
+
+  /* ─── Accent magenta (from palette) ─── */
+  --accent: #cf147b;
+  --accent-dark: #af146a;
+  --accent-darker: #9a0055;
+
+  /* ─── Neutrals (exact palette values) ─── */
+  --background: #f5f7fa;
+  --foreground: #1f2937;
+  --muted: #6b7280;
+  --border: #f0efef;
   --card-bg: #ffffff;
-  --muted: #64748b;
-  --border: #e2e8f0;
+  --slate-mid: #4d5f77;
+  --slate-deep: #304e71;
 }
 
 @theme inline {
@@ -16,10 +33,17 @@
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-primary-dark: var(--primary-dark);
+  --color-brand-cyan: var(--brand-cyan);
+  --color-brand-cyan-muted: var(--brand-cyan-muted);
+  --color-brand-cyan-subtle: var(--brand-cyan-subtle);
   --color-accent: var(--accent);
+  --color-accent-dark: var(--accent-dark);
+  --color-accent-darker: var(--accent-darker);
   --color-card: var(--card-bg);
   --color-muted: var(--muted);
   --color-border: var(--border);
+  --color-slate-mid: var(--slate-mid);
+  --color-slate-deep: var(--slate-deep);
   --font-sans: var(--font-inter);
 }
 

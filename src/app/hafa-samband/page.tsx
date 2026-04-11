@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function HafaSambandPage() {
   return (
     <>
-      <section className="bg-gradient-to-br from-sky-50 to-white py-20">
+      <section className="bg-gradient-to-br from-brand-cyan-subtle to-white py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
             Hafa samband
@@ -25,7 +25,7 @@ export default function HafaSambandPage() {
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-10">
           <div className="bg-white rounded-2xl border border-slate-200 p-8">
-            <div className="w-12 h-12 rounded-xl bg-sky-50 text-[var(--primary)] flex items-center justify-center mb-4">
+            <div className="w-12 h-12 rounded-xl bg-brand-cyan-subtle text-[var(--primary-dark)] flex items-center justify-center mb-4">
               <svg
                 className="w-6 h-6"
                 fill="none"
@@ -51,7 +51,7 @@ export default function HafaSambandPage() {
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 p-8">
-            <div className="w-12 h-12 rounded-xl bg-sky-50 text-[var(--primary)] flex items-center justify-center mb-4">
+            <div className="w-12 h-12 rounded-xl bg-brand-cyan-subtle text-[var(--primary-dark)] flex items-center justify-center mb-4">
               <svg
                 className="w-6 h-6"
                 fill="none"

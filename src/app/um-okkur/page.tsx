@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function UmOkkurPage() {
   return (
     <>
-      <section className="bg-gradient-to-br from-sky-50 to-white py-20">
+      <section className="bg-gradient-to-br from-brand-cyan-subtle to-white py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
             Um okkur
