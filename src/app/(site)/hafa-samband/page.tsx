@@ -73,10 +73,10 @@ export default function HafaSambandPage() {
               Fyrir fyrirspurnir sem ekki tengjast læknisfræðilegum málefnum.
             </p>
             <a
-              href="mailto:info@fjarlaekningar.is"
+              href="mailto:fjarlaekningar@fjarlaekningar.is"
               className="inline-flex items-center gap-2 text-[var(--primary)] font-semibold hover:text-[var(--primary-dark)]"
             >
-              info@fjarlaekningar.is
+              fjarlaekningar@fjarlaekningar.is
               <svg
                 className="w-4 h-4"
                 fill="none"

@@ -47,10 +47,10 @@ export default function Footer() {
               <li>Ísland</li>
               <li>
                 <a
-                  href="mailto:info@fjarlaekningar.is"
+                  href="mailto:fjarlaekningar@fjarlaekningar.is"
                   className="hover:text-white"
                 >
-                  info@fjarlaekningar.is
+                  fjarlaekningar@fjarlaekningar.is
                 </a>
               </li>
             </ul>

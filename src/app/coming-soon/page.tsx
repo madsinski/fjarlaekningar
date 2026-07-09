@@ -27,7 +27,7 @@ export default function ComingSoon() {
 
         <div className="mt-10">
           <a
-            href="mailto:info@fjarlaekningar.is"
+            href="mailto:fjarlaekningar@fjarlaekningar.is"
             className="inline-flex items-center justify-center px-10 py-4 rounded-full bg-[var(--primary)] text-white font-semibold hover:bg-[var(--primary-dark)] transition-colors"
           >
             Hafa samband
