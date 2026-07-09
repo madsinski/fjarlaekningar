@@ -26,8 +26,8 @@ export default function ComingSoon() {
         </h1>
 
         <p className="mx-auto mt-4 max-w-sm text-base leading-relaxed text-slate-600">
-          Fjarlækningar ehf. veitir örugga og faglega fjarlæknisþjónustu í
-          gegnum sjúklingagátt Medalia. Við leggjum nú lokahönd á vefinn.
+          Nánari upplýsingar birtast hér fljótlega. Hafðu samband ef þú vilt
+          vita meira.
         </p>
 
         <div className="mt-8 flex flex-col items-center gap-3">
