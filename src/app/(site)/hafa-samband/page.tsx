@@ -4,7 +4,7 @@ import MedaliaButton from "../../components/MedaliaButton";
 export const metadata: Metadata = {
   title: "Hafa samband — Fjarlækningar ehf.",
   description:
-    "Hafðu samband við Fjarlækningar ehf. Fyrir læknisviðtal, opnaðu sjúklingagátt Medalia.",
+    "Hafðu samband við Fjarlækningar ehf. Fyrir læknisþjónustu, opnaðu sjúklingagátt Medalia.",
 };
 
 export default function HafaSambandPage() {
@@ -16,8 +16,8 @@ export default function HafaSambandPage() {
             Hafa samband
           </h1>
           <p className="mt-6 text-lg text-slate-600 max-w-2xl">
-            Fyrir læknisviðtal skaltu opna sjúklingagáttina. Fyrir almennar
-            fyrirspurnir, notaðu upplýsingarnar hér að neðan.
+            Fyrir læknisþjónustu skaltu opna sjúklingagáttina og velja erindi.
+            Fyrir almennar fyrirspurnir, notaðu upplýsingarnar hér að neðan.
           </p>
         </div>
       </section>
@@ -41,11 +41,12 @@ export default function HafaSambandPage() {
               </svg>
             </div>
             <h2 className="text-xl font-semibold text-slate-900 mb-2">
-              Bóka viðtal
+              Senda inn erindi
             </h2>
             <p className="text-slate-600 mb-6">
-              Öll viðtöl og læknisfræðileg samskipti fara fram í gegnum
-              sjúklingagátt Medalia.
+              Öll erindi og læknisfræðileg samskipti fara fram í gegnum
+              sjúklingagátt Medalia. Læknir svarar innan auglýsts afgreiðslutíma
+              — hægt er að hafa samband alla daga milli 10 og 22.
             </p>
             <MedaliaButton label="Opna sjúklingagátt" />
           </div>

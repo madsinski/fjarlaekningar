@@ -3,9 +3,9 @@ import MedaliaButton from "../components/MedaliaButton";
 
 const services = [
   {
-    title: "Almenn læknisviðtöl",
+    title: "Kvef, hósti og hálsbólga",
     description:
-      "Ráðgjöf og mat á einkennum í gegnum öruggt myndsamtal með lækni.",
+      "Greining og meðferð við helstu öndunarfærakvillum.",
     icon: (
       <svg
         className="w-6 h-6"
@@ -17,35 +17,15 @@ const services = [
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={1.5}
-          d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
         />
       </svg>
     ),
   },
   {
-    title: "Lyfseðlar",
+    title: "Þvagfæra- og leggangasýkingar",
     description:
-      "Endurnýjun á lyfseðlum og ávísun nýrra lyfja þegar við á, beint í lyfjagáttina.",
-    icon: (
-      <svg
-        className="w-6 h-6"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.5}
-          d="M9 12h6m-3-3v6m9-3a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-    ),
-  },
-  {
-    title: "Veikindavottorð",
-    description:
-      "Útgáfa veikindavottorða án þess að þú þurfir að mæta á heilsugæsluna.",
+      "Greining og meðferð — með þvagstrimli heima þegar við á.",
     icon: (
       <svg
         className="w-6 h-6"
@@ -63,9 +43,9 @@ const services = [
     ),
   },
   {
-    title: "Tilvísanir",
+    title: "Frunsa",
     description:
-      "Tilvísanir til sérfræðilækna og rannsókna þegar þörf krefur.",
+      "Greining og meðferð við endurtekinni frunsu.",
     icon: (
       <svg
         className="w-6 h-6"
@@ -77,7 +57,67 @@ const services = [
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={1.5}
-          d="M14 5l7 7m0 0l-7 7m7-7H3"
+          d="M13 10V3L4 14h7v7l9-11h-7z"
+        />
+      </svg>
+    ),
+  },
+  {
+    title: "Frjókornaofnæmi",
+    description:
+      "Greining og meðferð við árstíðabundnu ofnæmi.",
+    icon: (
+      <svg
+        className="w-6 h-6"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.5}
+          d="M12 3v18m0 0c-3 0-5-2-5-5m5 5c3 0 5-2 5-5M12 8c-2.5 0-4-1.5-4-4m4 4c2.5 0 4-1.5 4-4"
+        />
+      </svg>
+    ),
+  },
+  {
+    title: "Lyfjaendurnýjun",
+    description:
+      "Endurnýjun á föstum lyfjum — þó ekki ávanabindandi lyfjum.",
+    icon: (
+      <svg
+        className="w-6 h-6"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.5}
+          d="M9 12h6m-3-3v6m9-3a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+    ),
+  },
+  {
+    title: "Getnaðarvörn",
+    description:
+      "Mat og ráðgjöf um getnaðarvarnir.",
+    icon: (
+      <svg
+        className="w-6 h-6"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.5}
+          d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4z"
         />
       </svg>
     ),
@@ -87,21 +127,33 @@ const services = [
 const steps = [
   {
     n: "1",
-    title: "Skráðu þig inn",
+    title: "Þú velur erindi",
     description:
-      "Opnaðu sjúklingagáttina og skráðu þig inn með rafrænum skilríkjum.",
+      "Skráðu þig inn í sjúklingagáttina með rafrænum skilríkjum og veldu þjónustu af lista.",
   },
   {
     n: "2",
-    title: "Bókaðu viðtal",
+    title: "Svarar spurningalista",
     description:
-      "Veldu tíma sem hentar þér — flest viðtöl eru í boði samdægurs.",
+      "Markvissar spurningar um einkenni — ásamt sjálfsprófi heima þegar það á við.",
   },
   {
     n: "3",
-    title: "Hittu lækninn",
+    title: "Öryggisnetið metur svörin",
     description:
-      "Viðtalið fer fram í öruggu myndsamtali beint í gegnum gáttina.",
+      "Bendi svörin til alvarlegra veikinda færð þú strax leiðbeiningar um rétt úrræði.",
+  },
+  {
+    n: "4",
+    title: "Læknir yfirfer og ávísar",
+    description:
+      "Læknir fær erindið í verkefnalista, yfirfer svörin og staðfestir viðeigandi meðferð.",
+  },
+  {
+    n: "5",
+    title: "Niðurstaða og lyfseðill",
+    description:
+      "Þú færð skriflega niðurstöðu í gáttina og lyfseðill fer rafrænt í lyfjagátt.",
   },
 ];
 
@@ -115,17 +167,30 @@ export default function Home() {
           <div className="max-w-3xl">
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 border border-brand-cyan-muted text-xs font-medium text-[var(--primary-dark)] mb-6">
               <span className="w-2 h-2 rounded-full bg-[var(--primary)]" />
-              Fjarlæknisþjónusta á Íslandi
+              Íslensk fjarlækningaþjónusta
             </span>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900">
-              Læknisviðtal{" "}
-              <span className="text-[var(--primary)]">hvar sem þú ert</span>
+              Læknisþjónusta{" "}
+              <span className="text-[var(--primary)]">án biðstofu</span>
             </h1>
             <p className="mt-6 text-lg text-slate-600 max-w-2xl">
-              Fjarlækningar ehf. býður upp á örugga og faglega læknisþjónustu
-              í gegnum sjúklingagátt Medalia. Bókaðu viðtal, fáðu ráðgjöf og
-              lyfseðla án þess að mæta á heilsugæsluna.
+              Fjarlækningar er íslenskt fyrirtæki, stofnað af læknum, sem leysir
+              algeng heilsugæsluerindi í gegnum örugga sjúklingagátt — án þess
+              að þú þurfir að mæta á staðinn. Þú svarar markvissum spurningalista
+              þegar þér hentar og læknir yfirfer og staðfestir meðferð.
             </p>
+            <div className="mt-6 flex flex-wrap gap-2">
+              {["Stofnað 2021", "Íslenskir læknar", "Samstarf við Lyfju"].map(
+                (chip) => (
+                  <span
+                    key={chip}
+                    className="inline-flex items-center px-3 py-1 rounded-full bg-white/70 border border-brand-cyan-muted text-xs font-medium text-slate-600"
+                  >
+                    {chip}
+                  </span>
+                ),
+              )}
+            </div>
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
               <MedaliaButton size="lg" label="Opna sjúklingagátt" />
               <Link
@@ -144,14 +209,14 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">
-              Þjónusta sem þú þarft
+              Algeng erindi — leyst samdægurs
             </h2>
             <p className="mt-4 text-slate-600">
-              Hvort sem þú þarft ráðgjöf, lyfseðil eða vottorð — allt er hægt að
-              afgreiða í gegnum sjúklingagáttina.
+              Spurningalistar samdir af læknum utan um hvert erindi, með
+              innbyggðum öryggisspurningum. Flest erindi eru afgreidd samdægurs.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {services.map((s) => (
               <div
                 key={s.title}
@@ -167,6 +232,10 @@ export default function Home() {
               </div>
             ))}
           </div>
+          <p className="mt-8 text-sm text-slate-500">
+            Auk þess njálgur, ristill og risvandamál — og listinn lengist jafnt
+            og þétt.
+          </p>
         </div>
       </section>
 
@@ -175,13 +244,14 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">
-              Svona virkar þetta
+              Ferlið frá upphafi til enda
             </h2>
             <p className="mt-4 text-slate-600">
-              Þrjú einföld skref og þú ert komin(n) í viðtal við lækni.
+              Ósamtíma þjónusta: þú svarar spurningalista þegar þér hentar,
+              læknir yfirfer þegar honum hentar. Ekkert myndsímtal nauðsynlegt.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8">
             {steps.map((step) => (
               <div key={step.n} className="relative">
                 <div className="w-12 h-12 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-xl font-bold mb-4">
@@ -202,11 +272,11 @@ export default function Home() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] p-10 sm:p-16 text-center text-white">
             <h2 className="text-3xl sm:text-4xl font-bold">
-              Tilbúin(n) í læknisviðtal?
+              Tilbúin(n) að senda inn erindi?
             </h2>
             <p className="mt-4 text-brand-cyan-subtle max-w-xl mx-auto">
-              Skráðu þig inn í sjúklingagáttina og bókaðu tíma. Einfalt, öruggt
-              og í flestum tilvikum samdægurs.
+              Skráðu þig inn í sjúklingagáttina og veldu erindi. Einfalt, öruggt
+              og í flestum tilvikum afgreitt samdægurs.
             </p>
             <div className="mt-8 flex justify-center">
               <MedaliaButton

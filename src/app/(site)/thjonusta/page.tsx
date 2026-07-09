@@ -4,39 +4,62 @@ import MedaliaButton from "../../components/MedaliaButton";
 export const metadata: Metadata = {
   title: "Þjónusta — Fjarlækningar ehf.",
   description:
-    "Almenn læknisviðtöl, lyfseðlar, veikindavottorð og tilvísanir í gegnum sjúklingagátt Medalia.",
+    "Algeng heilsugæsluerindi leyst í gegnum örugga sjúklingagátt Medalia — spurningalistar samdir af læknum, sjálfspróf heima og lyfseðill rafrænt í lyfjagátt.",
 };
 
 const services = [
   {
-    title: "Almenn læknisviðtöl",
+    title: "Kvef, hósti og hálsbólga",
     description:
-      "Í fjarlæknisviðtali færð þú faglega ráðgjöf og mat á einkennum frá lækni í gegnum öruggt myndsamtal. Viðtalið hentar fyrir algeng vandamál eins og sýkingar, húðvandamál, almenn veikindi og eftirfylgni.",
+      "Greining og meðferð við helstu öndunarfærakvillum.",
   },
   {
-    title: "Lyfseðlar og endurnýjanir",
+    title: "Þvagfæra- og leggangasýkingar",
     description:
-      "Læknirinn getur ávísað nýjum lyfjum eða endurnýjað eldri lyfseðla þegar það á við. Lyfseðillinn er sendur rafrænt í lyfjagátt og er tilbúinn til afgreiðslu í apóteki að vali þínu.",
+      "Greining og meðferð — með þvagstrimli heima þegar við á.",
   },
   {
-    title: "Veikindavottorð",
+    title: "Frunsa",
     description:
-      "Útgáfa veikindavottorða fyrir vinnuveitanda eða skóla er einföld í fjarlæknaviðtali. Þú færð vottorðið rafrænt beint í sjúklingagáttina.",
+      "Greining og meðferð við endurtekinni frunsu.",
   },
   {
-    title: "Tilvísanir til sérfræðinga",
+    title: "Frjókornaofnæmi",
     description:
-      "Ef þörf er á frekari rannsóknum eða sérfræðiaðstoð útbýr læknirinn tilvísun til viðeigandi sérfræðings eða rannsóknarstofu.",
+      "Greining og meðferð við árstíðabundnu ofnæmi.",
   },
   {
-    title: "Eftirfylgni",
+    title: "Lyfjaendurnýjun",
     description:
-      "Eftirfylgni með langvinnum sjúkdómum, blóðþrýstingi, sykursýki og öðrum aðstæðum sem krefjast reglulegs eftirlits.",
+      "Endurnýjun á föstum lyfjum — þó ekki ávanabindandi lyfjum.",
   },
   {
-    title: "Ráðgjöf og fræðsla",
+    title: "Getnaðarvörn",
     description:
-      "Almenn heilsufarsráðgjöf, forvarnir og fræðsla um lífsstíl og heilbrigði.",
+      "Mat og ráðgjöf um getnaðarvarnir.",
+  },
+];
+
+const features = [
+  {
+    title: "Ósamtíma þjónusta",
+    description:
+      "Þú svarar markvissum spurningalista þegar þér hentar — læknir yfirfer þegar honum hentar. Ekkert myndsímtal nauðsynlegt.",
+  },
+  {
+    title: "Spurningalistar samdir af læknum",
+    description:
+      "Hver spurningalisti er saminn af læknum utan um sitt erindi, með innbyggðum öryggisspurningum sem vísa alvarlegum einkennum strax í rétta þjónustu.",
+  },
+  {
+    title: "Sjálfspróf heima",
+    description:
+      "Þegar sjálfspróf bætir greiningu er þér leiðbeint að taka það — þvagstrimil, strep-próf eða CRP — og skrá niðurstöðuna beint í gáttina.",
+  },
+  {
+    title: "Lyfseðill og heimsending",
+    description:
+      "Læknir staðfestir meðferð og lyfseðill fer rafrænt í lyfjagátt. Heimsending lyfja og sjálfsprófa í samstarfi við Lyfju þar sem hún er í boði.",
   },
 ];
 
@@ -49,14 +72,22 @@ export default function ThjonustaPage() {
             Þjónusta
           </h1>
           <p className="mt-6 text-lg text-slate-600 max-w-2xl mx-auto">
-            Fjarlækningar ehf. bjóða upp á fjölbreytta læknisþjónustu í gegnum
-            sjúklingagátt Medalia — án þess að þú þurfir að mæta á heilsugæslu.
+            Fjarlækningar leysa algeng heilsugæsluerindi í gegnum örugga
+            sjúklingagátt Medalia — án þess að þú þurfir að mæta á staðinn.
           </p>
         </div>
       </section>
 
       <section className="py-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl mb-10">
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+              Algeng erindi
+            </h2>
+            <p className="mt-3 text-slate-600">
+              Flest erindi eru afgreidd samdægurs.
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {services.map((s) => (
               <div
@@ -70,11 +101,36 @@ export default function ThjonustaPage() {
               </div>
             ))}
           </div>
+          <p className="mt-8 text-sm text-slate-500">
+            Auk þess njálgur, ristill og risvandamál — og listinn lengist jafnt
+            og þétt.
+          </p>
+        </div>
+      </section>
+
+      <section className="py-20 bg-[var(--background)]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl mb-10">
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+              Hvernig þjónustan virkar
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {features.map((f) => (
+              <div
+                key={f.title}
+                className="bg-white rounded-2xl border border-slate-200 p-8"
+              >
+                <h3 className="text-xl font-semibold text-slate-900 mb-3">
+                  {f.title}
+                </h3>
+                <p className="text-slate-600">{f.description}</p>
+              </div>
+            ))}
+          </div>
 
           <div className="mt-16 text-center">
-            <p className="text-slate-600 mb-6">
-              Tilbúin(n) að bóka viðtal?
-            </p>
+            <p className="text-slate-600 mb-6">Tilbúin(n) að senda inn erindi?</p>
             <MedaliaButton size="lg" label="Opna sjúklingagátt" />
           </div>
         </div>

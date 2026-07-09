@@ -16,8 +16,9 @@ export default function UmOkkurPage() {
             Um okkur
           </h1>
           <p className="mt-6 text-lg text-slate-600">
-            Fjarlækningar ehf. er íslenskt fyrirtæki sem sérhæfir sig í að
-            veita faglega og örugga læknisþjónustu í fjarformi.
+            Fjarlækningar ehf. er íslenskt fyrirtæki, stofnað af læknum árið
+            2021, sem leysir algeng heilsugæsluerindi í gegnum örugga
+            sjúklingagátt.
           </p>
         </div>
       </section>
@@ -29,10 +30,11 @@ export default function UmOkkurPage() {
               Hlutverk okkar
             </h2>
             <p>
-              Fjarlækningar ehf. var stofnað með því markmiði að auka aðgengi
-              að læknisþjónustu á Íslandi. Með fjarlæknatækni geta sjúklingar
-              fengið ráðgjöf, greiningu og meðferð frá reyndum læknum — án þess
-              að þurfa að mæta í persónu. Það sparar tíma, dregur úr álagi á
+              Fjarlækningar var stofnað með því markmiði að auka aðgengi að
+              læknisþjónustu á Íslandi. Þú svarar markvissum spurningalista sem
+              læknar hafa samið utan um hvert erindi þegar þér hentar, og læknir
+              yfirfer svörin og staðfestir meðferð — án þess að þú þurfir að mæta
+              á staðinn eða í myndsímtal. Það sparar tíma, dregur úr álagi á
               heilsugæsluna og gerir heilbrigðisþjónustu aðgengilegri fyrir
               alla, óháð staðsetningu.
             </p>
@@ -56,8 +58,21 @@ export default function UmOkkurPage() {
             </h2>
             <p>
               Læknar okkar eru með full réttindi og langa reynslu í almennri
-              læknisþjónustu. Við leggjum áherslu á gæði, fagmennsku og
-              persónulega þjónustu í hverju viðtali.
+              læknisþjónustu. Innbyggt öryggisnet í spurningalistunum vísar
+              alvarlegum einkennum strax í rétta þjónustu — Fjarlækningar taka
+              aldrei að sér erindi sem eiga heima annars staðar.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-3">
+              Samstarf við Lyfju
+            </h2>
+            <p>
+              Lyfseðill fer rafrænt í lyfjagátt að loknu erindi. Í samstarfi við
+              Lyfju, stærstu apótekakeðju landsins, bjóðum við heimsendingu lyfja
+              og sjálfsprófa þar sem hún er í boði — svo þú getir lokið erindinu
+              án þess að fara að heiman.
             </p>
           </div>
 
@@ -78,7 +93,7 @@ export default function UmOkkurPage() {
               </li>
               <li>
                 <strong>Einfaldleiki.</strong> Þjónustan á að vera auðveld í
-                notkun — frá bókun til eftirfylgni.
+                notkun — frá fyrstu spurningu til lyfseðils.
               </li>
             </ul>
           </div>
