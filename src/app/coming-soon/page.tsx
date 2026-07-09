@@ -15,14 +15,8 @@ export default function ComingSoon() {
           <Logo markHeight={56} wordmarkHeight={34} />
         </div>
 
-        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 border border-brand-cyan-muted text-xs font-medium text-[var(--primary-dark)] mb-6">
-          <span className="w-2 h-2 rounded-full bg-[var(--primary)]" />
+        <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-[var(--primary)]">
           Væntanlegt
-        </span>
-
-        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
-          Vefurinn opnar{" "}
-          <span className="text-[var(--primary)]">fljótlega</span>
         </h1>
 
         <p className="mt-6 text-lg text-slate-600">
