@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import MedaliaButton from "../components/MedaliaButton";
+import MedaliaButton from "../../components/MedaliaButton";
 
 export const metadata: Metadata = {
   title: "Um okkur — Fjarlækningar ehf.",

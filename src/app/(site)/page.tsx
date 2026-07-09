@@ -1,5 +1,5 @@
 import Link from "next/link";
-import MedaliaButton from "./components/MedaliaButton";
+import MedaliaButton from "../components/MedaliaButton";
 
 const services = [
   {
