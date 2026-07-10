@@ -122,11 +122,11 @@ export default function Home() {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={`/erindi-icons/${s.slug}.svg`}
+                  src={`/erindi-icons/${s.slug}.png`}
                   alt=""
-                  width={48}
-                  height={48}
-                  className="w-12 h-12 mb-4"
+                  width={80}
+                  height={80}
+                  className="w-20 h-20 mb-4 object-contain"
                 />
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">
                   {s.title}
@@ -211,6 +211,42 @@ export default function Home() {
         </div>
       </section>
 
+      {/* HSU cooperation / pilot */}
+      <section className="py-20 bg-[var(--background)]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 flex flex-col md:flex-row items-center gap-10">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/hsu-logo.webp"
+              alt="Heilbrigðisstofnun Suðurlands"
+              width={160}
+              height={160}
+              className="w-32 h-32 sm:w-40 sm:h-40 shrink-0"
+            />
+            <div>
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-cyan-subtle/60 border border-brand-cyan-muted text-xs font-medium text-[var(--primary-dark)] mb-4">
+                <span className="w-2 h-2 rounded-full bg-[var(--primary)]" />
+                Tilraunaverkefni til eins árs
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+                Í samstarfi við Heilbrigðisstofnun Suðurlands
+              </h2>
+              <p className="mt-4 text-slate-600">
+                Heilbrigðisstofnun Suðurlands (HSU) er fyrsti samstarfsaðili
+                Fjarlækninga meðal opinberra heilbrigðisstofnana. Saman keyrum
+                við tilraunaverkefni til eins árs þar sem einföld erindi eru
+                leyst í gegnum sjúklingagáttina — svo heilsugæslan geti einbeitt
+                sér að flóknari málum.
+              </p>
+              <p className="mt-4 font-medium text-slate-900">
+                Þjónustan er nú aðeins í boði fyrir skjólstæðinga sem eru
+                skráðir hjá HSU.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="py-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -229,6 +265,10 @@ export default function Home() {
                 className="bg-white !text-[var(--primary-dark)] hover:!bg-brand-cyan-subtle"
               />
             </div>
+            <p className="mt-6 text-sm text-brand-cyan-subtle/90">
+              Meðan á tilraunaverkefninu stendur er þjónustan aðeins í boði
+              fyrir skjólstæðinga sem eru skráðir hjá HSU.
+            </p>
           </div>
         </div>
       </section>
