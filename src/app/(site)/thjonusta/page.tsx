@@ -20,13 +20,12 @@ const iconProps = {
 
 const features = [
   {
-    title: "Ósamtíma þjónusta",
+    title: "Fljótleg og þægileg læknisþjónusta",
     description:
       "Þú svarar spurningalista heima eða þar sem þú ert — læknir svarar erindum innan tveggja klukkustunda á opnunartíma milli 10 og 22.",
     icon: (
       <svg {...iconProps}>
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l3 2" />
+        <path d="M13 3L4 14h6l-1 7 9-11h-6l1-7z" />
       </svg>
     ),
   },
@@ -43,13 +42,13 @@ const features = [
     ),
   },
   {
-    title: "Sjálfspróf heima",
+    title: "Heimapróf",
     description:
-      "Þegar sjálfspróf bætir greiningu er þér leiðbeint að taka það — t.d. þvagpróf sem sækja má á heilsugæslu eða í næsta apóteki — og skrá niðurstöðuna beint í gáttina.",
+      "Þegar heimapróf bætir greiningu er þér leiðbeint að taka það — t.d. þvagpróf sem sækja má á heilsugæslu eða í næsta apóteki — og skrá niðurstöðuna beint í gáttina.",
     icon: (
       <svg {...iconProps}>
-        <path d="M9 3v6l-4.5 8A2 2 0 006.3 20h11.4a2 2 0 001.8-3L15 9V3" />
-        <path d="M8 3h8M7.5 14h9" />
+        <path d="M10 3h4M11 3v13a2 2 0 004 0V3" />
+        <path d="M11 11h4" />
       </svg>
     ),
   },
@@ -59,8 +58,9 @@ const features = [
       "Læknir leggur til meðferð út frá svörum og læknisfræðilegu mati. Engin meðferð án mats læknis — lyfseðill fer rafrænt í lyfjagátt og er tilbúinn í næsta apóteki.",
     icon: (
       <svg {...iconProps}>
-        <rect x="3.5" y="9" width="11" height="11" rx="5.5" transform="rotate(45 9 14.5)" />
-        <path d="M6.8 11.2l5 5" />
+        <rect x="7" y="3" width="10" height="4" rx="1" />
+        <path d="M8 7h8v11a3 3 0 01-3 3h-2a3 3 0 01-3-3z" />
+        <path d="M12 11v6M9 14h6" />
       </svg>
     ),
   },
