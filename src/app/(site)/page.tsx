@@ -115,7 +115,9 @@ export default function Home() {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {erindi.map((s) => (
+            {erindi
+              .filter((s) => s.slug !== "laeknisvottord")
+              .map((s) => (
               <div
                 key={s.slug}
                 className="bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-lg hover:border-brand-cyan transition-all"
