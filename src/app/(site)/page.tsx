@@ -136,9 +136,7 @@ export default function Home() {
             ))}
           </div>
           <p className="mt-8 text-sm text-slate-500">
-            Auk þess læknisvottorð tengt vandamálum sem sinnt hefur verið í
-            gegnum Fjarlækningar. Listinn lengist jafnt og þétt eftir því sem
-            þjónustan þróast — sjá{" "}
+            Listinn lengist jafnt og þétt eftir því sem þjónustan þróast — sjá{" "}
             <Link
               href="/thjonusta"
               className="text-[var(--primary)] font-medium hover:underline"

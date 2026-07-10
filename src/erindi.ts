@@ -59,4 +59,10 @@ export const erindi: Erindi[] = [
     description:
       "Endurnýjun á föstum lyfjum fyrir utan ávanabindandi lyf.",
   },
+  {
+    slug: "laeknisvottord",
+    title: "Læknisvottorð",
+    description:
+      "Veikindavottorð fyrir vinnu eða skóla, tengt vandamálum sem hafa verið sinnt í gegnum Fjarlækningar.",
+  },
 ];

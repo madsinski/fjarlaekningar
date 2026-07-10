@@ -8,36 +8,83 @@ export const metadata: Metadata = {
     "Algeng heilsugæsluerindi leyst í gegnum örugga sjúklingagátt Medalia — spurningalistar samdir af læknum, sjálfspróf heima og lyfseðill rafrænt í lyfjagátt.",
 };
 
+const iconProps = {
+  className: "w-6 h-6",
+  fill: "none",
+  stroke: "currentColor",
+  viewBox: "0 0 24 24",
+  strokeWidth: 1.6,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+};
+
 const features = [
   {
     title: "Ósamtíma þjónusta",
     description:
       "Þú svarar spurningalista heima eða þar sem þú ert — læknir svarar erindum innan tveggja klukkustunda á opnunartíma milli 10 og 22.",
+    icon: (
+      <svg {...iconProps}>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </svg>
+    ),
   },
   {
     title: "Spurningalistar sérhannaðir",
     description:
       "Spurningalistar eru sérhannaðir í samstarfi við íslenska sérfræðilækna tengt hverju vandamáli. Ferlið er hannað eins og viðtal við lækni.",
+    icon: (
+      <svg {...iconProps}>
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
+        <rect x="9" y="3" width="6" height="4" rx="1" />
+        <path d="M9 12l1.5 1.5L13 11M9 17h5" />
+      </svg>
+    ),
   },
   {
     title: "Sjálfspróf heima",
     description:
       "Þegar sjálfspróf bætir greiningu er þér leiðbeint að taka það — t.d. þvagpróf sem sækja má á heilsugæslu eða í næsta apóteki — og skrá niðurstöðuna beint í gáttina.",
+    icon: (
+      <svg {...iconProps}>
+        <path d="M9 3v6l-4.5 8A2 2 0 006.3 20h11.4a2 2 0 001.8-3L15 9V3" />
+        <path d="M8 3h8M7.5 14h9" />
+      </svg>
+    ),
   },
   {
     title: "Meðferð og lyfseðill",
     description:
       "Læknir leggur til meðferð út frá svörum og læknisfræðilegu mati. Engin meðferð án mats læknis — lyfseðill fer rafrænt í lyfjagátt og er tilbúinn í næsta apóteki.",
+    icon: (
+      <svg {...iconProps}>
+        <rect x="3.5" y="9" width="11" height="11" rx="5.5" transform="rotate(45 9 14.5)" />
+        <path d="M6.8 11.2l5 5" />
+      </svg>
+    ),
   },
   {
     title: "Innbyggt öryggisnet",
     description:
       "Rauð flögg í spurningalistunum vísa alvarlegum einkennum strax í rétta þjónustu. Fjarlækningar taka ekki að sér erindi sem eiga heima annars staðar — og þú greiðir ekki ef þér er vísað frá.",
+    icon: (
+      <svg {...iconProps}>
+        <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" />
+        <path d="M9 12l2 2 4-4" />
+      </svg>
+    ),
   },
   {
     title: "Fræðsluefni fylgir",
     description:
       "Niðurstöðunni fylgir fræðsluefni tengt þínu vandamáli: ráðleggingar, fyrirbyggjandi ráð og vörur án lyfseðils sem geta hjálpað.",
+    icon: (
+      <svg {...iconProps}>
+        <path d="M4 5.5A2 2 0 016 4h5v15H6a2 2 0 00-2 1.5z" />
+        <path d="M20 5.5A2 2 0 0018 4h-5v15h5a2 2 0 012 1.5z" />
+      </svg>
+    ),
   },
 ];
 
@@ -117,30 +164,37 @@ export default function ThjonustaPage() {
             ))}
           </div>
           <p className="mt-8 text-sm text-slate-500">
-            Auk þess læknisvottorð tengt vandamálum sem sinnt hefur verið í
-            gegnum Fjarlækningar. Listinn lengist jafnt og þétt eftir því sem
-            þjónustan þróast.
+            Listinn lengist jafnt og þétt eftir því sem þjónustan þróast.
           </p>
         </div>
       </section>
 
       <section className="py-20 bg-[var(--background)]">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl mb-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
               Hvernig þjónustan virkar
             </h2>
+            <p className="mt-4 text-slate-600">
+              Sömu spurningar og sama fagmennska og á læknastofu — bara
+              skilvirkari leið til að leysa erindið.
+            </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((f) => (
               <div
                 key={f.title}
-                className="bg-white rounded-2xl border border-slate-200 p-8"
+                className="group bg-white rounded-2xl border border-slate-200 p-8 hover:shadow-lg hover:border-brand-cyan transition-all"
               >
-                <h3 className="text-xl font-semibold text-slate-900 mb-3">
+                <div className="w-12 h-12 rounded-2xl bg-brand-cyan-subtle text-[var(--primary-dark)] flex items-center justify-center mb-5 group-hover:bg-[var(--primary)] group-hover:text-white transition-colors">
+                  {f.icon}
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">
                   {f.title}
                 </h3>
-                <p className="text-slate-600">{f.description}</p>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  {f.description}
+                </p>
               </div>
             ))}
           </div>

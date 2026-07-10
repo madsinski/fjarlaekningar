@@ -78,8 +78,8 @@ function PhotoLightbox({
         alt={member.name}
         className="block rounded-3xl object-contain"
         style={{
-          maxWidth: "min(88vw, 540px)",
-          maxHeight: "78vh",
+          maxWidth: "min(88vw, 480px)",
+          maxHeight: "76vh",
           boxShadow: "0 40px 90px -24px rgba(0,0,0,.85)",
         }}
       />
@@ -97,28 +97,29 @@ export default function TeamGrid() {
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
         {team.map((member) => (
-          <div
+          <button
             key={member.name}
-            className="bg-white rounded-2xl border border-slate-200 p-6 text-center"
+            type="button"
+            onClick={() => setActive(member)}
+            title="Smelltu til að stækka"
+            aria-label={`Stækka mynd: ${member.name}`}
+            className="group text-left bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:-translate-y-0.5 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
           >
-            <button
-              type="button"
-              onClick={() => setActive(member)}
-              title="Smelltu til að stækka"
-              aria-label={`Stækka mynd: ${member.name}`}
-              className="group relative mx-auto block w-28 h-28 rounded-full overflow-hidden ring-2 ring-brand-cyan-muted transition-transform hover:-translate-y-0.5 hover:ring-brand-cyan focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
-            >
+            <div className="relative aspect-[4/5] overflow-hidden bg-brand-cyan-subtle">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={member.photo}
                 alt={member.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.04]"
               />
-              <span className="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-full bg-[var(--primary)] text-white grid place-items-center shadow-md opacity-90 group-hover:opacity-100">
+              <span className="absolute top-3 left-3 inline-flex items-center px-2.5 py-1 rounded-full bg-white/90 backdrop-blur text-[11px] font-semibold text-[var(--primary-dark)] shadow-sm">
+                {member.flag}
+              </span>
+              <span className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-[var(--primary)] text-white grid place-items-center shadow-md opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all">
                 <svg
-                  className="w-3.5 h-3.5"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -131,15 +132,14 @@ export default function TeamGrid() {
                   />
                 </svg>
               </span>
-            </button>
-            <span className="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-brand-cyan-subtle/60 text-xs font-medium text-[var(--primary-dark)]">
-              {member.flag}
-            </span>
-            <h3 className="mt-3 text-lg font-semibold text-slate-900">
-              {member.name}
-            </h3>
-            <p className="text-sm text-slate-600">{member.role}</p>
-          </div>
+            </div>
+            <div className="p-5">
+              <h3 className="text-base font-semibold text-slate-900 leading-snug">
+                {member.name}
+              </h3>
+              <p className="mt-1 text-sm text-slate-600">{member.role}</p>
+            </div>
+          </button>
         ))}
       </div>
       {active && (
