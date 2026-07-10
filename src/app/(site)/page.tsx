@@ -1,128 +1,6 @@
 import Link from "next/link";
 import MedaliaButton from "../components/MedaliaButton";
-
-const services = [
-  {
-    title: "Kvef, hósti og hálsbólga",
-    description:
-      "CRP heimapróf notað í upplýsingasöfnun ef þarf. Alvarlegum einkennum vísað í annan farveg.",
-    icon: (
-      <svg
-        className="w-6 h-6"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.5}
-          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-    ),
-  },
-  {
-    title: "Þvagfærasýkingar",
-    description:
-      "Alvarlegum einkennum vísað í annan farveg. Þvag-stix heimapróf notað í upplýsingasöfnun.",
-    icon: (
-      <svg
-        className="w-6 h-6"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.5}
-          d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-        />
-      </svg>
-    ),
-  },
-  {
-    title: "Frunsa",
-    description:
-      "Meðferð við endurtekna frunsu. Frumgreiningu vísað í annan farveg.",
-    icon: (
-      <svg
-        className="w-6 h-6"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.5}
-          d="M13 10V3L4 14h7v7l9-11h-7z"
-        />
-      </svg>
-    ),
-  },
-  {
-    title: "Frjókornaofnæmi",
-    description:
-      "Meðferð við árstíðabundnu ofnæmi.",
-    icon: (
-      <svg
-        className="w-6 h-6"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.5}
-          d="M12 3v18m0 0c-3 0-5-2-5-5m5 5c3 0 5-2 5-5M12 8c-2.5 0-4-1.5-4-4m4 4c2.5 0 4-1.5 4-4"
-        />
-      </svg>
-    ),
-  },
-  {
-    title: "Lyfjaendurnýjun",
-    description:
-      "Endurnýjun á föstum lyfjum fyrir utan ávanabindandi lyf.",
-    icon: (
-      <svg
-        className="w-6 h-6"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.5}
-          d="M9 12h6m-3-3v6m9-3a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-    ),
-  },
-  {
-    title: "Getnaðarvörn",
-    description:
-      "Fyrsta ávísun, endurnýjun eða breyting á getnaðarvörn.",
-    icon: (
-      <svg
-        className="w-6 h-6"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.5}
-          d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4z"
-        />
-      </svg>
-    ),
-  },
-];
+import { erindi } from "../../erindi";
 
 const steps = [
   {
@@ -237,14 +115,19 @@ export default function Home() {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {services.map((s) => (
+            {erindi.map((s) => (
               <div
-                key={s.title}
+                key={s.slug}
                 className="bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-lg hover:border-brand-cyan transition-all"
               >
-                <div className="w-12 h-12 rounded-xl bg-brand-cyan-subtle text-[var(--primary-dark)] flex items-center justify-center mb-4">
-                  {s.icon}
-                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`/erindi-icons/${s.slug}.svg`}
+                  alt=""
+                  width={48}
+                  height={48}
+                  className="w-12 h-12 mb-4"
+                />
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">
                   {s.title}
                 </h3>
@@ -253,14 +136,16 @@ export default function Home() {
             ))}
           </div>
           <p className="mt-8 text-sm text-slate-500">
-            Auk fleiri erinda — sjá{" "}
+            Auk þess læknisvottorð tengt vandamálum sem sinnt hefur verið í
+            gegnum Fjarlækningar. Listinn lengist jafnt og þétt eftir því sem
+            þjónustan þróast — sjá{" "}
             <Link
               href="/thjonusta"
               className="text-[var(--primary)] font-medium hover:underline"
             >
               alla þjónustu
             </Link>
-            . Listinn lengist jafnt og þétt eftir því sem þjónustan þróast.
+            .
           </p>
         </div>
       </section>

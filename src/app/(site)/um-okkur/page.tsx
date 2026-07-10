@@ -1,49 +1,12 @@
 import type { Metadata } from "next";
 import MedaliaButton from "../../components/MedaliaButton";
+import TeamGrid from "../../components/TeamGrid";
 
 export const metadata: Metadata = {
   title: "Um okkur — Fjarlækningar ehf.",
   description:
     "Fjarlækningar ehf. er íslenskt fyrirtæki sem býður upp á örugga fjarlæknisþjónustu í gegnum sjúklingagátt Medalia.",
 };
-
-const team = [
-  {
-    name: "Victor Guðmundsson",
-    role: "Framkvæmdastjóri · Læknir",
-    flag: "Stofnandi",
-  },
-  {
-    name: "Mads Christian Aanesen",
-    role: "Tæknistjóri · Læknir",
-    flag: "Stofnandi",
-  },
-  {
-    name: "Guðbjartur Ólafsson",
-    role: "Yfirlæknir",
-    flag: "Læknateymi",
-  },
-  {
-    name: "Dagbjört Guðbrandsdóttir",
-    role: "Læknir",
-    flag: "Læknateymi",
-  },
-  {
-    name: "Elvar Páll Sigurðsson",
-    role: "Rekstrarstjóri · Markaðsstjóri",
-    flag: "Stjórnun",
-  },
-];
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-}
 
 export default function UmOkkurPage() {
   return (
@@ -141,25 +104,7 @@ export default function UmOkkurPage() {
           <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center">
             Teymið á bakvið Fjarlækningar
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {team.map((member) => (
-              <div
-                key={member.name}
-                className="bg-white rounded-2xl border border-slate-200 p-6 text-center"
-              >
-                <div className="w-16 h-16 mx-auto rounded-full bg-brand-cyan-subtle text-[var(--primary-dark)] flex items-center justify-center text-xl font-bold">
-                  {initials(member.name)}
-                </div>
-                <span className="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-brand-cyan-subtle/60 text-xs font-medium text-[var(--primary-dark)]">
-                  {member.flag}
-                </span>
-                <h3 className="mt-3 text-lg font-semibold text-slate-900">
-                  {member.name}
-                </h3>
-                <p className="text-sm text-slate-600">{member.role}</p>
-              </div>
-            ))}
-          </div>
+          <TeamGrid />
           <p className="mt-8 text-sm text-slate-500 text-center">
             Auk hóps starfandi lækna sem afgreiða erindi í sjúklingagáttinni.
           </p>

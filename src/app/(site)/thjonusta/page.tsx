@@ -1,69 +1,12 @@
 import type { Metadata } from "next";
 import MedaliaButton from "../../components/MedaliaButton";
+import { erindi } from "../../../erindi";
 
 export const metadata: Metadata = {
   title: "Þjónusta — Fjarlækningar ehf.",
   description:
     "Algeng heilsugæsluerindi leyst í gegnum örugga sjúklingagátt Medalia — spurningalistar samdir af læknum, sjálfspróf heima og lyfseðill rafrænt í lyfjagátt.",
 };
-
-const services = [
-  {
-    title: "Kvef, hósti og hálsbólga",
-    description:
-      "CRP heimapróf notað í upplýsingasöfnun ef þarf. Alvarlegum einkennum vísað í annan farveg.",
-  },
-  {
-    title: "Þvagfærasýkingar",
-    description:
-      "Alvarlegum einkennum vísað í annan farveg. Þvag-stix heimapróf notað í upplýsingasöfnun.",
-  },
-  {
-    title: "Sveppasýkingar í leggöngum",
-    description: "Greining og meðferð.",
-  },
-  {
-    title: "Bakteríusýkingar í leggöngum",
-    description: "Greining og meðferð.",
-  },
-  {
-    title: "Frjókornaofnæmi",
-    description: "Meðferð við árstíðabundnu ofnæmi.",
-  },
-  {
-    title: "Frunsa",
-    description:
-      "Meðferð við endurtekna frunsu. Frumgreiningu vísað í annan farveg.",
-  },
-  {
-    title: "Ristill á húð",
-    description:
-      "Meðferð við endurteknum ristli. Frumgreiningu vísað í annan farveg.",
-  },
-  {
-    title: "Njálgur",
-    description: "Greining og meðferð.",
-  },
-  {
-    title: "Risvandamál",
-    description: "Mat og meðferð.",
-  },
-  {
-    title: "Getnaðarvörn",
-    description:
-      "Fyrsta ávísun, endurnýjun eða breyting á getnaðarvörn.",
-  },
-  {
-    title: "Lyfjaendurnýjun",
-    description:
-      "Endurnýjun á föstum lyfjum fyrir utan ávanabindandi lyf.",
-  },
-  {
-    title: "Læknisvottorð",
-    description:
-      "Veikindavottorð fyrir vinnu eða skóla, tengt vandamálum sem hafa verið sinnt í gegnum Fjarlækningar.",
-  },
-];
 
 const features = [
   {
@@ -124,20 +67,32 @@ export default function ThjonustaPage() {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {services.map((s) => (
+            {erindi.map((s) => (
               <div
-                key={s.title}
-                className="bg-white rounded-2xl border border-slate-200 p-8"
+                key={s.slug}
+                className="bg-white rounded-2xl border border-slate-200 p-8 flex items-start gap-5"
               >
-                <h3 className="text-xl font-semibold text-slate-900 mb-3">
-                  {s.title}
-                </h3>
-                <p className="text-slate-600">{s.description}</p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`/erindi-icons/${s.slug}.svg`}
+                  alt=""
+                  width={56}
+                  height={56}
+                  className="w-14 h-14 shrink-0"
+                />
+                <div>
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">
+                    {s.title}
+                  </h3>
+                  <p className="text-slate-600">{s.description}</p>
+                </div>
               </div>
             ))}
           </div>
           <p className="mt-8 text-sm text-slate-500">
-            Listinn lengist jafnt og þétt eftir því sem þjónustan þróast.
+            Auk þess læknisvottorð tengt vandamálum sem sinnt hefur verið í
+            gegnum Fjarlækningar. Listinn lengist jafnt og þétt eftir því sem
+            þjónustan þróast.
           </p>
         </div>
       </section>
