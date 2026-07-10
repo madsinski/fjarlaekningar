@@ -1,4 +1,12 @@
 import type { Metadata } from "next";
+import {
+  Zap,
+  ClipboardList,
+  TestTube,
+  Pill,
+  ShieldCheck,
+  BookOpen,
+} from "lucide-react";
 import MedaliaButton from "../../components/MedaliaButton";
 import { erindi } from "../../../erindi";
 
@@ -8,83 +16,42 @@ export const metadata: Metadata = {
     "Algeng heilsugæsluerindi leyst í gegnum örugga sjúklingagátt Medalia — spurningalistar samdir af læknum, sjálfspróf heima og lyfseðill rafrænt í lyfjagátt.",
 };
 
-const iconProps = {
-  className: "w-6 h-6",
-  fill: "none",
-  stroke: "currentColor",
-  viewBox: "0 0 24 24",
-  strokeWidth: 1.6,
-  strokeLinecap: "round" as const,
-  strokeLinejoin: "round" as const,
-};
-
 const features = [
   {
     title: "Fljótleg og þægileg læknisþjónusta",
     description:
       "Þú svarar spurningalista heima eða þar sem þú ert — læknir svarar erindum innan tveggja klukkustunda á opnunartíma milli 10 og 22.",
-    icon: (
-      <svg {...iconProps}>
-        <path d="M13 3L4 14h6l-1 7 9-11h-6l1-7z" />
-      </svg>
-    ),
+    icon: Zap,
   },
   {
     title: "Spurningalistar sérhannaðir",
     description:
       "Spurningalistar eru sérhannaðir í samstarfi við íslenska sérfræðilækna tengt hverju vandamáli. Ferlið er hannað eins og viðtal við lækni.",
-    icon: (
-      <svg {...iconProps}>
-        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
-        <rect x="9" y="3" width="6" height="4" rx="1" />
-        <path d="M9 12l1.5 1.5L13 11M9 17h5" />
-      </svg>
-    ),
+    icon: ClipboardList,
   },
   {
     title: "Heimapróf",
     description:
       "Þegar heimapróf bætir greiningu er þér leiðbeint að taka það — t.d. þvagpróf sem sækja má á heilsugæslu eða í næsta apóteki — og skrá niðurstöðuna beint í gáttina.",
-    icon: (
-      <svg {...iconProps}>
-        <path d="M10 3h4M11 3v13a2 2 0 004 0V3" />
-        <path d="M11 11h4" />
-      </svg>
-    ),
+    icon: TestTube,
   },
   {
     title: "Meðferð og lyfseðill",
     description:
       "Læknir leggur til meðferð út frá svörum og læknisfræðilegu mati. Engin meðferð án mats læknis — lyfseðill fer rafrænt í lyfjagátt og er tilbúinn í næsta apóteki.",
-    icon: (
-      <svg {...iconProps}>
-        <rect x="7" y="3" width="10" height="4" rx="1" />
-        <path d="M8 7h8v11a3 3 0 01-3 3h-2a3 3 0 01-3-3z" />
-        <path d="M12 11v6M9 14h6" />
-      </svg>
-    ),
+    icon: Pill,
   },
   {
     title: "Innbyggt öryggisnet",
     description:
       "Rauð flögg í spurningalistunum vísa alvarlegum einkennum strax í rétta þjónustu. Fjarlækningar taka ekki að sér erindi sem eiga heima annars staðar — og þú greiðir ekki ef þér er vísað frá.",
-    icon: (
-      <svg {...iconProps}>
-        <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" />
-        <path d="M9 12l2 2 4-4" />
-      </svg>
-    ),
+    icon: ShieldCheck,
   },
   {
     title: "Fræðsluefni fylgir",
     description:
       "Niðurstöðunni fylgir fræðsluefni tengt þínu vandamáli: ráðleggingar, fyrirbyggjandi ráð og vörur án lyfseðils sem geta hjálpað.",
-    icon: (
-      <svg {...iconProps}>
-        <path d="M4 5.5A2 2 0 016 4h5v15H6a2 2 0 00-2 1.5z" />
-        <path d="M20 5.5A2 2 0 0018 4h-5v15h5a2 2 0 012 1.5z" />
-      </svg>
-    ),
+    icon: BookOpen,
   },
 ];
 
@@ -187,7 +154,7 @@ export default function ThjonustaPage() {
                 className="group bg-white rounded-2xl border border-slate-200 p-8 hover:shadow-lg hover:border-brand-cyan transition-all"
               >
                 <div className="w-12 h-12 rounded-2xl bg-brand-cyan-subtle text-[var(--primary-dark)] flex items-center justify-center mb-5 group-hover:bg-[var(--primary)] group-hover:text-white transition-colors">
-                  {f.icon}
+                  <f.icon className="w-6 h-6" strokeWidth={1.75} aria-hidden />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">
                   {f.title}

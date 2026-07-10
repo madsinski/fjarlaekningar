@@ -1,4 +1,14 @@
 import type { Metadata } from "next";
+import {
+  Target,
+  Lock,
+  Stethoscope,
+  ClipboardPlus,
+  Globe,
+  ShieldCheck,
+  Award,
+  Sparkles,
+} from "lucide-react";
 import MedaliaButton from "../../components/MedaliaButton";
 import TeamGrid from "../../components/TeamGrid";
 
@@ -8,60 +18,26 @@ export const metadata: Metadata = {
     "Fjarlækningar ehf. er íslenskt fyrirtæki sem býður upp á örugga fjarlæknisþjónustu í gegnum sjúklingagátt Medalia.",
 };
 
-const iconProps = {
-  className: "w-6 h-6",
-  fill: "none",
-  stroke: "currentColor",
-  viewBox: "0 0 24 24",
-  strokeWidth: 1.6,
-  strokeLinecap: "round" as const,
-  strokeLinejoin: "round" as const,
-};
-
 const pillars = [
   {
     title: "Hlutverk okkar",
     body: "Fjarlækningar var stofnað til að auka aðgengi að læknisþjónustu á Íslandi. Sama þjónusta og á læknastofu, sömu spurningar og sömu vandamál — en skilvirkari leið til að leysa þau og styttri biðlistar, óháð staðsetningu.",
-    icon: (
-      <svg {...iconProps}>
-        <circle cx="12" cy="12" r="9" />
-        <circle cx="12" cy="12" r="5" />
-        <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
-      </svg>
-    ),
+    icon: Target,
   },
   {
     title: "Örugg þjónusta í gegnum Medalia",
     body: "Við notum sjúklingagátt Medalia, íslenska heilbrigðisgátt byggða samkvæmt ströngustu kröfum um persónuvernd. Öll samskipti og sjúkraskrár eru dulkóðaðar og eingöngu aðgengilegar þér og þeim lækni sem annast þig.",
-    icon: (
-      <svg {...iconProps}>
-        <rect x="5" y="11" width="14" height="9" rx="2" />
-        <path d="M8 11V8a4 4 0 018 0v3M12 15v2" />
-      </svg>
-    ),
+    icon: Lock,
   },
   {
     title: "Faglegir og reyndir læknar",
     body: "Læknar okkar eru með full réttindi og langa reynslu í almennri læknisþjónustu. Innbyggt öryggisnet í spurningalistunum vísar alvarlegum einkennum strax í rétta þjónustu — við tökum aldrei að okkur erindi sem eiga heima annars staðar.",
-    icon: (
-      <svg {...iconProps}>
-        <path d="M6 3v6a6 6 0 0012 0V3" />
-        <path d="M4 3h4M16 3h4" />
-        <path d="M12 15v2a4 4 0 004 4 3 3 0 003-3v-2" />
-        <circle cx="19" cy="15" r="2" />
-      </svg>
-    ),
+    icon: Stethoscope,
   },
   {
     title: "Lyfseðill og eftirfylgni",
     body: "Læknir leggur til meðferð út frá svörum þínum og lyfseðill fer rafrænt í lyfjagátt, tilbúinn í næsta apóteki. Þú getur valið heimsendingu í gegnum app apóteksins þar sem það er í boði — svo þú getir lokið erindinu án þess að fara að heiman.",
-    icon: (
-      <svg {...iconProps}>
-        <rect x="4" y="4" width="10" height="16" rx="3" />
-        <path d="M4 12h10M9 7v10" />
-        <path d="M15 15l4 4M17 13l4 4" />
-      </svg>
-    ),
+    icon: ClipboardPlus,
   },
 ];
 
@@ -69,41 +45,22 @@ const values = [
   {
     title: "Aðgengi",
     body: "Læknisþjónusta á að vera einföld og aðgengileg fyrir alla.",
-    icon: (
-      <svg {...iconProps}>
-        <circle cx="12" cy="12" r="9" />
-        <path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18" />
-      </svg>
-    ),
+    icon: Globe,
   },
   {
     title: "Öryggi",
     body: "Persónuvernd og örugg meðhöndlun heilsufarsupplýsinga er forgangsmál.",
-    icon: (
-      <svg {...iconProps}>
-        <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" />
-        <path d="M9 12l2 2 4-4" />
-      </svg>
-    ),
+    icon: ShieldCheck,
   },
   {
     title: "Fagmennska",
     body: "Við fylgjum faglegum stöðlum og klínískum leiðbeiningum.",
-    icon: (
-      <svg {...iconProps}>
-        <path d="M8 14l-1.5 7L12 18l5.5 3L16 14" />
-        <circle cx="12" cy="9" r="6" />
-      </svg>
-    ),
+    icon: Award,
   },
   {
     title: "Einfaldleiki",
     body: "Þjónustan á að vera auðveld í notkun — frá fyrstu spurningu til lyfseðils.",
-    icon: (
-      <svg {...iconProps}>
-        <path d="M13 3L4 14h7l-1 7 9-11h-7l1-7z" />
-      </svg>
-    ),
+    icon: Sparkles,
   },
 ];
 
@@ -133,7 +90,7 @@ export default function UmOkkurPage() {
                 className="group bg-white rounded-2xl border border-slate-200 p-8 hover:shadow-lg hover:border-brand-cyan transition-all"
               >
                 <div className="w-12 h-12 rounded-2xl bg-brand-cyan-subtle text-[var(--primary-dark)] flex items-center justify-center mb-5 group-hover:bg-[var(--primary)] group-hover:text-white transition-colors">
-                  {p.icon}
+                  <p.icon className="w-6 h-6" strokeWidth={1.75} aria-hidden />
                 </div>
                 <h2 className="text-xl font-semibold text-slate-900 mb-3">
                   {p.title}
@@ -160,7 +117,7 @@ export default function UmOkkurPage() {
                 className="bg-white rounded-2xl border border-slate-200 p-6"
               >
                 <div className="w-11 h-11 rounded-xl bg-brand-cyan-subtle text-[var(--primary-dark)] flex items-center justify-center mb-4">
-                  {v.icon}
+                  <v.icon className="w-5 h-5" strokeWidth={1.75} aria-hidden />
                 </div>
                 <h3 className="text-base font-semibold text-slate-900 mb-1.5">
                   {v.title}

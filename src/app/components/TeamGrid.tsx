@@ -97,7 +97,7 @@ export default function TeamGrid() {
 
   return (
     <>
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5 max-w-5xl mx-auto">
         {team.map((member) => (
           <button
             key={member.name}
@@ -105,21 +105,18 @@ export default function TeamGrid() {
             onClick={() => setActive(member)}
             title="Smelltu til að stækka"
             aria-label={`Stækka mynd: ${member.name}`}
-            className="group text-left bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:-translate-y-0.5 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+            className="group bg-white rounded-2xl border border-slate-200 p-5 text-center hover:shadow-lg hover:border-brand-cyan transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
           >
-            <div className="relative aspect-[4/5] overflow-hidden bg-brand-cyan-subtle">
+            <div className="relative mx-auto w-20 h-20 rounded-full overflow-hidden bg-brand-cyan-subtle ring-2 ring-brand-cyan-muted">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={member.photo}
                 alt={member.name}
-                className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.04]"
+                className="w-full h-full object-cover object-top"
               />
-              <span className="absolute top-3 left-3 inline-flex items-center px-2.5 py-1 rounded-full bg-white/90 backdrop-blur text-[11px] font-semibold text-[var(--primary-dark)] shadow-sm">
-                {member.flag}
-              </span>
-              <span className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-[var(--primary)] text-white grid place-items-center shadow-md opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all">
+              <span className="absolute inset-0 grid place-items-center bg-[var(--primary-dark)]/45 text-white opacity-0 group-hover:opacity-100 transition-opacity">
                 <svg
-                  className="w-4 h-4"
+                  className="w-5 h-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -133,12 +130,13 @@ export default function TeamGrid() {
                 </svg>
               </span>
             </div>
-            <div className="p-5">
-              <h3 className="text-base font-semibold text-slate-900 leading-snug">
-                {member.name}
-              </h3>
-              <p className="mt-1 text-sm text-slate-600">{member.role}</p>
-            </div>
+            <h3 className="mt-4 text-sm font-semibold text-slate-900 leading-snug">
+              {member.name}
+            </h3>
+            <p className="mt-0.5 text-xs text-slate-600">{member.role}</p>
+            <span className="mt-3 inline-flex items-center px-2.5 py-0.5 rounded-full bg-brand-cyan-subtle/70 text-[11px] font-medium text-[var(--primary-dark)]">
+              {member.flag}
+            </span>
           </button>
         ))}
       </div>
