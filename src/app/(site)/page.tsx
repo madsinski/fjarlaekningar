@@ -44,7 +44,7 @@ const stats = [
   {
     value: "0 km",
     label:
-      "Engin óþarfa ferðalög — þjónustan er aðgengileg um land allt.",
+      "Engin óþarfa ferðalög — þú sækir þjónustuna þangað sem þú ert. Markmiðið er aðgengi um land allt.",
   },
   {
     value: "10–22",
