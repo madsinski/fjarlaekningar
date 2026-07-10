@@ -5,7 +5,7 @@ const services = [
   {
     title: "Kvef, hósti og hálsbólga",
     description:
-      "Greining og meðferð við helstu öndunarfærakvillum.",
+      "CRP heimapróf notað í upplýsingasöfnun ef þarf. Alvarlegum einkennum vísað í annan farveg.",
     icon: (
       <svg
         className="w-6 h-6"
@@ -23,9 +23,9 @@ const services = [
     ),
   },
   {
-    title: "Þvagfæra- og leggangasýkingar",
+    title: "Þvagfærasýkingar",
     description:
-      "Greining og meðferð — með þvagstrimli heima þegar við á.",
+      "Alvarlegum einkennum vísað í annan farveg. Þvag-stix heimapróf notað í upplýsingasöfnun.",
     icon: (
       <svg
         className="w-6 h-6"
@@ -45,7 +45,7 @@ const services = [
   {
     title: "Frunsa",
     description:
-      "Greining og meðferð við endurtekinni frunsu.",
+      "Meðferð við endurtekna frunsu. Frumgreiningu vísað í annan farveg.",
     icon: (
       <svg
         className="w-6 h-6"
@@ -65,7 +65,7 @@ const services = [
   {
     title: "Frjókornaofnæmi",
     description:
-      "Greining og meðferð við árstíðabundnu ofnæmi.",
+      "Meðferð við árstíðabundnu ofnæmi.",
     icon: (
       <svg
         className="w-6 h-6"
@@ -85,7 +85,7 @@ const services = [
   {
     title: "Lyfjaendurnýjun",
     description:
-      "Endurnýjun á föstum lyfjum — þó ekki ávanabindandi lyfjum.",
+      "Endurnýjun á föstum lyfjum fyrir utan ávanabindandi lyf.",
     icon: (
       <svg
         className="w-6 h-6"
@@ -105,7 +105,7 @@ const services = [
   {
     title: "Getnaðarvörn",
     description:
-      "Mat og ráðgjöf um getnaðarvarnir.",
+      "Fyrsta ávísun, endurnýjun eða breyting á getnaðarvörn.",
     icon: (
       <svg
         className="w-6 h-6"
@@ -127,9 +127,9 @@ const services = [
 const steps = [
   {
     n: "1",
-    title: "Þú velur erindi",
+    title: "Þú velur erindi af vandamálalista",
     description:
-      "Skráðu þig inn í sjúklingagáttina með rafrænum skilríkjum og veldu þjónustu af lista.",
+      "Skráðu þig inn með rafrænum skilríkjum og farðu í viðeigandi ferli eftir einkennum.",
   },
   {
     n: "2",
@@ -141,19 +141,37 @@ const steps = [
     n: "3",
     title: "Öryggisnetið metur svörin",
     description:
-      "Bendi svörin til alvarlegra veikinda færð þú strax leiðbeiningar um rétt úrræði.",
+      "Ef svör benda til alvarlegra veikinda færð þú strax leiðbeiningar um rétt úrræði.",
   },
   {
     n: "4",
-    title: "Læknir yfirfer og ávísar",
+    title: "Læknir metur og leggur til meðferð",
     description:
-      "Læknir fær erindið í verkefnalista, yfirfer svörin og staðfestir viðeigandi meðferð.",
+      "Læknir fer yfir svörin og leggur til viðeigandi meðferð út frá sínu læknisfræðilega mati.",
   },
   {
     n: "5",
-    title: "Niðurstaða og lyfseðill",
+    title: "Niðurstaða, ráðleggingar og lyfseðill",
     description:
-      "Þú færð skriflega niðurstöðu í gáttina og lyfseðill fer rafrænt í lyfjagátt.",
+      "Þú færð skriflega niðurstöðu og ráðleggingar — og lyfseðill fer rafrænt í lyfjagátt ef þörf er á.",
+  },
+];
+
+const stats = [
+  {
+    value: "2 klst.",
+    label:
+      "Flest erindi afgreidd innan tveggja klukkustunda á opnunartíma.",
+  },
+  {
+    value: "0 km",
+    label:
+      "Engin óþarfa ferðalög — þjónustan er aðgengileg um land allt.",
+  },
+  {
+    value: "10–22",
+    label:
+      "Opið alla daga. Beiðnum sem berast eftir kl. 22 er svarað daginn eftir.",
   },
 ];
 
@@ -170,17 +188,18 @@ export default function Home() {
               Íslensk fjarlækningaþjónusta
             </span>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900">
-              Læknisþjónusta{" "}
-              <span className="text-[var(--primary)]">án biðstofu</span>
+              Aðgengileg og skilvirk{" "}
+              <span className="text-[var(--primary)]">læknisþjónusta</span>
             </h1>
             <p className="mt-6 text-lg text-slate-600 max-w-2xl">
-              Fjarlækningar er íslenskt fyrirtæki, stofnað af læknum, sem leysir
-              algeng heilsugæsluerindi í gegnum örugga sjúklingagátt — án þess
-              að þú þurfir að mæta á staðinn. Þú svarar markvissum spurningalista
-              þegar þér hentar og læknir yfirfer og staðfestir meðferð.
+              Fjarlækningar er íslensk fjarlækningaþjónusta fyrir einföld og
+              afmörkuð erindi. Sama þjónusta og á læknastofu — sömu spurningar og
+              sömu vandamál — en skilvirkari leið til að leysa þau og styttri
+              biðlistar. Þú svarar spurningalista heima og læknir svarar innan
+              tveggja klukkustunda.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
-              {["Stofnað 2021", "Íslenskir læknar", "Samstarf við Lyfju"].map(
+              {["Svar innan 2 klst.", "Opið alla daga 10–22", "Óháð staðsetningu"].map(
                 (chip) => (
                   <span
                     key={chip}
@@ -209,11 +228,12 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">
-              Algeng erindi — leyst samdægurs
+              Algeng erindi leyst innan tveggja klukkustunda
             </h2>
             <p className="mt-4 text-slate-600">
-              Spurningalistar samdir af læknum utan um hvert erindi, með
-              innbyggðum öryggisspurningum. Flest erindi eru afgreidd samdægurs.
+              Spurningalistar sérhannaðir í samstarfi við íslenska
+              sérfræðilækna, með innbyggðum öryggisspurningum. Ferlið er hannað
+              eins og viðtal við lækni.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -233,22 +253,61 @@ export default function Home() {
             ))}
           </div>
           <p className="mt-8 text-sm text-slate-500">
-            Auk þess njálgur, ristill og risvandamál — og listinn lengist jafnt
-            og þétt.
+            Auk fleiri erinda — sjá{" "}
+            <Link
+              href="/thjonusta"
+              className="text-[var(--primary)] font-medium hover:underline"
+            >
+              alla þjónustu
+            </Link>
+            . Listinn lengist jafnt og þétt eftir því sem þjónustan þróast.
+          </p>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section className="py-20 bg-[var(--background)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">
+              Aukið aðgengi fyrir sjúklinga, hagræðing fyrir kerfið
+            </h2>
+            <p className="mt-4 text-slate-600">
+              Þú sækir þjónustuna hvar sem þú ert stödd eða staddur. Markmiðið er
+              að stytta biðlista heilsugæslunnar með því að leysa algengustu
+              erindin í gegnum Fjarlækningar.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+            {stats.map((stat) => (
+              <div
+                key={stat.value}
+                className="bg-white rounded-2xl border border-slate-200 p-8"
+              >
+                <div className="text-4xl font-extrabold text-[var(--primary)]">
+                  {stat.value}
+                </div>
+                <p className="mt-3 text-slate-600">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-8 text-sm text-slate-500">
+            Alvarleg einkenni fá strax leiðbeiningar um rétt úrræði.
           </p>
         </div>
       </section>
 
       {/* How it works */}
-      <section className="py-20 bg-[var(--background)]">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">
               Ferlið frá upphafi til enda
             </h2>
             <p className="mt-4 text-slate-600">
-              Ósamtíma þjónusta: þú svarar spurningalista þegar þér hentar,
-              læknir yfirfer þegar honum hentar. Ekkert myndsímtal nauðsynlegt.
+              Þú svarar spurningalista heima eða þar sem þú ert stödd eða
+              staddur — læknir svarar erindum innan tveggja klukkustunda á
+              opnunartíma.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8">
@@ -276,7 +335,7 @@ export default function Home() {
             </h2>
             <p className="mt-4 text-brand-cyan-subtle max-w-xl mx-auto">
               Skráðu þig inn í sjúklingagáttina og veldu erindi. Einfalt, öruggt
-              og í flestum tilvikum afgreitt samdægurs.
+              og flest erindi afgreidd innan tveggja klukkustunda á opnunartíma.
             </p>
             <div className="mt-8 flex justify-center">
               <MedaliaButton

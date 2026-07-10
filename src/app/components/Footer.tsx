@@ -9,8 +9,9 @@ export default function Footer() {
           <div className="md:col-span-2">
             <Logo variant="light" />
             <p className="mt-4 text-sm text-slate-400 max-w-sm">
-              Fjarlækningar ehf. leysir algeng heilsugæsluerindi í gegnum örugga
-              sjúklingagátt Medalia. Læknisþjónusta án biðstofu.
+              Fjarlækningar ehf. leysir einföld og afmörkuð erindi í gegnum
+              örugga sjúklingagátt Medalia. Aðgengileg og skilvirk
+              læknisþjónusta, óháð staðsetningu.
             </p>
           </div>
 

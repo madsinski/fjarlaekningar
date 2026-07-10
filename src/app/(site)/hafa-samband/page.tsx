@@ -45,8 +45,9 @@ export default function HafaSambandPage() {
             </h2>
             <p className="text-slate-600 mb-6">
               Öll erindi og læknisfræðileg samskipti fara fram í gegnum
-              sjúklingagátt Medalia. Læknir svarar innan auglýsts afgreiðslutíma
-              — hægt er að hafa samband alla daga milli 10 og 22.
+              sjúklingagátt Medalia. Læknir svarar innan tveggja klukkustunda á
+              opnunartíma. Opið alla daga milli 10 og 22 — beiðnum sem berast
+              eftir kl. 22 er svarað daginn eftir.
             </p>
             <MedaliaButton label="Opna sjúklingagátt" />
           </div>

@@ -11,32 +11,57 @@ const services = [
   {
     title: "Kvef, hósti og hálsbólga",
     description:
-      "Greining og meðferð við helstu öndunarfærakvillum.",
+      "CRP heimapróf notað í upplýsingasöfnun ef þarf. Alvarlegum einkennum vísað í annan farveg.",
   },
   {
-    title: "Þvagfæra- og leggangasýkingar",
+    title: "Þvagfærasýkingar",
     description:
-      "Greining og meðferð — með þvagstrimli heima þegar við á.",
+      "Alvarlegum einkennum vísað í annan farveg. Þvag-stix heimapróf notað í upplýsingasöfnun.",
+  },
+  {
+    title: "Sveppasýkingar í leggöngum",
+    description: "Greining og meðferð.",
+  },
+  {
+    title: "Bakteríusýkingar í leggöngum",
+    description: "Greining og meðferð.",
+  },
+  {
+    title: "Frjókornaofnæmi",
+    description: "Meðferð við árstíðabundnu ofnæmi.",
   },
   {
     title: "Frunsa",
     description:
-      "Greining og meðferð við endurtekinni frunsu.",
+      "Meðferð við endurtekna frunsu. Frumgreiningu vísað í annan farveg.",
   },
   {
-    title: "Frjókornaofnæmi",
+    title: "Ristill á húð",
     description:
-      "Greining og meðferð við árstíðabundnu ofnæmi.",
+      "Meðferð við endurteknum ristli. Frumgreiningu vísað í annan farveg.",
   },
   {
-    title: "Lyfjaendurnýjun",
-    description:
-      "Endurnýjun á föstum lyfjum — þó ekki ávanabindandi lyfjum.",
+    title: "Njálgur",
+    description: "Greining og meðferð.",
+  },
+  {
+    title: "Risvandamál",
+    description: "Mat og meðferð.",
   },
   {
     title: "Getnaðarvörn",
     description:
-      "Mat og ráðgjöf um getnaðarvarnir.",
+      "Fyrsta ávísun, endurnýjun eða breyting á getnaðarvörn.",
+  },
+  {
+    title: "Lyfjaendurnýjun",
+    description:
+      "Endurnýjun á föstum lyfjum fyrir utan ávanabindandi lyf.",
+  },
+  {
+    title: "Læknisvottorð",
+    description:
+      "Veikindavottorð fyrir vinnu eða skóla, tengt vandamálum sem hafa verið sinnt í gegnum Fjarlækningar.",
   },
 ];
 
@@ -44,22 +69,32 @@ const features = [
   {
     title: "Ósamtíma þjónusta",
     description:
-      "Þú svarar markvissum spurningalista þegar þér hentar — læknir yfirfer þegar honum hentar. Ekkert myndsímtal nauðsynlegt.",
+      "Þú svarar spurningalista heima eða þar sem þú ert — læknir svarar erindum innan tveggja klukkustunda á opnunartíma milli 10 og 22.",
   },
   {
-    title: "Spurningalistar samdir af læknum",
+    title: "Spurningalistar sérhannaðir",
     description:
-      "Hver spurningalisti er saminn af læknum utan um sitt erindi, með innbyggðum öryggisspurningum sem vísa alvarlegum einkennum strax í rétta þjónustu.",
+      "Spurningalistar eru sérhannaðir í samstarfi við íslenska sérfræðilækna tengt hverju vandamáli. Ferlið er hannað eins og viðtal við lækni.",
   },
   {
     title: "Sjálfspróf heima",
     description:
-      "Þegar sjálfspróf bætir greiningu er þér leiðbeint að taka það — þvagstrimil, strep-próf eða CRP — og skrá niðurstöðuna beint í gáttina.",
+      "Þegar sjálfspróf bætir greiningu er þér leiðbeint að taka það — t.d. þvagpróf sem sækja má á heilsugæslu eða í næsta apóteki — og skrá niðurstöðuna beint í gáttina.",
   },
   {
-    title: "Lyfseðill og heimsending",
+    title: "Meðferð og lyfseðill",
     description:
-      "Læknir staðfestir meðferð og lyfseðill fer rafrænt í lyfjagátt. Heimsending lyfja og sjálfsprófa í samstarfi við Lyfju þar sem hún er í boði.",
+      "Læknir leggur til meðferð út frá svörum og læknisfræðilegu mati. Engin meðferð án mats læknis — lyfseðill fer rafrænt í lyfjagátt og er tilbúinn í næsta apóteki.",
+  },
+  {
+    title: "Innbyggt öryggisnet",
+    description:
+      "Rauð flögg í spurningalistunum vísa alvarlegum einkennum strax í rétta þjónustu. Fjarlækningar taka ekki að sér erindi sem eiga heima annars staðar — og þú greiðir ekki ef þér er vísað frá.",
+  },
+  {
+    title: "Fræðsluefni fylgir",
+    description:
+      "Niðurstöðunni fylgir fræðsluefni tengt þínu vandamáli: ráðleggingar, fyrirbyggjandi ráð og vörur án lyfseðils sem geta hjálpað.",
   },
 ];
 
@@ -85,7 +120,7 @@ export default function ThjonustaPage() {
               Algeng erindi
             </h2>
             <p className="mt-3 text-slate-600">
-              Flest erindi eru afgreidd samdægurs.
+              Flest erindi afgreidd innan tveggja klukkustunda á opnunartíma.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -102,8 +137,7 @@ export default function ThjonustaPage() {
             ))}
           </div>
           <p className="mt-8 text-sm text-slate-500">
-            Auk þess njálgur, ristill og risvandamál — og listinn lengist jafnt
-            og þétt.
+            Listinn lengist jafnt og þétt eftir því sem þjónustan þróast.
           </p>
         </div>
       </section>

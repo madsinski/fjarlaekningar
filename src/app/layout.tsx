@@ -11,7 +11,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Fjarlækningar ehf.",
   description:
-    "Íslensk fjarlækningaþjónusta sem leysir algeng heilsugæsluerindi í gegnum örugga sjúklingagátt Medalia — án biðstofu og án þess að mæta á staðinn.",
+    "Íslensk fjarlækningaþjónusta fyrir einföld og afmörkuð erindi. Sama þjónusta og á læknastofu í gegnum örugga sjúklingagátt Medalia — læknir svarar innan tveggja klukkustunda, óháð staðsetningu.",
 };
 
 export default function RootLayout({
