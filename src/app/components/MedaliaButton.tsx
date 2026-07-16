@@ -7,9 +7,10 @@ interface MedaliaButtonProps {
   className?: string;
 }
 
-// TODO: replace data-src with the Fjarlækningar-specific Medalia portal URL
-// once it has been provisioned. Defaults to the generic Medalia app root.
-const MEDALIA_PORTAL_URL = "https://app.medalia.is/";
+// Fjarlækningar patient portal (sjúklingagátt) — the provisioned Medalia URL
+// for the HSU pilot. Used as the widget data-src by every "Opna sjúklingagátt"
+// button across the site.
+const MEDALIA_PORTAL_URL = "https://app.medalia.dev/hsu-fjarlaekningar";
 
 export default function MedaliaButton({
   label = "Opna sjúklingagátt",
