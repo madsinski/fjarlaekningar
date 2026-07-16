@@ -1,5 +1,3 @@
-"use client";
-
 interface MedaliaButtonProps {
   label?: string;
   variant?: "filled" | "outline";
@@ -7,9 +5,9 @@ interface MedaliaButtonProps {
   className?: string;
 }
 
-// Fjarlækningar patient portal (sjúklingagátt) — the provisioned Medalia URL
-// for the HSU pilot. Used as the widget data-src by every "Opna sjúklingagátt"
-// button across the site.
+// Fjarlækningar patient portal (sjúklingagátt) — provisioned Medalia URL for the
+// HSU pilot. Opened directly (the portal is a normal page), so every
+// "Opna sjúklingagátt" button links here.
 const MEDALIA_PORTAL_URL = "https://app.medalia.dev/hsu-fjarlaekningar";
 
 export default function MedaliaButton({
@@ -30,12 +28,13 @@ export default function MedaliaButton({
       : "border-2 border-[var(--primary-dark)] text-[var(--primary-dark)] hover:bg-[var(--primary-dark)] hover:text-white";
 
   return (
-    <button
-      className={`medalia-widget inline-flex items-center justify-center font-semibold rounded-full transition-all ${sizeClasses[size]} ${variantClasses} ${className}`}
-      data-src={MEDALIA_PORTAL_URL}
-      type="button"
+    <a
+      href={MEDALIA_PORTAL_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`inline-flex items-center justify-center font-semibold rounded-full transition-all ${sizeClasses[size]} ${variantClasses} ${className}`}
     >
       {label}
-    </button>
+    </a>
   );
 }
