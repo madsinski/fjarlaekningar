@@ -50,13 +50,9 @@ create policy survey_responses_staff_read on public.survey_responses
   for select to authenticated
   using (public.is_active_staff());
 
-create or replace function public.touch_updated_at()
-returns trigger language plpgsql as $fn$
-begin
-  new.updated_at = now();
-  return new;
-end
-$fn$;
+-- Single line on purpose (SQL-editor splitter breaks on end-of-line ';' in a
+-- dollar-quoted body).
+create or replace function public.touch_updated_at() returns trigger language plpgsql as $fn$ begin new.updated_at = now(); return new; end $fn$;
 
 drop trigger if exists trg_surveys_updated_at on public.surveys;
 create trigger trg_surveys_updated_at

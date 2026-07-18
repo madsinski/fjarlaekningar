@@ -26,13 +26,9 @@ create index if not exists data_requests_created_idx on public.data_requests (cr
 
 -- Self-contained updated_at trigger (create-or-replace so migration order
 -- doesn't matter).
-create or replace function public.touch_updated_at()
-returns trigger language plpgsql as $fn$
-begin
-  new.updated_at = now();
-  return new;
-end
-$fn$;
+-- Single line on purpose (SQL-editor splitter breaks on end-of-line ';' in a
+-- dollar-quoted body).
+create or replace function public.touch_updated_at() returns trigger language plpgsql as $fn$ begin new.updated_at = now(); return new; end $fn$;
 
 drop trigger if exists trg_data_requests_updated_at on public.data_requests;
 create trigger trg_data_requests_updated_at

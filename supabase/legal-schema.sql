@@ -68,13 +68,9 @@ create policy legal_versions_staff_read on public.legal_document_versions
   using (public.is_active_staff());
 
 -- keep updated_at fresh
-create or replace function public.touch_legal_documents_updated_at()
-returns trigger language plpgsql as $fn$
-begin
-  new.updated_at = now();
-  return new;
-end
-$fn$;
+-- Body kept on ONE line on purpose: this Supabase SQL editor's statement
+-- splitter breaks on a ';' at end-of-line inside a dollar-quoted body.
+create or replace function public.touch_legal_documents_updated_at() returns trigger language plpgsql as $fn$ begin new.updated_at = now(); return new; end $fn$;
 
 drop trigger if exists trg_legal_documents_updated_at on public.legal_documents;
 create trigger trg_legal_documents_updated_at
