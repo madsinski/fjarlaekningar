@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Users, Settings, FileText, Presentation, FlaskConical, MessageSquare, ClipboardList, ShieldAlert } from "lucide-react";
+import { Users, Settings, FileText, Presentation, FlaskConical, MessageSquare, ClipboardList, ShieldAlert, Rocket, AlertTriangle } from "lucide-react";
 
 // Dashboard. Phase 1 ships the foundation; later phases light up the modules
 // below (shown as "væntanlegt" until their phase lands).
@@ -10,10 +10,12 @@ const MODULES: { label: string; icon: React.ReactNode; href?: string; phase: num
   { label: "Stillingar", icon: <Settings className="w-5 h-5" />, href: "/admin/settings", phase: 1 },
   { label: "Lögfræðiskjöl", icon: <FileText className="w-5 h-5" />, href: "/admin/legal", phase: 2 },
   { label: "Kynningar & prentefni", icon: <Presentation className="w-5 h-5" />, href: "/admin/presentations", phase: 2 },
-  { label: "Rannsóknir", icon: <FlaskConical className="w-5 h-5" />, phase: 3 },
-  { label: "Samskipti", icon: <MessageSquare className="w-5 h-5" />, phase: 3 },
+  { label: "Rannsóknir", icon: <FlaskConical className="w-5 h-5" />, href: "/admin/research", phase: 3 },
+  { label: "Samskipti", icon: <MessageSquare className="w-5 h-5" />, href: "/admin/communication", phase: 3 },
   { label: "Kannanir", icon: <ClipboardList className="w-5 h-5" />, phase: 3 },
-  { label: "Persónuverndarbeiðnir", icon: <ShieldAlert className="w-5 h-5" />, phase: 3 },
+  { label: "Persónuverndarbeiðnir", icon: <ShieldAlert className="w-5 h-5" />, href: "/admin/data-requests", phase: 3 },
+  { label: "Útgáfusaga", icon: <Rocket className="w-5 h-5" />, href: "/admin/releases", phase: 3 },
+  { label: "Villuskráning", icon: <AlertTriangle className="w-5 h-5" />, href: "/admin/errors", phase: 3 },
 ];
 
 export default function AdminDashboard() {

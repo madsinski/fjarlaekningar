@@ -11,6 +11,11 @@ import {
   ShieldCheck,
   FileText,
   Presentation,
+  FlaskConical,
+  MessageSquare,
+  ShieldAlert,
+  Rocket,
+  AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -33,6 +38,11 @@ const NAV: { href: string; label: string; icon: React.ReactNode; adminOnly?: boo
   { href: "/admin", label: "Yfirlit", icon: <LayoutDashboard className="w-5 h-5" /> },
   { href: "/admin/legal", label: "Lögfræðiskjöl", icon: <FileText className="w-5 h-5" /> },
   { href: "/admin/presentations", label: "Kynningar & prentefni", icon: <Presentation className="w-5 h-5" /> },
+  { href: "/admin/research", label: "Rannsóknir", icon: <FlaskConical className="w-5 h-5" /> },
+  { href: "/admin/communication", label: "Samskipti", icon: <MessageSquare className="w-5 h-5" /> },
+  { href: "/admin/data-requests", label: "Persónuverndarbeiðnir", icon: <ShieldAlert className="w-5 h-5" /> },
+  { href: "/admin/releases", label: "Útgáfusaga", icon: <Rocket className="w-5 h-5" /> },
+  { href: "/admin/errors", label: "Villuskráning", icon: <AlertTriangle className="w-5 h-5" /> },
   { href: "/admin/team", label: "Starfsfólk", icon: <Users className="w-5 h-5" />, adminOnly: true },
   { href: "/admin/settings", label: "Stillingar", icon: <Settings className="w-5 h-5" /> },
 ];
