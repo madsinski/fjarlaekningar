@@ -21,6 +21,12 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // The staff admin has its own auth + MFA gate and must stay reachable even
+  // while the public site is behind the coming-soon wall.
+  if (request.nextUrl.pathname.startsWith("/admin")) {
+    return NextResponse.next();
+  }
+
   const url = request.nextUrl.clone();
   url.pathname = "/coming-soon";
   return NextResponse.rewrite(url);

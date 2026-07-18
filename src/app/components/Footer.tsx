@@ -62,18 +62,26 @@ export default function Footer() {
           <p>
             © {new Date().getFullYear()} Fjarlækningar ehf. Allur réttur áskilinn.
           </p>
-          <p>
-            Sjúklingagátt rekin af{" "}
-            <a
-              href="https://medalia.is"
-              className="hover:text-white"
-              target="_blank"
-              rel="noopener noreferrer"
+          <div className="flex items-center gap-4">
+            <p>
+              Sjúklingagátt rekin af{" "}
+              <a
+                href="https://medalia.is"
+                className="hover:text-white"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Medalia
+              </a>
+              .
+            </p>
+            <Link
+              href="/admin"
+              className="text-slate-500 hover:text-white transition-colors"
             >
-              Medalia
-            </a>
-            .
-          </p>
+              Stjórnborð
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
