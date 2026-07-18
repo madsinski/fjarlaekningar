@@ -49,6 +49,7 @@ export default function AdminLoginPage() {
         }
       }
 
+      // Preferred flow: token_hash (works cross-device, no PKCE verifier).
       if (detected && queryTokenHash) {
         const { error: otpErr } = await supabase.auth.verifyOtp({
           token_hash: queryTokenHash,
@@ -62,6 +63,25 @@ export default function AdminLoginPage() {
         setSetupMode(detected);
         return;
       }
+
+      // Fallback: PKCE ?code= (default Supabase email templates). Only works
+      // if the code-verifier is present on this device; otherwise we surface a
+      // clear message rather than the opaque "Auth session missing".
+      const queryCode =
+        typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("code") : null;
+      if (queryCode) {
+        const { error: exErr } = await supabase.auth.exchangeCodeForSession(queryCode);
+        if (cancelled) return;
+        if (exErr) {
+          setError(
+            "Innskráningarhlekkurinn er af eldri gerð. Biddu um nýjan hlekk (eða uppfærðu tölvupóstsniðmátið í Supabase til að nota token_hash).",
+          );
+          return;
+        }
+        setSetupMode(detected || "recovery");
+        return;
+      }
+
       if (detected) {
         // Legacy hash flow — JS client auto-established the session.
         setSetupMode(detected);
