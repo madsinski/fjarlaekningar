@@ -1,173 +1,392 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Eye, Save, Globe, Trash2 } from "lucide-react";
+import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { renderMarkdown } from "@/lib/markdown";
+import {
+  SLIDE_SCHEMAS, SLIDE_TYPE_ORDER, makeBlankSlide, DESIGNS, BRAND_OPTIONS,
+  type Slide, type SlideType, type SlideTheme, type PresentationData, type DesignId,
+  type DeckTextMaps, type BrandKey,
+} from "@/lib/presentations/types";
+import {
+  applyTextMap, extractTextMap, translatablePaths, getAtPath,
+  planSync, applySync, resolveSlides, hasIcelandic,
+} from "@/lib/presentations/i18n";
+import { Deck, SlideStage } from "@/app/components/presentation/Deck";
+import { DeckPrint } from "@/app/components/presentation/DeckPrint";
+import { SlideFields } from "../_components/SlideFields";
 
-interface Item {
-  id: string;
-  slug: string;
-  title: string;
-  kind: string;
-  summary: string;
-  body: string;
-  external_url: string | null;
-  status: string;
+type EditLang = "en" | "is";
+const EMPTY_SNAP = { en: {}, is: {} };
+
+async function authHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
 }
 
-export default function PresentationEditPage() {
-  const router = useRouter();
-  const params = useParams<{ id: string }>();
-  const id = params.id;
+type SaveState = "idle" | "saving" | "saved" | "error";
 
-  const [item, setItem] = useState<Item | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+export default function PresentationEditor() {
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
 
   const [title, setTitle] = useState("");
-  const [kind, setKind] = useState("kynning");
-  const [summary, setSummary] = useState("");
-  const [externalUrl, setExternalUrl] = useState("");
-  const [bodyText, setBodyText] = useState("");
-  const [preview, setPreview] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [slug, setSlug] = useState("");
+  const [published, setPublished] = useState(false);
+  const [slides, setSlides] = useState<Slide[]>([]);
+  const [design, setDesign] = useState<DesignId>("lifeline");
+  const [tIs, setTIs] = useState<DeckTextMaps>({});
+  const [syncSnap, setSyncSnap] = useState<{ en: DeckTextMaps; is: DeckTextMaps }>(EMPTY_SNAP);
+  const [editLang, setEditLang] = useState<EditLang>("en");
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+  const [sel, setSel] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  const [save, setSave] = useState<SaveState>("idle");
+  const [present, setPresent] = useState(false);
+  const [printOpen, setPrintOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [addBrand, setAddBrand] = useState<BrandKey>("lifeline");
+  const [previewType, setPreviewType] = useState<SlideType>("title");
+  const [copied, setCopied] = useState(false);
+  const [origin] = useState(() => (typeof window !== "undefined" ? window.location.origin : ""));
 
-  const authHeaders = async (): Promise<Record<string, string>> => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    return { "Content-Type": "application/json", Authorization: session?.access_token ? `Bearer ${session.access_token}` : "" };
-  };
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const skipNextSave = useRef(true);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      const { data: me } = await supabase.from("staff").select("role").eq("id", user.id).maybeSingle();
-      setIsAdmin(me?.role === "admin");
-    }
-    const res = await fetch(`/api/admin/presentations/${id}`, { headers: await authHeaders() });
-    const j = await res.json().catch(() => ({}));
-    if (j.ok) {
-      const d = j.presentation as Item;
-      setItem(d);
-      setTitle(d.title);
-      setKind(d.kind);
-      setSummary(d.summary || "");
-      setExternalUrl(d.external_url || "");
-      setBodyText(d.body || "");
-    }
-    setLoading(false);
+  // Load
+  useEffect(() => {
+    if (!id) return;
+    (async () => {
+      const res = await fetch(`/api/admin/presentations/${id}`, { headers: await authHeaders() });
+      if (!res.ok) { setLoaded(true); return; }
+      const j = await res.json();
+      const p = j.presentation;
+      setTitle(p.title ?? "");
+      setSlug(p.slug ?? "");
+      setPublished(!!p.is_published);
+      const data = (p.data as PresentationData) || { slides: [] };
+      setSlides(data.slides ?? []);
+      setDesign(data.design ?? "lifeline");
+      setTIs(data.tIs ?? {});
+      setSyncSnap(data.syncSnap ?? EMPTY_SNAP);
+      setLoaded(true);
+    })();
   }, [id]);
 
+  // Debounced autosave of title + slides
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
-  }, [load]);
+    if (!loaded) return;
+    if (skipNextSave.current) { skipNextSave.current = false; return; }
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      setSave("saving");
+      try {
+        const res = await fetch(`/api/admin/presentations/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+          body: JSON.stringify({ title, data: { slides, design, tIs, syncSnap } }),
+        });
+        setSave(res.ok ? "saved" : "error");
+      } catch { setSave("error"); }
+    }, 800);
+    return () => clearTimeout(saveTimer.current);
+  }, [title, slides, design, tIs, syncSnap, loaded, id]);
 
-  const patch = async (payload: Record<string, unknown>, okText: string) => {
-    setBusy(true);
-    setMsg(null);
-    const res = await fetch(`/api/admin/presentations/${id}`, { method: "PATCH", headers: await authHeaders(), body: JSON.stringify(payload) });
-    const j = await res.json().catch(() => ({}));
-    setBusy(false);
-    if (!res.ok || !j.ok) {
-      setMsg({ type: "err", text: j.error || "Villa" });
-      return;
+  const selected = slides[sel] ?? null;
+
+  const updateSlide = useCallback((next: Slide) => {
+    setSlides((prev) => prev.map((s, i) => (i === sel ? next : s)));
+  }, [sel]);
+
+  // What the editor shows/edits in the right panel, per edit language.
+  const displaySlide = selected ? (editLang === "is" ? applyTextMap(selected, tIs[selected.id]) : selected) : null;
+
+  const handleFieldChange = useCallback((next: Slide) => {
+    if (!selected) return;
+    if (editLang === "en") { updateSlide(next); return; }
+    // IS mode: keep only fields whose Icelandic text differs from English.
+    const enMap = extractTextMap(selected);
+    const map: Record<string, string> = {};
+    for (const p of translatablePaths(selected)) {
+      const v = getAtPath(next, p);
+      if (v && v !== enMap[p]) map[p] = v;
     }
-    setMsg({ type: "ok", text: okText });
-    await load();
-  };
+    setTIs((prev) => ({ ...prev, [selected.id]: map }));
+  }, [selected, editLang, updateSlide]);
 
-  const save = () => patch({ title, kind, summary, external_url: externalUrl, body: bodyText }, "Vistað.");
-  const publish = () => patch({ title, kind, summary, external_url: externalUrl, body: bodyText, status: "published" }, "Birt.");
-  const unpublish = () => patch({ status: "draft" }, "Tekið úr birtingu.");
+  async function runSync() {
+    setSyncing(true); setSyncMsg(null);
+    try {
+      const data: PresentationData = { slides, design, tIs, syncSnap };
+      const plan = planSync(data);
+      if (plan.items.length === 0) { setSyncMsg("Already in sync — nothing changed."); return; }
+      // Translate in small batches so each request stays well under the
+      // function/gateway timeout (a whole-deck call can otherwise 504).
+      const CHUNK = 12;
+      const headers = { "Content-Type": "application/json", ...(await authHeaders()) };
+      const all: string[] = [];
+      for (let off = 0; off < plan.items.length; off += CHUNK) {
+        const slice = plan.items.slice(off, off + CHUNK);
+        setSyncMsg(`Translating… ${Math.min(off + CHUNK, plan.items.length)} / ${plan.items.length}`);
+        const res = await fetch(`/api/admin/presentations/${id}/translate`, {
+          method: "POST", headers,
+          body: JSON.stringify({ items: slice.map(({ from, to, text }) => ({ from, to, text })) }),
+        });
+        if (!res.ok) { const j = await res.json().catch(() => ({})); setSyncMsg(`Sync failed: ${j.error || res.status}`); return; }
+        const { translations } = await res.json();
+        for (let k = 0; k < slice.length; k++) all.push((translations?.[k] ?? slice[k].text) as string);
+      }
+      const results = plan.items.map((it, idx) => ({ slideId: it.slideId, path: it.path, to: it.to, text: all[idx] ?? it.text }));
+      const nextData = applySync(data, results);
+      setSlides(nextData.slides);
+      setTIs(nextData.tIs || {});
+      setSyncSnap(nextData.syncSnap || EMPTY_SNAP);
+      setSyncMsg(`Synced ${results.length} field${results.length === 1 ? "" : "s"}${plan.conflicts ? ` · ${plan.conflicts} conflict${plan.conflicts === 1 ? "" : "s"} resolved to English` : ""}.`);
+    } catch (e) {
+      setSyncMsg(e instanceof Error ? e.message : "Sync failed");
+    } finally { setSyncing(false); }
+  }
 
-  const remove = async () => {
-    if (!confirm("Eyða þessu efni varanlega?")) return;
-    setBusy(true);
-    const res = await fetch(`/api/admin/presentations/${id}`, { method: "DELETE", headers: await authHeaders() });
-    const j = await res.json().catch(() => ({}));
-    setBusy(false);
-    if (res.ok && j.ok) router.push("/admin/presentations");
-    else setMsg({ type: "err", text: j.error || "Villa" });
-  };
+  function addSlide(type: SlideType) {
+    const ns = { ...makeBlankSlide(type), brand: addBrand };
+    setSlides((prev) => {
+      const copy = prev.slice();
+      copy.splice(sel + 1, 0, ns);
+      return copy;
+    });
+    setSel((i) => i + 1);
+    setAddOpen(false);
+  }
+  function removeSlide(i: number) {
+    if (!confirm("Delete this slide?")) return;
+    setSlides((prev) => prev.filter((_, idx) => idx !== i));
+    setSel((cur) => Math.max(0, cur > i ? cur - 1 : cur));
+  }
+  function moveSlide(i: number, dir: -1 | 1) {
+    const j = i + dir; if (j < 0 || j >= slides.length) return;
+    setSlides((prev) => { const c = prev.slice(); [c[i], c[j]] = [c[j], c[i]]; return c; });
+    setSel(j);
+  }
 
-  if (loading) return <div className="p-8 text-sm text-slate-500">Hleð…</div>;
-  if (!item) return <div className="p-8 text-sm text-slate-500">Efni fannst ekki.</div>;
+  async function togglePublish() {
+    const next = !published;
+    setPublished(next);
+    await fetch(`/api/admin/presentations/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify({ is_published: next }),
+    }).catch(() => {});
+  }
+
+  async function copyLink() {
+    try { await navigator.clipboard.writeText(`${origin}/present/${slug}`); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch { /* ignore */ }
+  }
+
+  if (!loaded) return <div className="p-6 text-gray-400">Loading…</div>;
 
   return (
-    <div className="p-8 max-w-4xl">
-      <Link href="/admin/presentations" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-4">
-        <ArrowLeft className="w-4 h-4" /> Kynningar & prentefni
-      </Link>
-
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-slate-900 truncate">{item.title}</h1>
-          <div className="text-sm text-slate-500 mt-1">
-            /{item.slug} · {item.kind === "prentefni" ? "Prentefni" : "Kynning"} ·{" "}
-            {item.status === "published" ? <span className="text-emerald-700">Birt</span> : <span className="text-amber-600">Drög</span>}
-          </div>
-        </div>
-        {item.status === "published" && (
-          <a href={`/kynning/${item.slug}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-cyan-700 hover:text-cyan-900">
-            <Globe className="w-4 h-4" /> Skoða opinbera síðu
-          </a>
-        )}
-      </div>
-
-      {!isAdmin && (
-        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">Þú hefur lesaðgang. Aðeins stjórnendur geta breytt og birt.</div>
-      )}
-
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <input value={title} onChange={(e) => setTitle(e.target.value)} disabled={!isAdmin} placeholder="Titill" className="sm:col-span-2 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
-        <select value={kind} onChange={(e) => setKind(e.target.value)} disabled={!isAdmin} className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white disabled:bg-slate-50">
-          <option value="kynning">Kynning</option>
-          <option value="prentefni">Prentefni</option>
-        </select>
-        <input value={summary} onChange={(e) => setSummary(e.target.value)} disabled={!isAdmin} placeholder="Stutt lýsing (valfrjálst)" className="sm:col-span-3 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
-        <input value={externalUrl} onChange={(e) => setExternalUrl(e.target.value)} disabled={!isAdmin} placeholder="Ytri hlekkur (Figma/PDF/Medalia) — valfrjálst" className="sm:col-span-3 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
-      </div>
-
-      <div className="mt-4 flex items-center justify-between">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Efni (markdown, valfrjálst)</div>
-        <button onClick={() => setPreview((v) => !v)} className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-900">
-          <Eye className="w-3.5 h-3.5" /> {preview ? "Breyta" : "Forskoða"}
+    <div className="flex h-[calc(100vh-4rem)] flex-col">
+      {/* top bar */}
+      <div className="flex flex-wrap items-center gap-3 border-b border-gray-100 bg-white px-4 py-2.5">
+        <Link href="/admin/presentations" className="text-sm text-gray-400 hover:text-gray-700">← All</Link>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="min-w-0 flex-1 rounded-md border border-transparent px-2 py-1 text-lg font-semibold text-gray-900 hover:border-gray-200 focus:border-emerald-500 focus:outline-none"
+          placeholder="Untitled presentation"
+        />
+        <span className={`text-xs ${save === "error" ? "text-red-600" : save === "saved" ? "text-emerald-600" : "text-gray-400"}`}>
+          {save === "saving" ? "Saving…" : save === "saved" ? "Saved" : save === "error" ? "Save failed" : ""}
+        </span>
+        <label className="flex items-center gap-1.5 text-xs text-gray-500">
+          Design
+          <select value={design} onChange={(e) => setDesign(e.target.value as DesignId)} className="rounded-md border border-gray-300 px-2 py-1 text-sm text-gray-700 focus:border-emerald-500 focus:outline-none" title="Deck design">
+            {DESIGNS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+          </select>
+        </label>
+        <button onClick={() => setPresent(true)} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">▶ Present</button>
+        <button onClick={() => setPrintOpen(true)} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50" title="Export to PDF">⤓ PDF</button>
+        <button onClick={togglePublish} className={`rounded-md px-3 py-1.5 text-sm font-medium ${published ? "bg-emerald-600 text-white hover:bg-emerald-700" : "border border-gray-300 text-gray-700 hover:bg-gray-50"}`}>
+          {published ? "Published" : "Publish"}
         </button>
       </div>
-      {preview ? (
-        <div className="mt-2 rounded-lg border border-slate-200 bg-white p-6 min-h-[240px]">{renderMarkdown(bodyText)}</div>
-      ) : (
-        <textarea value={bodyText} onChange={(e) => setBodyText(e.target.value)} disabled={!isAdmin} rows={16} placeholder={"# Fyrirsögn\n\nEfni hér…"} className="mt-2 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono leading-relaxed focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
-      )}
 
-      {msg && (
-        <div className={`mt-4 rounded-lg border p-3 text-xs ${msg.type === "ok" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}>{msg.text}</div>
-      )}
-
-      {isAdmin && (
-        <div className="mt-6 flex flex-wrap items-center gap-3">
-          <button onClick={save} disabled={busy} className="inline-flex items-center gap-2 py-2 px-4 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
-            <Save className="w-4 h-4" /> Vista drög
-          </button>
-          {item.status === "published" ? (
-            <button onClick={unpublish} disabled={busy} className="py-2 px-4 rounded-lg border border-amber-300 text-sm font-semibold text-amber-700 hover:bg-amber-50 disabled:opacity-50">Taka úr birtingu</button>
-          ) : (
-            <button onClick={publish} disabled={busy} className="inline-flex items-center gap-2 py-2 px-4 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold disabled:opacity-50">
-              <Globe className="w-4 h-4" /> Vista og birta
+      {/* translation bar */}
+      <div className="flex flex-wrap items-center gap-2.5 border-b border-gray-100 bg-white px-4 py-1.5 text-xs">
+        <span className="font-medium text-gray-400">Language</span>
+        <div className="inline-flex overflow-hidden rounded-md border border-gray-300">
+          {(["en", "is"] as const).map((l) => (
+            <button key={l} onClick={() => setEditLang(l)} className={`px-2.5 py-1 ${editLang === l ? "bg-emerald-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
+              {l === "en" ? "English" : "Íslenska"}
             </button>
+          ))}
+        </div>
+        <button onClick={runSync} disabled={syncing} className="rounded-md border border-emerald-300 bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">
+          {syncing ? "Syncing…" : "⟳ Sync translations"}
+        </button>
+        {syncMsg && <span className="text-gray-500">{syncMsg}</span>}
+        <span className="ml-auto text-gray-400">{editLang === "is" ? "Editing Icelandic — structure & images shared with English." : "Editing English (source)."}</span>
+      </div>
+
+      {published && (
+        <div className="flex items-center gap-2 border-b border-emerald-100 bg-emerald-50/60 px-4 py-1.5 text-xs">
+          <span className="text-emerald-700">Public link:</span>
+          <code className="rounded bg-white px-1.5 py-0.5 text-gray-600">{origin}/present/{slug}</code>
+          <button onClick={copyLink} className="font-medium text-emerald-600 hover:underline">{copied ? "Copied!" : "Copy"}</button>
+          <a href={`/present/${slug}`} target="_blank" rel="noreferrer" className="font-medium text-gray-500 hover:underline">Open ↗</a>
+        </div>
+      )}
+
+      {/* 3-column workspace */}
+      <div className="grid flex-1 grid-cols-[220px_1fr_340px] overflow-hidden">
+        {/* slide list */}
+        <div className="overflow-y-auto border-r border-gray-100 bg-gray-50/50 p-2">
+          {slides.map((s, i) => (
+            <div
+              key={s.id}
+              onClick={() => setSel(i)}
+              className={`group mb-1.5 cursor-pointer rounded-md border p-2 ${i === sel ? "border-emerald-400 bg-white shadow-sm" : "border-transparent hover:bg-white"}`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-medium text-gray-400">{i + 1}. {SLIDE_SCHEMAS[s.type].label}</span>
+                <div className="flex items-center gap-0.5 text-gray-300 opacity-0 group-hover:opacity-100">
+                  <button onClick={(e) => { e.stopPropagation(); moveSlide(i, -1); }} className="px-1 hover:text-gray-700">↑</button>
+                  <button onClick={(e) => { e.stopPropagation(); moveSlide(i, 1); }} className="px-1 hover:text-gray-700">↓</button>
+                  <button onClick={(e) => { e.stopPropagation(); removeSlide(i); }} className="px-1 hover:text-red-500">✕</button>
+                </div>
+              </div>
+              <div className="mt-0.5 truncate text-xs text-gray-700">{s.heading?.replace(/==/g, "") || s.quote?.replace(/==/g, "") || s.kicker || "—"}</div>
+            </div>
+          ))}
+          <button
+            onClick={() => { setAddBrand(selected?.brand ?? "lifeline"); setPreviewType(selected?.type ?? "title"); setAddOpen(true); }}
+            className="mt-1 w-full rounded-md border border-dashed border-gray-300 py-2 text-sm text-gray-500 hover:border-emerald-400 hover:text-emerald-600"
+          >+ Add slide</button>
+        </div>
+
+        {/* preview */}
+        <div className="overflow-y-auto bg-gray-100 p-6">
+          <SlideStage slide={displaySlide} design={design} />
+          {selected && (
+            <p className="mt-3 text-center text-xs text-gray-400">Slide {sel + 1} of {slides.length} · {SLIDE_SCHEMAS[selected.type].label}{editLang === "is" ? " · Icelandic preview" : ""}</p>
           )}
-          <button onClick={remove} disabled={busy} className="ml-auto inline-flex items-center gap-2 py-2 px-3 rounded-lg text-sm text-red-600 hover:bg-red-50 disabled:opacity-50">
-            <Trash2 className="w-4 h-4" /> Eyða
-          </button>
+        </div>
+
+        {/* field editor */}
+        <div className="overflow-y-auto border-l border-gray-100 bg-white p-4">
+          {selected && displaySlide ? (
+            <>
+              <div className="mb-4 flex items-center gap-2">
+                <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">{SLIDE_SCHEMAS[selected.type].label}</span>
+                {editLang === "is" && <span className="rounded-full bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700">🇮🇸 Icelandic</span>}
+                {editLang === "en" && (
+                  <div className="ml-auto flex items-center gap-2 text-xs text-gray-500">
+                    <label className="flex items-center gap-1">Logo
+                      <select
+                        value={selected.brand ?? "lifeline"}
+                        onChange={(e) => updateSlide({ ...selected, brand: e.target.value as BrandKey })}
+                        className="rounded border border-gray-300 px-1.5 py-0.5"
+                      >
+                        {BRAND_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                    </label>
+                    <label className="flex items-center gap-1">Theme
+                      <select
+                        value={selected.theme}
+                        onChange={(e) => updateSlide({ ...selected, theme: e.target.value as SlideTheme })}
+                        className="rounded border border-gray-300 px-1.5 py-0.5"
+                      >
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                      </select>
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              <SlideFields slide={displaySlide} presentationId={id!} onChange={handleFieldChange} textOnly={editLang === "is"} />
+
+              {editLang === "en" && (
+                <div className="mt-5 border-t border-gray-100 pt-4">
+                  <label className="mb-1 block text-xs font-medium text-gray-500">Presenter notes (private)</label>
+                  <textarea
+                    rows={4}
+                    value={selected.notes ?? ""}
+                    onChange={(e) => updateSlide({ ...selected, notes: e.target.value })}
+                    className="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
+                    placeholder="Shown to the presenter with the N key. Never visible to the audience."
+                  />
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="text-gray-400">Add a slide to begin.</p>
+          )}
+        </div>
+      </div>
+
+      {present && (
+        <Deck
+          slides={slides}
+          slidesIs={hasIcelandic({ slides, tIs }) ? resolveSlides({ slides, tIs }, "is") : undefined}
+          design={design}
+          initialIndex={sel}
+          onClose={() => setPresent(false)}
+        />
+      )}
+
+      {printOpen && (
+        <DeckPrint
+          slides={editLang === "is" && hasIcelandic({ slides, tIs }) ? resolveSlides({ slides, tIs }, "is") : slides}
+          design={design}
+          onClose={() => setPrintOpen(false)}
+        />
+      )}
+
+      {addOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4" onClick={() => setAddOpen(false)}>
+          <div className="flex max-h-[88vh] w-full max-w-3xl flex-col rounded-xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-wrap items-center gap-3 border-b border-gray-100 px-4 py-3">
+              <h3 className="font-semibold text-gray-800">Add slide</h3>
+              <span className="text-xs text-gray-400">Pick a layout — preview on the right.</span>
+              <div className="ml-auto flex items-center gap-2 text-xs text-gray-500">
+                <span>Logo</span>
+                <div className="inline-flex overflow-hidden rounded-md border border-gray-300">
+                  {BRAND_OPTIONS.map((o) => (
+                    <button key={o.value} onClick={() => setAddBrand(o.value)} className={`px-2.5 py-1 ${addBrand === o.value ? "bg-emerald-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>{o.label}</button>
+                  ))}
+                </div>
+                <button onClick={() => setAddOpen(false)} className="ml-1 rounded p-1 text-gray-400 hover:text-gray-700" aria-label="Close">✕</button>
+              </div>
+            </div>
+            <div className="grid min-h-0 flex-1 grid-cols-[230px_1fr] gap-3 overflow-hidden p-3">
+              <div className="overflow-y-auto rounded-md border border-gray-100 bg-gray-50/50 p-1">
+                {SLIDE_TYPE_ORDER.map((t) => (
+                  <button
+                    key={t}
+                    onMouseEnter={() => setPreviewType(t)}
+                    onFocus={() => setPreviewType(t)}
+                    onClick={() => addSlide(t)}
+                    className={`block w-full rounded px-2.5 py-2 text-left ${previewType === t ? "bg-white shadow-sm ring-1 ring-emerald-300" : "hover:bg-white"}`}
+                  >
+                    <div className="text-sm font-medium text-gray-800">{SLIDE_SCHEMAS[t].label}</div>
+                    <div className="text-[11px] text-gray-400">{SLIDE_SCHEMAS[t].description}</div>
+                  </button>
+                ))}
+              </div>
+              <div className="flex min-h-0 flex-col">
+                <div className="rounded-md bg-gray-100 p-3">
+                  <SlideStage slide={{ ...makeBlankSlide(previewType), brand: addBrand }} design={design} />
+                </div>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <p className="text-xs text-gray-500">{SLIDE_SCHEMAS[previewType].label} · {SLIDE_SCHEMAS[previewType].description}</p>
+                  <button onClick={() => addSlide(previewType)} className="flex-none rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700">Add this slide</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

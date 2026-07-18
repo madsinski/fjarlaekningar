@@ -1,58 +1,74 @@
-// Read / update (+publish) / delete a presentation (admin for writes).
-
-import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { NextRequest, NextResponse } from "next/server";
 import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import type { PresentationData, Slide } from "@/lib/presentations/types";
 
-export const runtime = "nodejs";
+// Backed by supabase/presentations-studio-schema.sql (table: presentation_decks)
 
-const KINDS = ["kynning", "prentefni"];
+type Ctx = { params: Promise<{ id: string }> };
 
-export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const caller = await getCallerStaff(req);
-  if (!caller) return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
-  const { id } = await ctx.params;
-  const { data } = await supabaseAdmin.from("presentations").select("*").eq("id", id).maybeSingle();
-  if (!data) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
-  return NextResponse.json({ ok: true, presentation: data });
+function isValidData(d: unknown): d is PresentationData {
+  if (!d || typeof d !== "object") return false;
+  const slides = (d as { slides?: unknown }).slides;
+  if (!Array.isArray(slides)) return false;
+  return slides.every((s) => s && typeof s === "object" && typeof (s as Slide).id === "string" && typeof (s as Slide).type === "string");
 }
 
-export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
+// GET /api/admin/presentations/:id — full row (any active staff).
+export async function GET(req: NextRequest, ctx: Ctx) {
   const caller = await getCallerStaff(req);
-  if (!isAdmin(caller)) return NextResponse.json({ ok: false, error: "Admin role required" }, { status: 403 });
+  if (!caller) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
   const { id } = await ctx.params;
-
-  let body: Record<string, unknown> = {};
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
-  }
-
-  const update: Record<string, unknown> = { updated_by: caller!.id };
-  if (typeof body.title === "string" && body.title.trim()) update.title = body.title.trim();
-  if (typeof body.summary === "string") update.summary = body.summary;
-  if (typeof body.body === "string") update.body = body.body;
-  if (typeof body.external_url === "string") update.external_url = body.external_url.trim() || null;
-  if (typeof body.kind === "string") {
-    if (!KINDS.includes(body.kind)) return NextResponse.json({ ok: false, error: "Invalid kind" }, { status: 400 });
-    update.kind = body.kind;
-  }
-  if (body.status === "published" || body.status === "draft") {
-    update.status = body.status;
-    update.published_at = body.status === "published" ? new Date().toISOString() : null;
-  }
-
-  const { data, error } = await supabaseAdmin.from("presentations").update(update).eq("id", id).select().single();
-  if (error || !data) return NextResponse.json({ ok: false, error: error?.message || "Villa" }, { status: 500 });
-  return NextResponse.json({ ok: true, presentation: data });
+  const { data, error } = await supabaseAdmin
+    .from("presentation_decks")
+    .select("id, slug, title, template_version, is_published, data, created_at, updated_at")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!data) return NextResponse.json({ error: "not_found" }, { status: 404 });
+  return NextResponse.json({ presentation: data });
 }
 
-export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }> }) {
+// PUT /api/admin/presentations/:id — update title/data/publish (admin).
+export async function PUT(req: NextRequest, ctx: Ctx) {
   const caller = await getCallerStaff(req);
-  if (!isAdmin(caller)) return NextResponse.json({ ok: false, error: "Admin role required" }, { status: 403 });
+  if (!isAdmin(caller)) {
+    return NextResponse.json({ error: "forbidden" }, { status: caller ? 403 : 401 });
+  }
   const { id } = await ctx.params;
-  const { error } = await supabaseAdmin.from("presentations").delete().eq("id", id);
-  if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+
+  let body: { title?: string; data?: unknown; is_published?: boolean };
+  try { body = await req.json(); } catch { return NextResponse.json({ error: "invalid_body" }, { status: 400 }); }
+
+  const patch: Record<string, unknown> = { updated_by: caller!.id };
+  if (typeof body.title === "string") patch.title = body.title.trim() || "Untitled presentation";
+  if (typeof body.is_published === "boolean") patch.is_published = body.is_published;
+  if (body.data !== undefined) {
+    if (!isValidData(body.data)) return NextResponse.json({ error: "invalid_data" }, { status: 400 });
+    patch.data = body.data;
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("presentation_decks")
+    .update(patch)
+    .eq("id", id)
+    .select("id, slug, title, template_version, is_published, updated_at")
+    .maybeSingle();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!data) return NextResponse.json({ error: "not_found" }, { status: 404 });
+  return NextResponse.json({ presentation: data });
+}
+
+// DELETE /api/admin/presentations/:id (admin).
+export async function DELETE(req: NextRequest, ctx: Ctx) {
+  const caller = await getCallerStaff(req);
+  if (!isAdmin(caller)) {
+    return NextResponse.json({ error: "forbidden" }, { status: caller ? 403 : 401 });
+  }
+  const { id } = await ctx.params;
+  const { error } = await supabaseAdmin.from("presentation_decks").delete().eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

@@ -3,150 +3,161 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Presentation, Plus, Globe, Pencil, Printer } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { TEMPLATES } from "@/lib/presentations/templates";
+import type { PresentationMeta } from "@/lib/presentations/types";
 
-interface Item {
-  id: string;
-  slug: string;
-  title: string;
-  kind: string;
-  status: string;
-  updated_at: string;
+async function authHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
 }
 
-const KIND_LABELS: Record<string, string> = { kynning: "Kynningar", prentefni: "Prentefni" };
-const KIND_ORDER = ["kynning", "prentefni"];
+function fmtDate(s: string) {
+  try { return new Date(s).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }); } catch { return s; }
+}
 
-export default function PresentationsListPage() {
+export default function PresentationsList() {
   const router = useRouter();
-  const [items, setItems] = useState<Item[]>([]);
+  const [items, setItems] = useState<PresentationMeta[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  const [title, setTitle] = useState("");
-  const [kind, setKind] = useState("kynning");
+  const [busy, setBusy] = useState<string | null>(null);
+  const [showNew, setShowNew] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+  const [origin] = useState(() => (typeof window !== "undefined" ? window.location.origin : ""));
 
   const load = useCallback(async () => {
     setLoading(true);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      const { data: me } = await supabase.from("staff").select("role").eq("id", user.id).maybeSingle();
-      setIsAdmin(me?.role === "admin");
-    }
-    const { data } = await supabase
-      .from("presentations")
-      .select("id, slug, title, kind, status, updated_at")
-      .order("kind", { ascending: true })
-      .order("title", { ascending: true });
-    setItems((data as Item[]) || []);
-    setLoading(false);
+    try {
+      const res = await fetch("/api/admin/presentations", { headers: await authHeaders() });
+      if (res.ok) { const j = await res.json(); setItems(j.presentations ?? []); }
+    } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
-  const create = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (busy) return;
-    setBusy(true);
-    setErr(null);
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const res = await fetch("/api/admin/presentations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: session?.access_token ? `Bearer ${session.access_token}` : "" },
-      body: JSON.stringify({ title, kind }),
-    });
-    const j = await res.json().catch(() => ({}));
-    setBusy(false);
-    if (!res.ok || !j.ok) {
-      setErr(j.error || "Ekki tókst að stofna.");
-      return;
-    }
-    router.push(`/admin/presentations/${j.presentation.id}`);
-  };
+  async function create(templateId: string) {
+    setBusy("new");
+    try {
+      const res = await fetch("/api/admin/presentations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        body: JSON.stringify({ templateId }),
+      });
+      const j = await res.json();
+      if (res.ok && j.presentation) router.push(`/admin/presentations/${j.presentation.id}`);
+    } finally { setBusy(null); setShowNew(false); }
+  }
 
-  const grouped = KIND_ORDER.map((k) => ({ k, items: items.filter((i) => i.kind === k) })).filter((g) => g.items.length > 0);
+  async function duplicate(id: string) {
+    setBusy(id);
+    try {
+      const res = await fetch("/api/admin/presentations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        body: JSON.stringify({ duplicateOf: id }),
+      });
+      if (res.ok) await load();
+    } finally { setBusy(null); }
+  }
+
+  async function togglePublish(p: PresentationMeta) {
+    setBusy(p.id);
+    try {
+      const res = await fetch(`/api/admin/presentations/${p.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        body: JSON.stringify({ is_published: !p.is_published }),
+      });
+      if (res.ok) setItems((prev) => prev.map((x) => x.id === p.id ? { ...x, is_published: !p.is_published } : x));
+    } finally { setBusy(null); }
+  }
+
+  async function remove(p: PresentationMeta) {
+    if (!confirm(`Delete “${p.title}”? This cannot be undone.`)) return;
+    setBusy(p.id);
+    try {
+      const res = await fetch(`/api/admin/presentations/${p.id}`, { method: "DELETE", headers: await authHeaders() });
+      if (res.ok) setItems((prev) => prev.filter((x) => x.id !== p.id));
+    } finally { setBusy(null); }
+  }
+
+  async function copyLink(slug: string) {
+    const url = `${origin}/present/${slug}`;
+    try { await navigator.clipboard.writeText(url); setCopied(slug); setTimeout(() => setCopied(null), 1800); } catch { /* ignore */ }
+  }
 
   return (
-    <div className="p-8 max-w-4xl">
-      <div className="flex items-start justify-between gap-4">
+    <div className="mx-auto max-w-5xl px-4 py-6">
+      <div className="mb-6 flex items-center justify-between">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-widest text-cyan-700 mb-1">Stjórnborð</div>
-          <h1 className="text-2xl font-bold text-slate-900">Kynningar & prentefni</h1>
-          <p className="text-sm text-slate-600 mt-1">Kynningar og prentvænt efni til að deila.</p>
+          <h1 className="text-2xl font-bold text-gray-900">Presentations</h1>
+          <p className="text-sm text-gray-500">Build and share slide decks. Published decks are viewable at a public link.</p>
         </div>
-        {isAdmin && (
-          <button onClick={() => setCreating((v) => !v)} className="inline-flex items-center gap-2 py-2 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold shrink-0">
-            <Plus className="w-4 h-4" /> Nýtt
+        <div className="flex items-center gap-2">
+          <Link href="/admin/presentations/collateral" className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            Fjarlækningar prentefni
+          </Link>
+          <button onClick={() => setShowNew(true)} className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+            + New presentation
           </button>
-        )}
+        </div>
       </div>
 
-      {creating && isAdmin && (
-        <form onSubmit={create} className="mt-6 rounded-xl border border-slate-200 bg-white p-5">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titill" required className="sm:col-span-2 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none" />
-            <select value={kind} onChange={(e) => setKind(e.target.value)} className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white">
-              {KIND_ORDER.map((k) => (
-                <option key={k} value={k}>{KIND_LABELS[k]}</option>
-              ))}
-            </select>
-          </div>
-          <div className="mt-3 flex items-center gap-3">
-            <button type="submit" disabled={busy || !title} className="py-2 px-4 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-sm disabled:opacity-50">
-              {busy ? "Stofna…" : "Stofna og opna"}
-            </button>
-            {err && <span className="text-xs text-red-600">{err}</span>}
-          </div>
-        </form>
+      {loading ? (
+        <p className="text-gray-400">Loading…</p>
+      ) : items.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-gray-200 p-10 text-center text-gray-500">
+          No presentations yet. Create one from a template to get started.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items.map((p) => (
+            <div key={p.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <Link href={`/admin/presentations/${p.id}`} className="truncate font-semibold text-gray-900 hover:text-emerald-700">{p.title}</Link>
+                  {p.is_published
+                    ? <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">Published</span>
+                    : <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500">Draft</span>}
+                </div>
+                <div className="mt-0.5 text-xs text-gray-400">Updated {fmtDate(p.updated_at)} · {p.template_version}</div>
+                {p.is_published && (
+                  <div className="mt-1 flex items-center gap-2 text-xs">
+                    <code className="truncate rounded bg-gray-50 px-1.5 py-0.5 text-gray-500">/present/{p.slug}</code>
+                    <button onClick={() => copyLink(p.slug)} className="font-medium text-emerald-600 hover:underline">{copied === p.slug ? "Copied!" : "Copy link"}</button>
+                    <a href={`/present/${p.slug}`} target="_blank" rel="noreferrer" className="font-medium text-gray-500 hover:underline">Open ↗</a>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Link href={`/admin/presentations/${p.id}`} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">Edit</Link>
+                <button disabled={busy === p.id} onClick={() => togglePublish(p)} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                  {p.is_published ? "Unpublish" : "Publish"}
+                </button>
+                <button disabled={busy === p.id} onClick={() => duplicate(p.id)} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50">Duplicate</button>
+                <button disabled={busy === p.id} onClick={() => remove(p)} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50">Delete</button>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
-      <div className="mt-6 space-y-8">
-        {loading ? (
-          <div className="text-sm text-slate-500">Hleð…</div>
-        ) : items.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
-            <Presentation className="w-6 h-6 mx-auto mb-2 text-slate-400" />
-            Ekkert efni enn.
+      {showNew && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4" onClick={() => setShowNew(false)}>
+          <div className="flex max-h-[85vh] w-full max-w-md flex-col rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="mb-1 font-semibold text-gray-800">New presentation</h3>
+            <p className="mb-4 text-sm text-gray-500">Start from a template — you can change everything after.</p>
+            <div className="-mr-2 space-y-2 overflow-y-auto pr-2">
+              {TEMPLATES.map((t) => (
+                <button key={t.id} disabled={busy === "new"} onClick={() => create(t.id)} className="w-full rounded-lg border border-gray-200 p-3 text-left hover:border-emerald-400 hover:bg-emerald-50/40 disabled:opacity-50">
+                  <div className="font-medium text-gray-800">{t.name}</div>
+                  <div className="text-xs text-gray-500">{t.description}</div>
+                </button>
+              ))}
+            </div>
           </div>
-        ) : (
-          grouped.map((g) => (
-            <section key={g.k}>
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2 flex items-center gap-1">
-                {g.k === "prentefni" ? <Printer className="w-3.5 h-3.5" /> : <Presentation className="w-3.5 h-3.5" />}
-                {KIND_LABELS[g.k]}
-              </h2>
-              <div className="rounded-xl border border-slate-200 bg-white divide-y divide-slate-100">
-                {g.items.map((d) => (
-                  <Link key={d.id} href={`/admin/presentations/${d.id}`} className="flex items-center justify-between gap-4 p-4 hover:bg-slate-50">
-                    <div className="min-w-0">
-                      <div className="font-medium text-slate-900 truncate">{d.title}</div>
-                      <div className="text-xs text-slate-500">/{d.slug}</div>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      {d.status === "published" ? (
-                        <span className="inline-flex items-center gap-1 text-xs text-emerald-700"><Globe className="w-3.5 h-3.5" /> Birt</span>
-                      ) : (
-                        <span className="text-xs text-amber-600">Drög</span>
-                      )}
-                      <Pencil className="w-4 h-4 text-slate-400" />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          ))
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

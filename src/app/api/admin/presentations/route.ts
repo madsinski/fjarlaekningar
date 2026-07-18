@@ -1,56 +1,93 @@
-// Create a presentation / printable (admin only).
-
-import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { NextRequest, NextResponse } from "next/server";
 import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { buildTemplateData, isKnownTemplate } from "@/lib/presentations/templates";
+import type { PresentationData } from "@/lib/presentations/types";
 
-export const runtime = "nodejs";
+// Backed by supabase/presentations-studio-schema.sql (table: presentation_decks)
 
-const KINDS = ["kynning", "prentefni"];
+const META_COLS = "id, slug, title, template_version, is_published, created_at, updated_at";
 
-function slugify(s: string): string {
-  return s
+function slugify(input: string): string {
+  const base = (input || "presentation")
     .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .normalize("NFKD")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
+    .slice(0, 40) || "presentation";
+  const suffix = Math.random().toString(36).slice(2, 8);
+  return `${base}-${suffix}`;
 }
 
-export async function POST(req: Request) {
+// GET /api/admin/presentations — list (any active staff may read).
+export async function GET(req: NextRequest) {
+  const caller = await getCallerStaff(req);
+  if (!caller) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+  const { data, error } = await supabaseAdmin
+    .from("presentation_decks")
+    .select(META_COLS)
+    .order("updated_at", { ascending: false });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ presentations: data ?? [] });
+}
+
+// POST /api/admin/presentations — create from a template or duplicate (admin).
+export async function POST(req: NextRequest) {
   const caller = await getCallerStaff(req);
   if (!isAdmin(caller)) {
-    return NextResponse.json({ ok: false, error: "Admin role required" }, { status: 403 });
+    return NextResponse.json({ error: "forbidden" }, { status: caller ? 403 : 401 });
   }
 
-  let body: Record<string, unknown> = {};
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+  let body: { title?: string; templateId?: string; duplicateOf?: string };
+  try { body = await req.json(); } catch { return NextResponse.json({ error: "invalid_body" }, { status: 400 }); }
+
+  let title = (body.title || "").trim();
+  let templateVersion = body.templateId && isKnownTemplate(body.templateId) ? body.templateId : "standard-v2";
+  let data: PresentationData;
+
+  if (body.duplicateOf) {
+    const { data: src, error: srcErr } = await supabaseAdmin
+      .from("presentation_decks")
+      .select("title, template_version, data")
+      .eq("id", body.duplicateOf)
+      .maybeSingle();
+    if (srcErr) return NextResponse.json({ error: srcErr.message }, { status: 500 });
+    if (!src) return NextResponse.json({ error: "source_not_found" }, { status: 404 });
+    data = (src.data as PresentationData) ?? { slides: [] };
+    templateVersion = src.template_version ?? templateVersion;
+    if (!title) title = `Copy of ${src.title ?? "presentation"}`;
+  } else {
+    data = buildTemplateData(templateVersion);
+    if (!title) title = templateVersion === "standard-v1" ? "Standard deck (v1)" : "Standard deck (v2)";
   }
 
-  const title = String(body.title || "").trim();
-  const kind = String(body.kind || "kynning");
-  const slug = String(body.slug || "").trim() || slugify(title);
-
-  if (!title) return NextResponse.json({ ok: false, error: "Titill vantar" }, { status: 400 });
-  if (!slug) return NextResponse.json({ ok: false, error: "Slóð vantar" }, { status: 400 });
-  if (!KINDS.includes(kind)) return NextResponse.json({ ok: false, error: "Invalid kind" }, { status: 400 });
-
-  const { data, error } = await supabaseAdmin
-    .from("presentations")
-    .insert({ slug, title, kind, updated_by: caller!.id })
-    .select()
-    .single();
-
-  if (error || !data) {
-    const dup = error?.code === "23505";
-    return NextResponse.json(
-      { ok: false, error: dup ? "Slóð er þegar í notkun" : error?.message || "Villa" },
-      { status: dup ? 409 : 500 },
-    );
+  // Generate a unique slug; retry a couple of times on the off chance of a clash.
+  let inserted = null;
+  let lastErr: string | null = null;
+  for (let attempt = 0; attempt < 3 && !inserted; attempt++) {
+    const slug = slugify(title);
+    const { data: row, error } = await supabaseAdmin
+      .from("presentation_decks")
+      .insert({
+        slug,
+        title,
+        template_version: templateVersion,
+        data,
+        is_published: false,
+        created_by: caller!.id,
+        updated_by: caller!.id,
+      })
+      .select(META_COLS)
+      .single();
+    if (error) {
+      lastErr = error.message;
+      if (!/duplicate key|unique/i.test(error.message)) break;
+      continue;
+    }
+    inserted = row;
   }
-  return NextResponse.json({ ok: true, presentation: data });
+  if (!inserted) return NextResponse.json({ error: lastErr ?? "insert_failed" }, { status: 500 });
+  return NextResponse.json({ presentation: inserted }, { status: 201 });
 }

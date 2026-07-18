@@ -17,6 +17,7 @@ modules also need a **Storage bucket** — noted inline.
 | 9 | `supabase/surveys-schema.sql` | Phase 3 — Surveys | ✅ done |
 | 10 | `supabase/legal-approval-schema.sql` | Legal approval workflow + green tick | ⬜ run this |
 | 11 | `supabase/clinical-protocols-schema.sql` | Clinical algorithm change log (medical-device) | ⬜ run this |
+| 12 | `supabase/presentations-studio-schema.sql` | Presentation deck studio + A4 collateral (ported from Lifeline) — also creates the `presentation-assets` storage bucket | ⬜ run this |
 
 > After running a migration, the matching admin module works immediately (no
 > redeploy needed — the tables just start returning data).

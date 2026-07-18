@@ -40,7 +40,7 @@ export function proxy(request: NextRequest) {
   // while the public site is behind the coming-soon wall. Published legal
   // documents (/skjol/*) are also always public — a privacy policy must be
   // reachable regardless of the marketing-site launch state.
-  const alwaysPublic = ["/admin", "/skjol", "/kynning", "/breytingaskra", "/fyrirspurn", "/personuverndarbeidni", "/kannanir"];
+  const alwaysPublic = ["/admin", "/skjol", "/kynning", "/breytingaskra", "/fyrirspurn", "/personuverndarbeidni", "/kannanir", "/present"];
   if (alwaysPublic.some((p) => request.nextUrl.pathname.startsWith(p))) {
     return NextResponse.next();
   }
