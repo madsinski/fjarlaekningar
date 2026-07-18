@@ -22,8 +22,13 @@ export function proxy(request: NextRequest) {
   }
 
   // The staff admin has its own auth + MFA gate and must stay reachable even
-  // while the public site is behind the coming-soon wall.
-  if (request.nextUrl.pathname.startsWith("/admin")) {
+  // while the public site is behind the coming-soon wall. Published legal
+  // documents (/skjol/*) are also always public — a privacy policy must be
+  // reachable regardless of the marketing-site launch state.
+  if (
+    request.nextUrl.pathname.startsWith("/admin") ||
+    request.nextUrl.pathname.startsWith("/skjol")
+  ) {
     return NextResponse.next();
   }
 

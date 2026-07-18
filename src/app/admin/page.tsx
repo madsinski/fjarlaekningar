@@ -8,7 +8,7 @@ import { Users, Settings, FileText, Presentation, FlaskConical, MessageSquare, C
 const MODULES: { label: string; icon: React.ReactNode; href?: string; phase: number }[] = [
   { label: "Starfsfólk", icon: <Users className="w-5 h-5" />, href: "/admin/team", phase: 1 },
   { label: "Stillingar", icon: <Settings className="w-5 h-5" />, href: "/admin/settings", phase: 1 },
-  { label: "Lögfræðiskjöl", icon: <FileText className="w-5 h-5" />, phase: 2 },
+  { label: "Lögfræðiskjöl", icon: <FileText className="w-5 h-5" />, href: "/admin/legal", phase: 2 },
   { label: "Kynningar & prentefni", icon: <Presentation className="w-5 h-5" />, phase: 2 },
   { label: "Rannsóknir", icon: <FlaskConical className="w-5 h-5" />, phase: 3 },
   { label: "Samskipti", icon: <MessageSquare className="w-5 h-5" />, phase: 3 },

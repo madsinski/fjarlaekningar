@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
   ShieldCheck,
+  FileText,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -29,6 +30,7 @@ interface StaffProfile {
 // research, communication, surveys, privacy requests, releases, errors).
 const NAV: { href: string; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
   { href: "/admin", label: "Yfirlit", icon: <LayoutDashboard className="w-5 h-5" /> },
+  { href: "/admin/legal", label: "Lögfræðiskjöl", icon: <FileText className="w-5 h-5" /> },
   { href: "/admin/team", label: "Starfsfólk", icon: <Users className="w-5 h-5" />, adminOnly: true },
   { href: "/admin/settings", label: "Stillingar", icon: <Settings className="w-5 h-5" /> },
 ];
