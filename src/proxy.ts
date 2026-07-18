@@ -27,7 +27,8 @@ export function proxy(request: NextRequest) {
   // reachable regardless of the marketing-site launch state.
   if (
     request.nextUrl.pathname.startsWith("/admin") ||
-    request.nextUrl.pathname.startsWith("/skjol")
+    request.nextUrl.pathname.startsWith("/skjol") ||
+    request.nextUrl.pathname.startsWith("/kynning")
   ) {
     return NextResponse.next();
   }

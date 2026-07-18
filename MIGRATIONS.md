@@ -8,6 +8,7 @@ modules also need a **Storage bucket** — noted inline.
 |---|------|----------------|--------|
 | 1 | `supabase/schema.sql` | Phase 1 — staff auth + onboarding | ✅ done |
 | 2 | `supabase/legal-schema.sql` | Phase 2 — Legal documents | ⬜ run this |
+| 3 | `supabase/presentations-schema.sql` | Phase 2 — Presentations & printables | ⬜ run this |
 
 > After running a migration, the matching admin module works immediately (no
 > redeploy needed — the tables just start returning data).
