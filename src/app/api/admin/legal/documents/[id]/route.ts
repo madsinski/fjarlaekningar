@@ -24,8 +24,14 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
     .select("version, title, status, edited_by_name, created_at")
     .eq("document_id", id)
     .order("version", { ascending: false });
+  // Review history is best-effort: the approval migration may not be run yet.
+  const { data: reviews } = await supabaseAdmin
+    .from("legal_document_reviews")
+    .select("action, comment, reviewer_name, created_at")
+    .eq("document_id", id)
+    .order("created_at", { ascending: false });
 
-  return NextResponse.json({ ok: true, document, versions: versions || [] });
+  return NextResponse.json({ ok: true, document, versions: versions || [], reviews: reviews || [] });
 }
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {

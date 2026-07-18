@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Eye, Save, Globe, Trash2, History } from "lucide-react";
+import { ArrowLeft, Eye, Save, Globe, Trash2, History, CheckCircle2, Send, RotateCcw, MessageSquarePlus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { renderMarkdown } from "@/lib/markdown";
 
@@ -18,6 +18,8 @@ interface Doc {
   status: string;
   published_at: string | null;
   updated_at: string;
+  approval_status?: string;
+  approved_at?: string | null;
 }
 interface Version {
   version: number;
@@ -26,6 +28,26 @@ interface Version {
   edited_by_name: string | null;
   created_at: string;
 }
+interface Review {
+  action: string;
+  comment: string | null;
+  reviewer_name: string | null;
+  created_at: string;
+}
+
+const APPROVAL_META: Record<string, { label: string; cls: string }> = {
+  draft: { label: "Drög", cls: "bg-slate-100 text-slate-600" },
+  in_review: { label: "Í yfirlestri", cls: "bg-amber-100 text-amber-700" },
+  changes_requested: { label: "Breytinga óskað", cls: "bg-red-100 text-red-700" },
+  approved: { label: "Samþykkt", cls: "bg-emerald-100 text-emerald-700" },
+};
+const REVIEW_ACTION_LABEL: Record<string, string> = {
+  submitted: "sendi í yfirlestur",
+  approved: "samþykkti",
+  changes_requested: "óskaði breytinga",
+  reopened: "enduropnaði",
+  comment: "athugasemd",
+};
 
 const CATEGORY_LABELS: Record<string, string> = {
   privacy: "Persónuvernd",
@@ -41,8 +63,11 @@ export default function LegalEditPage() {
 
   const [doc, setDoc] = useState<Doc | null>(null);
   const [versions, setVersions] = useState<Version[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewComment, setReviewComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [role, setRole] = useState<string>("member");
 
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("privacy");
@@ -72,6 +97,7 @@ export default function LegalEditPage() {
     if (user) {
       const { data: me } = await supabase.from("staff").select("role").eq("id", user.id).maybeSingle();
       setIsAdmin(me?.role === "admin");
+      setRole(me?.role || "member");
     }
     const res = await fetch(`/api/admin/legal/documents/${id}`, { headers: await authHeaders() });
     const j = await res.json().catch(() => ({}));
@@ -83,9 +109,28 @@ export default function LegalEditPage() {
       setLanguage(d.language);
       setBodyText(d.body || "");
       setVersions(j.versions || []);
+      setReviews(j.reviews || []);
     }
     setLoading(false);
   }, [id]);
+
+  const reviewAction = async (action: string) => {
+    setBusy(true);
+    setMsg(null);
+    const res = await fetch(`/api/admin/legal/documents/${id}/review`, {
+      method: "POST",
+      headers: await authHeaders(),
+      body: JSON.stringify({ action, comment: reviewComment }),
+    });
+    const j = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (!res.ok || !j.ok) {
+      setMsg({ type: "err", text: j.error || "Villa" });
+      return;
+    }
+    setReviewComment("");
+    await load();
+  };
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -163,6 +208,78 @@ export default function LegalEditPage() {
           Þú hefur lesaðgang. Aðeins stjórnendur geta breytt og birt.
         </div>
       )}
+
+      {/* Approval */}
+      {(() => {
+        const approval = doc.approval_status || "draft";
+        const meta = APPROVAL_META[approval] || APPROVAL_META.draft;
+        const canApprove = role === "admin" || role === "lawyer";
+        return (
+          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-2">
+                {approval === "approved" && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
+                <span className="text-sm font-semibold text-slate-900">Samþykki</span>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${meta.cls}`}>{meta.label}</span>
+                {doc.approved_at && approval === "approved" && (
+                  <span className="text-xs text-slate-400">· {new Date(doc.approved_at).toLocaleDateString("is-IS")}</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {canApprove && (approval === "draft" || approval === "changes_requested") && (
+                  <button onClick={() => reviewAction("submit")} disabled={busy} className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+                    <Send className="w-3.5 h-3.5" /> Senda í yfirlestur
+                  </button>
+                )}
+                {canApprove && approval === "in_review" && (
+                  <>
+                    <button onClick={() => reviewAction("request_changes")} disabled={busy} className="py-1.5 px-3 rounded-lg border border-amber-300 text-xs font-semibold text-amber-700 hover:bg-amber-50 disabled:opacity-50">
+                      Óska breytinga
+                    </button>
+                    <button onClick={() => reviewAction("approve")} disabled={busy} className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold disabled:opacity-50">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Samþykkja
+                    </button>
+                  </>
+                )}
+                {canApprove && approval === "approved" && (
+                  <button onClick={() => reviewAction("reopen")} disabled={busy} className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+                    <RotateCcw className="w-3.5 h-3.5" /> Enduropna
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-3 flex gap-2">
+              <input
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                placeholder="Athugasemd (valfrjálst)"
+                className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none"
+              />
+              <button
+                onClick={() => reviewAction("comment")}
+                disabled={busy || !reviewComment.trim()}
+                className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                <MessageSquarePlus className="w-3.5 h-3.5" /> Bæta við
+              </button>
+            </div>
+
+            {reviews.length > 0 && (
+              <ul className="mt-4 space-y-1.5 border-t border-slate-100 pt-3">
+                {reviews.map((r, i) => (
+                  <li key={i} className="text-xs text-slate-600">
+                    <span className="font-medium text-slate-800">{r.reviewer_name || "—"}</span>{" "}
+                    {REVIEW_ACTION_LABEL[r.action] || r.action}
+                    {r.comment ? `: “${r.comment}”` : ""}
+                    <span className="text-slate-400"> · {new Date(r.created_at).toLocaleDateString("is-IS")}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Meta */}
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">

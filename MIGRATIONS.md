@@ -15,6 +15,7 @@ modules also need a **Storage bucket** — noted inline.
 | 7 | `supabase/communication-schema.sql` | Phase 3 — Communication (contact inbox) | ✅ done |
 | 8 | `supabase/research-schema.sql` | Phase 3 — Research library | ✅ done |
 | 9 | `supabase/surveys-schema.sql` | Phase 3 — Surveys | ✅ done |
+| 10 | `supabase/legal-approval-schema.sql` | Legal approval workflow + green tick | ⬜ run this |
 
 > After running a migration, the matching admin module works immediately (no
 > redeploy needed — the tables just start returning data).

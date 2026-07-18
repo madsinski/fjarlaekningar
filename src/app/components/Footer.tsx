@@ -1,7 +1,27 @@
 import Link from "next/link";
 import Logo from "./Logo";
 
-export default function Footer() {
+// Single source of truth: published legal documents managed in /admin/legal
+// auto-appear here. Publish a doc → it shows in the footer + is live at
+// /skjol/<slug>, with no code change.
+async function getPublishedLegalDocs(): Promise<{ title: string; slug: string }[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) return [];
+  try {
+    const res = await fetch(
+      `${url}/rest/v1/legal_documents?status=eq.published&select=title,slug&order=title.asc`,
+      { headers: { apikey: anon, Authorization: `Bearer ${anon}` }, next: { revalidate: 60 } },
+    );
+    if (!res.ok) return [];
+    return (await res.json().catch(() => [])) as { title: string; slug: string }[];
+  } catch {
+    return [];
+  }
+}
+
+export default async function Footer() {
+  const legalDocs = await getPublishedLegalDocs();
   return (
     <footer className="bg-slate-900 text-slate-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -57,6 +77,21 @@ export default function Footer() {
             </ul>
           </div>
         </div>
+
+        {legalDocs.length > 0 && (
+          <div className="mt-10 pt-6 border-t border-slate-800">
+            <h3 className="text-sm font-semibold text-white mb-3">Lögfræði</h3>
+            <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+              {legalDocs.map((d) => (
+                <li key={d.slug}>
+                  <Link href={`/skjol/${d.slug}`} className="hover:text-white">
+                    {d.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="mt-10 pt-6 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <p>
