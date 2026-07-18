@@ -45,13 +45,11 @@ create index if not exists idx_presentation_decks_slug       on public.presentat
 create index if not exists idx_presentation_decks_published  on public.presentation_decks (is_published);
 create index if not exists idx_presentation_decks_updated_at on public.presentation_decks (updated_at desc);
 
--- Reuse the shared updated_at helper (create-or-replace so order doesn't matter).
-create or replace function public.touch_updated_at() returns trigger language plpgsql as $fn$ begin new.updated_at = now(); return new; end $fn$;
-
-drop trigger if exists trg_presentation_decks_updated_at on public.presentation_decks;
-create trigger trg_presentation_decks_updated_at
-  before update on public.presentation_decks
-  for each row execute function public.touch_updated_at();
+-- NOTE: the updated_at trigger is created at the END of this file (see §5).
+-- We reuse the existing public.touch_updated_at() from an earlier migration and
+-- keep this file entirely dollar-quote-free — the Supabase SQL editor's splitter
+-- mis-parses a dollar-quoted function body sitting between two CREATE TABLEs
+-- (it merged the two `data`-column tables → "column data specified more than once").
 
 alter table public.presentation_decks enable row level security;
 
@@ -140,5 +138,13 @@ create policy "admin manage presentation assets" on storage.objects
 drop policy if exists "public read presentation assets" on storage.objects;
 create policy "public read presentation assets" on storage.objects
   for select using (bucket_id = 'presentation-assets');
+
+-- ── 5. updated_at trigger (reuses existing public.touch_updated_at()) ────────
+-- Placed last, after all tables, and references the function created by an
+-- earlier migration — keeping this file dollar-quote-free (see note in §1).
+drop trigger if exists trg_presentation_decks_updated_at on public.presentation_decks;
+create trigger trg_presentation_decks_updated_at
+  before update on public.presentation_decks
+  for each row execute function public.touch_updated_at();
 
 notify pgrst, 'reload schema';
