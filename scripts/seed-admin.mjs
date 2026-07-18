@@ -5,17 +5,16 @@
 // service-role key directly to (1) send an invite email so the admin sets
 // their own password, and (2) insert the matching staff row (role=admin).
 //
-// Usage (after schema.sql has been run in the Supabase project):
-//   SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... \
-//   NEXT_PUBLIC_SITE_URL=https://www.fjarlaekningar.is \
-//   SEED_ADMIN_EMAIL=mads@fjarlaekningar.is SEED_ADMIN_NAME="Mads Christian Aanesen" \
-//   node scripts/seed-admin.mjs
+// Uses plain fetch against Supabase's GoTrue + PostgREST APIs (no
+// @supabase/supabase-js) so it runs on Node 20 without the realtime client's
+// native-WebSocket requirement.
 //
-// It reads .env.local automatically if present. Idempotent: re-running reuses
-// the existing auth user and upserts the staff row.
+// Usage (after schema.sql has been run in the Supabase project):
+//   node scripts/seed-admin.mjs
+// It reads .env.local automatically. Idempotent: re-running reuses the
+// existing auth user and upserts the staff row.
 
 import { readFileSync } from "node:fs";
-import { createClient } from "@supabase/supabase-js";
 
 // Minimal .env.local loader (no dotenv dependency).
 try {
@@ -39,19 +38,17 @@ if (!url || !serviceKey) {
   process.exit(1);
 }
 
-const admin = createClient(url, serviceKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
-
-const headers = {
+const authHeaders = {
   apikey: serviceKey,
   Authorization: `Bearer ${serviceKey}`,
   "Content-Type": "application/json",
 };
 
 async function findUser() {
-  const { data } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
-  return data?.users?.find((u) => (u.email || "").toLowerCase() === email) || null;
+  const res = await fetch(`${url}/auth/v1/admin/users?page=1&per_page=200`, { headers: authHeaders });
+  const j = await res.json().catch(() => ({}));
+  const users = Array.isArray(j) ? j : j?.users || [];
+  return users.find((u) => (u.email || "").toLowerCase() === email) || null;
 }
 
 async function main() {
@@ -61,11 +58,11 @@ async function main() {
     console.log(`→ Inviting ${email} …`);
     const res = await fetch(
       `${url}/auth/v1/invite?redirect_to=${encodeURIComponent(`${origin}/admin/login`)}`,
-      { method: "POST", headers, body: JSON.stringify({ email, data: { name, role: "admin" } }) },
+      { method: "POST", headers: authHeaders, body: JSON.stringify({ email, data: { name, role: "admin" } }) },
     );
     const j = await res.json().catch(() => ({}));
     if (!res.ok || !j?.id) {
-      console.error(`✗ Invite failed: ${j?.msg || j?.error || `HTTP ${res.status}`}`);
+      console.error(`✗ Invite failed: ${j?.msg || j?.error || j?.message || `HTTP ${res.status}`}`);
       process.exit(1);
     }
     user = { id: j.id, email };
@@ -74,12 +71,19 @@ async function main() {
     console.log(`→ Auth user already exists (${user.id}); upserting staff row.`);
   }
 
-  const { error } = await admin.from("staff").upsert(
-    { id: user.id, name, email, role: "admin", active: true, invited: true },
-    { onConflict: "id" },
-  );
-  if (error) {
-    console.error(`✗ Could not upsert staff row: ${error.message}`);
+  // Upsert the staff row (PostgREST: merge on the id primary key).
+  const res = await fetch(`${url}/rest/v1/staff?on_conflict=id`, {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      Prefer: "resolution=merge-duplicates,return=representation",
+    },
+    body: JSON.stringify([{ id: user.id, name, email, role: "admin", active: true, invited: true }]),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    console.error(`✗ Could not upsert staff row: ${body?.message || body?.hint || `HTTP ${res.status}`}`);
+    console.error(JSON.stringify(body));
     process.exit(1);
   }
 
