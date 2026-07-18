@@ -12,7 +12,7 @@ const MODULES: { label: string; icon: React.ReactNode; href?: string; phase: num
   { label: "Kynningar & prentefni", icon: <Presentation className="w-5 h-5" />, href: "/admin/presentations", phase: 2 },
   { label: "Rannsóknir", icon: <FlaskConical className="w-5 h-5" />, href: "/admin/research", phase: 3 },
   { label: "Samskipti", icon: <MessageSquare className="w-5 h-5" />, href: "/admin/communication", phase: 3 },
-  { label: "Kannanir", icon: <ClipboardList className="w-5 h-5" />, phase: 3 },
+  { label: "Kannanir", icon: <ClipboardList className="w-5 h-5" />, href: "/admin/surveys", phase: 3 },
   { label: "Persónuverndarbeiðnir", icon: <ShieldAlert className="w-5 h-5" />, href: "/admin/data-requests", phase: 3 },
   { label: "Útgáfusaga", icon: <Rocket className="w-5 h-5" />, href: "/admin/releases", phase: 3 },
   { label: "Villuskráning", icon: <AlertTriangle className="w-5 h-5" />, href: "/admin/errors", phase: 3 },
