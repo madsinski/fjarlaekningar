@@ -54,17 +54,13 @@ create index if not exists staff_agreement_acceptances_staff_idx
 create or replace function public.is_active_staff()
 returns boolean language sql security definer stable
 set search_path = public as $$
-  select exists (
-    select 1 from public.staff where id = auth.uid() and active
-  );
+  select exists (select 1 from public.staff where id = auth.uid() and active)
 $$;
 
 create or replace function public.is_admin_staff()
 returns boolean language sql security definer stable
 set search_path = public as $$
-  select exists (
-    select 1 from public.staff where id = auth.uid() and active and role = 'admin'
-  );
+  select exists (select 1 from public.staff where id = auth.uid() and active and role = 'admin')
 $$;
 
 -- ── RLS ─────────────────────────────────────────────────────────────────────
