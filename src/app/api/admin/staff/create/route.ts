@@ -6,6 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { generateInviteLink } from "@/lib/invite-link";
 
 export const runtime = "nodejs";
 
@@ -20,8 +21,6 @@ interface CreateBody {
   title?: string;
   send_invite?: boolean;
 }
-
-const ORIGIN = process.env.NEXT_PUBLIC_SITE_URL || "https://www.fjarlaekningar.is";
 
 export async function POST(req: Request) {
   let body: CreateBody = {};
@@ -90,39 +89,26 @@ export async function POST(req: Request) {
       "Content-Type": "application/json",
     };
 
-    if (sendInvite) {
-      const url = `${supabaseUrl}/auth/v1/invite?redirect_to=${encodeURIComponent(`${ORIGIN}/admin/login`)}`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ email, data: { name, role } }),
-      });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok || !j?.id) {
-        return NextResponse.json(
-          { ok: false, error: `Could not invite user: ${j?.msg || j?.error || j?.message || `HTTP ${res.status}`}` },
-          { status: 500 },
-        );
-      }
-      authUserId = j.id as string;
-      authCreated = true;
-    } else {
-      const url = `${supabaseUrl}/auth/v1/admin/users`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ email, email_confirm: true, user_metadata: { name, role } }),
-      });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok || !j?.id) {
-        return NextResponse.json(
-          { ok: false, error: `Could not create user: ${j?.msg || j?.error || j?.message || `HTTP ${res.status}`}` },
-          { status: 500 },
-        );
-      }
-      authUserId = j.id as string;
-      authCreated = true;
+    // Create the auth user directly (email_confirm=true, no Supabase email).
+    // We do NOT use /auth/v1/invite: its emailed link uses the PKCE ?code=
+    // flow, which can't be completed on the invitee's device, and the email
+    // template can't be fixed on the free tier. Instead we mint a token_hash
+    // link below and hand it to the admin to share.
+    const url = `${supabaseUrl}/auth/v1/admin/users`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ email, email_confirm: true, user_metadata: { name, role } }),
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || !j?.id) {
+      return NextResponse.json(
+        { ok: false, error: `Could not create user: ${j?.msg || j?.error || j?.message || `HTTP ${res.status}`}` },
+        { status: 500 },
+      );
     }
+    authUserId = j.id as string;
+    authCreated = true;
   }
 
   // ── Upsert the staff row with id == auth user id ──────────────────────────
@@ -156,10 +142,14 @@ export async function POST(req: Request) {
     );
   }
 
+  // Mint a token_hash set-password link for the admin to share with the new
+  // teammate (free-tier-safe; no reliance on Supabase's invite email).
+  const inviteLink = sendInvite ? await generateInviteLink(email) : null;
+
   return NextResponse.json({
     ok: true,
     staff: staffRow,
-    invite_sent: sendInvite,
+    invite_link: inviteLink,
     auth_user_created: authCreated,
   });
 }
