@@ -16,6 +16,21 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Preview bypass: a shareable `?preview=<key>` link ungates the ENTIRE site
+  // for that visitor and drops a 30-day `site_preview` cookie so they don't
+  // need the query param again. Cosmetic gate only — not a security boundary
+  // (the key lives in source / env). Override the key via the PREVIEW_KEY env.
+  const PREVIEW_KEY = process.env.PREVIEW_KEY || "fjarforskodun2026";
+  const previewParam = request.nextUrl.searchParams.get("preview");
+  const previewCookie = request.cookies.get("site_preview")?.value;
+  if (previewParam === PREVIEW_KEY || previewCookie === PREVIEW_KEY) {
+    const res = NextResponse.next();
+    if (previewParam === PREVIEW_KEY) {
+      res.cookies.set("site_preview", PREVIEW_KEY, { path: "/", maxAge: 60 * 60 * 24 * 30 });
+    }
+    return res;
+  }
+
   // Let the coming-soon screen itself render.
   if (request.nextUrl.pathname === "/coming-soon") {
     return NextResponse.next();
