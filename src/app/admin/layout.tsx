@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   ClipboardList,
   Activity,
+  Globe,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import Navbar from "@/app/components/Navbar";
@@ -39,6 +40,7 @@ interface StaffProfile {
 // research, communication, surveys, privacy requests, releases, errors).
 const NAV: { href: string; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
   { href: "/admin", label: "Yfirlit", icon: <LayoutDashboard className="w-5 h-5" /> },
+  { href: "/admin/website", label: "Vefsíða", icon: <Globe className="w-5 h-5" /> },
   { href: "/admin/legal", label: "Lögfræðiskjöl", icon: <FileText className="w-5 h-5" /> },
   { href: "/admin/presentations", label: "Kynningar & prentefni", icon: <Presentation className="w-5 h-5" /> },
   { href: "/admin/research", label: "Rannsóknir", icon: <FlaskConical className="w-5 h-5" /> },

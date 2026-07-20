@@ -2,9 +2,37 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Logo from "./Logo";
 import MedaliaButton from "./MedaliaButton";
+
+function LangToggle() {
+  const router = useRouter();
+  const [lang, setLang] = useState<"is" | "en">("is");
+  useEffect(() => {
+    const m = document.cookie.match(/(?:^|;\s*)lang=(is|en)/);
+    if (m) setLang(m[1] as "is" | "en");
+  }, []);
+  const pick = (l: "is" | "en") => {
+    // eslint-disable-next-line react-hooks/immutability
+    document.cookie = `lang=${l}; path=/; max-age=${60 * 60 * 24 * 365}`;
+    setLang(l);
+    router.refresh();
+  };
+  return (
+    <div className="inline-flex rounded-full border border-brand-cyan-muted overflow-hidden text-xs">
+      {(["is", "en"] as const).map((l) => (
+        <button
+          key={l}
+          onClick={() => pick(l)}
+          className={`px-2.5 py-1 font-medium transition-colors ${lang === l ? "bg-[var(--primary)] text-white" : "text-slate-600 hover:bg-white/60"}`}
+        >
+          {l.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 const navLinks = [
   { href: "/", label: "Heim" },
@@ -28,6 +56,7 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMobileOpen(false);
   }, [pathname]);
 
@@ -66,6 +95,7 @@ export default function Navbar() {
                 </Link>
               );
             })}
+            <LangToggle />
             <MedaliaButton size="sm" />
           </div>
 
@@ -111,7 +141,8 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <div className="px-2 pt-2">
+            <div className="px-2 pt-2 flex items-center gap-3">
+              <LangToggle />
               <MedaliaButton className="w-full" />
             </div>
           </div>
