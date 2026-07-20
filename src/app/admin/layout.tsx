@@ -20,6 +20,7 @@ import {
   Activity,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import Navbar from "@/app/components/Navbar";
 
 // Routes that render WITHOUT the admin shell and don't require full clearance
 // (session may exist but MFA / onboarding not yet complete).
@@ -159,7 +160,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const nav = NAV.filter((n) => !n.adminOnly || isAdmin);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* Public site top nav bar, same as fjarlaekningar.is */}
+      <Navbar />
+      <div className="flex flex-1 min-h-0">
       {/* Sidebar */}
       <aside className="w-60 shrink-0 bg-slate-900 text-slate-300 flex flex-col">
         <div className="px-5 py-5 border-b border-slate-800">
@@ -207,6 +211,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Content */}
       <main className="flex-1 min-w-0">{children}</main>
+      </div>
     </div>
   );
 }
