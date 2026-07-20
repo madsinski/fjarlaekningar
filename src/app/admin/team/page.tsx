@@ -17,13 +17,15 @@ interface StaffRow {
   created_at: string;
 }
 
+// Order matters — the invite dropdown iterates this. Admin + legal first since
+// those are the primary access levels.
 const ROLE_LABELS: Record<string, string> = {
-  admin: "Stjórnandi",
+  admin: "Stjórnandi — fullur aðgangur",
+  lawyer: "Lögfræðingur — aðeins lögfræði",
   member: "Starfsmaður",
   doctor: "Læknir",
-  nurse: "Hjúkrunarfr.",
+  nurse: "Hjúkrunarfræðingur",
   psychologist: "Sálfræðingur",
-  lawyer: "Lögfræðingur",
 };
 
 export default function TeamPage() {

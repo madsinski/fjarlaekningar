@@ -125,9 +125,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return;
     }
 
+    // ── Legal-only (lawyer) gate ─────────────────────────────────────────
+    // A 'lawyer' account is scoped to the legal module + their own settings.
+    if (profile.role === "lawyer") {
+      const allowed =
+        pathname.startsWith("/admin/legal") ||
+        pathname.startsWith("/admin/settings") ||
+        pathname === "/admin/mfa" ||
+        pathname === "/admin/onboard";
+      if (!allowed) {
+        router.replace("/admin/legal");
+        return;
+      }
+    }
+
     // Fully cleared. If they somehow sit on a bare route, send them home.
     if (isBare) {
-      router.replace("/admin");
+      router.replace(profile.role === "lawyer" ? "/admin/legal" : "/admin");
       return;
     }
     setReady(true);
@@ -157,7 +171,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (isBare) return <>{children}</>;
 
   const isAdmin = staff?.role === "admin";
-  const nav = NAV.filter((n) => !n.adminOnly || isAdmin);
+  const isLawyer = staff?.role === "lawyer";
+  const nav = isLawyer
+    ? NAV.filter((n) => n.href.startsWith("/admin/legal") || n.href === "/admin/settings")
+    : NAV.filter((n) => !n.adminOnly || isAdmin);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
