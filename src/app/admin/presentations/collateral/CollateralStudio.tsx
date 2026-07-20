@@ -367,7 +367,7 @@ export function CollateralStudio({
             onClick={() => setAddOpen((v) => !v)}
             aria-haspopup="menu"
             aria-expanded={addOpen}
-            className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+            className="rounded-md bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-700"
           >
             + Nýtt efni ▾
           </button>
@@ -378,7 +378,7 @@ export function CollateralStudio({
                   key={t.type}
                   role="menuitem"
                   onClick={() => { addDoc(t.type); setAddOpen(false); }}
-                  className="block w-full px-3 py-2 text-left text-xs font-medium text-gray-700 hover:bg-emerald-50 hover:text-emerald-700"
+                  className="block w-full px-3 py-2 text-left text-sm font-medium text-gray-700 hover:bg-cyan-50 hover:text-cyan-700"
                 >
                   {t.label}
                 </button>
