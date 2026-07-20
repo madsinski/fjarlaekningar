@@ -1,14 +1,17 @@
-import { createElement } from "react";
-import { iconFor } from "./icons";
+"use client";
 
-// Renders a CMS-selected icon by key.
+import { DynamicIcon } from "lucide-react/dynamic";
+import { isIconName } from "./icon-names";
+
+// Renders a CMS-selected icon by key, from the FULL lucide library (1,986
+// icons — the same high-quality set the presentation decks use).
 //
-// The icon component is looked up from a module-scope table (icons.ts) rather
-// than declared inline. We use createElement instead of JSX because rendering a
-// component held in a local variable trips react-hooks/static-components — a
-// rule aimed at components *constructed* during render losing their state.
-// These are stateless SVG glyphs from a fixed table, so there is no state to
-// lose, and a dynamic icon-by-key picker needs this indirection.
+// lucide's DynamicIcon lazy-loads each icon on demand, so making the whole
+// library selectable doesn't bloat the bundle. It needs a client boundary, but
+// this is a tiny leaf component — the surrounding page stays a server component.
+//
+// An empty or unrecognised key falls back to `fallback`, so content written
+// before an icon was renamed still renders something sensible.
 export default function SiteIcon({
   name,
   fallback,
@@ -22,9 +25,13 @@ export default function SiteIcon({
   className?: string;
   strokeWidth?: number;
 }) {
-  return createElement(iconFor(name, fallback), {
-    className,
-    strokeWidth,
-    "aria-hidden": true,
-  });
+  const key = isIconName(name) ? name : fallback;
+  return (
+    <DynamicIcon
+      name={key as never}
+      className={className}
+      strokeWidth={strokeWidth}
+      aria-hidden
+    />
+  );
 }

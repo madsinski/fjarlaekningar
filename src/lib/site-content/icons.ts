@@ -55,10 +55,21 @@ export const ICONS: Record<string, LucideIcon> = {
   star: Star,
 };
 
-/** Ordered keys for the editor's icon picker. */
+/** Curated "common" keys surfaced first in the picker. */
 export const ICON_KEYS: string[] = Object.keys(ICONS);
 
 /** Resolve an icon key to a component, falling back to `fallback`'s icon. */
 export function iconFor(key: string | undefined, fallback: string): LucideIcon {
   return (key && ICONS[key]) || ICONS[fallback] || Zap;
 }
+
+// ── Full library ────────────────────────────────────────────────────────────
+// The complete lucide set (1,986 names) baked out of lucide-react and shared
+// with the presentation decks — the same high-quality icon library used across
+// the Lifeline admin. The curated ICONS map above stays as the quick-pick list;
+// anything in ALL_ICON_NAMES is selectable and renders via <SiteIcon> using
+// lucide's DynamicIcon (lazy-loaded per icon, so the bundle isn't bloated).
+//
+// Re-exported from icon-names.ts, which has no lucide *component* imports — so
+// client components can pull the lookup without dragging this map along.
+export { ALL_ICON_NAMES, isIconName } from "./icon-names";

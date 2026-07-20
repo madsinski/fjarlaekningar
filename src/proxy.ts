@@ -20,7 +20,10 @@ export function proxy(request: NextRequest) {
   // for that visitor and drops a 30-day `site_preview` cookie so they don't
   // need the query param again. Cosmetic gate only — not a security boundary
   // (the key lives in source / env). Override the key via the PREVIEW_KEY env.
-  const PREVIEW_KEY = process.env.PREVIEW_KEY || "fjarforskodun2026";
+  // NEXT_PUBLIC_PREVIEW_KEY is also read by src/lib/public-site.ts so the admin's
+  // "view live site" links stay in sync with this gate from a single env var.
+  const PREVIEW_KEY =
+    process.env.PREVIEW_KEY || process.env.NEXT_PUBLIC_PREVIEW_KEY || "fjarforskodun2026";
   const previewParam = request.nextUrl.searchParams.get("preview");
   const previewCookie = request.cookies.get("site_preview")?.value;
   if (previewParam === PREVIEW_KEY || previewCookie === PREVIEW_KEY) {
