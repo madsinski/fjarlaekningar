@@ -1,20 +1,20 @@
 "use client";
 
-// Archived collateral documents (admin). Restore or permanently delete docs
-// that were removed with "Eyða" in the studio. Saves via the admin API (AAL2).
+// Archived printables (admin). Restore or permanently delete docs removed with
+// "Eyða" in the studio. Shared components live under ../../collateral/.
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { mergeContent, DEFAULT_CONTENT, type CollateralContent } from "../content";
-import { CollateralArchive } from "../CollateralArchive";
-import type { SaveResult } from "../CollateralStudio";
+import { mergeContent, DEFAULT_CONTENT, type CollateralContent } from "../../collateral/content";
+import { CollateralArchive } from "../../collateral/CollateralArchive";
+import type { SaveResult } from "../../collateral/CollateralStudio";
 
 async function authHeaders(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession();
   return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
 }
 
-export default function CollateralArchivePage() {
+export default function PrintablesArchivePage() {
   const [initial, setInitial] = useState<CollateralContent | null>(null);
 
   useEffect(() => {
@@ -48,5 +48,5 @@ export default function CollateralArchivePage() {
 
   if (!initial) return <p className="mx-auto max-w-4xl px-4 py-10 text-sm text-gray-400">Hleð efni…</p>;
 
-  return <CollateralArchive initial={initial} onSave={onSave} backHref="/admin/presentations/collateral" />;
+  return <CollateralArchive initial={initial} onSave={onSave} backHref="/admin/presentations/printables" />;
 }

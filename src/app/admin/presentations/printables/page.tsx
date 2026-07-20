@@ -1,13 +1,15 @@
 "use client";
 
-// Fjarlækningar print collateral studio — thin wrapper around CollateralStudio.
-// Loads the stored content (any active staff), saves via the admin API
-// (admin + AAL2), and can mint an unguessable external edit link.
+// Fjarlækningar printables studio — thin wrapper around the shared
+// CollateralStudio. Loads the stored content (any active staff), saves via the
+// admin API, and can mint an unguessable external edit link. The heavy studio
+// components stay under ../collateral/ (also used by the public /present routes).
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { mergeContent, DEFAULT_CONTENT, type CollateralContent } from "./content";
-import { CollateralStudio, type SaveResult } from "./CollateralStudio";
+import { mergeContent, DEFAULT_CONTENT, type CollateralContent } from "../collateral/content";
+import { CollateralStudio, type SaveResult } from "../collateral/CollateralStudio";
+import PresentationTabs from "../PresentationTabs";
 
 async function authHeaders(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -45,7 +47,7 @@ function MintLink() {
         value={link}
         onFocus={(e) => e.currentTarget.select()}
         title="Deildu þessum tengli með ytri aðila. Hægt að afturkalla."
-        className="w-56 rounded-md border border-emerald-300 bg-emerald-50 px-2 py-1.5 text-xs text-emerald-900"
+        className="w-56 rounded-md border border-cyan-300 bg-cyan-50 px-2 py-1.5 text-xs text-cyan-900"
       />
     );
   }
@@ -64,7 +66,7 @@ function MintLink() {
   );
 }
 
-export default function CollateralAdminPage() {
+export default function PrintablesAdminPage() {
   const [initial, setInitial] = useState<CollateralContent | null>(null);
 
   useEffect(() => {
@@ -96,17 +98,23 @@ export default function CollateralAdminPage() {
     }
   };
 
-  if (!initial) return <p className="mx-auto max-w-7xl px-4 py-10 text-sm text-gray-400">Hleð efni…</p>;
-
   return (
-    <CollateralStudio
-      initial={initial}
-      onSave={onSave}
-      heading="Fjarlækningar — prentefni fyrir HSU"
-      subtitle="Breyttu textanum, forskoðaðu og vistaðu sem PDF. A4."
-      back={{ href: "/admin/presentations", label: "← Presentations" }}
-      headerExtra={<MintLink />}
-      archiveHref="/admin/presentations/collateral/archive"
-    />
+    <>
+      <div className="mx-auto max-w-7xl px-4 pt-6">
+        <PresentationTabs />
+      </div>
+      {!initial ? (
+        <p className="mx-auto max-w-7xl px-4 py-10 text-sm text-gray-400">Hleð efni…</p>
+      ) : (
+        <CollateralStudio
+          initial={initial}
+          onSave={onSave}
+          heading="Prentefni — Fjarlækningar fyrir HSU"
+          subtitle="Breyttu textanum, forskoðaðu og vistaðu sem PDF. A4."
+          headerExtra={<MintLink />}
+          archiveHref="/admin/presentations/printables/archive"
+        />
+      )}
+    </>
   );
 }

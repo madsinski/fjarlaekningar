@@ -304,6 +304,23 @@ export function CollateralStudio({
 
   const btn = "rounded-md border border-gray-300 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-30";
 
+  // Single "+ Nýtt efni" add-menu (replaces the row of per-type buttons).
+  const [addOpen, setAddOpen] = useState(false);
+  const addRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!addOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (addRef.current && !addRef.current.contains(e.target as Node)) setAddOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setAddOpen(false); };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [addOpen]);
+
   return (
     <div className="llcol mx-auto max-w-7xl px-4 py-6">
       <style dangerouslySetInnerHTML={{ __html: COLLATERAL_CSS + PRINT_CSS }} />
@@ -345,10 +362,30 @@ export function CollateralStudio({
         <button onClick={() => move(-1)} disabled={index === 0} className={btn}>← Færa</button>
         <button onClick={() => move(1)} disabled={index === docs.length - 1} className={btn}>Færa →</button>
         <span className="mx-1 text-gray-300">|</span>
-        <span className="text-xs text-gray-400">Bæta við:</span>
-        {NEW_TYPES.map((t) => (
-          <button key={t.type} onClick={() => addDoc(t.type)} className="rounded-md border border-emerald-200 px-2.5 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50">+ {t.label}</button>
-        ))}
+        <div ref={addRef} className="relative">
+          <button
+            onClick={() => setAddOpen((v) => !v)}
+            aria-haspopup="menu"
+            aria-expanded={addOpen}
+            className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+          >
+            + Nýtt efni ▾
+          </button>
+          {addOpen && (
+            <div role="menu" className="absolute left-0 top-full z-30 mt-1 w-60 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+              {NEW_TYPES.map((t) => (
+                <button
+                  key={t.type}
+                  role="menuitem"
+                  onClick={() => { addDoc(t.type); setAddOpen(false); }}
+                  className="block w-full px-3 py-2 text-left text-xs font-medium text-gray-700 hover:bg-emerald-50 hover:text-emerald-700"
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         {archiveHref && (
           <>
             <span className="mx-1 text-gray-300">|</span>

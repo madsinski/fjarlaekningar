@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { TEMPLATES } from "@/lib/presentations/templates";
 import type { PresentationMeta } from "@/lib/presentations/types";
+import PresentationTabs from "./PresentationTabs";
 
 async function authHeaders(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -88,19 +89,15 @@ export default function PresentationsList() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
+      <PresentationTabs />
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Presentations</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Kynningar</h1>
           <p className="text-sm text-gray-500">Build and share slide decks. Published decks are viewable at a public link.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Link href="/admin/presentations/collateral" className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-            Fjarlækningar prentefni
-          </Link>
-          <button onClick={() => setShowNew(true)} className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
-            + New presentation
-          </button>
-        </div>
+        <button onClick={() => setShowNew(true)} className="rounded-md bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-700">
+          + Ný kynning
+        </button>
       </div>
 
       {loading ? (
