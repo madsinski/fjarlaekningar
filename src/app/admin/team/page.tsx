@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { Mail } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface StaffRow {
@@ -127,8 +129,18 @@ export default function TeamPage() {
   return (
     <div className="p-8 max-w-4xl">
       <div className="text-[11px] font-semibold uppercase tracking-widest text-cyan-700 mb-1">Stjórnborð</div>
-      <h1 className="text-2xl font-bold text-slate-900">Starfsfólk</h1>
-      <p className="text-sm text-slate-600 mt-1 mb-6">Fólk með aðgang að stjórnkerfinu.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Starfsfólk</h1>
+          <p className="text-sm text-slate-600 mt-1 mb-6">Fólk með aðgang að stjórnkerfinu.</p>
+        </div>
+        <Link
+          href="/admin/signatures"
+          className="shrink-0 inline-flex items-center gap-2 py-2 px-3 rounded-lg border border-cyan-600 text-cyan-700 hover:bg-cyan-50 text-sm font-semibold"
+        >
+          <Mail className="w-4 h-4" /> Netfangsundirskriftir
+        </Link>
+      </div>
 
       {isAdmin && (
         <form onSubmit={invite} className="rounded-xl border border-slate-200 bg-white p-5 mb-8">
