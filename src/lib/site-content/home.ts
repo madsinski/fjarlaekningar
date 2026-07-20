@@ -5,27 +5,23 @@
 // the CMS stores per-locale overrides. resolveHome() flattens a stored
 // { is:{}, en:{} } blob for one locale, falling back to the Icelandic default.
 
-export type FieldType = "text" | "textarea";
+import {
+  resolveFields,
+  type Locale,
+  type LocaleContent,
+  type SiteContentBlob,
+  type SiteField,
+} from "./types";
 
-export interface HomeField {
-  key: string;
-  label: string;
-  group: string;
-  type: FieldType;
-}
-
-export type Locale = "is" | "en";
-export type LocaleContent = Record<string, string>;
-export interface SiteContentBlob {
-  is?: LocaleContent;
-  en?: LocaleContent;
-}
+// Re-exported so existing importers (HomeView, the editor) keep working.
+export type { FieldType, Locale, LocaleContent, SiteContentBlob, SiteField } from "./types";
+export type HomeField = SiteField;
 
 // ── Field list (order = editor order) ───────────────────────────────────────
-export const HOME_FIELDS: HomeField[] = [
+export const HOME_FIELDS: SiteField[] = [
   // Hero
   { key: "hero_eyebrow", label: "Merki (eyebrow)", group: "Hetjusvæði", type: "text" },
-  { key: "hero_heading", label: "Fyrirsögn", group: "Hetjusvæði", type: "text" },
+  { key: "hero_heading", label: "Fyrirsögn", group: "Hetjusvæði", type: "heading" },
   { key: "hero_heading_highlight", label: "Fyrirsögn — lituð orð", group: "Hetjusvæði", type: "text" },
   { key: "hero_subheading", label: "Undirtexti", group: "Hetjusvæði", type: "textarea" },
   { key: "hero_chip1", label: "Merkimiði 1", group: "Hetjusvæði", type: "text" },
@@ -35,13 +31,13 @@ export const HOME_FIELDS: HomeField[] = [
   { key: "hero_cta_secondary", label: "Aukahnappur", group: "Hetjusvæði", type: "text" },
 
   // Services
-  { key: "services_heading", label: "Fyrirsögn", group: "Þjónusta", type: "text" },
+  { key: "services_heading", label: "Fyrirsögn", group: "Þjónusta", type: "heading" },
   { key: "services_body", label: "Texti", group: "Þjónusta", type: "textarea" },
   { key: "services_footer_pre", label: "Neðanmálstexti", group: "Þjónusta", type: "text" },
   { key: "services_footer_link", label: "Neðanmáls — tengill", group: "Þjónusta", type: "text" },
 
   // Stats
-  { key: "stats_heading", label: "Fyrirsögn", group: "Tölur", type: "text" },
+  { key: "stats_heading", label: "Fyrirsögn", group: "Tölur", type: "heading" },
   { key: "stats_body", label: "Texti", group: "Tölur", type: "textarea" },
   { key: "stat1_value", label: "Tala 1 — gildi", group: "Tölur", type: "text" },
   { key: "stat1_label", label: "Tala 1 — skýring", group: "Tölur", type: "textarea" },
@@ -52,7 +48,7 @@ export const HOME_FIELDS: HomeField[] = [
   { key: "stats_footer", label: "Neðanmálstexti", group: "Tölur", type: "text" },
 
   // How it works
-  { key: "how_heading", label: "Fyrirsögn", group: "Ferlið", type: "text" },
+  { key: "how_heading", label: "Fyrirsögn", group: "Ferlið", type: "heading" },
   { key: "how_body", label: "Texti", group: "Ferlið", type: "textarea" },
   { key: "step1_title", label: "Skref 1 — titill", group: "Ferlið", type: "text" },
   { key: "step1_desc", label: "Skref 1 — lýsing", group: "Ferlið", type: "textarea" },
@@ -67,12 +63,12 @@ export const HOME_FIELDS: HomeField[] = [
 
   // HSU
   { key: "hsu_eyebrow", label: "Merki (eyebrow)", group: "HSU samstarf", type: "text" },
-  { key: "hsu_heading", label: "Fyrirsögn", group: "HSU samstarf", type: "text" },
+  { key: "hsu_heading", label: "Fyrirsögn", group: "HSU samstarf", type: "heading" },
   { key: "hsu_body1", label: "Texti", group: "HSU samstarf", type: "textarea" },
   { key: "hsu_body2", label: "Áhersla (feitletrað)", group: "HSU samstarf", type: "textarea" },
 
   // CTA
-  { key: "cta_heading", label: "Fyrirsögn", group: "Ákall (CTA)", type: "text" },
+  { key: "cta_heading", label: "Fyrirsögn", group: "Ákall (CTA)", type: "heading" },
   { key: "cta_body", label: "Texti", group: "Ákall (CTA)", type: "textarea" },
   { key: "cta_button", label: "Hnappur", group: "Ákall (CTA)", type: "text" },
   { key: "cta_footer", label: "Neðanmálstexti", group: "Ákall (CTA)", type: "textarea" },
@@ -144,16 +140,11 @@ export const HOME_DEFAULTS_EN: LocaleContent = Object.fromEntries(
 );
 
 /**
- * Flatten a stored { is, en } blob for one locale into key→string, falling
- * back: locale value → Icelandic value → Icelandic default. So an untranslated
- * English page still shows Icelandic rather than blanks.
+ * Flatten a stored { is, en } blob for one locale (locale → Icelandic → default).
  */
-export function resolveHome(content: SiteContentBlob | null | undefined, locale: Locale): LocaleContent {
-  const loc = content?.[locale] ?? {};
-  const is = content?.is ?? {};
-  const out: LocaleContent = {};
-  for (const f of HOME_FIELDS) {
-    out[f.key] = loc[f.key]?.trim() ? loc[f.key] : is[f.key]?.trim() ? is[f.key] : HOME_DEFAULTS_IS[f.key] ?? "";
-  }
-  return out;
+export function resolveHome(
+  content: SiteContentBlob | null | undefined,
+  locale: Locale,
+): LocaleContent {
+  return resolveFields(HOME_FIELDS, HOME_DEFAULTS_IS, content, locale);
 }

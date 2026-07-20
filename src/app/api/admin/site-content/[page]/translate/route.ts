@@ -9,7 +9,8 @@ import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
-import { HOME_FIELDS, HOME_DEFAULTS_IS, type SiteContentBlob } from "@/lib/site-content/home";
+import { getSitePage } from "@/lib/site-content/registry";
+import type { SiteContentBlob } from "@/lib/site-content/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -37,7 +38,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ page: string }
     return NextResponse.json({ ok: false, error: "Admin role required" }, { status: 403 });
   }
   const { page } = await ctx.params;
-  if (page !== "home") {
+  const sitePage = getSitePage(page);
+  if (!sitePage) {
     return NextResponse.json({ ok: false, error: "Unsupported page" }, { status: 400 });
   }
   if (!process.env.OPENAI_API_KEY) {
@@ -59,9 +61,12 @@ export async function POST(req: Request, ctx: { params: Promise<{ page: string }
   const fromMap = draft[from] ?? {};
 
   // Build the list of fields to translate (non-empty source text).
+  // Icon fields hold an icon KEY (e.g. "shield-check"), never prose — translating
+  // one would break the icon lookup, so they're skipped.
   const items: { i: number; key: string; text: string }[] = [];
-  HOME_FIELDS.forEach((f, i) => {
-    const src = fromMap[f.key]?.trim() || (from === "is" ? HOME_DEFAULTS_IS[f.key] : "");
+  sitePage.fields.forEach((f, i) => {
+    if (f.type === "icon") return;
+    const src = fromMap[f.key]?.trim() || (from === "is" ? sitePage.defaultsIs[f.key] : "");
     if (src && src.trim()) items.push({ i, key: f.key, text: src });
   });
   if (items.length === 0) {

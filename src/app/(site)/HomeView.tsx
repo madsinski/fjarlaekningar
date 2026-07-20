@@ -1,6 +1,7 @@
 import Link from "next/link";
 import MedaliaButton from "../components/MedaliaButton";
 import { erindi } from "../../erindi";
+import { renderHighlighted } from "@/lib/site-content/highlight";
 import type { LocaleContent } from "@/lib/site-content/home";
 
 // Presentational Home page. Renders from a resolved content map `c` so the same
@@ -34,7 +35,7 @@ export default function HomeView({ c }: { c: LocaleContent }) {
               {c.hero_eyebrow}
             </span>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900">
-              {c.hero_heading}{" "}
+              {renderHighlighted(c.hero_heading)}{" "}
               <span className="text-[var(--primary)]">{c.hero_heading_highlight}</span>
             </h1>
             <p className="mt-6 text-lg text-slate-600 max-w-2xl">{c.hero_subheading}</p>
@@ -65,7 +66,7 @@ export default function HomeView({ c }: { c: LocaleContent }) {
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">{c.services_heading}</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">{renderHighlighted(c.services_heading)}</h2>
             <p className="mt-4 text-slate-600">{c.services_body}</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -103,7 +104,7 @@ export default function HomeView({ c }: { c: LocaleContent }) {
       <section className="py-20 bg-[var(--background)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">{c.stats_heading}</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">{renderHighlighted(c.stats_heading)}</h2>
             <p className="mt-4 text-slate-600">{c.stats_body}</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
@@ -122,7 +123,7 @@ export default function HomeView({ c }: { c: LocaleContent }) {
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">{c.how_heading}</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">{renderHighlighted(c.how_heading)}</h2>
             <p className="mt-4 text-slate-600">{c.how_body}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8">
@@ -156,7 +157,7 @@ export default function HomeView({ c }: { c: LocaleContent }) {
                 <span className="w-2 h-2 rounded-full bg-[var(--primary)]" />
                 {c.hsu_eyebrow}
               </span>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{c.hsu_heading}</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{renderHighlighted(c.hsu_heading)}</h2>
               <p className="mt-4 text-slate-600">{c.hsu_body1}</p>
               <p className="mt-4 font-medium text-slate-900">{c.hsu_body2}</p>
             </div>
@@ -168,7 +169,7 @@ export default function HomeView({ c }: { c: LocaleContent }) {
       <section className="py-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] p-10 sm:p-16 text-center text-white">
-            <h2 className="text-3xl sm:text-4xl font-bold">{c.cta_heading}</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold">{renderHighlighted(c.cta_heading)}</h2>
             <p className="mt-4 text-brand-cyan-subtle max-w-xl mx-auto">{c.cta_body}</p>
             <div className="mt-8 flex justify-center">
               <MedaliaButton

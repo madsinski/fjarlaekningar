@@ -34,14 +34,33 @@ function LangToggle() {
   );
 }
 
-const navLinks = [
-  { href: "/", label: "Heim" },
-  { href: "/thjonusta", label: "Þjónusta" },
-  { href: "/um-okkur", label: "Um okkur" },
-  { href: "/hafa-samband", label: "Hafa samband" },
-];
+// Labels are CMS-editable (page key "chrome"). Props are OPTIONAL and fall back
+// to these defaults, so <Navbar /> with no props (e.g. in the admin shell) works
+// exactly as before.
+export interface NavbarContent {
+  nav_home?: string;
+  nav_thjonusta?: string;
+  nav_um_okkur?: string;
+  nav_hafa_samband?: string;
+  nav_cta?: string;
+}
 
-export default function Navbar() {
+const NAV_DEFAULTS: Required<NavbarContent> = {
+  nav_home: "Heim",
+  nav_thjonusta: "Þjónusta",
+  nav_um_okkur: "Um okkur",
+  nav_hafa_samband: "Hafa samband",
+  nav_cta: "Opna sjúklingagátt",
+};
+
+export default function Navbar({ content }: { content?: NavbarContent }) {
+  const t = { ...NAV_DEFAULTS, ...(content ?? {}) };
+  const navLinks = [
+    { href: "/", label: t.nav_home },
+    { href: "/thjonusta", label: t.nav_thjonusta },
+    { href: "/um-okkur", label: t.nav_um_okkur },
+    { href: "/hafa-samband", label: t.nav_hafa_samband },
+  ];
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
@@ -96,7 +115,7 @@ export default function Navbar() {
               );
             })}
             <LangToggle />
-            <MedaliaButton size="sm" />
+            <MedaliaButton size="sm" label={t.nav_cta} />
           </div>
 
           {/* Mobile toggle */}
@@ -143,7 +162,7 @@ export default function Navbar() {
             ))}
             <div className="px-2 pt-2 flex items-center gap-3">
               <LangToggle />
-              <MedaliaButton className="w-full" />
+              <MedaliaButton className="w-full" label={t.nav_cta} />
             </div>
           </div>
         )}
