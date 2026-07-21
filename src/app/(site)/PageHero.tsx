@@ -17,7 +17,12 @@ import type { LocaleContent } from "@/lib/site-content/types";
 // that's what made the edges wander in the first place.
 export default function PageHero({ c }: { c: LocaleContent }) {
   return (
-    <section className="border-b border-slate-200 bg-gradient-to-b from-brand-cyan-subtle/60 to-white py-14">
+    // The gradient ends at --background, NOT white. It used to fade to white,
+    // which meant the header's bottom edge was the exact colour of the white
+    // content section beneath it and the two ran together. Ending on the page
+    // tint keeps the header a distinct band that the white content starts
+    // crisply against.
+    <section className="border-b border-slate-200 bg-gradient-to-b from-brand-cyan-subtle to-[var(--background)] py-14">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {c.hero_eyebrow && (
           <span className="inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--primary-dark)]">
