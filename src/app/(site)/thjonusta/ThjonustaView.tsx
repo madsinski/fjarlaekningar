@@ -9,14 +9,13 @@ import type { LocaleContent } from "@/lib/site-content/types";
 // page — only the strings + icon keys come from the resolved content map `c`,
 // so this powers both the public page (server) and the CMS live preview.
 export default function ThjonustaView({ c }: { c: LocaleContent }) {
-  const features = [
-    { title: c.f1_title, description: c.f1_desc, icon: c.f1_icon, fallback: "zap" },
-    { title: c.f2_title, description: c.f2_desc, icon: c.f2_icon, fallback: "clipboard-list" },
-    { title: c.f3_title, description: c.f3_desc, icon: c.f3_icon, fallback: "test-tube" },
-    { title: c.f4_title, description: c.f4_desc, icon: c.f4_icon, fallback: "pill" },
-    { title: c.f5_title, description: c.f5_desc, icon: c.f5_icon, fallback: "shield-check" },
-    { title: c.f6_title, description: c.f6_desc, icon: c.f6_icon, fallback: "book-open" },
-  ];
+  const steps = [
+    { n: "1", title: c.step1_title, description: c.step1_desc },
+    { n: "2", title: c.step2_title, description: c.step2_desc },
+    { n: "3", title: c.step3_title, description: c.step3_desc },
+    { n: "4", title: c.step4_title, description: c.step4_desc },
+    { n: "5", title: c.step5_title, description: c.step5_desc },
+  ].filter((s) => s.title);
   const limits = [
     { title: c.limits1_title, body: c.limits1_body, icon: c.limits1_icon, fallback: "shield-alert" },
     { title: c.limits2_title, body: c.limits2_body, icon: c.limits2_icon, fallback: "stethoscope" },
@@ -68,7 +67,11 @@ export default function ThjonustaView({ c }: { c: LocaleContent }) {
         </div>
       </section>
 
-      <section className="py-20 bg-[var(--background)]">
+      {/* The process. Rendered as a vertical numbered sequence rather than a
+          grid of cards: a patient's question here is "what happens to me, in
+          what order", and a grid gives no reading order. The connecting spine
+          makes the sequence explicit. #ferlid is linked from the home page. */}
+      <section id="ferlid" className="py-20 bg-[var(--background)] scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
@@ -76,20 +79,27 @@ export default function ThjonustaView({ c }: { c: LocaleContent }) {
             </h2>
             <p className="mt-4 text-slate-600">{c.how_body}</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((f) => (
-              <div
-                key={f.title}
-                className="group bg-white rounded-2xl border border-slate-200 p-8 hover:shadow-lg hover:border-brand-cyan transition-all"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-brand-cyan-subtle text-[var(--primary-dark)] flex items-center justify-center mb-5 group-hover:bg-[var(--primary)] group-hover:text-white transition-colors">
-                  <SiteIcon name={f.icon} fallback={f.fallback} className="w-6 h-6" />
+
+          <ol className="relative max-w-3xl">
+            {steps.map((step, i) => (
+              <li key={step.n} className="relative flex gap-5 pb-8 last:pb-0">
+                {/* Spine: drawn on every item except the last. */}
+                {i < steps.length - 1 && (
+                  <span
+                    aria-hidden
+                    className="absolute left-5 top-11 -ml-px h-[calc(100%-2.75rem)] w-0.5 bg-brand-cyan-muted"
+                  />
+                )}
+                <span className="relative z-10 shrink-0 w-10 h-10 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-base font-bold ring-4 ring-[var(--background)]">
+                  {step.n}
+                </span>
+                <div className="pt-1.5">
+                  <h3 className="text-lg font-semibold text-slate-900">{step.title}</h3>
+                  <p className="mt-1.5 text-slate-600 leading-relaxed">{step.description}</p>
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">{f.title}</h3>
-                <p className="text-sm text-slate-600 leading-relaxed">{f.description}</p>
-              </div>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
       </section>
 

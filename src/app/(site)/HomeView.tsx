@@ -10,13 +10,11 @@ import type { LocaleContent } from "@/lib/site-content/home";
 // Markup/classes are identical to the original hard-coded page — only the text
 // strings come from `c`.
 export default function HomeView({ c }: { c: LocaleContent }) {
-  const steps = [
-    { n: "1", title: c.step1_title, description: c.step1_desc },
-    { n: "2", title: c.step2_title, description: c.step2_desc },
-    { n: "3", title: c.step3_title, description: c.step3_desc },
-    { n: "4", title: c.step4_title, description: c.step4_desc },
-    { n: "5", title: c.step5_title, description: c.step5_desc },
-  ];
+  // Titles only. The descriptions used to live here too, which meant the home
+  // page and /thjonusta each carried a different half of the same explanation.
+  const steps = [c.step1_title, c.step2_title, c.step3_title, c.step4_title, c.step5_title].filter(
+    Boolean,
+  );
   const stats = [
     { value: c.stat1_value, label: c.stat1_label },
     { value: c.stat2_value, label: c.stat2_label },
@@ -131,17 +129,29 @@ export default function HomeView({ c }: { c: LocaleContent }) {
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">{renderHighlighted(c.how_heading)}</h2>
             <p className="mt-4 text-slate-600">{c.how_body}</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8">
-            {steps.map((step) => (
-              <div key={step.n} className="relative">
-                <div className="w-12 h-12 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-xl font-bold mb-4">
-                  {step.n}
-                </div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">{step.title}</h3>
-                <p className="text-slate-600">{step.description}</p>
-              </div>
+          {/* Glanceable summary: the five steps in order, titles only. Someone
+              who wants to know what each step involves follows the button to
+              the full process on /thjonusta, where it is written out once. */}
+          <ol className="flex flex-col sm:flex-row sm:flex-wrap gap-x-4 gap-y-3">
+            {steps.map((title, i) => (
+              <li key={title} className="flex items-center gap-3 sm:flex-1 sm:min-w-[15rem]">
+                <span className="shrink-0 w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm font-bold">
+                  {i + 1}
+                </span>
+                <span className="text-sm font-medium text-slate-800 leading-snug">{title}</span>
+              </li>
             ))}
-          </div>
+          </ol>
+
+          <Link
+            href="/thjonusta#ferlid"
+            className="mt-10 inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-white border-2 border-[var(--primary)] text-[var(--primary-dark)] font-semibold hover:bg-brand-cyan-subtle transition-colors"
+          >
+            {c.how_cta || "Sjá hvernig þjónustan virkar"}
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </Link>
         </div>
       </section>
 

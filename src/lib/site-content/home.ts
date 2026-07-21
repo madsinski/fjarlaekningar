@@ -48,18 +48,16 @@ export const HOME_FIELDS: SiteField[] = [
   { key: "stats_footer", label: "Neðanmálstexti", group: "Tölur", type: "text" },
 
   // How it works
+  // Summary only — step titles, no descriptions. The full process with the
+  // detail lives once on /thjonusta#ferlid, which this section links to.
   { key: "how_heading", label: "Fyrirsögn", group: "Ferlið", type: "heading" },
   { key: "how_body", label: "Texti", group: "Ferlið", type: "textarea" },
-  { key: "step1_title", label: "Skref 1 — titill", group: "Ferlið", type: "text" },
-  { key: "step1_desc", label: "Skref 1 — lýsing", group: "Ferlið", type: "textarea" },
-  { key: "step2_title", label: "Skref 2 — titill", group: "Ferlið", type: "text" },
-  { key: "step2_desc", label: "Skref 2 — lýsing", group: "Ferlið", type: "textarea" },
-  { key: "step3_title", label: "Skref 3 — titill", group: "Ferlið", type: "text" },
-  { key: "step3_desc", label: "Skref 3 — lýsing", group: "Ferlið", type: "textarea" },
-  { key: "step4_title", label: "Skref 4 — titill", group: "Ferlið", type: "text" },
-  { key: "step4_desc", label: "Skref 4 — lýsing", group: "Ferlið", type: "textarea" },
-  { key: "step5_title", label: "Skref 5 — titill", group: "Ferlið", type: "text" },
-  { key: "step5_desc", label: "Skref 5 — lýsing", group: "Ferlið", type: "textarea" },
+  { key: "step1_title", label: "Skref 1", group: "Ferlið", type: "text" },
+  { key: "step2_title", label: "Skref 2", group: "Ferlið", type: "text" },
+  { key: "step3_title", label: "Skref 3", group: "Ferlið", type: "text" },
+  { key: "step4_title", label: "Skref 4", group: "Ferlið", type: "text" },
+  { key: "step5_title", label: "Skref 5", group: "Ferlið", type: "text" },
+  { key: "how_cta", label: "Hnappur", group: "Ferlið", type: "text" },
 
   // HSU
   { key: "hsu_eyebrow", label: "Merki (eyebrow)", group: "HSU samstarf", type: "text" },
@@ -112,20 +110,15 @@ export const HOME_DEFAULTS_IS: LocaleContent = {
   stat3_label: "Opið alla daga. Beiðnum sem berast eftir kl. 22 er svarað daginn eftir.",
   stats_footer: "Alvarleg einkenni fá strax leiðbeiningar um rétt úrræði.",
 
-  how_heading: "Ferlið frá upphafi til enda",
+  how_heading: "Ferlið frá ==upphafi til enda==",
   how_body:
     "Þú svarar spurningalista heima eða þar sem þú ert stödd eða staddur — læknir svarar erindum innan tveggja klukkustunda á opnunartíma.",
   step1_title: "Þú velur erindi af vandamálalista",
-  step1_desc: "Skráðu þig inn með rafrænum skilríkjum og farðu í viðeigandi ferli eftir einkennum.",
   step2_title: "Svarar spurningalista",
-  step2_desc: "Markvissar spurningar um einkenni — ásamt sjálfsprófi heima þegar það á við.",
   step3_title: "Öryggisnetið metur svörin",
-  step3_desc: "Ef svör benda til alvarlegra veikinda færð þú strax leiðbeiningar um rétt úrræði.",
   step4_title: "Læknir metur og leggur til meðferð",
-  step4_desc: "Læknir fer yfir svörin og leggur til viðeigandi meðferð út frá sínu læknisfræðilega mati.",
   step5_title: "Niðurstaða, ráðleggingar og lyfseðill",
-  step5_desc:
-    "Þú færð skriflega niðurstöðu og ráðleggingar — og lyfseðill fer rafrænt í lyfjagátt ef þörf er á.",
+  how_cta: "Sjá hvernig þjónustan virkar",
 
   hsu_eyebrow: "Tilraunaverkefni til eins árs",
   hsu_heading: "Í samstarfi við Heilbrigðisstofnun Suðurlands",

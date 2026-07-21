@@ -14,27 +14,24 @@ export const THJONUSTA_FIELDS: SiteField[] = [
   { key: "erindi_body", label: "Texti", group: "Algeng erindi", type: "textarea" },
   { key: "erindi_footer", label: "Neðanmálstexti", group: "Algeng erindi", type: "text" },
 
-  // How it works
-  { key: "how_heading", label: "Fyrirsögn", group: "Hvernig þjónustan virkar", type: "heading" },
-  { key: "how_body", label: "Texti", group: "Hvernig þjónustan virkar", type: "textarea" },
-  { key: "f1_title", label: "Eiginleiki 1 — titill", group: "Hvernig þjónustan virkar", type: "text" },
-  { key: "f1_desc", label: "Eiginleiki 1 — lýsing", group: "Hvernig þjónustan virkar", type: "textarea" },
-  { key: "f1_icon", label: "Eiginleiki 1 — tákn", group: "Hvernig þjónustan virkar", type: "icon" },
-  { key: "f2_title", label: "Eiginleiki 2 — titill", group: "Hvernig þjónustan virkar", type: "text" },
-  { key: "f2_desc", label: "Eiginleiki 2 — lýsing", group: "Hvernig þjónustan virkar", type: "textarea" },
-  { key: "f2_icon", label: "Eiginleiki 2 — tákn", group: "Hvernig þjónustan virkar", type: "icon" },
-  { key: "f3_title", label: "Eiginleiki 3 — titill", group: "Hvernig þjónustan virkar", type: "text" },
-  { key: "f3_desc", label: "Eiginleiki 3 — lýsing", group: "Hvernig þjónustan virkar", type: "textarea" },
-  { key: "f3_icon", label: "Eiginleiki 3 — tákn", group: "Hvernig þjónustan virkar", type: "icon" },
-  { key: "f4_title", label: "Eiginleiki 4 — titill", group: "Hvernig þjónustan virkar", type: "text" },
-  { key: "f4_desc", label: "Eiginleiki 4 — lýsing", group: "Hvernig þjónustan virkar", type: "textarea" },
-  { key: "f4_icon", label: "Eiginleiki 4 — tákn", group: "Hvernig þjónustan virkar", type: "icon" },
-  { key: "f5_title", label: "Eiginleiki 5 — titill", group: "Hvernig þjónustan virkar", type: "text" },
-  { key: "f5_desc", label: "Eiginleiki 5 — lýsing", group: "Hvernig þjónustan virkar", type: "textarea" },
-  { key: "f5_icon", label: "Eiginleiki 5 — tákn", group: "Hvernig þjónustan virkar", type: "icon" },
-  { key: "f6_title", label: "Eiginleiki 6 — titill", group: "Hvernig þjónustan virkar", type: "text" },
-  { key: "f6_desc", label: "Eiginleiki 6 — lýsing", group: "Hvernig þjónustan virkar", type: "textarea" },
-  { key: "f6_icon", label: "Eiginleiki 6 — tákn", group: "Hvernig þjónustan virkar", type: "icon" },
+  // The process — the single canonical description of how the service works.
+  // This used to be split in two: five numbered steps on the home page and six
+  // feature cards here, which restated the same five things in a different
+  // format. Five of the six cards duplicated a step. They are now merged, with
+  // each card's specifics folded into the step it belonged to, so a patient
+  // reads the process once, in order, in one place.
+  { key: "how_heading", label: "Fyrirsögn", group: "Ferlið", type: "heading" },
+  { key: "how_body", label: "Texti", group: "Ferlið", type: "textarea" },
+  { key: "step1_title", label: "Skref 1 — titill", group: "Ferlið", type: "text" },
+  { key: "step1_desc", label: "Skref 1 — lýsing", group: "Ferlið", type: "textarea" },
+  { key: "step2_title", label: "Skref 2 — titill", group: "Ferlið", type: "text" },
+  { key: "step2_desc", label: "Skref 2 — lýsing", group: "Ferlið", type: "textarea" },
+  { key: "step3_title", label: "Skref 3 — titill", group: "Ferlið", type: "text" },
+  { key: "step3_desc", label: "Skref 3 — lýsing", group: "Ferlið", type: "textarea" },
+  { key: "step4_title", label: "Skref 4 — titill", group: "Ferlið", type: "text" },
+  { key: "step4_desc", label: "Skref 4 — lýsing", group: "Ferlið", type: "textarea" },
+  { key: "step5_title", label: "Skref 5 — titill", group: "Ferlið", type: "text" },
+  { key: "step5_desc", label: "Skref 5 — lýsing", group: "Ferlið", type: "textarea" },
 
   // FAQ
   // Scope/limits — what fjarlækningar is NOT for. Clinically sensitive: the
@@ -82,34 +79,28 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
   erindi_body: "Flest erindi afgreidd innan tveggja klukkustunda á opnunartíma.",
   erindi_footer: "Listinn lengist jafnt og þétt eftir því sem þjónustan þróast.",
 
-  how_heading: "Hvernig þjónustan virkar",
+  // Merged from the old home-page steps + the six cards that used to live here.
+  // Every sentence below is verbatim from one of those two sources — the merge
+  // only removed repetition and put the detail on the step it describes.
+  how_heading: "Ferlið frá ==upphafi til enda==",
   how_body:
-    "Sömu spurningar og sama fagmennska og á læknastofu — bara skilvirkari leið til að leysa erindið.",
+    "Sömu spurningar og sama fagmennska og á læknastofu — bara skilvirkari leið til að leysa erindið. Þú svarar spurningalista heima eða þar sem þú ert, og læknir svarar innan tveggja klukkustunda á opnunartíma milli 10 og 22.",
 
-  f1_title: "Fljótleg og þægileg læknisþjónusta",
-  f1_desc:
-    "Þú svarar spurningalista heima eða þar sem þú ert — læknir svarar erindum innan tveggja klukkustunda á opnunartíma milli 10 og 22.",
-  f1_icon: "zap",
-  f2_title: "Spurningalistar sérhannaðir",
-  f2_desc:
-    "Spurningalistar eru sérhannaðir í samstarfi við íslenska sérfræðilækna tengt hverju vandamáli. Ferlið er hannað eins og viðtal við lækni.",
-  f2_icon: "clipboard-list",
-  f3_title: "Heimapróf",
-  f3_desc:
-    "Þegar heimapróf bætir greiningu er þér leiðbeint að taka það — t.d. þvagpróf sem sækja má á heilsugæslu eða í næsta apóteki — og skrá niðurstöðuna beint í gáttina.",
-  f3_icon: "test-tube",
-  f4_title: "Meðferð og lyfseðill",
-  f4_desc:
-    "Læknir leggur til meðferð út frá svörum og læknisfræðilegu mati. Engin meðferð án mats læknis — lyfseðill fer rafrænt í lyfjagátt og er tilbúinn í næsta apóteki.",
-  f4_icon: "pill",
-  f5_title: "Innbyggt öryggisnet",
-  f5_desc:
+  step1_title: "Þú velur erindi af vandamálalista",
+  step1_desc:
+    "Skráðu þig inn með rafrænum skilríkjum og farðu í viðeigandi ferli eftir einkennum.",
+  step2_title: "Þú svarar spurningalista",
+  step2_desc:
+    "Spurningalistar eru sérhannaðir í samstarfi við íslenska sérfræðilækna tengt hverju vandamáli — ferlið er hannað eins og viðtal við lækni. Þegar heimapróf bætir greiningu er þér leiðbeint að taka það, t.d. þvagpróf sem sækja má á heilsugæslu eða í næsta apóteki, og skrá niðurstöðuna beint í gáttina.",
+  step3_title: "Öryggisnetið metur svörin",
+  step3_desc:
     "Rauð flögg í spurningalistunum vísa alvarlegum einkennum strax í rétta þjónustu. Fjarlækningar taka ekki að sér erindi sem eiga heima annars staðar — og þú greiðir ekki ef þér er vísað frá.",
-  f5_icon: "shield-check",
-  f6_title: "Fræðsluefni fylgir",
-  f6_desc:
-    "Niðurstöðunni fylgir fræðsluefni tengt þínu vandamáli: ráðleggingar, fyrirbyggjandi ráð og vörur án lyfseðils sem geta hjálpað.",
-  f6_icon: "book-open",
+  step4_title: "Læknir metur og leggur til meðferð",
+  step4_desc:
+    "Læknir fer yfir svörin og leggur til viðeigandi meðferð út frá sínu læknisfræðilega mati. Engin meðferð án mats læknis.",
+  step5_title: "Niðurstaða, ráðleggingar og lyfseðill",
+  step5_desc:
+    "Þú færð skriflega niðurstöðu og ráðleggingar, og lyfseðill fer rafrænt í lyfjagátt ef þörf er á — tilbúinn í næsta apóteki. Niðurstöðunni fylgir fræðsluefni tengt þínu vandamáli: ráðleggingar, fyrirbyggjandi ráð og vörur án lyfseðils sem geta hjálpað.",
 
   // NOTE: assembled from Fjarlækningar's own published wording (erindi
   // descriptions + HSU referral collateral). Review clinically before publishing.
