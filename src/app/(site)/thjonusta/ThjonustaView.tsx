@@ -39,17 +39,33 @@ export default function ThjonustaView({
   //   Stofnun | undirtexti | /logo.webp   unprefixed  -> new umbrella
   //   + Heilsugæsla | texti               "+"         -> open now
   //   - Heilsugæsla                       "-"         -> not yet open
+  //   * Staður | heimilisfang | prófin    "*"         -> where to collect the
+  //                                                      home tests, attached to
+  //                                                      the "+" line above it
+  type Pickup = { name: string; address?: string; tests?: string };
+  type Location = { name: string; note?: string; active: boolean; pickups: Pickup[] };
   const umbrellas: {
     name: string;
     subtitle?: string;
     logo?: string;
-    locations: { name: string; note?: string; active: boolean }[];
+    locations: Location[];
   }[] = [];
+  const lastLocation = (): Location | undefined => {
+    const u = umbrellas[umbrellas.length - 1];
+    return u?.locations[u.locations.length - 1];
+  };
   for (const raw of (c.live_locations ?? "").split("\n")) {
     const line = raw.trim();
     if (!line) continue;
     const active = line.startsWith("+");
-    if (active || line.startsWith("-")) {
+    if (line.startsWith("*")) {
+      // A pickup point belongs to the heilsugæsla above it; with none, drop it
+      // rather than showing an address with nothing to attach it to.
+      const loc = lastLocation();
+      if (!loc) continue;
+      const [name, address, tests] = line.slice(1).split("|").map((x) => x.trim());
+      if (name) loc.pickups.push({ name, address: address || undefined, tests: tests || undefined });
+    } else if (active || line.startsWith("-")) {
       // A member line before any institution line has nowhere to go; skip it
       // rather than inventing an unnamed umbrella.
       if (!umbrellas.length) continue;
@@ -59,6 +75,7 @@ export default function ThjonustaView({
         name: name.trim(),
         note: note || undefined,
         active,
+        pickups: [],
       });
     } else {
       const [name, subtitle, logo] = line.split("|").map((x) => x.trim());
@@ -259,6 +276,56 @@ export default function ThjonustaView({
                             {l.note && <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">{l.note}</p>}
                           </div>
                         </div>
+
+                        {/* Where this station's patients collect their home
+                            tests. Answered inside the card rather than in the
+                            general Heimapróf section, because "Heilsugæsla" or
+                            "Apótek" in the abstract doesn't tell a patient in
+                            Vestmannaeyjar which door to walk through. */}
+                        {l.pickups.length > 0 && (
+                          <details className="group mt-4 border-t border-slate-100 pt-3">
+                            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-semibold text-emerald-800 hover:text-emerald-900">
+                              {c.live_pickup_label || "Hvar fæ ég heimapróf?"}
+                              <svg
+                                className="w-4 h-4 shrink-0 transition-transform group-open:rotate-180"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </summary>
+                            <ul className="mt-3 space-y-3">
+                              {l.pickups.map((pk) => (
+                                <li key={pk.name} className="flex gap-2.5">
+                                  <SiteIcon
+                                    name="map-pin"
+                                    fallback="map-pin"
+                                    className="w-4 h-4 shrink-0 mt-0.5 text-slate-400"
+                                  />
+                                  <div>
+                                    <div className="text-sm font-medium text-slate-800">{pk.name}</div>
+                                    {pk.address && (
+                                      <div className="text-sm text-slate-500">{pk.address}</div>
+                                    )}
+                                    {pk.tests && (
+                                      <div className="mt-1 flex flex-wrap gap-1.5">
+                                        {pk.tests.split(",").map((tst) => (
+                                          <span
+                                            key={tst}
+                                            className="inline-flex items-center rounded-full bg-brand-cyan-subtle/70 px-2 py-0.5 text-[11px] font-medium text-[var(--primary-dark)]"
+                                          >
+                                            {tst.trim()}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          </details>
+                        )}
                       </div>
                     ))}
                   </div>

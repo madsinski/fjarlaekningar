@@ -69,13 +69,16 @@ export const THJONUSTA_FIELDS: SiteField[] = [
   // The text after "|" is optional; a line with no "|" renders as name only.
   { key: "live_heading", label: "Fyrirsögn", group: "Virk þjónusta", type: "heading" },
   { key: "live_body", label: "Inngangur", group: "Virk þjónusta", type: "textarea" },
-  // Umbrella organisations (HSU, HSN, ...) and their heilsugæslur, one per
-  // line. Adding a whole new umbrella is just another unprefixed line, so the
-  // rollout can grow without a schema change:
+  // Umbrella organisations (HSU, HSN, ...), their heilsugæslur, and where
+  // patients of an open heilsugæsla can collect home tests. One per line, so
+  // the rollout can grow without a schema change:
   //   Stofnun | undirtexti | /logo.webp      <- umbrella (no prefix)
   //   + Heilsugæsla | texti                  <- open now
   //   - Heilsugæsla                          <- not yet open
-  { key: "live_locations", label: "Stofnanir og heilsugæslur (sjá snið að neðan)", group: "Virk þjónusta", type: "textarea" },
+  //   * Staður | heimilisfang | prófin       <- test pickup point for the
+  //                                             nearest "+" line above it
+  { key: "live_locations", label: "Stofnanir, heilsugæslur og afhendingarstaðir (sjá snið að neðan)", group: "Virk þjónusta", type: "textarea" },
+  { key: "live_pickup_label", label: "Hnappur — afhendingarstaðir", group: "Virk þjónusta", type: "text" },
   { key: "live_footer", label: "Neðanmálstexti", group: "Virk þjónusta", type: "text" },
 
   // FAQ
@@ -184,13 +187,20 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
   live_heading: "Hvar er þjónustan ==virk==?",
   live_body:
     "Við opnum þjónustuna í samstarfi við heilbrigðisstofnanir, eina heilsugæslu í einu. Heilbrigðisstofnun Suðurlands er fyrsta stofnunin sem opnar fyrir þjónustuna.",
-  // VERIFY BEFORE PUBLISHING: the roster of HSU heilsugæslur below is written
-  // from public knowledge of the institution, not from a Fjarlækningar source
-  // document. Confirm the list is complete and correctly named — and confirm
-  // Vestmannaeyjar is genuinely live — before this ships.
+  // VERIFY BEFORE PUBLISHING. Written from public knowledge of the institution,
+  // not from a Fjarlækningar source document:
+  //   - the roster of HSU heilsugæslur, and that Vestmannaeyjar is genuinely live
+  //   - the pickup points: the pharmacy NAME is a best guess and the addresses
+  //     are deliberately left blank rather than invented. Sending a patient to a
+  //     wrong address for a test is a real failure, so these must be filled in
+  //     and checked before this section goes public.
   live_locations: [
     "Heilbrigðisstofnun Suðurlands | Fyrsta stofnunin sem opnar fyrir þjónustuna | /hsu-logo.webp",
-    "+ Heilsugæslan í Vestmannaeyjum | Fyrsta heilsugæslan til að opna. Hér færðu einnig heimaprófin sem geta fylgt erindinu: CRP-próf, þvagstix og strep-próf.",
+    "+ Heilsugæslan í Vestmannaeyjum | Fyrsta heilsugæslan til að opna.",
+    // ADDRESSES INTENTIONALLY BLANK — see the note above. The middle field is
+    // the street address; fill it in from a source you trust.
+    "* Heilsugæslan í Vestmannaeyjum |  | CRP-próf, þvagstix, strep-próf",
+    "* Apótek Vestmannaeyja |  | Þvagstix, strep-próf",
     "- Heilsugæslan á Selfossi",
     "- Heilsugæslan í Hveragerði",
     "- Heilsugæslan í Þorlákshöfn",
@@ -201,6 +211,7 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
     "- Heilsugæslan á Kirkjubæjarklaustri",
     "- Heilsugæslan á Höfn í Hornafirði",
   ].join("\n"),
+  live_pickup_label: "Hvar fæ ég heimapróf?",
   live_footer:
     "Heilsugæslur merktar „væntanlegt“ opna fyrir þjónustuna í áföngum. Fleiri heilbrigðisstofnanir bætast við eftir því sem þjónustan þróast.",
 
