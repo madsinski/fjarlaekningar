@@ -228,10 +228,13 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
   tests_s2_title: "Þú sækir prófið og tekur það heima",
   tests_s2_desc:
     "Prófið sækir þú á heilsugæslu eða í apóteki — sjá hvar hér að ofan. Leiðbeiningar um hvernig það er tekið fylgja í gáttinni.",
-  // No screenshot on purpose: collecting the test happens in the real world,
-  // not in the gátt, so there is nothing to show. Steps 1 and 3 are the two
-  // portal screens (slides 10 and 11 of the HSN deck).
-  tests_s2_img: "",
+  // Not a portal screen — steps 1 and 3 are the two gátt screenshots (slides 10
+  // and 11 of the HSN deck). This step happens in the real world, so it shows
+  // the kit itself.
+  // PROVENANCE: third-party product photo of a PRIMA Strep A home test, sourced
+  // from an Amazon listing. Copied locally rather than hotlinked, but it is NOT
+  // our image — see the licensing note flagged with this change.
+  tests_s2_img: "/gatt/heimaprof-kit.jpg",
   tests_s2_hl: "",
   tests_s3_title: "Þú skráir niðurstöðuna í gáttina",
   tests_s3_desc:
