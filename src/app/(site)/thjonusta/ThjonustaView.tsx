@@ -1,6 +1,7 @@
 import PortalButton from "../../components/PortalButton";
 import PageHero from "../PageHero";
 import Band from "../Band";
+import Screenshot from "../Screenshot";
 import { erindi } from "../../../erindi";
 import SiteIcon from "@/lib/site-content/SiteIcon";
 import { renderHighlighted } from "@/lib/site-content/highlight";
@@ -33,6 +34,13 @@ export default function ThjonustaView({
     { title: c.test2_title, desc: c.test2_desc, when: c.test2_when, where: c.test2_where, icon: c.test2_icon, fallback: "test-tube" },
     { title: c.test3_title, desc: c.test3_desc, when: c.test3_when, where: c.test3_where, icon: c.test3_icon, fallback: "open-mouth" },
   ].filter((t) => t.title);
+  // Portal walkthrough. Screenshots are optional — a step with no image renders
+  // as text, so the section works before the images are in place.
+  const testSteps = [
+    { title: c.tests_s1_title, desc: c.tests_s1_desc, img: c.tests_s1_img, hl: c.tests_s1_hl },
+    { title: c.tests_s2_title, desc: c.tests_s2_desc, img: c.tests_s2_img, hl: c.tests_s2_hl },
+    { title: c.tests_s3_title, desc: c.tests_s3_desc, img: c.tests_s3_img, hl: c.tests_s3_hl },
+  ].filter((st) => st.title);
   // Rollout is umbrella-organisation first (HSU, then HSN, ...), each with its
   // member heilsugæslur. Parsed from one textarea so staff can open another
   // heilsugæsla — or add a whole new institution — without a schema change:
@@ -239,7 +247,56 @@ export default function ThjonustaView({
             </div>
           ))}
         </div>
-        {c.tests_footer && <p className="mt-8 text-sm text-slate-500 max-w-3xl">{c.tests_footer}</p>}
+        {/* Why home tests exist. Placed after the three test cards: the reader
+            has just seen what the tests are, and this answers the "why am I
+            being asked to do this myself" that naturally follows. */}
+        {c.tests_why_heading && (
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">{c.tests_why_heading}</h3>
+              <p className="mt-2 text-slate-600 leading-relaxed">{c.tests_why_body}</p>
+            </div>
+            {c.tests_accuracy && (
+              <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
+                <p className="text-sm text-slate-600 leading-relaxed">{c.tests_accuracy}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* The portal flow, 1-2-3. Screenshots are optional: until an image is
+            set in the CMS the steps render as text, so the section is useful
+            immediately and gets better when the images land. */}
+        {testSteps.length > 0 && (
+          <div className="mt-14">
+            {c.tests_how_heading && (
+              <h3 className="text-lg font-semibold text-slate-900 mb-6">{c.tests_how_heading}</h3>
+            )}
+            <ol className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {testSteps.map((st, i) => (
+                <li key={st.title} className="flex flex-col">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="shrink-0 w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm font-bold">
+                      {i + 1}
+                    </span>
+                    <h4 className="text-base font-semibold text-slate-900">{st.title}</h4>
+                  </div>
+                  <p className="text-sm text-slate-600 leading-relaxed">{st.desc}</p>
+                  {st.img && (
+                    <Screenshot
+                      src={st.img}
+                      alt={st.title}
+                      highlights={st.hl}
+                      className="mt-4 shadow-sm"
+                    />
+                  )}
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+
+        {c.tests_footer && <p className="mt-10 text-sm text-slate-500 max-w-3xl">{c.tests_footer}</p>}
       </>
     ) : null,
 

@@ -64,6 +64,27 @@ export const THJONUSTA_FIELDS: SiteField[] = [
   { key: "test3_when", label: "Próf 3 — á við um (erindi)", group: "Heimapróf", type: "text" },
   { key: "test3_where", label: "Próf 3 — hvar (aðskilið með kommu)", group: "Heimapróf", type: "text" },
   { key: "test3_icon", label: "Próf 3 — tákn", group: "Heimapróf", type: "icon" },
+  // Why home tests exist, and what they are / are not. Clinically sensitive:
+  // see the sign-off note in the defaults.
+  { key: "tests_why_heading", label: "Af hverju — fyrirsögn", group: "Heimapróf", type: "text" },
+  { key: "tests_why_body", label: "Af hverju — texti", group: "Heimapróf", type: "textarea" },
+  { key: "tests_accuracy", label: "Áreiðanleiki — texti", group: "Heimapróf", type: "textarea" },
+  // How it works in the sjúklingagátt. Each step takes an optional screenshot
+  // and highlight boxes, written as "x,y,w,h" in PERCENT of the image, several
+  // separated by ";" — e.g. "12,40,55,12; 12,60,55,10".
+  { key: "tests_how_heading", label: "Í gáttinni — fyrirsögn", group: "Heimapróf", type: "text" },
+  { key: "tests_s1_title", label: "Skref 1 — titill", group: "Heimapróf", type: "text" },
+  { key: "tests_s1_desc", label: "Skref 1 — lýsing", group: "Heimapróf", type: "textarea" },
+  { key: "tests_s1_img", label: "Skref 1 — skjámynd (slóð)", group: "Heimapróf", type: "text" },
+  { key: "tests_s1_hl", label: "Skref 1 — áherslusvæði (x,y,b,h í %)", group: "Heimapróf", type: "text" },
+  { key: "tests_s2_title", label: "Skref 2 — titill", group: "Heimapróf", type: "text" },
+  { key: "tests_s2_desc", label: "Skref 2 — lýsing", group: "Heimapróf", type: "textarea" },
+  { key: "tests_s2_img", label: "Skref 2 — skjámynd (slóð)", group: "Heimapróf", type: "text" },
+  { key: "tests_s2_hl", label: "Skref 2 — áherslusvæði (x,y,b,h í %)", group: "Heimapróf", type: "text" },
+  { key: "tests_s3_title", label: "Skref 3 — titill", group: "Heimapróf", type: "text" },
+  { key: "tests_s3_desc", label: "Skref 3 — lýsing", group: "Heimapróf", type: "textarea" },
+  { key: "tests_s3_img", label: "Skref 3 — skjámynd (slóð)", group: "Heimapróf", type: "text" },
+  { key: "tests_s3_hl", label: "Skref 3 — áherslusvæði (x,y,b,h í %)", group: "Heimapróf", type: "text" },
   { key: "tests_footer", label: "Neðanmálstexti", group: "Heimapróf", type: "textarea" },
 
   // Where the service is live. One location per line so staff can add as many
@@ -187,6 +208,34 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
   test3_when: "Kvef, hósti og hálsbólga — hálsbólga, til að aðstoða greiningu",
   test3_where: "Apótek, Heilsugæsla",
   test3_icon: "open-mouth",
+  // NEEDS CLINICAL SIGN-OFF, in addition to the test descriptions above.
+  // tests_accuracy makes a factual claim about the tests being the same rapid
+  // tests used at a heilsugæsla — deliberately written without any numeric
+  // sensitivity/specificity figure, because no source was available. Do not add
+  // numbers without a citation, and confirm the "same tests" claim is true.
+  tests_why_heading: "Af hverju heimapróf?",
+  tests_why_body:
+    "Fyrir afmörkuð og algeng erindi getur einfalt próf, sem þú tekur sjálf eða sjálfur, gefið lækni þær upplýsingar sem upp á vantar til að ljúka matinu — án þess að þú þurfir að bóka tíma, ferðast og bíða. Þannig verður ferlið einfaldara og hraðara fyrir þig, og heilsugæslan getur einbeitt sér að flóknari erindum.",
+  tests_accuracy:
+    "Prófin eru sömu hraðpróf og notuð eru við sömu erindi á heilsugæslu. Þau koma ekki í stað mats læknis: læknir túlkar niðurstöðuna í samhengi við svörin þín úr spurningalistanum. Ef niðurstaðan er óljós, eða einkennin passa ekki við hana, er erindinu vísað í hefðbundna þjónustu.",
+
+  tests_how_heading: "Svona fer þetta fram í sjúklingagáttinni",
+  tests_s1_title: "Spurningalistinn segir þér hvort prófs er þörf",
+  tests_s1_desc:
+    "Þú velur erindi og svarar spurningalistanum. Eigi próf við um þitt erindi færðu skilaboð um hvaða próf það er — það á ekki við um öll erindi.",
+  tests_s1_img: "",
+  tests_s1_hl: "",
+  tests_s2_title: "Þú sækir prófið og tekur það heima",
+  tests_s2_desc:
+    "Prófið sækir þú á heilsugæslu eða í apóteki — sjá hvar hér að ofan. Leiðbeiningar um hvernig það er tekið fylgja í gáttinni.",
+  tests_s2_img: "",
+  tests_s2_hl: "",
+  tests_s3_title: "Þú skráir niðurstöðuna í gáttina",
+  tests_s3_desc:
+    "Niðurstaðan er skráð beint í sjúklingagáttina. Læknir metur hana ásamt svörunum þínum og lýkur erindinu.",
+  tests_s3_img: "",
+  tests_s3_hl: "",
+
   tests_footer:
     "Þú skráir niðurstöðuna beint í sjúklingagáttina og læknir metur hana með svörunum þínum. Þurfir þú aðstoð við að nálgast próf, hafðu samband.",
 
