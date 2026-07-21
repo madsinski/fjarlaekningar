@@ -30,7 +30,6 @@ export const CHROME_FIELDS: SiteField[] = [
 
   // Footer — bottom bar
   { key: "footer_rights", label: "Réttindi (á eftir ártali)", group: "Fótur — neðst", type: "text" },
-  { key: "footer_portal_note", label: "Sjúklingagátt — texti", group: "Fótur — neðst", type: "text" },
   { key: "footer_admin_link", label: "Stjórnborð — hlekkur", group: "Fótur — neðst", type: "text" },
 ];
 
@@ -42,7 +41,7 @@ export const CHROME_DEFAULTS_IS: LocaleContent = {
   nav_cta: "Opna sjúklingagátt",
 
   footer_blurb:
-    "Fjarlækningar ehf. leysir einföld og afmörkuð erindi í gegnum örugga sjúklingagátt Medalia. Aðgengileg og skilvirk læknisþjónusta, óháð staðsetningu.",
+    "Fjarlækningar ehf. leysir einföld og afmörkuð erindi í gegnum örugga sjúklingagátt. Aðgengileg og skilvirk læknisþjónusta, óháð staðsetningu.",
 
   footer_pages_heading: "Síður",
   footer_contact_heading: "Samband",
@@ -53,7 +52,6 @@ export const CHROME_DEFAULTS_IS: LocaleContent = {
   footer_email: "fjarlaekningar@fjarlaekningar.is",
 
   footer_rights: "Fjarlækningar ehf. Allur réttur áskilinn.",
-  footer_portal_note: "Sjúklingagátt rekin af",
   footer_admin_link: "Stjórnborð",
 };
 

@@ -45,7 +45,7 @@ const FOOTER_DEFAULTS: Required<FooterContent> = {
   nav_um_okkur: "Um okkur",
   nav_hafa_samband: "Hafa samband",
   footer_blurb:
-    "Fjarlækningar ehf. leysir einföld og afmörkuð erindi í gegnum örugga sjúklingagátt Medalia. Aðgengileg og skilvirk læknisþjónusta, óháð staðsetningu.",
+    "Fjarlækningar ehf. leysir einföld og afmörkuð erindi í gegnum örugga sjúklingagátt. Aðgengileg og skilvirk læknisþjónusta, óháð staðsetningu.",
   footer_pages_heading: "Síður",
   footer_contact_heading: "Samband",
   footer_legal_heading: "Lögfræði",
@@ -123,18 +123,6 @@ export default async function Footer({ content }: { content?: FooterContent }) {
             © {new Date().getFullYear()} {t.footer_rights}
           </p>
           <div className="flex items-center gap-4">
-            <p>
-              {t.footer_portal_note}{" "}
-              <a
-                href="https://medalia.is"
-                className="hover:text-white"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Medalia
-              </a>
-              .
-            </p>
             <Link
               href="/admin"
               className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-800/60 px-3.5 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800 hover:text-white"

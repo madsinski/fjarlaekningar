@@ -5,7 +5,7 @@ import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 
 // Public general-inquiry form. NON-medical only — medical erindi go through
-// the Medalia patient portal (see the Hafa samband page).
+// the patient portal (see the Hafa samband page).
 
 export default function FyrirspurnPage() {
   const [name, setName] = useState("");
@@ -41,7 +41,7 @@ export default function FyrirspurnPage() {
       <p className="mt-4 text-slate-600">
         Þetta eyðublað er fyrir <strong>almennar fyrirspurnir</strong> sem tengjast ekki
         læknisþjónustu. Fyrir læknisfræðileg erindi skaltu nota{" "}
-        <Link href="/hafa-samband" className="text-cyan-700 underline hover:text-cyan-900">sjúklingagátt Medalia</Link>.
+        <Link href="/hafa-samband" className="text-cyan-700 underline hover:text-cyan-900">sjúklingagátt Fjarlækninga</Link>.
       </p>
 
       {sent ? (

@@ -57,9 +57,9 @@ export const UM_OKKUR_DEFAULTS_IS: LocaleContent = {
   p1_body:
     "Fjarlækningar var stofnað til að auka aðgengi að læknisþjónustu á Íslandi. Sama þjónusta og á læknastofu, sömu spurningar og sömu vandamál — en skilvirkari leið til að leysa þau og styttri biðlistar, óháð staðsetningu.",
   p1_icon: "target",
-  p2_title: "Örugg þjónusta í gegnum Medalia",
+  p2_title: "Örugg sjúklingagátt",
   p2_body:
-    "Við notum sjúklingagátt Medalia, íslenska heilbrigðisgátt byggða samkvæmt ströngustu kröfum um persónuvernd. Öll samskipti og sjúkraskrár eru dulkóðaðar og eingöngu aðgengilegar þér og þeim lækni sem annast þig.",
+    "Sjúklingagátt Fjarlækninga er íslensk heilbrigðisgátt, byggð samkvæmt ströngustu kröfum um persónuvernd. Öll samskipti og sjúkraskrár eru dulkóðaðar og eingöngu aðgengilegar þér og þeim lækni sem annast þig.",
   p2_icon: "lock",
   p3_title: "Faglegir og reyndir læknar",
   p3_body:

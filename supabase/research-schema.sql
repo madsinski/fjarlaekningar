@@ -2,7 +2,7 @@
 -- Fjarlækningar admin — Phase 3: Research (internal notes / library)
 --
 -- Lightweight internal research repository: studies, protocols and findings as
--- markdown notes with source links. NOTE: lifeline's research module (Medalia
+-- markdown notes with source links. NOTE: lifeline's research module (the portal
 -- longitudinal cohort ingest, clinical-flag dashboard, AI trends, Excel export)
 -- is intentionally OUT OF SCOPE here.
 --

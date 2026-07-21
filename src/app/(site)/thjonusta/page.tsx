@@ -5,7 +5,7 @@ import ThjonustaView from "./ThjonustaView";
 export const metadata: Metadata = {
   title: "Þjónusta — Fjarlækningar ehf.",
   description:
-    "Algeng heilsugæsluerindi leyst í gegnum örugga sjúklingagátt Medalia — spurningalistar samdir af læknum, sjálfspróf heima og lyfseðill rafrænt í lyfjagátt.",
+    "Algeng heilsugæsluerindi leyst í gegnum örugga sjúklingagátt Fjarlækninga — spurningalistar samdir af læknum, sjálfspróf heima og lyfseðill rafrænt í lyfjagátt.",
 };
 
 // Rendered per request: picks up the `lang` cookie + the latest PUBLISHED

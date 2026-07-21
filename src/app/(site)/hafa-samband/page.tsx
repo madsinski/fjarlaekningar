@@ -5,7 +5,7 @@ import HafaSambandView from "./HafaSambandView";
 export const metadata: Metadata = {
   title: "Hafa samband — Fjarlækningar ehf.",
   description:
-    "Hafðu samband við Fjarlækningar ehf. Fyrir læknisþjónustu, opnaðu sjúklingagátt Medalia.",
+    "Hafðu samband við Fjarlækningar ehf. Fyrir læknisþjónustu, opnaðu sjúklingagátt Fjarlækninga.",
 };
 
 // Per-request render: `lang` cookie + latest PUBLISHED content, falling back to

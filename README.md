@@ -1,6 +1,6 @@
 # Fjarlækningar ehf.
 
-Website for Fjarlækningar ehf. — telemedicine service in Iceland. Patient bookings and consultations are handled through the Medalia patient portal (same integration as lifeline-website).
+Website for Fjarlækningar ehf. — telemedicine service in Iceland. Patient bookings and consultations are handled through the sjúklingagátt (patient portal).
 
 ## Stack
 
@@ -8,7 +8,6 @@ Website for Fjarlækningar ehf. — telemedicine service in Iceland. Patient boo
 - React 19
 - TypeScript
 - Tailwind CSS v4 (PostCSS plugin)
-- Medalia SDK loaded via `<Script>` in `layout.tsx`
 
 ## Getting started
 
@@ -24,7 +23,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ```
 src/
   app/
-    layout.tsx          # Root layout, Medalia SDK, Navbar, Footer
+    layout.tsx          # Root layout, Navbar, Footer
     page.tsx            # Home
     globals.css         # Tailwind v4 + theme tokens
     thjonusta/          # Services
@@ -34,14 +33,19 @@ src/
       Navbar.tsx
       Footer.tsx
       Logo.tsx
-      MedaliaButton.tsx
+      PortalButton.tsx
 ```
 
-## Medalia integration
+## Patient portal (sjúklingagátt)
 
-`MedaliaButton.tsx` renders a button with class `medalia-widget` and a `data-src` pointing to the patient portal URL. The Medalia SDK (`https://app.medalia.is/sdk.js`), loaded in `layout.tsx`, hydrates these buttons so clicks open the portal.
+`PortalButton.tsx` is a plain link to the portal URL — there is no SDK and no
+widget hydration (the previous README described the lifeline setup, which this
+repo never actually used).
 
-**TODO:** Replace `MEDALIA_PORTAL_URL` in `MedaliaButton.tsx` with the Fjarlækningar-specific portal instance once it has been provisioned.
+**Naming:** user-facing copy says "sjúklingagátt Fjarlækninga", or plainly
+"sjúklingagátt". The vendor name is not used anywhere a patient can see. The one
+place it survives is the `PORTAL_URL` value itself, because that is the real
+address patients are sent to and cannot be renamed from here.
 
 ## Deployment
 

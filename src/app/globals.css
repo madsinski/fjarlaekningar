@@ -57,11 +57,6 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Style Medalia widget buttons to match our design */
-button.medalia-widget {
-  cursor: pointer;
-}
-
 /* Fade-in-up animation for scroll reveals */
 @keyframes fadeInUp {
   from {

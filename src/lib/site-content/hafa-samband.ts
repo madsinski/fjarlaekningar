@@ -34,7 +34,7 @@ export const HAFA_SAMBAND_DEFAULTS_IS: LocaleContent = {
 
   card1_heading: "Senda inn erindi",
   card1_body:
-    "Öll erindi og læknisfræðileg samskipti fara fram í gegnum sjúklingagátt Medalia. Læknir svarar innan tveggja klukkustunda á opnunartíma. Opið alla daga milli 10 og 22 — beiðnum sem berast eftir kl. 22 er svarað daginn eftir.",
+    "Öll erindi og læknisfræðileg samskipti fara fram í gegnum sjúklingagátt Fjarlækninga. Læknir svarar innan tveggja klukkustunda á opnunartíma. Opið alla daga milli 10 og 22 — beiðnum sem berast eftir kl. 22 er svarað daginn eftir.",
   card1_button: "Opna sjúklingagátt",
   card1_icon: "shield-check",
 

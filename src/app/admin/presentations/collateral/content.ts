@@ -3,7 +3,7 @@
 // The collateral is a DYNAMIC LIST of A4 documents (docs.tsx renders each from
 // its fields). Each document has a layout `type` (poster / referral / advert),
 // an editable tab name + tagline, and per-document sharing (web address +
-// Medalia portal link; the QR encodes the portal link). Documents can be
+// portal link; the QR encodes the portal link). Documents can be
 // duplicated, deleted and reordered in the studio (page.tsx / CollateralStudio).
 // Persisted as one JSONB blob in a single-row Supabase table.
 
@@ -14,7 +14,9 @@ export type AfterItem = { k: string; bold: string; text: string; icon?: string }
 
 export type DocType = "poster" | "referral" | "advert" | "lifelinecheck";
 
-export const MEDALIA_PORTAL_URL =
+// Vendor-provisioned portal address. Kept verbatim: it is where patients
+// actually land, so it is a real URL rather than a brand reference.
+export const PORTAL_URL =
   "https://app.medalia.dev/0b9e8a71-34dc-4354-bf79-03826914bcce";
 
 export type PosterFields = {
@@ -101,7 +103,7 @@ export type Doc =
 export type ArchivedDoc = Doc & { archivedAt?: string };
 export type CollateralContent = { docs: Doc[]; archived?: ArchivedDoc[] };
 
-// The nine services from the Medalia menu „Hvernig getum við aðstoðað þig?“.
+// The nine services from the portal menu „Hvernig getum við aðstoðað þig?“.
 // `icon` maps to /public/fjarlaekningar-icons/portal/<icon>.png — the fixed set.
 export const SERVICE_ICONS = [
   "kvef-hosti-halsbolga",
@@ -143,7 +145,7 @@ export const DEFAULT_POSTER: PosterFields = {
   ],
   ctaLabel: "Byrjaðu hér",
   url: "fjarlaekningar.is",
-  portalUrl: MEDALIA_PORTAL_URL,
+  portalUrl: PORTAL_URL,
   footerNote: "Svar innan tveggja klukkustunda á opnunartíma, alla daga milli 10 og 22.",
   safety: { bold: "Neyðartilfelli?", text: " Hringdu í 112 eða leitaðu á bráðamóttöku." },
 };
@@ -187,11 +189,11 @@ export const DEFAULT_REFERRAL: ReferralFields = {
     { k: "2h", icon: "clock", bold: "Innan tveggja klukkustunda.", text: " Læknir svarar erindum á opnunartíma, alla daga milli 10 og 22." },
     { k: "Rx", icon: "pill", bold: "Lyfseðill fer rafrænt í lyfjagátt", text: " og er tilbúinn í því apóteki sem sjúklingur velur." },
     { k: "←", icon: "undo", bold: "Tilvísun til baka.", text: " Þurfi sjúklingur skoðun eða frekari rannsókn vísar læknir aftur í hefðbundna þjónustu HSU." },
-    { k: "lás", icon: "lock", bold: "Öruggt.", text: " Öll samskipti fara um sjúklingagátt Medalia — dulkóðuð og eingöngu aðgengileg sjúklingi og lækni." },
+    { k: "lás", icon: "lock", bold: "Öruggt.", text: " Öll samskipti fara um sjúklingagátt Fjarlækninga — dulkóðuð og eingöngu aðgengileg sjúklingi og lækni." },
   ],
   shareTitle: "Þrjár leiðir til að deila þjónustunni með sjúklingi",
   url: "fjarlaekningar.is",
-  portalUrl: MEDALIA_PORTAL_URL,
+  portalUrl: PORTAL_URL,
   safety: { bold: "Neyðartilfelli:", text: " Fjarlækningar eru ekki fyrir bráðaþjónustu. Hringdu í 112 eða Læknavaktina 1700." },
   contactLabel: "Spurningar?",
   contactEmail: "info@fjarlaekningar.is",
@@ -211,7 +213,7 @@ export const DEFAULT_ADVERT: AdvertFields = {
   ],
   ctaLabel: "Byrjaðu í dag",
   url: "fjarlaekningar.is",
-  portalUrl: MEDALIA_PORTAL_URL,
+  portalUrl: PORTAL_URL,
   partnerNote: "Í tilraunasamstarfi til eins árs við Heilbrigðisstofnun Suðurlands (HSU).",
   safety: { bold: "Neyðartilfelli:", text: " Hringdu í 112. Fjarlækningar eru ekki ætlaðar fyrir bráðaþjónustu." },
 };

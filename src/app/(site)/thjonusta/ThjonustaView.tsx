@@ -1,4 +1,4 @@
-import MedaliaButton from "../../components/MedaliaButton";
+import PortalButton from "../../components/PortalButton";
 import PageHero from "../PageHero";
 import { erindi } from "../../../erindi";
 import SiteIcon from "@/lib/site-content/SiteIcon";
@@ -21,11 +21,15 @@ export default function ThjonustaView({ c }: { c: LocaleContent }) {
     { title: c.test2_title, desc: c.test2_desc, where: c.test2_where, icon: c.test2_icon, fallback: "test-tube" },
     { title: c.test3_title, desc: c.test3_desc, where: c.test3_where, icon: c.test3_icon, fallback: "thermometer" },
   ].filter((t) => t.title);
-  const live = [
-    { name: c.live1_name, note: c.live1_note },
-    { name: c.live2_name, note: c.live2_note },
-    { name: c.live3_name, note: c.live3_note },
-  ].filter((l) => l.name);
+  // One location per line, "Nafn | Texti". Unlimited, so staff can add
+  // heilsugæslur from the admin editor without touching the schema.
+  const live = (c.live_locations ?? "")
+    .split("\n")
+    .map((line) => {
+      const [name, ...rest] = line.split("|");
+      return { name: name.trim(), note: rest.join("|").trim() };
+    })
+    .filter((l) => l.name);
 
   // CMS stores these lists one item per line.
   const lines = (v?: string) =>
@@ -341,7 +345,7 @@ export default function ThjonustaView({ c }: { c: LocaleContent }) {
 
           <div className="mt-16 max-w-3xl">
             <p className="text-slate-600 mb-6">{c.cta_text}</p>
-            <MedaliaButton size="lg" label={c.cta_button} />
+            <PortalButton size="lg" label={c.cta_button} />
           </div>
         </div>
       </section>

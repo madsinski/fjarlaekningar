@@ -3,7 +3,7 @@
 --
 -- General, NON-medical inquiries submitted from the public contact form
 -- (/fyrirspurn) land here for staff triage. Medical erindi never touch this —
--- they go through Medalia. Run once in the Supabase SQL editor. Idempotent.
+-- they go through the sjúklingagátt. Run once in the Supabase SQL editor. Idempotent.
 -- Requires Phase 1 helpers (is_active_staff()).
 -- ============================================================================
 

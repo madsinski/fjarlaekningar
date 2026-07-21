@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Fjarlækningar admin — Phase 2: Presentations & printables
 --
--- A shareable content library: presentation decks (link-outs to Figma/Medalia/
+-- A shareable content library: presentation decks (link-outs to Figma/portal/
 -- PDF or an inline markdown page) and printable A4 collateral. Published items
 -- render at /kynning/<slug> (print-friendly). DB-backed like the legal module.
 --
@@ -16,7 +16,7 @@ create table if not exists public.presentations (
                   check (kind in ('kynning','prentefni')),   -- presentation | printable
   summary       text        not null default '',
   body          text        not null default '',              -- markdown (optional)
-  external_url  text,                                          -- link-out (Figma/PDF/Medalia)
+  external_url  text,                                          -- link-out (Figma/PDF/portal)
   status        text        not null default 'draft' check (status in ('draft','published')),
   published_at  timestamptz,
   updated_by    uuid        references public.staff(id) on delete set null,

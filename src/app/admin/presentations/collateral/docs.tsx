@@ -37,7 +37,7 @@ import type {
 } from "./content";
 
 function ico(icon: string) {
-  // Icons matching the live Medalia patient portal, normalised onto white tiles.
+  // Icons matching the live patient portal, normalised onto white tiles.
   return `/fjarlaekningar-icons/portal/${icon}.png`;
 }
 

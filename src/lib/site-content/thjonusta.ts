@@ -52,16 +52,13 @@ export const THJONUSTA_FIELDS: SiteField[] = [
   { key: "test3_icon", label: "Próf 3 — tákn", group: "Heimapróf", type: "icon" },
   { key: "tests_footer", label: "Neðanmálstexti", group: "Heimapróf", type: "textarea" },
 
-  // Where the service is live. Slots 2 and 3 are empty until more heilsugaeslur
-  // come online — a slot with no name is not rendered.
+  // Where the service is live. One location per line so staff can add as many
+  // heilsugaeslur as they like from the admin editor without a schema change:
+  //   Nafn | Texti
+  // The text after "|" is optional; a line with no "|" renders as name only.
   { key: "live_heading", label: "Fyrirsögn", group: "Virk þjónusta", type: "heading" },
   { key: "live_body", label: "Inngangur", group: "Virk þjónusta", type: "textarea" },
-  { key: "live1_name", label: "Staður 1 — heiti", group: "Virk þjónusta", type: "text" },
-  { key: "live1_note", label: "Staður 1 — texti", group: "Virk þjónusta", type: "textarea" },
-  { key: "live2_name", label: "Staður 2 — heiti", group: "Virk þjónusta", type: "text" },
-  { key: "live2_note", label: "Staður 2 — texti", group: "Virk þjónusta", type: "textarea" },
-  { key: "live3_name", label: "Staður 3 — heiti", group: "Virk þjónusta", type: "text" },
-  { key: "live3_note", label: "Staður 3 — texti", group: "Virk þjónusta", type: "textarea" },
+  { key: "live_locations", label: "Staðir — ein lína hver: Nafn | Texti", group: "Virk þjónusta", type: "textarea" },
   { key: "live_footer", label: "Neðanmálstexti", group: "Virk þjónusta", type: "text" },
 
   // FAQ
@@ -114,7 +111,7 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
   hero_eyebrow: "Þjónusta Fjarlækninga",
   hero_heading: "Læknisþjónusta fyrir ==algeng erindi==",
   hero_body:
-    "Fjarlækningar leysa algeng heilsugæsluerindi í gegnum örugga sjúklingagátt Medalia — án þess að þú þurfir að mæta á staðinn.",
+    "Fjarlækningar leysa algeng heilsugæsluerindi í gegnum örugga sjúklingagátt — án þess að þú þurfir að mæta á staðinn.",
 
   erindi_heading: "Algeng ==erindi==",
   erindi_body: "Flest erindi afgreidd innan tveggja klukkustunda á opnunartíma.",
@@ -170,12 +167,8 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
   live_heading: "Hvar er þjónustan ==virk==?",
   live_body:
     "Við byggjum þjónustuna upp í samstarfi við heilsugæslur, eina í einu. Þjónustan er virk hjá:",
-  live1_name: "Heilsugæslan í Vestmannaeyjum",
-  live1_note: "Hér færðu einnig heimaprófin sem geta fylgt erindinu: CRP-próf, þvagstix og strep-próf.",
-  live2_name: "",
-  live2_note: "",
-  live3_name: "",
-  live3_note: "",
+  live_locations:
+    "Heilsugæslan í Vestmannaeyjum | Hér færðu einnig heimaprófin sem geta fylgt erindinu: CRP-próf, þvagstix og strep-próf.",
   live_footer: "Fleiri heilsugæslur bætast við eftir því sem þjónustan þróast.",
 
   // NOTE: assembled from Fjarlækningar's own published wording (erindi

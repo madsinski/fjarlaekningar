@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Logo from "./Logo";
-import MedaliaButton from "./MedaliaButton";
+import PortalButton from "./PortalButton";
 
 function LangToggle() {
   const router = useRouter();
@@ -115,7 +115,7 @@ export default function Navbar({ content }: { content?: NavbarContent }) {
               );
             })}
             <LangToggle />
-            <MedaliaButton size="sm" label={t.nav_cta} />
+            <PortalButton size="sm" label={t.nav_cta} />
           </div>
 
           {/* Mobile toggle */}
@@ -162,7 +162,7 @@ export default function Navbar({ content }: { content?: NavbarContent }) {
             ))}
             <div className="px-2 pt-2 flex items-center gap-3">
               <LangToggle />
-              <MedaliaButton className="w-full" label={t.nav_cta} />
+              <PortalButton className="w-full" label={t.nav_cta} />
             </div>
           </div>
         )}

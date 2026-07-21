@@ -1,5 +1,5 @@
 import Link from "next/link";
-import MedaliaButton from "../components/MedaliaButton";
+import PortalButton from "../components/PortalButton";
 import NewsletterSignup from "../components/NewsletterSignup";
 import { erindi } from "../../erindi";
 import { renderHighlighted } from "@/lib/site-content/highlight";
@@ -54,7 +54,7 @@ export default function HomeView({ c }: { c: LocaleContent }) {
               ))}
             </div>
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
-              <MedaliaButton size="lg" label={c.hero_cta_primary} />
+              <PortalButton size="lg" label={c.hero_cta_primary} />
               <Link
                 href="/thjonusta"
                 className="inline-flex items-center justify-center px-10 py-4 rounded-full border-2 border-slate-300 text-slate-700 font-semibold hover:border-slate-400 transition-colors"
@@ -195,7 +195,7 @@ export default function HomeView({ c }: { c: LocaleContent }) {
             <h2 className="text-3xl sm:text-4xl font-bold max-w-2xl">{renderHighlighted(c.cta_heading)}</h2>
             <p className="mt-4 text-brand-cyan-subtle max-w-xl">{c.cta_body}</p>
             <div className="mt-8">
-              <MedaliaButton
+              <PortalButton
                 size="lg"
                 label={c.cta_button}
                 className="bg-white !text-[var(--primary-dark)] hover:!bg-brand-cyan-subtle"

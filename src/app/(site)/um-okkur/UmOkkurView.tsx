@@ -1,4 +1,4 @@
-import MedaliaButton from "../../components/MedaliaButton";
+import PortalButton from "../../components/PortalButton";
 import TeamGrid from "../../components/TeamGrid";
 import PageHero from "../PageHero";
 import SiteIcon from "@/lib/site-content/SiteIcon";
@@ -84,7 +84,7 @@ export default function UmOkkurView({ c }: { c: LocaleContent }) {
       {/* CTA */}
       <section className="pb-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <MedaliaButton size="lg" label={c.cta_button} />
+          <PortalButton size="lg" label={c.cta_button} />
         </div>
       </section>
     </>

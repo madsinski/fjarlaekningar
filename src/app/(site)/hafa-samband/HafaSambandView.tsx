@@ -1,4 +1,4 @@
-import MedaliaButton from "../../components/MedaliaButton";
+import PortalButton from "../../components/PortalButton";
 import SiteIcon from "@/lib/site-content/SiteIcon";
 import PageHero from "../PageHero";
 import type { LocaleContent } from "@/lib/site-content/types";
@@ -21,7 +21,7 @@ export default function HafaSambandView({ c }: { c: LocaleContent }) {
             </div>
             <h2 className="text-xl font-semibold text-slate-900 mb-2">{c.card1_heading}</h2>
             <p className="text-slate-600 mb-6">{c.card1_body}</p>
-            <MedaliaButton label={c.card1_button} />
+            <PortalButton label={c.card1_button} />
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 p-8">

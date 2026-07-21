@@ -5,7 +5,7 @@ import UmOkkurView from "./UmOkkurView";
 export const metadata: Metadata = {
   title: "Um okkur — Fjarlækningar ehf.",
   description:
-    "Fjarlækningar ehf. er íslenskt fyrirtæki sem býður upp á örugga fjarlæknisþjónustu í gegnum sjúklingagátt Medalia.",
+    "Fjarlækningar ehf. er íslenskt fyrirtæki sem býður upp á örugga fjarlæknisþjónustu í gegnum sjúklingagátt Fjarlækninga.",
 };
 
 // Per-request render: `lang` cookie + latest PUBLISHED content, falling back to
