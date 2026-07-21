@@ -97,7 +97,9 @@ export default function TeamGrid() {
 
   return (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5 max-w-5xl mx-auto">
+      {/* No mx-auto: the grid starts at the container's left edge so it lines up
+          with the section heading above it, like every other grid on the site. */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5 max-w-5xl">
         {team.map((member) => (
           <button
             key={member.name}
@@ -105,9 +107,9 @@ export default function TeamGrid() {
             onClick={() => setActive(member)}
             title="Smelltu til að stækka"
             aria-label={`Stækka mynd: ${member.name}`}
-            className="group bg-white rounded-2xl border border-slate-200 p-5 text-center hover:shadow-lg hover:border-brand-cyan transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+            className="group bg-white rounded-2xl border border-slate-200 p-5 text-left hover:shadow-lg hover:border-brand-cyan transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
           >
-            <div className="relative mx-auto w-20 h-20 rounded-full overflow-hidden bg-brand-cyan-subtle ring-2 ring-brand-cyan-muted">
+            <div className="relative w-20 h-20 rounded-full overflow-hidden bg-brand-cyan-subtle ring-2 ring-brand-cyan-muted">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={member.photo}
