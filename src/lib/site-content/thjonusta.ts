@@ -33,6 +33,37 @@ export const THJONUSTA_FIELDS: SiteField[] = [
   { key: "step5_title", label: "Skref 5 — titill", group: "Ferlið", type: "text" },
   { key: "step5_desc", label: "Skref 5 — lýsing", group: "Ferlið", type: "textarea" },
 
+  // Heimapróf. Step 2 of the process mentions these in passing; this section is
+  // the practical detail, because fetching a test yourself is the one piece of
+  // friction in an otherwise at-home flow. "Hvar" is a comma-separated list.
+  { key: "tests_heading", label: "Fyrirsögn", group: "Heimapróf", type: "heading" },
+  { key: "tests_body", label: "Inngangur", group: "Heimapróf", type: "textarea" },
+  { key: "test1_title", label: "Próf 1 — heiti", group: "Heimapróf", type: "text" },
+  { key: "test1_desc", label: "Próf 1 — lýsing", group: "Heimapróf", type: "textarea" },
+  { key: "test1_where", label: "Próf 1 — hvar (aðskilið með kommu)", group: "Heimapróf", type: "text" },
+  { key: "test1_icon", label: "Próf 1 — tákn", group: "Heimapróf", type: "icon" },
+  { key: "test2_title", label: "Próf 2 — heiti", group: "Heimapróf", type: "text" },
+  { key: "test2_desc", label: "Próf 2 — lýsing", group: "Heimapróf", type: "textarea" },
+  { key: "test2_where", label: "Próf 2 — hvar (aðskilið með kommu)", group: "Heimapróf", type: "text" },
+  { key: "test2_icon", label: "Próf 2 — tákn", group: "Heimapróf", type: "icon" },
+  { key: "test3_title", label: "Próf 3 — heiti", group: "Heimapróf", type: "text" },
+  { key: "test3_desc", label: "Próf 3 — lýsing", group: "Heimapróf", type: "textarea" },
+  { key: "test3_where", label: "Próf 3 — hvar (aðskilið með kommu)", group: "Heimapróf", type: "text" },
+  { key: "test3_icon", label: "Próf 3 — tákn", group: "Heimapróf", type: "icon" },
+  { key: "tests_footer", label: "Neðanmálstexti", group: "Heimapróf", type: "textarea" },
+
+  // Where the service is live. Slots 2 and 3 are empty until more heilsugaeslur
+  // come online — a slot with no name is not rendered.
+  { key: "live_heading", label: "Fyrirsögn", group: "Virk þjónusta", type: "heading" },
+  { key: "live_body", label: "Inngangur", group: "Virk þjónusta", type: "textarea" },
+  { key: "live1_name", label: "Staður 1 — heiti", group: "Virk þjónusta", type: "text" },
+  { key: "live1_note", label: "Staður 1 — texti", group: "Virk þjónusta", type: "textarea" },
+  { key: "live2_name", label: "Staður 2 — heiti", group: "Virk þjónusta", type: "text" },
+  { key: "live2_note", label: "Staður 2 — texti", group: "Virk þjónusta", type: "textarea" },
+  { key: "live3_name", label: "Staður 3 — heiti", group: "Virk þjónusta", type: "text" },
+  { key: "live3_note", label: "Staður 3 — texti", group: "Virk þjónusta", type: "textarea" },
+  { key: "live_footer", label: "Neðanmálstexti", group: "Virk þjónusta", type: "text" },
+
   // FAQ
   // Scope/limits — what fjarlækningar is NOT for. Clinically sensitive: the
   // defaults are assembled verbatim from Fjarlækningar's own existing copy
@@ -111,6 +142,41 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
   step5_title: "Niðurstaða, ráðleggingar og lyfseðill",
   step5_desc:
     "Þú færð skriflega niðurstöðu og ráðleggingar, og lyfseðill fer rafrænt í lyfjagátt ef þörf er á — tilbúinn í næsta apóteki. Niðurstöðunni fylgir fræðsluefni tengt þínu vandamáli: ráðleggingar, fyrirbyggjandi ráð og vörur án lyfseðils sem geta hjálpað.",
+
+  // NEEDS CLINICAL SIGN-OFF. Step 2 already says heimapróf exist and that
+  // þvagpróf is fetched "á heilsugæslu eða í næsta apóteki" — that part is
+  // existing copy. What is new: naming CRP and strep-próf, the one-line
+  // description of what each screens for, and CRP being heilsugæsla-only.
+  // Descriptions are deliberately about what the test looks for, never what a
+  // result means for the patient.
+  tests_heading: "==Heimapróf== sem geta fylgt erindinu",
+  tests_body:
+    "Fyrir sum erindi bætir einfalt próf matið. Spurningalistinn segir þér hvort próf þarf — það á ekki við um öll erindi. Þú sækir prófið sjálf eða sjálfur, tekur það heima og skráir niðurstöðuna beint í gáttina.",
+  test1_title: "CRP-próf",
+  test1_desc: "Mælir bólgusvörun í blóði.",
+  test1_where: "Heilsugæsla",
+  test1_icon: "droplet",
+  test2_title: "Þvagstix",
+  test2_desc: "Skimar fyrir merkjum um þvagfærasýkingu.",
+  test2_where: "Apótek, Heilsugæsla",
+  test2_icon: "test-tube",
+  test3_title: "Strep-próf",
+  test3_desc: "Skimar fyrir streptókokkum í hálsi.",
+  test3_where: "Apótek, Heilsugæsla",
+  test3_icon: "thermometer",
+  tests_footer:
+    "Þú skráir niðurstöðuna beint í sjúklingagáttina og læknir metur hana með svörunum þínum. Þurfir þú aðstoð við að nálgast próf, hafðu samband.",
+
+  live_heading: "Hvar er þjónustan ==virk==?",
+  live_body:
+    "Við byggjum þjónustuna upp í samstarfi við heilsugæslur, eina í einu. Þjónustan er virk hjá:",
+  live1_name: "Heilsugæslan í Vestmannaeyjum",
+  live1_note: "Hér færðu einnig heimaprófin sem geta fylgt erindinu: CRP-próf, þvagstix og strep-próf.",
+  live2_name: "",
+  live2_note: "",
+  live3_name: "",
+  live3_note: "",
+  live_footer: "Fleiri heilsugæslur bætast við eftir því sem þjónustan þróast.",
 
   // NOTE: assembled from Fjarlækningar's own published wording (erindi
   // descriptions + HSU referral collateral). Review clinically before publishing.

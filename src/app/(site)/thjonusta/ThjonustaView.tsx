@@ -16,6 +16,17 @@ export default function ThjonustaView({ c }: { c: LocaleContent }) {
     { n: "4", title: c.step4_title, description: c.step4_desc },
     { n: "5", title: c.step5_title, description: c.step5_desc },
   ].filter((s) => s.title);
+  const tests = [
+    { title: c.test1_title, desc: c.test1_desc, where: c.test1_where, icon: c.test1_icon, fallback: "droplet" },
+    { title: c.test2_title, desc: c.test2_desc, where: c.test2_where, icon: c.test2_icon, fallback: "test-tube" },
+    { title: c.test3_title, desc: c.test3_desc, where: c.test3_where, icon: c.test3_icon, fallback: "thermometer" },
+  ].filter((t) => t.title);
+  const live = [
+    { name: c.live1_name, note: c.live1_note },
+    { name: c.live2_name, note: c.live2_note },
+    { name: c.live3_name, note: c.live3_note },
+  ].filter((l) => l.name);
+
   // CMS stores these lists one item per line.
   const lines = (v?: string) =>
     (v ?? "")
@@ -120,6 +131,91 @@ export default function ThjonustaView({ c }: { c: LocaleContent }) {
         </div>
       </section>
 
+      {/* Heimapróf. Fetching a test yourself is the one piece of friction in an
+          otherwise at-home flow, so this section's job is to make it feel
+          small: what the test is, and exactly where to get it. */}
+      {c.tests_heading && (
+        <section className="py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-2xl mb-10">
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+                {renderHighlighted(c.tests_heading)}
+              </h2>
+              <p className="mt-3 text-slate-600">{c.tests_body}</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {tests.map((t) => (
+                <div
+                  key={t.title}
+                  className="h-full flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm p-6"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-brand-cyan-subtle text-[var(--primary-dark)] flex items-center justify-center mb-4">
+                    <SiteIcon name={t.icon} fallback={t.fallback} className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-base font-semibold text-slate-900 mb-1.5">{t.title}</h3>
+                  <p className="text-sm text-slate-600 leading-relaxed">{t.desc}</p>
+                  {t.where && (
+                    <div className="mt-4 pt-4 border-t border-slate-100">
+                      <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                        Fæst hjá
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {t.where.split(",").map((w) => (
+                          <span
+                            key={w}
+                            className="inline-flex items-center rounded-full bg-brand-cyan-subtle/70 px-2.5 py-0.5 text-xs font-medium text-[var(--primary-dark)]"
+                          >
+                            {w.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            {c.tests_footer && <p className="mt-8 text-sm text-slate-500 max-w-3xl">{c.tests_footer}</p>}
+          </div>
+        </section>
+      )}
+
+      {/* Where the service is live. Green is used only here, and only to mean
+          "you can use this today" — it is the one genuinely positive status on
+          the page, so it should not share the cyan of ordinary content. */}
+      {c.live_heading && (
+        <section className="py-20 bg-[var(--background)] border-y border-slate-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-2xl mb-10">
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+                {renderHighlighted(c.live_heading)}
+              </h2>
+              <p className="mt-3 text-slate-600">{c.live_body}</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+              {live.map((l) => (
+                <div
+                  key={l.name}
+                  className="h-full flex flex-col bg-white rounded-2xl border border-emerald-200 shadow-sm p-6"
+                >
+                  <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 mb-4">
+                    <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    Virk þjónusta
+                  </span>
+                  <div className="flex items-start gap-3">
+                    <SiteIcon name="map-pin" fallback="map-pin" className="w-5 h-5 shrink-0 mt-0.5 text-emerald-700" />
+                    <div>
+                      <h3 className="text-base font-semibold text-slate-900">{l.name}</h3>
+                      {l.note && <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">{l.note}</p>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {c.live_footer && <p className="mt-8 text-sm text-slate-500">{c.live_footer}</p>}
+          </div>
+        </section>
+      )}
+
       {/* Scope / limits. Styled apart from the cyan capability cards on purpose
           — this is clinical guidance, not marketing. Hidden entirely if the
           heading is cleared in the CMS. */}
@@ -132,11 +228,17 @@ export default function ThjonustaView({ c }: { c: LocaleContent }) {
               </h2>
               <p className="mt-3 text-slate-600">{c.limits_body}</p>
             </div>
-            {/* items-start so an expanded card grows on its own instead of
-                stretching its neighbours to match. */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            {/* Default stretch (no items-start) so cards in a row share one
+                height and their edges line up. h-full + flex-col makes each
+                card fill that height rather than floating at its natural size.
+                Amber border + lift: these are scope warnings on a white
+                section, and a plain slate border left them barely visible. */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {limits.map((l) => (
-                <div key={l.title} className="bg-white rounded-2xl border border-slate-200 p-6">
+                <div
+                  key={l.title}
+                  className="h-full flex flex-col bg-white rounded-2xl border border-amber-200 shadow-sm p-6 transition-shadow hover:shadow-md"
+                >
                   <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center mb-4">
                     <SiteIcon name={l.icon} fallback={l.fallback} className="w-5 h-5" />
                   </div>
