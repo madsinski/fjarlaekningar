@@ -135,8 +135,12 @@ export default async function Footer({ content }: { content?: FooterContent }) {
               </a>
               .
             </p>
-            <Link href="/admin" className="text-slate-500 hover:text-white transition-colors">
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-800/60 px-3.5 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800 hover:text-white"
+            >
               {t.footer_admin_link}
+              <span aria-hidden className="text-slate-500">→</span>
             </Link>
           </div>
         </div>

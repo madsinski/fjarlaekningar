@@ -1,4 +1,5 @@
 import MedaliaButton from "../../components/MedaliaButton";
+import PageHero from "../PageHero";
 import { erindi } from "../../../erindi";
 import SiteIcon from "@/lib/site-content/SiteIcon";
 import { renderHighlighted } from "@/lib/site-content/highlight";
@@ -27,14 +28,7 @@ export default function ThjonustaView({ c }: { c: LocaleContent }) {
 
   return (
     <>
-      <section className="bg-gradient-to-br from-brand-cyan-subtle to-white py-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
-            {renderHighlighted(c.hero_heading)}
-          </h1>
-          <p className="mt-6 text-lg text-slate-600 max-w-2xl mx-auto">{c.hero_body}</p>
-        </div>
-      </section>
+      <PageHero c={c} />
 
       <section className="py-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">

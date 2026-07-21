@@ -5,8 +5,13 @@ import { emptyDefaults, type LocaleContent, type SiteField } from "./types";
 
 export const THJONUSTA_FIELDS: SiteField[] = [
   // Hero
+  { key: "hero_eyebrow", label: "Merki (lítill borði)", group: "Hetjusvæði", type: "text" },
   { key: "hero_heading", label: "Fyrirsögn", group: "Hetjusvæði", type: "heading" },
   { key: "hero_body", label: "Undirtexti", group: "Hetjusvæði", type: "textarea" },
+  { key: "hero_chip1", label: "Staðreynd 1", group: "Hetjusvæði", type: "text" },
+  { key: "hero_chip2", label: "Staðreynd 2", group: "Hetjusvæði", type: "text" },
+  { key: "hero_chip3", label: "Staðreynd 3", group: "Hetjusvæði", type: "text" },
+  { key: "hero_cta", label: "Hnappur", group: "Hetjusvæði", type: "text" },
 
   // Erindi list
   { key: "erindi_heading", label: "Fyrirsögn", group: "Algeng erindi", type: "heading" },
@@ -56,9 +61,14 @@ export const THJONUSTA_FIELDS: SiteField[] = [
 ];
 
 export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
-  hero_heading: "Þjónusta",
+  hero_eyebrow: "Þjónusta Fjarlækninga",
+  hero_heading: "Læknisþjónusta fyrir ==algeng erindi==",
   hero_body:
     "Fjarlækningar leysa algeng heilsugæsluerindi í gegnum örugga sjúklingagátt Medalia — án þess að þú þurfir að mæta á staðinn.",
+  hero_chip1: "Svar innan 2 klst.",
+  hero_chip2: "Opið alla daga 10–22",
+  hero_chip3: "Óháð staðsetningu",
+  hero_cta: "Opna sjúklingagátt",
 
   erindi_heading: "Algeng erindi",
   erindi_body: "Flest erindi afgreidd innan tveggja klukkustunda á opnunartíma.",

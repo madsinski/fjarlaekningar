@@ -5,8 +5,13 @@ import { emptyDefaults, type LocaleContent, type SiteField } from "./types";
 
 export const HAFA_SAMBAND_FIELDS: SiteField[] = [
   // Hero
+  { key: "hero_eyebrow", label: "Merki (lítill borði)", group: "Hetjusvæði", type: "text" },
   { key: "hero_heading", label: "Fyrirsögn", group: "Hetjusvæði", type: "heading" },
   { key: "hero_body", label: "Undirtexti", group: "Hetjusvæði", type: "textarea" },
+  { key: "hero_chip1", label: "Staðreynd 1", group: "Hetjusvæði", type: "text" },
+  { key: "hero_chip2", label: "Staðreynd 2", group: "Hetjusvæði", type: "text" },
+  { key: "hero_chip3", label: "Staðreynd 3", group: "Hetjusvæði", type: "text" },
+  { key: "hero_cta", label: "Hnappur", group: "Hetjusvæði", type: "text" },
 
   // Card 1 — portal
   { key: "card1_heading", label: "Titill", group: "Senda inn erindi", type: "text" },
@@ -26,9 +31,14 @@ export const HAFA_SAMBAND_FIELDS: SiteField[] = [
 ];
 
 export const HAFA_SAMBAND_DEFAULTS_IS: LocaleContent = {
-  hero_heading: "Hafa samband",
+  hero_eyebrow: "Hafa samband",
+  hero_heading: "Hafðu samband við ==Fjarlækningar==",
   hero_body:
     "Fyrir læknisþjónustu skaltu opna sjúklingagáttina og velja erindi. Fyrir almennar fyrirspurnir, notaðu upplýsingarnar hér að neðan.",
+  hero_chip1: "Svar innan 2 klst.",
+  hero_chip2: "Opið alla daga 10–22",
+  hero_chip3: "",
+  hero_cta: "",
 
   card1_heading: "Senda inn erindi",
   card1_body:

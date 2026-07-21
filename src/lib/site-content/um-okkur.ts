@@ -5,8 +5,13 @@ import { emptyDefaults, type LocaleContent, type SiteField } from "./types";
 
 export const UM_OKKUR_FIELDS: SiteField[] = [
   // Hero
+  { key: "hero_eyebrow", label: "Merki (lítill borði)", group: "Hetjusvæði", type: "text" },
   { key: "hero_heading", label: "Fyrirsögn", group: "Hetjusvæði", type: "heading" },
   { key: "hero_body", label: "Undirtexti", group: "Hetjusvæði", type: "textarea" },
+  { key: "hero_chip1", label: "Staðreynd 1", group: "Hetjusvæði", type: "text" },
+  { key: "hero_chip2", label: "Staðreynd 2", group: "Hetjusvæði", type: "text" },
+  { key: "hero_chip3", label: "Staðreynd 3", group: "Hetjusvæði", type: "text" },
+  { key: "hero_cta", label: "Hnappur", group: "Hetjusvæði", type: "text" },
 
   // Pillars
   { key: "p1_title", label: "Stoð 1 — titill", group: "Stoðir", type: "text" },
@@ -47,9 +52,14 @@ export const UM_OKKUR_FIELDS: SiteField[] = [
 ];
 
 export const UM_OKKUR_DEFAULTS_IS: LocaleContent = {
-  hero_heading: "Um okkur",
+  hero_eyebrow: "Um okkur",
+  hero_heading: "Stofnað af ==læknum== árið 2021",
   hero_body:
     "Fjarlækningar ehf. er íslenskt fyrirtæki, stofnað af læknum árið 2021, sem leysir algeng heilsugæsluerindi í gegnum örugga sjúklingagátt.",
+  hero_chip1: "Íslenskt fyrirtæki",
+  hero_chip2: "Stofnað 2021",
+  hero_chip3: "Í samstarfi við HSU",
+  hero_cta: "Opna sjúklingagátt",
 
   p1_title: "Hlutverk okkar",
   p1_body:

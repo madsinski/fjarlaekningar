@@ -1,6 +1,6 @@
 import MedaliaButton from "../../components/MedaliaButton";
 import SiteIcon from "@/lib/site-content/SiteIcon";
-import { renderHighlighted } from "@/lib/site-content/highlight";
+import PageHero from "../PageHero";
 import type { LocaleContent } from "@/lib/site-content/types";
 
 // Presentational Hafa samband page — identical markup to the original, with
@@ -8,14 +8,7 @@ import type { LocaleContent } from "@/lib/site-content/types";
 export default function HafaSambandView({ c }: { c: LocaleContent }) {
   return (
     <>
-      <section className="bg-gradient-to-br from-brand-cyan-subtle to-white py-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
-            {renderHighlighted(c.hero_heading)}
-          </h1>
-          <p className="mt-6 text-lg text-slate-600 max-w-2xl">{c.hero_body}</p>
-        </div>
-      </section>
+      <PageHero c={c} width="max-w-4xl" />
 
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-10">
