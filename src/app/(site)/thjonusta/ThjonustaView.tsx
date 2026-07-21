@@ -503,8 +503,11 @@ export default function ThjonustaView({
   return (
     <>
       <PageHero c={c} />
+      {/* Every band is anchored by its section id, so anything can be deep
+          linked (#ferlid from the home page's process summary, #live from the
+          cooperation card) without hand-maintaining a list of anchors. */}
       {visible.map((id, i) => (
-        <Band key={id} index={i} anchor={id === "ferlid" ? "ferlid" : undefined}>
+        <Band key={id} index={i} anchor={id}>
           {blocks[id]}
         </Band>
       ))}

@@ -20,7 +20,7 @@ export const HOME_SECTIONS: SiteSection[] = [
   { id: "services", label: "Þjónusta (yfirlit)" },
   { id: "stats", label: "Tölur" },
   { id: "how", label: "Ferlið" },
-  { id: "hsu", label: "HSU samstarf" },
+  { id: "coop", label: "Samstarf" },
   { id: "cta", label: "Ákall (CTA)" },
   { id: "news", label: "Fréttabréf" },
 ];
@@ -72,10 +72,15 @@ export const HOME_FIELDS: SiteField[] = [
   { key: "how_cta", label: "Hnappur", group: "Ferlið", type: "text" },
 
   // HSU
-  { key: "hsu_eyebrow", label: "Merki (eyebrow)", group: "HSU samstarf", type: "text" },
-  { key: "hsu_heading", label: "Fyrirsögn", group: "HSU samstarf", type: "heading" },
-  { key: "hsu_body1", label: "Texti", group: "HSU samstarf", type: "textarea" },
-  { key: "hsu_body2", label: "Áhersla (feitletrað)", group: "HSU samstarf", type: "textarea" },
+  // Cooperations. Was HSU-specific; now a list, so announcing a second
+  // institution (HSN, ...) is a line of CMS text rather than a code change.
+  // One per line:  Nafn | /logo.webp | undirtexti
+  { key: "coop_eyebrow", label: "Merki (eyebrow)", group: "Samstarf", type: "text" },
+  { key: "coop_heading", label: "Fyrirsögn", group: "Samstarf", type: "heading" },
+  { key: "coop_body", label: "Texti", group: "Samstarf", type: "textarea" },
+  { key: "coop_list", label: "Stofnanir — ein lína hver: Nafn | /logo.webp | undirtexti", group: "Samstarf", type: "textarea" },
+  { key: "coop_note", label: "Áhersla (feitletrað)", group: "Samstarf", type: "textarea" },
+  { key: "coop_cta", label: "Hnappur", group: "Samstarf", type: "text" },
 
   // Fréttabréf (newsletter opt-in)
   { key: "news_heading", label: "Fyrirsögn", group: "Fréttabréf", type: "heading" },
@@ -132,11 +137,13 @@ export const HOME_DEFAULTS_IS: LocaleContent = {
   step5_title: "Niðurstaða, ráðleggingar og lyfseðill",
   how_cta: "Sjá hvernig þjónustan virkar",
 
-  hsu_eyebrow: "Tilraunaverkefni til eins árs",
-  hsu_heading: "Í samstarfi við Heilbrigðisstofnun Suðurlands",
-  hsu_body1:
+  coop_eyebrow: "Samstarf við heilbrigðisstofnanir",
+  coop_heading: "Í samstarfi við ==heilbrigðisstofnanir==",
+  coop_body:
     "Heilbrigðisstofnun Suðurlands (HSU) er fyrsti samstarfsaðili Fjarlækninga meðal opinberra heilbrigðisstofnana. Saman keyrum við tilraunaverkefni til eins árs þar sem einföld erindi eru leyst í gegnum sjúklingagáttina — svo heilsugæslan geti einbeitt sér að flóknari málum.",
-  hsu_body2: "Þjónustan er nú aðeins í boði fyrir skjólstæðinga sem eru skráðir hjá HSU.",
+  coop_list: "Heilbrigðisstofnun Suðurlands | /hsu-logo.webp | Tilraunaverkefni til eins árs",
+  coop_note: "Þjónustan er nú aðeins í boði fyrir skjólstæðinga sem eru skráðir hjá HSU.",
+  coop_cta: "Hvar er þjónustan virk?",
 
   news_heading: "Fylgstu með því sem er að ==gerast==",
   news_body:

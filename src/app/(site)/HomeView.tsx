@@ -33,6 +33,14 @@ export default function HomeView({
     { value: c.stat3_value, label: c.stat3_label },
   ];
   const chips = [c.hero_chip1, c.hero_chip2, c.hero_chip3];
+  // Cooperating institutions, one per line: "Nafn | /logo.webp | undirtexti".
+  const coops = (c.coop_list ?? "")
+    .split("\n")
+    .map((line) => {
+      const [name, logo, note] = line.split("|").map((x) => x.trim());
+      return { name, logo: logo || undefined, note: note || undefined };
+    })
+    .filter((co) => co.name);
 
   const blocks: Record<string, React.ReactNode> = {
     services: (
@@ -126,24 +134,75 @@ export default function HomeView({
       </>
     ),
 
-    hsu: (
-      <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 flex flex-col md:flex-row items-center gap-10">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/hsu-logo.webp"
-          alt="Heilbrigðisstofnun Suðurlands"
-          width={160}
-          height={160}
-          className="w-32 h-32 sm:w-40 sm:h-40 shrink-0"
-        />
-        <div>
-          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-cyan-subtle/60 border border-brand-cyan-muted text-xs font-medium text-[var(--primary-dark)] mb-4">
-            <span className="w-2 h-2 rounded-full bg-[var(--primary)]" />
-            {c.hsu_eyebrow}
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{renderHighlighted(c.hsu_heading)}</h2>
-          <p className="mt-4 text-slate-600">{c.hsu_body1}</p>
-          <p className="mt-4 font-medium text-slate-900">{c.hsu_body2}</p>
+    // Cooperations. Was a single hard-coded HSU card; now a list, so announcing
+    // a second institution is a line of CMS text rather than a code change. The
+    // layout switches from side-by-side to a logo row once there is more than
+    // one, which is why the logos are not simply inlined into the prose.
+    coop: (
+      <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12">
+        <div className={coops.length > 1 ? "" : "flex flex-col md:flex-row items-center gap-10"}>
+          {coops.length === 1 && coops[0].logo && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={coops[0].logo}
+              alt={coops[0].name}
+              width={160}
+              height={160}
+              className="w-32 h-32 sm:w-40 sm:h-40 shrink-0 object-contain"
+            />
+          )}
+          <div className="w-full">
+            {c.coop_eyebrow && (
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-cyan-subtle/60 border border-brand-cyan-muted text-xs font-medium text-[var(--primary-dark)] mb-4">
+                <span className="w-2 h-2 rounded-full bg-[var(--primary)]" />
+                {c.coop_eyebrow}
+              </span>
+            )}
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+              {renderHighlighted(c.coop_heading)}
+            </h2>
+            <p className="mt-4 text-slate-600">{c.coop_body}</p>
+
+            {/* Two or more: a logo row, so no single institution reads as the
+                headline partner. */}
+            {coops.length > 1 && (
+              <div className="mt-8 flex flex-wrap items-center gap-x-10 gap-y-6">
+                {coops.map((co) => (
+                  <div key={co.name} className="flex items-center gap-4">
+                    {co.logo && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={co.logo}
+                        alt={co.name}
+                        width={96}
+                        height={96}
+                        className="w-20 h-20 shrink-0 object-contain"
+                      />
+                    )}
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900">{co.name}</div>
+                      {co.note && <div className="text-xs text-slate-500 mt-0.5">{co.note}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {coops.length === 1 && coops[0].note && (
+              <p className="mt-4 text-sm text-slate-500">{coops[0].note}</p>
+            )}
+
+            {c.coop_note && <p className="mt-4 font-medium text-slate-900">{c.coop_note}</p>}
+
+            <Link
+              href="/thjonusta#live"
+              className="mt-8 inline-flex items-center gap-2 px-7 py-3 rounded-full border-2 border-[var(--primary)] text-[var(--primary-dark)] font-semibold hover:bg-brand-cyan-subtle transition-colors"
+            >
+              {c.coop_cta || "Hvar er þjónustan virk?"}
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </Link>
+          </div>
         </div>
       </div>
     ),
