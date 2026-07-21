@@ -47,7 +47,7 @@ export default function ThjonustaView({ c }: { c: LocaleContent }) {
             {erindi.map((s) => (
               <div
                 key={s.slug}
-                className="bg-white rounded-2xl border border-slate-200 p-8 flex items-start gap-5"
+                className="group bg-white rounded-2xl border border-slate-200 p-8 flex items-start gap-5 hover:shadow-lg hover:border-brand-cyan hover:-translate-y-0.5 transition-all"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img

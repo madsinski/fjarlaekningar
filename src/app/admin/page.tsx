@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Users, Settings, FileText, Presentation, FlaskConical, MessageSquare, ClipboardList, ShieldAlert, Rocket, AlertTriangle, Activity } from "lucide-react";
+import { Users, Settings, FileText, Presentation, FlaskConical, MessageSquare, Mail, ClipboardList, ShieldAlert, Rocket, AlertTriangle, Activity } from "lucide-react";
 
 // Dashboard. Phase 1 ships the foundation; later phases light up the modules
 // below (shown as "væntanlegt" until their phase lands).
@@ -14,6 +14,7 @@ const MODULES: { label: string; icon: React.ReactNode; href?: string; phase: num
   { label: "Klínísk reiknirit", icon: <Activity className="w-5 h-5" />, href: "/admin/clinical", phase: 3 },
   { label: "Samskipti", icon: <MessageSquare className="w-5 h-5" />, href: "/admin/communication", phase: 3 },
   { label: "Kannanir", icon: <ClipboardList className="w-5 h-5" />, href: "/admin/surveys", phase: 3 },
+  { label: "Fréttabréf", icon: <Mail className="w-5 h-5" />, href: "/admin/outreach", phase: 3 },
   { label: "Persónuverndarbeiðnir", icon: <ShieldAlert className="w-5 h-5" />, href: "/admin/data-requests", phase: 3 },
   { label: "Útgáfusaga", icon: <Rocket className="w-5 h-5" />, href: "/admin/releases", phase: 3 },
   { label: "Villuskráning", icon: <AlertTriangle className="w-5 h-5" />, href: "/admin/errors", phase: 3 },

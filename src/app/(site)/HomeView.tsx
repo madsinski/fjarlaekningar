@@ -1,5 +1,6 @@
 import Link from "next/link";
 import MedaliaButton from "../components/MedaliaButton";
+import NewsletterSignup from "../components/NewsletterSignup";
 import { erindi } from "../../erindi";
 import { renderHighlighted } from "@/lib/site-content/highlight";
 import type { LocaleContent } from "@/lib/site-content/home";
@@ -166,6 +167,19 @@ export default function HomeView({ c }: { c: LocaleContent }) {
               <p className="mt-4 font-medium text-slate-900">{c.hsu_body2}</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Fréttabréf — opt-in for news, new heilsugæsla cooperations, new services */}
+      <section className="pb-4">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <NewsletterSignup
+            heading={renderHighlighted(c.news_heading)}
+            body={c.news_body}
+            cta={c.news_cta}
+            success={c.news_success}
+            consent={c.news_consent}
+          />
         </div>
       </section>
 

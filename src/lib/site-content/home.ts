@@ -67,6 +67,13 @@ export const HOME_FIELDS: SiteField[] = [
   { key: "hsu_body1", label: "Texti", group: "HSU samstarf", type: "textarea" },
   { key: "hsu_body2", label: "Áhersla (feitletrað)", group: "HSU samstarf", type: "textarea" },
 
+  // Fréttabréf (newsletter opt-in)
+  { key: "news_heading", label: "Fyrirsögn", group: "Fréttabréf", type: "heading" },
+  { key: "news_body", label: "Texti", group: "Fréttabréf", type: "textarea" },
+  { key: "news_cta", label: "Hnappur", group: "Fréttabréf", type: "text" },
+  { key: "news_success", label: "Staðfesting eftir skráningu", group: "Fréttabréf", type: "text" },
+  { key: "news_consent", label: "Samþykkistexti (GDPR)", group: "Fréttabréf", type: "textarea" },
+
   // CTA
   { key: "cta_heading", label: "Fyrirsögn", group: "Ákall (CTA)", type: "heading" },
   { key: "cta_body", label: "Texti", group: "Ákall (CTA)", type: "textarea" },
@@ -125,6 +132,14 @@ export const HOME_DEFAULTS_IS: LocaleContent = {
   hsu_body1:
     "Heilbrigðisstofnun Suðurlands (HSU) er fyrsti samstarfsaðili Fjarlækninga meðal opinberra heilbrigðisstofnana. Saman keyrum við tilraunaverkefni til eins árs þar sem einföld erindi eru leyst í gegnum sjúklingagáttina — svo heilsugæslan geti einbeitt sér að flóknari málum.",
   hsu_body2: "Þjónustan er nú aðeins í boði fyrir skjólstæðinga sem eru skráðir hjá HSU.",
+
+  news_heading: "Fylgstu með því sem er að ==gerast==",
+  news_body:
+    "Fáðu fréttir af Fjarlækningum, nýju samstarfi við heilsugæslur um land allt og nýrri þjónustu þegar hún bætist við. Engin læknisfræðileg ráðgjöf — bara fréttir, sjaldan og stutt.",
+  news_cta: "Skrá mig",
+  news_success: "Takk! Þú ert komin(n) á listann.",
+  news_consent:
+    "Með því að skrá þig samþykkir þú að fá tölvupóst frá Fjarlækningum ehf. um fréttir, nýtt samstarf og nýja þjónustu. Þú getur afskráð þig hvenær sem er með einum smelli.",
 
   cta_heading: "Tilbúin(n) að senda inn erindi?",
   cta_body:

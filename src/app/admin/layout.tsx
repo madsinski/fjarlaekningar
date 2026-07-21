@@ -19,6 +19,7 @@ import {
   ClipboardList,
   Activity,
   Globe,
+  Mail,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import Navbar from "@/app/components/Navbar";
@@ -47,6 +48,7 @@ const NAV: { href: string; label: string; icon: React.ReactNode; adminOnly?: boo
   { href: "/admin/clinical", label: "Klínísk reiknirit", icon: <Activity className="w-5 h-5" /> },
   { href: "/admin/surveys", label: "Kannanir", icon: <ClipboardList className="w-5 h-5" /> },
   { href: "/admin/communication", label: "Samskipti", icon: <MessageSquare className="w-5 h-5" /> },
+  { href: "/admin/outreach", label: "Fréttabréf", icon: <Mail className="w-5 h-5" /> },
   { href: "/admin/data-requests", label: "Persónuverndarbeiðnir", icon: <ShieldAlert className="w-5 h-5" /> },
   { href: "/admin/releases", label: "Útgáfusaga", icon: <Rocket className="w-5 h-5" /> },
   { href: "/admin/errors", label: "Villuskráning", icon: <AlertTriangle className="w-5 h-5" /> },

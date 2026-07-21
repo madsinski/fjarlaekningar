@@ -19,8 +19,9 @@ modules also need a **Storage bucket** — noted inline.
 | 11 | `supabase/clinical-protocols-schema.sql` | Clinical algorithm change log (medical-device) | ✅ done |
 | 12 | `supabase/presentations-studio-schema.sql` | Presentation deck studio + A4 collateral (ported from Lifeline) — also creates the `presentation-assets` storage bucket | ✅ done |
 | 13 | `supabase/signatures-schema.sql` | Email signatures | ✅ done |
-| 14 | `supabase/site-content-schema.sql` | Website CMS (site content, draft/publish) | ⬜ run this |
-| 15 | `supabase/site-settings-schema.sql` | Coming-soon gate toggle (site_settings) | ⬜ run this |
+| 14 | `supabase/site-content-schema.sql` | Website CMS (site content, draft/publish) | ✅ done |
+| 15 | `supabase/site-settings-schema.sql` | Coming-soon gate toggle (site_settings) | ✅ done |
+| 16 | `supabase/outreach-schema.sql` | Fréttabréf — subscribers + campaigns | ⬜ run this |
 
 > After running a migration, the matching admin module works immediately (no
 > redeploy needed — the tables just start returning data).
