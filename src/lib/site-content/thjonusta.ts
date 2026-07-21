@@ -208,33 +208,36 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
   test3_when: "Kvef, hósti og hálsbólga — hálsbólga, til að aðstoða greiningu",
   test3_where: "Apótek, Heilsugæsla",
   test3_icon: "open-mouth",
-  // NEEDS CLINICAL SIGN-OFF, in addition to the test descriptions above.
-  // tests_accuracy makes a factual claim about the tests being the same rapid
-  // tests used at a heilsugæsla — deliberately written without any numeric
-  // sensitivity/specificity figure, because no source was available. Do not add
-  // numbers without a citation, and confirm the "same tests" claim is true.
+  // Copy and highlight rectangles below are taken from Fjarlækningar's own
+  // "Fjarlækningar fyrir HSN" deck, slides 10 ("Markviss spurningalisti") and
+  // 11 ("Sjálfspróf heima") — including "eykur greiningarnákvæmni", which is
+  // their wording, not ours. No numeric sensitivity/specificity figure is
+  // claimed anywhere; do not add one without a citation.
   tests_why_heading: "Af hverju heimapróf?",
   tests_why_body:
     "Fyrir afmörkuð og algeng erindi getur einfalt próf, sem þú tekur sjálf eða sjálfur, gefið lækni þær upplýsingar sem upp á vantar til að ljúka matinu — án þess að þú þurfir að bóka tíma, ferðast og bíða. Þannig verður ferlið einfaldara og hraðara fyrir þig, og heilsugæslan getur einbeitt sér að flóknari erindum.",
   tests_accuracy:
-    "Prófin eru sömu hraðpróf og notuð eru við sömu erindi á heilsugæslu. Þau koma ekki í stað mats læknis: læknir túlkar niðurstöðuna í samhengi við svörin þín úr spurningalistanum. Ef niðurstaðan er óljós, eða einkennin passa ekki við hana, er erindinu vísað í hefðbundna þjónustu.",
+    "Þegar sjálfspróf bætir greiningu er þér leiðbeint að taka það — niðurstaðan eykur greiningarnákvæmni. Prófið kemur þó ekki í stað mats læknis: læknir fer yfir niðurstöðuna ásamt svörunum þínum úr spurningalistanum. Sé niðurstaðan óljós, eða passi einkennin ekki við hana, er erindinu vísað í hefðbundna þjónustu.",
 
   tests_how_heading: "Svona fer þetta fram í sjúklingagáttinni",
   tests_s1_title: "Spurningalistinn segir þér hvort prófs er þörf",
   tests_s1_desc:
-    "Þú velur erindi og svarar spurningalistanum. Eigi próf við um þitt erindi færðu skilaboð um hvaða próf það er — það á ekki við um öll erindi.",
-  tests_s1_img: "",
-  tests_s1_hl: "",
+    "Þú velur erindi og svarar spurningalistanum — það tekur aðeins nokkrar mínútur. Eigi próf við um þitt erindi færðu skilaboð um hvaða próf það er; það á ekki við um öll erindi.",
+  tests_s1_img: "/gatt/02-spurningalisti.png",
+  tests_s1_hl: "30,4.5,40,95.5",
   tests_s2_title: "Þú sækir prófið og tekur það heima",
   tests_s2_desc:
     "Prófið sækir þú á heilsugæslu eða í apóteki — sjá hvar hér að ofan. Leiðbeiningar um hvernig það er tekið fylgja í gáttinni.",
+  // No screenshot on purpose: collecting the test happens in the real world,
+  // not in the gátt, so there is nothing to show. Steps 1 and 3 are the two
+  // portal screens (slides 10 and 11 of the HSN deck).
   tests_s2_img: "",
   tests_s2_hl: "",
   tests_s3_title: "Þú skráir niðurstöðuna í gáttina",
   tests_s3_desc:
-    "Niðurstaðan er skráð beint í sjúklingagáttina. Læknir metur hana ásamt svörunum þínum og lýkur erindinu.",
-  tests_s3_img: "",
-  tests_s3_hl: "",
+    "Þú skráir niðurstöðuna beint í sjúklingagáttina. Allar upplýsingar um erindið og prófið fara til læknis til yfirferðar, sem lýkur erindinu.",
+  tests_s3_img: "/gatt/03-sjalfsprof.png",
+  tests_s3_hl: "30,36.3,40,51.7",
 
   tests_footer:
     "Þú skráir niðurstöðuna beint í sjúklingagáttina og læknir metur hana með svörunum þínum. Þurfir þú aðstoð við að nálgast próf, hafðu samband.",
