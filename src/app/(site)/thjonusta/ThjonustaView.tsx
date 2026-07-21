@@ -265,18 +265,27 @@ export default function ThjonustaView({
         </div>
         {/* Why home tests exist. Placed after the three test cards: the reader
             has just seen what the tests are, and this answers the "why am I
-            being asked to do this myself" that naturally follows. */}
+            being asked to do this myself" that naturally follows.
+
+            This and the walkthrough below are separate topics inside one band,
+            so each opens with a rule across the full container plus the cyan
+            accent mark used elsewhere on the site. Previously they were two
+            text-lg headings separated only by margin, which read as one
+            continuous run of text. */}
         {c.tests_why_heading && (
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900">{c.tests_why_heading}</h3>
-              <p className="mt-2 text-slate-600 leading-relaxed">{c.tests_why_body}</p>
+          <div className="mt-16 border-t border-slate-200 pt-10">
+            <h3 className="flex items-center gap-2.5 text-xl sm:text-2xl font-bold text-slate-900">
+              <span aria-hidden className="h-px w-6 shrink-0 bg-[var(--primary)]" />
+              {c.tests_why_heading}
+            </h3>
+            <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl">
+              <p className="text-slate-600 leading-relaxed">{c.tests_why_body}</p>
+              {c.tests_accuracy && (
+                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
+                  <p className="text-sm text-slate-600 leading-relaxed">{c.tests_accuracy}</p>
+                </div>
+              )}
             </div>
-            {c.tests_accuracy && (
-              <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
-                <p className="text-sm text-slate-600 leading-relaxed">{c.tests_accuracy}</p>
-              </div>
-            )}
           </div>
         )}
 
@@ -284,9 +293,12 @@ export default function ThjonustaView({
             set in the CMS the steps render as text, so the section is useful
             immediately and gets better when the images land. */}
         {testSteps.length > 0 && (
-          <div className="mt-14">
+          <div className="mt-16 border-t border-slate-200 pt-10">
             {c.tests_how_heading && (
-              <h3 className="text-lg font-semibold text-slate-900 mb-6">{c.tests_how_heading}</h3>
+              <h3 className="mb-8 flex items-center gap-2.5 text-xl sm:text-2xl font-bold text-slate-900">
+                <span aria-hidden className="h-px w-6 shrink-0 bg-[var(--primary)]" />
+                {c.tests_how_heading}
+              </h3>
             )}
             <ol className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {testSteps.map((st, i) => (
