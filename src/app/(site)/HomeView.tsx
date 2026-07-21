@@ -69,25 +69,29 @@ export default function HomeView({ c }: { c: LocaleContent }) {
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">{renderHighlighted(c.services_heading)}</h2>
             <p className="mt-4 text-slate-600">{c.services_body}</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Glanceable overview only — the full list with descriptions lives on
+              /thjonusta so the two pages don't restate each other. */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {erindi
               .filter((s) => s.slug !== "laeknisvottord")
               .map((s) => (
-                <div
+                <Link
                   key={s.slug}
-                  className="bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-lg hover:border-brand-cyan transition-all"
+                  href="/thjonusta"
+                  className="group flex items-center gap-3 bg-white rounded-xl border border-slate-200 px-4 py-3 hover:shadow-md hover:border-brand-cyan transition-all"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`/erindi-icons/${s.slug}.png`}
                     alt=""
-                    width={80}
-                    height={80}
-                    className="w-20 h-20 mb-4 object-contain"
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 shrink-0 object-contain"
                   />
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">{s.title}</h3>
-                  <p className="text-sm text-slate-600">{s.description}</p>
-                </div>
+                  <span className="text-sm font-medium text-slate-800 leading-snug group-hover:text-[var(--primary-dark)]">
+                    {s.title}
+                  </span>
+                </Link>
               ))}
           </div>
           <p className="mt-8 text-sm text-slate-500">

@@ -41,6 +41,22 @@ export const THJONUSTA_FIELDS: SiteField[] = [
   { key: "f6_icon", label: "Eiginleiki 6 — tákn", group: "Hvernig þjónustan virkar", type: "icon" },
 
   // FAQ
+  // Scope/limits — what fjarlækningar is NOT for. Clinically sensitive: the
+  // defaults are assembled verbatim from Fjarlækningar's own existing copy
+  // (erindi descriptions + the HSU referral collateral), not written fresh.
+  { key: "limits_heading", label: "Fyrirsögn", group: "Hvenær hentar ekki", type: "heading" },
+  { key: "limits_body", label: "Inngangur", group: "Hvenær hentar ekki", type: "textarea" },
+  { key: "limits1_title", label: "Atriði 1 — titill", group: "Hvenær hentar ekki", type: "text" },
+  { key: "limits1_body", label: "Atriði 1 — texti", group: "Hvenær hentar ekki", type: "textarea" },
+  { key: "limits1_icon", label: "Atriði 1 — tákn", group: "Hvenær hentar ekki", type: "icon" },
+  { key: "limits2_title", label: "Atriði 2 — titill", group: "Hvenær hentar ekki", type: "text" },
+  { key: "limits2_body", label: "Atriði 2 — texti", group: "Hvenær hentar ekki", type: "textarea" },
+  { key: "limits2_icon", label: "Atriði 2 — tákn", group: "Hvenær hentar ekki", type: "icon" },
+  { key: "limits3_title", label: "Atriði 3 — titill", group: "Hvenær hentar ekki", type: "text" },
+  { key: "limits3_body", label: "Atriði 3 — texti", group: "Hvenær hentar ekki", type: "textarea" },
+  { key: "limits3_icon", label: "Atriði 3 — tákn", group: "Hvenær hentar ekki", type: "icon" },
+  { key: "limits_note", label: "Áherslulína (neyðartilvik)", group: "Hvenær hentar ekki", type: "text" },
+
   { key: "faq_heading", label: "Fyrirsögn", group: "Algengar spurningar", type: "heading" },
   { key: "faq1_q", label: "Spurning 1", group: "Algengar spurningar", type: "text" },
   { key: "faq1_a", label: "Svar 1", group: "Algengar spurningar", type: "textarea" },
@@ -102,6 +118,23 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
   f6_desc:
     "Niðurstöðunni fylgir fræðsluefni tengt þínu vandamáli: ráðleggingar, fyrirbyggjandi ráð og vörur án lyfseðils sem geta hjálpað.",
   f6_icon: "book-open",
+
+  // NOTE: assembled from Fjarlækningar's own published wording (erindi
+  // descriptions + HSU referral collateral). Review clinically before publishing.
+  limits_heading: "Hvenær hentar fjarlækningaþjónusta ==ekki==?",
+  limits_body:
+    "Fjarlækningar leysa einföld og afmörkuð erindi. Sum erindi þarfnast skoðunar, rannsóknar eða bráðaþjónustu — og þeim er vísað í annan farveg.",
+  limits1_title: "Alvarleg einkenni",
+  limits1_body: "Alvarlegum einkennum er vísað í annan farveg.",
+  limits1_icon: "shield-alert",
+  limits2_title: "Þörf á skoðun eða rannsókn",
+  limits2_body:
+    "Þurfi sjúklingur skoðun eða frekari rannsókn vísar læknir aftur í hefðbundna þjónustu.",
+  limits2_icon: "stethoscope",
+  limits3_title: "Frumgreining",
+  limits3_body: "Frumgreiningu tiltekinna vandamála er vísað í annan farveg.",
+  limits3_icon: "clipboard-list",
+  limits_note: "Í bráðatilfellum hringdu í 112.",
 
   faq_heading: "Algengar spurningar",
   faq1_q: "Hverjir geta notað þjónustuna?",
