@@ -2,6 +2,7 @@
 
 import { DynamicIcon } from "lucide-react/dynamic";
 import { isIconName } from "./icon-names";
+import { CUSTOM_ICONS, isCustomIconName } from "./custom-icons";
 
 // Renders a CMS-selected icon by key, from the FULL lucide library (1,986
 // icons — the same high-quality set the presentation decks use).
@@ -25,7 +26,13 @@ export default function SiteIcon({
   className?: string;
   strokeWidth?: number;
 }) {
-  const key = isIconName(name) ? name : fallback;
+  // Custom icons win over lucide: they exist precisely because lucide has no
+  // equivalent, so there is nothing to collide with.
+  const key = isCustomIconName(name) || isIconName(name) ? name : fallback;
+  if (isCustomIconName(key)) {
+    const Custom = CUSTOM_ICONS[key];
+    return <Custom className={className} strokeWidth={strokeWidth} />;
+  }
   return (
     <DynamicIcon
       name={key as never}

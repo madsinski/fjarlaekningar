@@ -29,9 +29,9 @@ export default function ThjonustaView({
     { n: "5", title: c.step5_title, description: c.step5_desc },
   ].filter((s) => s.title);
   const tests = [
-    { title: c.test1_title, desc: c.test1_desc, where: c.test1_where, icon: c.test1_icon, fallback: "droplet" },
-    { title: c.test2_title, desc: c.test2_desc, where: c.test2_where, icon: c.test2_icon, fallback: "test-tube" },
-    { title: c.test3_title, desc: c.test3_desc, where: c.test3_where, icon: c.test3_icon, fallback: "thermometer" },
+    { title: c.test1_title, desc: c.test1_desc, when: c.test1_when, where: c.test1_where, icon: c.test1_icon, fallback: "droplet" },
+    { title: c.test2_title, desc: c.test2_desc, when: c.test2_when, where: c.test2_where, icon: c.test2_icon, fallback: "test-tube" },
+    { title: c.test3_title, desc: c.test3_desc, when: c.test3_when, where: c.test3_where, icon: c.test3_icon, fallback: "open-mouth" },
   ].filter((t) => t.title);
   // Rollout is umbrella-organisation first (HSU, then HSN, ...), each with its
   // member heilsugæslur. Parsed from one textarea so staff can open another
@@ -205,8 +205,22 @@ export default function ThjonustaView({
               </div>
               <h3 className="text-base font-semibold text-slate-900 mb-1.5">{t.title}</h3>
               <p className="text-sm text-slate-600 leading-relaxed">{t.desc}</p>
+
+              {/* Which erindi can call for this test, named as they appear in
+                  the menu so a patient can match it to the one they picked.
+                  mt-auto pins the two meta blocks to the bottom of the card, so
+                  "Fæst hjá" lines up across cards with different text lengths. */}
+              {t.when && (
+                <div className="mt-auto pt-4 border-t border-slate-100">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                    Á við um
+                  </div>
+                  <p className="text-sm text-slate-600 leading-relaxed">{t.when}</p>
+                </div>
+              )}
+
               {t.where && (
-                <div className="mt-4 pt-4 border-t border-slate-100">
+                <div className={t.when ? "mt-4" : "mt-auto pt-4 border-t border-slate-100"}>
                   <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
                     Fæst hjá
                   </div>

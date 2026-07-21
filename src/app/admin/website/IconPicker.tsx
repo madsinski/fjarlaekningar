@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { DynamicIcon } from "lucide-react/dynamic";
+// SiteIcon rather than lucide's DynamicIcon directly: the picker also lists
+// custom icons (see custom-icons.tsx), which DynamicIcon knows nothing about.
+import SiteIcon from "@/lib/site-content/SiteIcon";
 import { ALL_ICON_NAMES, ICON_KEYS, isIconName } from "@/lib/site-content/icons";
 
 // Icon field editor.
@@ -72,7 +74,7 @@ export default function IconPicker({
     <div ref={boxRef} className="relative">
       <div className="flex items-center gap-2">
         <div className="w-9 h-9 shrink-0 rounded-lg bg-brand-cyan-subtle text-[var(--primary-dark)] flex items-center justify-center border border-slate-200">
-          <DynamicIcon name={current as never} className="w-5 h-5" strokeWidth={1.75} aria-hidden />
+          <SiteIcon name={current} fallback={fallback} className="w-5 h-5" />
         </div>
         <button
           type="button"
@@ -116,7 +118,7 @@ export default function IconPicker({
                     : "border-transparent text-slate-600 hover:bg-slate-100"
                 }`}
               >
-                <DynamicIcon name={n as never} className="w-4 h-4" strokeWidth={1.75} aria-hidden />
+                <SiteIcon name={n} fallback={n} className="w-4 h-4" />
               </button>
             ))}
           </div>

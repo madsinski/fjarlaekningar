@@ -6,13 +6,16 @@
 // component imports out of the client bundle — SiteIcon renders via lucide's
 // DynamicIcon (lazy per icon) instead.
 
-export { LUCIDE_ICON_NAMES as ALL_ICON_NAMES } from "@/lib/presentations/lucide-icon-names";
-
 import { LUCIDE_ICON_NAMES } from "@/lib/presentations/lucide-icon-names";
+import { CUSTOM_ICON_NAMES } from "./custom-icons";
 
-const NAME_SET: ReadonlySet<string> = new Set(LUCIDE_ICON_NAMES);
+/** Custom icons first, so the handful of hand-drawn ones are easy to find in
+ *  the picker's 1,986-icon list. */
+export const ALL_ICON_NAMES: readonly string[] = [...CUSTOM_ICON_NAMES, ...LUCIDE_ICON_NAMES];
 
-/** True when `name` is a real lucide icon name. */
+const NAME_SET: ReadonlySet<string> = new Set(ALL_ICON_NAMES);
+
+/** True when `name` is a selectable icon (lucide or custom). */
 export function isIconName(name: string | undefined): name is string {
   return !!name && NAME_SET.has(name);
 }
