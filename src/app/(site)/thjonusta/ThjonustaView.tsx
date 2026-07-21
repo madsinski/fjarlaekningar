@@ -30,9 +30,9 @@ export default function ThjonustaView({
     { n: "5", title: c.step5_title, description: c.step5_desc },
   ].filter((s) => s.title);
   const tests = [
-    { title: c.test1_title, desc: c.test1_desc, when: c.test1_when, where: c.test1_where, icon: c.test1_icon, fallback: "droplet" },
-    { title: c.test2_title, desc: c.test2_desc, when: c.test2_when, where: c.test2_where, icon: c.test2_icon, fallback: "test-tube" },
-    { title: c.test3_title, desc: c.test3_desc, when: c.test3_when, where: c.test3_where, icon: c.test3_icon, fallback: "open-mouth" },
+    { title: c.test1_title, desc: c.test1_desc, when: c.test1_when, where: c.test1_where, img: c.test1_img, icon: c.test1_icon, fallback: "droplet" },
+    { title: c.test2_title, desc: c.test2_desc, when: c.test2_when, where: c.test2_where, img: c.test2_img, icon: c.test2_icon, fallback: "test-tube" },
+    { title: c.test3_title, desc: c.test3_desc, when: c.test3_when, where: c.test3_where, img: c.test3_img, icon: c.test3_icon, fallback: "open-mouth" },
   ].filter((t) => t.title);
   // Portal walkthrough. Screenshots are optional — a step with no image renders
   // as text, so the section works before the images are in place.
@@ -208,9 +208,25 @@ export default function ThjonustaView({
               key={t.title}
               className="h-full flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm p-6"
             >
-              <div className="w-11 h-11 rounded-xl bg-brand-cyan-subtle text-[var(--primary-dark)] flex items-center justify-center mb-4">
-                <SiteIcon name={t.icon} fallback={t.fallback} className="w-5 h-5" />
-              </div>
+              {/* Photo of the actual box the patient will be handed, so it is
+                  recognisable on the shelf. Falls back to the icon if no image
+                  is set in the CMS. */}
+              {t.img ? (
+                <div className="mb-4 -mx-2 flex items-center justify-center rounded-xl bg-slate-50 px-2 py-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={t.img}
+                    alt={t.title}
+                    width={900}
+                    height={434}
+                    className="h-auto w-full max-w-[15rem] object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="w-11 h-11 rounded-xl bg-brand-cyan-subtle text-[var(--primary-dark)] flex items-center justify-center mb-4">
+                  <SiteIcon name={t.icon} fallback={t.fallback} className="w-5 h-5" />
+                </div>
+              )}
               <h3 className="text-base font-semibold text-slate-900 mb-1.5">{t.title}</h3>
               <p className="text-sm text-slate-600 leading-relaxed">{t.desc}</p>
 
