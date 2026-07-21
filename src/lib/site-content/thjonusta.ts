@@ -42,9 +42,19 @@ export const THJONUSTA_FIELDS: SiteField[] = [
   { key: "limits1_title", label: "Atriði 1 — titill", group: "Hvenær hentar ekki", type: "text" },
   { key: "limits1_body", label: "Atriði 1 — texti", group: "Hvenær hentar ekki", type: "textarea" },
   { key: "limits1_icon", label: "Atriði 1 — tákn", group: "Hvenær hentar ekki", type: "icon" },
+  // Expandable red-flag panel on the "Alvarleg einkenni" card: what the
+  // symptoms are, then what to do about them. Clearing limits1_items collapses
+  // the card back to a plain one.
+  { key: "limits1_lead", label: "Atriði 1 — inngangur að einkennalista", group: "Hvenær hentar ekki", type: "text" },
+  { key: "limits1_items", label: "Atriði 1 — einkenni (ein lína hvert)", group: "Hvenær hentar ekki", type: "textarea" },
+  { key: "limits1_action_lead", label: "Atriði 1 — inngangur að úrræðum", group: "Hvenær hentar ekki", type: "text" },
+  { key: "limits1_actions", label: "Atriði 1 — úrræði (ein lína hvert)", group: "Hvenær hentar ekki", type: "textarea" },
   { key: "limits2_title", label: "Atriði 2 — titill", group: "Hvenær hentar ekki", type: "text" },
   { key: "limits2_body", label: "Atriði 2 — texti", group: "Hvenær hentar ekki", type: "textarea" },
   { key: "limits2_icon", label: "Atriði 2 — tákn", group: "Hvenær hentar ekki", type: "icon" },
+  { key: "limits4_title", label: "Atriði 4 — titill", group: "Hvenær hentar ekki", type: "text" },
+  { key: "limits4_body", label: "Atriði 4 — texti", group: "Hvenær hentar ekki", type: "textarea" },
+  { key: "limits4_icon", label: "Atriði 4 — tákn", group: "Hvenær hentar ekki", type: "icon" },
   { key: "limits3_title", label: "Atriði 3 — titill", group: "Hvenær hentar ekki", type: "text" },
   { key: "limits3_body", label: "Atriði 3 — texti", group: "Hvenær hentar ekki", type: "textarea" },
   { key: "limits3_icon", label: "Atriði 3 — tákn", group: "Hvenær hentar ekki", type: "icon" },
@@ -110,6 +120,24 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
   limits1_title: "Alvarleg einkenni",
   limits1_body: "Alvarlegum einkennum er vísað í annan farveg.",
   limits1_icon: "shield-alert",
+  limits1_lead: "Alvarleg einkenni geta meðal annars verið:",
+  limits1_items: [
+    "Brjóstverkur eða þrýstingur fyrir brjósti",
+    "Öndunarerfiðleikar eða skyndileg andnauð",
+    "Skyndilegur máttminnkun, dofi, taltruflun eða lömun (einkenni heilablóðfalls)",
+    "Skert meðvitund eða yfirlið",
+    "Miklar blæðingar eða alvarlegir áverkar",
+    "Skyndilegur, óbærilegur höfuðverkur eða kviðverkur",
+    "Hár hiti með hnakkastífleika eða húðblæðingum",
+    "Alvarleg ofnæmisviðbrögð (bjúgur í andliti/hálsi, öndunarerfiðleikar)",
+    "Hugsanir um sjálfsskaða eða sjálfsvíg",
+  ].join("\n"),
+  limits1_action_lead: "Ef alvarleg einkenni eru til staðar getur þú:",
+  limits1_actions: [
+    "Hringt í 1700 til að fá ráðgjöf hjúkrunarfræðings",
+    "Leitað á Læknavaktina (á höfuðborgarsvæðinu)",
+    "Ef málið þolir enga bið: farðu á Bráðamóttökuna eða hringdu í 112",
+  ].join("\n"),
   limits2_title: "Þörf á skoðun eða rannsókn",
   limits2_body:
     "Þurfi sjúklingur skoðun eða frekari rannsókn vísar læknir aftur í hefðbundna þjónustu.",
@@ -117,6 +145,13 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
   limits3_title: "Frumgreining",
   limits3_body: "Frumgreiningu tiltekinna vandamála er vísað í annan farveg.",
   limits3_icon: "clipboard-list",
+  // NEW — needs clinical sign-off before publishing (see NOTE above). Built
+  // around Mads' own phrasing; the rest uses vocabulary already on the page
+  // ("vísað í hefðbundna þjónustu", "annan farveg").
+  limits4_title: "Alvarlegir sjúkdómar í sjúkrasögu",
+  limits4_body:
+    "Ef sjúkrasaga sýnir alvarlega undirliggjandi sjúkdóma getur verið of áhættusamt að afgreiða erindið í gegnum fjarþjónustu — þá er vísað í hefðbundna þjónustu.",
+  limits4_icon: "heart-pulse",
   limits_note: "Í bráðatilfellum hringdu í 112.",
 
   faq_heading: "Algengar spurningar",

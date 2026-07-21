@@ -16,10 +16,27 @@ export default function ThjonustaView({ c }: { c: LocaleContent }) {
     { n: "4", title: c.step4_title, description: c.step4_desc },
     { n: "5", title: c.step5_title, description: c.step5_desc },
   ].filter((s) => s.title);
+  // CMS stores these lists one item per line.
+  const lines = (v?: string) =>
+    (v ?? "")
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
   const limits = [
-    { title: c.limits1_title, body: c.limits1_body, icon: c.limits1_icon, fallback: "shield-alert" },
+    {
+      title: c.limits1_title,
+      body: c.limits1_body,
+      icon: c.limits1_icon,
+      fallback: "shield-alert",
+      lead: c.limits1_lead,
+      items: lines(c.limits1_items),
+      actionLead: c.limits1_action_lead,
+      actions: lines(c.limits1_actions),
+    },
     { title: c.limits2_title, body: c.limits2_body, icon: c.limits2_icon, fallback: "stethoscope" },
     { title: c.limits3_title, body: c.limits3_body, icon: c.limits3_icon, fallback: "clipboard-list" },
+    { title: c.limits4_title, body: c.limits4_body, icon: c.limits4_icon, fallback: "heart-pulse" },
   ].filter((l) => l.title);
   const faqs = [
     { q: c.faq1_q, a: c.faq1_a },
@@ -115,7 +132,9 @@ export default function ThjonustaView({ c }: { c: LocaleContent }) {
               </h2>
               <p className="mt-3 text-slate-600">{c.limits_body}</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* items-start so an expanded card grows on its own instead of
+                stretching its neighbours to match. */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               {limits.map((l) => (
                 <div key={l.title} className="bg-white rounded-2xl border border-slate-200 p-6">
                   <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center mb-4">
@@ -123,6 +142,53 @@ export default function ThjonustaView({ c }: { c: LocaleContent }) {
                   </div>
                   <h3 className="text-base font-semibold text-slate-900 mb-1.5">{l.title}</h3>
                   <p className="text-sm text-slate-600 leading-relaxed">{l.body}</p>
+
+                  {/* Red flags. Collapsed by default to keep the three scope
+                      cards scannable, but the card still reads as a warning
+                      when shut and "hringdu í 112" stays visible below the grid
+                      regardless — nothing safety-critical is hidden behind the
+                      click alone. */}
+                  {l.items && l.items.length > 0 && (
+                    <details className="group mt-4 border-t border-slate-100 pt-3">
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-semibold text-amber-800 hover:text-amber-900">
+                        Sjá dæmi um alvarleg einkenni
+                        <svg
+                          className="w-4 h-4 shrink-0 transition-transform group-open:rotate-180"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </summary>
+
+                      {l.lead && <p className="mt-3 text-sm font-medium text-slate-800">{l.lead}</p>}
+                      <ul className="mt-2 space-y-1.5">
+                        {l.items.map((item) => (
+                          <li key={item} className="flex gap-2 text-sm text-slate-600 leading-relaxed">
+                            <span aria-hidden className="mt-2 h-1 w-1 shrink-0 rounded-full bg-amber-500" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+
+                      {l.actions && l.actions.length > 0 && (
+                        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                          {l.actionLead && (
+                            <p className="text-sm font-semibold text-amber-900">{l.actionLead}</p>
+                          )}
+                          <ul className="mt-2 space-y-1.5">
+                            {l.actions.map((a) => (
+                              <li key={a} className="flex gap-2 text-sm text-amber-900 leading-relaxed">
+                                <span aria-hidden className="mt-2 h-1 w-1 shrink-0 rounded-full bg-amber-600" />
+                                {a}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </details>
+                  )}
                 </div>
               ))}
             </div>
