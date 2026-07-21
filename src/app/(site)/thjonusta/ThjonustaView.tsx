@@ -71,7 +71,7 @@ export default function ThjonustaView({ c }: { c: LocaleContent }) {
           grid of cards: a patient's question here is "what happens to me, in
           what order", and a grid gives no reading order. The connecting spine
           makes the sequence explicit. #ferlid is linked from the home page. */}
-      <section id="ferlid" className="py-20 bg-[var(--background)] scroll-mt-20">
+      <section id="ferlid" className="py-20 bg-[var(--background)] scroll-mt-20 border-y border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
@@ -135,7 +135,7 @@ export default function ThjonustaView({ c }: { c: LocaleContent }) {
         </section>
       )}
 
-      <section className="py-20 bg-[var(--background)]">
+      <section className="py-20 bg-[var(--background)] border-y border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-10">
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">

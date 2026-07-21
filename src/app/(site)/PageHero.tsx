@@ -17,7 +17,7 @@ import type { LocaleContent } from "@/lib/site-content/types";
 // that's what made the edges wander in the first place.
 export default function PageHero({ c }: { c: LocaleContent }) {
   return (
-    <section className="border-b border-slate-200/70 bg-gradient-to-b from-brand-cyan-subtle/60 to-white py-14">
+    <section className="border-b border-slate-200 bg-gradient-to-b from-brand-cyan-subtle/60 to-white py-14">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {c.hero_eyebrow && (
           <span className="inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--primary-dark)]">

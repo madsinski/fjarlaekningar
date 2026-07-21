@@ -104,7 +104,7 @@ export default function HomeView({ c }: { c: LocaleContent }) {
       </section>
 
       {/* Stats */}
-      <section className="py-20 bg-[var(--background)]">
+      <section className="py-20 bg-[var(--background)] border-y border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">{renderHighlighted(c.stats_heading)}</h2>
@@ -156,7 +156,7 @@ export default function HomeView({ c }: { c: LocaleContent }) {
       </section>
 
       {/* HSU cooperation / pilot */}
-      <section className="py-20 bg-[var(--background)]">
+      <section className="py-20 bg-[var(--background)] border-y border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 flex flex-col md:flex-row items-center gap-10">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -203,7 +203,7 @@ export default function HomeView({ c }: { c: LocaleContent }) {
 
       {/* Fréttabréf — the fallback capture, last before the footer and styled
           quietly on purpose so it never competes with the CTA above it. */}
-      <section className="py-16 bg-[var(--background)]">
+      <section className="py-16 bg-[var(--background)] border-y border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <NewsletterSignup
             heading={renderHighlighted(c.news_heading)}
