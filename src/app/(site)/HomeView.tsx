@@ -25,8 +25,13 @@ export default function HomeView({ c }: { c: LocaleContent }) {
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-cyan-subtle via-white to-brand-cyan-subtle" />
+      {/* Same fix as PageHero: the mid-stop was `white`, so the hero's bottom
+          edge matched the white services section below and the two ran
+          together. It is now --background, which keeps the diagonal character
+          that distinguishes the landing hero from the quieter subpage headers
+          while giving it a bottom edge you can actually see. */}
+      <section className="relative overflow-hidden border-b border-slate-200">
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-cyan-subtle via-[var(--background)] to-brand-cyan-subtle" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
           <div className="max-w-3xl">
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 border border-brand-cyan-muted text-xs font-medium text-[var(--primary-dark)] mb-6">
