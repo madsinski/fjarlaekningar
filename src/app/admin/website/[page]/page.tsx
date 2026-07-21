@@ -3,14 +3,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Eye, Globe2, Languages, Send, Check, ExternalLink } from "lucide-react";
+import { ArrowLeft, Eye, Globe2, Languages, Send, Check, ExternalLink, ArrowUp, ArrowDown, GripVertical, RotateCcw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import HomeView from "@/app/(site)/HomeView";
 import ThjonustaView from "@/app/(site)/thjonusta/ThjonustaView";
 import UmOkkurView from "@/app/(site)/um-okkur/UmOkkurView";
 import HafaSambandView from "@/app/(site)/hafa-samband/HafaSambandView";
 import Navbar from "@/app/components/Navbar";
-import { getSitePage, resolveContent } from "@/lib/site-content/registry";
+import { getSitePage, resolveContent, resolveSections } from "@/lib/site-content/registry";
 import type { Locale, LocaleContent, SiteContentBlob } from "@/lib/site-content/types";
 import IconPicker from "../IconPicker";
 
@@ -18,16 +18,16 @@ type SaveState = "idle" | "saving" | "saved" | "error";
 
 // Preview renderer per page key. "chrome" previews the live header (the footer
 // is server-rendered — it reads published legal docs — so it isn't previewed here).
-function Preview({ pageKey, c }: { pageKey: string; c: LocaleContent }) {
+function Preview({ pageKey, c, order }: { pageKey: string; c: LocaleContent; order: string[] }) {
   switch (pageKey) {
     case "home":
-      return <HomeView c={c} />;
+      return <HomeView c={c} order={order} />;
     case "thjonusta":
-      return <ThjonustaView c={c} />;
+      return <ThjonustaView c={c} order={order} />;
     case "um-okkur":
-      return <UmOkkurView c={c} />;
+      return <UmOkkurView c={c} order={order} />;
     case "hafa-samband":
-      return <HafaSambandView c={c} />;
+      return <HafaSambandView c={c} order={order} />;
     case "chrome":
       return (
         <div>
@@ -79,7 +79,7 @@ export default function SiteContentEditor() {
     const j = await res.json().catch(() => ({}));
     if (j.ok) {
       const d = (j.content?.draft as SiteContentBlob) ?? {};
-      setDraft({ is: d.is ?? {}, en: d.en ?? {} });
+      setDraft({ is: d.is ?? {}, en: d.en ?? {}, order: d.order });
       setPublishedAt(j.content?.published_at ?? null);
     } else {
       setDraft({ is: {}, en: {} });
@@ -116,12 +116,38 @@ export default function SiteContentEditor() {
     setDraft((prev) => ({ ...prev, [locale]: { ...(prev[locale] ?? {}), [key]: value } }));
   };
 
-  const groups = useMemo(() => {
+  // Section order. Stored on the blob (not per-locale — order is the same in
+  // every language) and autosaved by the same effect as the field edits.
+  const sectionOrder = useMemo(
+    () => resolveSections(pageKey, draft),
+    [pageKey, draft],
+  );
+  const sectionLabel = (id: string) =>
+    page?.sections.find((s) => s.id === id)?.label ?? id;
+
+  const moveSection = (from: number, to: number) => {
+    if (to < 0 || to >= sectionOrder.length) return;
+    const next = [...sectionOrder];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setDraft((prev) => ({ ...prev, order: next }));
+  };
+  const resetOrder = () =>
+    setDraft((prev) => ({ ...prev, order: page?.sections.map((s) => s.id) ?? [] }));
+  const isCustomOrder =
+    !!draft.order?.length &&
+    JSON.stringify(draft.order) !== JSON.stringify(page?.sections.map((s) => s.id) ?? []);
+
+  // Plain derivation, not useMemo: `page` is now also read by the section-order
+  // helpers above, and the React Compiler could no longer prove the manual
+  // memoization safe (it bailed out of optimizing the whole component). The
+  // compiler memoizes this for us.
+  const groups = (() => {
     if (!page) return [];
     const seen: string[] = [];
     for (const f of page.fields) if (!seen.includes(f.group)) seen.push(f.group);
     return seen.map((g) => ({ group: g, fields: page.fields.filter((f) => f.group === g) }));
-  }, [page]);
+  })();
 
   const previewContent = useMemo(
     () => resolveContent(pageKey, draft, previewLocale),
@@ -155,7 +181,7 @@ export default function SiteContentEditor() {
     setBusy(null);
     if (res.ok && j.ok) {
       skipSave.current = true; // server already saved
-      setDraft({ is: j.draft.is ?? {}, en: j.draft.en ?? {} });
+      setDraft((prev) => ({ is: j.draft.is ?? {}, en: j.draft.en ?? {}, order: j.draft.order ?? prev.order }));
       setMsg({ type: "ok", text: `Þýddi ${j.count} reiti → ${to === "en" ? "ensku" : "íslensku"}.` });
     } else {
       setMsg({ type: "err", text: j.error || "Þýðing mistókst." });
@@ -235,6 +261,56 @@ export default function SiteContentEditor() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Fields */}
         <div className="space-y-6 max-h-[calc(100vh-180px)] overflow-y-auto pr-1">
+          {page.sections.length > 0 && (
+            <section className="rounded-xl border border-slate-200 bg-white p-4">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-cyan-700">
+                  Röð kafla
+                </h2>
+                {isCustomOrder && (
+                  <button
+                    onClick={resetOrder}
+                    disabled={!isAdmin}
+                    className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-700 disabled:opacity-50"
+                  >
+                    <RotateCcw className="w-3 h-3" /> Sjálfgefin röð
+                  </button>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-400 mb-3">
+                Færðu kafla upp eða niður. Bakgrunnur skiptist sjálfkrafa á milli hvíts og grás
+                eftir röðinni. Hetjusvæðið er alltaf efst.
+              </p>
+              <ol className="space-y-1.5">
+                {sectionOrder.map((id, i) => (
+                  <li
+                    key={id}
+                    className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/60 px-2.5 py-1.5"
+                  >
+                    <GripVertical className="w-3.5 h-3.5 shrink-0 text-slate-300" />
+                    <span className="w-5 text-[11px] font-semibold text-slate-400">{i + 1}</span>
+                    <span className="flex-1 text-sm text-slate-700">{sectionLabel(id)}</span>
+                    <button
+                      onClick={() => moveSection(i, i - 1)}
+                      disabled={!isAdmin || i === 0}
+                      aria-label={`Færa ${sectionLabel(id)} upp`}
+                      className="rounded-md p-1 text-slate-500 hover:bg-white hover:text-slate-800 disabled:opacity-25 disabled:hover:bg-transparent"
+                    >
+                      <ArrowUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => moveSection(i, i + 1)}
+                      disabled={!isAdmin || i === sectionOrder.length - 1}
+                      aria-label={`Færa ${sectionLabel(id)} niður`}
+                      className="rounded-md p-1 text-slate-500 hover:bg-white hover:text-slate-800 disabled:opacity-25 disabled:hover:bg-transparent"
+                    >
+                      <ArrowDown className="w-3.5 h-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
           {groups.map((g) => (
             <section key={g.group} className="rounded-xl border border-slate-200 bg-white p-4">
               <h2 className="text-xs font-semibold uppercase tracking-wide text-cyan-700 mb-3">{g.group}</h2>
@@ -321,7 +397,7 @@ export default function SiteContentEditor() {
           <div className="rounded-xl border border-slate-200 bg-white overflow-hidden" style={{ height: "calc(100vh - 180px)" }}>
             <div className="overflow-auto h-full">
               <div style={{ width: "200%", transform: "scale(0.5)", transformOrigin: "top left" }}>
-                <Preview pageKey={pageKey} c={previewContent} />
+                <Preview pageKey={pageKey} c={previewContent} order={sectionOrder} />
               </div>
             </div>
           </div>

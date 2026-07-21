@@ -1,7 +1,18 @@
 // Editable content model for /thjonusta.
 // Defaults are verbatim from the original hard-coded page.
 
-import { emptyDefaults, type LocaleContent, type SiteField } from "./types";
+import { emptyDefaults, type LocaleContent, type SiteField, type SiteSection } from "./types";
+// Reorderable bands, in their built-in order. The hero/page header is not
+// listed: it is structural and always renders first.
+export const THJONUSTA_SECTIONS: SiteSection[] = [
+  { id: "erindi", label: "Algeng erindi" },
+  { id: "ferlid", label: "Ferlið" },
+  { id: "tests", label: "Heimapróf" },
+  { id: "live", label: "Virk þjónusta" },
+  { id: "limits", label: "Hvenær hentar ekki" },
+  { id: "faq", label: "Algengar spurningar" },
+];
+
 
 export const THJONUSTA_FIELDS: SiteField[] = [
   // Hero
@@ -58,7 +69,13 @@ export const THJONUSTA_FIELDS: SiteField[] = [
   // The text after "|" is optional; a line with no "|" renders as name only.
   { key: "live_heading", label: "Fyrirsögn", group: "Virk þjónusta", type: "heading" },
   { key: "live_body", label: "Inngangur", group: "Virk þjónusta", type: "textarea" },
-  { key: "live_locations", label: "Staðir — ein lína hver: Nafn | Texti", group: "Virk þjónusta", type: "textarea" },
+  // Umbrella organisations (HSU, HSN, ...) and their heilsugæslur, one per
+  // line. Adding a whole new umbrella is just another unprefixed line, so the
+  // rollout can grow without a schema change:
+  //   Stofnun | undirtexti | /logo.webp      <- umbrella (no prefix)
+  //   + Heilsugæsla | texti                  <- open now
+  //   - Heilsugæsla                          <- not yet open
+  { key: "live_locations", label: "Stofnanir og heilsugæslur (sjá snið að neðan)", group: "Virk þjónusta", type: "textarea" },
   { key: "live_footer", label: "Neðanmálstexti", group: "Virk þjónusta", type: "text" },
 
   // FAQ
@@ -166,10 +183,26 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
 
   live_heading: "Hvar er þjónustan ==virk==?",
   live_body:
-    "Við byggjum þjónustuna upp í samstarfi við heilsugæslur, eina í einu. Þjónustan er virk hjá:",
-  live_locations:
-    "Heilsugæslan í Vestmannaeyjum | Hér færðu einnig heimaprófin sem geta fylgt erindinu: CRP-próf, þvagstix og strep-próf.",
-  live_footer: "Fleiri heilsugæslur bætast við eftir því sem þjónustan þróast.",
+    "Við opnum þjónustuna í samstarfi við heilbrigðisstofnanir, eina heilsugæslu í einu. Heilbrigðisstofnun Suðurlands er fyrsta stofnunin sem opnar fyrir þjónustuna.",
+  // VERIFY BEFORE PUBLISHING: the roster of HSU heilsugæslur below is written
+  // from public knowledge of the institution, not from a Fjarlækningar source
+  // document. Confirm the list is complete and correctly named — and confirm
+  // Vestmannaeyjar is genuinely live — before this ships.
+  live_locations: [
+    "Heilbrigðisstofnun Suðurlands | Fyrsta stofnunin sem opnar fyrir þjónustuna | /hsu-logo.webp",
+    "+ Heilsugæslan í Vestmannaeyjum | Fyrsta heilsugæslan til að opna. Hér færðu einnig heimaprófin sem geta fylgt erindinu: CRP-próf, þvagstix og strep-próf.",
+    "- Heilsugæslan á Selfossi",
+    "- Heilsugæslan í Hveragerði",
+    "- Heilsugæslan í Þorlákshöfn",
+    "- Heilsugæslan í Laugarási",
+    "- Heilsugæslan á Hellu",
+    "- Heilsugæslan á Hvolsvelli",
+    "- Heilsugæslan í Vík í Mýrdal",
+    "- Heilsugæslan á Kirkjubæjarklaustri",
+    "- Heilsugæslan á Höfn í Hornafirði",
+  ].join("\n"),
+  live_footer:
+    "Heilsugæslur merktar „væntanlegt“ opna fyrir þjónustuna í áföngum. Fleiri heilbrigðisstofnanir bætast við eftir því sem þjónustan þróast.",
 
   // NOTE: assembled from Fjarlækningar's own published wording (erindi
   // descriptions + HSU referral collateral). Review clinically before publishing.

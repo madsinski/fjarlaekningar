@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getPageContent } from "@/lib/site-content/server";
+import { getPage } from "@/lib/site-content/server";
 import UmOkkurView from "./UmOkkurView";
 
 export const metadata: Metadata = {
@@ -13,6 +13,6 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function UmOkkurPage() {
-  const c = await getPageContent("um-okkur");
-  return <UmOkkurView c={c} />;
+  const { c, order } = await getPage("um-okkur");
+  return <UmOkkurView c={c} order={order} />;
 }

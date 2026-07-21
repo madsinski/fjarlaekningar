@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getPageContent } from "@/lib/site-content/server";
+import { getPage } from "@/lib/site-content/server";
 import ThjonustaView from "./ThjonustaView";
 
 export const metadata: Metadata = {
@@ -14,6 +14,6 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function ThjonustaPage() {
-  const c = await getPageContent("thjonusta");
-  return <ThjonustaView c={c} />;
+  const { c, order } = await getPage("thjonusta");
+  return <ThjonustaView c={c} order={order} />;
 }

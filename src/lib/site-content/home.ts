@@ -11,7 +11,19 @@ import {
   type LocaleContent,
   type SiteContentBlob,
   type SiteField,
+  type SiteSection,
 } from "./types";
+
+// Reorderable bands, in their built-in order. The hero is not listed: it is
+// structural and always renders first.
+export const HOME_SECTIONS: SiteSection[] = [
+  { id: "services", label: "Þjónusta (yfirlit)" },
+  { id: "stats", label: "Tölur" },
+  { id: "how", label: "Ferlið" },
+  { id: "hsu", label: "HSU samstarf" },
+  { id: "cta", label: "Ákall (CTA)" },
+  { id: "news", label: "Fréttabréf" },
+];
 
 // Re-exported so existing importers (HomeView, the editor) keep working.
 export type { FieldType, Locale, LocaleContent, SiteContentBlob, SiteField } from "./types";

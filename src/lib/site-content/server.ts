@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { resolveContent } from "./registry";
+import { resolveContent, resolveSections } from "./registry";
 import type { Locale, LocaleContent, SiteContentBlob } from "./types";
 
 // Server-side content loading for the public site.
@@ -32,4 +32,15 @@ export async function getPublishedBlob(page: string): Promise<SiteContentBlob | 
 export async function getPageContent(page: string): Promise<LocaleContent> {
   const [locale, blob] = await Promise.all([getLocale(), getPublishedBlob(page)]);
   return resolveContent(page, blob, locale);
+}
+
+/**
+ * Content plus the published section order — one round trip, so a page that
+ * renders reorderable bands doesn't fetch the blob twice.
+ */
+export async function getPage(
+  page: string,
+): Promise<{ c: LocaleContent; order: string[] }> {
+  const [locale, blob] = await Promise.all([getLocale(), getPublishedBlob(page)]);
+  return { c: resolveContent(page, blob, locale), order: resolveSections(page, blob) };
 }

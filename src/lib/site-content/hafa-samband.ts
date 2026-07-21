@@ -1,7 +1,14 @@
 // Editable content model for /hafa-samband.
 // Defaults are verbatim from the original hard-coded page.
 
-import { emptyDefaults, type LocaleContent, type SiteField } from "./types";
+import { emptyDefaults, type LocaleContent, type SiteField, type SiteSection } from "./types";
+// Reorderable bands, in their built-in order. The hero/page header is not
+// listed: it is structural and always renders first.
+export const HAFA_SAMBAND_SECTIONS: SiteSection[] = [
+  { id: "cards", label: "Hafa samband (kort)" },
+  { id: "emergency", label: "Neyðartilfelli" },
+];
+
 
 export const HAFA_SAMBAND_FIELDS: SiteField[] = [
   // Hero

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getPageContent } from "@/lib/site-content/server";
+import { getPage } from "@/lib/site-content/server";
 import HafaSambandView from "./HafaSambandView";
 
 export const metadata: Metadata = {
@@ -13,6 +13,6 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function HafaSambandPage() {
-  const c = await getPageContent("hafa-samband");
-  return <HafaSambandView c={c} />;
+  const { c, order } = await getPage("hafa-samband");
+  return <HafaSambandView c={c} order={order} />;
 }

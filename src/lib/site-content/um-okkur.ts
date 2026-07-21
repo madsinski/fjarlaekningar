@@ -1,7 +1,16 @@
 // Editable content model for /um-okkur.
 // Defaults are verbatim from the original hard-coded page.
 
-import { emptyDefaults, type LocaleContent, type SiteField } from "./types";
+import { emptyDefaults, type LocaleContent, type SiteField, type SiteSection } from "./types";
+// Reorderable bands, in their built-in order. The hero/page header is not
+// listed: it is structural and always renders first.
+export const UM_OKKUR_SECTIONS: SiteSection[] = [
+  { id: "pillars", label: "Stoðir" },
+  { id: "values", label: "Gildin" },
+  { id: "team", label: "Teymið" },
+  { id: "cta", label: "Ákall (CTA)" },
+];
+
 
 export const UM_OKKUR_FIELDS: SiteField[] = [
   // Hero
