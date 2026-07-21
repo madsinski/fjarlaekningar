@@ -4,21 +4,23 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { ZoomIn } from "lucide-react";
 
-// A screenshot in a laptop mockup, with optional highlight boxes and
-// click-to-enlarge — the same presentation the Lifeline deck these came from
-// uses, so a slide and this page show the same thing.
+// A framed screenshot with optional highlight boxes and click-to-enlarge.
 //
-// Two details carried over from that deck deliberately:
-//   * the screen is 16/10 and the image is object-contain, which is also what
-//     makes three steps with three differently-shaped source images render at
-//     one uniform size.
-//   * highlights are a cyan STROKE with no fill, so nothing is tinted over the
-//     UI being pointed at.
+// The frame is deliberately plain — a thin border, soft shadow, rounded corners
+// — rather than a device mockup. A laptop bezel is decoration borrowed from a
+// slide deck: it adds chrome, costs vertical space, and says nothing true about
+// the content (one of these three images is a product photo, not a screen). A
+// quiet frame does the one job that matters here: separating the screenshot
+// from the white page so it reads as a picture of something rather than part of
+// the layout.
 //
-// Highlight rects are CMS text, "x,y,w,h" in PERCENT, ";"-separated — the same
-// format the deck stores, so values port across as literals. The source images
-// are padded to exactly 16/10 so those percentages map to the image itself
-// rather than to a letterboxed frame.
+// The 16/10 box is kept, because it is what makes three differently-shaped
+// source images render at one uniform size. The images are padded to exactly
+// 16/10 so highlight percentages map to the image itself, not to a letterboxed
+// frame.
+//
+// Highlights are a cyan STROKE with no fill, so nothing is tinted over the UI
+// being pointed at.
 
 export type Highlight = { x: number; y: number; w: number; h: number };
 
@@ -54,27 +56,6 @@ function Boxes({ boxes }: { boxes: Highlight[] }) {
   );
 }
 
-/** The screen itself: 16/10, dark bezel, image contained and top-aligned. */
-function Screen({
-  src,
-  alt,
-  boxes,
-  rounded = "rounded-t-xl",
-}: {
-  src: string;
-  alt: string;
-  boxes: Highlight[];
-  rounded?: string;
-}) {
-  return (
-    <div className={`relative aspect-[16/10] overflow-hidden border-[6px] border-b-0 border-[#16181c] bg-[#f4f4f5] ${rounded}`}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt} className="block h-full w-full object-contain object-top" />
-      <Boxes boxes={boxes} />
-    </div>
-  );
-}
-
 /** Full-size view in a portal. Click anywhere / Escape closes. */
 function Lightbox({
   src,
@@ -105,22 +86,25 @@ function Lightbox({
       aria-modal="true"
       aria-label={alt}
       onClick={onClose}
-      className="fixed inset-0 z-[10060] grid place-items-center gap-4 p-[4vmin] cursor-zoom-out"
-      style={{ background: "rgba(8,20,26,.93)" }}
+      className="fixed inset-0 z-[10060] flex flex-col items-center justify-center gap-3 p-[2vmin] cursor-zoom-out"
+      style={{ background: "rgba(8,20,26,.94)" }}
     >
-      <div className="w-full max-w-[min(94vw,1100px)]" onClick={(e) => e.stopPropagation()}>
-        <div className="relative">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={src}
-            alt={alt}
-            className="block w-full rounded-lg"
-            style={{ boxShadow: "0 40px 90px -24px rgba(0,0,0,.85)" }}
-          />
-          <Boxes boxes={boxes} />
-        </div>
+      {/* The box is sized by ASPECT, bounded by both viewport axes, so it fills
+          as much of the screen as 16/10 allows. Sizing the wrapper rather than
+          the <img> keeps it shrink-wrapped to the image, which is what makes the
+          highlight percentages land in the right place. */}
+      <div
+        className="relative aspect-[16/10] rounded-lg overflow-hidden ring-1 ring-white/15"
+        style={{
+          width: "min(96vw, calc(90vh * 1.6), 2000px)",
+          boxShadow: "0 40px 90px -24px rgba(0,0,0,.85)",
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={alt} className="block h-full w-full object-contain object-top" />
+        <Boxes boxes={boxes} />
       </div>
-      <p className="text-sm text-white/70">Smelltu hvar sem er til að loka</p>
+      <p className="text-sm text-white/60">Smelltu hvar sem er til að loka</p>
     </div>,
     document.body,
   );
@@ -130,16 +114,11 @@ export default function Screenshot({
   src,
   alt,
   highlights = "",
-  variant = "laptop",
   className = "",
 }: {
   src: string;
   alt: string;
   highlights?: string;
-  /** "laptop" frames it as a screen; "plain" is for images that are not a
-   *  screen (a product photo in a laptop bezel would be a lie). Both are 16/10
-   *  and end up the same height. */
-  variant?: "laptop" | "plain";
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -151,35 +130,15 @@ export default function Screenshot({
         type="button"
         onClick={() => setOpen(true)}
         aria-label={`Stækka mynd: ${alt}`}
-        className={`group relative block w-full cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] rounded-xl ${className}`}
+        className={`group relative block w-full aspect-[16/10] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm cursor-zoom-in transition-shadow hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] ${className}`}
       >
-        {variant === "laptop" ? (
-          <>
-            <Screen src={src} alt={alt} boxes={boxes} />
-            {/* Base bar, tapered wider than the screen like a real lid hinge. */}
-            <div className="-mx-[7%] h-3 rounded-b-md bg-gradient-to-b from-[#cfd3d9] to-[#9aa0a8] shadow-[0_14px_22px_-14px_rgba(0,0,0,.45)] relative">
-              <span
-                aria-hidden
-                className="absolute left-1/2 top-0 h-1.5 w-[14%] -translate-x-1/2 rounded-b-lg bg-black/15"
-              />
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-slate-200 bg-white">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt={alt} className="block h-full w-full object-contain" />
-              <Boxes boxes={boxes} />
-            </div>
-            {/* Matches the laptop base so all three steps end up the same
-                height, without pretending this is a screen. */}
-            <div aria-hidden className="h-3" />
-          </>
-        )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={alt} className="block h-full w-full object-contain object-top" />
+        <Boxes boxes={boxes} />
 
         {/* Always-visible affordance. Touch devices have no hover, so a
             hover-only cue would leave the zoom undiscoverable there. */}
-        <span className="pointer-events-none absolute bottom-5 right-2 inline-flex items-center gap-1.5 rounded-full bg-slate-900/75 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm transition-colors group-hover:bg-slate-900">
+        <span className="pointer-events-none absolute bottom-2 right-2 inline-flex items-center gap-1.5 rounded-full bg-slate-900/75 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm transition-colors group-hover:bg-slate-900">
           <ZoomIn className="w-3.5 h-3.5" />
           Stækka
         </span>
