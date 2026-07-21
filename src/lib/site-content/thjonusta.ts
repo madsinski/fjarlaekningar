@@ -313,7 +313,8 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
     "Þurfi sjúklingur skoðun eða frekari rannsókn vísar læknir aftur í hefðbundna þjónustu.",
   limits2_icon: "stethoscope",
   limits3_title: "Frumgreining",
-  limits3_body: "Frumgreiningu tiltekinna vandamála er vísað í annan farveg.",
+  limits3_body:
+    "Frumgreiningu tiltekinna vandamála er vísað í annan farveg. Frunsa og ristill á húð eru dæmi: fyrsta greining þarf mat læknis með skoðun, en endurtekin einkenni sem þú þekkir má afgreiða hér.",
   limits3_icon: "clipboard-list",
   // NEW — needs clinical sign-off before publishing (see NOTE above). Built
   // around Mads' own phrasing; the rest uses vocabulary already on the page
