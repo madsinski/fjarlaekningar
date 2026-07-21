@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { isGateEnabled } from "@/lib/site-gate";
 
 /**
  * Coming-soon gate.
@@ -11,8 +12,10 @@ import type { NextRequest } from "next/server";
  * The matcher excludes Next internals (_next), API routes, and any path with
  * a file extension (assets), so only page navigations are gated.
  */
-export function proxy(request: NextRequest) {
-  if (process.env.COMING_SOON !== "true") {
+export async function proxy(request: NextRequest) {
+  // Gate state lives in the DB (toggleable from /admin/website) and falls back
+  // to the COMING_SOON env var. Cached ~30s — see src/lib/site-gate.ts.
+  if (!(await isGateEnabled())) {
     return NextResponse.next();
   }
 

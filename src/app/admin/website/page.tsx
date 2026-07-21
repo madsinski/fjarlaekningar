@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FileText, PanelsTopLeft, ExternalLink } from "lucide-react";
 import { SITE_PAGES } from "@/lib/site-content/registry";
 import { PUBLIC_SITE_URL, previewUrl } from "@/lib/public-site";
+import GateToggle from "./GateToggle";
 
 // Website CMS index — every editable surface: the marketing pages plus the
 // site chrome (header + footer), which is edited separately from page content.
@@ -35,6 +36,8 @@ export default function WebsiteCmsPage() {
         forskoðunarlykli, svo þú sérð síðuna eins og hún verður — þótt „coming soon“ hliðið sé enn virkt. Lykillinn
         gildir í 30 daga í vafranum.
       </p>
+
+      <GateToggle />
 
       <div className="rounded-xl border border-slate-200 bg-white divide-y divide-slate-100">
         {SITE_PAGES.map((p) => {
