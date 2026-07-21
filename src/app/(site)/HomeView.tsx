@@ -147,7 +147,7 @@ export default function HomeView({ c }: { c: LocaleContent }) {
 
       {/* HSU cooperation / pilot */}
       <section className="py-20 bg-[var(--background)]">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 flex flex-col md:flex-row items-center gap-10">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -170,26 +170,16 @@ export default function HomeView({ c }: { c: LocaleContent }) {
         </div>
       </section>
 
-      {/* Fréttabréf — opt-in for news, new heilsugæsla cooperations, new services */}
-      <section className="pb-4">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <NewsletterSignup
-            heading={renderHighlighted(c.news_heading)}
-            body={c.news_body}
-            cta={c.news_cta}
-            success={c.news_success}
-            consent={c.news_consent}
-          />
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] p-10 sm:p-16 text-center text-white">
-            <h2 className="text-3xl sm:text-4xl font-bold">{renderHighlighted(c.cta_heading)}</h2>
-            <p className="mt-4 text-brand-cyan-subtle max-w-xl mx-auto">{c.cta_body}</p>
-            <div className="mt-8 flex justify-center">
+      {/* CTA — the primary ask, and the loudest thing on the page.
+          Deliberately placed BEFORE the newsletter: the newsletter is the
+          consolation prize for people who aren't ready to book, so asking for
+          an email first would interrupt the path to the actual conversion. */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] p-10 sm:p-16 text-white">
+            <h2 className="text-3xl sm:text-4xl font-bold max-w-2xl">{renderHighlighted(c.cta_heading)}</h2>
+            <p className="mt-4 text-brand-cyan-subtle max-w-xl">{c.cta_body}</p>
+            <div className="mt-8">
               <MedaliaButton
                 size="lg"
                 label={c.cta_button}
@@ -198,6 +188,20 @@ export default function HomeView({ c }: { c: LocaleContent }) {
             </div>
             <p className="mt-6 text-sm text-brand-cyan-subtle/90">{c.cta_footer}</p>
           </div>
+        </div>
+      </section>
+
+      {/* Fréttabréf — the fallback capture, last before the footer and styled
+          quietly on purpose so it never competes with the CTA above it. */}
+      <section className="py-16 bg-[var(--background)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <NewsletterSignup
+            heading={renderHighlighted(c.news_heading)}
+            body={c.news_body}
+            cta={c.news_cta}
+            success={c.news_success}
+            consent={c.news_consent}
+          />
         </div>
       </section>
     </>

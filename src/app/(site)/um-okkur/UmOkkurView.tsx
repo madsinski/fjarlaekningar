@@ -23,11 +23,11 @@ export default function UmOkkurView({ c }: { c: LocaleContent }) {
 
   return (
     <>
-      <PageHero c={c} width="max-w-4xl" />
+      <PageHero c={c} />
 
       {/* Pillars */}
       <section className="py-20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {pillars.map((p) => (
               <div
@@ -47,7 +47,7 @@ export default function UmOkkurView({ c }: { c: LocaleContent }) {
 
       {/* Values */}
       <section className="py-20 bg-[var(--background)]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
               {renderHighlighted(c.values_heading)}
@@ -69,21 +69,21 @@ export default function UmOkkurView({ c }: { c: LocaleContent }) {
 
       {/* Team */}
       <section className="py-20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
               {renderHighlighted(c.team_heading)}
             </h2>
             <p className="mt-4 text-slate-600">{c.team_body}</p>
           </div>
           <TeamGrid />
-          <p className="mt-10 text-sm text-slate-500 text-center">{c.team_footer}</p>
+          <p className="mt-10 text-sm text-slate-500">{c.team_footer}</p>
         </div>
       </section>
 
       {/* CTA */}
       <section className="pb-24">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <MedaliaButton size="lg" label={c.cta_button} />
         </div>
       </section>

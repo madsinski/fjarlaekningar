@@ -36,7 +36,7 @@ export default function ThjonustaView({ c }: { c: LocaleContent }) {
       <PageHero c={c} />
 
       <section className="py-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-10">
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
               {renderHighlighted(c.erindi_heading)}
@@ -69,7 +69,7 @@ export default function ThjonustaView({ c }: { c: LocaleContent }) {
       </section>
 
       <section className="py-20 bg-[var(--background)]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
               {renderHighlighted(c.how_heading)}
@@ -98,7 +98,7 @@ export default function ThjonustaView({ c }: { c: LocaleContent }) {
           heading is cleared in the CMS. */}
       {c.limits_heading && (
         <section className="py-20">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-2xl mb-10">
               <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
                 {renderHighlighted(c.limits_heading)}
@@ -126,13 +126,15 @@ export default function ThjonustaView({ c }: { c: LocaleContent }) {
       )}
 
       <section className="py-20 bg-[var(--background)]">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-10">
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
               {renderHighlighted(c.faq_heading)}
             </h2>
           </div>
-          <div className="space-y-4">
+          {/* Container is full width so the left edge aligns with every other
+              section; the list itself stays at a readable measure. */}
+          <div className="space-y-4 max-w-3xl">
             {faqs.map((item) => (
               <details
                 key={item.q}
@@ -159,7 +161,7 @@ export default function ThjonustaView({ c }: { c: LocaleContent }) {
             ))}
           </div>
 
-          <div className="mt-16 text-center">
+          <div className="mt-16 max-w-3xl">
             <p className="text-slate-600 mb-6">{c.cta_text}</p>
             <MedaliaButton size="lg" label={c.cta_button} />
           </div>

@@ -8,10 +8,13 @@ import type { LocaleContent } from "@/lib/site-content/types";
 export default function HafaSambandView({ c }: { c: LocaleContent }) {
   return (
     <>
-      <PageHero c={c} width="max-w-4xl" />
+      <PageHero c={c} />
 
       <section className="py-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-10">
+        {/* Full-width container pins the left edge to the nav/footer; the
+            two-card grid keeps a sane card size inside it. */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-4xl">
           <div className="bg-white rounded-2xl border border-slate-200 p-8">
             <div className="w-12 h-12 rounded-xl bg-brand-cyan-subtle text-[var(--primary-dark)] flex items-center justify-center mb-4">
               <SiteIcon name={c.card1_icon} fallback="shield-check" className="w-6 h-6" strokeWidth={1.5} />
@@ -44,10 +47,14 @@ export default function HafaSambandView({ c }: { c: LocaleContent }) {
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 text-center text-sm text-slate-500">
+        {/* Safety notice — left-aligned with the cards, and given a warning
+            treatment rather than muted grey footnote text. Someone in an
+            emergency must not scan past this. */}
+        <div className="mt-12 max-w-4xl rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
           <p>
             <strong>{c.emergency_label}</strong> {c.emergency_body}
           </p>
+        </div>
         </div>
       </section>
     </>

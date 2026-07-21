@@ -67,19 +67,18 @@ export default function NewsletterSignup({
   };
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-brand-cyan-muted bg-gradient-to-br from-brand-cyan-subtle to-white p-8 sm:p-12">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-[var(--brand-cyan)]/10 blur-3xl"
-      />
-      <div className="relative max-w-2xl">
-        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 border border-brand-cyan-muted text-xs font-medium text-[var(--primary-dark)] mb-5">
+    // Sits directly below the primary CTA, so this is deliberately the quietest
+    // block on the page: flat white card, no gradient, no glow, smaller heading.
+    // It should be findable by someone who wants it, not compete for the click.
+    <div className="rounded-2xl border border-slate-200 bg-white p-8 sm:p-10">
+      <div className="max-w-2xl">
+        <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--primary-dark)] mb-4">
           <Mail className="w-3.5 h-3.5" />
           Fréttabréf
         </span>
 
-        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{t.heading}</h2>
-        <p className="mt-3 text-slate-600">{t.body}</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-900">{t.heading}</h2>
+        <p className="mt-2 text-slate-600">{t.body}</p>
 
         {sent ? (
           <div className="mt-6 inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">

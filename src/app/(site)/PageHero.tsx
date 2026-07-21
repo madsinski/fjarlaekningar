@@ -11,17 +11,14 @@ import type { LocaleContent } from "@/lib/site-content/types";
 // It still isn't plain text: a slim cyan accent rule, a small uppercase
 // eyebrow, the ==word== highlight in the title, a soft gradient that fades into
 // the page, and a hairline rule separating it from the content.
-export default function PageHero({
-  c,
-  width = "max-w-5xl",
-}: {
-  c: LocaleContent;
-  /** Container width — match the page's content sections so edges line up. */
-  width?: string;
-}) {
+// The container is fixed at max-w-7xl — the same width as the navbar and footer
+// — so the title's left edge lines up with the logo above it and every content
+// section below it. Per-page width overrides are deliberately not offered:
+// that's what made the edges wander in the first place.
+export default function PageHero({ c }: { c: LocaleContent }) {
   return (
     <section className="border-b border-slate-200/70 bg-gradient-to-b from-brand-cyan-subtle/60 to-white py-14">
-      <div className={`${width} mx-auto px-4 sm:px-6 lg:px-8`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {c.hero_eyebrow && (
           <span className="inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--primary-dark)]">
             <span aria-hidden className="h-px w-6 bg-[var(--primary)]" />
