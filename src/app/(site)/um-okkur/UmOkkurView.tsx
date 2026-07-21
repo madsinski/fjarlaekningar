@@ -26,7 +26,7 @@ export default function UmOkkurView({ c }: { c: LocaleContent }) {
       <PageHero c={c} />
 
       {/* Pillars */}
-      <section className="py-20">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {pillars.map((p) => (
@@ -68,7 +68,7 @@ export default function UmOkkurView({ c }: { c: LocaleContent }) {
       </section>
 
       {/* Team */}
-      <section className="py-20">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
@@ -82,7 +82,7 @@ export default function UmOkkurView({ c }: { c: LocaleContent }) {
       </section>
 
       {/* CTA */}
-      <section className="pb-24">
+      <section className="pb-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <MedaliaButton size="lg" label={c.cta_button} />
         </div>

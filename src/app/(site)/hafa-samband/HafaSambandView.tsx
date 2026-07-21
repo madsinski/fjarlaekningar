@@ -10,7 +10,7 @@ export default function HafaSambandView({ c }: { c: LocaleContent }) {
     <>
       <PageHero c={c} />
 
-      <section className="py-20">
+      <section className="py-20 bg-white">
         {/* Full-width container pins the left edge to the nav/footer; the
             two-card grid keeps a sane card size inside it. */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
