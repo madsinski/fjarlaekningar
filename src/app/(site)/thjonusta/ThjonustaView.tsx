@@ -303,7 +303,10 @@ export default function ThjonustaView({
                       src={st.img}
                       alt={st.title}
                       highlights={st.hl}
-                      className="mt-4 shadow-sm"
+                      // The kit photo is not a portal screen, so it gets the
+                      // plain frame rather than a laptop bezel.
+                      variant={st.hl ? "laptop" : "plain"}
+                      className="mt-4"
                     />
                   )}
                 </li>

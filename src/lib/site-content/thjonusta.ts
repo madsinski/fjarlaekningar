@@ -229,8 +229,8 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
   tests_s1_title: "Spurningalistinn segir þér hvort prófs er þörf",
   tests_s1_desc:
     "Þú velur erindi og svarar spurningalistanum — það tekur aðeins nokkrar mínútur. Eigi próf við um þitt erindi færðu skilaboð um hvaða próf það er; það á ekki við um öll erindi.",
-  tests_s1_img: "/gatt/02-spurningalisti.png",
-  tests_s1_hl: "30,4.5,40,95.5",
+  tests_s1_img: "/gatt/02-spurningalisti.webp",
+  tests_s1_hl: "30,3.86,40,82.01",
   tests_s2_title: "Þú sækir prófið og tekur það heima",
   tests_s2_desc:
     "Prófið sækir þú á heilsugæslu eða í apóteki — sjá hvar hér að ofan. Leiðbeiningar um hvernig það er tekið fylgja í gáttinni.",
@@ -240,13 +240,13 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
   // PROVENANCE: third-party product photo of a PRIMA Strep A home test, sourced
   // from an Amazon listing. Copied locally rather than hotlinked, but it is NOT
   // our image — see the licensing note flagged with this change.
-  tests_s2_img: "/gatt/heimaprof-kit.jpg",
+  tests_s2_img: "/gatt/heimaprof-kit.webp",
   tests_s2_hl: "",
   tests_s3_title: "Þú skráir niðurstöðuna í gáttina",
   tests_s3_desc:
     "Þú skráir niðurstöðuna beint í sjúklingagáttina. Allar upplýsingar um erindið og prófið fara til læknis til yfirferðar, sem lýkur erindinu.",
-  tests_s3_img: "/gatt/03-sjalfsprof.png",
-  tests_s3_hl: "30,36.3,40,51.7",
+  tests_s3_img: "/gatt/03-sjalfsprof.webp",
+  tests_s3_hl: "30,31.23,40,44.48",
 
   tests_footer:
     "Þú skráir niðurstöðuna beint í sjúklingagáttina og læknir metur hana með svörunum þínum. Þurfir þú aðstoð við að nálgast próf, hafðu samband.",
