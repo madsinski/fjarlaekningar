@@ -35,7 +35,6 @@ export interface FooterContent {
   footer_country?: string;
   footer_email?: string;
   footer_rights?: string;
-  footer_portal_note?: string;
   footer_admin_link?: string;
 }
 
@@ -53,7 +52,6 @@ const FOOTER_DEFAULTS: Required<FooterContent> = {
   footer_country: "Ísland",
   footer_email: "fjarlaekningar@fjarlaekningar.is",
   footer_rights: "Fjarlækningar ehf. Allur réttur áskilinn.",
-  footer_portal_note: "Sjúklingagátt rekin af",
   footer_admin_link: "Stjórnborð",
 };
 
