@@ -280,19 +280,25 @@ export default function ThjonustaView({
             text-lg headings separated only by margin, which read as one
             continuous run of text. */}
         {c.tests_why_heading && (
-          <div className="mt-16 border-t border-slate-200 pt-10">
-            <h3 className="flex items-center gap-2.5 text-xl sm:text-2xl font-bold text-slate-900">
-              <span aria-hidden className="h-px w-6 shrink-0 bg-[var(--primary)]" />
-              {c.tests_why_heading}
-            </h3>
-            <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl">
-              <p className="text-slate-600 leading-relaxed">{c.tests_why_body}</p>
-              {c.tests_accuracy && (
-                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
-                  <p className="text-sm text-slate-600 leading-relaxed">{c.tests_accuracy}</p>
-                </div>
-              )}
+          {/* Heading + body form the LEFT column, so the accuracy card
+              top-aligns with the heading itself. Previously the heading spanned
+              the full width and the card started a row below it, which left the
+              card hanging visibly lower than the text block beside it. */}
+          <div className="mt-16 border-t border-slate-200 pt-10 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 max-w-5xl">
+            <div>
+              <h3 className="flex items-center gap-2.5 text-xl sm:text-2xl font-bold text-slate-900">
+                <span aria-hidden className="h-px w-6 shrink-0 bg-[var(--primary)]" />
+                {c.tests_why_heading}
+              </h3>
+              <p className="mt-5 text-slate-600 leading-relaxed">{c.tests_why_body}</p>
             </div>
+            {c.tests_accuracy && (
+              // self-start: the card hugs its content instead of stretching to
+              // the height of the text column and trailing empty space.
+              <div className="self-start rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
+                <p className="text-sm text-slate-600 leading-relaxed">{c.tests_accuracy}</p>
+              </div>
+            )}
           </div>
         )}
 
