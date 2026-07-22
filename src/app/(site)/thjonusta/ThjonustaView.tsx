@@ -280,10 +280,10 @@ export default function ThjonustaView({
             text-lg headings separated only by margin, which read as one
             continuous run of text. */}
         {c.tests_why_heading && (
-          {/* Heading + body form the LEFT column, so the accuracy card
-              top-aligns with the heading itself. Previously the heading spanned
-              the full width and the card started a row below it, which left the
-              card hanging visibly lower than the text block beside it. */}
+          // Heading + body form the LEFT column, so the accuracy card
+          // top-aligns with the heading itself. Previously the heading spanned
+          // the full width and the card started a row below it, which left the
+          // card hanging visibly lower than the text block beside it.
           <div className="mt-16 border-t border-slate-200 pt-10 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 max-w-5xl">
             <div>
               <h3 className="flex items-center gap-2.5 text-xl sm:text-2xl font-bold text-slate-900">
