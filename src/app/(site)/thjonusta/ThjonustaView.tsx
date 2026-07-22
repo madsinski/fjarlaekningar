@@ -295,8 +295,11 @@ export default function ThjonustaView({
             {c.tests_accuracy && (
               // self-start: the card hugs its content instead of stretching to
               // the height of the text column and trailing empty space.
-              <div className="self-start rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
-                <p className="text-sm text-slate-600 leading-relaxed">{c.tests_accuracy}</p>
+              // Amber: this is a caution (the test does not replace the
+              // doctor's assessment), so it uses the same warning treatment as
+              // the scope cards and the emergency notice.
+              <div className="self-start rounded-2xl border border-amber-200 bg-amber-50 p-6">
+                <p className="text-sm text-amber-900 leading-relaxed">{c.tests_accuracy}</p>
               </div>
             )}
           </div>
