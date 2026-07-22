@@ -253,7 +253,7 @@ export default function ThjonustaView({
               {t.where && (
                 <div className={t.when ? "mt-4" : "mt-auto pt-4 border-t border-slate-100"}>
                   <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Fæst hjá
+                    {tr.availableAt}
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {t.where.split(",").map((w) => (
@@ -505,7 +505,7 @@ export default function ThjonustaView({
               {l.items && l.items.length > 0 && (
                 <details className="group mt-4 border-t border-slate-100 pt-3">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-semibold text-amber-800 hover:text-amber-900">
-                    Sjá dæmi um alvarleg einkenni
+                    {tr.seeRedFlags}
                     <svg
                       className="w-4 h-4 shrink-0 transition-transform group-open:rotate-180"
                       fill="none"
