@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { ZoomIn } from "lucide-react";
+import { ui } from "@/lib/site-content/ui-strings";
+import type { Locale } from "@/lib/site-content/types";
 
 // A framed screenshot with optional highlight boxes and click-to-enlarge.
 //
@@ -61,11 +63,13 @@ function Lightbox({
   src,
   alt,
   boxes,
+  closeHint,
   onClose,
 }: {
   src: string;
   alt: string;
   boxes: Highlight[];
+  closeHint: string;
   onClose: () => void;
 }) {
   useEffect(() => {
@@ -104,7 +108,7 @@ function Lightbox({
         <img src={src} alt={alt} className="block h-full w-full object-contain object-top" />
         <Boxes boxes={boxes} />
       </div>
-      <p className="text-sm text-white/60">Smelltu hvar sem er til að loka</p>
+      <p className="text-sm text-white/60">{closeHint}</p>
     </div>,
     document.body,
   );
@@ -114,22 +118,25 @@ export default function Screenshot({
   src,
   alt,
   highlights = "",
+  locale = "is",
   className = "",
 }: {
   src: string;
   alt: string;
   highlights?: string;
+  locale?: Locale;
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const boxes = parseHighlights(highlights);
+  const t = ui(locale);
 
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label={`Stækka mynd: ${alt}`}
+        aria-label={`${t.enlargeImage}: ${alt}`}
         className={`group relative block w-full aspect-[16/10] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm cursor-zoom-in transition-shadow hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] ${className}`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -140,11 +147,11 @@ export default function Screenshot({
             hover-only cue would leave the zoom undiscoverable there. */}
         <span className="pointer-events-none absolute bottom-2 right-2 inline-flex items-center gap-1.5 rounded-full bg-slate-900/75 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm transition-colors group-hover:bg-slate-900">
           <ZoomIn className="w-3.5 h-3.5" />
-          Stækka
+          {t.enlarge}
         </span>
       </button>
 
-      {open && <Lightbox src={src} alt={alt} boxes={boxes} onClose={() => setOpen(false)} />}
+      {open && <Lightbox src={src} alt={alt} boxes={boxes} closeHint={t.clickToClose} onClose={() => setOpen(false)} />}
     </>
   );
 }

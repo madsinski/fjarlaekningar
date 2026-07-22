@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { CheckCircle2, Mail } from "lucide-react";
+import { ui } from "@/lib/site-content/ui-strings";
+import type { Locale } from "@/lib/site-content/types";
 
 // Public newsletter opt-in.
 //
@@ -16,7 +18,9 @@ export default function NewsletterSignup({
   cta,
   success,
   consent,
+  locale = "is",
 }: {
+  locale?: Locale;
   /** ReactNode so the caller can pass renderHighlighted() for ==word== support. */
   heading?: React.ReactNode;
   body?: string;
@@ -74,7 +78,7 @@ export default function NewsletterSignup({
       <div className="max-w-2xl">
         <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--primary-dark)] mb-4">
           <Mail className="w-3.5 h-3.5" />
-          Fréttabréf
+          {ui(locale).newsletter}
         </span>
 
         <h2 className="text-xl sm:text-2xl font-bold text-slate-900">{t.heading}</h2>

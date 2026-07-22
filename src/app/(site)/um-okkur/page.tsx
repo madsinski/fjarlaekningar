@@ -13,6 +13,6 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function UmOkkurPage() {
-  const { c, order } = await getPage("um-okkur");
-  return <UmOkkurView c={c} order={order} />;
+  const { c, order, locale } = await getPage("um-okkur");
+  return <UmOkkurView c={c} order={order} locale={locale} />;
 }

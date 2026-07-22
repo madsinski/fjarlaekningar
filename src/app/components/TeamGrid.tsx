@@ -2,11 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { ui } from "@/lib/site-content/ui-strings";
+import type { Locale } from "@/lib/site-content/types";
 
+// Roles and flags carry both languages here, in code, for the same reason the
+// erindi do: this list is static, so the CMS translator never sees it.
 type Member = {
   name: string;
   role: string;
+  roleEn: string;
   flag: string;
+  flagEn: string;
   photo: string;
 };
 
@@ -14,31 +20,41 @@ const team: Member[] = [
   {
     name: "Victor Guðmundsson",
     role: "Framkvæmdastjóri · Læknir",
+    roleEn: "CEO · Physician",
     flag: "Stofnandi",
+    flagEn: "Founder",
     photo: "/team/fjar-victor.jpg",
   },
   {
     name: "Mads Christian Aanesen",
     role: "Tæknistjóri · Læknir",
+    roleEn: "CTO · Physician",
     flag: "Stofnandi",
+    flagEn: "Founder",
     photo: "/team/fjar-mads.jpg",
   },
   {
     name: "Guðbjartur Ólafsson",
     role: "Yfirlæknir",
+    roleEn: "Chief Physician",
     flag: "Læknateymi",
+    flagEn: "Medical team",
     photo: "/team/fjar-gudbjartur.jpg",
   },
   {
     name: "Dagbjört Guðbrandsdóttir",
     role: "Læknir",
+    roleEn: "Physician",
     flag: "Læknateymi",
+    flagEn: "Medical team",
     photo: "/team/fjar-dagbjort.jpg",
   },
   {
     name: "Elvar Páll Sigurðsson",
     role: "Rekstrarstjóri · Markaðsstjóri",
+    roleEn: "COO · Head of Marketing",
     flag: "Stjórnun",
+    flagEn: "Management",
     photo: "/team/fjar-elvar.jpg",
   },
 ];
@@ -46,9 +62,11 @@ const team: Member[] = [
 /** Full-size portrait in a portal. Click anywhere / Escape closes. */
 function PhotoLightbox({
   member,
+  role,
   onClose,
 }: {
   member: Member;
+  role: string;
   onClose: () => void;
 }) {
   useEffect(() => {
@@ -85,15 +103,18 @@ function PhotoLightbox({
       />
       <div className="text-center text-[#eafaf3]">
         <div className="text-lg sm:text-xl font-bold">{member.name}</div>
-        <div className="text-sm text-[#a9c9bd]">{member.role}</div>
+        <div className="text-sm text-[#a9c9bd]">{role}</div>
       </div>
     </div>,
     document.body,
   );
 }
 
-export default function TeamGrid() {
+export default function TeamGrid({ locale = "is" }: { locale?: Locale }) {
   const [active, setActive] = useState<Member | null>(null);
+  const tr = ui(locale);
+  const roleOf = (m: Member) => (locale === "en" ? m.roleEn : m.role);
+  const flagOf = (m: Member) => (locale === "en" ? m.flagEn : m.flag);
 
   return (
     <>
@@ -105,8 +126,8 @@ export default function TeamGrid() {
             key={member.name}
             type="button"
             onClick={() => setActive(member)}
-            title="Smelltu til að stækka"
-            aria-label={`Stækka mynd: ${member.name}`}
+            title={tr.clickToEnlarge}
+            aria-label={`${tr.enlargeImage}: ${member.name}`}
             className="group bg-white rounded-2xl border border-slate-200 p-5 text-left hover:shadow-lg hover:border-brand-cyan transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
           >
             <div className="relative w-20 h-20 rounded-full overflow-hidden bg-brand-cyan-subtle ring-2 ring-brand-cyan-muted">
@@ -135,15 +156,15 @@ export default function TeamGrid() {
             <h3 className="mt-4 text-sm font-semibold text-slate-900 leading-snug">
               {member.name}
             </h3>
-            <p className="mt-0.5 text-xs text-slate-600">{member.role}</p>
+            <p className="mt-0.5 text-xs text-slate-600">{roleOf(member)}</p>
             <span className="mt-3 inline-flex items-center px-2.5 py-0.5 rounded-full bg-brand-cyan-subtle/70 text-[11px] font-medium text-[var(--primary-dark)]">
-              {member.flag}
+              {flagOf(member)}
             </span>
           </button>
         ))}
       </div>
       {active && (
-        <PhotoLightbox member={active} onClose={() => setActive(null)} />
+        <PhotoLightbox member={active} role={roleOf(active)} onClose={() => setActive(null)} />
       )}
     </>
   );

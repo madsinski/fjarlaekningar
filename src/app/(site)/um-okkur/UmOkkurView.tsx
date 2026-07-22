@@ -17,9 +17,12 @@ import { resolveOrder, type LocaleContent } from "@/lib/site-content/types";
 export default function UmOkkurView({
   c,
   order,
+  locale = "is",
 }: {
   c: LocaleContent;
   order?: string[];
+  /** For TeamGrid's static roles/flags — CMS strings in `c` are already resolved. */
+  locale?: "is" | "en";
 }) {
   const pillars = [
     { title: c.p1_title, body: c.p1_body, icon: c.p1_icon, fallback: "target" },
@@ -81,7 +84,7 @@ export default function UmOkkurView({
           </h2>
           <p className="mt-4 text-slate-600">{c.team_body}</p>
         </div>
-        <TeamGrid />
+        <TeamGrid locale={locale} />
         <p className="mt-10 text-sm text-slate-500">{c.team_footer}</p>
       </>
     ),

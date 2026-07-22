@@ -7,6 +7,7 @@ import SiteIcon from "@/lib/site-content/SiteIcon";
 import { renderHighlighted } from "@/lib/site-content/highlight";
 import { THJONUSTA_SECTIONS } from "@/lib/site-content/thjonusta";
 import { resolveOrder, type LocaleContent } from "@/lib/site-content/types";
+import { ui } from "@/lib/site-content/ui-strings";
 
 // Presentational Þjónusta page.
 //
@@ -27,6 +28,7 @@ export default function ThjonustaView({
   locale?: "is" | "en";
 }) {
   const erindi = localizeErindi(locale);
+  const tr = ui(locale);
   const steps = [
     { n: "1", title: c.step1_title, description: c.step1_desc },
     { n: "2", title: c.step2_title, description: c.step2_desc },
@@ -242,7 +244,7 @@ export default function ThjonustaView({
               {t.when && (
                 <div className="mt-auto pt-4 border-t border-slate-100">
                   <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
-                    Á við um
+                    {tr.appliesTo}
                   </div>
                   <p className="text-sm text-slate-600 leading-relaxed">{t.when}</p>
                 </div>
@@ -320,6 +322,7 @@ export default function ThjonustaView({
                       src={st.img}
                       alt={st.title}
                       highlights={st.hl}
+                      locale={locale}
                       // mt-auto pins all three images to the bottom of their
                       // (equal-height) grid row, so translations of different
                       // lengths cannot push one image lower than its
@@ -375,7 +378,7 @@ export default function ThjonustaView({
                       >
                         <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 mb-4">
                           <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                          Virk þjónusta
+                          {tr.serviceLive}
                         </span>
                         <div className="flex items-start gap-3">
                           <SiteIcon name="map-pin" fallback="map-pin" className="w-5 h-5 shrink-0 mt-0.5 text-emerald-700" />
@@ -393,7 +396,7 @@ export default function ThjonustaView({
                         {l.pickups.length > 0 && (
                           <details className="group mt-4 border-t border-slate-100 pt-3">
                             <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-semibold text-emerald-800 hover:text-emerald-900">
-                              {c.live_pickup_label || "Hvar fæ ég heimapróf?"}
+                              {c.live_pickup_label || tr.wherePickup}
                               <svg
                                 className="w-4 h-4 shrink-0 transition-transform group-open:rotate-180"
                                 fill="none"
@@ -446,7 +449,7 @@ export default function ThjonustaView({
                 {soon.length > 0 && (
                   <div className={open.length > 0 ? "mt-6" : ""}>
                     <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2.5">
-                      Væntanlegt
+                      {tr.comingSoon}
                     </div>
                     <ul className="flex flex-wrap gap-2">
                       {soon.map((l) => (

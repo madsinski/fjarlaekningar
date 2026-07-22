@@ -25,7 +25,7 @@ function Preview({ pageKey, c, order, locale }: { pageKey: string; c: LocaleCont
     case "thjonusta":
       return <ThjonustaView c={c} order={order} locale={locale} />;
     case "um-okkur":
-      return <UmOkkurView c={c} order={order} />;
+      return <UmOkkurView c={c} order={order} locale={locale} />;
     case "hafa-samband":
       return <HafaSambandView c={c} order={order} />;
     case "chrome":

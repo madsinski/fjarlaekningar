@@ -6,6 +6,7 @@ import { localizeErindi } from "../../erindi";
 import { renderHighlighted } from "@/lib/site-content/highlight";
 import { HOME_SECTIONS } from "@/lib/site-content/home";
 import { resolveOrder, type LocaleContent } from "@/lib/site-content/types";
+import { ui } from "@/lib/site-content/ui-strings";
 
 // Presentational Home page. Renders from a resolved content map `c` so the same
 // component powers the public page (server) and the CMS live preview (client).
@@ -27,6 +28,7 @@ export default function HomeView({
   locale?: "is" | "en";
 }) {
   const erindi = localizeErindi(locale);
+  const t = ui(locale);
   // Titles only. The descriptions used to live here too, which meant the home
   // page and /thjonusta each carried a different half of the same explanation.
   const steps = [c.step1_title, c.step2_title, c.step3_title, c.step4_title, c.step5_title].filter(
@@ -131,7 +133,7 @@ export default function HomeView({
           href="/thjonusta#ferlid"
           className="mt-10 inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-white border-2 border-[var(--primary)] text-[var(--primary-dark)] font-semibold hover:bg-brand-cyan-subtle transition-colors"
         >
-          {c.how_cta || "Sjá hvernig þjónustan virkar"}
+          {c.how_cta || t.seeHow}
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
           </svg>
@@ -202,7 +204,7 @@ export default function HomeView({
               href="/thjonusta#live"
               className="mt-8 inline-flex items-center gap-2 px-7 py-3 rounded-full border-2 border-[var(--primary)] text-[var(--primary-dark)] font-semibold hover:bg-brand-cyan-subtle transition-colors"
             >
-              {c.coop_cta || "Hvar er þjónustan virk?"}
+              {c.coop_cta || t.whereLive}
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
