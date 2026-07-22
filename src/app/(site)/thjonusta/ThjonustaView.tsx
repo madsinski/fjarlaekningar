@@ -327,17 +327,19 @@ export default function ThjonustaView({
                   </div>
                   <p className="text-sm text-slate-600 leading-relaxed">{st.desc}</p>
                   {st.img && (
-                    <Screenshot
-                      src={st.img}
-                      alt={st.title}
-                      highlights={st.hl}
-                      locale={locale}
-                      // mt-auto pins all three images to the bottom of their
-                      // (equal-height) grid row, so translations of different
-                      // lengths cannot push one image lower than its
-                      // neighbours — which is exactly what happened on /en.
-                      className="mt-auto pt-4"
-                    />
+                    // The wrapper carries the spacing: mt-auto pins all three
+                    // images to the bottom of their equal-height grid row (so
+                    // uneven translation lengths cannot misalign them), and
+                    // pt-6 is OUTSIDE the frame — padding on the button itself
+                    // would render as a white band inside the border.
+                    <div className="mt-auto pt-6">
+                      <Screenshot
+                        src={st.img}
+                        alt={st.title}
+                        highlights={st.hl}
+                        locale={locale}
+                      />
+                    </div>
                   )}
                 </li>
               ))}
