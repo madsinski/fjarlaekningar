@@ -14,6 +14,6 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function ThjonustaPage() {
-  const { c, order } = await getPage("thjonusta");
-  return <ThjonustaView c={c} order={order} />;
+  const { c, order, locale } = await getPage("thjonusta");
+  return <ThjonustaView c={c} order={order} locale={locale} />;
 }

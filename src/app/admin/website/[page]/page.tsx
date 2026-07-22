@@ -18,12 +18,12 @@ type SaveState = "idle" | "saving" | "saved" | "error";
 
 // Preview renderer per page key. "chrome" previews the live header (the footer
 // is server-rendered — it reads published legal docs — so it isn't previewed here).
-function Preview({ pageKey, c, order }: { pageKey: string; c: LocaleContent; order: string[] }) {
+function Preview({ pageKey, c, order, locale }: { pageKey: string; c: LocaleContent; order: string[]; locale: Locale }) {
   switch (pageKey) {
     case "home":
-      return <HomeView c={c} order={order} />;
+      return <HomeView c={c} order={order} locale={locale} />;
     case "thjonusta":
-      return <ThjonustaView c={c} order={order} />;
+      return <ThjonustaView c={c} order={order} locale={locale} />;
     case "um-okkur":
       return <UmOkkurView c={c} order={order} />;
     case "hafa-samband":
@@ -397,7 +397,7 @@ export default function SiteContentEditor() {
           <div className="rounded-xl border border-slate-200 bg-white overflow-hidden" style={{ height: "calc(100vh - 180px)" }}>
             <div className="overflow-auto h-full">
               <div style={{ width: "200%", transform: "scale(0.5)", transformOrigin: "top left" }}>
-                <Preview pageKey={pageKey} c={previewContent} order={sectionOrder} />
+                <Preview pageKey={pageKey} c={previewContent} order={sectionOrder} locale={previewLocale} />
               </div>
             </div>
           </div>

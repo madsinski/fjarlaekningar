@@ -40,7 +40,7 @@ export async function getPageContent(page: string): Promise<LocaleContent> {
  */
 export async function getPage(
   page: string,
-): Promise<{ c: LocaleContent; order: string[] }> {
+): Promise<{ c: LocaleContent; order: string[]; locale: Locale }> {
   const [locale, blob] = await Promise.all([getLocale(), getPublishedBlob(page)]);
-  return { c: resolveContent(page, blob, locale), order: resolveSections(page, blob) };
+  return { c: resolveContent(page, blob, locale), order: resolveSections(page, blob), locale };
 }

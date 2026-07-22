@@ -12,6 +12,6 @@ import HomeView from "./HomeView";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const { c, order } = await getPage("home");
-  return <HomeView c={c} order={order} />;
+  const { c, order, locale } = await getPage("home");
+  return <HomeView c={c} order={order} locale={locale} />;
 }

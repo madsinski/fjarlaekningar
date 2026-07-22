@@ -2,7 +2,7 @@ import Link from "next/link";
 import PortalButton from "../components/PortalButton";
 import NewsletterSignup from "../components/NewsletterSignup";
 import Band from "./Band";
-import { erindi } from "../../erindi";
+import { localizeErindi } from "../../erindi";
 import { renderHighlighted } from "@/lib/site-content/highlight";
 import { HOME_SECTIONS } from "@/lib/site-content/home";
 import { resolveOrder, type LocaleContent } from "@/lib/site-content/types";
@@ -18,10 +18,15 @@ import { resolveOrder, type LocaleContent } from "@/lib/site-content/types";
 export default function HomeView({
   c,
   order,
+  locale = "is",
 }: {
   c: LocaleContent;
   order?: string[];
+  /** Locale for the static erindi list — CMS strings in `c` are already
+   *  resolved, but the erindi are code, so the view must pick the language. */
+  locale?: "is" | "en";
 }) {
+  const erindi = localizeErindi(locale);
   // Titles only. The descriptions used to live here too, which meant the home
   // page and /thjonusta each carried a different half of the same explanation.
   const steps = [c.step1_title, c.step2_title, c.step3_title, c.step4_title, c.step5_title].filter(

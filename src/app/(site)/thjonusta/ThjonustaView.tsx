@@ -2,7 +2,7 @@ import PortalButton from "../../components/PortalButton";
 import PageHero from "../PageHero";
 import Band from "../Band";
 import Screenshot from "../Screenshot";
-import { erindi } from "../../../erindi";
+import { localizeErindi } from "../../../erindi";
 import SiteIcon from "@/lib/site-content/SiteIcon";
 import { renderHighlighted } from "@/lib/site-content/highlight";
 import { THJONUSTA_SECTIONS } from "@/lib/site-content/thjonusta";
@@ -18,10 +18,15 @@ import { resolveOrder, type LocaleContent } from "@/lib/site-content/types";
 export default function ThjonustaView({
   c,
   order,
+  locale = "is",
 }: {
   c: LocaleContent;
   order?: string[];
+  /** Locale for the static erindi list — CMS strings in `c` are already
+   *  resolved, but the erindi are code, so the view must pick the language. */
+  locale?: "is" | "en";
 }) {
+  const erindi = localizeErindi(locale);
   const steps = [
     { n: "1", title: c.step1_title, description: c.step1_desc },
     { n: "2", title: c.step2_title, description: c.step2_desc },
@@ -315,7 +320,11 @@ export default function ThjonustaView({
                       src={st.img}
                       alt={st.title}
                       highlights={st.hl}
-                      className="mt-4"
+                      // mt-auto pins all three images to the bottom of their
+                      // (equal-height) grid row, so translations of different
+                      // lengths cannot push one image lower than its
+                      // neighbours — which is exactly what happened on /en.
+                      className="mt-auto pt-4"
                     />
                   )}
                 </li>

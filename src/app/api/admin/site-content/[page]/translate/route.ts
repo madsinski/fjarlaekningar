@@ -29,6 +29,8 @@ Rules:
 - Translate naturally and concisely for a healthcare marketing website — clear, trustworthy, warm.
 - Keep the meaning and tone; keep numbers, times (e.g. "10–22"), and units intact.
 - Do NOT translate brand/product names: "Fjarlækningar", "HSU", "Heilbrigðisstofnun Suðurlands".
+- Do NOT translate proper names of institutions or health centres (e.g. "Heilsugæslan í Vestmannaeyjum", "Læknavaktin", "Apótek Vestmannaeyja") — patients must be able to find the real place by its real name. Translate the descriptive text around them.
+- Some items are structured lists: lines beginning with "+", "-" or "*", with fields separated by "|". Preserve the line structure, the prefixes and the "|" separators exactly; translate only the human-readable text within each field, subject to the proper-name rule. Never translate a field that is a file path (starts with "/") .
 - Use correct medical terminology in the target language.
 - Return ONLY the translation for each item, no notes.`;
 
@@ -62,10 +64,14 @@ export async function POST(req: Request, ctx: { params: Promise<{ page: string }
 
   // Build the list of fields to translate (non-empty source text).
   // Icon fields hold an icon KEY (e.g. "shield-check"), never prose — translating
-  // one would break the icon lookup, so they're skipped.
+  // one would break the icon lookup, so they're skipped. Likewise *_img (asset
+  // paths) and *_hl (highlight rectangles, "x,y,w,h" percentages): both are
+  // machine syntax that only survived past translations because the model
+  // happened to echo them back. Locale-independent anyway — skip, don't gamble.
+  const STRUCTURAL = /_img$|_hl$/;
   const items: { i: number; key: string; text: string }[] = [];
   sitePage.fields.forEach((f, i) => {
-    if (f.type === "icon") return;
+    if (f.type === "icon" || STRUCTURAL.test(f.key)) return;
     const src = fromMap[f.key]?.trim() || (from === "is" ? sitePage.defaultsIs[f.key] : "");
     if (src && src.trim()) items.push({ i, key: f.key, text: src });
   });
