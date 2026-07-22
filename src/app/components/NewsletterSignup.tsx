@@ -34,6 +34,7 @@ export default function NewsletterSignup({
   const [sent, setSent] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const u = ui(locale);
   const t = {
     heading: heading || "Fylgstu með því sem er að gerast",
     body:
@@ -59,12 +60,12 @@ export default function NewsletterSignup({
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok || !j.ok) {
-        setErr(j.error || "Ekki tókst að skrá netfangið.");
+        setErr(j.error || u.subscribeError);
         return;
       }
       setSent(true);
     } catch {
-      setErr("Netvilla — reyndu aftur.");
+      setErr(u.networkError);
     } finally {
       setBusy(false);
     }
@@ -78,7 +79,7 @@ export default function NewsletterSignup({
       <div className="max-w-2xl">
         <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--primary-dark)] mb-4">
           <Mail className="w-3.5 h-3.5" />
-          {ui(locale).newsletter}
+          {u.newsletter}
         </span>
 
         <h2 className="text-xl sm:text-2xl font-bold text-slate-900">{t.heading}</h2>
@@ -95,7 +96,7 @@ export default function NewsletterSignup({
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Nafn (valfrjálst)"
+                placeholder={u.namePlaceholder}
                 autoComplete="name"
                 className="sm:w-52 px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-cyan-200"
               />
@@ -103,7 +104,7 @@ export default function NewsletterSignup({
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Netfang"
+                placeholder={u.emailPlaceholder}
                 required
                 autoComplete="email"
                 className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-cyan-200"
@@ -113,7 +114,7 @@ export default function NewsletterSignup({
                 disabled={busy || !email}
                 className="shrink-0 rounded-lg bg-cyan-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-cyan-700 disabled:opacity-50"
               >
-                {busy ? "Skrái…" : t.cta}
+                {busy ? u.submitting : t.cta}
               </button>
             </div>
             {err && <p className="mt-3 text-sm text-red-600">{err}</p>}

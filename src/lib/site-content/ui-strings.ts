@@ -23,6 +23,11 @@ const IS = {
     newsletter: "Fréttabréf",
     seeHow: "Sjá hvernig þjónustan virkar",
     whereLive: "Hvar er þjónustan virk?",
+    namePlaceholder: "Nafn (valfrjálst)",
+    emailPlaceholder: "Netfang",
+    submitting: "Skrái…",
+    subscribeError: "Ekki tókst að skrá netfangið.",
+    networkError: "Netvilla — reyndu aftur.",
 };
 
 export type UiStrings = { [K in keyof typeof IS]: string };
@@ -43,6 +48,11 @@ const EN: UiStrings = {
     newsletter: "Newsletter",
     seeHow: "See how the service works",
     whereLive: "Where is the service available?",
+    namePlaceholder: "Name (optional)",
+    emailPlaceholder: "Email",
+    submitting: "Signing up…",
+    subscribeError: "Could not sign up this email address.",
+    networkError: "Network error — please try again.",
 };
 
 const STRINGS: Record<Locale, UiStrings> = { is: IS, en: EN };

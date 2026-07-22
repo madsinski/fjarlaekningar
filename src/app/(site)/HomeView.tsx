@@ -237,6 +237,7 @@ export default function HomeView({
     // quietly on purpose so it never competes with the CTA above it.
     news: (
       <NewsletterSignup
+        locale={locale}
         heading={renderHighlighted(c.news_heading)}
         body={c.news_body}
         cta={c.news_cta}
