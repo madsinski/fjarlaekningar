@@ -31,6 +31,12 @@ export const COLLATERAL_CSS = `
   -webkit-font-smoothing:antialiased;
 }
 .llcol .a4 *{box-sizing:border-box;}
+/* A document may be more than one sheet (e.g. the referral guide + its back
+   side). transform:scale does not shrink the layout box, so pull the next page
+   up by the space the scale frees — otherwise stacked pages sit 297mm apart on
+   screen. Print drops both (PRINT_CSS sets margin:0 !important on .a4). */
+.llcol .a4 + .a4{margin-top:6mm;}
+.llcol .a4{margin-bottom:calc(-297mm * (1 - var(--fit,1)));}
 
 /* ── shared atoms ──────────────────────────────────────────────────────── */
 .llcol .fjar-logo{display:block; height:11mm; width:auto;}
@@ -151,6 +157,37 @@ export const COLLATERAL_CSS = `
 /* section headers (referral) — accent bar + optional divider */
 .llcol .sec-h2{font-size:14.5px; font-weight:800; color:var(--ink); margin:0 0 4mm; letter-spacing:-.01em;}
 .llcol .sec-rule{border-top:1px solid var(--line); margin-bottom:4mm;}
+
+/* ── medication exclusion list (referral back side) ────────────────────── */
+.llcol .med-cols{column-count:2; column-gap:5mm;}
+.llcol .med-cat{
+  break-inside:avoid; -webkit-column-break-inside:avoid; page-break-inside:avoid;
+  margin:0 0 4.5mm; padding:3.5mm 4.5mm; border-radius:4mm;
+  border:1px solid #f5d3e1; background:#fdf7fa;
+}
+.llcol .med-cat.info{border-color:#cdeef7; background:var(--wash);}
+.llcol .med-cat-head{display:flex; align-items:center; gap:2.5mm; margin-bottom:1mm;}
+.llcol .med-key{
+  flex:0 0 auto; display:flex; align-items:center; justify-content:center;
+  width:6mm; height:6mm; border-radius:50%; font-size:11px; font-weight:800; color:#fff;
+  background:linear-gradient(135deg,var(--accent-dark),var(--accent));
+}
+.llcol .med-cat.info .med-key{background:linear-gradient(135deg,var(--primary),var(--cyan));}
+.llcol .med-cat h3{margin:0; font-size:13.5px; font-weight:800; color:var(--ink); line-height:1.15;}
+.llcol .med-group{margin-top:2.4mm;}
+.llcol .med-group .gt{
+  font-size:11px; font-weight:800; color:var(--accent-dark);
+  line-height:1.25; margin-bottom:1.2mm;
+}
+.llcol .med-cat.info .med-group .gt{color:var(--primary-dark);}
+.llcol .med-list{list-style:none; margin:0; padding:0; display:grid; gap:1.4mm;}
+.llcol .med-list li{
+  position:relative; padding-left:3.8mm;
+  font-size:11px; line-height:1.3; color:var(--body);
+}
+.llcol .med-list li::before{content:"–"; position:absolute; left:0; font-weight:800; color:var(--accent);}
+.llcol .med-cat.info .med-list li::before{color:var(--primary);}
+.llcol .med-list li b{color:var(--ink); font-weight:800;}
 
 /* dark hero band (poster + advert) */
 .llcol .hero{

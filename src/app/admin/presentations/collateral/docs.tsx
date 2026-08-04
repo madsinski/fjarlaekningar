@@ -263,6 +263,69 @@ function Referral({ r }: { r: ReferralFields }) {
   );
 }
 
+// ── 2b. Referral back side — medications we do not renew ─────────────────
+// A clinician-facing exclusion list, printed on the reverse of the referral
+// guide. Item lines read "Virka efnið: sérlyfjaheiti" — the substance before
+// the first colon is bolded so the page scans quickly at the desk.
+function MedLine({ text }: { text: string }) {
+  const i = text.indexOf(":");
+  if (i === -1) return <li>{text}</li>;
+  return <li><b>{text.slice(0, i)}</b>{text.slice(i)}</li>;
+}
+
+function ReferralMeds({ r }: { r: ReferralFields }) {
+  return (
+    <div className="a4">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9mm 14mm 4mm" }}>
+        <FjarLogo />
+        <HsuCobrand />
+      </div>
+
+      <div style={{ padding: "0 14mm" }}>
+        <div className="eyebrow" style={{ marginBottom: "2.5mm" }}>{r.medsEyebrow}</div>
+        <h1 style={{ fontSize: "26px", maxWidth: "165mm" }}>
+          {r.medsHeading}<span style={{ color: "var(--accent-dark)" }}>{r.medsHeadingAccent}</span>
+        </h1>
+        <p style={{ marginTop: "2.5mm", fontSize: "11px", lineHeight: 1.4, color: "var(--body)", maxWidth: "172mm" }}>{r.medsIntro}</p>
+      </div>
+
+      <div style={{ padding: "4mm 14mm 0" }}>
+        <div className="sec-rule" />
+        <div className="med-cols">
+          {r.medsCategories.map((c, i) => (
+            <div className={`med-cat${c.tone === "info" ? " info" : ""}`} key={i}>
+              <div className="med-cat-head">
+                <span className="med-key">{c.key}</span>
+                <h3>{c.title}</h3>
+              </div>
+              {c.groups.map((g, j) => (
+                <div className="med-group" key={j}>
+                  {g.title ? <div className="gt">{g.title}</div> : null}
+                  <ul className="med-list">
+                    {g.items.map((t, k) => <MedLine key={k} text={t} />)}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginTop: "auto", padding: "4mm 14mm 7mm" }}>
+        <div style={{ borderTop: "1px solid var(--line)", paddingTop: "4mm" }}>
+          <p style={{ fontSize: "10px", lineHeight: 1.4, color: "var(--muted)" }}>{r.medsFooter}</p>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8mm", marginTop: "3mm" }}>
+            <div className="safety"><span><b>{r.safety.bold}</b>{r.safety.text}</span></div>
+            <div style={{ fontSize: "11px", color: "var(--muted)", textAlign: "right" }}>
+              {r.contactLabel} <b style={{ color: "var(--ink)" }}>{r.contactEmail}</b>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── 3. Newspaper advert ──────────────────────────────────────────────────
 function Advert({ a }: { a: AdvertFields }) {
   return (
@@ -415,7 +478,16 @@ function LifelinePoster({ l }: { l: LifelineFields }) {
 }
 
 export function CollateralDoc({ doc }: { doc: Doc }) {
-  if (doc.type === "referral") return <Referral r={doc.referral} />;
+  // The referral guide is two sheets: the guide itself and — when enabled —
+  // the medication exclusion list on the back.
+  if (doc.type === "referral") {
+    return (
+      <>
+        <Referral r={doc.referral} />
+        {doc.referral.medsEnabled !== false && <ReferralMeds r={doc.referral} />}
+      </>
+    );
+  }
   if (doc.type === "advert") return <Advert a={doc.advert} />;
   if (doc.type === "lifelinecheck") return <LifelinePoster l={doc.lifeline} />;
   return <Poster p={doc.poster} />;

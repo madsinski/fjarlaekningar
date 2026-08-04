@@ -130,11 +130,13 @@ export default function CollateralViewer({
           <b>Bakgrunnsgrafík</b>.
         </p>
         <div ref={stageRef} className="flex justify-center rounded-xl bg-gray-200/60 p-4">
+          {/* Intrinsic height: a document may be several A4 sheets, stacked by
+              the negative-margin rule in COLLATERAL_CSS. */}
           <div
             style={{
               width: A4_W * fit,
-              height: A4_H * fit,
-              overflow: "hidden",
+              minHeight: A4_H * fit,
+              overflowX: "hidden",
               ["--fit" as string]: String(fit),
             }}
           >

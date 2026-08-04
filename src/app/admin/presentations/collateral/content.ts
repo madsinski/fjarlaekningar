@@ -36,6 +36,17 @@ export type PosterFields = {
   safety: Safety;
 };
 
+// Back side of the referral guide: the medication classes Fjarlækningar does
+// not renew. A category (A–D) holds groups; an item line reads
+// "Virka efnið: sérlyfjaheiti" — the part before the colon is bolded on print.
+export type MedGroup = { title: string; items: string[] };
+export type MedCategory = {
+  key: string;              // A / B / C / D badge
+  title: string;
+  tone?: "warn" | "info";   // warn = ávanabindandi (magenta), info = eftirlit (blue)
+  groups: MedGroup[];
+};
+
 export type ReferralFields = {
   badge: string;
   eyebrow: string;
@@ -56,6 +67,14 @@ export type ReferralFields = {
   safety: Safety;
   contactLabel: string;
   contactEmail: string;
+  // ── back side (page 2) — medication exclusion list ─────────────────────
+  medsEnabled: boolean;
+  medsEyebrow: string;
+  medsHeading: string;
+  medsHeadingAccent: string;
+  medsIntro: string;
+  medsCategories: MedCategory[];
+  medsFooter: string;
 };
 
 export type AdvertFields = {
@@ -150,6 +169,125 @@ export const DEFAULT_POSTER: PosterFields = {
   safety: { bold: "Neyðartilfelli?", text: " Hringdu í 112 eða leitaðu á bráðamóttöku." },
 };
 
+// Medication classes that are never renewed through the telemedicine service:
+// controlled substances, addiction maintenance, drugs requiring blood
+// monitoring, and specialist-only prescriptions. Clinician-facing, so the
+// listing keeps both the active substance and the Icelandic brand names.
+export const DEFAULT_MED_CATEGORIES: MedCategory[] = [
+  {
+    key: "A",
+    title: "Eftirritunarskyld lyf",
+    tone: "warn",
+    groups: [
+      {
+        title: "Ópíóíðar og sterk verkjalyf",
+        items: [
+          "Morfín: Contalgin, Morfin",
+          "Oxýkódon: OxyContin, OxyNorm, Targin (oxýkódon + naloxon)",
+          "Ketóbemídón: Ketogan",
+          "Fentanýl-plástrar: Durogesic, Matrifen, Fentanyl",
+          "Tapentadól: Palexia",
+          "Petidín og metadon (sjá einnig flokk B)",
+          "Tramadól: Tradolan, Nobligan, Tramadol — veikur ópíóíði en ávanabindandi",
+        ],
+      },
+      {
+        title: "Kódeín-samsett lyf",
+        items: [
+          "Parkódín og Parkódín forte (parasetamól + kódeín)",
+          "Kódímagnýl (asetýlsalisýlsýra + kódeín)",
+        ],
+      },
+      {
+        title: "Benzódíazepín",
+        items: [
+          "Díazepam: Stesolid, Diazepam",
+          "Oxazepam: Sobril",
+          "Klónazepam: Rivotril",
+          "Alprazólam: Xanax, Tafil, Alprazolam",
+          "Lorazepam: Lorazepam, Temesta",
+          "Midazólam: Dormicum, Midazolam",
+        ],
+      },
+      {
+        title: "Svefnlyf — Z-lyf (benzódíazepínskyld)",
+        items: [
+          "Zópíklón: Imovane, Zopiclone, Imozop",
+          "Zolpidem: Stilnoct, Zolpidem",
+        ],
+      },
+      {
+        title: "Örvandi lyf og ADHD-lyf",
+        items: [
+          "Metýlfenídat: Ritalin, Concerta, Medikinet, Equasym",
+          "Lísdexamfetamín: Elvanse",
+          "Dexamfetamín: Attentin",
+        ],
+      },
+      {
+        title: "Gabapentínóíð — vaxandi misnotkun, oft samhliða ópíóíðum",
+        items: [
+          "Pregabalín: Lyrica, Pregabalin",
+          "Gabapentín: Neurontin, Gabapentin",
+        ],
+      },
+      {
+        title: "Barbitúröt — sjaldgæf en ávanabindandi",
+        items: ["Fenóbarbital: Fenemal"],
+      },
+    ],
+  },
+  {
+    key: "B",
+    title: "Lyf við fíkn og viðhaldsmeðferð",
+    tone: "warn",
+    groups: [
+      {
+        title: "",
+        items: [
+          "Búprenorfín: Norspan (plástur), Subutex",
+          "Búprenorfín + naloxón: Suboxone",
+          "Metadon",
+          "Naltrexón og disúlfíram (Antabus)",
+        ],
+      },
+    ],
+  },
+  {
+    key: "C",
+    title: "Lyf sem þurfa eftirlit með blóðprufum",
+    tone: "info",
+    groups: [
+      {
+        title: "",
+        items: [
+          "Warfarín: Kóvar, Marevan",
+          "Litíum — þarf reglulegar sermismælingar",
+          "Klózapín: Leponex",
+          "Metótrexat",
+          "Ísótretínóín: Roaccutan",
+          "DOAC-blóðþynningarlyf: Xarelto, Eliquis, Pradaxa",
+        ],
+      },
+    ],
+  },
+  {
+    key: "D",
+    title: "Lyf sem einungis sérfræðingar ávísa",
+    tone: "info",
+    groups: [
+      {
+        title: "",
+        items: [
+          "Geðrofslyf",
+          "Testósterón",
+          "Krabbameinslyf, ónæmisbælandi lyf og líftæknilyf",
+        ],
+      },
+    ],
+  },
+];
+
 export const DEFAULT_REFERRAL: ReferralFields = {
   badge: "Innanhússleiðbeiningar",
   eyebrow: "Fyrir heilbrigðisstarfsfólk HSU",
@@ -197,6 +335,13 @@ export const DEFAULT_REFERRAL: ReferralFields = {
   safety: { bold: "Neyðartilfelli:", text: " Fjarlækningar eru ekki fyrir bráðaþjónustu. Hringdu í 112 eða Læknavaktina 1700." },
   contactLabel: "Spurningar?",
   contactEmail: "info@fjarlaekningar.is",
+  medsEnabled: true,
+  medsEyebrow: "Bakhlið — fyrir heilbrigðisstarfsfólk HSU",
+  medsHeading: "Lyf sem eru ",
+  medsHeadingAccent: "ekki endurnýjuð hér",
+  medsIntro: "Fjarlækningar endurnýja algeng viðhaldslyf við stöðugum, langvinnum sjúkdómum. Lyfin hér að neðan eru ekki endurnýjuð í fjarþjónustu — sjúklingi er vísað til heimilislæknis eða þess læknis sem ávísar lyfinu.",
+  medsCategories: DEFAULT_MED_CATEGORIES,
+  medsFooter: "Listinn er ekki tæmandi og mat læknis ræður alltaf. Óski sjúklingur eftir endurnýjun á lyfi úr þessum flokkum lýkur læknir erindinu með skýringu og vísar á rétta þjónustu.",
 };
 
 export const DEFAULT_ADVERT: AdvertFields = {

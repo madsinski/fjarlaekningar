@@ -27,6 +27,8 @@ import {
   type Service,
   type Safety,
   type AfterItem,
+  type MedCategory,
+  type MedGroup,
 } from "./content";
 
 const A4_W = 793.7;
@@ -176,6 +178,62 @@ function AfterEditor({ items, onChange }: { items: AfterItem[]; onChange: (v: Af
         </div>
       ))}
       <button onClick={() => onChange([...items, { k: "•", bold: "", text: "" }])} className="text-xs font-medium text-emerald-600 hover:underline">+ Bæta við lið</button>
+    </div>
+  );
+}
+
+// Editor for the referral back side: A–D categories → groups → drug lines.
+function MedsEditor({ cats, onChange }: { cats: MedCategory[]; onChange: (v: MedCategory[]) => void }) {
+  const setCat = (i: number, patch: Partial<MedCategory>) =>
+    onChange(cats.map((c, j) => (j === i ? { ...c, ...patch } : c)));
+  const setGroups = (i: number, groups: MedGroup[]) => setCat(i, { groups });
+  return (
+    <div className="space-y-2.5">
+      {cats.map((c, i) => (
+        <div key={i} className="space-y-2 rounded-md border border-gray-200 p-2">
+          <div className="flex items-center gap-1.5">
+            <input
+              value={c.key}
+              onChange={(e) => setCat(i, { key: e.target.value })}
+              className="w-10 shrink-0 rounded-md border border-gray-300 px-2 py-1.5 text-center text-sm font-semibold text-gray-900"
+              title="Bókstafur flokks"
+            />
+            <input value={c.title} onChange={(e) => setCat(i, { title: e.target.value })} className={inputCls} placeholder="Heiti flokks" />
+            <select
+              value={c.tone ?? "warn"}
+              onChange={(e) => setCat(i, { tone: e.target.value as MedCategory["tone"] })}
+              className="shrink-0 rounded-md border border-gray-300 px-1.5 py-1.5 text-xs text-gray-700"
+              title="Litur"
+            >
+              <option value="warn">Ávanabindandi</option>
+              <option value="info">Eftirlit</option>
+            </select>
+            <button onClick={() => onChange(cats.filter((_, j) => j !== i))} className="shrink-0 rounded-md border border-gray-300 px-2 text-gray-400 hover:bg-red-50 hover:text-red-600" title="Fjarlægja flokk">✕</button>
+          </div>
+
+          {c.groups.map((g, gi) => (
+            <div key={gi} className="space-y-1.5 rounded-md bg-gray-50 p-2">
+              <div className="flex gap-1.5">
+                <input
+                  value={g.title}
+                  onChange={(e) => setGroups(i, c.groups.map((x, j) => (j === gi ? { ...x, title: e.target.value } : x)))}
+                  className={inputCls}
+                  placeholder="Undirflokkur (má vera tómur)"
+                />
+                <button onClick={() => setGroups(i, c.groups.filter((_, j) => j !== gi))} className="shrink-0 rounded-md border border-gray-300 px-2 text-gray-400 hover:bg-red-50 hover:text-red-600" title="Fjarlægja undirflokk">✕</button>
+              </div>
+              <StrListEditor
+                items={g.items}
+                onChange={(items) => setGroups(i, c.groups.map((x, j) => (j === gi ? { ...x, items } : x)))}
+                addLabel="Bæta við lyfi"
+              />
+            </div>
+          ))}
+          <button onClick={() => setGroups(i, [...c.groups, { title: "", items: [""] }])} className="text-xs font-medium text-emerald-600 hover:underline">+ Bæta við undirflokki</button>
+        </div>
+      ))}
+      <button onClick={() => onChange([...cats, { key: "", title: "", tone: "warn", groups: [{ title: "", items: [""] }] }])} className="text-xs font-medium text-emerald-600 hover:underline">+ Bæta við flokki</button>
+      <p className="text-[11px] text-gray-400">Textinn á undan fyrsta tvípunkti er feitletraður á prentaðri síðu — t.d. <code>Morfín: Contalgin, Morfin</code>.</p>
     </div>
   );
 }
@@ -462,6 +520,27 @@ export function CollateralStudio({
                 <Field label="Tengiliður (label)" value={active.referral.contactLabel} onChange={(v) => patchReferral({ contactLabel: v })} />
                 <Field label="Netfang" value={active.referral.contactEmail} onChange={(v) => patchReferral({ contactEmail: v })} />
               </Section>
+              <Section title="Bakhlið — lyf sem eru ekki endurnýjuð">
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={active.referral.medsEnabled !== false}
+                    onChange={(e) => patchReferral({ medsEnabled: e.target.checked })}
+                    className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-400"
+                  />
+                  Prenta bakhlið (síðu 2)
+                </label>
+                {active.referral.medsEnabled !== false && (
+                  <>
+                    <Field label="Yfirskrift" value={active.referral.medsEyebrow} onChange={(v) => patchReferral({ medsEyebrow: v })} />
+                    <Field label="Fyrirsögn" value={active.referral.medsHeading} onChange={(v) => patchReferral({ medsHeading: v })} />
+                    <Field label="Fyrirsögn — áhersla (bleik)" value={active.referral.medsHeadingAccent} onChange={(v) => patchReferral({ medsHeadingAccent: v })} />
+                    <Field label="Inngangur" value={active.referral.medsIntro} onChange={(v) => patchReferral({ medsIntro: v })} area />
+                    <MedsEditor cats={active.referral.medsCategories} onChange={(medsCategories) => patchReferral({ medsCategories })} />
+                    <Field label="Fótnóta" value={active.referral.medsFooter} onChange={(v) => patchReferral({ medsFooter: v })} area />
+                  </>
+                )}
+              </Section>
             </>
           ) : active.type === "advert" ? (
             <>
@@ -526,7 +605,9 @@ export function CollateralStudio({
             Í prentglugganum: veldu <b>A4</b>, spássíur <b>Engar</b> og kveiktu á <b>Bakgrunnsgrafík</b>.
           </p>
           <div ref={stageRef} className="flex justify-center rounded-xl bg-gray-100 p-4">
-            <div style={{ width: A4_W * fit, height: A4_H * fit, overflow: "hidden", ["--fit" as string]: String(fit) }}>
+            {/* Height is intrinsic: a document may be several A4 sheets, which
+                stack via the negative-margin rule in COLLATERAL_CSS. */}
+            <div style={{ width: A4_W * fit, minHeight: A4_H * fit, overflowX: "hidden", ["--fit" as string]: String(fit) }}>
               <CollateralDoc doc={active} />
             </div>
           </div>
