@@ -65,23 +65,58 @@ function PhotoLightbox({
   );
 }
 
+/** Magnifier that fades in over a portrait on hover — the click affordance. */
+function ZoomHint() {
+  return (
+    <span className="absolute inset-0 grid place-items-center bg-[var(--primary-dark)]/45 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M21 21l-4.35-4.35M11 8v6M8 11h6M17 11a6 6 0 11-12 0 6 6 0 0112 0z"
+        />
+      </svg>
+    </span>
+  );
+}
+
+/**
+ * Two presentations of the same people:
+ *
+ *   cards      — the default: a bordered white card per person. Reads correctly
+ *                on its own band, where the card edges give the grid structure.
+ *   portraits  — chrome-free: just the portrait and the name, centred. For the
+ *                combined layout, where the grid sits inside a white panel and
+ *                a second set of white card edges would only add noise.
+ */
 export default function TeamGrid({
   members,
   locale = "is",
+  variant = "cards",
 }: {
   members: TeamMember[];
   locale?: Locale;
+  variant?: "cards" | "portraits";
 }) {
   const [active, setActive] = useState<TeamMember | null>(null);
   const tr = ui(locale);
 
   if (!members.length) return null;
 
+  const portraits = variant === "portraits";
+
   return (
     <>
       {/* No mx-auto: the grid starts at the container's left edge so it lines up
           with the section heading above it, like every other grid on the site. */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5 max-w-5xl">
+      <div
+        className={
+          portraits
+            ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-9"
+            : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5 max-w-5xl"
+        }
+      >
         {members.map((member) => (
           <button
             key={`${member.name}-${member.photo}`}
@@ -89,37 +124,37 @@ export default function TeamGrid({
             onClick={() => setActive(member)}
             title={tr.clickToEnlarge}
             aria-label={`${tr.enlargeImage}: ${member.name}`}
-            className="group bg-white rounded-2xl border border-slate-200 p-5 text-left hover:shadow-lg hover:border-brand-cyan transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+            className={
+              portraits
+                ? "group flex flex-col items-center rounded-2xl px-2 py-3 text-center hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+                : "group bg-white rounded-2xl border border-slate-200 p-5 text-left hover:shadow-lg hover:border-brand-cyan transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+            }
           >
-            <div className="relative w-20 h-20 rounded-full overflow-hidden bg-brand-cyan-subtle ring-2 ring-brand-cyan-muted">
+            <div
+              className={
+                portraits
+                  ? "relative w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden bg-brand-cyan-subtle ring-2 ring-brand-cyan-muted group-hover:ring-[var(--primary)] transition-colors"
+                  : "relative w-20 h-20 rounded-full overflow-hidden bg-brand-cyan-subtle ring-2 ring-brand-cyan-muted"
+              }
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={member.photo}
                 alt={member.name}
                 className="w-full h-full object-cover object-top"
               />
-              <span className="absolute inset-0 grid place-items-center bg-[var(--primary-dark)]/45 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-4.35-4.35M11 8v6M8 11h6M17 11a6 6 0 11-12 0 6 6 0 0112 0z"
-                  />
-                </svg>
-              </span>
+              <ZoomHint />
             </div>
             <h3 className="mt-4 text-sm font-semibold text-slate-900 leading-snug">
               {member.name}
             </h3>
             <p className="mt-0.5 text-xs text-slate-600">{member.role}</p>
             {member.flag ? (
-              <span className="mt-3 inline-flex items-center px-2.5 py-0.5 rounded-full bg-brand-cyan-subtle/70 text-[11px] font-medium text-[var(--primary-dark)]">
+              <span
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-full bg-brand-cyan-subtle/70 text-[11px] font-medium text-[var(--primary-dark)] ${
+                  portraits ? "mt-2.5" : "mt-3"
+                }`}
+              >
                 {member.flag}
               </span>
             ) : null}

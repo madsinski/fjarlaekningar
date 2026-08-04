@@ -17,9 +17,11 @@ export const UM_OKKUR_SECTIONS: SiteSection[] = [
 // between them:
 //   split    — the built-in behaviour: two separate bands, wherever they are
 //              ordered, each with its own background.
-//   combined — one band: the group photo and its copy on top, a divider, then
-//              the team grid below. The merged band takes the "Hópmynd" slot in
-//              the section order and the separate "Teymið" band disappears.
+//   combined — one band, composed rather than stacked: lead copy, then the
+//              group photo as a wide banner, then a white panel of individual
+//              portraits pulled up over the banner's lower edge. The merged
+//              band takes the "Hópmynd" slot in the section order and the
+//              separate "Teymið" band disappears.
 export const TEAM_LAYOUTS = { split: "split", combined: "combined" } as const;
 
 export function isCombinedTeam(c: LocaleContent): boolean {
@@ -82,7 +84,7 @@ export const UM_OKKUR_FIELDS: SiteField[] = [
       {
         value: TEAM_LAYOUTS.combined,
         label: "Sameinaður kafli",
-        hint: "Hópmyndin, textinn og teymisspjöldin renna saman í einn kafla. Fyrirsögn og texti úr „Hópmynd“ leiða kaflann; fyrirsögn „Teymið“ verður millifyrirsögn yfir spjöldunum. Kaflinn situr í sæti „Hópmynd“ í röðinni.",
+        hint: "Einn kafli: fyrirsögn og texti úr „Hópmynd“ leiða, hópmyndin verður breið mynd yfir alla síðuna og hvítt spjald með andlitsmyndum teymisins liggur yfir neðri brún hennar. Fyrirsögn „Teymið“ verður millifyrirsögn inni á spjaldinu og myndatextinn færist upp í horn myndarinnar. Kaflinn situr í sæti „Hópmynd“ í röðinni.",
       },
     ],
   },
