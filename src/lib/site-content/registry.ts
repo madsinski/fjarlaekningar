@@ -95,7 +95,7 @@ export function resolveContent(
 ): LocaleContent {
   const page = getSitePage(key);
   if (!page) return {};
-  return resolveFields(page.fields, page.defaultsIs, blob, locale);
+  return resolveFields(page.fields, page.defaultsIs, page.defaultsEn, blob, locale);
 }
 
 /** Section ids in display order for a page, honouring any CMS reordering. */

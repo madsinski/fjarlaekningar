@@ -4,7 +4,7 @@ import PageHero from "../PageHero";
 import Band from "../Band";
 import SiteIcon from "@/lib/site-content/SiteIcon";
 import { renderHighlighted } from "@/lib/site-content/highlight";
-import { UM_OKKUR_SECTIONS } from "@/lib/site-content/um-okkur";
+import { UM_OKKUR_SECTIONS, TEAM_MEMBER_SLOTS } from "@/lib/site-content/um-okkur";
 import { resolveOrder, type LocaleContent } from "@/lib/site-content/types";
 
 // Presentational Um okkur page.
@@ -24,6 +24,19 @@ export default function UmOkkurView({
   /** For TeamGrid's static roles/flags — CMS strings in `c` are already resolved. */
   locale?: "is" | "en";
 }) {
+  // Team members come from the numbered CMS slots, already resolved for the
+  // current locale. Empty slots (no name or no photo) are dropped so a blank
+  // slot never renders an empty card.
+  const teamMembers = Array.from({ length: TEAM_MEMBER_SLOTS }, (_, k) => {
+    const i = k + 1;
+    return {
+      name: c[`t${i}_name`] ?? "",
+      role: c[`t${i}_role`] ?? "",
+      flag: c[`t${i}_flag`] ?? "",
+      photo: c[`t${i}_photo`] ?? "",
+    };
+  }).filter((m) => m.name.trim() && m.photo.trim());
+
   const pillars = [
     { title: c.p1_title, body: c.p1_body, icon: c.p1_icon, fallback: "target" },
     { title: c.p2_title, body: c.p2_body, icon: c.p2_icon, fallback: "lock" },
@@ -84,7 +97,7 @@ export default function UmOkkurView({
           </h2>
           <p className="mt-4 text-slate-600">{c.team_body}</p>
         </div>
-        <TeamGrid locale={locale} />
+        <TeamGrid members={teamMembers} locale={locale} />
         <p className="mt-10 text-sm text-slate-500">{c.team_footer}</p>
       </>
     ),

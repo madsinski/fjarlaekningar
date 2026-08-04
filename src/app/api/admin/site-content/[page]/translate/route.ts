@@ -69,10 +69,11 @@ export async function POST(req: Request, ctx: { params: Promise<{ page: string }
   // paths) and *_hl (highlight rectangles, "x,y,w,h" percentages): both are
   // machine syntax that only survived past translations because the model
   // happened to echo them back. Locale-independent anyway — skip, don't gamble.
-  const STRUCTURAL = /_img$|_hl$/;
+  // `_name$` covers team members' names — proper names aren't translated.
+  const STRUCTURAL = /_img$|_hl$|_name$/;
   const items: { i: number; key: string; text: string }[] = [];
   sitePage.fields.forEach((f, i) => {
-    if (f.type === "icon" || STRUCTURAL.test(f.key)) return;
+    if (f.type === "icon" || f.type === "image" || STRUCTURAL.test(f.key)) return;
     const src = fromMap[f.key]?.trim() || (from === "is" ? sitePage.defaultsIs[f.key] : "");
     if (src && src.trim()) items.push({ i, key: f.key, text: src });
   });

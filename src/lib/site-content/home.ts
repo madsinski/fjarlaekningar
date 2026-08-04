@@ -173,5 +173,5 @@ export function resolveHome(
   content: SiteContentBlob | null | undefined,
   locale: Locale,
 ): LocaleContent {
-  return resolveFields(HOME_FIELDS, HOME_DEFAULTS_IS, content, locale);
+  return resolveFields(HOME_FIELDS, HOME_DEFAULTS_IS, HOME_DEFAULTS_EN, content, locale);
 }

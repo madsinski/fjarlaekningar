@@ -11,6 +11,24 @@ export const UM_OKKUR_SECTIONS: SiteSection[] = [
   { id: "cta", label: "Ákall (CTA)" },
 ];
 
+// Team members are a fixed set of numbered slots (like the pillars/values
+// above), so the existing flat CMS pipeline handles them with no new machinery
+// beyond the "image" field type. Empty slots simply don't render on the page.
+// Name + photo are a single value each (a person's name and portrait don't
+// change per language); role and flag are per-locale like any other copy.
+export const TEAM_MEMBER_SLOTS = 8;
+
+const teamMemberFields: SiteField[] = Array.from({ length: TEAM_MEMBER_SLOTS }, (_, k) => {
+  const i = k + 1;
+  const group = `Teymi — meðlimur ${i}`;
+  return [
+    { key: `t${i}_name`, label: "Nafn", group, type: "text" },
+    { key: `t${i}_role`, label: "Titill", group, type: "text" },
+    { key: `t${i}_flag`, label: "Merki (t.d. Stofnandi)", group, type: "text" },
+    { key: `t${i}_photo`, label: "Mynd", group, type: "image" },
+  ] as SiteField[];
+}).flat();
+
 
 export const UM_OKKUR_FIELDS: SiteField[] = [
   // Hero
@@ -51,6 +69,9 @@ export const UM_OKKUR_FIELDS: SiteField[] = [
   { key: "team_heading", label: "Fyrirsögn", group: "Teymið", type: "heading" },
   { key: "team_body", label: "Texti", group: "Teymið", type: "textarea" },
   { key: "team_footer", label: "Neðanmálstexti", group: "Teymið", type: "text" },
+
+  // Team members (one boxed group each in the editor)
+  ...teamMemberFields,
 
   // CTA
   { key: "cta_button", label: "Hnappur", group: "Ákall (CTA)", type: "text" },
@@ -98,7 +119,43 @@ export const UM_OKKUR_DEFAULTS_IS: LocaleContent = {
     "Tveir læknar stofnuðu Fjarlækningar. Í dag stendur að baki þjónustunni teymi lækna og sérfræðinga — smelltu á mynd til að sjá hana stærri.",
   team_footer: "Auk hóps starfandi lækna sem afgreiða erindi í sjúklingagáttinni.",
 
+  t1_name: "Victor Guðmundsson",
+  t1_role: "Framkvæmdastjóri · Læknir",
+  t1_flag: "Stofnandi",
+  t1_photo: "/team/fjar-victor.jpg",
+  t2_name: "Mads Christian Aanesen",
+  t2_role: "Tæknistjóri · Læknir",
+  t2_flag: "Stofnandi",
+  t2_photo: "/team/fjar-mads.jpg",
+  t3_name: "Guðbjartur Ólafsson",
+  t3_role: "Yfirlæknir",
+  t3_flag: "Læknateymi",
+  t3_photo: "/team/fjar-gudbjartur.jpg",
+  t4_name: "Dagbjört Guðbrandsdóttir",
+  t4_role: "Læknir",
+  t4_flag: "Læknateymi",
+  t4_photo: "/team/fjar-dagbjort.jpg",
+  t5_name: "Elvar Páll Sigurðsson",
+  t5_role: "Rekstrarstjóri · Markaðsstjóri",
+  t5_flag: "Stjórnun",
+  t5_photo: "/team/fjar-elvar.jpg",
+
   cta_button: "Opna sjúklingagátt",
 };
 
-export const UM_OKKUR_DEFAULTS_EN: LocaleContent = emptyDefaults(UM_OKKUR_FIELDS);
+export const UM_OKKUR_DEFAULTS_EN: LocaleContent = {
+  ...emptyDefaults(UM_OKKUR_FIELDS),
+  // Preserve the English role/flag the team grid used to hard-code, so the
+  // English page reads correctly before anyone opens the CMS. Names and photos
+  // are language-independent and fall back to the Icelandic defaults.
+  t1_role: "CEO · Physician",
+  t1_flag: "Founder",
+  t2_role: "CTO · Physician",
+  t2_flag: "Founder",
+  t3_role: "Chief Physician",
+  t3_flag: "Medical team",
+  t4_role: "Physician",
+  t4_flag: "Medical team",
+  t5_role: "COO · Head of Marketing",
+  t5_flag: "Management",
+};

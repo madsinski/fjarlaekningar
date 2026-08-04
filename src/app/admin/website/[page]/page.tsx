@@ -43,6 +43,95 @@ function Preview({ pageKey, c, order, locale }: { pageKey: string; c: LocaleCont
   }
 }
 
+// Single-value image field: upload to the shared assets bucket, paste a URL, or
+// clear. Photos are locale-independent, so (like icons) the value lives only in
+// the Icelandic map and the public page falls back to it for every language.
+function ImageField({
+  value,
+  fallback,
+  disabled,
+  onChange,
+}: {
+  value: string;
+  fallback: string;
+  disabled: boolean;
+  onChange: (v: string) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const shown = value.trim() || fallback;
+
+  async function upload(file: File) {
+    setErr(null);
+    setUploading(true);
+    try {
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `site/team/${Date.now()}-${safe}`;
+      const { error } = await supabase.storage
+        .from("presentation-assets")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("presentation-assets").getPublicUrl(path);
+      onChange(data.publicUrl);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Ekki tókst að hlaða upp mynd");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="flex items-start gap-3">
+      <div className="w-14 h-14 rounded-full overflow-hidden bg-slate-100 ring-1 ring-slate-200 shrink-0">
+        {shown ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={shown} alt="" className="w-full h-full object-cover object-top" />
+        ) : null}
+      </div>
+      <div className="flex-1 space-y-1.5">
+        <div className="flex flex-wrap gap-2">
+          <label
+            className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+              disabled
+                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                : "bg-cyan-600 text-white hover:bg-cyan-700 cursor-pointer"
+            }`}
+          >
+            {uploading ? "Hleð upp…" : "Hlaða upp mynd"}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              disabled={disabled || uploading}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) upload(f);
+              }}
+            />
+          </label>
+          {value.trim() && !disabled && (
+            <button
+              type="button"
+              onClick={() => onChange("")}
+              className="rounded-md px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100"
+            >
+              Fjarlægja
+            </button>
+          )}
+        </div>
+        <input
+          value={value}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={fallback || "/team/mynd.jpg eða https://…"}
+          className="w-full px-2 py-1.5 border border-slate-200 rounded-md text-xs focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50"
+        />
+        {err && <p className="text-xs text-red-600">{err}</p>}
+      </div>
+    </div>
+  );
+}
+
 export default function SiteContentEditor() {
   const params = useParams<{ page: string }>();
   const pageKey = params?.page ?? "home";
@@ -333,6 +422,14 @@ export default function SiteContentEditor() {
                         onChange={(v) => setField("is", f.key, v)}
                         disabled={!isAdmin}
                         fallback={page.defaultsIs[f.key] ?? ""}
+                      />
+                    ) : f.type === "image" ? (
+                      // Photos are a single, locale-independent value, like icons.
+                      <ImageField
+                        value={draft.is?.[f.key] ?? ""}
+                        fallback={page.defaultsIs[f.key] ?? ""}
+                        disabled={!isAdmin}
+                        onChange={(v) => setField("is", f.key, v)}
                       />
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

@@ -8,7 +8,8 @@ export type FieldType =
   | "text"      // single-line
   | "textarea"  // multi-line
   | "heading"   // single-line, supports ==word== brand-blue highlighting
-  | "icon";     // value is a key from ICON_KEYS (see icons.ts)
+  | "icon"      // value is a key from ICON_KEYS (see icons.ts)
+  | "image";    // value is an image URL/path; one locale-independent value
 
 export interface SiteField {
   key: string;
@@ -65,6 +66,7 @@ export function resolveOrder(
 export function resolveFields(
   fields: SiteField[],
   defaultsIs: LocaleContent,
+  defaultsEn: LocaleContent,
   content: SiteContentBlob | null | undefined,
   locale: Locale,
 ): LocaleContent {
@@ -72,11 +74,18 @@ export function resolveFields(
   const is = content?.is ?? {};
   const out: LocaleContent = {};
   for (const f of fields) {
+    // Fallback chain: locale override → Icelandic override → locale-specific
+    // built-in default (only English carries non-empty ones) → Icelandic
+    // default. Pages whose English defaults are empty therefore still fall
+    // through to the Icelandic text, exactly as before this parameter existed.
+    const localeDefault = locale === "en" ? defaultsEn[f.key] ?? "" : "";
     out[f.key] = loc[f.key]?.trim()
       ? loc[f.key]
       : is[f.key]?.trim()
         ? is[f.key]
-        : defaultsIs[f.key] ?? "";
+        : localeDefault.trim()
+          ? localeDefault
+          : defaultsIs[f.key] ?? "";
   }
   return out;
 }

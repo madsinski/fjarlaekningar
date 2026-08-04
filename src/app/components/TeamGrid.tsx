@@ -5,68 +5,23 @@ import { createPortal } from "react-dom";
 import { ui } from "@/lib/site-content/ui-strings";
 import type { Locale } from "@/lib/site-content/types";
 
-// Roles and flags carry both languages here, in code, for the same reason the
-// erindi do: this list is static, so the CMS translator never sees it.
-type Member = {
+// Members are now CMS-editable (see src/lib/site-content/um-okkur.ts): the page
+// resolves the numbered t{i}_* fields for the current locale and passes them in,
+// so role/flag arrive already in the right language and there are no hard-coded
+// strings here any more.
+export type TeamMember = {
   name: string;
   role: string;
-  roleEn: string;
   flag: string;
-  flagEn: string;
   photo: string;
 };
-
-const team: Member[] = [
-  {
-    name: "Victor Guðmundsson",
-    role: "Framkvæmdastjóri · Læknir",
-    roleEn: "CEO · Physician",
-    flag: "Stofnandi",
-    flagEn: "Founder",
-    photo: "/team/fjar-victor.jpg",
-  },
-  {
-    name: "Mads Christian Aanesen",
-    role: "Tæknistjóri · Læknir",
-    roleEn: "CTO · Physician",
-    flag: "Stofnandi",
-    flagEn: "Founder",
-    photo: "/team/fjar-mads.jpg",
-  },
-  {
-    name: "Guðbjartur Ólafsson",
-    role: "Yfirlæknir",
-    roleEn: "Chief Physician",
-    flag: "Læknateymi",
-    flagEn: "Medical team",
-    photo: "/team/fjar-gudbjartur.jpg",
-  },
-  {
-    name: "Dagbjört Guðbrandsdóttir",
-    role: "Læknir",
-    roleEn: "Physician",
-    flag: "Læknateymi",
-    flagEn: "Medical team",
-    photo: "/team/fjar-dagbjort.jpg",
-  },
-  {
-    name: "Elvar Páll Sigurðsson",
-    role: "Rekstrarstjóri · Markaðsstjóri",
-    roleEn: "COO · Head of Marketing",
-    flag: "Stjórnun",
-    flagEn: "Management",
-    photo: "/team/fjar-elvar.jpg",
-  },
-];
 
 /** Full-size portrait in a portal. Click anywhere / Escape closes. */
 function PhotoLightbox({
   member,
-  role,
   onClose,
 }: {
-  member: Member;
-  role: string;
+  member: TeamMember;
   onClose: () => void;
 }) {
   useEffect(() => {
@@ -103,27 +58,33 @@ function PhotoLightbox({
       />
       <div className="text-center text-[#eafaf3]">
         <div className="text-lg sm:text-xl font-bold">{member.name}</div>
-        <div className="text-sm text-[#a9c9bd]">{role}</div>
+        <div className="text-sm text-[#a9c9bd]">{member.role}</div>
       </div>
     </div>,
     document.body,
   );
 }
 
-export default function TeamGrid({ locale = "is" }: { locale?: Locale }) {
-  const [active, setActive] = useState<Member | null>(null);
+export default function TeamGrid({
+  members,
+  locale = "is",
+}: {
+  members: TeamMember[];
+  locale?: Locale;
+}) {
+  const [active, setActive] = useState<TeamMember | null>(null);
   const tr = ui(locale);
-  const roleOf = (m: Member) => (locale === "en" ? m.roleEn : m.role);
-  const flagOf = (m: Member) => (locale === "en" ? m.flagEn : m.flag);
+
+  if (!members.length) return null;
 
   return (
     <>
       {/* No mx-auto: the grid starts at the container's left edge so it lines up
           with the section heading above it, like every other grid on the site. */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5 max-w-5xl">
-        {team.map((member) => (
+        {members.map((member) => (
           <button
-            key={member.name}
+            key={`${member.name}-${member.photo}`}
             type="button"
             onClick={() => setActive(member)}
             title={tr.clickToEnlarge}
@@ -156,15 +117,17 @@ export default function TeamGrid({ locale = "is" }: { locale?: Locale }) {
             <h3 className="mt-4 text-sm font-semibold text-slate-900 leading-snug">
               {member.name}
             </h3>
-            <p className="mt-0.5 text-xs text-slate-600">{roleOf(member)}</p>
-            <span className="mt-3 inline-flex items-center px-2.5 py-0.5 rounded-full bg-brand-cyan-subtle/70 text-[11px] font-medium text-[var(--primary-dark)]">
-              {flagOf(member)}
-            </span>
+            <p className="mt-0.5 text-xs text-slate-600">{member.role}</p>
+            {member.flag ? (
+              <span className="mt-3 inline-flex items-center px-2.5 py-0.5 rounded-full bg-brand-cyan-subtle/70 text-[11px] font-medium text-[var(--primary-dark)]">
+                {member.flag}
+              </span>
+            ) : null}
           </button>
         ))}
       </div>
       {active && (
-        <PhotoLightbox member={active} role={roleOf(active)} onClose={() => setActive(null)} />
+        <PhotoLightbox member={active} onClose={() => setActive(null)} />
       )}
     </>
   );
