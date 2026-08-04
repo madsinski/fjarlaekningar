@@ -51,6 +51,32 @@ export default function UmOkkurView({
   ];
 
   const blocks: Record<string, React.ReactNode> = {
+    faces: (
+      <div className="grid lg:grid-cols-5 gap-8 lg:gap-12 items-center">
+        <div className="lg:col-span-2">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+            {renderHighlighted(c.faces_heading)}
+          </h2>
+          {c.faces_body && (
+            <p className="mt-4 text-slate-600 leading-relaxed">{c.faces_body}</p>
+          )}
+        </div>
+        {c.faces_photo && (
+          <figure className="lg:col-span-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={c.faces_photo}
+              alt={c.faces_heading || "Teymið"}
+              className="w-full rounded-3xl object-cover shadow-lg ring-1 ring-slate-200"
+            />
+            {c.faces_caption && (
+              <figcaption className="mt-3 text-sm text-slate-500">{c.faces_caption}</figcaption>
+            )}
+          </figure>
+        )}
+      </div>
+    ),
+
     pillars: (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {pillars.map((p) => (

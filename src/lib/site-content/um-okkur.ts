@@ -5,6 +5,7 @@ import { emptyDefaults, type LocaleContent, type SiteField, type SiteSection } f
 // Reorderable bands, in their built-in order. The hero/page header is not
 // listed: it is structural and always renders first.
 export const UM_OKKUR_SECTIONS: SiteSection[] = [
+  { id: "faces", label: "Hópmynd" },
   { id: "pillars", label: "Stoðir" },
   { id: "values", label: "Gildin" },
   { id: "team", label: "Teymið" },
@@ -35,6 +36,12 @@ export const UM_OKKUR_FIELDS: SiteField[] = [
   { key: "hero_eyebrow", label: "Merki (lítill borði)", group: "Hetjusvæði", type: "text" },
   { key: "hero_heading", label: "Fyrirsögn", group: "Hetjusvæði", type: "heading" },
   { key: "hero_body", label: "Undirtexti", group: "Hetjusvæði", type: "textarea" },
+
+  // Group photo
+  { key: "faces_heading", label: "Fyrirsögn", group: "Hópmynd", type: "heading" },
+  { key: "faces_body", label: "Texti", group: "Hópmynd", type: "textarea" },
+  { key: "faces_photo", label: "Hópmynd", group: "Hópmynd", type: "image" },
+  { key: "faces_caption", label: "Myndatexti (valfrjálst)", group: "Hópmynd", type: "text" },
 
   // Pillars
   { key: "p1_title", label: "Stoð 1 — titill", group: "Stoðir", type: "text" },
@@ -82,6 +89,12 @@ export const UM_OKKUR_DEFAULTS_IS: LocaleContent = {
   hero_heading: "Stofnað af ==læknum== árið 2021",
   hero_body:
     "Fjarlækningar ehf. er íslenskt fyrirtæki, stofnað af læknum árið 2021, sem leysir algeng heilsugæsluerindi í gegnum örugga sjúklingagátt.",
+
+  faces_heading: "Fólkið á bak við Fjarlækningar",
+  faces_body:
+    "Þjónustan er ekki ópersónuleg tölvugátt — á bak við hana stendur teymi lækna og sérfræðinga af holdi og blóði sem leggur metnað í hvert einasta erindi.",
+  faces_photo: "/team/fjarlaeknar-hopmynd.jpg",
+  faces_caption: "",
 
   p1_title: "Hlutverk okkar",
   p1_body:
@@ -145,6 +158,9 @@ export const UM_OKKUR_DEFAULTS_IS: LocaleContent = {
 
 export const UM_OKKUR_DEFAULTS_EN: LocaleContent = {
   ...emptyDefaults(UM_OKKUR_FIELDS),
+  faces_heading: "The people behind Fjarlækningar",
+  faces_body:
+    "This is no faceless portal — behind it stands a real team of doctors and specialists who put genuine care into every single case.",
   // Preserve the English role/flag the team grid used to hard-code, so the
   // English page reads correctly before anyone opens the CMS. Names and photos
   // are language-independent and fall back to the Icelandic defaults.
