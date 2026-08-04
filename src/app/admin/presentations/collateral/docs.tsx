@@ -91,7 +91,7 @@ function FjarLogo({ onDark = false }: { onDark?: boolean }) {
 
 // HSU co-brand lockup — "Í samstarfi við HSU" + their logo. The print-friendly
 // adaptation of the website's HSU cooperation section.
-function HsuCobrand({ label = "Í samstarfi við HSU", height = "11mm", onDark = false, lines = "2" }: { label?: string; height?: string; onDark?: boolean; lines?: "1" | "2" | "3" }) {
+function HsuCobrand({ label = "Í samstarfi við HSU", height = "11mm", onDark = false, lines = "2", stroke = true }: { label?: string; height?: string; onDark?: boolean; lines?: "1" | "2" | "3"; stroke?: boolean }) {
   // How the label wraps: 1 line (no wrap), or a FIXED width that yields ~2 or ~3
   // lines for the full institution name. A fixed width (not max-width) is what
   // makes text-align:right actually right-align every line — otherwise the label
@@ -103,9 +103,9 @@ function HsuCobrand({ label = "Í samstarfi við HSU", height = "11mm", onDark =
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "3mm" }}>
       <span style={{ display: "block", fontSize: "9px", fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: onDark ? "#eafaff" : "var(--muted)", textAlign: "right", lineHeight: 1.3, ...wrap }}>{label}</span>
-      {onDark ? (
-        // On the dark hero the logo needs a light plate to read.
-        <span style={{ background: "#fff", borderRadius: "2mm", padding: "1.5mm 2.5mm", display: "inline-flex" }}>
+      {onDark && stroke ? (
+        // On the dark hero, optionally frame the logo with a white stroke.
+        <span style={{ border: "0.4mm solid #ffffff", borderRadius: "2mm", padding: "1.5mm 2.5mm", display: "inline-flex" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/hsu-logo.webp" alt="Heilbrigðisstofnun Suðurlands" style={{ height, width: "auto", display: "block" }} />
         </span>
@@ -126,7 +126,7 @@ function Poster({ p }: { p: PosterFields }) {
         <div className="hero" style={{ padding: "14mm 14mm 12mm" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10mm" }}>
             <FjarLogo onDark />
-            <HsuCobrand onDark height="10mm" label={p.badge} lines={p.cobrandLines} />
+            <HsuCobrand onDark height="10mm" label={p.badge} lines={p.cobrandLines} stroke={p.cobrandStroke} />
           </div>
           <div className="eyebrow" style={{ marginBottom: "3.5mm" }}>{p.eyebrow}</div>
           <h1 style={{ fontSize: "33px", maxWidth: "165mm" }}>{renderHeading(p.heading)}</h1>
@@ -366,7 +366,7 @@ function Advert({ a }: { a: AdvertFields }) {
         <div className="hero" style={{ padding: "16mm 16mm 15mm" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12mm" }}>
             <FjarLogo onDark />
-            <HsuCobrand onDark height="10mm" label={a.cobrandLabel} lines={a.cobrandLines} />
+            <HsuCobrand onDark height="10mm" label={a.cobrandLabel} lines={a.cobrandLines} stroke={a.cobrandStroke} />
           </div>
           <div className="eyebrow" style={{ marginBottom: "3.5mm", color: "#5fe0ff" }}>{a.badge}</div>
           <h1 style={{ fontSize: "46px", color: "#fff", maxWidth: "165mm" }}>

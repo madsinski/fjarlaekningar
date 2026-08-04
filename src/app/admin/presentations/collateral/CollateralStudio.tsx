@@ -470,6 +470,10 @@ export function CollateralStudio({
                     <option value="hero">Hetja (heilflötur með merkjum inni)</option>
                   </select>
                 </label>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input type="checkbox" checked={active.poster.cobrandStroke} onChange={(e) => patchPoster({ cobrandStroke: e.target.checked })} className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-400" />
+                  Hvítur rammi um HSU-merki (á hetju-haus)
+                </label>
                 <Field label="Samstarfstexti (HSU)" value={active.poster.badge} onChange={(v) => patchPoster({ badge: v })} />
                 <label className="block">
                   <span className="mb-1 block text-xs font-medium text-gray-600">Samstarfstexti — línur</span>
@@ -575,6 +579,10 @@ export function CollateralStudio({
                     <option value="poster">Veggspjaldsstíll (merki efst, innfelldur haus)</option>
                     <option value="hero">Hetja (heilflötur með merkjum inni)</option>
                   </select>
+                </label>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input type="checkbox" checked={active.advert.cobrandStroke} onChange={(e) => patchAdvert({ cobrandStroke: e.target.checked })} className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-400" />
+                  Hvítur rammi um HSU-merki (á hetju-haus)
                 </label>
                 <Field label="Merki (yfirskrift)" value={active.advert.badge} onChange={(v) => patchAdvert({ badge: v })} />
                 <Field label="Samstarfstexti (HSU)" value={active.advert.cobrandLabel} onChange={(v) => patchAdvert({ cobrandLabel: v })} />

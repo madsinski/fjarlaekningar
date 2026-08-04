@@ -24,6 +24,8 @@ export type PosterFields = {
   // "poster" = logos on a white strip + inset hero; "hero" = full-bleed dark hero.
   headerLayout: "hero" | "poster";
   cobrandLines: "1" | "2" | "3";
+  // On the "hero" header, frame the HSU logo with a white stroke.
+  cobrandStroke: boolean;
   eyebrow: string;
   // Free-form heading: ==double equals== colours words blue; newlines break lines.
   heading: string;
@@ -89,6 +91,8 @@ export type AdvertFields = {
   // "hero"   = full-bleed dark hero with the logos inside it.
   headerLayout: "hero" | "poster";
   cobrandLines: "1" | "2" | "3";
+  // On the "hero" header, frame the HSU logo with a white stroke.
+  cobrandStroke: boolean;
   headingA: string;
   headingAccent: string;
   lead: string;
@@ -163,6 +167,7 @@ export const DEFAULT_POSTER: PosterFields = {
   badge: "Í samstarfi við HSU",
   headerLayout: "poster",
   cobrandLines: "2",
+  cobrandStroke: true,
   eyebrow: "Íslensk fjarlækningaþjónusta",
   heading: "Þarftu að hitta lækni?\nÞú getur gert það ==þar sem þú ert.==",
   lead: "Fjarlækningar leysa einföld og afmörkuð erindi. Þú svarar stuttum spurningalista og læknir metur málið og leggur til meðferð — sama þjónusta og á læknastofu, en skilvirkari leið og styttri biðlistar.",
@@ -363,6 +368,7 @@ export const DEFAULT_ADVERT: AdvertFields = {
   cobrandLabel: "Í samstarfi við HSU",
   headerLayout: "poster",
   cobrandLines: "2",
+  cobrandStroke: true,
   headingA: "Læknishjálp —",
   headingAccent: "þar sem þú ert.",
   lead: "Þú svarar stuttum spurningalista og læknir metur málið og leggur til meðferð. Sama þjónusta og á læknastofu — svar innan tveggja klukkustunda á opnunartíma, án biðstofu og biðlista.",
