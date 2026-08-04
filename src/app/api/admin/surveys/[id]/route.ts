@@ -38,6 +38,8 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   const update: Record<string, unknown> = {};
   if (typeof body.title === "string" && body.title.trim()) update.title = body.title.trim();
   if (typeof body.description === "string") update.description = body.description;
+  if (typeof body.title_en === "string") update.title_en = body.title_en;
+  if (typeof body.description_en === "string") update.description_en = body.description_en;
   if (Array.isArray(body.questions)) update.questions = body.questions as SurveyQuestion[];
   if (body.status === "published" || body.status === "draft") update.status = body.status;
 

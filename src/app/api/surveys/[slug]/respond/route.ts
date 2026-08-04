@@ -34,11 +34,14 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
     return NextResponse.json({ ok: false, error: validationError }, { status: 400 });
   }
 
-  // Keep only answers that correspond to real question ids.
+  // Keep only answers that correspond to real question ids; cap sizes.
   const allowed = new Set(questions.map((q) => q.id));
   const clean: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(answers)) {
-    if (allowed.has(k)) clean[k] = typeof v === "string" ? v.slice(0, 5000) : v;
+    if (!allowed.has(k)) continue;
+    if (typeof v === "string") clean[k] = v.slice(0, 5000);
+    else if (Array.isArray(v)) clean[k] = v.slice(0, 40).map((x) => String(x).slice(0, 200));
+    else clean[k] = v;
   }
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;

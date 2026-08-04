@@ -3,15 +3,27 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Trash2, ChevronUp, ChevronDown, Save, Globe } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, ChevronUp, ChevronDown, Save, Globe, Languages, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { QUESTION_TYPE_LABELS, type SurveyQuestion, type SurveyQuestionType } from "@/lib/survey-types";
+import SurveyFields from "@/app/components/SurveyFields";
+import {
+  QUESTION_TYPE_LABELS,
+  YES_NO_OPTIONS,
+  aggregateSurvey,
+  scaleBounds,
+  type Locale,
+  type SurveyAnswerValue,
+  type SurveyQuestion,
+  type SurveyQuestionType,
+} from "@/lib/survey-types";
 
 interface Survey {
   id: string;
   slug: string;
   title: string;
+  title_en: string | null;
   description: string;
+  description_en: string | null;
   questions: SurveyQuestion[];
   status: string;
 }
@@ -20,10 +32,23 @@ interface ResponseRow {
   answers: Record<string, unknown>;
   submitted_at: string;
 }
+interface AiSummary {
+  summary_md: string | null;
+  themes_jsonb: { title: string; description: string }[];
+  praise_jsonb: { title: string; description: string }[];
+  concerns_jsonb: { title: string; description: string; severity: string }[];
+  action_items_jsonb: { title: string; description: string; priority: string }[];
+  responses_count: number;
+  generated_at: string;
+  model: string | null;
+}
 
 function newQuestion(): SurveyQuestion {
   return { id: crypto.randomUUID(), label: "", type: "text", required: false };
 }
+
+const NEEDS_OPTIONS: SurveyQuestionType[] = ["single_choice", "multi_choice"];
+const IS_SCALE: SurveyQuestionType[] = ["scale", "nps"];
 
 export default function SurveyEditPage() {
   const router = useRouter();
@@ -34,13 +59,28 @@ export default function SurveyEditPage() {
   const [responses, setResponses] = useState<ResponseRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [tab, setTab] = useState<"build" | "responses">("build");
+  const [tab, setTab] = useState<"build" | "analytics" | "responses">("build");
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  const [ai, setAi] = useState<AiSummary | null>(null);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiErr, setAiErr] = useState<string | null>(null);
+
+  // Live preview state (its own answers, independent of real responses).
+  const [previewLocale, setPreviewLocale] = useState<Locale>("is");
+  const [previewAnswers, setPreviewAnswers] = useState<Record<string, SurveyAnswerValue>>({});
+  const pvSet = (qid: string, value: SurveyAnswerValue) =>
+    setPreviewAnswers((a) => ({ ...a, [qid]: value }));
+  const pvToggle = (qid: string, opt: string) =>
+    setPreviewAnswers((a) => {
+      const cur = Array.isArray(a[qid]) ? (a[qid] as string[]) : [];
+      return { ...a, [qid]: cur.includes(opt) ? cur.filter((x) => x !== opt) : [...cur, opt] };
+    });
 
   const authHeaders = async (): Promise<Record<string, string>> => {
     const {
@@ -68,6 +108,10 @@ export default function SurveyEditPage() {
       setQuestions(Array.isArray(s.questions) ? s.questions : []);
       setResponses(j.responses || []);
     }
+    // Cached AI summary (best-effort).
+    const aiRes = await fetch(`/api/admin/surveys/${id}/summary`, { headers: await authHeaders() });
+    const aiJson = await aiRes.json().catch(() => ({}));
+    if (aiJson.ok && aiJson.summary) setAi(aiJson.summary as AiSummary);
     setLoading(false);
   }, [id]);
 
@@ -78,6 +122,21 @@ export default function SurveyEditPage() {
 
   const updateQ = (idx: number, patch: Partial<SurveyQuestion>) =>
     setQuestions((qs) => qs.map((q, i) => (i === idx ? { ...q, ...patch } : q)));
+
+  const changeType = (idx: number, type: SurveyQuestionType) =>
+    setQuestions((qs) =>
+      qs.map((q, i) => {
+        if (i !== idx) return q;
+        const next: SurveyQuestion = { ...q, type };
+        if (IS_SCALE.includes(type)) {
+          next.min = type === "nps" ? 0 : 1;
+          next.max = 5;
+        }
+        if (NEEDS_OPTIONS.includes(type) && !next.options) next.options = [];
+        return next;
+      }),
+    );
+
   const moveQ = (idx: number, dir: -1 | 1) =>
     setQuestions((qs) => {
       const j = idx + dir;
@@ -105,6 +164,35 @@ export default function SurveyEditPage() {
   const publish = () => patch({ title, description, questions, status: "published" }, "Birt.");
   const unpublish = () => patch({ status: "draft" }, "Tekið úr birtingu.");
 
+  const translate = async () => {
+    setBusy(true);
+    setMsg(null);
+    // Save current edits first so the translator sees the latest text.
+    await fetch(`/api/admin/surveys/${id}`, { method: "PATCH", headers: await authHeaders(), body: JSON.stringify({ title, description, questions }) });
+    const res = await fetch(`/api/admin/surveys/${id}/translate`, { method: "POST", headers: await authHeaders() });
+    const j = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (!res.ok || !j.ok) {
+      setMsg({ type: "err", text: j.error || "Þýðing mistókst" });
+      return;
+    }
+    setMsg({ type: "ok", text: `Þýddi ${j.translated} atriði á ensku.` });
+    await load();
+  };
+
+  const regenerateAi = async () => {
+    setAiBusy(true);
+    setAiErr(null);
+    const res = await fetch(`/api/admin/surveys/${id}/summary`, { method: "POST", headers: await authHeaders() });
+    const j = await res.json().catch(() => ({}));
+    setAiBusy(false);
+    if (!res.ok || !j.ok) {
+      setAiErr(j.error || "AI greining mistókst");
+      return;
+    }
+    setAi(j.summary as AiSummary);
+  };
+
   const remove = async () => {
     if (!confirm("Eyða þessari könnun og öllum svörum?")) return;
     setBusy(true);
@@ -119,6 +207,8 @@ export default function SurveyEditPage() {
   if (!survey) return <div className="p-8 text-sm text-slate-500">Könnun fannst ekki.</div>;
 
   const labelFor = (qid: string) => questions.find((q) => q.id === qid)?.label || qid;
+  const controllerOptions = (q: SurveyQuestion) =>
+    q.type === "yes_no" ? [...YES_NO_OPTIONS] : q.options || [];
 
   return (
     <div className="p-8 max-w-4xl">
@@ -142,59 +232,138 @@ export default function SurveyEditPage() {
 
       {/* Tabs */}
       <div className="mt-6 flex gap-1 border-b border-slate-200">
-        {(["build", "responses"] as const).map((t) => (
+        {([
+          ["build", "Uppbygging"],
+          ["analytics", "Greining"],
+          ["responses", `Svör (${responses.length})`],
+        ] as const).map(([t, lbl]) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${tab === t ? "border-cyan-600 text-cyan-700" : "border-transparent text-slate-500 hover:text-slate-700"}`}
           >
-            {t === "build" ? "Uppbygging" : `Svör (${responses.length})`}
+            {lbl}
           </button>
         ))}
       </div>
 
-      {tab === "build" ? (
+      {tab === "build" && (
         <div className="mt-6">
           {!isAdmin && <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">Þú hefur lesaðgang.</div>}
           <input value={title} onChange={(e) => setTitle(e.target.value)} disabled={!isAdmin} placeholder="Titill" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} disabled={!isAdmin} rows={2} placeholder="Lýsing (valfrjálst)" className="mt-3 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} disabled={!isAdmin} rows={2} placeholder="Inngangstexti (valfrjálst)" className="mt-3 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
+          {survey.title_en && <p className="mt-1 text-[11px] text-slate-400">EN: {survey.title_en}</p>}
 
           <div className="mt-6 space-y-4">
-            {questions.map((q, idx) => (
-              <div key={q.id} className="rounded-xl border border-slate-200 bg-white p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex-1 space-y-3">
-                    <input value={q.label} onChange={(e) => updateQ(idx, { label: e.target.value })} disabled={!isAdmin} placeholder={`Spurning ${idx + 1}`} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
-                    <div className="flex flex-wrap items-center gap-3">
-                      <select value={q.type} onChange={(e) => updateQ(idx, { type: e.target.value as SurveyQuestionType })} disabled={!isAdmin} className="px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white disabled:bg-slate-50">
-                        {Object.entries(QUESTION_TYPE_LABELS).map(([v, l]) => (
-                          <option key={v} value={v}>{l}</option>
-                        ))}
-                      </select>
-                      <label className="inline-flex items-center gap-1.5 text-xs text-slate-600">
-                        <input type="checkbox" checked={!!q.required} onChange={(e) => updateQ(idx, { required: e.target.checked })} disabled={!isAdmin} className="accent-cyan-600" /> Skylda
-                      </label>
+            {questions.map((q, idx) => {
+              const priorControllers = questions
+                .slice(0, idx)
+                .filter((p) => p.type === "single_choice" || p.type === "yes_no");
+              const bounds = IS_SCALE.includes(q.type) ? scaleBounds(q) : null;
+              return (
+                <div key={q.id} className="rounded-xl border border-slate-200 bg-white p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 space-y-3">
+                      <input value={q.label} onChange={(e) => updateQ(idx, { label: e.target.value })} disabled={!isAdmin} placeholder={`Spurning ${idx + 1}`} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
+                      {q.labelEn && <p className="text-[11px] text-slate-400">EN: {q.labelEn}</p>}
+
+                      <input value={q.helper || ""} onChange={(e) => updateQ(idx, { helper: e.target.value })} disabled={!isAdmin} placeholder="Hjálpartexti (valfrjálst)" className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
+
+                      <div className="flex flex-wrap items-center gap-3">
+                        <select value={q.type} onChange={(e) => changeType(idx, e.target.value as SurveyQuestionType)} disabled={!isAdmin} className="px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white disabled:bg-slate-50">
+                          {Object.entries(QUESTION_TYPE_LABELS).map(([v, l]) => (
+                            <option key={v} value={v}>{l}</option>
+                          ))}
+                        </select>
+                        <label className="inline-flex items-center gap-1.5 text-xs text-slate-600">
+                          <input type="checkbox" checked={!!q.required} onChange={(e) => updateQ(idx, { required: e.target.checked })} disabled={!isAdmin} className="accent-cyan-600" /> Skylda
+                        </label>
+                      </div>
+
+                      {NEEDS_OPTIONS.includes(q.type) && (
+                        <input
+                          value={(q.options || []).join(", ")}
+                          onChange={(e) => updateQ(idx, { options: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
+                          disabled={!isAdmin}
+                          placeholder="Valkostir, aðgreindir með kommu"
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50"
+                        />
+                      )}
+
+                      {bounds && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <label className="text-xs text-slate-500">Lágmark
+                            <input type="number" value={bounds.min} onChange={(e) => updateQ(idx, { min: Number(e.target.value) })} disabled={!isAdmin} className="mt-0.5 w-full px-2 py-1.5 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50" />
+                          </label>
+                          <label className="text-xs text-slate-500">Hámark
+                            <input type="number" value={bounds.max} onChange={(e) => updateQ(idx, { max: Number(e.target.value) })} disabled={!isAdmin} className="mt-0.5 w-full px-2 py-1.5 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50" />
+                          </label>
+                          <label className="text-xs text-slate-500">Texti við lágmark
+                            <input value={q.minLabel || ""} onChange={(e) => updateQ(idx, { minLabel: e.target.value })} disabled={!isAdmin} placeholder="t.d. Mjög óánægð(ur)" className="mt-0.5 w-full px-2 py-1.5 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50" />
+                          </label>
+                          <label className="text-xs text-slate-500">Texti við hámark
+                            <input value={q.maxLabel || ""} onChange={(e) => updateQ(idx, { maxLabel: e.target.value })} disabled={!isAdmin} placeholder="t.d. Mjög ánægð(ur)" className="mt-0.5 w-full px-2 py-1.5 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50" />
+                          </label>
+                        </div>
+                      )}
+
+                      {/* Conditional visibility */}
+                      {priorControllers.length > 0 && (
+                        <div className="rounded-lg bg-slate-50 border border-slate-200 p-2.5 space-y-2">
+                          <label className="block text-[11px] font-medium text-slate-500">Sýna aðeins ef</label>
+                          <select
+                            value={q.showIf?.questionId || ""}
+                            onChange={(e) =>
+                              updateQ(idx, e.target.value ? { showIf: { questionId: e.target.value, equals: [] } } : { showIf: undefined })
+                            }
+                            disabled={!isAdmin}
+                            className="w-full px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white disabled:bg-slate-50"
+                          >
+                            <option value="">Engin skilyrði (alltaf sýnd)</option>
+                            {priorControllers.map((p) => (
+                              <option key={p.id} value={p.id}>{p.label || p.id}</option>
+                            ))}
+                          </select>
+                          {q.showIf?.questionId && (
+                            <div className="flex flex-wrap gap-2">
+                              {controllerOptions(questions.find((p) => p.id === q.showIf!.questionId)!).map((opt) => {
+                                const on = q.showIf!.equals.includes(opt);
+                                return (
+                                  <label key={opt} className="inline-flex items-center gap-1 text-xs text-slate-600">
+                                    <input
+                                      type="checkbox"
+                                      checked={on}
+                                      disabled={!isAdmin}
+                                      onChange={() =>
+                                        updateQ(idx, {
+                                          showIf: {
+                                            questionId: q.showIf!.questionId,
+                                            equals: on ? q.showIf!.equals.filter((x) => x !== opt) : [...q.showIf!.equals, opt],
+                                          },
+                                        })
+                                      }
+                                      className="accent-cyan-600"
+                                    />
+                                    {opt}
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    {q.type === "single_choice" && (
-                      <input
-                        value={(q.options || []).join(", ")}
-                        onChange={(e) => updateQ(idx, { options: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
-                        disabled={!isAdmin}
-                        placeholder="Valkostir, aðgreindir með kommu"
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50"
-                      />
+                    {isAdmin && (
+                      <div className="flex flex-col gap-1">
+                        <button onClick={() => moveQ(idx, -1)} className="p-1 text-slate-400 hover:text-slate-700"><ChevronUp className="w-4 h-4" /></button>
+                        <button onClick={() => moveQ(idx, 1)} className="p-1 text-slate-400 hover:text-slate-700"><ChevronDown className="w-4 h-4" /></button>
+                        <button onClick={() => setQuestions((qs) => qs.filter((_, i) => i !== idx))} className="p-1 text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                      </div>
                     )}
                   </div>
-                  {isAdmin && (
-                    <div className="flex flex-col gap-1">
-                      <button onClick={() => moveQ(idx, -1)} className="p-1 text-slate-400 hover:text-slate-700"><ChevronUp className="w-4 h-4" /></button>
-                      <button onClick={() => moveQ(idx, 1)} className="p-1 text-slate-400 hover:text-slate-700"><ChevronDown className="w-4 h-4" /></button>
-                      <button onClick={() => setQuestions((qs) => qs.filter((_, i) => i !== idx))} className="p-1 text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
-                    </div>
-                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {isAdmin && (
@@ -209,6 +378,9 @@ export default function SurveyEditPage() {
                 <button onClick={save} disabled={busy} className="inline-flex items-center gap-2 py-2 px-4 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
                   <Save className="w-4 h-4" /> Vista drög
                 </button>
+                <button onClick={translate} disabled={busy} className="inline-flex items-center gap-2 py-2 px-4 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50" title="Vistar og þýðir yfir á ensku með gervigreind">
+                  <Languages className="w-4 h-4" /> Þýða → EN
+                </button>
                 {survey.status === "published" ? (
                   <button onClick={unpublish} disabled={busy} className="py-2 px-4 rounded-lg border border-amber-300 text-sm font-semibold text-amber-700 hover:bg-amber-50 disabled:opacity-50">Taka úr birtingu</button>
                 ) : (
@@ -222,8 +394,57 @@ export default function SurveyEditPage() {
               </div>
             </>
           )}
+
+          {/* Live preview — updates as you edit; renders exactly like the public form */}
+          <div className="mt-10 border-t border-slate-200 pt-8">
+            <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+              <h2 className="text-sm font-semibold text-slate-900">Forskoðun</h2>
+              {(survey.title_en || questions.some((q) => q.labelEn)) && (
+                <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden text-xs font-medium">
+                  {(["is", "en"] as Locale[]).map((l) => (
+                    <button
+                      key={l}
+                      type="button"
+                      onClick={() => setPreviewLocale(l)}
+                      className={`px-3 py-1.5 ${previewLocale === l ? "bg-cyan-600 text-white" : "text-slate-600 hover:bg-slate-50"}`}
+                    >
+                      {l === "is" ? "IS" : "EN"}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-6">
+              <h3 className="text-xl font-bold text-slate-900">{previewLocale === "en" && survey.title_en ? survey.title_en : title}</h3>
+              {(previewLocale === "en" && survey.description_en ? survey.description_en : description) && (
+                <p className="text-slate-600 mt-2 mb-6 text-sm">
+                  {previewLocale === "en" && survey.description_en ? survey.description_en : description}
+                </p>
+              )}
+              <div className="space-y-6 mt-4">
+                <SurveyFields questions={questions} answers={previewAnswers} onSet={pvSet} onToggleMulti={pvToggle} locale={previewLocale} />
+              </div>
+              <button type="button" disabled className="mt-6 py-2.5 px-5 rounded-lg bg-slate-300 text-white font-semibold text-sm cursor-not-allowed">
+                Senda svar (forskoðun)
+              </button>
+            </div>
+          </div>
         </div>
-      ) : (
+      )}
+
+      {tab === "analytics" && (
+        <Analytics
+          questions={questions}
+          responses={responses}
+          isAdmin={isAdmin}
+          ai={ai}
+          aiBusy={aiBusy}
+          aiErr={aiErr}
+          onRegenerate={regenerateAi}
+        />
+      )}
+
+      {tab === "responses" && (
         <div className="mt-6">
           {responses.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">Engin svör enn.</div>
@@ -236,7 +457,7 @@ export default function SurveyEditPage() {
                     {Object.entries(r.answers || {}).map(([qid, val]) => (
                       <div key={qid} className="text-sm">
                         <dt className="text-slate-500">{labelFor(qid)}</dt>
-                        <dd className="text-slate-900">{String(val)}</dd>
+                        <dd className="text-slate-900">{Array.isArray(val) ? val.join(", ") : String(val)}</dd>
                       </div>
                     ))}
                   </dl>
@@ -246,6 +467,176 @@ export default function SurveyEditPage() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Analytics tab
+// ---------------------------------------------------------------------------
+
+function Bar({ label, count, total, tone = "cyan" }: { label: string; count: number; total: number; tone?: "cyan" | "slate" }) {
+  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+  return (
+    <div className="flex items-center gap-3 text-sm">
+      <div className="w-40 shrink-0 text-slate-600 truncate" title={label}>{label}</div>
+      <div className="flex-1 h-4 rounded bg-slate-100 overflow-hidden">
+        <div className={`h-full ${tone === "cyan" ? "bg-cyan-500" : "bg-slate-400"}`} style={{ width: `${pct}%` }} />
+      </div>
+      <div className="w-16 shrink-0 text-right text-slate-500 tabular-nums">{count} · {pct}%</div>
+    </div>
+  );
+}
+
+function Analytics({
+  questions,
+  responses,
+  isAdmin,
+  ai,
+  aiBusy,
+  aiErr,
+  onRegenerate,
+}: {
+  questions: SurveyQuestion[];
+  responses: ResponseRow[];
+  isAdmin: boolean;
+  ai: AiSummary | null;
+  aiBusy: boolean;
+  aiErr: string | null;
+  onRegenerate: () => void;
+}) {
+  const { total, perQuestion } = aggregateSurvey(questions, responses);
+  const npsStat = perQuestion.find((s) => s.nps)?.nps ?? null;
+
+  if (total === 0) {
+    return <div className="mt-6 rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">Engin svör enn — greining birtist þegar svör berast.</div>;
+  }
+
+  const sevTone: Record<string, string> = {
+    high: "bg-red-50 text-red-700 border-red-200",
+    medium: "bg-amber-50 text-amber-700 border-amber-200",
+    low: "bg-slate-50 text-slate-600 border-slate-200",
+  };
+
+  return (
+    <div className="mt-6 space-y-8">
+      {/* Headline metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="text-2xl font-bold text-slate-900">{total}</div>
+          <div className="text-xs text-slate-500 mt-0.5">Svör</div>
+        </div>
+        {npsStat && (
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <div className={`text-2xl font-bold ${npsStat.score >= 50 ? "text-emerald-700" : npsStat.score >= 0 ? "text-amber-600" : "text-red-600"}`}>{npsStat.score}</div>
+            <div className="text-xs text-slate-500 mt-0.5">NPS (meðmæli)</div>
+          </div>
+        )}
+      </div>
+
+      {/* AI insight panel */}
+      <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <h2 className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900"><Sparkles className="w-4 h-4 text-cyan-600" /> AI samantekt og tillögur</h2>
+          {isAdmin && (
+            <button onClick={onRegenerate} disabled={aiBusy} className="inline-flex items-center gap-2 py-1.5 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold disabled:opacity-50">
+              <Sparkles className="w-3.5 h-3.5" /> {aiBusy ? "Greini…" : ai ? "Endurkeyra greiningu" : "Búa til AI samantekt"}
+            </button>
+          )}
+        </div>
+        {aiErr && <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">{aiErr}</div>}
+        {!ai && !aiErr && <p className="mt-3 text-sm text-slate-500">Engin greining enn. {isAdmin ? "Smelltu á hnappinn til að búa hana til." : ""}</p>}
+        {ai && (
+          <div className="mt-4 space-y-5">
+            {ai.summary_md && <div className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{ai.summary_md}</div>}
+            <div className="grid md:grid-cols-2 gap-5">
+              {ai.action_items_jsonb?.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Aðgerðir</h3>
+                  <ul className="space-y-2">
+                    {ai.action_items_jsonb.map((a, i) => (
+                      <li key={i} className="rounded-lg border border-slate-200 p-2.5 text-sm">
+                        <div className="flex items-center gap-2"><span className={`text-[10px] px-1.5 py-0.5 rounded border ${sevTone[a.priority] || sevTone.low}`}>{a.priority}</span><span className="font-medium text-slate-800">{a.title}</span></div>
+                        <p className="text-slate-600 text-xs mt-1">{a.description}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {ai.concerns_jsonb?.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Áhyggjuefni</h3>
+                  <ul className="space-y-2">
+                    {ai.concerns_jsonb.map((c, i) => (
+                      <li key={i} className="rounded-lg border border-slate-200 p-2.5 text-sm">
+                        <div className="flex items-center gap-2"><span className={`text-[10px] px-1.5 py-0.5 rounded border ${sevTone[c.severity] || sevTone.low}`}>{c.severity}</span><span className="font-medium text-slate-800">{c.title}</span></div>
+                        <p className="text-slate-600 text-xs mt-1">{c.description}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            {(ai.themes_jsonb?.length > 0 || ai.praise_jsonb?.length > 0) && (
+              <div className="grid md:grid-cols-2 gap-5">
+                {ai.themes_jsonb?.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Helstu þemu</h3>
+                    <ul className="space-y-1.5 text-sm text-slate-700">
+                      {ai.themes_jsonb.map((t, i) => (<li key={i}><span className="font-medium">{t.title}:</span> <span className="text-slate-600">{t.description}</span></li>))}
+                    </ul>
+                  </div>
+                )}
+                {ai.praise_jsonb?.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Hrós</h3>
+                    <ul className="space-y-1.5 text-sm text-slate-700">
+                      {ai.praise_jsonb.map((p, i) => (<li key={i}><span className="font-medium">{p.title}:</span> <span className="text-slate-600">{p.description}</span></li>))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+            <p className="text-[11px] text-slate-400">Búið til {new Date(ai.generated_at).toLocaleString("is-IS")} · {ai.responses_count} svör{ai.model ? ` · ${ai.model}` : ""}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Per-question breakdown */}
+      <div className="space-y-6">
+        {perQuestion.map((s) => (
+          <div key={s.question.id} className="rounded-xl border border-slate-200 bg-white p-4">
+            <div className="flex items-baseline justify-between gap-3 flex-wrap">
+              <h3 className="text-sm font-semibold text-slate-800">{s.question.label}</h3>
+              <div className="text-xs text-slate-400">
+                {s.answered} svör
+                {s.mean != null && s.scaleMax != null && (
+                  <span className="ml-2 rounded-full bg-cyan-50 text-cyan-700 px-2 py-0.5">meðaltal {s.mean.toFixed(1)} / {s.scaleMax}</span>
+                )}
+              </div>
+            </div>
+
+            {(s.question.type === "text" || s.question.type === "textarea") ? (
+              s.texts.length === 0 ? (
+                <p className="mt-2 text-sm text-slate-400">Engin svör.</p>
+              ) : (
+                <ul className="mt-3 space-y-1.5 max-h-64 overflow-auto">
+                  {s.texts.map((t, i) => (<li key={i} className="text-sm text-slate-700 border-l-2 border-slate-200 pl-3">{t}</li>))}
+                </ul>
+              )
+            ) : (
+              <div className="mt-3 space-y-1.5">
+                {s.distribution.map((d) => (
+                  <Bar key={d.value} label={d.label} count={d.count} total={s.answered} tone={s.question.type === "multi_choice" ? "slate" : "cyan"} />
+                ))}
+                {s.nps && (
+                  <p className="mt-2 text-xs text-slate-500">Meðmælendur {s.nps.promoters} · hlutlausir {s.nps.passives} · letjendur {s.nps.detractors}</p>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
