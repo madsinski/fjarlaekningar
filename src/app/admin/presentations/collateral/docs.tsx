@@ -92,13 +92,17 @@ function FjarLogo({ onDark = false }: { onDark?: boolean }) {
 // HSU co-brand lockup — "Í samstarfi við HSU" + their logo. The print-friendly
 // adaptation of the website's HSU cooperation section.
 function HsuCobrand({ label = "Í samstarfi við HSU", height = "11mm", onDark = false, lines = "2" }: { label?: string; height?: string; onDark?: boolean; lines?: "1" | "2" | "3" }) {
-  // How the label is allowed to wrap: 1 line (no wrap), or a width that yields
-  // roughly 2 or 3 lines for the full institution name.
+  // How the label wraps: 1 line (no wrap), or a FIXED width that yields ~2 or ~3
+  // lines for the full institution name. A fixed width (not max-width) is what
+  // makes text-align:right actually right-align every line — otherwise the label
+  // shrinks to its longest line and the shorter lines read as centred.
   const wrap: React.CSSProperties =
-    lines === "1" ? { whiteSpace: "nowrap" } : { maxWidth: lines === "3" ? "26mm" : "46mm" };
+    lines === "1"
+      ? { whiteSpace: "nowrap" }
+      : { width: lines === "3" ? "32mm" : "58mm", flexShrink: 0 };
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "3mm" }}>
-      <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: onDark ? "#eafaff" : "var(--muted)", textAlign: "right", lineHeight: 1.3, ...wrap }}>{label}</span>
+      <span style={{ display: "block", fontSize: "9px", fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: onDark ? "#eafaff" : "var(--muted)", textAlign: "right", lineHeight: 1.3, ...wrap }}>{label}</span>
       {onDark ? (
         // On the dark hero the logo needs a light plate to read.
         <span style={{ background: "#fff", borderRadius: "2mm", padding: "1.5mm 2.5mm", display: "inline-flex" }}>
