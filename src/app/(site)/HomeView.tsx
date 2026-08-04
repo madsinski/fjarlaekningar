@@ -149,7 +149,7 @@ export default function HomeView({
     // cards (logo + 2-line name). Adding an institution is one more line in
     // coop_list; "Ekkert merki" hides the cards. Card logo size is a CMS choice.
     coop: (() => {
-      const showCards = (c.coop_logo_placement || "top") !== "none";
+      const mode = c.coop_logo_placement || "cards"; // "cards" | "top" | "none"
       const logoSize =
         c.coop_logo_size === "small"
           ? "w-14 h-14 sm:w-16 sm:h-16"
@@ -158,6 +158,11 @@ export default function HomeView({
             : "w-24 h-24 sm:w-28 sm:h-28";
       return (
         <div>
+          {/* "Efst": a single logo above the copy, cards hidden. */}
+          {mode === "top" && coops[0]?.logo && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={coops[0].logo} alt={coops[0].name} className={`${logoSize} object-contain mb-8`} />
+          )}
           <div className="max-w-2xl">
             {c.coop_eyebrow && (
               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-cyan-subtle/60 border border-brand-cyan-muted text-xs font-medium text-[var(--primary-dark)] mb-4">
@@ -172,10 +177,10 @@ export default function HomeView({
             {c.coop_note && <p className="mt-4 font-medium text-slate-900">{c.coop_note}</p>}
           </div>
 
-          {/* One card per institution, in a horizontal row. The narrow card
-              lets a name like "Heilbrigðisstofnun Suðurlands" wrap to two
+          {/* "Spjöld": one card per institution in a horizontal row. The narrow
+              card lets a name like "Heilbrigðisstofnun Suðurlands" wrap to two
               lines under the logo. */}
-          {showCards && coops.length > 0 && (
+          {mode === "cards" && coops.length > 0 && (
             <div className="mt-10 flex flex-wrap gap-4 sm:gap-5">
               {coops.map((co) => (
                 <div

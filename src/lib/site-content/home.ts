@@ -83,13 +83,13 @@ export const HOME_FIELDS: SiteField[] = [
   { key: "coop_cta", label: "Hnappur", group: "Samstarf", type: "text" },
   {
     key: "coop_logo_placement",
-    label: "Staðsetning merkis",
+    label: "Framsetning",
     group: "Samstarf",
     type: "choice",
-    help: "Á við þegar einn samstarfsaðili er skráður.",
     options: [
-      { value: "top", label: "Efst", hint: "Sýna stofnanaspjöld (merki + nafn) í láréttri röð." },
-      { value: "none", label: "Ekkert merki", hint: "Fela spjöldin." },
+      { value: "cards", label: "Spjöld", hint: "Stofnanaspjöld (merki + nafn) í láréttri röð." },
+      { value: "top", label: "Efst — eitt merki", hint: "Eitt merki fyrir ofan textann (spjöld falin)." },
+      { value: "none", label: "Ekkert", hint: "Fela merki og spjöld." },
     ],
   },
   {
@@ -166,7 +166,7 @@ export const HOME_DEFAULTS_IS: LocaleContent = {
   coop_list: "Heilbrigðisstofnun Suðurlands | /hsu-logo.webp | Tilraunaverkefni til eins árs",
   coop_note: "Þjónustan er nú aðeins í boði fyrir skjólstæðinga sem eru skráðir hjá HSU.",
   coop_cta: "Hvar er þjónustan virk?",
-  coop_logo_placement: "top",
+  coop_logo_placement: "cards",
   coop_logo_size: "large",
 
   news_heading: "Fylgstu með því sem er að ==gerast==",
