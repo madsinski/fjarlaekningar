@@ -132,9 +132,11 @@ function ImageField({
   );
 }
 
-// A layout switch: a fixed set of values rendered as a segmented control, with
-// the selected option's explanation underneath. Locale-independent like icons
-// and images — the value lives in the Icelandic map and every language reads it.
+// A layout switch: a fixed set of values as a list of radio cards. Each option
+// carries its own explanation, so they are all shown at once rather than only
+// the selected one — with four arrangements to choose between, the differences
+// are the whole point. Locale-independent like icons and images: the value
+// lives in the Icelandic map and every language reads it.
 function ChoiceField({
   value,
   options,
@@ -148,29 +150,44 @@ function ChoiceField({
 }) {
   const selected = options.find((o) => o.value === value) ?? options[0];
   return (
-    <div>
-      <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden">
-        {options.map((o) => {
-          const active = o.value === selected.value;
-          return (
-            <button
-              key={o.value}
-              type="button"
-              disabled={disabled}
-              aria-pressed={active}
-              onClick={() => onChange(o.value)}
-              className={`px-3 py-1.5 text-sm font-medium disabled:opacity-50 ${
-                active
-                  ? "bg-cyan-600 text-white"
-                  : "bg-white text-slate-600 hover:bg-slate-50"
+    <div className="space-y-1.5">
+      {options.map((o) => {
+        const active = o.value === selected?.value;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            disabled={disabled}
+            aria-pressed={active}
+            onClick={() => onChange(o.value)}
+            className={`flex w-full items-start gap-2.5 rounded-lg border p-2.5 text-left transition-colors disabled:opacity-60 ${
+              active
+                ? "border-cyan-500 bg-cyan-50/70"
+                : "border-slate-200 bg-white hover:bg-slate-50"
+            }`}
+          >
+            <span
+              className={`mt-0.5 grid h-3.5 w-3.5 shrink-0 place-items-center rounded-full border ${
+                active ? "border-cyan-600" : "border-slate-300"
               }`}
             >
-              {o.label}
-            </button>
-          );
-        })}
-      </div>
-      {selected.hint && <p className="mt-2 text-[11px] leading-relaxed text-slate-500">{selected.hint}</p>}
+              {active && <span className="h-1.5 w-1.5 rounded-full bg-cyan-600" />}
+            </span>
+            <span className="min-w-0">
+              <span
+                className={`block text-sm font-medium ${active ? "text-cyan-900" : "text-slate-700"}`}
+              >
+                {o.label}
+              </span>
+              {o.hint && (
+                <span className="mt-0.5 block text-[11px] leading-relaxed text-slate-500">
+                  {o.hint}
+                </span>
+              )}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }

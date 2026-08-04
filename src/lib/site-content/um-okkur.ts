@@ -13,19 +13,41 @@ export const UM_OKKUR_SECTIONS: SiteSection[] = [
 ];
 
 // The group photo ("Hópmynd") and the team grid ("Teymið") are two takes on the
-// same subject, so the page offers two arrangements and the CMS switches
-// between them:
+// same subject, so the page offers several arrangements and the CMS switches
+// between them. Every combined arrangement merges the two bands into one, takes
+// the "Hópmynd" slot in the section order, and makes the separate "Teymið" band
+// disappear; they differ only in composition:
+//
 //   split    — the built-in behaviour: two separate bands, wherever they are
 //              ordered, each with its own background.
-//   combined — one band, composed rather than stacked: lead copy, then the
-//              group photo as a wide banner, then a white panel of individual
-//              portraits pulled up over the banner's lower edge. The merged
-//              band takes the "Hópmynd" slot in the section order and the
-//              separate "Teymið" band disappears.
-export const TEAM_LAYOUTS = { split: "split", combined: "combined" } as const;
+//   overlap  — lead copy, the group photo as a wide banner, then a white panel
+//              of portraits pulled up over the banner's lower edge.
+//   panel    — the whole section inside one bordered white card, the same
+//              idiom as the forsíða's samstarf card: copy and photo side by
+//              side up top, a hairline, portraits below. The quietest option.
+//   banner   — the copy set *on* the photo behind a scrim, with the team cards
+//              on the band below it. The boldest, and the only place on the
+//              site where a heading sits over an image.
+export const TEAM_LAYOUTS = {
+  split: "split",
+  // "combined" (rather than "combined-overlap") is the value the first version
+  // of this switch shipped with; renaming it would silently reset any page
+  // already saved with it.
+  overlap: "combined",
+  panel: "combined-panel",
+  banner: "combined-banner",
+} as const;
+
+export type TeamLayout = (typeof TEAM_LAYOUTS)[keyof typeof TEAM_LAYOUTS];
+
+/** The stored layout, defaulting to split and tolerating an unknown value. */
+export function teamLayout(c: LocaleContent): TeamLayout {
+  const v = c.team_layout as TeamLayout;
+  return Object.values(TEAM_LAYOUTS).includes(v) ? v : TEAM_LAYOUTS.split;
+}
 
 export function isCombinedTeam(c: LocaleContent): boolean {
-  return (c.team_layout || TEAM_LAYOUTS.split) === TEAM_LAYOUTS.combined;
+  return teamLayout(c) !== TEAM_LAYOUTS.split;
 }
 
 /**
@@ -82,9 +104,19 @@ export const UM_OKKUR_FIELDS: SiteField[] = [
         hint: "Sjálfgefið. „Hópmynd“ og „Teymið“ eru tveir sjálfstæðir kaflar sem má raða hvorum í sínu lagi.",
       },
       {
-        value: TEAM_LAYOUTS.combined,
-        label: "Sameinaður kafli",
-        hint: "Einn kafli: fyrirsögn og texti úr „Hópmynd“ leiða, hópmyndin verður breið mynd yfir alla síðuna og hvítt spjald með andlitsmyndum teymisins liggur yfir neðri brún hennar. Fyrirsögn „Teymið“ verður millifyrirsögn inni á spjaldinu og myndatextinn færist upp í horn myndarinnar. Kaflinn situr í sæti „Hópmynd“ í röðinni.",
+        value: TEAM_LAYOUTS.overlap,
+        label: "Sameinað — yfirlögn",
+        hint: "Fyrirsögn og texti úr „Hópmynd“ leiða, hópmyndin verður breið mynd og hvítt spjald með andlitsmyndum teymisins liggur yfir neðri brún hennar.",
+      },
+      {
+        value: TEAM_LAYOUTS.panel,
+        label: "Sameinað — spjald",
+        hint: "Allur kaflinn inni á einu hvítu spjaldi, eins og samstarfsspjaldið á forsíðunni: texti og hópmynd hlið við hlið efst, þunn lína, andlitsmyndir neðst. Rólegasti kosturinn.",
+      },
+      {
+        value: TEAM_LAYOUTS.banner,
+        label: "Sameinað — borði",
+        hint: "Fyrirsögn og texti úr „Hópmynd“ liggja ofan á hópmyndinni sjálfri (hvítur texti á mjúkri skyggingu) og teymisspjöldin koma fyrir neðan. Áberandi kosturinn — hafðu í huga að myndin þarf að þola texta yfir neðri hlutanum.",
       },
     ],
   },

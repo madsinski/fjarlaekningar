@@ -4,7 +4,13 @@ import PageHero from "../PageHero";
 import Band from "../Band";
 import SiteIcon from "@/lib/site-content/SiteIcon";
 import { renderHighlighted } from "@/lib/site-content/highlight";
-import { umOkkurSections, isCombinedTeam, TEAM_MEMBER_SLOTS } from "@/lib/site-content/um-okkur";
+import {
+  umOkkurSections,
+  isCombinedTeam,
+  teamLayout,
+  TEAM_LAYOUTS,
+  TEAM_MEMBER_SLOTS,
+} from "@/lib/site-content/um-okkur";
 import { resolveOrder, type LocaleContent } from "@/lib/site-content/types";
 
 // Presentational Um okkur page.
@@ -166,12 +172,115 @@ export default function UmOkkurView({
     </div>
   );
 
+  // Combined B — "spjald": the whole section inside one bordered white card,
+  // the same object the forsíða uses for the samstarf block. Copy and a smaller
+  // photo share the top, a hairline divides, portraits sit below. Nothing
+  // breaks the container and nothing overlaps: the quietest way to say "these
+  // two things are one section".
+  const panelTeamBlock = (
+    <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12">
+      <div className="grid lg:grid-cols-5 gap-8 lg:gap-12 items-center">
+        <div className={c.faces_photo ? "lg:col-span-3" : "lg:col-span-5 max-w-2xl"}>
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+            {renderHighlighted(c.faces_heading)}
+          </h2>
+          {c.faces_body && <p className="mt-4 text-slate-600 leading-relaxed">{c.faces_body}</p>}
+        </div>
+        {c.faces_photo && (
+          <figure className="lg:col-span-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={c.faces_photo}
+              alt={c.faces_heading || "Teymið"}
+              className="w-full max-h-[280px] rounded-2xl object-cover object-[center_22%] ring-1 ring-slate-200"
+            />
+            {c.faces_caption && (
+              <figcaption className="mt-3 text-sm text-slate-500">{c.faces_caption}</figcaption>
+            )}
+          </figure>
+        )}
+      </div>
+      {teamMembers.length > 0 && (
+        <div className="mt-10 border-t border-slate-200 pt-10">
+          <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <h3 className="text-lg font-semibold text-slate-900">
+              {renderHighlighted(c.team_heading)}
+            </h3>
+            {c.team_body && <p className="text-sm text-slate-600 sm:max-w-md">{c.team_body}</p>}
+          </div>
+          <TeamGrid members={teamMembers} locale={locale} variant="portraits" />
+          {c.team_footer && <p className="mt-8 text-sm text-slate-500">{c.team_footer}</p>}
+        </div>
+      )}
+    </div>
+  );
+
+  // Combined C — "borði": the copy sits on the photo behind a scrim, and the
+  // team cards follow on the band below. The site already puts white type on a
+  // brand-gradient panel (forsíða's CTA), so type-on-colour is in the language;
+  // this is the first time it lands on a photograph. Fixed heights rather than
+  // an aspect ratio, because the copy needs a predictable amount of dark to sit
+  // on no matter what the editor uploads.
+  const bannerTeamBlock = (
+    <div>
+      {c.faces_photo ? (
+        <figure className="relative overflow-hidden rounded-3xl shadow-lg ring-1 ring-slate-200">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={c.faces_photo}
+            alt={c.faces_heading || "Teymið"}
+            className="h-[360px] w-full object-cover object-[center_22%] sm:h-[440px] lg:h-[520px]"
+          />
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-gradient-to-t from-slate-900/85 via-slate-900/45 to-slate-900/5"
+          />
+          {c.faces_caption && (
+            <figcaption className="absolute right-4 top-4 rounded-full bg-slate-900/50 px-3 py-1 text-[11px] font-medium text-white backdrop-blur-sm">
+              {c.faces_caption}
+            </figcaption>
+          )}
+          <div className="absolute inset-x-0 bottom-0 p-8 sm:p-12">
+            <div className="max-w-2xl">
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
+                {renderHighlighted(c.faces_heading)}
+              </h2>
+              {c.faces_body && (
+                <p className="mt-4 text-lg leading-relaxed text-white/85">{c.faces_body}</p>
+              )}
+            </div>
+          </div>
+        </figure>
+      ) : (
+        facesBlock
+      )}
+      {teamMembers.length > 0 && (
+        <div className="mt-12 lg:mt-14">
+          <div className="max-w-2xl mb-8">
+            <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+              {renderHighlighted(c.team_heading)}
+            </h3>
+            {c.team_body && <p className="mt-3 text-slate-600">{c.team_body}</p>}
+          </div>
+          {teamGrid}
+        </div>
+      )}
+    </div>
+  );
+
+  const layout = teamLayout(c);
   const combined = isCombinedTeam(c);
+  const combinedBlock =
+    layout === TEAM_LAYOUTS.panel
+      ? panelTeamBlock
+      : layout === TEAM_LAYOUTS.banner
+        ? bannerTeamBlock
+        : combinedTeamBlock;
 
   const blocks: Record<string, React.ReactNode> = {
     // In combined mode the merged block takes this slot and the separate
     // "team" band below is dropped, so the two never render twice.
-    faces: combined ? combinedTeamBlock : facesBlock,
+    faces: combined ? combinedBlock : facesBlock,
 
     pillars: (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
