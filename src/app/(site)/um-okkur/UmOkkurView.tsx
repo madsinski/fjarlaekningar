@@ -80,7 +80,7 @@ export default function UmOkkurView({
         <img
           src={c.faces_photo}
           alt={c.faces_heading || "Teymið"}
-          className={`w-full ${photoMaxH} rounded-3xl object-cover shadow-lg ring-1 ring-slate-200`}
+          className={`w-full ${photoMaxH} rounded-3xl object-cover object-[center_22%] shadow-lg ring-1 ring-slate-200`}
         />
         {c.faces_caption && (
           <figcaption className="mt-3 text-sm text-slate-500">{c.faces_caption}</figcaption>
