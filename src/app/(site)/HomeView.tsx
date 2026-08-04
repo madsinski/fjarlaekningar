@@ -145,12 +145,10 @@ export default function HomeView({
     // a second institution is a line of CMS text rather than a code change. The
     // layout switches from side-by-side to a logo row once there is more than
     // one, which is why the logos are not simply inlined into the prose.
-    // A plain section (no card). CMS controls: logo placement (right/left/top/
-    // none) and whether the descriptive copy shows. For a single partner the
-    // logo sits beside/above the text at a modest size.
+    // A plain section (no card). CMS controls: logo placement (top / none) and
+    // logo size. For a single partner the logo sits above the copy.
     coop: (() => {
-      const placement = c.coop_logo_placement || "right";
-      const showText = (c.coop_show_text || "show") !== "hide";
+      const placement = c.coop_logo_placement || "top";
       const logoSize =
         c.coop_logo_size === "small"
           ? "w-14 h-14 sm:w-16 sm:h-16"
@@ -170,18 +168,16 @@ export default function HomeView({
         ) : null;
       const textEl = (
         <div className="max-w-2xl">
-          {showText && c.coop_eyebrow && (
+          {c.coop_eyebrow && (
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-cyan-subtle/60 border border-brand-cyan-muted text-xs font-medium text-[var(--primary-dark)] mb-4">
               <span className="w-2 h-2 rounded-full bg-[var(--primary)]" />
               {c.coop_eyebrow}
             </span>
           )}
-          {showText && (
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
-              {renderHighlighted(c.coop_heading)}
-            </h2>
-          )}
-          {showText && c.coop_body && <p className="mt-4 text-slate-600">{c.coop_body}</p>}
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+            {renderHighlighted(c.coop_heading)}
+          </h2>
+          <p className="mt-4 text-slate-600">{c.coop_body}</p>
 
           {/* Two or more: a logo row, so no single institution reads as the
               headline partner. */}
@@ -207,10 +203,10 @@ export default function HomeView({
               ))}
             </div>
           )}
-          {showText && coops.length === 1 && coops[0].note && (
+          {coops.length === 1 && coops[0].note && (
             <p className="mt-4 text-sm text-slate-500">{coops[0].note}</p>
           )}
-          {showText && c.coop_note && <p className="mt-4 font-medium text-slate-900">{c.coop_note}</p>}
+          {c.coop_note && <p className="mt-4 font-medium text-slate-900">{c.coop_note}</p>}
 
           <Link
             href="/thjonusta#live"
