@@ -7,7 +7,12 @@ import React from "react";
 
 const MARK = /==([^=]+)==/g;
 
-export function renderHighlighted(text: string): React.ReactNode {
+export function renderHighlighted(
+  text: string,
+  // On a brand-gradient ground the mid-cyan accent all but disappears; pass the
+  // light on-dark cyan the print collateral already uses instead.
+  markClass = "text-[var(--primary)]",
+): React.ReactNode {
   if (!text || !text.includes("==")) return text;
 
   const parts: React.ReactNode[] = [];
@@ -19,7 +24,7 @@ export function renderHighlighted(text: string): React.ReactNode {
   while ((m = MARK.exec(text)) !== null) {
     if (m.index > last) parts.push(text.slice(last, m.index));
     parts.push(
-      <span key={`hl${i++}`} className="text-[var(--primary)]">
+      <span key={`hl${i++}`} className={markClass}>
         {m[1]}
       </span>,
     );

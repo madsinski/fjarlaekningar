@@ -28,6 +28,16 @@ export const UM_OKKUR_SECTIONS: SiteSection[] = [
 //   banner   — the copy set *on* the photo behind a scrim, with the team cards
 //              on the band below it. The boldest, and the only place on the
 //              site where a heading sits over an image.
+//
+// The three "eining" arrangements are a second generation, and they differ from
+// the three above in kind rather than in composition. The section owns two
+// headings and two bodies that say nearly the same thing, and the first three
+// layouts all render both — which is why the page reads as two sections however
+// they are arranged. The eining family fixes the hierarchy instead: the team
+// heading is demoted to the eyebrow pill the forsíða already uses, so the pair
+// reads label → title rather than title → title, and the team paragraph becomes
+// a supporting line under the lead instead of a second competing one. They then
+// share one head element between them, so they are recognisably a family.
 export const TEAM_LAYOUTS = {
   split: "split",
   // "combined" (rather than "combined-overlap") is the value the first version
@@ -36,6 +46,9 @@ export const TEAM_LAYOUTS = {
   overlap: "combined",
   panel: "combined-panel",
   banner: "combined-banner",
+  unifiedCard: "unified-card",
+  unifiedFrame: "unified-frame",
+  unifiedBrand: "unified-brand",
 } as const;
 
 export type TeamLayout = (typeof TEAM_LAYOUTS)[keyof typeof TEAM_LAYOUTS];
@@ -163,6 +176,21 @@ export const UM_OKKUR_FIELDS: SiteField[] = [
         value: TEAM_LAYOUTS.banner,
         label: "Sameinað — borði",
         hint: "Fyrirsögn og texti úr „Hópmynd“ liggja ofan á hópmyndinni sjálfri (hvítur texti á mjúkri skyggingu) og teymisspjöldin koma fyrir neðan. Áberandi kosturinn — hafðu í huga að myndin þarf að þola texta yfir neðri hlutanum.",
+      },
+      {
+        value: TEAM_LAYOUTS.unifiedCard,
+        label: "Eining — spjald",
+        hint: "Ein fyrirsögn í stað tveggja: „Teymið“ verður lítill merkimiði (borðapilla með punkti, eins og á forsíðunni), „Hópmynd“ verður fyrirsögnin og teymistextinn verður stuðningslína undir megintextanum. Allt inni á einu hvítu spjaldi: texti, hópmynd, lína, andlitsmyndir.",
+      },
+      {
+        value: TEAM_LAYOUTS.unifiedFrame,
+        label: "Eining — rammi",
+        hint: "Sama eina fyrirsögnin, en textinn og hópmyndin standa hlið við hlið efst og andlitsmyndirnar fá sitt eigið hvíta spjald fyrir neðan. Loftmesti kosturinn af einingunum þremur.",
+      },
+      {
+        value: TEAM_LAYOUTS.unifiedBrand,
+        label: "Eining — litaspjald",
+        hint: "Sama eina fyrirsögnin á bláu Fjarlækninga-spjaldi (sami litstigull og ákallið á forsíðunni), hópmyndin innan þess og teymisspjöldin fyrir neðan. Gerir teymiskaflann að eina litaða augnablikinu á síðunni.",
       },
     ],
   },

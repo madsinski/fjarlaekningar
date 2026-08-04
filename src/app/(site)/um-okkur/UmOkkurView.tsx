@@ -3,7 +3,7 @@ import TeamGrid from "../../components/TeamGrid";
 import PageHero from "../PageHero";
 import Band from "../Band";
 import SiteIcon from "@/lib/site-content/SiteIcon";
-import { renderHighlighted } from "@/lib/site-content/highlight";
+import { renderHighlighted, stripHighlight } from "@/lib/site-content/highlight";
 import {
   umOkkurSections,
   isCombinedTeam,
@@ -280,14 +280,136 @@ export default function UmOkkurView({
     </div>
   );
 
+  // ── Eining family ────────────────────────────────────────────────────────
+  // One head element, shared by all three, which is what makes them a family
+  // rather than three more one-offs. It also settles the section's oldest
+  // problem: two headings saying nearly the same thing, a paragraph apart.
+  // Here the team heading becomes the eyebrow pill the forsíða already uses —
+  // label → title instead of title → title — and the team paragraph drops to a
+  // supporting line rather than a second paragraph competing with the lead.
+  const unifiedHead = (onDark = false) => (
+    <div className="max-w-2xl">
+      {c.team_heading && (
+        <span
+          className={`mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${
+            onDark
+              ? "border-white/30 bg-white/15 text-white"
+              : "border-brand-cyan-muted bg-brand-cyan-subtle/60 text-[var(--primary-dark)]"
+          }`}
+        >
+          <span className={`h-2 w-2 rounded-full ${onDark ? "bg-white" : "bg-[var(--primary)]"}`} />
+          {stripHighlight(c.team_heading)}
+        </span>
+      )}
+      <h2
+        className={`text-2xl sm:text-3xl font-bold ${onDark ? "text-white" : "text-slate-900"}`}
+      >
+        {renderHighlighted(c.faces_heading, onDark ? "text-[#5fe0ff]" : undefined)}
+      </h2>
+      {c.faces_body && (
+        <p className={`mt-4 leading-relaxed ${onDark ? "text-white/85" : "text-slate-600"}`}>
+          {c.faces_body}
+        </p>
+      )}
+      {c.team_body && (
+        <p className={`mt-3 text-sm leading-relaxed ${onDark ? "text-white/70" : "text-slate-500"}`}>
+          {c.team_body}
+        </p>
+      )}
+    </div>
+  );
+
+  // Eining A — one white card holds the whole section: head, photo, rule,
+  // portraits. The site's samstarf card, doing more work.
+  const unifiedCardBlock = (
+    <div className="rounded-3xl border border-slate-200 bg-white p-8 sm:p-12">
+      {unifiedHead()}
+      {c.faces_photo && (
+        <figure className="mt-8">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={c.faces_photo}
+            alt={c.faces_heading || "Teymið"}
+            className="w-full max-h-[420px] rounded-2xl object-cover object-[center_22%] ring-1 ring-slate-200"
+          />
+          {c.faces_caption && (
+            <figcaption className="mt-3 text-sm text-slate-500">{c.faces_caption}</figcaption>
+          )}
+        </figure>
+      )}
+      {teamMembers.length > 0 && (
+        <div className="mt-10 border-t border-slate-200 pt-10">
+          <TeamGrid members={teamMembers} locale={locale} variant="portraits" align={align} />
+          {c.team_footer && <p className="mt-8 text-sm text-slate-500">{c.team_footer}</p>}
+        </div>
+      )}
+    </div>
+  );
+
+  // Eining B — head and photo side by side, portraits in a card of their own.
+  // The airiest of the three: two objects, one voice.
+  const unifiedFrameBlock = (
+    <div>
+      <div className="grid lg:grid-cols-5 gap-8 lg:gap-12 items-center">
+        <div className={c.faces_photo ? "lg:col-span-2" : "lg:col-span-5"}>{unifiedHead()}</div>
+        {groupPhoto("lg:col-span-3")}
+      </div>
+      {teamMembers.length > 0 && (
+        <div className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 sm:p-10">
+          <TeamGrid members={teamMembers} locale={locale} variant="portraits" align={align} />
+          {c.team_footer && (
+            <p className="mt-8 border-t border-slate-200 pt-5 text-sm text-slate-500">
+              {c.team_footer}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  // Eining C — the head on the brand gradient, the same panel the forsíða ends
+  // on, making the team the page's one colour moment. Portraits stay on the
+  // band below as cards, where their edges do their usual job.
+  const unifiedBrandBlock = (
+    <div>
+      <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] p-8 sm:p-12">
+        <div className="grid lg:grid-cols-5 gap-8 lg:gap-12 items-center">
+          <div className={c.faces_photo ? "lg:col-span-3" : "lg:col-span-5"}>
+            {unifiedHead(true)}
+          </div>
+          {c.faces_photo && (
+            <figure className="lg:col-span-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={c.faces_photo}
+                alt={c.faces_heading || "Teymið"}
+                className="w-full max-h-[300px] rounded-2xl object-cover object-[center_22%] ring-1 ring-white/25"
+              />
+              {c.faces_caption && (
+                <figcaption className="mt-3 text-sm text-white/70">{c.faces_caption}</figcaption>
+              )}
+            </figure>
+          )}
+        </div>
+      </div>
+      {teamMembers.length > 0 && (
+        <div className="mt-10">
+          {teamGrid}
+        </div>
+      )}
+    </div>
+  );
+
   const layout = teamLayout(c);
   const combined = isCombinedTeam(c);
   const combinedBlock =
-    layout === TEAM_LAYOUTS.panel
-      ? panelTeamBlock
-      : layout === TEAM_LAYOUTS.banner
-        ? bannerTeamBlock
-        : combinedTeamBlock;
+    ({
+      [TEAM_LAYOUTS.panel]: panelTeamBlock,
+      [TEAM_LAYOUTS.banner]: bannerTeamBlock,
+      [TEAM_LAYOUTS.unifiedCard]: unifiedCardBlock,
+      [TEAM_LAYOUTS.unifiedFrame]: unifiedFrameBlock,
+      [TEAM_LAYOUTS.unifiedBrand]: unifiedBrandBlock,
+    } as Record<string, React.ReactNode>)[layout] ?? combinedTeamBlock;
 
   const blocks: Record<string, React.ReactNode> = {
     // In combined mode the merged block takes this slot and the separate
