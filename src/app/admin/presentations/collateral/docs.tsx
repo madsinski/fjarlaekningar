@@ -91,10 +91,14 @@ function FjarLogo({ onDark = false }: { onDark?: boolean }) {
 
 // HSU co-brand lockup — "Í samstarfi við HSU" + their logo. The print-friendly
 // adaptation of the website's HSU cooperation section.
-function HsuCobrand({ label = "Í samstarfi við HSU", height = "11mm", onDark = false }: { label?: string; height?: string; onDark?: boolean }) {
+function HsuCobrand({ label = "Í samstarfi við HSU", height = "11mm", onDark = false, lines = "2" }: { label?: string; height?: string; onDark?: boolean; lines?: "1" | "2" | "3" }) {
+  // How the label is allowed to wrap: 1 line (no wrap), or a width that yields
+  // roughly 2 or 3 lines for the full institution name.
+  const wrap: React.CSSProperties =
+    lines === "1" ? { whiteSpace: "nowrap" } : { maxWidth: lines === "3" ? "26mm" : "46mm" };
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "3mm" }}>
-      <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: onDark ? "#eafaff" : "var(--muted)", textAlign: "right", lineHeight: 1.3, maxWidth: "46mm" }}>{label}</span>
+      <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: onDark ? "#eafaff" : "var(--muted)", textAlign: "right", lineHeight: 1.3, ...wrap }}>{label}</span>
       {onDark ? (
         // On the dark hero the logo needs a light plate to read.
         <span style={{ background: "#fff", borderRadius: "2mm", padding: "1.5mm 2.5mm", display: "inline-flex" }}>
@@ -118,7 +122,7 @@ function Poster({ p }: { p: PosterFields }) {
         <div className="hero" style={{ padding: "14mm 14mm 12mm" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10mm" }}>
             <FjarLogo onDark />
-            <HsuCobrand onDark height="10mm" label={p.badge} />
+            <HsuCobrand onDark height="10mm" label={p.badge} lines={p.cobrandLines} />
           </div>
           <div className="eyebrow" style={{ marginBottom: "3.5mm" }}>{p.eyebrow}</div>
           <h1 style={{ fontSize: "33px", maxWidth: "165mm" }}>{renderHeading(p.heading)}</h1>
@@ -129,7 +133,7 @@ function Poster({ p }: { p: PosterFields }) {
         <>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11mm 14mm 6mm" }}>
             <FjarLogo />
-            <HsuCobrand label={p.badge} />
+            <HsuCobrand label={p.badge} lines={p.cobrandLines} />
           </div>
           <div className="hero" style={{ padding: "10mm 14mm 10mm", margin: "0 14mm", borderRadius: "6mm" }}>
             <div className="eyebrow" style={{ marginBottom: "3.5mm" }}>{p.eyebrow}</div>
@@ -195,7 +199,7 @@ function Referral({ r }: { r: ReferralFields }) {
     <div className="a4">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9mm 14mm 4mm" }}>
         <FjarLogo />
-        <HsuCobrand label={r.cobrandLabel} />
+        <HsuCobrand label={r.cobrandLabel} lines={r.cobrandLines} />
       </div>
 
       <div style={{ padding: "0 14mm" }}>
@@ -301,7 +305,7 @@ function ReferralMeds({ r }: { r: ReferralFields }) {
     <div className="a4">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9mm 14mm 4mm" }}>
         <FjarLogo />
-        <HsuCobrand label={r.cobrandLabel} />
+        <HsuCobrand label={r.cobrandLabel} lines={r.cobrandLines} />
       </div>
 
       <div style={{ padding: "0 14mm" }}>
@@ -358,7 +362,7 @@ function Advert({ a }: { a: AdvertFields }) {
         <div className="hero" style={{ padding: "16mm 16mm 15mm" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12mm" }}>
             <FjarLogo onDark />
-            <HsuCobrand onDark height="10mm" label={a.cobrandLabel} />
+            <HsuCobrand onDark height="10mm" label={a.cobrandLabel} lines={a.cobrandLines} />
           </div>
           <div className="eyebrow" style={{ marginBottom: "3.5mm", color: "#5fe0ff" }}>{a.badge}</div>
           <h1 style={{ fontSize: "46px", color: "#fff", maxWidth: "165mm" }}>
@@ -371,7 +375,7 @@ function Advert({ a }: { a: AdvertFields }) {
         <>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14mm 16mm 6mm" }}>
             <FjarLogo />
-            <HsuCobrand label={a.cobrandLabel} />
+            <HsuCobrand label={a.cobrandLabel} lines={a.cobrandLines} />
           </div>
           <div className="hero" style={{ padding: "11mm 16mm 12mm", margin: "0 16mm", borderRadius: "6mm" }}>
             <div className="eyebrow" style={{ marginBottom: "3.5mm", color: "#5fe0ff" }}>{a.badge}</div>

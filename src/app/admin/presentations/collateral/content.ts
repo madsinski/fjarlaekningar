@@ -23,6 +23,7 @@ export type PosterFields = {
   badge: string;
   // "poster" = logos on a white strip + inset hero; "hero" = full-bleed dark hero.
   headerLayout: "hero" | "poster";
+  cobrandLines: "1" | "2" | "3";
   eyebrow: string;
   // Free-form heading: ==double equals== colours words blue; newlines break lines.
   heading: string;
@@ -52,6 +53,7 @@ export type MedCategory = {
 export type ReferralFields = {
   badge: string;
   cobrandLabel: string;
+  cobrandLines: "1" | "2" | "3";
   eyebrow: string;
   heading: string;
   headingAccent: string;
@@ -86,6 +88,7 @@ export type AdvertFields = {
   // "poster" = veggspjald-style header (logos on a white strip, inset hero);
   // "hero"   = full-bleed dark hero with the logos inside it.
   headerLayout: "hero" | "poster";
+  cobrandLines: "1" | "2" | "3";
   headingA: string;
   headingAccent: string;
   lead: string;
@@ -159,6 +162,7 @@ const DEFAULT_SERVICES: Service[] = [
 export const DEFAULT_POSTER: PosterFields = {
   badge: "Í samstarfi við HSU",
   headerLayout: "poster",
+  cobrandLines: "2",
   eyebrow: "Íslensk fjarlækningaþjónusta",
   heading: "Þarftu að hitta lækni?\nÞú getur gert það ==þar sem þú ert.==",
   lead: "Fjarlækningar leysa einföld og afmörkuð erindi. Þú svarar stuttum spurningalista og læknir metur málið og leggur til meðferð — sama þjónusta og á læknastofu, en skilvirkari leið og styttri biðlistar.",
@@ -299,6 +303,7 @@ export const DEFAULT_MED_CATEGORIES: MedCategory[] = [
 export const DEFAULT_REFERRAL: ReferralFields = {
   badge: "Innanhússleiðbeiningar",
   cobrandLabel: "Í samstarfi við HSU",
+  cobrandLines: "2",
   eyebrow: "Fyrir heilbrigðisstarfsfólk HSU",
   heading: "Að vísa sjúklingi í ",
   headingAccent: "Fjarlækningar",
@@ -357,6 +362,7 @@ export const DEFAULT_ADVERT: AdvertFields = {
   badge: "Ný þjónusta á Íslandi",
   cobrandLabel: "Í samstarfi við HSU",
   headerLayout: "poster",
+  cobrandLines: "2",
   headingA: "Læknishjálp —",
   headingAccent: "þar sem þú ert.",
   lead: "Þú svarar stuttum spurningalista og læknir metur málið og leggur til meðferð. Sama þjónusta og á læknastofu — svar innan tveggja klukkustunda á opnunartíma, án biðstofu og biðlista.",

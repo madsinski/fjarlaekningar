@@ -471,6 +471,14 @@ export function CollateralStudio({
                   </select>
                 </label>
                 <Field label="Samstarfstexti (HSU)" value={active.poster.badge} onChange={(v) => patchPoster({ badge: v })} />
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-gray-600">Samstarfstexti — línur</span>
+                  <select value={active.poster.cobrandLines} onChange={(e) => patchPoster({ cobrandLines: e.target.value as "1" | "2" | "3" })} className={inputCls}>
+                    <option value="1">Ein lína</option>
+                    <option value="2">Tvær línur</option>
+                    <option value="3">Þrjár línur</option>
+                  </select>
+                </label>
                 <Field label="Yfirskrift" value={active.poster.eyebrow} onChange={(v) => patchPoster({ eyebrow: v })} />
                 <Field label="Fyrirsögn" value={active.poster.heading} onChange={(v) => patchPoster({ heading: v })} area />
                 <p className="text-[11px] text-gray-400">Ný lína = línuskil. Settu <b>==</b> utan um orð til að lita þau blá, t.d. <code>==þar sem þú ert.==</code></p>
@@ -497,6 +505,14 @@ export function CollateralStudio({
               <Section title="Haus">
                 <Field label="Merki" value={active.referral.badge} onChange={(v) => patchReferral({ badge: v })} />
                 <Field label="Samstarfstexti (HSU)" value={active.referral.cobrandLabel} onChange={(v) => patchReferral({ cobrandLabel: v })} />
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-gray-600">Samstarfstexti — línur</span>
+                  <select value={active.referral.cobrandLines} onChange={(e) => patchReferral({ cobrandLines: e.target.value as "1" | "2" | "3" })} className={inputCls}>
+                    <option value="1">Ein lína</option>
+                    <option value="2">Tvær línur</option>
+                    <option value="3">Þrjár línur</option>
+                  </select>
+                </label>
                 <Field label="Yfirskrift" value={active.referral.eyebrow} onChange={(v) => patchReferral({ eyebrow: v })} />
                 <Field label="Fyrirsögn" value={active.referral.heading} onChange={(v) => patchReferral({ heading: v })} />
                 <Field label="Fyrirsögn — áhersla (blá)" value={active.referral.headingAccent} onChange={(v) => patchReferral({ headingAccent: v })} />
@@ -562,6 +578,14 @@ export function CollateralStudio({
                 </label>
                 <Field label="Merki (yfirskrift)" value={active.advert.badge} onChange={(v) => patchAdvert({ badge: v })} />
                 <Field label="Samstarfstexti (HSU)" value={active.advert.cobrandLabel} onChange={(v) => patchAdvert({ cobrandLabel: v })} />
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-gray-600">Samstarfstexti — línur</span>
+                  <select value={active.advert.cobrandLines} onChange={(e) => patchAdvert({ cobrandLines: e.target.value as "1" | "2" | "3" })} className={inputCls}>
+                    <option value="1">Ein lína</option>
+                    <option value="2">Tvær línur</option>
+                    <option value="3">Þrjár línur</option>
+                  </select>
+                </label>
                 <Field label="Fyrirsögn — lína 1 (hvít)" value={active.advert.headingA} onChange={(v) => patchAdvert({ headingA: v })} />
                 <Field label="Fyrirsögn — áhersla (blá)" value={active.advert.headingAccent} onChange={(v) => patchAdvert({ headingAccent: v })} />
                 <Field label="Inngangur" value={active.advert.lead} onChange={(v) => patchAdvert({ lead: v })} area />
