@@ -89,6 +89,20 @@ function FjarLogo({ onDark = false }: { onDark?: boolean }) {
   );
 }
 
+// A white outline that follows the logo's actual (flower) silhouette rather than
+// a rectangular box: layered zero-blur drop-shadows around 8 directions trace the
+// transparent PNG/WebP edges. Requires the logo to have a transparent background.
+const HSU_OUTLINE = (() => {
+  const w = "0.55mm";
+  const n = `-${w}`;
+  return [
+    [w, "0"], [n, "0"], ["0", w], ["0", n],
+    [w, w], [n, w], [w, n], [n, n],
+  ]
+    .map(([x, y]) => `drop-shadow(${x} ${y} 0 #ffffff)`)
+    .join(" ");
+})();
+
 // HSU co-brand lockup — "Í samstarfi við HSU" + their logo. The print-friendly
 // adaptation of the website's HSU cooperation section.
 function HsuCobrand({ label = "Í samstarfi við HSU", height = "11mm", onDark = false, lines = "2", stroke = true }: { label?: string; height?: string; onDark?: boolean; lines?: "1" | "2" | "3"; stroke?: boolean }) {
@@ -103,16 +117,12 @@ function HsuCobrand({ label = "Í samstarfi við HSU", height = "11mm", onDark =
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "3mm" }}>
       <span style={{ display: "block", fontSize: "9px", fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: onDark ? "#eafaff" : "var(--muted)", textAlign: "right", lineHeight: 1.3, ...wrap }}>{label}</span>
-      {onDark && stroke ? (
-        // On the dark hero, optionally frame the logo with a white stroke.
-        <span style={{ border: "0.4mm solid #ffffff", borderRadius: "2mm", padding: "1.5mm 2.5mm", display: "inline-flex" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/hsu-logo.webp" alt="Heilbrigðisstofnun Suðurlands" style={{ height, width: "auto", display: "block" }} />
-        </span>
-      ) : (
-        /* eslint-disable-next-line @next/next/no-img-element */
-        <img src="/hsu-logo.webp" alt="Heilbrigðisstofnun Suðurlands" style={{ height, width: "auto", display: "block" }} />
-      )}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/hsu-logo.webp"
+        alt="Heilbrigðisstofnun Suðurlands"
+        style={{ height, width: "auto", display: "block", ...(onDark && stroke ? { filter: HSU_OUTLINE } : {}) }}
+      />
     </div>
   );
 }
