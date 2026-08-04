@@ -187,7 +187,13 @@ export default function UmOkkurView({
           <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
             {renderHighlighted(c.faces_heading)}
           </h2>
+          {/* Both paragraphs belong to the same intro block here. In this
+              layout the team copy read as a stray caption floating beside the
+              sub-heading; set under the lead it reads as one thought — the
+              company, then the people. The other layouts keep it by the grid,
+              where there is room for it to sit on its own. */}
           {c.faces_body && <p className="mt-4 text-slate-600 leading-relaxed">{c.faces_body}</p>}
+          {c.team_body && <p className="mt-3 text-slate-600 leading-relaxed">{c.team_body}</p>}
         </div>
         {c.faces_photo && (
           <figure className="lg:col-span-2">
@@ -205,11 +211,10 @@ export default function UmOkkurView({
       </div>
       {teamMembers.length > 0 && (
         <div className="mt-10 border-t border-slate-200 pt-10">
-          <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div className="mb-8">
             <h3 className="text-lg font-semibold text-slate-900">
               {renderHighlighted(c.team_heading)}
             </h3>
-            {c.team_body && <p className="text-sm text-slate-600 sm:max-w-md">{c.team_body}</p>}
           </div>
           <TeamGrid members={teamMembers} locale={locale} variant="portraits" />
           {c.team_footer && <p className="mt-8 text-sm text-slate-500">{c.team_footer}</p>}
