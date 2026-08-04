@@ -81,6 +81,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ page: string }
       f.type === "image" ||
       f.type === "choice" ||
       f.type === "internal" ||
+      f.editor ||
       STRUCTURAL.test(f.key)
     )
       return;

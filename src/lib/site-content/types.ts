@@ -37,7 +37,7 @@ export interface SiteField {
    * together — see the team roster on /um-okkur, where add, duplicate, delete
    * and hide have to move four keys across two locales at once.
    */
-  editor?: "team-members";
+  editor?: "team-members" | "coop-cards";
 }
 
 export type Locale = "is" | "en";

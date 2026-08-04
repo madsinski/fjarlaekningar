@@ -78,7 +78,7 @@ export const HOME_FIELDS: SiteField[] = [
   { key: "coop_eyebrow", label: "Merki (eyebrow)", group: "Samstarf", type: "text" },
   { key: "coop_heading", label: "Fyrirsögn", group: "Samstarf", type: "heading" },
   { key: "coop_body", label: "Texti", group: "Samstarf", type: "textarea" },
-  { key: "coop_list", label: "Stofnanir — ein lína hver: Nafn | /logo.webp | undirtexti", group: "Samstarf", type: "textarea" },
+  { key: "coop_list", label: "Stofnanir", group: "Samstarf", type: "textarea", editor: "coop-cards" },
   { key: "coop_note", label: "Áhersla (feitletrað)", group: "Samstarf", type: "textarea" },
   { key: "coop_cta", label: "Hnappur", group: "Samstarf", type: "text" },
   {

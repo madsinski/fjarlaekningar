@@ -460,6 +460,86 @@ function TeamRoster({
   );
 }
 
+// Institution-cards editor for the home "Samstarf" section. Cards live in the
+// single coop_list field, one line per card ("Nafn | /logo.webp | undirtexti").
+// Add / duplicate / delete / reorder; an empty card persists as " |  | " so a
+// blank row just added doesn't vanish on the next render.
+type CoopRow = { name: string; logo: string; note: string };
+function CoopCardsEditor({
+  value,
+  disabled,
+  onChange,
+}: {
+  value: string;
+  disabled: boolean;
+  onChange: (v: string) => void;
+}) {
+  const rows: CoopRow[] = value.trim()
+    ? value.split("\n").map((line) => {
+        const [name = "", logo = "", note = ""] = line.split("|").map((s) => s.trim());
+        return { name, logo, note };
+      })
+    : [];
+  const write = (next: CoopRow[]) =>
+    onChange(next.map((r) => `${r.name} | ${r.logo} | ${r.note}`).join("\n"));
+  const update = (i: number, patch: Partial<CoopRow>) =>
+    write(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+  const add = () => write([...rows, { name: "", logo: "", note: "" }]);
+  const dup = (i: number) => write([...rows.slice(0, i + 1), { ...rows[i] }, ...rows.slice(i + 1)]);
+  const del = (i: number) => write(rows.filter((_, j) => j !== i));
+  const move = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= rows.length) return;
+    const cp = [...rows];
+    [cp[i], cp[j]] = [cp[j], cp[i]];
+    write(cp);
+  };
+  const ibtn = "rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30";
+  return (
+    <div className="space-y-3">
+      {rows.map((r, i) => (
+        <div key={i} className="rounded-lg border border-slate-200 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-medium text-slate-500">Spjald {i + 1}</span>
+            {!disabled && (
+              <div className="flex items-center gap-1">
+                <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className={ibtn} aria-label="Færa upp">↑</button>
+                <button type="button" onClick={() => move(i, 1)} disabled={i === rows.length - 1} className={ibtn} aria-label="Færa niður">↓</button>
+                <button type="button" onClick={() => dup(i)} className="rounded px-2 py-1 text-[11px] text-slate-500 hover:bg-slate-100">Afrita</button>
+                <button type="button" onClick={() => del(i)} className="rounded px-2 py-1 text-[11px] text-red-500 hover:bg-red-50">Eyða</button>
+              </div>
+            )}
+          </div>
+          <input
+            value={r.name}
+            onChange={(e) => update(i, { name: e.target.value })}
+            disabled={disabled}
+            placeholder="Nafn stofnunar"
+            className="w-full px-2 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50"
+          />
+          <ImageField value={r.logo} fallback="" disabled={disabled} onChange={(v) => update(i, { logo: v })} />
+          <input
+            value={r.note}
+            onChange={(e) => update(i, { note: e.target.value })}
+            disabled={disabled}
+            placeholder="Undirtexti (valfrjálst)"
+            className="w-full px-2 py-1.5 border border-slate-200 rounded-md text-xs focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50"
+          />
+        </div>
+      ))}
+      {!disabled && (
+        <button
+          type="button"
+          onClick={add}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
+        >
+          + Bæta við spjaldi
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function SiteContentEditor() {
   const params = useParams<{ page: string }>();
   const pageKey = params?.page ?? "home";
@@ -870,6 +950,22 @@ export default function SiteContentEditor() {
                   ekki á vefnum. Röðin hér er röðin á síðunni.
                 </p>
                 <TeamRoster members={members} disabled={!isAdmin} onChange={setMembers} />
+              </section>
+            )}
+            {page.fields.some((f) => f.editor === "coop-cards" && f.group === g.group) && (
+              <section className="rounded-xl border border-slate-200 bg-white p-4">
+                <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-cyan-700">
+                  Stofnanaspjöld
+                </h2>
+                <p className="mb-3 text-[11px] text-slate-400">
+                  Hvert spjald birtist í láréttri röð á forsíðunni (þegar „Spjöld“ er valið sem
+                  framsetning). Röðin hér er röðin á vefnum.
+                </p>
+                <CoopCardsEditor
+                  value={draft.is?.coop_list ?? page.defaultsIs.coop_list ?? ""}
+                  disabled={!isAdmin}
+                  onChange={(v) => setField("is", "coop_list", v)}
+                />
               </section>
             )}
             </Fragment>
