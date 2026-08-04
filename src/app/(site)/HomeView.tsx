@@ -145,88 +145,64 @@ export default function HomeView({
     // a second institution is a line of CMS text rather than a code change. The
     // layout switches from side-by-side to a logo row once there is more than
     // one, which is why the logos are not simply inlined into the prose.
-    // A plain section (no card). CMS controls: logo placement (top / none) and
-    // logo size. For a single partner the logo sits above the copy.
+    // Cooperation section: intro copy, then a horizontal row of institution
+    // cards (logo + 2-line name). Adding an institution is one more line in
+    // coop_list; "Ekkert merki" hides the cards. Card logo size is a CMS choice.
     coop: (() => {
-      const placement = c.coop_logo_placement || "top";
+      const showCards = (c.coop_logo_placement || "top") !== "none";
       const logoSize =
         c.coop_logo_size === "small"
           ? "w-14 h-14 sm:w-16 sm:h-16"
           : c.coop_logo_size === "medium"
             ? "w-20 h-20 sm:w-24 sm:h-24"
             : "w-24 h-24 sm:w-28 sm:h-28";
-      const logoEl =
-        coops.length === 1 && coops[0].logo && placement !== "none" ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={coops[0].logo}
-            alt={coops[0].name}
-            width={160}
-            height={160}
-            className={`${logoSize} shrink-0 object-contain mx-auto md:mx-0`}
-          />
-        ) : null;
-      const textEl = (
-        <div className="max-w-2xl">
-          {c.coop_eyebrow && (
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-cyan-subtle/60 border border-brand-cyan-muted text-xs font-medium text-[var(--primary-dark)] mb-4">
-              <span className="w-2 h-2 rounded-full bg-[var(--primary)]" />
-              {c.coop_eyebrow}
-            </span>
-          )}
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
-            {renderHighlighted(c.coop_heading)}
-          </h2>
-          <p className="mt-4 text-slate-600">{c.coop_body}</p>
+      return (
+        <div>
+          <div className="max-w-2xl">
+            {c.coop_eyebrow && (
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-cyan-subtle/60 border border-brand-cyan-muted text-xs font-medium text-[var(--primary-dark)] mb-4">
+                <span className="w-2 h-2 rounded-full bg-[var(--primary)]" />
+                {c.coop_eyebrow}
+              </span>
+            )}
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+              {renderHighlighted(c.coop_heading)}
+            </h2>
+            <p className="mt-4 text-slate-600">{c.coop_body}</p>
+            {c.coop_note && <p className="mt-4 font-medium text-slate-900">{c.coop_note}</p>}
+          </div>
 
-          {/* Two or more: a logo row, so no single institution reads as the
-              headline partner. */}
-          {coops.length > 1 && (
-            <div className="mt-8 flex flex-wrap items-center gap-x-10 gap-y-6">
+          {/* One card per institution, in a horizontal row. The narrow card
+              lets a name like "Heilbrigðisstofnun Suðurlands" wrap to two
+              lines under the logo. */}
+          {showCards && coops.length > 0 && (
+            <div className="mt-10 flex flex-wrap gap-4 sm:gap-5">
               {coops.map((co) => (
-                <div key={co.name} className="flex items-center gap-4">
+                <div
+                  key={co.name}
+                  className="flex w-48 flex-col items-center rounded-2xl border border-slate-200 bg-white p-5 text-center"
+                >
                   {co.logo && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={co.logo}
-                      alt={co.name}
-                      width={96}
-                      height={96}
-                      className="w-20 h-20 shrink-0 object-contain"
-                    />
+                    <img src={co.logo} alt={co.name} className={`${logoSize} object-contain`} />
                   )}
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">{co.name}</div>
-                    {co.note && <div className="text-xs text-slate-500 mt-0.5">{co.note}</div>}
+                  <div className="mt-3 text-sm font-semibold leading-tight text-slate-900 break-words">
+                    {co.name}
                   </div>
                 </div>
               ))}
             </div>
           )}
-          {coops.length === 1 && coops[0].note && (
-            <p className="mt-4 text-sm text-slate-500">{coops[0].note}</p>
-          )}
-          {c.coop_note && <p className="mt-4 font-medium text-slate-900">{c.coop_note}</p>}
 
           <Link
             href="/thjonusta#live"
-            className="mt-8 inline-flex items-center gap-2 px-7 py-3 rounded-full border-2 border-[var(--primary)] text-[var(--primary-dark)] font-semibold hover:bg-brand-cyan-subtle transition-colors"
+            className="mt-10 inline-flex items-center gap-2 px-7 py-3 rounded-full border-2 border-[var(--primary)] text-[var(--primary-dark)] font-semibold hover:bg-brand-cyan-subtle transition-colors"
           >
             {c.coop_cta || t.whereLive}
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
             </svg>
           </Link>
-        </div>
-      );
-      const rowCls =
-        placement === "top"
-          ? "flex flex-col gap-8"
-          : "flex flex-col md:flex-row md:items-center gap-8 lg:gap-14";
-      const logoFirst = placement === "left" || placement === "top";
-      return (
-        <div className={rowCls}>
-          {logoFirst ? (<>{logoEl}{textEl}</>) : (<>{textEl}{logoEl}</>)}
         </div>
       );
     })(),

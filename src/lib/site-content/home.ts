@@ -88,8 +88,8 @@ export const HOME_FIELDS: SiteField[] = [
     type: "choice",
     help: "Á við þegar einn samstarfsaðili er skráður.",
     options: [
-      { value: "top", label: "Efst", hint: "Merkið stendur fyrir ofan textann." },
-      { value: "none", label: "Ekkert merki", hint: "Fela merkið." },
+      { value: "top", label: "Efst", hint: "Sýna stofnanaspjöld (merki + nafn) í láréttri röð." },
+      { value: "none", label: "Ekkert merki", hint: "Fela spjöldin." },
     ],
   },
   {
