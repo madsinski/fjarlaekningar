@@ -7,9 +7,10 @@ import { renderHighlighted } from "@/lib/site-content/highlight";
 import {
   umOkkurSections,
   isCombinedTeam,
+  isMemberHidden,
   teamLayout,
+  teamSize,
   TEAM_LAYOUTS,
-  TEAM_MEMBER_SLOTS,
 } from "@/lib/site-content/um-okkur";
 import { resolveOrder, type LocaleContent } from "@/lib/site-content/types";
 
@@ -31,17 +32,19 @@ export default function UmOkkurView({
   locale?: "is" | "en";
 }) {
   // Team members come from the numbered CMS slots, already resolved for the
-  // current locale. Empty slots (no name or no photo) are dropped so a blank
-  // slot never renders an empty card.
-  const teamMembers = Array.from({ length: TEAM_MEMBER_SLOTS }, (_, k) => {
+  // current locale. Only the live slots are read (the roster's count is what
+  // makes a deletion stick), members hidden from the CMS are skipped, and any
+  // slot still missing a name or a photo is dropped so it never renders empty.
+  const teamMembers = Array.from({ length: teamSize(c) }, (_, k) => {
     const i = k + 1;
     return {
       name: c[`t${i}_name`] ?? "",
       role: c[`t${i}_role`] ?? "",
       flag: c[`t${i}_flag`] ?? "",
       photo: c[`t${i}_photo`] ?? "",
+      hidden: isMemberHidden(c, i),
     };
-  }).filter((m) => m.name.trim() && m.photo.trim());
+  }).filter((m) => !m.hidden && m.name.trim() && m.photo.trim());
 
   const pillars = [
     { title: c.p1_title, body: c.p1_body, icon: c.p1_icon, fallback: "target" },

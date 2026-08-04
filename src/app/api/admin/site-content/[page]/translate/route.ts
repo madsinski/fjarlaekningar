@@ -73,9 +73,17 @@ export async function POST(req: Request, ctx: { params: Promise<{ page: string }
   const STRUCTURAL = /_img$|_hl$|_name$/;
   const items: { i: number; key: string; text: string }[] = [];
   sitePage.fields.forEach((f, i) => {
-    // "choice" holds a layout key (e.g. "combined"), not prose — translating it
-    // would silently break the switch, like the icon keys above.
-    if (f.type === "icon" || f.type === "image" || f.type === "choice" || STRUCTURAL.test(f.key)) return;
+    // "choice" holds a layout key (e.g. "combined") and "internal" holds
+    // bookkeeping like the roster size — machine values, not prose. Translating
+    // one would silently break the control that owns it, like the icons above.
+    if (
+      f.type === "icon" ||
+      f.type === "image" ||
+      f.type === "choice" ||
+      f.type === "internal" ||
+      STRUCTURAL.test(f.key)
+    )
+      return;
     const src = fromMap[f.key]?.trim() || (from === "is" ? sitePage.defaultsIs[f.key] : "");
     if (src && src.trim()) items.push({ i, key: f.key, text: src });
   });

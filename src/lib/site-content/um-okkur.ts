@@ -65,19 +65,53 @@ export function umOkkurSections(c: LocaleContent): SiteSection[] {
 
 // Team members are a fixed set of numbered slots (like the pillars/values
 // above), so the existing flat CMS pipeline handles them with no new machinery
-// beyond the "image" field type. Empty slots simply don't render on the page.
-// Name + photo are a single value each (a person's name and portrait don't
-// change per language); role and flag are per-locale like any other copy.
+// beyond the "image" field type. Name + photo are a single value each (a
+// person's name and portrait don't change per language); role and flag are
+// per-locale like any other copy.
+//
+// The slots are edited as a roster (add / duplicate / hide / delete / reorder)
+// by a custom control in the admin — see `editor: "team-members"` below.
 export const TEAM_MEMBER_SLOTS = 8;
+
+/** The editor group the roster control renders after. */
+export const TEAM_ROSTER_GROUP = "Teymið";
+
+/**
+ * How many slots are live.
+ *
+ * Deleting a member cannot simply blank its fields: an empty override means
+ * "use the built-in default" everywhere else in this CMS, so a blanked slot
+ * would resurrect the default member on the next render. An explicit count is
+ * what makes deletion stick — slots past it are never read.
+ *
+ * Content saved before the roster editor existed has no count, so fall back to
+ * the last slot that actually holds someone. That keeps a sixth member added
+ * through the old numbered field list from vanishing the moment this shipped.
+ */
+export function teamSize(c: LocaleContent): number {
+  const n = Number.parseInt(c.team_size ?? "", 10);
+  if (Number.isInteger(n) && n >= 0 && n <= TEAM_MEMBER_SLOTS) return n;
+  let last = 0;
+  for (let i = 1; i <= TEAM_MEMBER_SLOTS; i++) {
+    if ((c[`t${i}_name`] ?? "").trim() && (c[`t${i}_photo`] ?? "").trim()) last = i;
+  }
+  return last;
+}
+
+/** Hidden members stay in the CMS with all their content, but leave the page. */
+export function isMemberHidden(c: LocaleContent, slot: number): boolean {
+  return (c[`t${slot}_hidden`] ?? "") === "1";
+}
 
 const teamMemberFields: SiteField[] = Array.from({ length: TEAM_MEMBER_SLOTS }, (_, k) => {
   const i = k + 1;
   const group = `Teymi — meðlimur ${i}`;
   return [
-    { key: `t${i}_name`, label: "Nafn", group, type: "text" },
-    { key: `t${i}_role`, label: "Titill", group, type: "text" },
-    { key: `t${i}_flag`, label: "Merki (t.d. Stofnandi)", group, type: "text" },
-    { key: `t${i}_photo`, label: "Mynd", group, type: "image" },
+    { key: `t${i}_name`, label: "Nafn", group, type: "text", editor: "team-members" },
+    { key: `t${i}_role`, label: "Titill", group, type: "text", editor: "team-members" },
+    { key: `t${i}_flag`, label: "Merki (t.d. Stofnandi)", group, type: "text", editor: "team-members" },
+    { key: `t${i}_photo`, label: "Mynd", group, type: "image", editor: "team-members" },
+    { key: `t${i}_hidden`, label: "Falin", group, type: "internal", editor: "team-members" },
   ] as SiteField[];
 }).flat();
 
@@ -160,6 +194,9 @@ export const UM_OKKUR_FIELDS: SiteField[] = [
   { key: "team_heading", label: "Fyrirsögn", group: "Teymið", type: "heading" },
   { key: "team_body", label: "Texti", group: "Teymið", type: "textarea" },
   { key: "team_footer", label: "Neðanmálstexti", group: "Teymið", type: "text" },
+  // Owned by the roster control; deliberately has no built-in default, so
+  // pre-roster content derives its size from the slots instead (see teamSize).
+  { key: "team_size", label: "Fjöldi meðlima", group: "Teymið", type: "internal", editor: "team-members" },
 
   // Team members (one boxed group each in the editor)
   ...teamMemberFields,

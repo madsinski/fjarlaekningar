@@ -91,12 +91,20 @@ function FjarLogo({ onDark = false }: { onDark?: boolean }) {
 
 // HSU co-brand lockup — "Í samstarfi við HSU" + their logo. The print-friendly
 // adaptation of the website's HSU cooperation section.
-function HsuCobrand({ label = "Í samstarfi við HSU", height = "11mm" }: { label?: string; height?: string }) {
+function HsuCobrand({ label = "Í samstarfi við HSU", height = "11mm", onDark = false }: { label?: string; height?: string; onDark?: boolean }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "3mm" }}>
-      <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--muted)", textAlign: "right", lineHeight: 1.25, maxWidth: "30mm" }}>{label}</span>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/hsu-logo.webp" alt="Heilbrigðisstofnun Suðurlands" style={{ height, width: "auto", display: "block" }} />
+      <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: onDark ? "#eafaff" : "var(--muted)", textAlign: "right", lineHeight: 1.25, maxWidth: "30mm" }}>{label}</span>
+      {onDark ? (
+        // On the dark hero the logo needs a light plate to read.
+        <span style={{ background: "#fff", borderRadius: "2mm", padding: "1.5mm 2.5mm", display: "inline-flex" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/hsu-logo.webp" alt="Heilbrigðisstofnun Suðurlands" style={{ height, width: "auto", display: "block" }} />
+        </span>
+      ) : (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img src="/hsu-logo.webp" alt="Heilbrigðisstofnun Suðurlands" style={{ height, width: "auto", display: "block" }} />
+      )}
     </div>
   );
 }
@@ -333,8 +341,9 @@ function Advert({ a }: { a: AdvertFields }) {
       <div className="hero" style={{ padding: "16mm 16mm 15mm" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12mm" }}>
           <FjarLogo onDark />
-          <span className="pill" style={{ background: "rgba(255,255,255,.14)", color: "#eafaff" }}>{a.badge}</span>
+          <HsuCobrand onDark height="10mm" />
         </div>
+        <div className="eyebrow" style={{ marginBottom: "3.5mm", color: "#5fe0ff" }}>{a.badge}</div>
         <h1 style={{ fontSize: "46px", color: "#fff", maxWidth: "165mm" }}>
           {a.headingA}<br /><span style={{ color: "#5fe0ff" }}>{a.headingAccent}</span>
         </h1>
@@ -377,11 +386,6 @@ function Advert({ a }: { a: AdvertFields }) {
             <div>
               <div className="eyebrow" style={{ marginBottom: "2mm" }}>{a.ctaLabel}</div>
               <div style={{ fontSize: "26px", fontWeight: 800, color: "var(--ink)" }} className="grad-text">{a.url}</div>
-              <div style={{ display: "flex", alignItems: "center", gap: "2.5mm", marginTop: "2.5mm" }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/hsu-logo.webp" alt="Heilbrigðisstofnun Suðurlands" style={{ height: "9mm", width: "auto", flexShrink: 0 }} />
-                <p style={{ fontSize: "11px", color: "var(--muted)", maxWidth: "55mm" }}>{a.partnerNote}</p>
-              </div>
             </div>
           </div>
           <div className="safety" style={{ textAlign: "right", justifyContent: "flex-end" }}>

@@ -10,7 +10,9 @@ export type FieldType =
   | "heading"   // single-line, supports ==word== brand-blue highlighting
   | "icon"      // value is a key from ICON_KEYS (see icons.ts)
   | "image"     // value is an image URL/path; one locale-independent value
-  | "choice";   // value is one of `options`; one locale-independent value
+  | "choice"    // value is one of `options`; one locale-independent value
+  | "internal"; // bookkeeping owned by a custom editor: never auto-rendered,
+                // never translated, one locale-independent value
 
 /** One alternative of a "choice" field, rendered as a segmented switch. */
 export interface SiteFieldOption {
@@ -29,6 +31,13 @@ export interface SiteField {
   options?: SiteFieldOption[];
   /** Optional helper line under the field label in the editor. */
   help?: string;
+  /**
+   * Hands this field to a purpose-built control in the admin editor instead of
+   * the generic label-and-input rendering. Fields sharing an id are edited
+   * together — see the team roster on /um-okkur, where add, duplicate, delete
+   * and hide have to move four keys across two locales at once.
+   */
+  editor?: "team-members";
 }
 
 export type Locale = "is" | "en";

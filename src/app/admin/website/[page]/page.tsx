@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Eye, Globe2, Languages, Send, Check, ExternalLink, ArrowUp, ArrowDown, GripVertical, RotateCcw } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Globe2, Languages, Send, Check, ExternalLink, ArrowUp, ArrowDown, GripVertical, RotateCcw, Copy, Trash2, Plus, ChevronDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import HomeView from "@/app/(site)/HomeView";
 import ThjonustaView from "@/app/(site)/thjonusta/ThjonustaView";
@@ -12,6 +12,7 @@ import HafaSambandView from "@/app/(site)/hafa-samband/HafaSambandView";
 import Navbar from "@/app/components/Navbar";
 import { getSitePage, resolveContent, resolveSections, sectionsOf } from "@/lib/site-content/registry";
 import type { Locale, LocaleContent, SiteContentBlob, SiteFieldOption } from "@/lib/site-content/types";
+import { TEAM_MEMBER_SLOTS, TEAM_ROSTER_GROUP, teamSize } from "@/lib/site-content/um-okkur";
 import IconPicker from "../IconPicker";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -192,6 +193,273 @@ function ChoiceField({
   );
 }
 
+// One person in the team roster. Name and photo are single values (a person's
+// name and portrait don't change per language); role and flag carry both.
+type Member = {
+  name: string;
+  photo: string;
+  hidden: boolean;
+  role: { is: string; en: string };
+  flag: { is: string; en: string };
+};
+
+const BLANK_MEMBER: Member = {
+  name: "",
+  photo: "",
+  hidden: false,
+  role: { is: "", en: "" },
+  flag: { is: "", en: "" },
+};
+
+/**
+ * The team roster: add, duplicate, hide, delete and reorder the people on
+ * /um-okkur. Rows collapse to a single line so the list stays scannable — the
+ * actions are what you come here for, and the fields are one click away.
+ *
+ * Hiding is not deleting: a hidden member keeps every field and simply stops
+ * rendering on the public page, which is what you want for someone on leave or
+ * an announcement that isn't live yet.
+ */
+function TeamRoster({
+  members,
+  disabled,
+  onChange,
+}: {
+  members: Member[];
+  disabled: boolean;
+  onChange: (next: Member[]) => void;
+}) {
+  const [open, setOpen] = useState<number | null>(null);
+
+  const replace = (i: number, m: Member) =>
+    onChange(members.map((cur, k) => (k === i ? m : cur)));
+
+  const move = (from: number, to: number) => {
+    if (to < 0 || to >= members.length) return;
+    const next = [...members];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    onChange(next);
+    setOpen(open === from ? to : open);
+  };
+
+  const duplicate = (i: number) => {
+    const src = members[i];
+    const next = [...members];
+    // Suffixed rather than identical: two rows reading the same name is a
+    // puzzle, and the public grid keys members by name + photo.
+    next.splice(i + 1, 0, {
+      ...src,
+      name: src.name ? `${src.name} (afrit)` : "",
+      role: { ...src.role },
+      flag: { ...src.flag },
+    });
+    onChange(next);
+    setOpen(i + 1);
+  };
+
+  const remove = (i: number) => {
+    const who = members[i].name.trim() || "þennan meðlim";
+    if (!window.confirm(`Eyða ${who} af síðunni? Þetta er ekki hægt að afturkalla.`)) return;
+    onChange(members.filter((_, k) => k !== i));
+    setOpen(null);
+  };
+
+  const add = () => {
+    onChange([...members, { ...BLANK_MEMBER, role: { is: "", en: "" }, flag: { is: "", en: "" } }]);
+    setOpen(members.length);
+  };
+
+  const iconBtn =
+    "rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30 disabled:hover:bg-transparent";
+
+  return (
+    <div className="space-y-2">
+      {members.length === 0 && (
+        <p className="rounded-lg border border-dashed border-slate-300 p-4 text-center text-xs text-slate-400">
+          Enginn í teyminu. Bættu við fyrsta meðlimnum hér að neðan.
+        </p>
+      )}
+
+      {members.map((m, i) => {
+        const isOpen = open === i;
+        const incomplete = !m.name.trim() || !m.photo.trim();
+        return (
+          <div
+            key={i}
+            className={`rounded-xl border ${m.hidden ? "border-slate-200 bg-slate-50" : "border-slate-200 bg-white"}`}
+          >
+            <div className="flex items-center gap-2.5 p-2.5">
+              <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200">
+                {m.photo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={m.photo}
+                    alt=""
+                    className={`h-full w-full object-cover object-top ${m.hidden ? "opacity-40 grayscale" : ""}`}
+                  />
+                ) : null}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setOpen(isOpen ? null : i)}
+                className="min-w-0 flex-1 text-left"
+              >
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className={`truncate text-sm font-medium ${m.hidden ? "text-slate-400" : "text-slate-800"}`}
+                  >
+                    {m.name.trim() || "Nafnlaus meðlimur"}
+                  </span>
+                  {m.hidden && (
+                    <span className="shrink-0 rounded-full bg-slate-200 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+                      Falin
+                    </span>
+                  )}
+                  {!m.hidden && incomplete && (
+                    <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                      Birtist ekki
+                    </span>
+                  )}
+                </span>
+                <span className="mt-0.5 flex items-center gap-1 text-[11px] text-slate-400">
+                  <ChevronDown
+                    className={`h-3 w-3 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                  />
+                  <span className="truncate">{m.role.is.trim() || "Enginn titill"}</span>
+                </span>
+              </button>
+
+              <div className="flex shrink-0 items-center">
+                <button
+                  type="button"
+                  onClick={() => replace(i, { ...m, hidden: !m.hidden })}
+                  disabled={disabled}
+                  title={m.hidden ? "Sýna á vefnum" : "Fela á vefnum"}
+                  aria-label={m.hidden ? `Sýna ${m.name}` : `Fela ${m.name}`}
+                  className={iconBtn}
+                >
+                  {m.hidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => move(i, i - 1)}
+                  disabled={disabled || i === 0}
+                  title="Færa upp"
+                  aria-label={`Færa ${m.name} upp`}
+                  className={iconBtn}
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => move(i, i + 1)}
+                  disabled={disabled || i === members.length - 1}
+                  title="Færa niður"
+                  aria-label={`Færa ${m.name} niður`}
+                  className={iconBtn}
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => duplicate(i)}
+                  disabled={disabled || members.length >= TEAM_MEMBER_SLOTS}
+                  title={
+                    members.length >= TEAM_MEMBER_SLOTS
+                      ? `Hámark ${TEAM_MEMBER_SLOTS} meðlimir`
+                      : "Afrita"
+                  }
+                  aria-label={`Afrita ${m.name}`}
+                  className={iconBtn}
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => remove(i)}
+                  disabled={disabled}
+                  title="Eyða"
+                  aria-label={`Eyða ${m.name}`}
+                  className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-30 disabled:hover:bg-transparent"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {isOpen && (
+              <div className="space-y-3 border-t border-slate-100 p-3">
+                <label className="block">
+                  <span className="text-[10px] uppercase tracking-wide text-slate-400">Nafn</span>
+                  <input
+                    value={m.name}
+                    disabled={disabled}
+                    onChange={(e) => replace(i, { ...m, name: e.target.value })}
+                    placeholder="Nafn meðlims"
+                    className="w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-cyan-200 disabled:bg-slate-50"
+                  />
+                </label>
+
+                {(["role", "flag"] as const).map((k) => (
+                  <div key={k}>
+                    <div className="mb-1 text-xs font-medium text-slate-600">
+                      {k === "role" ? "Titill" : "Merki (t.d. Stofnandi)"}
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {(["is", "en"] as Locale[]).map((loc) => (
+                        <label key={loc} className="block">
+                          <span className="text-[10px] uppercase tracking-wide text-slate-400">
+                            {loc}
+                          </span>
+                          <input
+                            value={m[k][loc]}
+                            disabled={disabled}
+                            onChange={(e) =>
+                              replace(i, { ...m, [k]: { ...m[k], [loc]: e.target.value } })
+                            }
+                            placeholder={loc === "en" ? "(þýðing)" : ""}
+                            className="w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-cyan-200 disabled:bg-slate-50"
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                <div>
+                  <div className="mb-1 text-xs font-medium text-slate-600">Mynd</div>
+                  <ImageField
+                    value={m.photo}
+                    fallback=""
+                    disabled={disabled}
+                    onChange={(v) => replace(i, { ...m, photo: v })}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      <div className="flex items-center justify-between gap-2 pt-1">
+        <button
+          type="button"
+          onClick={add}
+          disabled={disabled || members.length >= TEAM_MEMBER_SLOTS}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+        >
+          <Plus className="h-4 w-4" /> Bæta við meðlimi
+        </button>
+        <span className="text-[11px] text-slate-400">
+          {members.length} af {TEAM_MEMBER_SLOTS}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function SiteContentEditor() {
   const params = useParams<{ page: string }>();
   const pageKey = params?.page ?? "home";
@@ -274,7 +542,57 @@ export default function SiteContentEditor() {
   // The sections that actually render for the current draft — a layout switch
   // can merge two bands into one, and the order list must agree with the page
   // or moving a phantom section would look like a bug.
-  const visibleSections = sectionsOf(pageKey, resolveContent(pageKey, draft, "is"));
+  const contentIs = resolveContent(pageKey, draft, "is");
+  const visibleSections = sectionsOf(pageKey, contentIs);
+
+  // ── Team roster ──────────────────────────────────────────────────────────
+  // Read per locale from its own map, never across locales: a draft value if
+  // there is one, otherwise that locale's built-in default. Resolving through
+  // the public fallback chain instead would freeze Icelandic copy into the
+  // English overrides the first time anyone pressed a button here.
+  const hasRoster = !!page?.fields.some((f) => f.editor === "team-members");
+  const rawField = (loc: Locale, key: string) =>
+    draft[loc]?.[key] ??
+    (loc === "is" ? page?.defaultsIs[key] : page?.defaultsEn[key]) ??
+    "";
+
+  const members: Member[] = hasRoster
+    ? Array.from({ length: teamSize(contentIs) }, (_, k) => {
+        const i = k + 1;
+        return {
+          name: rawField("is", `t${i}_name`),
+          photo: rawField("is", `t${i}_photo`),
+          hidden: rawField("is", `t${i}_hidden`) === "1",
+          role: { is: rawField("is", `t${i}_role`), en: rawField("en", `t${i}_role`) },
+          flag: { is: rawField("is", `t${i}_flag`), en: rawField("en", `t${i}_flag`) },
+        };
+      })
+    : [];
+
+  // Every slot is rewritten on every change, and the count with it. That
+  // materialises the built-in defaults into the draft the first time the roster
+  // is touched — necessary, because an empty override means "use the default"
+  // and a deletion would otherwise undo itself on the next render.
+  const setMembers = (next: Member[]) => {
+    setDraft((prev) => {
+      const is = { ...(prev.is ?? {}) };
+      const en = { ...(prev.en ?? {}) };
+      for (let i = 1; i <= TEAM_MEMBER_SLOTS; i++) {
+        const m = next[i - 1];
+        is[`t${i}_name`] = m?.name ?? "";
+        is[`t${i}_photo`] = m?.photo ?? "";
+        is[`t${i}_hidden`] = m?.hidden ? "1" : "";
+        is[`t${i}_role`] = m?.role.is ?? "";
+        is[`t${i}_flag`] = m?.flag.is ?? "";
+        // Names are the same in every language — the translator skips them too.
+        en[`t${i}_name`] = "";
+        en[`t${i}_role`] = m?.role.en ?? "";
+        en[`t${i}_flag`] = m?.flag.en ?? "";
+      }
+      is.team_size = String(next.length);
+      return { ...prev, is, en };
+    });
+  };
   const sectionLabel = (id: string) =>
     visibleSections.find((s) => s.id === id)?.label ?? id;
 
@@ -296,9 +614,12 @@ export default function SiteContentEditor() {
   // compiler memoizes this for us.
   const groups = (() => {
     if (!page) return [];
+    // Fields owned by a custom control (the roster) and pure bookkeeping never
+    // get the generic label-and-input treatment.
+    const generic = page.fields.filter((f) => !f.editor && f.type !== "internal");
     const seen: string[] = [];
-    for (const f of page.fields) if (!seen.includes(f.group)) seen.push(f.group);
-    return seen.map((g) => ({ group: g, fields: page.fields.filter((f) => f.group === g) }));
+    for (const f of generic) if (!seen.includes(f.group)) seen.push(f.group);
+    return seen.map((g) => ({ group: g, fields: generic.filter((f) => f.group === g) }));
   })();
 
   const previewContent = useMemo(
@@ -464,7 +785,8 @@ export default function SiteContentEditor() {
             </section>
           )}
           {groups.map((g) => (
-            <section key={g.group} className="rounded-xl border border-slate-200 bg-white p-4">
+            <Fragment key={g.group}>
+            <section className="rounded-xl border border-slate-200 bg-white p-4">
               <h2 className="text-xs font-semibold uppercase tracking-wide text-cyan-700 mb-3">{g.group}</h2>
               <div className="space-y-4">
                 {g.fields.map((f) => (
@@ -538,6 +860,19 @@ export default function SiteContentEditor() {
                 ))}
               </div>
             </section>
+            {hasRoster && g.group === TEAM_ROSTER_GROUP && (
+              <section className="rounded-xl border border-slate-200 bg-white p-4">
+                <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-cyan-700">
+                  Teymismeðlimir
+                </h2>
+                <p className="mb-3 text-[11px] text-slate-400">
+                  Smelltu á nafn til að breyta. Falinn meðlimur heldur öllum upplýsingum en birtist
+                  ekki á vefnum. Röðin hér er röðin á síðunni.
+                </p>
+                <TeamRoster members={members} disabled={!isAdmin} onChange={setMembers} />
+              </section>
+            )}
+            </Fragment>
           ))}
           <p className="text-xs text-slate-400">
             Íslenskur reitur sem er tómur notar sjálfgefna textann. Enskur reitur sem er tómur sýnir íslenska textann á
