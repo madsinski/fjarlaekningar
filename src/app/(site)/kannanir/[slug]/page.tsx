@@ -134,7 +134,7 @@ export default function PublicSurveyPage() {
   const brandMode = survey.brand_mode || "both";
   const fjarLogo = (
     /* eslint-disable-next-line @next/next/no-img-element */
-    <img src="/fjarlaekningar-logo.svg" alt="Fjarlækningar" className="h-8 w-auto object-contain" />
+    <img src="/fjarlaekningar-logo.svg" alt="Fjarlækningar" className="h-12 sm:h-14 w-auto object-contain" />
   );
   const clientLockup =
     survey.brand_logo_url || survey.brand_name ? (

@@ -511,7 +511,7 @@ export default function SurveyEditPage() {
                 {(() => {
                   const fjar = (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src="/fjarlaekningar-logo.svg" alt="Fjarlækningar" className="h-7 w-auto object-contain" />
+                    <img src="/fjarlaekningar-logo.svg" alt="Fjarlækningar" className="h-11 w-auto object-contain" />
                   );
                   const client =
                     brandLogoUrl || brandName ? (
