@@ -40,6 +40,9 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (typeof body.description === "string") update.description = body.description;
   if (typeof body.title_en === "string") update.title_en = body.title_en;
   if (typeof body.description_en === "string") update.description_en = body.description_en;
+  if (body.layout === "list" || body.layout === "steps") update.layout = body.layout;
+  if (typeof body.brand_name === "string") update.brand_name = body.brand_name;
+  if (typeof body.brand_logo_url === "string") update.brand_logo_url = body.brand_logo_url;
   if (Array.isArray(body.questions)) update.questions = body.questions as SurveyQuestion[];
   if (body.status === "published" || body.status === "draft") update.status = body.status;
 

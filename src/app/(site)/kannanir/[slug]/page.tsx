@@ -18,6 +18,9 @@ interface Survey {
   description: string;
   description_en: string | null;
   questions: SurveyQuestion[];
+  layout?: string | null;
+  brand_name?: string | null;
+  brand_logo_url?: string | null;
 }
 
 const T = {
@@ -61,7 +64,7 @@ export default function PublicSurveyPage() {
     setLoading(true);
     const { data } = await supabase
       .from("surveys")
-      .select("slug, title, title_en, description, description_en, questions")
+      .select("*")
       .eq("slug", slug)
       .eq("status", "published")
       .maybeSingle();
@@ -137,48 +140,73 @@ export default function PublicSurveyPage() {
   const title = locale === "en" && survey.title_en ? survey.title_en : survey.title;
   const description =
     locale === "en" && survey.description_en ? survey.description_en : survey.description;
+  const mode = survey.layout === "steps" ? "steps" : "list";
+
+  const localeToggle = hasEn ? (
+    <div className="inline-flex rounded-lg border border-slate-200 bg-white/70 overflow-hidden text-xs font-medium">
+      {(["is", "en"] as Locale[]).map((l) => (
+        <button
+          key={l}
+          type="button"
+          onClick={() => setLocale(l)}
+          className={`px-3 py-1.5 ${locale === l ? "bg-[var(--primary)] text-white" : "text-slate-600 hover:bg-slate-50"}`}
+        >
+          {l === "is" ? "IS" : "EN"}
+        </button>
+      ))}
+    </div>
+  ) : null;
+
+  const footer = (
+    <div className="space-y-4">
+      {err && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{err}</div>}
+      <button
+        type="submit"
+        disabled={submitting}
+        className="py-2.5 px-6 rounded-lg bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-semibold text-sm disabled:opacity-50"
+      >
+        {submitting ? tr.submitting : tr.submit}
+      </button>
+    </div>
+  );
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      {hasEn && (
-        <div className="flex justify-end mb-4">
-          <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden text-xs font-medium">
-            {(["is", "en"] as Locale[]).map((l) => (
-              <button
-                key={l}
-                type="button"
-                onClick={() => setLocale(l)}
-                className={`px-3 py-1.5 ${locale === l ? "bg-[var(--primary)] text-white" : "text-slate-600 hover:bg-slate-50"}`}
-              >
-                {l === "is" ? "IS" : "EN"}
-              </button>
-            ))}
-          </div>
+    <div className="min-h-screen bg-[var(--background)] pb-20">
+      {/* Branded header — mirrors the site's PageHero */}
+      <div className="border-b border-slate-200 bg-gradient-to-b from-brand-cyan-subtle to-[var(--background)]">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
+          {localeToggle && <div className="flex justify-end mb-4">{localeToggle}</div>}
+          {survey.brand_logo_url || survey.brand_name ? (
+            <div className="flex items-center gap-3 mb-3">
+              {survey.brand_logo_url && (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={survey.brand_logo_url} alt={survey.brand_name || ""} className="h-10 w-auto object-contain" />
+              )}
+              {survey.brand_name && <span className="text-sm font-semibold text-slate-700">{survey.brand_name}</span>}
+            </div>
+          ) : (
+            <span className="inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--primary-dark)]">
+              <span aria-hidden className="h-px w-6 bg-[var(--primary)]" /> Fjarlækningar
+            </span>
+          )}
+          <h1 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">{title}</h1>
+          {description && <p className="mt-3 text-base text-slate-600">{description}</p>}
         </div>
-      )}
+      </div>
 
-      <h1 className="text-3xl font-bold text-slate-900">{title}</h1>
-      {description && <p className="text-slate-600 mt-2 mb-8">{description}</p>}
-
-      <form onSubmit={submit} className="space-y-8 mt-8">
-        <SurveyFields
-          questions={survey.questions}
-          answers={answers}
-          onSet={setOne}
-          onToggleMulti={toggleMulti}
-          locale={locale}
-        />
-
-        {err && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{err}</div>}
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="py-2.5 px-5 rounded-lg bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-semibold text-sm disabled:opacity-50"
-        >
-          {submitting ? tr.submitting : tr.submit}
-        </button>
-      </form>
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <form onSubmit={submit} className={mode === "steps" ? "" : "space-y-5"}>
+          <SurveyFields
+            questions={survey.questions}
+            answers={answers}
+            onSet={setOne}
+            onToggleMulti={toggleMulti}
+            locale={locale}
+            mode={mode}
+            footer={footer}
+          />
+        </form>
+      </div>
     </div>
   );
 }

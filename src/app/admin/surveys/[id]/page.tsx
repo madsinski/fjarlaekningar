@@ -26,6 +26,9 @@ interface Survey {
   description_en: string | null;
   questions: SurveyQuestion[];
   status: string;
+  layout?: string | null;
+  brand_name?: string | null;
+  brand_logo_url?: string | null;
 }
 interface ResponseRow {
   id: string;
@@ -63,6 +66,10 @@ export default function SurveyEditPage() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [layout, setLayout] = useState<"list" | "steps">("list");
+  const [brandName, setBrandName] = useState("");
+  const [brandLogoUrl, setBrandLogoUrl] = useState("");
+  const [logoBusy, setLogoBusy] = useState(false);
   const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
@@ -105,6 +112,9 @@ export default function SurveyEditPage() {
       setSurvey(s);
       setTitle(s.title);
       setDescription(s.description || "");
+      setLayout(s.layout === "steps" ? "steps" : "list");
+      setBrandName(s.brand_name || "");
+      setBrandLogoUrl(s.brand_logo_url || "");
       setQuestions(Array.isArray(s.questions) ? s.questions : []);
       setResponses(j.responses || []);
     }
@@ -116,7 +126,6 @@ export default function SurveyEditPage() {
   }, [id]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load]);
 
@@ -160,15 +169,33 @@ export default function SurveyEditPage() {
     await load();
   };
 
-  const save = () => patch({ title, description, questions }, "Vistað.");
-  const publish = () => patch({ title, description, questions, status: "published" }, "Birt.");
+  const brandPayload = () => ({ brand_name: brandName, brand_logo_url: brandLogoUrl });
+  const save = () => patch({ title, description, layout, ...brandPayload(), questions }, "Vistað.");
+  const publish = () => patch({ title, description, layout, ...brandPayload(), questions, status: "published" }, "Birt.");
+
+  const uploadLogo = async (file: File) => {
+    setLogoBusy(true);
+    setMsg(null);
+    try {
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `site/survey-brand/${Date.now()}-${safe}`;
+      const { error } = await supabase.storage.from("presentation-assets").upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("presentation-assets").getPublicUrl(path);
+      setBrandLogoUrl(data.publicUrl);
+    } catch (e) {
+      setMsg({ type: "err", text: e instanceof Error ? e.message : "Ekki tókst að hlaða upp merki" });
+    } finally {
+      setLogoBusy(false);
+    }
+  };
   const unpublish = () => patch({ status: "draft" }, "Tekið úr birtingu.");
 
   const translate = async () => {
     setBusy(true);
     setMsg(null);
     // Save current edits first so the translator sees the latest text.
-    await fetch(`/api/admin/surveys/${id}`, { method: "PATCH", headers: await authHeaders(), body: JSON.stringify({ title, description, questions }) });
+    await fetch(`/api/admin/surveys/${id}`, { method: "PATCH", headers: await authHeaders(), body: JSON.stringify({ title, description, layout, ...brandPayload(), questions }) });
     const res = await fetch(`/api/admin/surveys/${id}/translate`, { method: "POST", headers: await authHeaders() });
     const j = await res.json().catch(() => ({}));
     setBusy(false);
@@ -211,7 +238,7 @@ export default function SurveyEditPage() {
     q.type === "yes_no" ? [...YES_NO_OPTIONS] : q.options || [];
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-8 max-w-6xl">
       <Link href="/admin/surveys" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-4">
         <ArrowLeft className="w-4 h-4" /> Kannanir
       </Link>
@@ -248,11 +275,47 @@ export default function SurveyEditPage() {
       </div>
 
       {tab === "build" && (
-        <div className="mt-6">
+        <div className="mt-6 grid lg:grid-cols-2 gap-8 items-start">
+          <div>
           {!isAdmin && <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">Þú hefur lesaðgang.</div>}
           <input value={title} onChange={(e) => setTitle(e.target.value)} disabled={!isAdmin} placeholder="Titill" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} disabled={!isAdmin} rows={2} placeholder="Inngangstexti (valfrjálst)" className="mt-3 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
           {survey.title_en && <p className="mt-1 text-[11px] text-slate-400">EN: {survey.title_en}</p>}
+
+          {/* Institution branding — logo + name shown in the survey header */}
+          <div className="mt-4 rounded-lg border border-slate-200 p-3">
+            <label className="block text-xs font-medium text-slate-500 mb-2">Stofnun (könnun fyrir)</label>
+            <input value={brandName} onChange={(e) => setBrandName(e.target.value)} disabled={!isAdmin} placeholder="Nafn stofnunar (t.d. Heilbrigðisstofnun Suðurlands)" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
+            <div className="mt-2 flex items-center gap-3">
+              <div className="h-12 w-20 shrink-0 rounded border border-slate-200 bg-white grid place-items-center overflow-hidden">
+                {brandLogoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={brandLogoUrl} alt="" className="max-h-full max-w-full object-contain" />
+                ) : (
+                  <span className="text-[10px] text-slate-400">Ekkert merki</span>
+                )}
+              </div>
+              {isAdmin && (
+                <div className="flex flex-wrap gap-2">
+                  <label className={`rounded-md px-3 py-1.5 text-xs font-medium ${logoBusy ? "bg-slate-100 text-slate-400" : "bg-cyan-600 text-white hover:bg-cyan-700 cursor-pointer"}`}>
+                    {logoBusy ? "Hleð upp…" : "Hlaða upp merki"}
+                    <input type="file" accept="image/*" className="hidden" disabled={logoBusy} onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); }} />
+                  </label>
+                  {brandLogoUrl && <button type="button" onClick={() => setBrandLogoUrl("")} className="rounded-md px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100">Fjarlægja</button>}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Display layout */}
+          <div className="mt-4">
+            <label className="block text-xs font-medium text-slate-500 mb-1.5">Framsetning</label>
+            <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden text-sm">
+              {([["list", "Listi"], ["steps", "Ein spurning í einu"]] as const).map(([v, l]) => (
+                <button key={v} type="button" disabled={!isAdmin} onClick={() => setLayout(v)} className={`px-3 py-1.5 ${layout === v ? "bg-cyan-600 text-white" : "text-slate-600 hover:bg-slate-50"} disabled:opacity-60`}>{l}</button>
+              ))}
+            </div>
+          </div>
 
           <div className="mt-6 space-y-4">
             {questions.map((q, idx) => {
@@ -394,10 +457,11 @@ export default function SurveyEditPage() {
               </div>
             </>
           )}
+          </div>
 
-          {/* Live preview — updates as you edit; renders exactly like the public form */}
-          <div className="mt-10 border-t border-slate-200 pt-8">
-            <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+          {/* Right: sticky live preview — brand + layout update as you edit */}
+          <div className="lg:sticky lg:top-4">
+            <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
               <h2 className="text-sm font-semibold text-slate-900">Forskoðun</h2>
               {(survey.title_en || questions.some((q) => q.labelEn)) && (
                 <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden text-xs font-medium">
@@ -414,19 +478,41 @@ export default function SurveyEditPage() {
                 </div>
               )}
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-6">
-              <h3 className="text-xl font-bold text-slate-900">{previewLocale === "en" && survey.title_en ? survey.title_en : title}</h3>
-              {(previewLocale === "en" && survey.description_en ? survey.description_en : description) && (
-                <p className="text-slate-600 mt-2 mb-6 text-sm">
-                  {previewLocale === "en" && survey.description_en ? survey.description_en : description}
-                </p>
-              )}
-              <div className="space-y-6 mt-4">
-                <SurveyFields questions={questions} answers={previewAnswers} onSet={pvSet} onToggleMulti={pvToggle} locale={previewLocale} />
+            <div className="rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="bg-gradient-to-b from-brand-cyan-subtle to-[var(--background)] px-5 py-6 border-b border-slate-200">
+                {brandLogoUrl || brandName ? (
+                  <div className="flex items-center gap-3 mb-3">
+                    {brandLogoUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={brandLogoUrl} alt={brandName || ""} className="h-9 w-auto object-contain" />
+                    )}
+                    {brandName && <span className="text-sm font-semibold text-slate-700">{brandName}</span>}
+                  </div>
+                ) : (
+                  <span className="inline-flex items-center gap-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--primary-dark)]">
+                    <span aria-hidden className="h-px w-5 bg-[var(--primary)]" /> Fjarlækningar
+                  </span>
+                )}
+                <h3 className="mt-1 text-xl font-bold text-slate-900">{previewLocale === "en" && survey.title_en ? survey.title_en : title}</h3>
+                {(previewLocale === "en" && survey.description_en ? survey.description_en : description) && (
+                  <p className="text-slate-600 mt-2 text-sm">{previewLocale === "en" && survey.description_en ? survey.description_en : description}</p>
+                )}
               </div>
-              <button type="button" disabled className="mt-6 py-2.5 px-5 rounded-lg bg-slate-300 text-white font-semibold text-sm cursor-not-allowed">
-                Senda svar (forskoðun)
-              </button>
+              <div className={`bg-[var(--background)] p-5 ${layout === "steps" ? "" : "space-y-5"}`}>
+                <SurveyFields
+                  questions={questions}
+                  answers={previewAnswers}
+                  onSet={pvSet}
+                  onToggleMulti={pvToggle}
+                  locale={previewLocale}
+                  mode={layout}
+                  footer={
+                    <button type="button" disabled className="py-2.5 px-6 rounded-lg bg-slate-300 text-white font-semibold text-sm cursor-not-allowed">
+                      Senda svar (forskoðun)
+                    </button>
+                  }
+                />
+              </div>
             </div>
           </div>
         </div>

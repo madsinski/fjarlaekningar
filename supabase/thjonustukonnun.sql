@@ -2,9 +2,14 @@
 -- English columns, an AI-summary cache table, and seeds the service survey.
 -- Idempotent — safe to run more than once. Apply in the Supabase SQL editor.
 
--- 1. Bilingual survey-level columns (per-question EN lives in questions JSONB).
+-- 1. Bilingual survey-level columns (per-question EN lives in questions JSONB),
+--    plus display layout and per-survey institution branding (logo + name), so
+--    the same survey engine can be branded for HSU, other institutions, etc.
 alter table public.surveys add column if not exists title_en text;
 alter table public.surveys add column if not exists description_en text;
+alter table public.surveys add column if not exists layout text not null default 'list';
+alter table public.surveys add column if not exists brand_name text;
+alter table public.surveys add column if not exists brand_logo_url text;
 
 -- 2. Cached AI summary, one row per survey (regenerate = upsert). All reads and
 --    writes go through the service-role API, so RLS is enabled with no policies
