@@ -463,7 +463,7 @@ export function CollateralStudio({
           {active.type === "poster" ? (
             <>
               <Section title="Haus">
-                <Field label="Merki (efst til hægri)" value={active.poster.badge} onChange={(v) => patchPoster({ badge: v })} />
+                <Field label="Samstarfstexti (HSU)" value={active.poster.badge} onChange={(v) => patchPoster({ badge: v })} />
                 <Field label="Yfirskrift" value={active.poster.eyebrow} onChange={(v) => patchPoster({ eyebrow: v })} />
                 <Field label="Fyrirsögn" value={active.poster.heading} onChange={(v) => patchPoster({ heading: v })} area />
                 <p className="text-[11px] text-gray-400">Ný lína = línuskil. Settu <b>==</b> utan um orð til að lita þau blá, t.d. <code>==þar sem þú ert.==</code></p>
@@ -489,6 +489,7 @@ export function CollateralStudio({
             <>
               <Section title="Haus">
                 <Field label="Merki" value={active.referral.badge} onChange={(v) => patchReferral({ badge: v })} />
+                <Field label="Samstarfstexti (HSU)" value={active.referral.cobrandLabel} onChange={(v) => patchReferral({ cobrandLabel: v })} />
                 <Field label="Yfirskrift" value={active.referral.eyebrow} onChange={(v) => patchReferral({ eyebrow: v })} />
                 <Field label="Fyrirsögn" value={active.referral.heading} onChange={(v) => patchReferral({ heading: v })} />
                 <Field label="Fyrirsögn — áhersla (blá)" value={active.referral.headingAccent} onChange={(v) => patchReferral({ headingAccent: v })} />
@@ -545,7 +546,15 @@ export function CollateralStudio({
           ) : active.type === "advert" ? (
             <>
               <Section title="Haus">
-                <Field label="Merki" value={active.advert.badge} onChange={(v) => patchAdvert({ badge: v })} />
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-gray-600">Framsetning haus</span>
+                  <select value={active.advert.headerLayout} onChange={(e) => patchAdvert({ headerLayout: e.target.value as "hero" | "poster" })} className={inputCls}>
+                    <option value="poster">Veggspjaldsstíll (merki efst, innfelldur haus)</option>
+                    <option value="hero">Hetja (heilflötur með merkjum inni)</option>
+                  </select>
+                </label>
+                <Field label="Merki (yfirskrift)" value={active.advert.badge} onChange={(v) => patchAdvert({ badge: v })} />
+                <Field label="Samstarfstexti (HSU)" value={active.advert.cobrandLabel} onChange={(v) => patchAdvert({ cobrandLabel: v })} />
                 <Field label="Fyrirsögn — lína 1 (hvít)" value={active.advert.headingA} onChange={(v) => patchAdvert({ headingA: v })} />
                 <Field label="Fyrirsögn — áhersla (blá)" value={active.advert.headingAccent} onChange={(v) => patchAdvert({ headingAccent: v })} />
                 <Field label="Inngangur" value={active.advert.lead} onChange={(v) => patchAdvert({ lead: v })} area />

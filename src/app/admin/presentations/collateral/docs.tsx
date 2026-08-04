@@ -180,7 +180,7 @@ function Referral({ r }: { r: ReferralFields }) {
     <div className="a4">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9mm 14mm 4mm" }}>
         <FjarLogo />
-        <HsuCobrand />
+        <HsuCobrand label={r.cobrandLabel} />
       </div>
 
       <div style={{ padding: "0 14mm" }}>
@@ -286,7 +286,7 @@ function ReferralMeds({ r }: { r: ReferralFields }) {
     <div className="a4">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9mm 14mm 4mm" }}>
         <FjarLogo />
-        <HsuCobrand />
+        <HsuCobrand label={r.cobrandLabel} />
       </div>
 
       <div style={{ padding: "0 14mm" }}>
@@ -338,17 +338,35 @@ function ReferralMeds({ r }: { r: ReferralFields }) {
 function Advert({ a }: { a: AdvertFields }) {
   return (
     <div className="a4">
-      <div className="hero" style={{ padding: "16mm 16mm 15mm" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12mm" }}>
-          <FjarLogo onDark />
-          <HsuCobrand onDark height="10mm" />
+      {a.headerLayout === "hero" ? (
+        // Classic: full-bleed dark hero with the logos inside it.
+        <div className="hero" style={{ padding: "16mm 16mm 15mm" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12mm" }}>
+            <FjarLogo onDark />
+            <HsuCobrand onDark height="10mm" label={a.cobrandLabel} />
+          </div>
+          <div className="eyebrow" style={{ marginBottom: "3.5mm", color: "#5fe0ff" }}>{a.badge}</div>
+          <h1 style={{ fontSize: "46px", color: "#fff", maxWidth: "165mm" }}>
+            {a.headingA}<br /><span style={{ color: "#5fe0ff" }}>{a.headingAccent}</span>
+          </h1>
+          <p style={{ marginTop: "6mm", fontSize: "15px", lineHeight: 1.5, maxWidth: "160mm" }}>{a.lead}</p>
         </div>
-        <div className="eyebrow" style={{ marginBottom: "3.5mm", color: "#5fe0ff" }}>{a.badge}</div>
-        <h1 style={{ fontSize: "46px", color: "#fff", maxWidth: "165mm" }}>
-          {a.headingA}<br /><span style={{ color: "#5fe0ff" }}>{a.headingAccent}</span>
-        </h1>
-        <p style={{ marginTop: "6mm", fontSize: "15px", lineHeight: 1.5, maxWidth: "160mm" }}>{a.lead}</p>
-      </div>
+      ) : (
+        // Veggspjald style: logos on a white strip, then an inset dark hero.
+        <>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14mm 16mm 6mm" }}>
+            <FjarLogo />
+            <HsuCobrand label={a.cobrandLabel} />
+          </div>
+          <div className="hero" style={{ padding: "11mm 16mm 12mm", margin: "0 16mm", borderRadius: "6mm" }}>
+            <div className="eyebrow" style={{ marginBottom: "3.5mm", color: "#5fe0ff" }}>{a.badge}</div>
+            <h1 style={{ fontSize: "40px", color: "#fff", maxWidth: "150mm" }}>
+              {a.headingA}<br /><span style={{ color: "#5fe0ff" }}>{a.headingAccent}</span>
+            </h1>
+            <p style={{ marginTop: "5mm", fontSize: "14px", lineHeight: 1.5, maxWidth: "150mm", color: "#cdeefb" }}>{a.lead}</p>
+          </div>
+        </>
+      )}
 
       <div style={{ padding: "11mm 16mm 0" }}>
         <div className="eyebrow" style={{ marginBottom: "4mm" }}>{a.servicesTitle}</div>

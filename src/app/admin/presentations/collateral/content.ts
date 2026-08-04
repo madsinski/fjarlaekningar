@@ -49,6 +49,7 @@ export type MedCategory = {
 
 export type ReferralFields = {
   badge: string;
+  cobrandLabel: string;
   eyebrow: string;
   heading: string;
   headingAccent: string;
@@ -79,6 +80,10 @@ export type ReferralFields = {
 
 export type AdvertFields = {
   badge: string;
+  cobrandLabel: string;
+  // "poster" = veggspjald-style header (logos on a white strip, inset hero);
+  // "hero"   = full-bleed dark hero with the logos inside it.
+  headerLayout: "hero" | "poster";
   headingA: string;
   headingAccent: string;
   lead: string;
@@ -290,6 +295,7 @@ export const DEFAULT_MED_CATEGORIES: MedCategory[] = [
 
 export const DEFAULT_REFERRAL: ReferralFields = {
   badge: "Innanhússleiðbeiningar",
+  cobrandLabel: "Í samstarfi við HSU",
   eyebrow: "Fyrir heilbrigðisstarfsfólk HSU",
   heading: "Að vísa sjúklingi í ",
   headingAccent: "Fjarlækningar",
@@ -346,6 +352,8 @@ export const DEFAULT_REFERRAL: ReferralFields = {
 
 export const DEFAULT_ADVERT: AdvertFields = {
   badge: "Ný þjónusta á Íslandi",
+  cobrandLabel: "Í samstarfi við HSU",
+  headerLayout: "poster",
   headingA: "Læknishjálp —",
   headingAccent: "þar sem þú ert.",
   lead: "Þú svarar stuttum spurningalista og læknir metur málið og leggur til meðferð. Sama þjónusta og á læknastofu — svar innan tveggja klukkustunda á opnunartíma, án biðstofu og biðlista.",
