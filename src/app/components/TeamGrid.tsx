@@ -90,14 +90,20 @@ function ZoomHint() {
  *                combined layout, where the grid sits inside a white panel and
  *                a second set of white card edges would only add noise.
  */
+/** Columns at the widest breakpoint — also "a full row" for `align: auto`. */
+const LG_COLUMNS = 5;
+
 export default function TeamGrid({
   members,
   locale = "is",
   variant = "cards",
+  align = "auto",
 }: {
   members: TeamMember[];
   locale?: Locale;
   variant?: "cards" | "portraits";
+  /** auto = left while the row is full, centred once it isn't. */
+  align?: "auto" | "left" | "center";
 }) {
   const [active, setActive] = useState<TeamMember | null>(null);
   const tr = ui(locale);
@@ -105,16 +111,35 @@ export default function TeamGrid({
   if (!members.length) return null;
 
   const portraits = variant === "portraits";
+  const centered = align === "center" || (align === "auto" && members.length < LG_COLUMNS);
+
+  // Centring cannot be `mx-auto` on the grid: the tracks are 1fr, so the
+  // container already spans the full width and a short row leaves its gap
+  // *inside* it — the cards would not move. It has to become a wrapping row of
+  // fixed-width items instead, which also centres a ragged last row rather
+  // than leaving it hanging off to the left. The widths below reproduce the
+  // grid's own track widths exactly, so a card is the same size either way.
+  const rowClass = portraits ? "gap-x-6 gap-y-9" : "gap-5";
+  const itemClass = centered
+    ? portraits
+      ? "w-[calc(50%-0.75rem)] sm:w-[calc(33.333%-1rem)] lg:w-[188px]"
+      : "w-[calc(50%-0.625rem)] sm:w-[calc(33.333%-0.833rem)] lg:w-[188px]"
+    : "";
 
   return (
     <>
-      {/* No mx-auto: the grid starts at the container's left edge so it lines up
-          with the section heading above it, like every other grid on the site. */}
+      {/* Left-aligned, the grid starts at the container's left edge so it lines
+          up with the section heading above it, like every other grid on the
+          site. That only reads as deliberate while the row is reasonably full. */}
       <div
         className={
-          portraits
-            ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-9"
-            : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5 max-w-5xl"
+          // Class names are spelled out: Tailwind scans source text, so an
+          // interpolated `lg:grid-cols-${n}` would never be generated.
+          centered
+            ? `flex flex-wrap justify-center ${rowClass}`
+            : portraits
+              ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-9"
+              : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5 max-w-5xl"
         }
       >
         {members.map((member) => (
@@ -124,11 +149,11 @@ export default function TeamGrid({
             onClick={() => setActive(member)}
             title={tr.clickToEnlarge}
             aria-label={`${tr.enlargeImage}: ${member.name}`}
-            className={
+            className={`${
               portraits
                 ? "group flex flex-col items-center rounded-2xl px-2 py-3 text-center hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
                 : "group bg-white rounded-2xl border border-slate-200 p-5 text-left hover:shadow-lg hover:border-brand-cyan transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
-            }
+            } ${itemClass}`}
           >
             <div
               className={

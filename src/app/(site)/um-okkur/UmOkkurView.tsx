@@ -8,6 +8,7 @@ import {
   umOkkurSections,
   isCombinedTeam,
   isMemberHidden,
+  teamAlign,
   teamLayout,
   teamSize,
   TEAM_LAYOUTS,
@@ -46,6 +47,9 @@ export default function UmOkkurView({
     };
   }).filter((m) => !m.hidden && m.name.trim() && m.photo.trim());
 
+  // Left while the row is full, centred once it isn't — overridable in the CMS.
+  const align = teamAlign(c);
+
   const pillars = [
     { title: c.p1_title, body: c.p1_body, icon: c.p1_icon, fallback: "target" },
     { title: c.p2_title, body: c.p2_body, icon: c.p2_icon, fallback: "lock" },
@@ -79,7 +83,7 @@ export default function UmOkkurView({
   // The team grid plus its footnote — identical in both layouts.
   const teamGrid = (
     <>
-      <TeamGrid members={teamMembers} locale={locale} />
+      <TeamGrid members={teamMembers} locale={locale} align={align} />
       {c.team_footer && <p className="mt-10 text-sm text-slate-500">{c.team_footer}</p>}
     </>
   );
@@ -163,7 +167,7 @@ export default function UmOkkurView({
                 <p className="text-sm text-slate-600 leading-relaxed lg:max-w-sm">{c.team_body}</p>
               )}
             </div>
-            <TeamGrid members={teamMembers} locale={locale} variant="portraits" />
+            <TeamGrid members={teamMembers} locale={locale} variant="portraits" align={align} />
             {c.team_footer && (
               <p className="mt-9 border-t border-slate-200 pt-5 text-sm text-slate-500">
                 {c.team_footer}
@@ -216,7 +220,7 @@ export default function UmOkkurView({
               {renderHighlighted(c.team_heading)}
             </h3>
           </div>
-          <TeamGrid members={teamMembers} locale={locale} variant="portraits" />
+          <TeamGrid members={teamMembers} locale={locale} variant="portraits" align={align} />
           {c.team_footer && <p className="mt-8 text-sm text-slate-500">{c.team_footer}</p>}
         </div>
       )}

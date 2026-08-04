@@ -98,6 +98,18 @@ export function teamSize(c: LocaleContent): number {
   return last;
 }
 
+// How the row of people sits in its section. Left matches the section heading
+// and every other grid on the site, which is right while the row is full; a
+// short row left-aligned just reads as a hole on the right. Auto switches at
+// exactly that point.
+export const TEAM_ALIGNS = { auto: "auto", left: "left", center: "center" } as const;
+export type TeamAlign = (typeof TEAM_ALIGNS)[keyof typeof TEAM_ALIGNS];
+
+export function teamAlign(c: LocaleContent): TeamAlign {
+  const v = c.team_align as TeamAlign;
+  return Object.values(TEAM_ALIGNS).includes(v) ? v : TEAM_ALIGNS.auto;
+}
+
 /** Hidden members stay in the CMS with all their content, but leave the page. */
 export function isMemberHidden(c: LocaleContent, slot: number): boolean {
   return (c[`t${slot}_hidden`] ?? "") === "1";
@@ -194,6 +206,29 @@ export const UM_OKKUR_FIELDS: SiteField[] = [
   { key: "team_heading", label: "Fyrirsögn", group: "Teymið", type: "heading" },
   { key: "team_body", label: "Texti", group: "Teymið", type: "textarea" },
   { key: "team_footer", label: "Neðanmálstexti", group: "Teymið", type: "text" },
+  {
+    key: "team_align",
+    label: "Staðsetning andlitsmynda",
+    group: "Teymið",
+    type: "choice",
+    options: [
+      {
+        value: TEAM_ALIGNS.auto,
+        label: "Sjálfvirkt",
+        hint: "Mælt með. Raðast frá vinstri á meðan röðin er full (5 eða fleiri), miðjast sjálfkrafa þegar teymið er minna og röðin nær ekki út í kant.",
+      },
+      {
+        value: TEAM_ALIGNS.left,
+        label: "Alltaf vinstri",
+        hint: "Í takt við fyrirsögnina og allar aðrar spjaldaraðir á vefnum. Fáir meðlimir skilja eftir autt svæði hægra megin.",
+      },
+      {
+        value: TEAM_ALIGNS.center,
+        label: "Alltaf miðjað",
+        hint: "Myndirnar miðjast í kaflanum, líka síðasta röðin ef hún er ekki full. Sker sig frá vinstristilltri fyrirsögninni fyrir ofan.",
+      },
+    ],
+  },
   // Owned by the roster control; deliberately has no built-in default, so
   // pre-roster content derives its size from the slots instead (see teamSize).
   { key: "team_size", label: "Fjöldi meðlima", group: "Teymið", type: "internal", editor: "team-members" },
@@ -212,6 +247,7 @@ export const UM_OKKUR_DEFAULTS_IS: LocaleContent = {
     "Fjarlækningar ehf. er íslenskt fyrirtæki, stofnað af læknum árið 2021, sem leysir algeng heilsugæsluerindi í gegnum örugga sjúklingagátt.",
 
   team_layout: TEAM_LAYOUTS.split,
+  team_align: TEAM_ALIGNS.auto,
 
   faces_heading: "Fólkið á bak við Fjarlækningar",
   faces_body:
