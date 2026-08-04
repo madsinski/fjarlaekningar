@@ -145,21 +145,37 @@ export default function HomeView({
     // a second institution is a line of CMS text rather than a code change. The
     // layout switches from side-by-side to a logo row once there is more than
     // one, which is why the logos are not simply inlined into the prose.
-    // A plain section (no card): the copy on the left, and for a single partner
-    // its logo sits on the right (top on mobile) at a modest size.
-    coop: (
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 lg:gap-12">
+    // A plain section (no card). CMS controls: logo placement (right/left/top/
+    // none) and whether the descriptive copy shows. For a single partner the
+    // logo sits beside/above the text at a modest size.
+    coop: (() => {
+      const placement = c.coop_logo_placement || "right";
+      const showText = (c.coop_show_text || "show") !== "hide";
+      const logoEl =
+        coops.length === 1 && coops[0].logo && placement !== "none" ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={coops[0].logo}
+            alt={coops[0].name}
+            width={160}
+            height={160}
+            className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 object-contain mx-auto md:mx-0"
+          />
+        ) : null;
+      const textEl = (
         <div className="max-w-2xl">
-          {c.coop_eyebrow && (
+          {showText && c.coop_eyebrow && (
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-cyan-subtle/60 border border-brand-cyan-muted text-xs font-medium text-[var(--primary-dark)] mb-4">
               <span className="w-2 h-2 rounded-full bg-[var(--primary)]" />
               {c.coop_eyebrow}
             </span>
           )}
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
-            {renderHighlighted(c.coop_heading)}
-          </h2>
-          <p className="mt-4 text-slate-600">{c.coop_body}</p>
+          {showText && (
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+              {renderHighlighted(c.coop_heading)}
+            </h2>
+          )}
+          {showText && c.coop_body && <p className="mt-4 text-slate-600">{c.coop_body}</p>}
 
           {/* Two or more: a logo row, so no single institution reads as the
               headline partner. */}
@@ -185,11 +201,10 @@ export default function HomeView({
               ))}
             </div>
           )}
-          {coops.length === 1 && coops[0].note && (
+          {showText && coops.length === 1 && coops[0].note && (
             <p className="mt-4 text-sm text-slate-500">{coops[0].note}</p>
           )}
-
-          {c.coop_note && <p className="mt-4 font-medium text-slate-900">{c.coop_note}</p>}
+          {showText && c.coop_note && <p className="mt-4 font-medium text-slate-900">{c.coop_note}</p>}
 
           <Link
             href="/thjonusta#live"
@@ -201,19 +216,18 @@ export default function HomeView({
             </svg>
           </Link>
         </div>
-
-        {coops.length === 1 && coops[0].logo && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={coops[0].logo}
-            alt={coops[0].name}
-            width={160}
-            height={160}
-            className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 object-contain order-first md:order-none mx-auto md:mx-0"
-          />
-        )}
-      </div>
-    ),
+      );
+      const rowCls =
+        placement === "top"
+          ? "flex flex-col gap-8"
+          : "flex flex-col md:flex-row md:items-center gap-8 lg:gap-14";
+      const logoFirst = placement === "left" || placement === "top";
+      return (
+        <div className={rowCls}>
+          {logoFirst ? (<>{logoEl}{textEl}</>) : (<>{textEl}{logoEl}</>)}
+        </div>
+      );
+    })(),
 
     // CTA — the primary ask, and the loudest thing on the page.
     // Deliberately placed BEFORE the newsletter: the newsletter is the

@@ -81,6 +81,29 @@ export const HOME_FIELDS: SiteField[] = [
   { key: "coop_list", label: "Stofnanir — ein lína hver: Nafn | /logo.webp | undirtexti", group: "Samstarf", type: "textarea" },
   { key: "coop_note", label: "Áhersla (feitletrað)", group: "Samstarf", type: "textarea" },
   { key: "coop_cta", label: "Hnappur", group: "Samstarf", type: "text" },
+  {
+    key: "coop_logo_placement",
+    label: "Staðsetning merkis",
+    group: "Samstarf",
+    type: "choice",
+    help: "Á við þegar einn samstarfsaðili er skráður.",
+    options: [
+      { value: "right", label: "Til hægri", hint: "Merkið stendur hægra megin við textann (fyrir neðan á símum)." },
+      { value: "left", label: "Til vinstri", hint: "Merkið stendur vinstra megin (efst á símum)." },
+      { value: "top", label: "Efst", hint: "Merkið stendur fyrir ofan textann." },
+      { value: "none", label: "Ekkert merki", hint: "Fela merkið." },
+    ],
+  },
+  {
+    key: "coop_show_text",
+    label: "Lýsingartexti",
+    group: "Samstarf",
+    type: "choice",
+    options: [
+      { value: "show", label: "Með texta", hint: "Sýna yfirskrift, fyrirsögn og lýsingu." },
+      { value: "hide", label: "Án texta", hint: "Sýna aðeins merki og hnapp." },
+    ],
+  },
 
   // Fréttabréf (newsletter opt-in)
   { key: "news_heading", label: "Fyrirsögn", group: "Fréttabréf", type: "heading" },
@@ -144,6 +167,8 @@ export const HOME_DEFAULTS_IS: LocaleContent = {
   coop_list: "Heilbrigðisstofnun Suðurlands | /hsu-logo.webp | Tilraunaverkefni til eins árs",
   coop_note: "Þjónustan er nú aðeins í boði fyrir skjólstæðinga sem eru skráðir hjá HSU.",
   coop_cta: "Hvar er þjónustan virk?",
+  coop_logo_placement: "right",
+  coop_show_text: "show",
 
   news_heading: "Fylgstu með því sem er að ==gerast==",
   news_body:
