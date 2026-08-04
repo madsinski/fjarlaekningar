@@ -94,7 +94,7 @@ function FjarLogo({ onDark = false }: { onDark?: boolean }) {
 function HsuCobrand({ label = "Í samstarfi við HSU", height = "11mm", onDark = false }: { label?: string; height?: string; onDark?: boolean }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "3mm" }}>
-      <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: onDark ? "#eafaff" : "var(--muted)", textAlign: "right", lineHeight: 1.25, maxWidth: "30mm" }}>{label}</span>
+      <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: onDark ? "#eafaff" : "var(--muted)", textAlign: "right", lineHeight: 1.3, maxWidth: "46mm" }}>{label}</span>
       {onDark ? (
         // On the dark hero the logo needs a light plate to read.
         <span style={{ background: "#fff", borderRadius: "2mm", padding: "1.5mm 2.5mm", display: "inline-flex" }}>
