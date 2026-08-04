@@ -127,12 +127,32 @@ export default function PublicSurveyPage() {
       </div>
     );
 
+  // Dual-branding lockup — Fjarlækningar (platform) left, institution right.
+  // Shared by the header and the thank-you screen so branding is consistent.
+  const brandRow = (
+    <div className="flex items-center justify-between gap-4">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/fjarlaekningar-logo.svg" alt="Fjarlækningar" className="h-8 w-auto" />
+      {survey.brand_logo_url ? (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img src={survey.brand_logo_url} alt={survey.brand_name || ""} className="h-10 w-auto object-contain" />
+      ) : survey.brand_name ? (
+        <span className="text-sm font-semibold text-slate-700 text-right">{survey.brand_name}</span>
+      ) : null}
+    </div>
+  );
+
   if (done)
     return (
-      <div className="max-w-2xl mx-auto px-4 py-24 text-center">
-        <div className="w-14 h-14 rounded-full bg-brand-cyan-subtle text-[var(--primary-dark)] flex items-center justify-center mx-auto mb-4 text-2xl">✓</div>
-        <h1 className="text-2xl font-bold text-slate-900">{tr.thanks}</h1>
-        <p className="text-slate-600 mt-2">{tr.thanksBody}</p>
+      <div className="min-h-screen bg-[var(--background)]">
+        <div className="border-b border-slate-200 bg-gradient-to-b from-brand-cyan-subtle to-[var(--background)]">
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">{brandRow}</div>
+        </div>
+        <div className="max-w-2xl mx-auto px-4 py-24 text-center">
+          <div className="w-14 h-14 rounded-full bg-brand-cyan-subtle text-[var(--primary-dark)] flex items-center justify-center mx-auto mb-4 text-2xl">✓</div>
+          <h1 className="text-2xl font-bold text-slate-900">{tr.thanks}</h1>
+          <p className="text-slate-600 mt-2">{tr.thanksBody}</p>
+        </div>
       </div>
     );
 
@@ -177,16 +197,7 @@ export default function PublicSurveyPage() {
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
           {localeToggle && <div className="flex justify-end mb-3">{localeToggle}</div>}
           {/* Dual branding: Fjarlækningar (platform) left, institution right */}
-          <div className="flex items-center justify-between gap-4 mb-6">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/fjarlaekningar-logo.svg" alt="Fjarlækningar" className="h-8 w-auto" />
-            {survey.brand_logo_url ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img src={survey.brand_logo_url} alt={survey.brand_name || ""} className="h-10 w-auto object-contain" />
-            ) : survey.brand_name ? (
-              <span className="text-sm font-semibold text-slate-700 text-right">{survey.brand_name}</span>
-            ) : null}
-          </div>
+          <div className="mb-6">{brandRow}</div>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">{title}</h1>
           {description && <p className="mt-3 text-base text-slate-600">{description}</p>}
         </div>
