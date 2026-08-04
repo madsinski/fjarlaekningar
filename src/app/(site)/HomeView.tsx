@@ -194,6 +194,9 @@ export default function HomeView({
                   <div className="mt-3 text-sm font-semibold leading-tight text-slate-900 break-words">
                     {co.name}
                   </div>
+                  {co.note && (
+                    <div className="mt-1 text-xs leading-snug text-slate-500 break-words">{co.note}</div>
+                  )}
                 </div>
               ))}
             </div>
