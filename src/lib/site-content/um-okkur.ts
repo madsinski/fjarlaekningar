@@ -200,6 +200,17 @@ export const UM_OKKUR_FIELDS: SiteField[] = [
   { key: "faces_body", label: "Texti", group: "Hópmynd", type: "textarea" },
   { key: "faces_photo", label: "Hópmynd", group: "Hópmynd", type: "image" },
   { key: "faces_caption", label: "Myndatexti (valfrjálst)", group: "Hópmynd", type: "text" },
+  {
+    key: "faces_photo_size",
+    label: "Stærð myndar",
+    group: "Hópmynd",
+    type: "choice",
+    options: [
+      { value: "large", label: "Stór" },
+      { value: "medium", label: "Miðlungs" },
+      { value: "small", label: "Lítil" },
+    ],
+  },
 
   // Pillars
   { key: "p1_title", label: "Stoð 1 — titill", group: "Stoðir", type: "text" },
@@ -282,6 +293,7 @@ export const UM_OKKUR_DEFAULTS_IS: LocaleContent = {
     "Þjónustan er ekki ópersónuleg tölvugátt — á bak við hana stendur teymi lækna og sérfræðinga af holdi og blóði sem leggur metnað í hvert einasta erindi.",
   faces_photo: "/team/fjarlaeknar-hopmynd.jpg",
   faces_caption: "",
+  faces_photo_size: "large",
 
   p1_title: "Hlutverk okkar",
   p1_body:

@@ -63,6 +63,14 @@ export default function UmOkkurView({
     { title: c.v4_title, body: c.v4_body, icon: c.v4_icon, fallback: "sparkles" },
   ];
 
+  // Group-photo size for the split / frame layouts — CMS choice; "large" = now.
+  const photoMaxH =
+    c.faces_photo_size === "small"
+      ? "max-h-[300px]"
+      : c.faces_photo_size === "medium"
+        ? "max-h-[440px]"
+        : "max-h-[620px]";
+
   // The group photo, shared by both team layouts. Only the column span differs
   // between them, so it takes it as an argument rather than being duplicated.
   const groupPhoto = (className: string) =>
@@ -72,7 +80,7 @@ export default function UmOkkurView({
         <img
           src={c.faces_photo}
           alt={c.faces_heading || "Teymið"}
-          className="w-full rounded-3xl object-cover shadow-lg ring-1 ring-slate-200"
+          className={`w-full ${photoMaxH} rounded-3xl object-cover shadow-lg ring-1 ring-slate-200`}
         />
         {c.faces_caption && (
           <figcaption className="mt-3 text-sm text-slate-500">{c.faces_caption}</figcaption>
