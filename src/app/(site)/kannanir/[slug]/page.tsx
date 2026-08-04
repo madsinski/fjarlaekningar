@@ -175,21 +175,19 @@ export default function PublicSurveyPage() {
       {/* Branded header — mirrors the site's PageHero */}
       <div className="border-b border-slate-200 bg-gradient-to-b from-brand-cyan-subtle to-[var(--background)]">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
-          {localeToggle && <div className="flex justify-end mb-4">{localeToggle}</div>}
-          {survey.brand_logo_url || survey.brand_name ? (
-            <div className="flex items-center gap-3 mb-3">
-              {survey.brand_logo_url && (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={survey.brand_logo_url} alt={survey.brand_name || ""} className="h-10 w-auto object-contain" />
-              )}
-              {survey.brand_name && <span className="text-sm font-semibold text-slate-700">{survey.brand_name}</span>}
-            </div>
-          ) : (
-            <span className="inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--primary-dark)]">
-              <span aria-hidden className="h-px w-6 bg-[var(--primary)]" /> Fjarlækningar
-            </span>
-          )}
-          <h1 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">{title}</h1>
+          {localeToggle && <div className="flex justify-end mb-3">{localeToggle}</div>}
+          {/* Dual branding: Fjarlækningar (platform) left, institution right */}
+          <div className="flex items-center justify-between gap-4 mb-6">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/fjarlaekningar-logo.svg" alt="Fjarlækningar" className="h-8 w-auto" />
+            {survey.brand_logo_url ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={survey.brand_logo_url} alt={survey.brand_name || ""} className="h-10 w-auto object-contain" />
+            ) : survey.brand_name ? (
+              <span className="text-sm font-semibold text-slate-700 text-right">{survey.brand_name}</span>
+            ) : null}
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">{title}</h1>
           {description && <p className="mt-3 text-base text-slate-600">{description}</p>}
         </div>
       </div>

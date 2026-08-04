@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Trash2, ChevronUp, ChevronDown, Save, Globe, Languages, Sparkles } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, ChevronUp, ChevronDown, Save, Globe, Languages, Sparkles, Copy, Check } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import SurveyFields from "@/app/components/SurveyFields";
 import {
@@ -70,6 +70,7 @@ export default function SurveyEditPage() {
   const [brandName, setBrandName] = useState("");
   const [brandLogoUrl, setBrandLogoUrl] = useState("");
   const [logoBusy, setLogoBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
@@ -191,6 +192,16 @@ export default function SurveyEditPage() {
   };
   const unpublish = () => patch({ status: "draft" }, "Tekið úr birtingu.");
 
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/kannanir/${survey?.slug ?? ""}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setMsg({ type: "err", text: "Ekki tókst að afrita hlekk" });
+    }
+  };
+
   const translate = async () => {
     setBusy(true);
     setMsg(null);
@@ -250,11 +261,17 @@ export default function SurveyEditPage() {
             /{survey.slug} · {survey.status === "published" ? <span className="text-emerald-700">Birt</span> : <span className="text-amber-600">Drög</span>}
           </div>
         </div>
-        {survey.status === "published" && (
-          <a href={`/kannanir/${survey.slug}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-cyan-700 hover:text-cyan-900">
-            <Globe className="w-4 h-4" /> Opna könnun
-          </a>
-        )}
+        <div className="flex items-center gap-2">
+          <button onClick={copyLink} className="inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg px-3 py-1.5">
+            {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+            {copied ? "Afritað!" : "Afrita hlekk"}
+          </button>
+          {survey.status === "published" && (
+            <a href={`/kannanir/${survey.slug}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-cyan-700 hover:text-cyan-900 border border-cyan-200 rounded-lg px-3 py-1.5">
+              <Globe className="w-4 h-4" /> Opna könnun
+            </a>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
@@ -480,20 +497,17 @@ export default function SurveyEditPage() {
             </div>
             <div className="rounded-2xl border border-slate-200 overflow-hidden">
               <div className="bg-gradient-to-b from-brand-cyan-subtle to-[var(--background)] px-5 py-6 border-b border-slate-200">
-                {brandLogoUrl || brandName ? (
-                  <div className="flex items-center gap-3 mb-3">
-                    {brandLogoUrl && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={brandLogoUrl} alt={brandName || ""} className="h-9 w-auto object-contain" />
-                    )}
-                    {brandName && <span className="text-sm font-semibold text-slate-700">{brandName}</span>}
-                  </div>
-                ) : (
-                  <span className="inline-flex items-center gap-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--primary-dark)]">
-                    <span aria-hidden className="h-px w-5 bg-[var(--primary)]" /> Fjarlækningar
-                  </span>
-                )}
-                <h3 className="mt-1 text-xl font-bold text-slate-900">{previewLocale === "en" && survey.title_en ? survey.title_en : title}</h3>
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/fjarlaekningar-logo.svg" alt="Fjarlækningar" className="h-7 w-auto" />
+                  {brandLogoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={brandLogoUrl} alt={brandName || ""} className="h-9 w-auto object-contain" />
+                  ) : brandName ? (
+                    <span className="text-sm font-semibold text-slate-700 text-right">{brandName}</span>
+                  ) : null}
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">{previewLocale === "en" && survey.title_en ? survey.title_en : title}</h3>
                 {(previewLocale === "en" && survey.description_en ? survey.description_en : description) && (
                   <p className="text-slate-600 mt-2 text-sm">{previewLocale === "en" && survey.description_en ? survey.description_en : description}</p>
                 )}
