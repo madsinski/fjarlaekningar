@@ -10,6 +10,8 @@ alter table public.surveys add column if not exists description_en text;
 alter table public.surveys add column if not exists layout text not null default 'list';
 alter table public.surveys add column if not exists brand_name text;
 alter table public.surveys add column if not exists brand_logo_url text;
+-- Which logos show in the header: 'both' (default), 'fjarlaekningar', or 'client'.
+alter table public.surveys add column if not exists brand_mode text not null default 'both';
 
 -- 2. Cached AI summary, one row per survey (regenerate = upsert). All reads and
 --    writes go through the service-role API, so RLS is enabled with no policies

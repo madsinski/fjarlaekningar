@@ -21,6 +21,7 @@ interface Survey {
   layout?: string | null;
   brand_name?: string | null;
   brand_logo_url?: string | null;
+  brand_mode?: string | null;
 }
 
 const T = {
@@ -127,20 +128,37 @@ export default function PublicSurveyPage() {
       </div>
     );
 
-  // Dual-branding lockup — Fjarlækningar (platform) left, institution right.
-  // Shared by the header and the thank-you screen so branding is consistent.
-  const brandRow = (
-    <div className="flex items-center justify-between gap-4">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/fjarlaekningar-logo.svg" alt="Fjarlækningar" className="h-8 w-auto" />
-      {survey.brand_logo_url ? (
-        /* eslint-disable-next-line @next/next/no-img-element */
-        <img src={survey.brand_logo_url} alt={survey.brand_name || ""} className="h-10 w-auto object-contain" />
-      ) : survey.brand_name ? (
-        <span className="text-sm font-semibold text-slate-700 text-right">{survey.brand_name}</span>
-      ) : null}
-    </div>
+  // Header branding — Fjarlækningar (platform) left, institution right. The
+  // brand_mode setting picks which side(s) show: both / fjarlaekningar / client.
+  // Shared by the header and the thank-you screen so branding stays consistent.
+  const brandMode = survey.brand_mode || "both";
+  const fjarLogo = (
+    /* eslint-disable-next-line @next/next/no-img-element */
+    <img src="/fjarlaekningar-logo.svg" alt="Fjarlækningar" className="h-8 w-auto object-contain" />
   );
+  const clientLockup =
+    survey.brand_logo_url || survey.brand_name ? (
+      <div className="flex items-center gap-2.5">
+        {survey.brand_logo_url && (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={survey.brand_logo_url} alt={survey.brand_name || ""} className="h-9 w-auto object-contain" />
+        )}
+        {survey.brand_name && (
+          <span className="text-sm font-semibold text-slate-800 leading-tight max-w-[13rem]">{survey.brand_name}</span>
+        )}
+      </div>
+    ) : null;
+  const showFjar = brandMode !== "client";
+  const showClient = brandMode !== "fjarlaekningar" && !!clientLockup;
+  const brandRow =
+    showFjar && showClient ? (
+      <div className="flex items-center justify-between gap-4">
+        {fjarLogo}
+        {clientLockup}
+      </div>
+    ) : (
+      <div className="flex items-center gap-4">{showFjar ? fjarLogo : clientLockup}</div>
+    );
 
   if (done)
     return (

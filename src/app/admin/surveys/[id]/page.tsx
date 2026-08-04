@@ -29,6 +29,7 @@ interface Survey {
   layout?: string | null;
   brand_name?: string | null;
   brand_logo_url?: string | null;
+  brand_mode?: string | null;
 }
 interface ResponseRow {
   id: string;
@@ -69,6 +70,7 @@ export default function SurveyEditPage() {
   const [layout, setLayout] = useState<"list" | "steps">("list");
   const [brandName, setBrandName] = useState("");
   const [brandLogoUrl, setBrandLogoUrl] = useState("");
+  const [brandMode, setBrandMode] = useState<"both" | "fjarlaekningar" | "client">("both");
   const [logoBusy, setLogoBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
@@ -116,6 +118,7 @@ export default function SurveyEditPage() {
       setLayout(s.layout === "steps" ? "steps" : "list");
       setBrandName(s.brand_name || "");
       setBrandLogoUrl(s.brand_logo_url || "");
+      setBrandMode(s.brand_mode === "fjarlaekningar" || s.brand_mode === "client" ? s.brand_mode : "both");
       setQuestions(Array.isArray(s.questions) ? s.questions : []);
       setResponses(j.responses || []);
     }
@@ -170,7 +173,7 @@ export default function SurveyEditPage() {
     await load();
   };
 
-  const brandPayload = () => ({ brand_name: brandName, brand_logo_url: brandLogoUrl });
+  const brandPayload = () => ({ brand_name: brandName, brand_logo_url: brandLogoUrl, brand_mode: brandMode });
   const save = () => patch({ title, description, layout, ...brandPayload(), questions }, "Vistað.");
   const publish = () => patch({ title, description, layout, ...brandPayload(), questions, status: "published" }, "Birt.");
 
@@ -321,6 +324,14 @@ export default function SurveyEditPage() {
                   {brandLogoUrl && <button type="button" onClick={() => setBrandLogoUrl("")} className="rounded-md px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100">Fjarlægja</button>}
                 </div>
               )}
+            </div>
+            <div className="mt-3">
+              <label className="block text-[11px] font-medium text-slate-500 mb-1">Merki í haus</label>
+              <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden text-xs">
+                {([["both", "Bæði"], ["fjarlaekningar", "Fjarlækningar"], ["client", "Stofnun"]] as const).map(([v, l]) => (
+                  <button key={v} type="button" disabled={!isAdmin} onClick={() => setBrandMode(v)} className={`px-2.5 py-1.5 ${brandMode === v ? "bg-cyan-600 text-white" : "text-slate-600 hover:bg-slate-50"} disabled:opacity-60`}>{l}</button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -497,16 +508,29 @@ export default function SurveyEditPage() {
             </div>
             <div className="rounded-2xl border border-slate-200 overflow-hidden">
               <div className="bg-gradient-to-b from-brand-cyan-subtle to-[var(--background)] px-5 py-6 border-b border-slate-200">
-                <div className="flex items-center justify-between gap-3 mb-4">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/fjarlaekningar-logo.svg" alt="Fjarlækningar" className="h-7 w-auto" />
-                  {brandLogoUrl ? (
+                {(() => {
+                  const fjar = (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={brandLogoUrl} alt={brandName || ""} className="h-9 w-auto object-contain" />
-                  ) : brandName ? (
-                    <span className="text-sm font-semibold text-slate-700 text-right">{brandName}</span>
-                  ) : null}
-                </div>
+                    <img src="/fjarlaekningar-logo.svg" alt="Fjarlækningar" className="h-7 w-auto object-contain" />
+                  );
+                  const client =
+                    brandLogoUrl || brandName ? (
+                      <div className="flex items-center gap-2.5">
+                        {brandLogoUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={brandLogoUrl} alt={brandName || ""} className="h-8 w-auto object-contain" />
+                        )}
+                        {brandName && <span className="text-sm font-semibold text-slate-800 leading-tight max-w-[12rem]">{brandName}</span>}
+                      </div>
+                    ) : null;
+                  const sf = brandMode !== "client";
+                  const sc = brandMode !== "fjarlaekningar" && !!client;
+                  return sf && sc ? (
+                    <div className="flex items-center justify-between gap-3 mb-4">{fjar}{client}</div>
+                  ) : (
+                    <div className="flex items-center gap-3 mb-4">{sf ? fjar : client}</div>
+                  );
+                })()}
                 <h3 className="text-xl font-bold text-slate-900">{previewLocale === "en" && survey.title_en ? survey.title_en : title}</h3>
                 {(previewLocale === "en" && survey.description_en ? survey.description_en : description) && (
                   <p className="text-slate-600 mt-2 text-sm">{previewLocale === "en" && survey.description_en ? survey.description_en : description}</p>
