@@ -21,6 +21,8 @@ export const PORTAL_URL =
 
 export type PosterFields = {
   badge: string;
+  // "poster" = logos on a white strip + inset hero; "hero" = full-bleed dark hero.
+  headerLayout: "hero" | "poster";
   eyebrow: string;
   // Free-form heading: ==double equals== colours words blue; newlines break lines.
   heading: string;
@@ -156,6 +158,7 @@ const DEFAULT_SERVICES: Service[] = [
 // ── Default field sets (team-reviewed HSN presentation language) ──────────
 export const DEFAULT_POSTER: PosterFields = {
   badge: "Í samstarfi við HSU",
+  headerLayout: "poster",
   eyebrow: "Íslensk fjarlækningaþjónusta",
   heading: "Þarftu að hitta lækni?\nÞú getur gert það ==þar sem þú ert.==",
   lead: "Fjarlækningar leysa einföld og afmörkuð erindi. Þú svarar stuttum spurningalista og læknir metur málið og leggur til meðferð — sama þjónusta og á læknastofu, en skilvirkari leið og styttri biðlistar.",

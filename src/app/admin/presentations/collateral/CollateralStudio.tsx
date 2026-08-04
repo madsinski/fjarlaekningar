@@ -463,6 +463,13 @@ export function CollateralStudio({
           {active.type === "poster" ? (
             <>
               <Section title="Haus">
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-gray-600">Framsetning haus</span>
+                  <select value={active.poster.headerLayout} onChange={(e) => patchPoster({ headerLayout: e.target.value as "hero" | "poster" })} className={inputCls}>
+                    <option value="poster">Veggspjaldsstíll (merki efst, innfelldur haus)</option>
+                    <option value="hero">Hetja (heilflötur með merkjum inni)</option>
+                  </select>
+                </label>
                 <Field label="Samstarfstexti (HSU)" value={active.poster.badge} onChange={(v) => patchPoster({ badge: v })} />
                 <Field label="Yfirskrift" value={active.poster.eyebrow} onChange={(v) => patchPoster({ eyebrow: v })} />
                 <Field label="Fyrirsögn" value={active.poster.heading} onChange={(v) => patchPoster({ heading: v })} area />

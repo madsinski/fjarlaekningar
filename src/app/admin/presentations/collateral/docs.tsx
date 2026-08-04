@@ -113,16 +113,31 @@ function HsuCobrand({ label = "Í samstarfi við HSU", height = "11mm", onDark =
 function Poster({ p }: { p: PosterFields }) {
   return (
     <div className="a4">
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11mm 14mm 6mm" }}>
-        <FjarLogo />
-        <HsuCobrand label={p.badge} />
-      </div>
-
-      <div className="hero" style={{ padding: "10mm 14mm 10mm", margin: "0 14mm", borderRadius: "6mm" }}>
-        <div className="eyebrow" style={{ marginBottom: "3.5mm" }}>{p.eyebrow}</div>
-        <h1 style={{ fontSize: "31px", maxWidth: "155mm" }}>{renderHeading(p.heading)}</h1>
-        <p style={{ marginTop: "4mm", fontSize: "13px", lineHeight: 1.5, maxWidth: "155mm", color: "#cdeefb" }}>{p.lead}</p>
-      </div>
+      {p.headerLayout === "hero" ? (
+        // Full-bleed dark hero with the logos inside it.
+        <div className="hero" style={{ padding: "14mm 14mm 12mm" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10mm" }}>
+            <FjarLogo onDark />
+            <HsuCobrand onDark height="10mm" label={p.badge} />
+          </div>
+          <div className="eyebrow" style={{ marginBottom: "3.5mm" }}>{p.eyebrow}</div>
+          <h1 style={{ fontSize: "33px", maxWidth: "165mm" }}>{renderHeading(p.heading)}</h1>
+          <p style={{ marginTop: "4mm", fontSize: "13px", lineHeight: 1.5, maxWidth: "165mm", color: "#cdeefb" }}>{p.lead}</p>
+        </div>
+      ) : (
+        // Veggspjald style: logos on a white strip, then an inset dark hero.
+        <>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11mm 14mm 6mm" }}>
+            <FjarLogo />
+            <HsuCobrand label={p.badge} />
+          </div>
+          <div className="hero" style={{ padding: "10mm 14mm 10mm", margin: "0 14mm", borderRadius: "6mm" }}>
+            <div className="eyebrow" style={{ marginBottom: "3.5mm" }}>{p.eyebrow}</div>
+            <h1 style={{ fontSize: "31px", maxWidth: "155mm" }}>{renderHeading(p.heading)}</h1>
+            <p style={{ marginTop: "4mm", fontSize: "13px", lineHeight: 1.5, maxWidth: "155mm", color: "#cdeefb" }}>{p.lead}</p>
+          </div>
+        </>
+      )}
 
       <div style={{ padding: "8mm 14mm 0" }}>
         <h2 style={{ fontSize: "15px", marginBottom: "4mm" }}>{p.servicesTitle}</h2>
