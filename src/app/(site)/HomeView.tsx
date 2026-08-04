@@ -151,6 +151,12 @@ export default function HomeView({
     coop: (() => {
       const placement = c.coop_logo_placement || "right";
       const showText = (c.coop_show_text || "show") !== "hide";
+      const logoSize =
+        c.coop_logo_size === "small"
+          ? "w-14 h-14 sm:w-16 sm:h-16"
+          : c.coop_logo_size === "medium"
+            ? "w-20 h-20 sm:w-24 sm:h-24"
+            : "w-24 h-24 sm:w-28 sm:h-28";
       const logoEl =
         coops.length === 1 && coops[0].logo && placement !== "none" ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -159,7 +165,7 @@ export default function HomeView({
             alt={coops[0].name}
             width={160}
             height={160}
-            className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 object-contain mx-auto md:mx-0"
+            className={`${logoSize} shrink-0 object-contain mx-auto md:mx-0`}
           />
         ) : null;
       const textEl = (

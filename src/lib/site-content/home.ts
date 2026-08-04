@@ -104,6 +104,17 @@ export const HOME_FIELDS: SiteField[] = [
       { value: "hide", label: "Án texta", hint: "Sýna aðeins merki og hnapp." },
     ],
   },
+  {
+    key: "coop_logo_size",
+    label: "Stærð merkis",
+    group: "Samstarf",
+    type: "choice",
+    options: [
+      { value: "small", label: "Lítið" },
+      { value: "medium", label: "Miðlungs" },
+      { value: "large", label: "Stórt" },
+    ],
+  },
 
   // Fréttabréf (newsletter opt-in)
   { key: "news_heading", label: "Fyrirsögn", group: "Fréttabréf", type: "heading" },
@@ -169,6 +180,7 @@ export const HOME_DEFAULTS_IS: LocaleContent = {
   coop_cta: "Hvar er þjónustan virk?",
   coop_logo_placement: "right",
   coop_show_text: "show",
+  coop_logo_size: "large",
 
   news_heading: "Fylgstu með því sem er að ==gerast==",
   news_body:
