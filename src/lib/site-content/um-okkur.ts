@@ -87,7 +87,7 @@ export function umOkkurSections(c: LocaleContent): SiteSection[] {
 export const TEAM_MEMBER_SLOTS = 8;
 
 /** The editor group the roster control renders after. */
-export const TEAM_ROSTER_GROUP = "Teymið";
+export const TEAM_ROSTER_GROUP = "Teymið & hópmynd";
 
 /**
  * How many slots are live.
@@ -153,7 +153,7 @@ export const UM_OKKUR_FIELDS: SiteField[] = [
   {
     key: "team_layout",
     label: "Uppsetning",
-    group: "Hópmynd & teymi — uppsetning",
+    group: "Teymið & hópmynd",
     type: "choice",
     help: "Á hópmyndin og teymisspjöldin að vera sinn hvor kaflinn, eða einn sameinaður kafli?",
     options: [
@@ -196,14 +196,14 @@ export const UM_OKKUR_FIELDS: SiteField[] = [
   },
 
   // Group photo
-  { key: "faces_heading", label: "Fyrirsögn", group: "Hópmynd", type: "heading" },
-  { key: "faces_body", label: "Texti", group: "Hópmynd", type: "textarea" },
-  { key: "faces_photo", label: "Hópmynd", group: "Hópmynd", type: "image" },
-  { key: "faces_caption", label: "Myndatexti (valfrjálst)", group: "Hópmynd", type: "text" },
+  { key: "faces_heading", label: "Fyrirsögn", group: "Teymið & hópmynd", type: "heading" },
+  { key: "faces_body", label: "Texti", group: "Teymið & hópmynd", type: "textarea" },
+  { key: "faces_photo", label: "Hópmynd", group: "Teymið & hópmynd", type: "image" },
+  { key: "faces_caption", label: "Myndatexti (valfrjálst)", group: "Teymið & hópmynd", type: "text" },
   {
     key: "faces_photo_size",
     label: "Stærð myndar",
-    group: "Hópmynd",
+    group: "Teymið & hópmynd",
     type: "choice",
     options: [
       { value: "large", label: "Stór" },
@@ -242,13 +242,12 @@ export const UM_OKKUR_FIELDS: SiteField[] = [
   { key: "v4_icon", label: "Gildi 4 — tákn", group: "Gildin", type: "icon" },
 
   // Team
-  { key: "team_heading", label: "Fyrirsögn", group: "Teymið", type: "heading" },
-  { key: "team_body", label: "Texti", group: "Teymið", type: "textarea" },
-  { key: "team_footer", label: "Neðanmálstexti", group: "Teymið", type: "text" },
+  { key: "team_heading", label: "Fyrirsögn", group: "Teymið & hópmynd", type: "heading" },
+  { key: "team_footer", label: "Neðanmálstexti", group: "Teymið & hópmynd", type: "text" },
   {
     key: "team_align",
     label: "Staðsetning andlitsmynda",
-    group: "Teymið",
+    group: "Teymið & hópmynd",
     type: "choice",
     options: [
       {
@@ -270,7 +269,7 @@ export const UM_OKKUR_FIELDS: SiteField[] = [
   },
   // Owned by the roster control; deliberately has no built-in default, so
   // pre-roster content derives its size from the slots instead (see teamSize).
-  { key: "team_size", label: "Fjöldi meðlima", group: "Teymið", type: "internal", editor: "team-members" },
+  { key: "team_size", label: "Fjöldi meðlima", group: "Teymið & hópmynd", type: "internal", editor: "team-members" },
 
   // Team members (one boxed group each in the editor)
   ...teamMemberFields,
@@ -290,7 +289,7 @@ export const UM_OKKUR_DEFAULTS_IS: LocaleContent = {
 
   faces_heading: "Fólkið á bak við Fjarlækningar",
   faces_body:
-    "Þjónustan er ekki ópersónuleg tölvugátt — á bak við hana stendur teymi lækna og sérfræðinga af holdi og blóði sem leggur metnað í hvert einasta erindi.",
+    "Þjónustan er ekki ópersónuleg tölvugátt — á bak við hana stendur teymi lækna og sérfræðinga af holdi og blóði sem leggur metnað í hvert einasta erindi. Við erum teymi lækna og sérfræðinga með reynslu víða innan heilbrigðiskerfisins, sem hefur ástríðu fyrir því að finna nýjar leiðir til þess að bæta heilbrigðiskerfið.",
   faces_photo: "/team/fjarlaeknar-hopmynd.jpg",
   faces_caption: "",
   faces_photo_size: "large",
@@ -327,8 +326,6 @@ export const UM_OKKUR_DEFAULTS_IS: LocaleContent = {
   v4_icon: "sparkles",
 
   team_heading: "Teymið á bakvið Fjarlækningar",
-  team_body:
-    "Tveir læknar stofnuðu Fjarlækningar. Í dag stendur að baki þjónustunni teymi lækna og sérfræðinga — smelltu á mynd til að sjá hana stærri.",
   team_footer: "Auk hóps starfandi lækna sem afgreiða erindi í sjúklingagáttinni.",
 
   t1_name: "Victor Guðmundsson",
