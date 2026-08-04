@@ -12,6 +12,33 @@ export const UM_OKKUR_SECTIONS: SiteSection[] = [
   { id: "cta", label: "Ákall (CTA)" },
 ];
 
+// The group photo ("Hópmynd") and the team grid ("Teymið") are two takes on the
+// same subject, so the page offers two arrangements and the CMS switches
+// between them:
+//   split    — the built-in behaviour: two separate bands, wherever they are
+//              ordered, each with its own background.
+//   combined — one band: the group photo and its copy on top, a divider, then
+//              the team grid below. The merged band takes the "Hópmynd" slot in
+//              the section order and the separate "Teymið" band disappears.
+export const TEAM_LAYOUTS = { split: "split", combined: "combined" } as const;
+
+export function isCombinedTeam(c: LocaleContent): boolean {
+  return (c.team_layout || TEAM_LAYOUTS.split) === TEAM_LAYOUTS.combined;
+}
+
+/**
+ * The sections that actually render for the given content. In combined mode the
+ * two team bands merge, so only one of them is a real, movable section — the
+ * CMS order list must show one entry, not two, or moving "Teymið" would appear
+ * to do nothing.
+ */
+export function umOkkurSections(c: LocaleContent): SiteSection[] {
+  if (!isCombinedTeam(c)) return UM_OKKUR_SECTIONS;
+  return UM_OKKUR_SECTIONS.filter((s) => s.id !== "team").map((s) =>
+    s.id === "faces" ? { ...s, label: "Teymið (hópmynd + fólk)" } : s,
+  );
+}
+
 // Team members are a fixed set of numbered slots (like the pillars/values
 // above), so the existing flat CMS pipeline handles them with no new machinery
 // beyond the "image" field type. Empty slots simply don't render on the page.
@@ -36,6 +63,29 @@ export const UM_OKKUR_FIELDS: SiteField[] = [
   { key: "hero_eyebrow", label: "Merki (lítill borði)", group: "Hetjusvæði", type: "text" },
   { key: "hero_heading", label: "Fyrirsögn", group: "Hetjusvæði", type: "heading" },
   { key: "hero_body", label: "Undirtexti", group: "Hetjusvæði", type: "textarea" },
+
+  // Layout switch for the two team bands (see TEAM_LAYOUTS above). Placed in
+  // its own group at the top of the team-related fields, because it changes
+  // which of the fields below actually appear on the page.
+  {
+    key: "team_layout",
+    label: "Uppsetning",
+    group: "Hópmynd & teymi — uppsetning",
+    type: "choice",
+    help: "Á hópmyndin og teymisspjöldin að vera sinn hvor kaflinn, eða einn sameinaður kafli?",
+    options: [
+      {
+        value: TEAM_LAYOUTS.split,
+        label: "Aðskildir kaflar",
+        hint: "Sjálfgefið. „Hópmynd“ og „Teymið“ eru tveir sjálfstæðir kaflar sem má raða hvorum í sínu lagi.",
+      },
+      {
+        value: TEAM_LAYOUTS.combined,
+        label: "Sameinaður kafli",
+        hint: "Hópmyndin, textinn og teymisspjöldin renna saman í einn kafla. Fyrirsögn og texti úr „Hópmynd“ leiða kaflann; fyrirsögn „Teymið“ verður millifyrirsögn yfir spjöldunum. Kaflinn situr í sæti „Hópmynd“ í röðinni.",
+      },
+    ],
+  },
 
   // Group photo
   { key: "faces_heading", label: "Fyrirsögn", group: "Hópmynd", type: "heading" },
@@ -89,6 +139,8 @@ export const UM_OKKUR_DEFAULTS_IS: LocaleContent = {
   hero_heading: "Stofnað af ==læknum== árið 2021",
   hero_body:
     "Fjarlækningar ehf. er íslenskt fyrirtæki, stofnað af læknum árið 2021, sem leysir algeng heilsugæsluerindi í gegnum örugga sjúklingagátt.",
+
+  team_layout: TEAM_LAYOUTS.split,
 
   faces_heading: "Fólkið á bak við Fjarlækningar",
   faces_body:

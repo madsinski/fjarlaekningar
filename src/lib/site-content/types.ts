@@ -9,13 +9,26 @@ export type FieldType =
   | "textarea"  // multi-line
   | "heading"   // single-line, supports ==word== brand-blue highlighting
   | "icon"      // value is a key from ICON_KEYS (see icons.ts)
-  | "image";    // value is an image URL/path; one locale-independent value
+  | "image"     // value is an image URL/path; one locale-independent value
+  | "choice";   // value is one of `options`; one locale-independent value
+
+/** One alternative of a "choice" field, rendered as a segmented switch. */
+export interface SiteFieldOption {
+  value: string;
+  label: string;
+  /** Short explanation shown under the switch when the option is selected. */
+  hint?: string;
+}
 
 export interface SiteField {
   key: string;
   label: string;
   group: string;
   type: FieldType;
+  /** Required for type "choice"; ignored otherwise. First entry is the default. */
+  options?: SiteFieldOption[];
+  /** Optional helper line under the field label in the editor. */
+  help?: string;
 }
 
 export type Locale = "is" | "en";

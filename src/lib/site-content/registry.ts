@@ -13,7 +13,7 @@ import {
 } from "./types";
 import { HOME_FIELDS, HOME_SECTIONS, HOME_DEFAULTS_IS, HOME_DEFAULTS_EN } from "./home";
 import { THJONUSTA_FIELDS, THJONUSTA_SECTIONS, THJONUSTA_DEFAULTS_IS, THJONUSTA_DEFAULTS_EN } from "./thjonusta";
-import { UM_OKKUR_FIELDS, UM_OKKUR_SECTIONS, UM_OKKUR_DEFAULTS_IS, UM_OKKUR_DEFAULTS_EN } from "./um-okkur";
+import { UM_OKKUR_FIELDS, UM_OKKUR_SECTIONS, UM_OKKUR_DEFAULTS_IS, UM_OKKUR_DEFAULTS_EN, umOkkurSections } from "./um-okkur";
 import { HAFA_SAMBAND_FIELDS, HAFA_SAMBAND_SECTIONS, HAFA_SAMBAND_DEFAULTS_IS, HAFA_SAMBAND_DEFAULTS_EN } from "./hafa-samband";
 import { CHROME_FIELDS, CHROME_DEFAULTS_IS, CHROME_DEFAULTS_EN } from "./chrome";
 
@@ -26,6 +26,13 @@ export interface SitePage {
   fields: SiteField[];
   /** Reorderable bands. Empty for chrome, which has no movable sections. */
   sections: SiteSection[];
+  /**
+   * Optional refinement of `sections` for the content at hand — for pages whose
+   * own settings can merge or drop a band (see /um-okkur's team layout switch).
+   * Both the public page and the CMS order list go through this, so what you
+   * can move in the editor is always what actually renders.
+   */
+  sectionsFor?: (c: LocaleContent) => SiteSection[];
   defaultsIs: LocaleContent;
   defaultsEn: LocaleContent;
 }
@@ -58,6 +65,7 @@ export const SITE_PAGES: SitePage[] = [
     path: "/um-okkur",
     fields: UM_OKKUR_FIELDS,
     sections: UM_OKKUR_SECTIONS,
+    sectionsFor: umOkkurSections,
     defaultsIs: UM_OKKUR_DEFAULTS_IS,
     defaultsEn: UM_OKKUR_DEFAULTS_EN,
   },
@@ -98,9 +106,29 @@ export function resolveContent(
   return resolveFields(page.fields, page.defaultsIs, page.defaultsEn, blob, locale);
 }
 
-/** Section ids in display order for a page, honouring any CMS reordering. */
-export function resolveSections(key: string, blob: SiteContentBlob | null | undefined): string[] {
+/**
+ * The sections a page renders, for the content it renders them with. Layout
+ * switches (see SitePage.sectionsFor) can drop or merge a band, so this is
+ * resolved from the content before the order is applied.
+ */
+export function sectionsOf(key: string, c: LocaleContent): SiteSection[] {
   const page = getSitePage(key);
   if (!page) return [];
-  return resolveOrder(page.sections, blob);
+  return page.sectionsFor ? page.sectionsFor(c) : page.sections;
+}
+
+/** Section ids in display order for a page, honouring any CMS reordering. */
+export function resolveSections(
+  key: string,
+  blob: SiteContentBlob | null | undefined,
+  locale: Locale = "is",
+): string[] {
+  const page = getSitePage(key);
+  if (!page) return [];
+  // Layout-affecting fields are locale-independent, but resolve in the caller's
+  // locale anyway so the fallback chain is the same one the page renders with.
+  const sections = page.sectionsFor
+    ? page.sectionsFor(resolveFields(page.fields, page.defaultsIs, page.defaultsEn, blob, locale))
+    : page.sections;
+  return resolveOrder(sections, blob);
 }

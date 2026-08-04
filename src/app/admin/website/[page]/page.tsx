@@ -10,8 +10,8 @@ import ThjonustaView from "@/app/(site)/thjonusta/ThjonustaView";
 import UmOkkurView from "@/app/(site)/um-okkur/UmOkkurView";
 import HafaSambandView from "@/app/(site)/hafa-samband/HafaSambandView";
 import Navbar from "@/app/components/Navbar";
-import { getSitePage, resolveContent, resolveSections } from "@/lib/site-content/registry";
-import type { Locale, LocaleContent, SiteContentBlob } from "@/lib/site-content/types";
+import { getSitePage, resolveContent, resolveSections, sectionsOf } from "@/lib/site-content/registry";
+import type { Locale, LocaleContent, SiteContentBlob, SiteFieldOption } from "@/lib/site-content/types";
 import IconPicker from "../IconPicker";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -132,6 +132,49 @@ function ImageField({
   );
 }
 
+// A layout switch: a fixed set of values rendered as a segmented control, with
+// the selected option's explanation underneath. Locale-independent like icons
+// and images — the value lives in the Icelandic map and every language reads it.
+function ChoiceField({
+  value,
+  options,
+  disabled,
+  onChange,
+}: {
+  value: string;
+  options: SiteFieldOption[];
+  disabled: boolean;
+  onChange: (v: string) => void;
+}) {
+  const selected = options.find((o) => o.value === value) ?? options[0];
+  return (
+    <div>
+      <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden">
+        {options.map((o) => {
+          const active = o.value === selected.value;
+          return (
+            <button
+              key={o.value}
+              type="button"
+              disabled={disabled}
+              aria-pressed={active}
+              onClick={() => onChange(o.value)}
+              className={`px-3 py-1.5 text-sm font-medium disabled:opacity-50 ${
+                active
+                  ? "bg-cyan-600 text-white"
+                  : "bg-white text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+      {selected.hint && <p className="mt-2 text-[11px] leading-relaxed text-slate-500">{selected.hint}</p>}
+    </div>
+  );
+}
+
 export default function SiteContentEditor() {
   const params = useParams<{ page: string }>();
   const pageKey = params?.page ?? "home";
@@ -211,8 +254,12 @@ export default function SiteContentEditor() {
     () => resolveSections(pageKey, draft),
     [pageKey, draft],
   );
+  // The sections that actually render for the current draft — a layout switch
+  // can merge two bands into one, and the order list must agree with the page
+  // or moving a phantom section would look like a bug.
+  const visibleSections = sectionsOf(pageKey, resolveContent(pageKey, draft, "is"));
   const sectionLabel = (id: string) =>
-    page?.sections.find((s) => s.id === id)?.label ?? id;
+    visibleSections.find((s) => s.id === id)?.label ?? id;
 
   const moveSection = (from: number, to: number) => {
     if (to < 0 || to >= sectionOrder.length) return;
@@ -221,11 +268,10 @@ export default function SiteContentEditor() {
     next.splice(to, 0, moved);
     setDraft((prev) => ({ ...prev, order: next }));
   };
-  const resetOrder = () =>
-    setDraft((prev) => ({ ...prev, order: page?.sections.map((s) => s.id) ?? [] }));
+  const defaultOrder = visibleSections.map((s) => s.id);
+  const resetOrder = () => setDraft((prev) => ({ ...prev, order: defaultOrder }));
   const isCustomOrder =
-    !!draft.order?.length &&
-    JSON.stringify(draft.order) !== JSON.stringify(page?.sections.map((s) => s.id) ?? []);
+    !!draft.order?.length && JSON.stringify(sectionOrder) !== JSON.stringify(defaultOrder);
 
   // Plain derivation, not useMemo: `page` is now also read by the section-order
   // helpers above, and the React Compiler could no longer prove the manual
@@ -414,8 +460,17 @@ export default function SiteContentEditor() {
                         </span>
                       )}
                     </div>
+                    {f.help && <p className="text-[11px] text-slate-400 mb-1.5 -mt-0.5">{f.help}</p>}
 
-                    {f.type === "icon" ? (
+                    {f.type === "choice" ? (
+                      // Layout switches aren't translated — one value for both locales.
+                      <ChoiceField
+                        value={draft.is?.[f.key] || page.defaultsIs[f.key] || ""}
+                        options={f.options ?? []}
+                        disabled={!isAdmin}
+                        onChange={(v) => setField("is", f.key, v)}
+                      />
+                    ) : f.type === "icon" ? (
                       // Icons aren't translated — one value for both locales.
                       <IconPicker
                         value={draft.is?.[f.key] ?? ""}
