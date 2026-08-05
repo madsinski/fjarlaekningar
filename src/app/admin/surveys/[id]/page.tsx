@@ -171,6 +171,35 @@ export default function SurveyEditPage() {
       }),
     );
 
+  // Rename an option AND carry the change into any later question whose
+  // "Sýna aðeins ef" condition points at this one — so conditions never go stale.
+  const renameOption = (qIdx: number, optIdx: number, value: string) =>
+    setQuestions((qs) => {
+      const controllerId = qs[qIdx]?.id;
+      const old = qs[qIdx]?.options?.[optIdx];
+      return qs.map((q, i) => {
+        if (i === qIdx) return { ...q, options: (q.options || []).map((o, j) => (j === optIdx ? value : o)) };
+        if (old !== undefined && old !== value && q.showIf?.questionId === controllerId && q.showIf.equals.includes(old)) {
+          return { ...q, showIf: { ...q.showIf, equals: q.showIf.equals.map((x) => (x === old ? value : x)) } };
+        }
+        return q;
+      });
+    });
+
+  // Delete an option and drop it from any dependent condition.
+  const deleteOption = (qIdx: number, optIdx: number) =>
+    setQuestions((qs) => {
+      const controllerId = qs[qIdx]?.id;
+      const removed = qs[qIdx]?.options?.[optIdx];
+      return qs.map((q, i) => {
+        if (i === qIdx) return { ...q, options: (q.options || []).filter((_, j) => j !== optIdx) };
+        if (removed !== undefined && q.showIf?.questionId === controllerId && q.showIf.equals.includes(removed)) {
+          return { ...q, showIf: { ...q.showIf, equals: q.showIf.equals.filter((x) => x !== removed) } };
+        }
+        return q;
+      });
+    });
+
   const patch = async (payload: Record<string, unknown>, okText: string) => {
     setBusy(true);
     setMsg(null);
@@ -403,9 +432,7 @@ export default function SurveyEditPage() {
                                 <span className="w-5 text-right text-[11px] text-slate-400 tabular-nums">{oi + 1}.</span>
                                 <input
                                   value={opt}
-                                  onChange={(e) =>
-                                    updateQ(idx, { options: (q.options || []).map((o, i) => (i === oi ? e.target.value : o)) })
-                                  }
+                                  onChange={(e) => renameOption(idx, oi, e.target.value)}
                                   disabled={!isAdmin}
                                   placeholder={`Valkostur ${oi + 1}`}
                                   className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-100"
@@ -432,7 +459,7 @@ export default function SurveyEditPage() {
                                   {isAdmin && (
                                     <button
                                       type="button"
-                                      onClick={() => updateQ(idx, { options: (q.options || []).filter((_, i) => i !== oi) })}
+                                      onClick={() => deleteOption(idx, oi)}
                                       className="p-1 text-slate-400 hover:text-red-600"
                                       title="Eyða valkosti"
                                     >
