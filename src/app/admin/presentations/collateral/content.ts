@@ -16,8 +16,7 @@ export type DocType = "poster" | "referral" | "advert" | "lifelinecheck";
 
 // Vendor-provisioned portal address. Kept verbatim: it is where patients
 // actually land, so it is a real URL rather than a brand reference.
-export const PORTAL_URL =
-  "https://app.medalia.dev/0b9e8a71-34dc-4354-bf79-03826914bcce";
+export const PORTAL_URL = "https://app.medalia.is/fjarlaekningar-hsu";
 
 export type PosterFields = {
   badge: string;

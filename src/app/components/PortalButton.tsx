@@ -10,7 +10,7 @@ interface PortalButtonProps {
 // patients actually land, not a brand reference we can rewrite. Opened
 // directly (the portal is a normal page), so every "Opna sjúklingagátt"
 // button links here.
-const PORTAL_URL = "https://app.medalia.dev/hsu-fjarlaekningar";
+const PORTAL_URL = "https://app.medalia.is/fjarlaekningar-hsu";
 
 export default function PortalButton({
   label = "Opna sjúklingagátt",
