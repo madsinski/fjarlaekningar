@@ -159,6 +159,18 @@ export default function SurveyEditPage() {
       return copy;
     });
 
+  const moveOption = (qIdx: number, optIdx: number, dir: -1 | 1) =>
+    setQuestions((qs) =>
+      qs.map((q, i) => {
+        if (i !== qIdx) return q;
+        const opts = [...(q.options || [])];
+        const j = optIdx + dir;
+        if (j < 0 || j >= opts.length) return q;
+        [opts[optIdx], opts[j]] = [opts[j], opts[optIdx]];
+        return { ...q, options: opts };
+      }),
+    );
+
   const patch = async (payload: Record<string, unknown>, okText: string) => {
     setBusy(true);
     setMsg(null);
@@ -174,8 +186,16 @@ export default function SurveyEditPage() {
   };
 
   const brandPayload = () => ({ brand_name: brandName, brand_logo_url: brandLogoUrl, brand_mode: brandMode });
-  const save = () => patch({ title, description, layout, ...brandPayload(), questions }, "Vistað.");
-  const publish = () => patch({ title, description, layout, ...brandPayload(), questions, status: "published" }, "Birt.");
+  // Trim option text and drop blank options for choice questions on save, so an
+  // empty "new option" row the editor left behind is never persisted.
+  const cleanQuestions = () =>
+    questions.map((q) =>
+      NEEDS_OPTIONS.includes(q.type)
+        ? { ...q, options: (q.options || []).map((o) => o.trim()).filter(Boolean) }
+        : q,
+    );
+  const save = () => patch({ title, description, layout, ...brandPayload(), questions: cleanQuestions() }, "Vistað.");
+  const publish = () => patch({ title, description, layout, ...brandPayload(), questions: cleanQuestions(), status: "published" }, "Birt.");
 
   const uploadLogo = async (file: File) => {
     setLogoBusy(true);
@@ -209,7 +229,7 @@ export default function SurveyEditPage() {
     setBusy(true);
     setMsg(null);
     // Save current edits first so the translator sees the latest text.
-    await fetch(`/api/admin/surveys/${id}`, { method: "PATCH", headers: await authHeaders(), body: JSON.stringify({ title, description, layout, ...brandPayload(), questions }) });
+    await fetch(`/api/admin/surveys/${id}`, { method: "PATCH", headers: await authHeaders(), body: JSON.stringify({ title, description, layout, ...brandPayload(), questions: cleanQuestions() }) });
     const res = await fetch(`/api/admin/surveys/${id}/translate`, { method: "POST", headers: await authHeaders() });
     const j = await res.json().catch(() => ({}));
     setBusy(false);
@@ -372,13 +392,67 @@ export default function SurveyEditPage() {
                       </div>
 
                       {NEEDS_OPTIONS.includes(q.type) && (
-                        <input
-                          value={(q.options || []).join(", ")}
-                          onChange={(e) => updateQ(idx, { options: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
-                          disabled={!isAdmin}
-                          placeholder="Valkostir, aðgreindir með kommu"
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50"
-                        />
+                        <div className="rounded-lg bg-slate-50 border border-slate-200 p-2.5 space-y-2">
+                          <label className="block text-[11px] font-medium text-slate-500">Valkostir</label>
+                          {(q.options || []).length === 0 && (
+                            <p className="text-[11px] text-slate-400">Engir valkostir enn — bættu við fyrsta valkosti.</p>
+                          )}
+                          <div className="space-y-1.5">
+                            {(q.options || []).map((opt, oi) => (
+                              <div key={oi} className="flex items-center gap-2">
+                                <span className="w-5 text-right text-[11px] text-slate-400 tabular-nums">{oi + 1}.</span>
+                                <input
+                                  value={opt}
+                                  onChange={(e) =>
+                                    updateQ(idx, { options: (q.options || []).map((o, i) => (i === oi ? e.target.value : o)) })
+                                  }
+                                  disabled={!isAdmin}
+                                  placeholder={`Valkostur ${oi + 1}`}
+                                  className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-100"
+                                />
+                                <div className="flex items-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => moveOption(idx, oi, -1)}
+                                    disabled={!isAdmin || oi === 0}
+                                    className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                                    title="Færa upp"
+                                  >
+                                    <ChevronUp className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => moveOption(idx, oi, 1)}
+                                    disabled={!isAdmin || oi === (q.options || []).length - 1}
+                                    className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                                    title="Færa niður"
+                                  >
+                                    <ChevronDown className="w-4 h-4" />
+                                  </button>
+                                  {isAdmin && (
+                                    <button
+                                      type="button"
+                                      onClick={() => updateQ(idx, { options: (q.options || []).filter((_, i) => i !== oi) })}
+                                      className="p-1 text-slate-400 hover:text-red-600"
+                                      title="Eyða valkosti"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          {isAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => updateQ(idx, { options: [...(q.options || []), ""] })}
+                              className="inline-flex items-center gap-1.5 text-xs font-medium text-cyan-700 hover:text-cyan-800"
+                            >
+                              <Plus className="w-3.5 h-3.5" /> Bæta við valkosti
+                            </button>
+                          )}
+                        </div>
                       )}
 
                       {bounds && (
