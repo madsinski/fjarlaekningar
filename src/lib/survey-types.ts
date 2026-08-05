@@ -19,10 +19,16 @@ export type Locale = "is" | "en";
 export type SurveyAnswerValue = string | string[];
 export type SurveyAnswers = Record<string, SurveyAnswerValue>;
 
-/** Show a question only if another question's answer matches one of `equals`. */
+/**
+ * Show a question only if another question's answer matches `equals`.
+ * `match` decides how multiple values combine (default "any"):
+ *   - "any": the answer matches at least one of `equals`
+ *   - "all": the answer contains every value in `equals` (multi-choice only)
+ */
 export interface SurveyCondition {
   questionId: string;
   equals: string[];
+  match?: "any" | "all";
 }
 
 export interface SurveyQuestion {
@@ -79,7 +85,11 @@ export function isQuestionVisible(q: SurveyQuestion, answers: Record<string, unk
   const dep = answers[q.showIf.questionId];
   if (dep === undefined || dep === null) return false;
   const vals = Array.isArray(dep) ? dep.map(String) : [String(dep)];
-  return q.showIf.equals.some((e) => vals.includes(e));
+  const { equals, match } = q.showIf;
+  if (equals.length === 0) return false;
+  return match === "all"
+    ? equals.every((e) => vals.includes(e))
+    : equals.some((e) => vals.includes(e));
 }
 
 /** Localized option list as {value, label} pairs — value stays Icelandic. */

@@ -530,32 +530,56 @@ export default function SurveyEditPage() {
                               <option key={p.id} value={p.id}>{p.label || p.id}</option>
                             ))}
                           </select>
-                          {q.showIf?.questionId && (
-                            <div className="flex flex-wrap gap-2">
-                              {controllerOptions(questions.find((p) => p.id === q.showIf!.questionId)!).map((opt) => {
-                                const on = q.showIf!.equals.includes(opt);
-                                return (
-                                  <label key={opt} className="inline-flex items-center gap-1 text-xs text-slate-600">
-                                    <input
-                                      type="checkbox"
-                                      checked={on}
-                                      disabled={!isAdmin}
-                                      onChange={() =>
-                                        updateQ(idx, {
-                                          showIf: {
-                                            questionId: q.showIf!.questionId,
-                                            equals: on ? q.showIf!.equals.filter((x) => x !== opt) : [...q.showIf!.equals, opt],
-                                          },
-                                        })
-                                      }
-                                      className="accent-cyan-600"
-                                    />
-                                    {opt}
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          )}
+                          {q.showIf?.questionId && (() => {
+                            const controller = questions.find((p) => p.id === q.showIf!.questionId);
+                            if (!controller) return null;
+                            return (
+                              <>
+                                <div className="flex flex-wrap gap-2">
+                                  {controllerOptions(controller).map((opt) => {
+                                    const on = q.showIf!.equals.includes(opt);
+                                    return (
+                                      <label key={opt} className="inline-flex items-center gap-1 text-xs text-slate-600">
+                                        <input
+                                          type="checkbox"
+                                          checked={on}
+                                          disabled={!isAdmin}
+                                          onChange={() =>
+                                            updateQ(idx, {
+                                              showIf: {
+                                                ...q.showIf!,
+                                                equals: on ? q.showIf!.equals.filter((x) => x !== opt) : [...q.showIf!.equals, opt],
+                                              },
+                                            })
+                                          }
+                                          className="accent-cyan-600"
+                                        />
+                                        {opt}
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                                {controller.type === "multi_choice" && q.showIf!.equals.length >= 2 && (
+                                  <div className="flex items-center gap-2 pt-1">
+                                    <span className="text-[11px] text-slate-500">Skilyrði stenst ef:</span>
+                                    <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden text-xs">
+                                      {([["any", "Eitt af völdum"], ["all", "Öll valin"]] as const).map(([v, l]) => (
+                                        <button
+                                          key={v}
+                                          type="button"
+                                          disabled={!isAdmin}
+                                          onClick={() => updateQ(idx, { showIf: { ...q.showIf!, match: v } })}
+                                          className={`px-2.5 py-1 ${(q.showIf!.match ?? "any") === v ? "bg-cyan-600 text-white" : "text-slate-600 hover:bg-slate-50"} disabled:opacity-60`}
+                                        >
+                                          {l}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                       )}
                     </div>
