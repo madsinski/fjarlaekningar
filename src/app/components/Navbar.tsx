@@ -20,7 +20,7 @@ function LangToggle() {
     router.refresh();
   };
   return (
-    <div className="inline-flex rounded-full border border-brand-cyan-muted overflow-hidden text-xs">
+    <div className="inline-flex shrink-0 rounded-full border border-brand-cyan-muted overflow-hidden text-xs">
       {(["is", "en"] as const).map((l) => (
         <button
           key={l}

@@ -75,7 +75,7 @@ export default function HomeView({
                   height={40}
                   className="w-10 h-10 shrink-0 object-contain"
                 />
-                <span className="text-sm font-medium text-slate-800 leading-snug group-hover:text-[var(--primary-dark)]">
+                <span className="min-w-0 break-words text-sm font-medium text-slate-800 leading-snug group-hover:text-[var(--primary-dark)]">
                   {s.title}
                 </span>
               </Link>
