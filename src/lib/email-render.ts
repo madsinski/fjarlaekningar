@@ -111,6 +111,19 @@ export function markdownToEmailHtml(md: string): string {
 
 // ── Branded shell ───────────────────────────────────────────────────────────
 
+export type EmailTemplate = "classic" | "hero" | "minimal" | "announcement";
+
+/** Selectable designs, surfaced in the /admin/outreach composer. */
+export const EMAIL_TEMPLATES: { id: EmailTemplate; label: string; hint: string }[] = [
+  { id: "classic", label: "Klassískt", hint: "Hvítt spjald, merki efst — rólegt og traust" },
+  { id: "hero", label: "Áhersla", hint: "Blár haus með fyrirsögn í hvítu — kröftugt" },
+  { id: "minimal", label: "Einfalt", hint: "Hreint bréf, lítið merki, mikið hvítt rými" },
+  { id: "announcement", label: "Tilkynning", hint: "„NÝTT“ merki og áberandi hnappur — fyrir kynningar" },
+];
+
+const CYAN_TINT = "#e6f4f7";
+const FONT = "Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+
 export interface FjarlaekningarEmailInput {
   heading: string;
   /** Already-rendered HTML for the body (use markdownToEmailHtml). */
@@ -121,65 +134,134 @@ export interface FjarlaekningarEmailInput {
   ctaHref?: string;
   /** Required for marketing email — every send must be opt-out-able. */
   unsubscribeUrl: string;
+  /** Visual design; defaults to "classic". */
+  template?: EmailTemplate;
 }
 
-/**
- * Wrap body HTML in the Fjarlækningar look: white card on the light canvas,
- * cyan accents, logo header, and a footer carrying the unsubscribe link.
- * Table-based with inline styles for email-client compatibility.
- */
-export function renderFjarlaekningarEmail(input: FjarlaekningarEmailInput): string {
-  const preheader = input.preheader
-    ? `<div style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0;">${escapeHtml(input.preheader)}</div>`
+// ── Shared building blocks (all table-based, inline-styled) ──────────────────
+
+const logoRow = (opts: { border?: boolean; small?: boolean } = {}) =>
+  `<tr><td style="padding:${opts.small ? "8px 0 0" : "24px 32px"};${opts.border ? `border-bottom:1px solid ${BORDER};` : ""}">
+    <a href="${SITE_URL}" style="text-decoration:none;display:inline-block;">
+      <img src="${LOGO_URL}" alt="Fjarlækningar" width="${opts.small ? 140 : 170}" style="display:block;height:auto;max-width:${opts.small ? 140 : 170}px;border:0;" />
+    </a>
+  </td></tr>`;
+
+const ctaBlock = (label?: string, href?: string, margin = "28px 0 4px") =>
+  label && href
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:${margin};">
+        <tr><td style="border-radius:999px;background:${CYAN_DARK};">
+          <a href="${escapeHtml(href)}" style="display:inline-block;padding:13px 30px;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;border-radius:999px;">${escapeHtml(label)}</a>
+        </td></tr>
+      </table>`
     : "";
 
-  const cta =
-    input.ctaLabel && input.ctaHref
-      ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 4px;">
-          <tr><td style="border-radius:999px;background:${CYAN_DARK};">
-            <a href="${escapeHtml(input.ctaHref)}" style="display:inline-block;padding:13px 30px;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;border-radius:999px;">${escapeHtml(input.ctaLabel)}</a>
-          </td></tr>
-        </table>`
-      : "";
+const footerRow = (unsubscribeUrl: string) =>
+  `<tr><td style="padding:20px 32px 28px;border-top:1px solid ${BORDER};background:#fbfcfd;">
+    <p style="margin:0 0 6px;color:${MUTED};font-size:12px;line-height:1.6;">
+      Fjarlækningar ehf. · Ísland ·
+      <a href="mailto:fjarlaekningar@fjarlaekningar.is" style="color:${CYAN_DARK};text-decoration:none;">fjarlaekningar@fjarlaekningar.is</a>
+    </p>
+    <p style="margin:0;color:${MUTED};font-size:12px;line-height:1.6;">
+      Þú færð þennan póst af því að þú skráðir þig á fréttalista okkar.
+      <a href="${escapeHtml(unsubscribeUrl)}" style="color:${MUTED};text-decoration:underline;">Afskrá mig</a>.
+    </p>
+  </td></tr>`;
 
-  return `<!doctype html>
-<html lang="is"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>${escapeHtml(input.heading)}</title></head>
+const card = (rows: string, radius = true) =>
+  `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:#ffffff;border:1px solid ${BORDER};${radius ? "border-radius:16px;" : ""}overflow:hidden;font-family:${FONT};">${rows}</table>`;
+
+const page = (heading: string, preheader: string | undefined, inner: string) =>
+  `<!doctype html>
+<html lang="is"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>${escapeHtml(heading)}</title></head>
 <body style="margin:0;padding:0;background:${CANVAS};">
-  ${preheader}
+  ${preheader ? `<div style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0;">${escapeHtml(preheader)}</div>` : ""}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${CANVAS};padding:32px 12px;">
     <tr><td align="center">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:#ffffff;border:1px solid ${BORDER};border-radius:16px;overflow:hidden;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-
-        <tr><td style="padding:24px 32px;border-bottom:1px solid ${BORDER};">
-          <a href="${SITE_URL}" style="text-decoration:none;display:inline-block;">
-            <img src="${LOGO_URL}" alt="Fjarlækningar" width="170" style="display:block;height:auto;max-width:170px;border:0;" />
-          </a>
-        </td></tr>
-
-        <tr><td style="padding:32px;">
-          <h1 style="margin:0 0 18px;font-size:24px;line-height:1.25;font-weight:800;color:${INK};letter-spacing:-0.01em;">${escapeHtml(input.heading)}</h1>
-          ${input.bodyHtml}
-          ${cta}
-        </td></tr>
-
-        <tr><td style="padding:20px 32px 28px;border-top:1px solid ${BORDER};background:#fbfcfd;">
-          <p style="margin:0 0 6px;color:${MUTED};font-size:12px;line-height:1.6;">
-            Fjarlækningar ehf. · Ísland ·
-            <a href="mailto:fjarlaekningar@fjarlaekningar.is" style="color:${CYAN_DARK};text-decoration:none;">fjarlaekningar@fjarlaekningar.is</a>
-          </p>
-          <p style="margin:0;color:${MUTED};font-size:12px;line-height:1.6;">
-            Þú færð þennan póst af því að þú skráðir þig á fréttalista okkar.
-            <a href="${escapeHtml(input.unsubscribeUrl)}" style="color:${MUTED};text-decoration:underline;">Afskrá mig</a>.
-          </p>
-        </td></tr>
-
-      </table>
-      <div style="max-width:600px;margin:14px auto 0;color:#9aa4b2;font-size:11px;font-family:Inter,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-        <a href="${SITE_URL}" style="color:#9aa4b2;text-decoration:none;">www.fjarlaekningar.is</a>
-      </div>
+      ${inner}
     </td></tr>
   </table>
 </body></html>`;
+
+const wwwLine = `<div style="max-width:600px;margin:14px auto 0;color:#9aa4b2;font-size:11px;font-family:${FONT};">
+        <a href="${SITE_URL}" style="color:#9aa4b2;text-decoration:none;">www.fjarlaekningar.is</a>
+      </div>`;
+
+/**
+ * Wrap body HTML in the Fjarlækningar look. Four selectable designs share the
+ * logo, cyan accents and unsubscribe footer; they differ in header treatment
+ * and emphasis. Table-based with inline styles for email-client compatibility.
+ */
+export function renderFjarlaekningarEmail(input: FjarlaekningarEmailInput): string {
+  const h = escapeHtml(input.heading);
+  const cta = ctaBlock(input.ctaLabel, input.ctaHref);
+
+  switch (input.template) {
+    // Blue hero band: logo, then the heading reversed out in white on cyan.
+    case "hero":
+      return page(input.heading, input.preheader, `${card(`
+        ${logoRow({ border: true })}
+        <tr><td style="padding:34px 32px;background:${CYAN_DARK};">
+          <h1 style="margin:0;font-size:26px;line-height:1.25;font-weight:800;color:#ffffff;letter-spacing:-0.01em;">${h}</h1>
+        </td></tr>
+        <tr><td style="padding:32px;">
+          ${input.bodyHtml}
+          ${cta}
+        </td></tr>
+        ${footerRow(input.unsubscribeUrl)}`)}
+      ${wwwLine}`);
+
+    // Letter style: no card chrome, small left logo, generous whitespace.
+    case "minimal":
+      return page(input.heading, input.preheader, card(`
+        <tr><td style="padding:8px 8px 0;">
+          <a href="${SITE_URL}" style="text-decoration:none;display:inline-block;">
+            <img src="${LOGO_URL}" alt="Fjarlækningar" width="140" style="display:block;height:auto;max-width:140px;border:0;" />
+          </a>
+        </td></tr>
+        <tr><td style="padding:20px 8px 8px;">
+          <hr style="border:0;border-top:1px solid ${BORDER};margin:0 0 22px;" />
+          <h1 style="margin:0 0 18px;font-size:22px;line-height:1.3;font-weight:800;color:${INK};letter-spacing:-0.01em;">${h}</h1>
+          ${input.bodyHtml}
+          ${cta}
+        </td></tr>
+        <tr><td style="padding:22px 8px 8px;border-top:1px solid ${BORDER};">
+          <p style="margin:0;color:${MUTED};font-size:12px;line-height:1.6;">
+            Fjarlækningar ehf. ·
+            <a href="mailto:fjarlaekningar@fjarlaekningar.is" style="color:${CYAN_DARK};text-decoration:none;">fjarlaekningar@fjarlaekningar.is</a> ·
+            <a href="${escapeHtml(input.unsubscribeUrl)}" style="color:${MUTED};text-decoration:underline;">Afskrá</a>
+          </p>
+        </td></tr>`, false));
+
+    // Launch style: "NÝTT" badge over a big heading, emphasized CTA.
+    case "announcement":
+      return page(input.heading, input.preheader, `${card(`
+        ${logoRow({ border: true })}
+        <tr><td style="padding:30px 32px 0;">
+          <span style="display:inline-block;background:${CYAN_TINT};color:${CYAN_DARK};font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px 12px;border-radius:999px;">Nýtt</span>
+          <h1 style="margin:14px 0 0;font-size:27px;line-height:1.2;font-weight:800;color:${INK};letter-spacing:-0.01em;">${h}</h1>
+        </td></tr>
+        <tr><td style="padding:16px 32px 4px;">
+          ${input.bodyHtml}
+        </td></tr>
+        <tr><td style="padding:0 32px 30px;">
+          ${ctaBlock(input.ctaLabel, input.ctaHref, "12px 0 0")}
+        </td></tr>
+        ${footerRow(input.unsubscribeUrl)}`)}
+      ${wwwLine}`);
+
+    // Classic (default): white card, logo header, heading in body.
+    default:
+      return page(input.heading, input.preheader, `${card(`
+        ${logoRow({ border: true })}
+        <tr><td style="padding:32px;">
+          <h1 style="margin:0 0 18px;font-size:24px;line-height:1.25;font-weight:800;color:${INK};letter-spacing:-0.01em;">${h}</h1>
+          ${input.bodyHtml}
+          ${cta}
+        </td></tr>
+        ${footerRow(input.unsubscribeUrl)}`)}
+      ${wwwLine}`);
+  }
 }
 
 /**

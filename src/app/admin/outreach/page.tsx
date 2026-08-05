@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Mail, Users, Download, Send, Trash2, Plus, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { markdownToEmailHtml, renderFjarlaekningarEmail } from "@/lib/email-render";
+import {
+  markdownToEmailHtml,
+  renderFjarlaekningarEmail,
+  EMAIL_TEMPLATES,
+  type EmailTemplate,
+} from "@/lib/email-render";
 
 // Fréttabréf — subscriber list + campaign composer ("content creator").
 //
@@ -58,6 +63,7 @@ export default function OutreachPage() {
   const [subject, setSubject] = useState("");
   const [preheader, setPreheader] = useState("");
   const [body, setBody] = useState("");
+  const [template, setTemplate] = useState<EmailTemplate>("classic");
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [locked, setLocked] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -120,12 +126,12 @@ export default function OutreachPage() {
       const res = await fetch(`/api/admin/outreach/campaigns/${openId}`, {
         method: "PATCH",
         headers: await authHeaders(),
-        body: JSON.stringify({ subject, preheader, body }),
+        body: JSON.stringify({ subject, preheader, body, template }),
       });
       setSaveState(res.ok ? "saved" : "error");
     }, 800);
     return () => clearTimeout(saveTimer.current);
-  }, [subject, preheader, body, openId, isAdmin, locked]);
+  }, [subject, preheader, body, template, openId, isAdmin, locked]);
 
   const openCampaign = async (id: string) => {
     setMsg(null);
@@ -138,6 +144,7 @@ export default function OutreachPage() {
     setSubject(j.campaign.subject ?? "");
     setPreheader(j.campaign.preheader ?? "");
     setBody(j.campaign.body ?? "");
+    setTemplate((j.campaign.template as EmailTemplate) ?? "classic");
     setLocked(j.campaign.status === "sent");
     setSaveState("idle");
   };
@@ -241,8 +248,9 @@ export default function OutreachPage() {
         bodyHtml: markdownToEmailHtml(body),
         preheader,
         unsubscribeUrl: "#",
+        template,
       }),
-    [subject, preheader, body],
+    [subject, preheader, body, template],
   );
 
   return (
@@ -426,6 +434,29 @@ export default function OutreachPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Form */}
                 <div className="space-y-3">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+                      Hönnun
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {EMAIL_TEMPLATES.map((tpl) => (
+                        <button
+                          key={tpl.id}
+                          type="button"
+                          onClick={() => setTemplate(tpl.id)}
+                          disabled={locked || !isAdmin}
+                          className={`rounded-lg border p-3 text-left transition-colors disabled:opacity-60 ${
+                            template === tpl.id
+                              ? "border-cyan-500 bg-cyan-50 ring-1 ring-cyan-200"
+                              : "border-slate-200 bg-white hover:border-slate-300"
+                          }`}
+                        >
+                          <div className="text-sm font-semibold text-slate-900">{tpl.label}</div>
+                          <div className="text-[11px] text-slate-500 leading-snug mt-0.5">{tpl.hint}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <input
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}

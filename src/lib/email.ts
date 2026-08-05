@@ -73,5 +73,7 @@ export {
   renderConfirmationEmail,
   confirmationPlainText,
   emailPlainText,
+  EMAIL_TEMPLATES,
+  type EmailTemplate,
   type FjarlaekningarEmailInput,
 } from "./email-render";

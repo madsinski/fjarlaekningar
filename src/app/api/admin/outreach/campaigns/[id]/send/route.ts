@@ -15,6 +15,7 @@ import {
   renderFjarlaekningarEmail,
   markdownToEmailHtml,
   emailPlainText,
+  type EmailTemplate,
 } from "@/lib/email";
 import { PUBLIC_SITE_URL } from "@/lib/public-site";
 
@@ -40,7 +41,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
   const { data: campaign } = await supabaseAdmin
     .from("outreach_campaigns")
-    .select("id, subject, preheader, body, status")
+    .select("id, subject, preheader, body, status, template")
     .eq("id", id)
     .maybeSingle();
   if (!campaign) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
@@ -52,6 +53,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   }
 
   const bodyHtml = markdownToEmailHtml(String(campaign.body || ""));
+  const template = (campaign.template || "classic") as EmailTemplate;
 
   // ── Test send: just the caller, nothing recorded ──────────────────────────
   if (isTest) {
@@ -64,6 +66,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         bodyHtml,
         preheader: campaign.preheader || undefined,
         unsubscribeUrl: unsubUrl(token),
+        template,
       }),
       text: emailPlainText(campaign.subject, String(campaign.body || ""), unsubUrl(token)),
     });
@@ -100,6 +103,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         bodyHtml,
         preheader: campaign.preheader || undefined,
         unsubscribeUrl,
+        template,
       }),
       text: emailPlainText(campaign.subject, String(campaign.body || ""), unsubscribeUrl),
     });

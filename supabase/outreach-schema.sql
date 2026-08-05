@@ -49,12 +49,16 @@ create table if not exists public.outreach_campaigns (
   preheader   text        not null default '',
   body        text        not null default '',
   status      text        not null default 'draft' check (status in ('draft','sent')),
+  template    text        not null default 'classic',
   sent_at     timestamptz,
   sent_count  integer     not null default 0,
   created_by  uuid        references public.staff(id) on delete set null,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
+
+-- Selectable email design for existing databases (default = classic look).
+alter table public.outreach_campaigns add column if not exists template text not null default 'classic';
 
 create index if not exists outreach_campaigns_updated_idx
   on public.outreach_campaigns (updated_at desc);

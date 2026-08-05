@@ -50,6 +50,12 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (typeof body.subject === "string") patch.subject = body.subject.slice(0, 300);
   if (typeof body.preheader === "string") patch.preheader = body.preheader.slice(0, 300);
   if (typeof body.body === "string") patch.body = body.body;
+  if (
+    typeof body.template === "string" &&
+    ["classic", "hero", "minimal", "announcement"].includes(body.template)
+  ) {
+    patch.template = body.template;
+  }
   if (Object.keys(patch).length === 0) return NextResponse.json({ ok: true });
 
   const { data, error } = await supabaseAdmin
