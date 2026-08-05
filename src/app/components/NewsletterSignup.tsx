@@ -41,7 +41,9 @@ export default function NewsletterSignup({
       body ||
       "Fáðu fréttir af Fjarlækningum, nýju samstarfi við heilsugæslur og nýrri þjónustu þegar hún bætist við.",
     cta: cta || "Skrá mig",
-    success: success || "Takk! Þú ert komin(n) á listann.",
+    success:
+      success ||
+      "Næstum komið! Við sendum þér staðfestingarpóst — smelltu á hlekkinn í honum til að ljúka skráningu.",
     consent:
       consent ||
       "Með því að skrá þig samþykkir þú að fá tölvupóst frá Fjarlækningum ehf. um fréttir, nýtt samstarf og nýja þjónustu. Þú getur afskráð þig hvenær sem er.",

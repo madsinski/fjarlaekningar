@@ -70,6 +70,8 @@ export {
   escapeHtml,
   markdownToEmailHtml,
   renderFjarlaekningarEmail,
+  renderConfirmationEmail,
+  confirmationPlainText,
   emailPlainText,
   type FjarlaekningarEmailInput,
 } from "./email-render";

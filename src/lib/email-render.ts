@@ -182,6 +182,59 @@ export function renderFjarlaekningarEmail(input: FjarlaekningarEmailInput): stri
 </body></html>`;
 }
 
+/**
+ * Double opt-in confirmation email. Sent on signup; the address only becomes an
+ * active subscriber after the recipient clicks the button. No unsubscribe link
+ * (there is nothing to unsubscribe from until they confirm) — instead a plain
+ * "ignore this if it wasn't you" note.
+ */
+export function renderConfirmationEmail(confirmUrl: string): string {
+  return `<!doctype html>
+<html lang="is"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>Staðfestu áskrift</title></head>
+<body style="margin:0;padding:0;background:${CANVAS};">
+  <div style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0;">Staðfestu áskrift að fréttabréfi Fjarlækninga.</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${CANVAS};padding:32px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:#ffffff;border:1px solid ${BORDER};border-radius:16px;overflow:hidden;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+
+        <tr><td style="padding:24px 32px;border-bottom:1px solid ${BORDER};">
+          <a href="${SITE_URL}" style="text-decoration:none;display:inline-block;">
+            <img src="${LOGO_URL}" alt="Fjarlækningar" width="170" style="display:block;height:auto;max-width:170px;border:0;" />
+          </a>
+        </td></tr>
+
+        <tr><td style="padding:32px;">
+          <h1 style="margin:0 0 18px;font-size:24px;line-height:1.25;font-weight:800;color:${INK};letter-spacing:-0.01em;">Staðfestu áskrift</h1>
+          <p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.65;">Takk fyrir að skrá þig á fréttalista Fjarlækninga. Til að ljúka skráningunni þarftu að staðfesta netfangið þitt með því að smella á hnappinn hér að neðan.</p>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 8px;">
+            <tr><td style="border-radius:999px;background:${CYAN_DARK};">
+              <a href="${escapeHtml(confirmUrl)}" style="display:inline-block;padding:13px 30px;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;border-radius:999px;">Staðfesta áskrift</a>
+            </td></tr>
+          </table>
+          <p style="margin:16px 0 0;color:${MUTED};font-size:13px;line-height:1.6;">Ef hnappurinn virkar ekki, afritaðu þessa slóð í vafrann þinn:<br /><a href="${escapeHtml(confirmUrl)}" style="color:${CYAN_DARK};text-decoration:underline;word-break:break-all;">${escapeHtml(confirmUrl)}</a></p>
+        </td></tr>
+
+        <tr><td style="padding:20px 32px 28px;border-top:1px solid ${BORDER};background:#fbfcfd;">
+          <p style="margin:0 0 6px;color:${MUTED};font-size:12px;line-height:1.6;">
+            Fjarlækningar ehf. · Ísland ·
+            <a href="mailto:fjarlaekningar@fjarlaekningar.is" style="color:${CYAN_DARK};text-decoration:none;">fjarlaekningar@fjarlaekningar.is</a>
+          </p>
+          <p style="margin:0;color:${MUTED};font-size:12px;line-height:1.6;">
+            Ef þú baðst ekki um þessa áskrift geturðu einfaldlega hunsað þennan póst — ekkert gerist nema þú staðfestir.
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+}
+
+/** Plain-text fallback for the confirmation email. */
+export function confirmationPlainText(confirmUrl: string): string {
+  return `Staðfestu áskrift\n\nTakk fyrir að skrá þig á fréttalista Fjarlækninga. Til að ljúka skráningunni þarftu að staðfesta netfangið þitt með því að opna þessa slóð:\n\n${confirmUrl}\n\nEf þú baðst ekki um þessa áskrift geturðu hunsað þennan póst.\n\n—\nFjarlækningar ehf. · www.fjarlaekningar.is\n`;
+}
+
 /** Plain-text fallback so the email isn't HTML-only (helps deliverability). */
 export function emailPlainText(heading: string, markdownBody: string, unsubscribeUrl: string): string {
   const body = (markdownBody || "")

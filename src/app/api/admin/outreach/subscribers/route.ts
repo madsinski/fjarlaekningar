@@ -12,7 +12,7 @@ export async function GET(req: Request) {
 
   const { data, error } = await supabaseAdmin
     .from("subscribers")
-    .select("id, email, name, source, unsubscribed_at, created_at")
+    .select("id, email, name, source, confirmed_at, unsubscribed_at, created_at")
     .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
@@ -21,6 +21,6 @@ export async function GET(req: Request) {
   return NextResponse.json({
     ok: true,
     subscribers,
-    active: subscribers.filter((s) => !s.unsubscribed_at).length,
+    active: subscribers.filter((s) => s.confirmed_at && !s.unsubscribed_at).length,
   });
 }

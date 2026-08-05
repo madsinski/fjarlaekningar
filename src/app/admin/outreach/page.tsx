@@ -17,6 +17,7 @@ interface Subscriber {
   email: string;
   name: string | null;
   source: string;
+  confirmed_at: string | null;
   unsubscribed_at: string | null;
   created_at: string;
 }
@@ -201,7 +202,8 @@ export default function OutreachPage() {
     }
   };
 
-  const activeCount = subs.filter((s) => !s.unsubscribed_at).length;
+  const activeCount = subs.filter((s) => s.confirmed_at && !s.unsubscribed_at).length;
+  const pendingCount = subs.filter((s) => !s.confirmed_at && !s.unsubscribed_at).length;
 
   const filteredSubs = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -218,7 +220,7 @@ export default function OutreachPage() {
         s.email,
         s.name ?? "",
         s.source,
-        s.unsubscribed_at ? "unsubscribed" : "active",
+        s.unsubscribed_at ? "unsubscribed" : s.confirmed_at ? "active" : "pending",
         s.created_at,
       ]),
     ];
@@ -281,7 +283,11 @@ export default function OutreachPage() {
               <span className="font-semibold text-slate-900">{activeCount}</span>
               <span className="text-slate-500">virkir</span>
               <span className="text-slate-300">·</span>
-              <span className="text-slate-500">{subs.length - activeCount} afskráðir</span>
+              <span className="text-slate-500">{pendingCount} í bið</span>
+              <span className="text-slate-300">·</span>
+              <span className="text-slate-500">
+                {subs.filter((s) => s.unsubscribed_at).length} afskráðir
+              </span>
             </div>
             <input
               value={query}
@@ -324,8 +330,10 @@ export default function OutreachPage() {
                       <td className="px-4 py-3">
                         {s.unsubscribed_at ? (
                           <span className="text-xs text-slate-400">Afskráð</span>
-                        ) : (
+                        ) : s.confirmed_at ? (
                           <span className="text-xs text-emerald-700">Virkur</span>
+                        ) : (
+                          <span className="text-xs text-amber-600">Í bið</span>
                         )}
                       </td>
                       {isAdmin && (

@@ -23,14 +23,25 @@ create table if not exists public.subscribers (
   name              text,
   source            text        not null default 'website',
   unsubscribe_token text        not null unique,
+  confirm_token     text,                 -- double opt-in credential
+  confirmed_at      timestamptz,          -- null = pending; set once confirmed
   unsubscribed_at   timestamptz,
   created_at        timestamptz not null default now()
 );
+
+-- DOUBLE OPT-IN migration for databases created before these columns existed.
+-- Grandfather every existing subscriber as already confirmed so sends keep
+-- working; only signups made AFTER this migration require confirmation.
+alter table public.subscribers add column if not exists confirm_token text;
+alter table public.subscribers add column if not exists confirmed_at timestamptz;
+update public.subscribers set confirmed_at = coalesce(confirmed_at, created_at);
 
 create index if not exists subscribers_created_idx
   on public.subscribers (created_at desc);
 create index if not exists subscribers_active_idx
   on public.subscribers (unsubscribed_at);
+create index if not exists subscribers_confirm_token_idx
+  on public.subscribers (confirm_token);
 
 create table if not exists public.outreach_campaigns (
   id          uuid        primary key default gen_random_uuid(),

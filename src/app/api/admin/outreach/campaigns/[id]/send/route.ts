@@ -72,11 +72,12 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       : NextResponse.json({ ok: false, error: res.error || "Sending mistókst" }, { status: 500 });
   }
 
-  // ── Real send: every active subscriber ────────────────────────────────────
+  // ── Real send: every active subscriber (confirmed + not unsubscribed) ──────
   const { data: subs, error: subErr } = await supabaseAdmin
     .from("subscribers")
     .select("email, name, unsubscribe_token")
-    .is("unsubscribed_at", null);
+    .is("unsubscribed_at", null)
+    .not("confirmed_at", "is", null);
   if (subErr) return NextResponse.json({ ok: false, error: subErr.message }, { status: 500 });
 
   const recipients = subs ?? [];
