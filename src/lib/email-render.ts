@@ -40,72 +40,134 @@ function renderInline(text: string): string {
   return out;
 }
 
-/** Convert the campaign's markdown body into inline-styled email HTML. */
+// Content palette for the card blocks below (kept local to the renderer).
+const MD_BODY = "#334155";
+const MD_PRIMARY = "#00a8cc";
+const MD_CYAN = "#00d6ff";
+const MD_WASH = "#f2f9fc";
+const MD_WASH_LINE = "#dbeef6";
+
+// A paragraph that is nothing but a single [label](url) becomes a pill button.
+const SOLE_LINK = /^\[([^\]]+)\]\(([^)]+)\)$/;
+
+/**
+ * Convert the campaign's markdown body into inline-styled email HTML, rendering
+ * block elements as email-safe cards so newsletters look designed, not plain:
+ *   - unordered list  → tinted check-list card (✓ badges)
+ *   - ordered list    → numbered step cards (gradient number badge)
+ *   - > blockquote    → cyan callout card with an accent bar
+ *   - a lone link     → pill CTA button
+ * Everything is table-based with inline styles for email-client compatibility.
+ */
 export function markdownToEmailHtml(md: string): string {
   const lines = (md || "").replace(/\r\n/g, "\n").split("\n");
   const out: string[] = [];
   let para: string[] = [];
   let list: { ordered: boolean; items: string[] } | null = null;
+  let quote: string[] = [];
 
   const flushPara = () => {
     if (!para.length) return;
-    out.push(
-      `<p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.65;">${renderInline(para.join(" "))}</p>`,
-    );
+    const joined = para.join(" ").trim();
+    const link = joined.match(SOLE_LINK);
+    if (link && /^(https?:|mailto:)/i.test(link[2])) {
+      out.push(
+        `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 20px;"><tr><td style="border-radius:999px;background:${CYAN_DARK};"><a href="${escapeHtml(link[2])}" style="display:inline-block;padding:13px 30px;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;border-radius:999px;">${escapeHtml(link[1])}</a></td></tr></table>`,
+      );
+    } else {
+      out.push(`<p style="margin:0 0 16px;color:${MD_BODY};font-size:15px;line-height:1.65;">${renderInline(joined)}</p>`);
+    }
     para = [];
   };
+
+  const flushQuote = () => {
+    if (!quote.length) return;
+    out.push(
+      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;background:${MD_WASH};border-left:4px solid ${MD_PRIMARY};border-radius:0 10px 10px 0;"><tr><td style="padding:14px 18px;color:${INK};font-size:15px;line-height:1.6;">${renderInline(quote.join(" "))}</td></tr></table>`,
+    );
+    quote = [];
+  };
+
   const flushList = () => {
     if (!list) return;
-    const tag = list.ordered ? "ol" : "ul";
-    const items = list.items
-      .map((i) => `<li style="margin:0 0 8px;color:#334155;font-size:15px;line-height:1.6;">${renderInline(i)}</li>`)
-      .join("");
-    out.push(`<${tag} style="margin:0 0 16px;padding-left:22px;">${items}</${tag}>`);
+    if (list.ordered) {
+      // Numbered step cards.
+      const cards = list.items
+        .map(
+          (item, i) =>
+            `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 10px;background:#ffffff;border:1px solid ${BORDER};border-radius:12px;"><tr><td width="56" valign="middle" style="padding:14px 0 14px 16px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td width="30" height="30" align="center" valign="middle" style="width:30px;height:30px;background:${MD_PRIMARY};background-image:linear-gradient(135deg,${MD_PRIMARY},${MD_CYAN});border-radius:50%;color:#ffffff;font-weight:800;font-size:14px;line-height:30px;">${i + 1}</td></tr></table></td><td valign="middle" style="padding:12px 16px 12px 12px;color:${MD_BODY};font-size:15px;line-height:1.5;">${renderInline(item)}</td></tr></table>`,
+        )
+        .join("");
+      out.push(cards);
+    } else {
+      // Tinted check-list card.
+      const rows = list.items
+        .map(
+          (item) =>
+            `<tr><td width="30" valign="top" style="padding:5px 10px 5px 0;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td width="20" height="20" align="center" valign="middle" style="width:20px;height:20px;background:${MD_PRIMARY};border-radius:50%;color:#ffffff;font-size:12px;font-weight:700;line-height:20px;">&#10003;</td></tr></table></td><td valign="top" style="padding:5px 0;color:${MD_BODY};font-size:15px;line-height:1.5;">${renderInline(item)}</td></tr>`,
+        )
+        .join("");
+      out.push(
+        `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;background:${MD_WASH};border:1px solid ${MD_WASH_LINE};border-radius:12px;"><tr><td style="padding:12px 18px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${rows}</table></td></tr></table>`,
+      );
+    }
     list = null;
+  };
+
+  const flushAll = () => {
+    flushPara();
+    flushList();
+    flushQuote();
   };
 
   for (const raw of lines) {
     const line = raw.trimEnd();
     if (!line.trim()) {
-      flushPara();
-      flushList();
+      flushAll();
       continue;
     }
     if (/^---+$/.test(line.trim())) {
-      flushPara();
-      flushList();
+      flushAll();
       out.push(`<hr style="border:0;border-top:1px solid ${BORDER};margin:24px 0;" />`);
       continue;
     }
     const h = line.match(/^(#{1,3})\s+(.*)$/);
     if (h) {
-      flushPara();
-      flushList();
+      flushAll();
       const size = h[1].length === 1 ? 22 : h[1].length === 2 ? 18 : 16;
       out.push(
         `<h${h[1].length} style="margin:24px 0 10px;font-size:${size}px;font-weight:700;color:${INK};line-height:1.3;">${renderInline(h[2])}</h${h[1].length}>`,
       );
       continue;
     }
+    const bq = line.match(/^\s*>\s?(.*)$/);
+    if (bq) {
+      flushPara();
+      flushList();
+      quote.push(bq[1]);
+      continue;
+    }
     const ol = line.match(/^\s*\d+\.\s+(.*)$/);
     const ul = line.match(/^\s*[-*]\s+(.*)$/);
     if (ol) {
       flushPara();
+      flushQuote();
       if (!list || !list.ordered) { flushList(); list = { ordered: true, items: [] }; }
       list.items.push(ol[1]);
       continue;
     }
     if (ul) {
       flushPara();
+      flushQuote();
       if (!list || list.ordered) { flushList(); list = { ordered: false, items: [] }; }
       list.items.push(ul[1]);
       continue;
     }
     flushList();
+    flushQuote();
     para.push(line.trim());
   }
-  flushPara();
-  flushList();
+  flushAll();
   return out.join("\n");
 }
 
@@ -388,6 +450,7 @@ export function emailPlainText(heading: string, markdownBody: string, unsubscrib
   const body = (markdownBody || "")
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1 ($2)")
     .replace(/\*\*([^*]+)\*\*/g, "$1")
-    .replace(/^#{1,3}\s+/gm, "");
+    .replace(/^#{1,3}\s+/gm, "")
+    .replace(/^\s*>\s?/gm, "");
   return `${heading}\n\n${body}\n\n—\nFjarlækningar ehf. · www.fjarlaekningar.is\nAfskrá: ${unsubscribeUrl}\n`;
 }
