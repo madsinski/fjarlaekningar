@@ -5,6 +5,8 @@
 // tech team. Pure/props-only (no server or client-only APIs) so it renders both
 // on the public shareable page (server) and in the admin live preview (client).
 
+import { PUBLIC_SITE_URL } from "@/lib/public-site";
+
 export interface PartnerPageData {
   slug: string;
   name: string;
@@ -61,11 +63,11 @@ export default function PartnerSection({
   showSpec?: boolean;
 }) {
   const erindi = p.erindi.filter(Boolean);
-  const stats: [React.ReactNode, string, string][] = [
-    [I.clock, p.response_time, "frá lækni á opnunartíma"],
-    [I.cal, p.hours, "opnunartími þjónustunnar"],
-    [I.shield, "Örugg sjúklingagátt", "senda erindi hvar og hvenær sem er"],
-    [I.pin, p.region, "fyrsta skref tilraunaverkefnis"],
+  // Standard Fjarlækningar process — same wording as the printed collateral.
+  const steps: [string, string][] = [
+    ["Skráðu þig inn", "Opnaðu sjúklingagáttina með rafrænum skilríkjum — í tölvu eða síma."],
+    ["Veldu vandamál", "Svaraðu markvissum spurningalista um einkennin þín."],
+    ["Fáðu meðferð", "Læknir metur málið og leggur til meðferð. Lyfseðill fer rafrænt í lyfjagátt."],
   ];
 
   return (
@@ -74,11 +76,11 @@ export default function PartnerSection({
       <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_24px_60px_-40px_rgba(6,42,56,.6)]">
         <div className="h-[5px] bg-gradient-to-r from-[var(--primary)] to-[#00d6ff]" />
         <div className="p-6 sm:p-10">
-          {/* cobrand */}
-          <div className="mb-6 flex flex-wrap items-center gap-4 border-b border-slate-200 pb-5">
-            {p.logo_url && <img src={p.logo_url} alt={p.name} className="h-11 w-auto" />}
+          {/* cobrand — Fjarlækningar logo prominent */}
+          <div className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-slate-200 pb-5">
+            {p.logo_url && <img src={p.logo_url} alt={p.name} className="h-10 w-auto" />}
             <span className="text-sm text-slate-400">í samstarfi við</span>
-            <img src="/fjarlaekningar-logo.svg" alt="Fjarlækningar" className="h-7 w-auto" />
+            <img src="/fjarlaekningar-logo.svg" alt="Fjarlækningar" className="h-10 sm:h-12 w-auto" />
             {p.pilot_tag && (
               <span className="ml-auto rounded-full border border-[#d5eaf2] bg-[#f1f8fb] px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-[var(--primary-dark)]">
                 {p.pilot_tag}
@@ -93,17 +95,16 @@ export default function PartnerSection({
           <h1 className="mb-3.5 text-balance text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-[34px]">
             {p.title}
           </h1>
-          <p className="mb-7 max-w-[64ch] text-[17px] text-slate-600">{p.intro}</p>
+          <p className="mb-8 max-w-[64ch] text-[17px] text-slate-600">{p.intro}</p>
 
-          {/* stats */}
-          <div className="mb-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {stats.map(([icon, main, sub], i) => (
-              <div key={i} className="flex items-start gap-3 rounded-2xl border border-[#d5eaf2] bg-[#f1f8fb] px-4 py-3.5">
-                <span className="mt-0.5 h-6 w-6 shrink-0 text-[var(--primary-dark)]">{icon}</span>
-                <div>
-                  <b className="block text-[15px] font-extrabold leading-tight text-slate-900">{main}</b>
-                  <span className="block text-[13px] text-slate-500">{sub}</span>
-                </div>
+          {/* Svona virkar það — numbered steps (matches the printed collateral) */}
+          <p className="mb-3 text-[13px] font-extrabold uppercase tracking-[0.1em] text-slate-500">Svona virkar það</p>
+          <div className="mb-8 grid gap-3 sm:grid-cols-3">
+            {steps.map(([t, b], i) => (
+              <div key={i} className="rounded-2xl border border-[#d5eaf2] bg-[#f1f8fb] p-4">
+                <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[var(--primary)] to-[#00d6ff] text-sm font-extrabold text-white">{i + 1}</div>
+                <div className="text-[15px] font-extrabold leading-tight text-slate-900">{t}</div>
+                <div className="mt-1 text-[13px] leading-snug text-slate-600">{b}</div>
               </div>
             ))}
           </div>
@@ -111,7 +112,7 @@ export default function PartnerSection({
           {erindi.length > 0 && (
             <>
               <p className="mb-3 text-[13px] font-extrabold uppercase tracking-[0.1em] text-slate-500">
-                Dæmi um erindi sem hægt er að leysa
+                Við getum meðal annars aðstoðað með:
               </p>
               <div className="mb-8 flex flex-wrap gap-2.5">
                 {erindi.map((e, i) => (
@@ -128,7 +129,7 @@ export default function PartnerSection({
           <div className="flex flex-wrap items-center gap-3.5">
             <a href={p.service_url} target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-full bg-[var(--primary-dark)] px-7 py-3.5 text-base font-bold text-white shadow-[0_12px_26px_-14px_rgba(4,136,164,.8)] transition hover:brightness-110">
-              Opna þjónustuna <span aria-hidden>→</span>
+              Byrjaðu hér <span aria-hidden>→</span>
             </a>
             <a href={p.info_url} target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--primary-dark)] px-7 py-3.5 text-base font-bold text-[var(--primary-dark)] transition hover:bg-[#f1f8fb]">
@@ -136,8 +137,17 @@ export default function PartnerSection({
             </a>
           </div>
 
+          {/* Availability note (matches the poster's footer line) */}
+          <div className="mt-6 flex items-start gap-2.5 text-[13.5px] text-slate-600">
+            <span className="mt-0.5 h-5 w-5 shrink-0 text-[var(--primary-dark)]">{I.clock}</span>
+            <p>
+              <b className="text-slate-900">{p.response_time}</b> á opnunartíma · {p.hours}
+              {p.region ? ` · Fyrir skjólstæðinga ${p.region}` : ""}
+            </p>
+          </div>
+
           {p.safety_note && (
-            <p className="mt-6 rounded-xl border border-[#d5eaf2] bg-[#f1f8fb] px-4.5 py-3.5 text-[13.5px] text-slate-600">
+            <p className="mt-4 rounded-xl border border-[#d5eaf2] bg-[#f1f8fb] px-4 py-3.5 text-[13.5px] text-slate-600">
               <b className="text-slate-900">Athugið: </b>{p.safety_note}
             </p>
           )}
@@ -185,4 +195,60 @@ export default function PartnerSection({
       )}
     </div>
   );
+}
+
+// Self-contained, inline-styled HTML for the section — no Tailwind, no external
+// CSS — so island.is developers can paste it straight into a page/HTML block.
+// Logos become absolute URLs on www.fjarlaekningar.is.
+export function buildPartnerHtml(p: PartnerPageData): string {
+  const abs = (u: string) => (u?.startsWith("/") ? PUBLIC_SITE_URL + u : u);
+  const esc = (s: string) => (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const erindi = p.erindi.filter(Boolean);
+  const steps: [string, string][] = [
+    ["Skráðu þig inn", "Opnaðu sjúklingagáttina með rafrænum skilríkjum — í tölvu eða síma."],
+    ["Veldu vandamál", "Svaraðu markvissum spurningalista um einkennin þín."],
+    ["Fáðu meðferð", "Læknir metur málið og leggur til meðferð. Lyfseðill fer rafrænt í lyfjagátt."],
+  ];
+  const font = "font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;";
+
+  const cobrand = `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:20px;border-bottom:1px solid #e2e8f0;padding-bottom:18px;margin-bottom:22px;">${
+    p.logo_url ? `<img src="${esc(abs(p.logo_url))}" alt="${esc(p.name)}" style="height:40px;width:auto;">` : ""
+  }<span style="font-size:14px;color:#94a3b8;">í samstarfi við</span><img src="${PUBLIC_SITE_URL}/fjarlaekningar-logo.svg" alt="Fjarlækningar" style="height:46px;width:auto;">${
+    p.pilot_tag ? `<span style="margin-left:auto;border:1px solid #d5eaf2;background:#f1f8fb;color:#0488a4;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-radius:999px;padding:6px 13px;">${esc(p.pilot_tag)}</span>` : ""
+  }</div>`;
+
+  const stepsHtml = `<div style="font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#64748b;margin-bottom:12px;">Svona virkar það</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:26px;border-collapse:separate;border-spacing:10px 0;"><tr>${steps
+    .map(([t, b], i) => `<td width="33%" valign="top" style="background:#f1f8fb;border:1px solid #d5eaf2;border-radius:14px;padding:16px;"><div style="width:30px;height:30px;line-height:30px;text-align:center;border-radius:50%;background:#00a8cc;color:#fff;font-weight:800;font-size:14px;margin-bottom:8px;">${i + 1}</div><div style="font-size:15px;font-weight:800;color:#0f2733;">${esc(t)}</div><div style="font-size:13px;line-height:1.4;color:#475569;margin-top:4px;">${esc(b)}</div></td>`)
+    .join("")}</tr></table>`;
+
+  const services = erindi.length
+    ? `<div style="font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#64748b;margin-bottom:12px;">Við getum meðal annars aðstoðað með:</div><div style="margin-bottom:28px;">${erindi
+        .map((e) => `<span style="display:inline-block;border:1px solid #e2e8f0;border-radius:999px;padding:8px 15px;font-size:14px;font-weight:600;color:#0f2733;margin:0 8px 8px 0;">${esc(e)}</span>`)
+        .join("")}</div>`
+    : "";
+
+  const cta = `<div style="margin-bottom:18px;"><a href="${esc(p.service_url)}" target="_blank" rel="noopener" style="display:inline-block;background:#0488a4;color:#fff;text-decoration:none;font-weight:700;font-size:16px;border-radius:999px;padding:14px 30px;margin:0 12px 10px 0;">Byrjaðu hér &rarr;</a><a href="${esc(p.info_url)}" target="_blank" rel="noopener" style="display:inline-block;border:2px solid #0488a4;color:#0488a4;text-decoration:none;font-weight:700;font-size:16px;border-radius:999px;padding:12px 28px;margin:0 0 10px 0;">Nánari upplýsingar</a></div>`;
+
+  const note = `<p style="font-size:13.5px;color:#475569;margin:6px 0 0;"><strong style="color:#0f2733;">${esc(p.response_time)}</strong> á opnunartíma &middot; ${esc(p.hours)}${p.region ? ` &middot; Fyrir skjólstæðinga ${esc(p.region)}` : ""}</p>`;
+
+  const safety = p.safety_note
+    ? `<p style="margin:16px 0 0;background:#f1f8fb;border:1px solid #d5eaf2;border-radius:12px;padding:14px 16px;font-size:13.5px;color:#475569;"><strong style="color:#0f2733;">Athugið: </strong>${esc(p.safety_note)}</p>`
+    : "";
+
+  return `<div style="max-width:760px;margin:0 auto;${font}color:#334155;">
+  <div style="border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;">
+    <div style="height:5px;background:linear-gradient(90deg,#00a8cc,#00d6ff);"></div>
+    <div style="padding:32px;">
+      ${cobrand}
+      <div style="font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#0488a4;margin-bottom:10px;">${esc(p.eyebrow)}</div>
+      <h2 style="margin:0 0 14px;font-size:30px;line-height:1.15;font-weight:800;color:#0f2733;">${esc(p.title)}</h2>
+      <p style="margin:0 0 26px;font-size:17px;line-height:1.6;color:#475569;">${esc(p.intro)}</p>
+      ${stepsHtml}
+      ${services}
+      ${cta}
+      ${note}
+      ${safety}
+    </div>
+  </div>
+</div>`;
 }

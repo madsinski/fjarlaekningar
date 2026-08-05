@@ -4,9 +4,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Globe, Copy, Check, Plus, Trash2, ChevronUp, ChevronDown, Upload } from "lucide-react";
+import { ArrowLeft, Save, Globe, Copy, Check, Plus, Trash2, ChevronUp, ChevronDown, Upload, Code } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import PartnerSection, { type PartnerPageData } from "@/app/components/PartnerSection";
+import PartnerSection, { buildPartnerHtml, type PartnerPageData } from "@/app/components/PartnerSection";
 
 interface PartnerRow extends PartnerPageData {
   id: string;
@@ -28,6 +28,7 @@ export default function StofnunEditor() {
   const [busy, setBusy] = useState(false);
   const [logoBusy, setLogoBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedHtml, setCopiedHtml] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   const authHeaders = async (): Promise<Record<string, string>> => {
@@ -119,6 +120,18 @@ export default function StofnunEditor() {
     }
   };
 
+  // Inline-styled HTML the institution's developers paste into their island.is page.
+  const copyHtml = async () => {
+    if (!p) return;
+    try {
+      await navigator.clipboard.writeText(buildPartnerHtml(p));
+      setCopiedHtml(true);
+      setTimeout(() => setCopiedHtml(false), 2000);
+    } catch {
+      setMsg({ type: "err", text: "Ekki tókst að afrita HTML" });
+    }
+  };
+
   if (loading) return <div className="p-8 text-sm text-slate-500">Hleð…</div>;
   if (!p) return <div className="p-8 text-sm text-slate-500">Fannst ekki.</div>;
 
@@ -137,6 +150,10 @@ export default function StofnunEditor() {
           <button onClick={copyLink} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
             {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
             {copied ? "Afritað!" : "Afrita hlekk"}
+          </button>
+          <button onClick={copyHtml} title="Afrita HTML-kóða til að líma inn á island.is" className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            {copiedHtml ? <Check className="w-4 h-4 text-emerald-600" /> : <Code className="w-4 h-4" />}
+            {copiedHtml ? "Afritað!" : "Afrita HTML"}
           </button>
           {p.status === "published" && (
             <a href={`/samstarf/${p.slug}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
