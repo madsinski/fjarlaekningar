@@ -11,6 +11,7 @@ import {
   YES_NO_OPTIONS,
   aggregateSurvey,
   scaleBounds,
+  scaleValues,
   type Locale,
   type SurveyAnswerValue,
   type SurveyQuestion,
@@ -297,8 +298,13 @@ export default function SurveyEditPage() {
   if (!survey) return <div className="p-8 text-sm text-slate-500">Könnun fannst ekki.</div>;
 
   const labelFor = (qid: string) => questions.find((q) => q.id === qid)?.label || qid;
-  const controllerOptions = (q: SurveyQuestion) =>
-    q.type === "yes_no" ? [...YES_NO_OPTIONS] : q.options || [];
+  const controllerOptions = (q: SurveyQuestion): string[] => {
+    if (q.type === "yes_no") return [...YES_NO_OPTIONS];
+    if (q.type === "scale" || q.type === "nps") return scaleValues(q).map(String);
+    return q.options || [];
+  };
+  // A question can be a condition source if its answer has discrete values.
+  const CAN_CONDITION: SurveyQuestionType[] = ["single_choice", "multi_choice", "yes_no", "scale", "nps"];
 
   return (
     <div className="p-8 max-w-6xl">
@@ -396,9 +402,7 @@ export default function SurveyEditPage() {
 
           <div className="mt-6 space-y-4">
             {questions.map((q, idx) => {
-              const priorControllers = questions
-                .slice(0, idx)
-                .filter((p) => p.type === "single_choice" || p.type === "yes_no");
+              const conditionSources = questions.filter((p) => p.id !== q.id && CAN_CONDITION.includes(p.type));
               const bounds = IS_SCALE.includes(q.type) ? scaleBounds(q) : null;
               return (
                 <div key={q.id} className="rounded-xl border border-slate-200 bg-white p-4">
@@ -510,7 +514,7 @@ export default function SurveyEditPage() {
                       )}
 
                       {/* Conditional visibility */}
-                      {priorControllers.length > 0 && (
+                      {conditionSources.length > 0 && (
                         <div className="rounded-lg bg-slate-50 border border-slate-200 p-2.5 space-y-2">
                           <label className="block text-[11px] font-medium text-slate-500">Sýna aðeins ef</label>
                           <select
@@ -522,7 +526,7 @@ export default function SurveyEditPage() {
                             className="w-full px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white disabled:bg-slate-50"
                           >
                             <option value="">Engin skilyrði (alltaf sýnd)</option>
-                            {priorControllers.map((p) => (
+                            {conditionSources.map((p) => (
                               <option key={p.id} value={p.id}>{p.label || p.id}</option>
                             ))}
                           </select>
