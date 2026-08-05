@@ -58,7 +58,7 @@ export default function HomeView({
         </div>
         {/* Glanceable overview only — the full list with descriptions lives on
             /thjonusta so the two pages don't restate each other. */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {erindi
             .filter((s) => s.slug !== "laeknisvottord")
             .map((s) => (
