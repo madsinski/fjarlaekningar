@@ -6,6 +6,7 @@
 // on the public shareable page (server) and in the admin live preview (client).
 
 import { PUBLIC_SITE_URL } from "@/lib/public-site";
+import CopyHtmlButton from "@/app/components/CopyHtmlButton";
 
 export interface PartnerPageData {
   slug: string;
@@ -40,6 +41,14 @@ const I = {
   ),
 };
 
+// Standard Fjarlækningar process — verbatim from the printed collateral (Veggspjald).
+const STEPS_TITLE = "Svona virka Fjarlækningar";
+const STEPS: [string, string][] = [
+  ["Skráðu þig inn", "Á fjarlaekningar.is með rafrænum skilríkjum — í tölvu, spjaldtölvu eða síma."],
+  ["Veldu vandamál af lista", "Svaraðu markvissum spurningalista um einkennin þín."],
+  ["Úrlausn og meðferð", "Læknir metur og leggur til meðferð. Lyfseðill fer rafrænt í lyfjagátt ef við á."],
+];
+
 function copyText(p: PartnerPageData): string {
   return `Fjarlækningar — stafræn læknisþjónusta
 
@@ -63,12 +72,7 @@ export default function PartnerSection({
   showSpec?: boolean;
 }) {
   const erindi = p.erindi.filter(Boolean);
-  // Standard Fjarlækningar process — same wording as the printed collateral.
-  const steps: [string, string][] = [
-    ["Skráðu þig inn", "Opnaðu sjúklingagáttina með rafrænum skilríkjum — í tölvu eða síma."],
-    ["Veldu vandamál", "Svaraðu markvissum spurningalista um einkennin þín."],
-    ["Fáðu meðferð", "Læknir metur málið og leggur til meðferð. Lyfseðill fer rafrænt í lyfjagátt."],
-  ];
+  const steps = STEPS;
 
   return (
     <div className="w-full">
@@ -98,7 +102,7 @@ export default function PartnerSection({
           <p className="mb-8 max-w-[64ch] text-[17px] text-slate-600">{p.intro}</p>
 
           {/* Svona virkar það — numbered steps (matches the printed collateral) */}
-          <p className="mb-3 text-[13px] font-extrabold uppercase tracking-[0.1em] text-slate-500">Svona virkar það</p>
+          <p className="mb-3 text-[13px] font-extrabold uppercase tracking-[0.1em] text-slate-500">{STEPS_TITLE}</p>
           <div className="mb-8 grid gap-3 sm:grid-cols-3">
             {steps.map(([t, b], i) => (
               <div key={i} className="rounded-2xl border border-[#d5eaf2] bg-[#f1f8fb] p-4">
@@ -191,6 +195,15 @@ export default function PartnerSection({
 
           <h3 className="mb-3 mt-7 text-xs font-extrabold uppercase tracking-[0.12em] text-[#00d6ff]">Texti til að afrita</h3>
           <pre className="whitespace-pre-wrap rounded-xl border border-[#204a68] bg-[#12324a] px-4 py-4 font-sans text-[14px] leading-relaxed text-[#eaf5fb]">{copyText(p)}</pre>
+
+          <h3 className="mb-2 mt-7 text-xs font-extrabold uppercase tracking-[0.12em] text-[#00d6ff]">HTML-kóði (fyrir vefstjóra)</h3>
+          <p className="mb-3 text-[13px] text-[#9fbccd]">Sjálfstæður kóði með innfelldum stílum — límdu beint inn í HTML-reit á island.is. Merki eru sótt af www.fjarlaekningar.is.</p>
+          <CopyHtmlButton
+            text={buildPartnerHtml(p)}
+            label="Afrita HTML"
+            className="mb-3 inline-flex items-center gap-2 rounded-lg bg-[#00a8cc] px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
+          />
+          <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded-xl border border-[#204a68] bg-[#0b1f2c] px-4 py-4 font-mono text-[11px] leading-relaxed text-[#9fdcec]">{buildPartnerHtml(p)}</pre>
         </div>
       )}
     </div>
@@ -204,11 +217,7 @@ export function buildPartnerHtml(p: PartnerPageData): string {
   const abs = (u: string) => (u?.startsWith("/") ? PUBLIC_SITE_URL + u : u);
   const esc = (s: string) => (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   const erindi = p.erindi.filter(Boolean);
-  const steps: [string, string][] = [
-    ["Skráðu þig inn", "Opnaðu sjúklingagáttina með rafrænum skilríkjum — í tölvu eða síma."],
-    ["Veldu vandamál", "Svaraðu markvissum spurningalista um einkennin þín."],
-    ["Fáðu meðferð", "Læknir metur málið og leggur til meðferð. Lyfseðill fer rafrænt í lyfjagátt."],
-  ];
+  const steps = STEPS;
   const font = "font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;";
 
   const cobrand = `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:20px;border-bottom:1px solid #e2e8f0;padding-bottom:18px;margin-bottom:22px;">${
@@ -217,7 +226,7 @@ export function buildPartnerHtml(p: PartnerPageData): string {
     p.pilot_tag ? `<span style="margin-left:auto;border:1px solid #d5eaf2;background:#f1f8fb;color:#0488a4;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-radius:999px;padding:6px 13px;">${esc(p.pilot_tag)}</span>` : ""
   }</div>`;
 
-  const stepsHtml = `<div style="font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#64748b;margin-bottom:12px;">Svona virkar það</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:26px;border-collapse:separate;border-spacing:10px 0;"><tr>${steps
+  const stepsHtml = `<div style="font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#64748b;margin-bottom:12px;">${esc(STEPS_TITLE)}</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:26px;border-collapse:separate;border-spacing:10px 0;"><tr>${steps
     .map(([t, b], i) => `<td width="33%" valign="top" style="background:#f1f8fb;border:1px solid #d5eaf2;border-radius:14px;padding:16px;"><div style="width:30px;height:30px;line-height:30px;text-align:center;border-radius:50%;background:#00a8cc;color:#fff;font-weight:800;font-size:14px;margin-bottom:8px;">${i + 1}</div><div style="font-size:15px;font-weight:800;color:#0f2733;">${esc(t)}</div><div style="font-size:13px;line-height:1.4;color:#475569;margin-top:4px;">${esc(b)}</div></td>`)
     .join("")}</tr></table>`;
 
