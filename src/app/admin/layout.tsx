@@ -20,6 +20,7 @@ import {
   Activity,
   Globe,
   Mail,
+  Building2,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import Navbar from "@/app/components/Navbar";
@@ -44,6 +45,7 @@ const NAV: { href: string; label: string; icon: React.ReactNode; adminOnly?: boo
   { href: "/admin/website", label: "Vefsíða", icon: <Globe className="w-5 h-5" /> },
   { href: "/admin/legal", label: "Lögfræðiskjöl", icon: <FileText className="w-5 h-5" /> },
   { href: "/admin/presentations", label: "Kynningar & prentefni", icon: <Presentation className="w-5 h-5" /> },
+  { href: "/admin/stofnanir", label: "Samstarfsstofnanir", icon: <Building2 className="w-5 h-5" /> },
   { href: "/admin/research", label: "Rannsóknir", icon: <FlaskConical className="w-5 h-5" /> },
   { href: "/admin/clinical", label: "Klínísk reiknirit", icon: <Activity className="w-5 h-5" /> },
   { href: "/admin/surveys", label: "Kannanir", icon: <ClipboardList className="w-5 h-5" /> },
