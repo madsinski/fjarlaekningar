@@ -53,7 +53,7 @@ export const QUESTION_TYPE_LABELS: Record<SurveyQuestionType, string> = {
   single_choice: "Einn valkostur",
   multi_choice: "Fjölval",
   scale: "Kvarði (1–5)",
-  nps: "Meðmæli (0–5)",
+  nps: "Meðmæli (0–10)",
   yes_no: "Já / Nei",
 };
 
@@ -62,7 +62,7 @@ export const YES_NO_OPTIONS_EN = ["Yes", "No"] as const;
 
 /** Effective numeric bounds for a scale/nps question. */
 export function scaleBounds(q: SurveyQuestion): { min: number; max: number } {
-  if (q.type === "nps") return { min: q.min ?? 0, max: q.max ?? 5 };
+  if (q.type === "nps") return { min: q.min ?? 0, max: q.max ?? 10 };
   return { min: q.min ?? 1, max: q.max ?? 5 };
 }
 

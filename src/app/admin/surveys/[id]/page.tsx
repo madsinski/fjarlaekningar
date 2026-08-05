@@ -144,7 +144,7 @@ export default function SurveyEditPage() {
         const next: SurveyQuestion = { ...q, type };
         if (IS_SCALE.includes(type)) {
           next.min = type === "nps" ? 0 : 1;
-          next.max = 5;
+          next.max = type === "nps" ? 10 : 5;
         }
         if (NEEDS_OPTIONS.includes(type) && !next.options) next.options = [];
         return next;
