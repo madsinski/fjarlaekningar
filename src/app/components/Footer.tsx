@@ -32,6 +32,7 @@ export interface FooterContent {
   footer_contact_heading?: string;
   footer_legal_heading?: string;
   footer_company?: string;
+  footer_address?: string;
   footer_country?: string;
   footer_email?: string;
   footer_rights?: string;
@@ -49,6 +50,7 @@ const FOOTER_DEFAULTS: Required<FooterContent> = {
   footer_contact_heading: "Samband",
   footer_legal_heading: "Lögfræði",
   footer_company: "Fjarlækningar ehf.",
+  footer_address: "Langholtsvegi 111\n104 Reykjavík",
   footer_country: "Ísland",
   footer_email: "fjarlaekningar@fjarlaekningar.is",
   footer_rights: "Fjarlækningar ehf. Allur réttur áskilinn.",
@@ -91,6 +93,7 @@ export default async function Footer({ content }: { content?: FooterContent }) {
             <h3 className="text-sm font-semibold text-white mb-3">{t.footer_contact_heading}</h3>
             <ul className="space-y-2 text-sm text-slate-400">
               <li>{t.footer_company}</li>
+              {t.footer_address && <li className="whitespace-pre-line">{t.footer_address}</li>}
               <li>{t.footer_country}</li>
               <li>
                 <a href={`mailto:${t.footer_email}`} className="hover:text-white">

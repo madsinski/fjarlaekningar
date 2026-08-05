@@ -25,6 +25,7 @@ export const CHROME_FIELDS: SiteField[] = [
 
   // Footer — contact lines
   { key: "footer_company", label: "Fyrirtæki", group: "Fótur", type: "text" },
+  { key: "footer_address", label: "Heimilisfang", group: "Fótur", type: "textarea" },
   { key: "footer_country", label: "Land", group: "Fótur", type: "text" },
   { key: "footer_email", label: "Netfang", group: "Fótur", type: "text" },
 
@@ -48,6 +49,7 @@ export const CHROME_DEFAULTS_IS: LocaleContent = {
   footer_legal_heading: "Lögfræði",
 
   footer_company: "Fjarlækningar ehf.",
+  footer_address: "Langholtsvegi 111\n104 Reykjavík",
   footer_country: "Ísland",
   footer_email: "fjarlaekningar@fjarlaekningar.is",
 
