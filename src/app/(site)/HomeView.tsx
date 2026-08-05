@@ -215,6 +215,33 @@ export default function HomeView({
       );
     })(),
 
+    // Team — a human face right before the final ask, linking to /um-okkur.
+    team: (
+      <div className="grid items-center gap-8 rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 md:grid-cols-2">
+        <div className="order-2 md:order-1">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{renderHighlighted(c.team_heading)}</h2>
+          <p className="mt-4 max-w-prose text-slate-600">{c.team_body}</p>
+          <Link
+            href="/um-okkur"
+            className="mt-6 inline-flex items-center gap-2 px-7 py-3 rounded-full border-2 border-[var(--primary)] text-[var(--primary-dark)] font-semibold hover:bg-brand-cyan-subtle transition-colors"
+          >
+            {c.team_cta || "Kynnast teyminu"}
+            <span aria-hidden>→</span>
+          </Link>
+        </div>
+        {c.team_photo && (
+          <div className="order-1 md:order-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={c.team_photo}
+              alt="Teymi Fjarlækninga"
+              className="h-60 w-full rounded-2xl border border-slate-200 object-cover object-[center_25%] sm:h-72"
+            />
+          </div>
+        )}
+      </div>
+    ),
+
     // CTA — the primary ask, and the loudest thing on the page.
     // Deliberately placed BEFORE the newsletter: the newsletter is the
     // consolation prize for people who aren't ready to book, so asking for

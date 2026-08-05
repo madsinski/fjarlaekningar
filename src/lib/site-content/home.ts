@@ -21,6 +21,7 @@ export const HOME_SECTIONS: SiteSection[] = [
   { id: "stats", label: "Tölur" },
   { id: "how", label: "Ferlið" },
   { id: "coop", label: "Samstarf" },
+  { id: "team", label: "Teymið" },
   { id: "cta", label: "Ákall (CTA)" },
   { id: "news", label: "Fréttabréf" },
 ];
@@ -112,6 +113,12 @@ export const HOME_FIELDS: SiteField[] = [
   { key: "news_consent", label: "Samþykkistexti (GDPR)", group: "Fréttabréf", type: "textarea" },
 
   // CTA
+  // Team
+  { key: "team_heading", label: "Fyrirsögn", group: "Teymið", type: "heading" },
+  { key: "team_body", label: "Texti", group: "Teymið", type: "textarea" },
+  { key: "team_photo", label: "Hópmynd", group: "Teymið", type: "image" },
+  { key: "team_cta", label: "Hnappur", group: "Teymið", type: "text" },
+
   { key: "cta_heading", label: "Fyrirsögn", group: "Ákall (CTA)", type: "heading" },
   { key: "cta_body", label: "Texti", group: "Ákall (CTA)", type: "textarea" },
   { key: "cta_button", label: "Hnappur", group: "Ákall (CTA)", type: "text" },
@@ -176,6 +183,12 @@ export const HOME_DEFAULTS_IS: LocaleContent = {
   news_success: "Takk! Þú ert komin(n) á listann.",
   news_consent:
     "Með því að skrá þig samþykkir þú að fá tölvupóst frá Fjarlækningum ehf. um fréttir, nýtt samstarf og nýja þjónustu. Þú getur afskráð þig hvenær sem er með einum smelli.",
+
+  team_heading: "Fólkið á bak við Fjarlækningar",
+  team_body:
+    "Þjónustan er ekki ópersónuleg tölvugátt — á bak við hana stendur teymi lækna og sérfræðinga af holdi og blóði sem leggur metnað í hvert einasta erindi.",
+  team_photo: "/team/fjarlaeknar-hopmynd.jpg",
+  team_cta: "Kynnast teyminu",
 
   cta_heading: "Tilbúin(n) að senda inn erindi?",
   cta_body:
