@@ -68,6 +68,8 @@ export default function SurveyEditPage() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [titleEn, setTitleEn] = useState("");
+  const [descriptionEn, setDescriptionEn] = useState("");
   const [layout, setLayout] = useState<"list" | "steps">("list");
   const [brandName, setBrandName] = useState("");
   const [brandLogoUrl, setBrandLogoUrl] = useState("");
@@ -116,6 +118,8 @@ export default function SurveyEditPage() {
       setSurvey(s);
       setTitle(s.title);
       setDescription(s.description || "");
+      setTitleEn(s.title_en || "");
+      setDescriptionEn(s.description_en || "");
       setLayout(s.layout === "steps" ? "steps" : "list");
       setBrandName(s.brand_name || "");
       setBrandLogoUrl(s.brand_logo_url || "");
@@ -224,8 +228,8 @@ export default function SurveyEditPage() {
         ? { ...q, options: (q.options || []).map((o) => o.trim()).filter(Boolean) }
         : q,
     );
-  const save = () => patch({ title, description, layout, ...brandPayload(), questions: cleanQuestions() }, "Vistað.");
-  const publish = () => patch({ title, description, layout, ...brandPayload(), questions: cleanQuestions(), status: "published" }, "Birt.");
+  const save = () => patch({ title, description, title_en: titleEn, description_en: descriptionEn, layout, ...brandPayload(), questions: cleanQuestions() }, "Vistað.");
+  const publish = () => patch({ title, description, title_en: titleEn, description_en: descriptionEn, layout, ...brandPayload(), questions: cleanQuestions(), status: "published" }, "Birt.");
 
   const uploadLogo = async (file: File) => {
     setLogoBusy(true);
@@ -355,7 +359,11 @@ export default function SurveyEditPage() {
           {!isAdmin && <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">Þú hefur lesaðgang.</div>}
           <input value={title} onChange={(e) => setTitle(e.target.value)} disabled={!isAdmin} placeholder="Titill" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} disabled={!isAdmin} rows={2} placeholder="Inngangstexti (valfrjálst)" className="mt-3 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
-          {survey.title_en && <p className="mt-1 text-[11px] text-slate-400">EN: {survey.title_en}</p>}
+          <div className="mt-2 rounded-lg border border-dashed border-slate-200 p-2.5 space-y-2">
+            <span className="block text-[11px] font-medium text-slate-400">Enska þýðing (EN) — handvirk</span>
+            <input value={titleEn} onChange={(e) => setTitleEn(e.target.value)} disabled={!isAdmin} placeholder="Title (EN)" className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
+            <textarea value={descriptionEn} onChange={(e) => setDescriptionEn(e.target.value)} disabled={!isAdmin} rows={2} placeholder="Intro text (EN)" className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
+          </div>
 
           {/* Institution branding — logo + name shown in the survey header */}
           <div className="mt-4 rounded-lg border border-slate-200 p-3">
@@ -419,7 +427,6 @@ export default function SurveyEditPage() {
                   <div className="flex items-start gap-3">
                     <div className="flex-1 space-y-3">
                       <input value={q.label} onChange={(e) => updateQ(idx, { label: e.target.value })} disabled={!isAdmin} placeholder={`Spurning ${idx + 1}`} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
-                      {q.labelEn && <p className="text-[11px] text-slate-400">EN: {q.labelEn}</p>}
 
                       <input value={q.helper || ""} onChange={(e) => updateQ(idx, { helper: e.target.value })} disabled={!isAdmin} placeholder="Hjálpartexti (valfrjálst)" className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
 
@@ -580,6 +587,38 @@ export default function SurveyEditPage() {
                               </>
                             );
                           })()}
+                        </div>
+                      )}
+                      {isAdmin && (
+                        <div className="rounded-lg border border-dashed border-slate-200 p-2.5 space-y-1.5">
+                          <span className="block text-[11px] font-medium text-slate-400">Enska þýðing (EN)</span>
+                          <input value={q.labelEn || ""} onChange={(e) => updateQ(idx, { labelEn: e.target.value })} placeholder="Question (EN)" className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-cyan-200" />
+                          {(q.helper || q.helperEn) && (
+                            <input value={q.helperEn || ""} onChange={(e) => updateQ(idx, { helperEn: e.target.value })} placeholder="Helper (EN)" className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-cyan-200" />
+                          )}
+                          {NEEDS_OPTIONS.includes(q.type) && (q.options || []).length > 0 && (
+                            <div className="space-y-1">
+                              {(q.options || []).map((opt, oi) => (
+                                <input
+                                  key={oi}
+                                  value={q.optionsEn?.[oi] || ""}
+                                  onChange={(e) => {
+                                    const en = (q.options || []).map((_, i) => q.optionsEn?.[i] ?? "");
+                                    en[oi] = e.target.value;
+                                    updateQ(idx, { optionsEn: en });
+                                  }}
+                                  placeholder={`EN: ${opt}`}
+                                  className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-cyan-200"
+                                />
+                              ))}
+                            </div>
+                          )}
+                          {IS_SCALE.includes(q.type) && (
+                            <div className="grid grid-cols-2 gap-2">
+                              <input value={q.minLabelEn || ""} onChange={(e) => updateQ(idx, { minLabelEn: e.target.value })} placeholder="Min label (EN)" className="w-full px-2 py-1.5 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-cyan-200" />
+                              <input value={q.maxLabelEn || ""} onChange={(e) => updateQ(idx, { maxLabelEn: e.target.value })} placeholder="Max label (EN)" className="w-full px-2 py-1.5 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-cyan-200" />
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
