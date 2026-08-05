@@ -163,6 +163,15 @@ export default function OutreachPage() {
     load();
   };
 
+  const removeSubscriber = async (s: Subscriber) => {
+    if (!confirm(`Eyða áskrifanda ${s.email} varanlega? Þetta er ekki afskráning heldur endanleg eyðing.`)) return;
+    const res = await fetch(`/api/admin/outreach/subscribers/${s.id}`, {
+      method: "DELETE",
+      headers: await authHeaders(),
+    });
+    if (res.ok) setSubs((prev) => prev.filter((x) => x.id !== s.id));
+  };
+
   const send = async (test: boolean) => {
     if (!openId) return;
     setBusy(true);
@@ -303,6 +312,7 @@ export default function OutreachPage() {
                     <th className="px-4 py-3 font-medium">Nafn</th>
                     <th className="px-4 py-3 font-medium">Skráð</th>
                     <th className="px-4 py-3 font-medium">Staða</th>
+                    {isAdmin && <th className="px-4 py-3 font-medium text-right">Aðgerð</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -318,6 +328,17 @@ export default function OutreachPage() {
                           <span className="text-xs text-emerald-700">Virkur</span>
                         )}
                       </td>
+                      {isAdmin && (
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => removeSubscriber(s)}
+                            className="text-slate-400 hover:text-red-600"
+                            title="Eyða áskrifanda varanlega"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
