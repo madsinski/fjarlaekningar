@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Trash2, ChevronUp, ChevronDown, Save, Globe, Languages, Sparkles, Copy, Check } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, ChevronUp, ChevronDown, Save, Globe, Languages, Sparkles, Copy, Check, Download } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import SurveyFields from "@/app/components/SurveyFields";
 import {
@@ -259,6 +259,63 @@ export default function SurveyEditPage() {
     }
   };
 
+  // Export the questionnaire (from current editor state, incl. unsaved edits) as
+  // a Word-openable .doc or a plain .txt — for review by the institution.
+  const exportQuestionnaire = (fmt: "doc" | "txt") => {
+    const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const html: string[] = [];
+    const txt: string[] = [];
+    html.push(`<h1>${esc(title)}</h1>`);
+    txt.push(title, "=".repeat(Math.max(title.length, 3)));
+    if (titleEn) { html.push(`<p><i>EN: ${esc(titleEn)}</i></p>`); txt.push(`EN: ${titleEn}`); }
+    if (description) { html.push(`<p>${esc(description)}</p>`); txt.push("", description); }
+    if (descriptionEn) { html.push(`<p><i>EN: ${esc(descriptionEn)}</i></p>`); txt.push(`EN: ${descriptionEn}`); }
+
+    questions.forEach((q, i) => {
+      const n = i + 1;
+      const req = q.required ? " *" : "";
+      html.push(`<h3>${n}. ${esc(q.label)}${req}</h3>`);
+      txt.push("", `${n}. ${q.label}${req}`);
+      if (q.labelEn) { html.push(`<p><i>EN: ${esc(q.labelEn)}</i></p>`); txt.push(`   EN: ${q.labelEn}`); }
+      html.push(`<p style="color:#666;font-size:10pt;">Tegund: ${QUESTION_TYPE_LABELS[q.type]}</p>`);
+      txt.push(`   [${QUESTION_TYPE_LABELS[q.type]}]`);
+      if (q.helper) { html.push(`<p>${esc(q.helper)}</p>`); txt.push(`   ${q.helper}`); }
+      if (NEEDS_OPTIONS.includes(q.type) && q.options?.length) {
+        html.push("<ul>" + q.options.map((o, oi) => `<li>${esc(o)}${q.optionsEn?.[oi] ? ` <i>(EN: ${esc(q.optionsEn[oi])})</i>` : ""}</li>`).join("") + "</ul>");
+        q.options.forEach((o, oi) => txt.push(`      - ${o}${q.optionsEn?.[oi] ? ` (EN: ${q.optionsEn[oi]})` : ""}`));
+      }
+      if (IS_SCALE.includes(q.type)) {
+        const b = scaleBounds(q);
+        const labels = [q.minLabel && `${b.min} = ${q.minLabel}`, q.maxLabel && `${b.max} = ${q.maxLabel}`].filter(Boolean).join(", ");
+        html.push(`<p style="color:#666;font-size:10pt;">Kvarði ${b.min}–${b.max}${labels ? ` (${esc(labels)})` : ""}</p>`);
+        txt.push(`      Kvarði ${b.min}–${b.max}${labels ? ` — ${labels}` : ""}`);
+      }
+      if (q.showIf?.questionId) {
+        const mm = q.showIf.match === "all" ? "öll valin" : "eitt af";
+        const cond = `Birtist ef „${labelFor(q.showIf.questionId)}“: ${q.showIf.equals.join(", ")} (${mm})`;
+        html.push(`<p style="color:#666;font-size:10pt;"><i>${esc(cond)}</i></p>`);
+        txt.push(`      ↳ ${cond}`);
+      }
+    });
+
+    const base = survey?.slug || "spurningalisti";
+    if (fmt === "txt") {
+      downloadFile(`${base}.txt`, "text/plain;charset=utf-8", txt.join("\n"));
+    } else {
+      const doc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${esc(title)}</title></head><body style="font-family:Calibri,Arial,sans-serif;">${html.join("\n")}</body></html>`;
+      downloadFile(`${base}.doc`, "application/msword", doc);
+    }
+  };
+
+  const downloadFile = (name: string, mime: string, content: string) => {
+    const url = URL.createObjectURL(new Blob([content], { type: mime }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const translate = async () => {
     setBusy(true);
     setMsg(null);
@@ -327,6 +384,12 @@ export default function SurveyEditPage() {
           <button onClick={copyLink} className="inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg px-3 py-1.5">
             {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
             {copied ? "Afritað!" : "Afrita hlekk"}
+          </button>
+          <button onClick={() => exportQuestionnaire("doc")} title="Sækja sem Word-skjal til yfirferðar" className="inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg px-3 py-1.5">
+            <Download className="w-4 h-4" /> Word
+          </button>
+          <button onClick={() => exportQuestionnaire("txt")} title="Sækja sem textaskjal" className="inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg px-3 py-1.5">
+            <Download className="w-4 h-4" /> Texti
           </button>
           {survey.status === "published" && (
             <a href={`/kannanir/${survey.slug}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-cyan-700 hover:text-cyan-900 border border-cyan-200 rounded-lg px-3 py-1.5">
