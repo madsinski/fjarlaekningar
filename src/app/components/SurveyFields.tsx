@@ -133,8 +133,8 @@ export default function SurveyFields({
             </div>
           )}
           {(q.type === "scale" || q.type === "nps") && (
-            <div className="inline-block max-w-full overflow-x-auto align-top">
-              <div className="flex gap-2">
+            <div className="w-full align-top">
+              <div className="flex gap-1 sm:gap-2">
                 {scaleValues(q).map((n) => {
                   const sel = String(value) === String(n);
                   return (
@@ -143,7 +143,7 @@ export default function SurveyFields({
                       type="button"
                       onClick={() => onSet(q.id, String(n))}
                       aria-pressed={sel}
-                      className={`w-11 h-11 shrink-0 rounded-xl border text-sm font-semibold transition-colors ${
+                      className={`flex-1 basis-0 min-w-0 h-10 sm:h-11 rounded-lg sm:rounded-xl border text-xs sm:text-sm font-semibold transition-colors ${
                         sel
                           ? "bg-[var(--primary)] border-[var(--primary)] text-white"
                           : "border-slate-300 text-slate-700 hover:border-[var(--primary)]"
@@ -155,9 +155,9 @@ export default function SurveyFields({
                 })}
               </div>
               {(l.minLabel || l.maxLabel) && (
-                <div className="flex justify-between gap-6 text-[11px] font-medium text-slate-400 mt-2 px-0.5">
+                <div className="flex justify-between gap-4 text-[11px] font-medium text-slate-400 mt-2 px-0.5">
                   <span>{l.minLabel}</span>
-                  <span>{l.maxLabel}</span>
+                  <span className="text-right">{l.maxLabel}</span>
                 </div>
               )}
             </div>
