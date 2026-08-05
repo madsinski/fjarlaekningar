@@ -41,7 +41,7 @@ const T = {
     notFoundBody: "This survey does not exist or is no longer active.",
     thanks: "Thank you!",
     thanksBody: "Your response has been recorded.",
-    submit: "Submit",
+    submit: "Submit response",
     submitting: "Sending…",
     error: "Could not submit your response.",
   },

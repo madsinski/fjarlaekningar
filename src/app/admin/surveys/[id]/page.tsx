@@ -780,7 +780,7 @@ export default function SurveyEditPage() {
                   mode={layout}
                   footer={
                     <button type="button" disabled className="py-2.5 px-6 rounded-lg bg-slate-300 text-white font-semibold text-sm cursor-not-allowed">
-                      Senda svar (forskoðun)
+                      {previewLocale === "en" ? "Submit response (preview)" : "Senda svar (forskoðun)"}
                     </button>
                   }
                 />
