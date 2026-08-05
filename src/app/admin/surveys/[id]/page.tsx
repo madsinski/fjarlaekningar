@@ -402,6 +402,16 @@ export default function SurveyEditPage() {
               const bounds = IS_SCALE.includes(q.type) ? scaleBounds(q) : null;
               return (
                 <div key={q.id} className="rounded-xl border border-slate-200 bg-white p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Spurning {idx + 1}</span>
+                    {isAdmin && (
+                      <div className="flex items-center gap-0.5">
+                        <button type="button" onClick={() => moveQ(idx, -1)} disabled={idx === 0} title="Færa upp" className="p-1.5 rounded text-slate-500 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-30 disabled:hover:bg-transparent"><ChevronUp className="w-4 h-4" /></button>
+                        <button type="button" onClick={() => moveQ(idx, 1)} disabled={idx === questions.length - 1} title="Færa niður" className="p-1.5 rounded text-slate-500 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-30 disabled:hover:bg-transparent"><ChevronDown className="w-4 h-4" /></button>
+                        <button type="button" onClick={() => setQuestions((qs) => qs.filter((_, i) => i !== idx))} title="Eyða spurningu" className="p-1.5 rounded text-red-400 hover:bg-red-50 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                      </div>
+                    )}
+                  </div>
                   <div className="flex items-start gap-3">
                     <div className="flex-1 space-y-3">
                       <input value={q.label} onChange={(e) => updateQ(idx, { label: e.target.value })} disabled={!isAdmin} placeholder={`Spurning ${idx + 1}`} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50" />
@@ -545,13 +555,6 @@ export default function SurveyEditPage() {
                         </div>
                       )}
                     </div>
-                    {isAdmin && (
-                      <div className="flex flex-col gap-1">
-                        <button onClick={() => moveQ(idx, -1)} className="p-1 text-slate-400 hover:text-slate-700"><ChevronUp className="w-4 h-4" /></button>
-                        <button onClick={() => moveQ(idx, 1)} className="p-1 text-slate-400 hover:text-slate-700"><ChevronDown className="w-4 h-4" /></button>
-                        <button onClick={() => setQuestions((qs) => qs.filter((_, i) => i !== idx))} className="p-1 text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
-                      </div>
-                    )}
                   </div>
                 </div>
               );
