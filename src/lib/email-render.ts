@@ -111,17 +111,41 @@ export function markdownToEmailHtml(md: string): string {
 
 // ── Branded shell ───────────────────────────────────────────────────────────
 
-export type EmailTemplate = "classic" | "hero" | "minimal" | "announcement";
+export type EmailTemplate =
+  | "classic"
+  | "hero"
+  | "minimal"
+  | "announcement"
+  | "announcement-dark"
+  | "announcement-band"
+  | "announcement-accent";
 
 /** Selectable designs, surfaced in the /admin/outreach composer. */
 export const EMAIL_TEMPLATES: { id: EmailTemplate; label: string; hint: string }[] = [
+  { id: "announcement", label: "Tilkynning – ljós", hint: "„NÝTT“ merki, ljós haus — fyrir kynningar" },
+  { id: "announcement-dark", label: "Tilkynning – dökk", hint: "Dökkur borði með cyan glæðum, líkt og veggspjaldið" },
+  { id: "announcement-band", label: "Tilkynning – borði", hint: "Cyan litaborði með fyrirsögn í hvítu" },
+  { id: "announcement-accent", label: "Tilkynning – áhersla", hint: "Bleik (magenta) áhersla og merki" },
   { id: "classic", label: "Klassískt", hint: "Hvítt spjald, merki efst — rólegt og traust" },
-  { id: "hero", label: "Áhersla", hint: "Blár haus með fyrirsögn í hvítu — kröftugt" },
+  { id: "hero", label: "Blár haus", hint: "Dökkblár haus með fyrirsögn í hvítu" },
   { id: "minimal", label: "Einfalt", hint: "Hreint bréf, lítið merki, mikið hvítt rými" },
-  { id: "announcement", label: "Tilkynning", hint: "„NÝTT“ merki og áberandi hnappur — fyrir kynningar" },
 ];
 
+// Shared eyebrow + body/CTA/footer tail for the "Tilkynning" family, so the
+// variants differ only in their header treatment.
+const annEyebrow = (color: string) =>
+  `<div style="font-size:12px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:${color};margin:0 0 10px;">Nýtt</div>`;
+
 const CYAN_TINT = "#e6f4f7";
+// Fjarlækningar print/deck brand palette (mirrors collateral-css.ts) so the
+// "Tilkynning" email family matches the veggspjald / blaðaauglýsing look.
+const BRAND_PRIMARY = "#00a8cc";
+const BRAND_CYAN = "#00d6ff";
+const BRAND_DARK1 = "#062a38";
+const BRAND_DARK2 = "#0a4a5e";
+const BRAND_ACCENT = "#cf147b";
+const BRAND_ACCENT_DARK = "#af146a";
+const BRAND_ACCENT_TINT = "#fbe3ef";
 const FONT = "Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 
 export interface FjarlaekningarEmailInput {
@@ -187,10 +211,22 @@ const wwwLine = `<div style="max-width:600px;margin:14px auto 0;color:#9aa4b2;fo
         <a href="${SITE_URL}" style="color:#9aa4b2;text-decoration:none;">www.fjarlaekningar.is</a>
       </div>`;
 
+// Body + CTA + footer that follows every "Tilkynning" header variant.
+const annTail = (input: FjarlaekningarEmailInput) => `
+        <tr><td style="padding:18px 32px 4px;">
+          ${input.bodyHtml}
+        </td></tr>
+        <tr><td style="padding:0 32px 30px;">
+          ${ctaBlock(input.ctaLabel, input.ctaHref, "12px 0 0")}
+        </td></tr>
+        ${footerRow(input.unsubscribeUrl)}`;
+
 /**
- * Wrap body HTML in the Fjarlækningar look. Four selectable designs share the
- * logo, cyan accents and unsubscribe footer; they differ in header treatment
- * and emphasis. Table-based with inline styles for email-client compatibility.
+ * Wrap body HTML in the Fjarlækningar look. Selectable designs share the logo,
+ * brand palette and unsubscribe footer; they differ in header treatment and
+ * emphasis. The "Tilkynning" family mirrors the print collateral (dark hero
+ * band with cyan/magenta glow, cyan band, magenta accent). Table-based with
+ * inline styles for email-client compatibility.
  */
 export function renderFjarlaekningarEmail(input: FjarlaekningarEmailInput): string {
   const h = escapeHtml(input.heading);
@@ -233,7 +269,7 @@ export function renderFjarlaekningarEmail(input: FjarlaekningarEmailInput): stri
           </p>
         </td></tr>`, false));
 
-    // Launch style: "NÝTT" badge over a big heading, emphasized CTA.
+    // Launch style: cyan-tint "NÝTT" badge over a big heading (light).
     case "announcement":
       return page(input.heading, input.preheader, `${card(`
         ${logoRow({ border: true })}
@@ -241,13 +277,43 @@ export function renderFjarlaekningarEmail(input: FjarlaekningarEmailInput): stri
           <span style="display:inline-block;background:${CYAN_TINT};color:${CYAN_DARK};font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px 12px;border-radius:999px;">Nýtt</span>
           <h1 style="margin:14px 0 0;font-size:27px;line-height:1.2;font-weight:800;color:${INK};letter-spacing:-0.01em;">${h}</h1>
         </td></tr>
-        <tr><td style="padding:16px 32px 4px;">
-          ${input.bodyHtml}
+        ${annTail(input)}`)}
+      ${wwwLine}`);
+
+    // Dark hero band with cyan + magenta glow — the veggspjald/advert look.
+    // bgcolor is the solid fallback for clients that drop the gradient image.
+    case "announcement-dark":
+      return page(input.heading, input.preheader, `${card(`
+        ${logoRow({ border: true })}
+        <tr><td bgcolor="${BRAND_DARK1}" style="background:${BRAND_DARK1};background-image:radial-gradient(120% 120% at 90% -10%, rgba(0,214,255,0.45), transparent 55%),radial-gradient(120% 120% at -10% 120%, rgba(207,20,123,0.35), transparent 55%),linear-gradient(135deg,${BRAND_DARK1},${BRAND_DARK2});padding:34px 32px;">
+          ${annEyebrow(BRAND_CYAN)}
+          <h1 style="margin:0;font-size:27px;line-height:1.2;font-weight:800;color:#ffffff;letter-spacing:-0.01em;">${h}</h1>
         </td></tr>
-        <tr><td style="padding:0 32px 30px;">
-          ${ctaBlock(input.ctaLabel, input.ctaHref, "12px 0 0")}
+        ${annTail(input)}`)}
+      ${wwwLine}`);
+
+    // Bright cyan gradient band, heading reversed out in white.
+    case "announcement-band":
+      return page(input.heading, input.preheader, `${card(`
+        ${logoRow({ border: true })}
+        <tr><td bgcolor="${BRAND_PRIMARY}" style="background:${BRAND_PRIMARY};background-image:linear-gradient(120deg,${BRAND_PRIMARY},${BRAND_CYAN});padding:32px;">
+          ${annEyebrow("#eafaff")}
+          <h1 style="margin:0;font-size:26px;line-height:1.22;font-weight:800;color:#ffffff;letter-spacing:-0.01em;">${h}</h1>
         </td></tr>
-        ${footerRow(input.unsubscribeUrl)}`)}
+        ${annTail(input)}`)}
+      ${wwwLine}`);
+
+    // Magenta accent: pink "NÝTT" pill + heading with a magenta rule.
+    case "announcement-accent":
+      return page(input.heading, input.preheader, `${card(`
+        ${logoRow({ border: true })}
+        <tr><td style="padding:30px 32px 0;">
+          <span style="display:inline-block;background:${BRAND_ACCENT_TINT};color:${BRAND_ACCENT_DARK};font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px 12px;border-radius:999px;">Nýtt</span>
+          <div style="border-left:4px solid ${BRAND_ACCENT};padding-left:14px;margin:16px 0 0;">
+            <h1 style="margin:0;font-size:27px;line-height:1.2;font-weight:800;color:${INK};letter-spacing:-0.01em;">${h}</h1>
+          </div>
+        </td></tr>
+        ${annTail(input)}`)}
       ${wwwLine}`);
 
     // Classic (default): white card, logo header, heading in body.

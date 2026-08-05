@@ -52,7 +52,15 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (typeof body.body === "string") patch.body = body.body;
   if (
     typeof body.template === "string" &&
-    ["classic", "hero", "minimal", "announcement"].includes(body.template)
+    [
+      "classic",
+      "hero",
+      "minimal",
+      "announcement",
+      "announcement-dark",
+      "announcement-band",
+      "announcement-accent",
+    ].includes(body.template)
   ) {
     patch.template = body.template;
   }
