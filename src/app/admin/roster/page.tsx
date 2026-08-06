@@ -15,12 +15,14 @@ import {
   type RosterDoctor,
   type RosterShift,
   type RosterSettings,
+  type RosterSwap,
 } from "@/lib/roster";
 
 export default function RosterPage() {
   const [month, setMonth] = useState(() => monthKey(new Date()));
   const [doctors, setDoctors] = useState<RosterDoctor[]>([]);
   const [shifts, setShifts] = useState<RosterShift[]>([]);
+  const [swaps, setSwaps] = useState<RosterSwap[]>([]);
   const [settings, setSettings] = useState<RosterSettings>({ per_patient_salary: 3000, currency: "kr." });
   const [salaryDraft, setSalaryDraft] = useState("3000");
   const [isAdmin, setIsAdmin] = useState(false);
@@ -47,6 +49,7 @@ export default function RosterPage() {
     if (j?.ok) {
       setDoctors(j.doctors);
       setShifts(j.shifts);
+      setSwaps(j.swaps ?? []);
       setSettings(j.settings);
       setSalaryDraft(String(j.settings.per_patient_salary));
     }
@@ -128,6 +131,13 @@ export default function RosterPage() {
     const j = await res.json().catch(() => ({}));
     if (j?.ok) { setSettings(j.settings); flash("ok", "Vistað"); }
   };
+
+  const cancelSwap = async (id: string) => {
+    setSwaps((prev) => prev.filter((s) => s.id !== id));
+    await fetch(`/api/admin/roster/swaps/${id}`, { method: "PATCH", headers: await authHeaders(), body: JSON.stringify({ action: "cancel" }) });
+    load();
+  };
+  const docName = (id: string | null) => doctors.find((d) => d.id === id)?.name ?? "óþekktur";
 
   const shiftsByDate = useMemo(() => {
     const m: Record<string, RosterShift[]> = {};
@@ -272,6 +282,28 @@ export default function RosterPage() {
               </table>
             </div>
           </section>
+
+          {/* Pending swaps / market */}
+          {swaps.length > 0 && (
+            <section>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3">Beiðnir um vaktaskipti ({swaps.length})</h2>
+              <div className="rounded-xl border border-slate-200 bg-white divide-y divide-slate-100">
+                {swaps.map((sw) => (
+                  <div key={sw.id} className="flex items-center justify-between gap-4 p-3 text-sm">
+                    <div>
+                      <span className="text-slate-900 font-medium">
+                        {sw.shift ? `${weekdayShort(sw.shift.shift_date)} ${Number(sw.shift.shift_date.slice(-2))}. — ${hhmm(sw.shift.starts)}–${hhmm(sw.shift.ends)}` : "—"}
+                      </span>
+                      <span className="text-slate-500"> · {docName(sw.from_doctor)} → {sw.to_doctor ? docName(sw.to_doctor) : <span className="text-amber-600">markaður</span>}</span>
+                    </div>
+                    {isAdmin && (
+                      <button onClick={() => cancelSwap(sw.id)} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">Afturkalla</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Payroll */}
           <section>

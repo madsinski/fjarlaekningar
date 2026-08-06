@@ -16,7 +16,7 @@ export async function GET(req: Request) {
   const first = `${month}-01`;
   const next = `${shiftMonth(month, 1)}-01`;
 
-  const [doctors, settings, shifts] = await Promise.all([
+  const [doctors, settings, shifts, swaps] = await Promise.all([
     supabaseAdmin.from("roster_doctors").select("*").order("active", { ascending: false }).order("name"),
     supabaseAdmin.from("roster_settings").select("per_patient_salary, currency").eq("id", 1).maybeSingle(),
     supabaseAdmin
@@ -26,6 +26,10 @@ export async function GET(req: Request) {
       .lt("shift_date", next)
       .order("shift_date")
       .order("starts"),
+    supabaseAdmin
+      .from("roster_swaps")
+      .select("id, shift_id, from_doctor, to_doctor, status, shift:roster_shifts(shift_date, starts, ends)")
+      .eq("status", "pending"),
   ]);
 
   return NextResponse.json({
@@ -34,5 +38,6 @@ export async function GET(req: Request) {
     doctors: doctors.data ?? [],
     settings: settings.data ?? { per_patient_salary: 3000, currency: "kr." },
     shifts: shifts.data ?? [],
+    swaps: swaps.data ?? [],
   });
 }
