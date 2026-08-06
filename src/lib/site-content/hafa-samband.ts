@@ -28,6 +28,13 @@ export const HAFA_SAMBAND_FIELDS: SiteField[] = [
   { key: "card2_email", label: "Netfang", group: "Almennar fyrirspurnir", type: "text" },
   { key: "card2_icon", label: "Tákn", group: "Almennar fyrirspurnir", type: "icon" },
 
+  // Card 3 — newsletter signup
+  { key: "card3_heading", label: "Titill", group: "Fréttabréf", type: "text" },
+  { key: "card3_body", label: "Texti", group: "Fréttabréf", type: "textarea" },
+  { key: "card3_button", label: "Hnappur", group: "Fréttabréf", type: "text" },
+  { key: "card3_success", label: "Staðfestingartexti", group: "Fréttabréf", type: "textarea" },
+  { key: "card3_icon", label: "Tákn", group: "Fréttabréf", type: "icon" },
+
   // Emergency note
   { key: "emergency_label", label: "Feitletruð fyrirsögn", group: "Neyðartilfelli", type: "text" },
   { key: "emergency_body", label: "Texti", group: "Neyðartilfelli", type: "textarea" },
@@ -49,6 +56,14 @@ export const HAFA_SAMBAND_DEFAULTS_IS: LocaleContent = {
   card2_body: "Fyrir fyrirspurnir sem ekki tengjast læknisfræðilegum málefnum.",
   card2_email: "fjarlaekningar@fjarlaekningar.is",
   card2_icon: "mail",
+
+  card3_heading: "Fréttabréf",
+  card3_body:
+    "Fáðu fréttir af Fjarlækningum, nýrri þjónustu og samstarfi þegar það bætist við.",
+  card3_button: "Skrá mig",
+  card3_success:
+    "Staðfestingarpóstur sendur — smelltu á hlekkinn í honum til að ljúka skráningu.",
+  card3_icon: "mail",
 
   emergency_label: "Neyðartilfelli:",
   emergency_body:

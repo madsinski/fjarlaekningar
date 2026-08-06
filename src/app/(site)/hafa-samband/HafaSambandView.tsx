@@ -1,4 +1,5 @@
 import PortalButton from "../../components/PortalButton";
+import NewsletterInline from "../../components/NewsletterInline";
 import SiteIcon from "@/lib/site-content/SiteIcon";
 import PageHero from "../PageHero";
 import Band from "../Band";
@@ -21,7 +22,7 @@ export default function HafaSambandView({
 }) {
   const blocks: Record<string, React.ReactNode> = {
     cards: (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-4xl">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl">
         <div className="bg-white rounded-2xl border border-slate-200 p-8">
           <div className="w-12 h-12 rounded-xl bg-brand-cyan-subtle text-[var(--primary-dark)] flex items-center justify-center mb-4">
             <SiteIcon name={c.card1_icon} fallback="shield-check" className="w-6 h-6" strokeWidth={1.5} />
@@ -52,6 +53,15 @@ export default function HafaSambandView({
             </svg>
           </a>
         </div>
+
+        <div className="bg-white rounded-2xl border border-slate-200 p-8">
+          <div className="w-12 h-12 rounded-xl bg-brand-cyan-subtle text-[var(--primary-dark)] flex items-center justify-center mb-4">
+            <SiteIcon name={c.card3_icon} fallback="mail" className="w-6 h-6" strokeWidth={1.5} />
+          </div>
+          <h2 className="text-xl font-semibold text-slate-900 mb-2">{c.card3_heading}</h2>
+          <p className="text-slate-600 mb-6">{c.card3_body}</p>
+          <NewsletterInline buttonLabel={c.card3_button} success={c.card3_success} />
+        </div>
       </div>
     ),
 
@@ -59,7 +69,7 @@ export default function HafaSambandView({
     // treatment rather than muted grey footnote text. Someone in an
     // emergency must not scan past this.
     emergency: (
-      <div className="max-w-4xl rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
+      <div className="max-w-5xl rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
         <p>
           <strong>{c.emergency_label}</strong> {c.emergency_body}
         </p>
