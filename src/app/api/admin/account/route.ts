@@ -67,10 +67,17 @@ export async function GET(req: Request) {
     }
   }
 
+  const { data: documents } = await supabaseAdmin
+    .from("staff_documents")
+    .select("id, kind, title, filename, size_bytes, signer_name, signed_at, uploaded_at")
+    .eq("staff_id", caller.id)
+    .order("uploaded_at", { ascending: false });
+
   return NextResponse.json({
     ok: true,
     me: { name: caller.name, email: caller.email, roles: caller.roles },
     signature,
     roster,
+    documents: documents ?? [],
   });
 }

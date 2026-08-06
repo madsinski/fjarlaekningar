@@ -1,12 +1,29 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Download, FileText } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import DoctorShifts from "@/app/vaktir/[token]/DoctorShifts";
 import MonthSchedule from "./MonthSchedule";
 import { DESIGN_BUILDERS, DESIGN_LABELS, type DesignKey, type SignatureFields } from "@/lib/signature";
 import type { RosterShift, RosterDoctor, RosterSwap, RosterSettings } from "@/lib/roster";
+
+interface StaffDoc {
+  id: string;
+  kind: string;
+  title: string;
+  filename: string;
+  signer_name: string | null;
+  signed_at: string | null;
+  uploaded_at: string;
+}
+
+const DOC_KINDS: Record<string, string> = {
+  employment_contract: "Ráðningarsamningur",
+  nda: "Þagnarskyldusamningur",
+  offer_letter: "Ráðningarbréf",
+  other: "Annað",
+};
 
 interface RosterBlock {
   doctorId: string;
@@ -23,6 +40,7 @@ export default function AccountPage() {
   const [me, setMe] = useState<{ name: string; email: string; roles: string[] } | null>(null);
   const [sig, setSig] = useState<SignatureFields | null>(null);
   const [roster, setRoster] = useState<RosterBlock | null>(null);
+  const [documents, setDocuments] = useState<StaffDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [design, setDesign] = useState<DesignKey>("stacked");
   const [copied, setCopied] = useState(false);
@@ -41,6 +59,7 @@ export default function AccountPage() {
       setMe(j.me);
       setSig(j.signature);
       setRoster(j.roster);
+      setDocuments(j.documents ?? []);
     }
     setLoading(false);
   }, []);
@@ -63,6 +82,12 @@ export default function AccountPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 1500);
     }
+  };
+
+  const downloadDoc = async (id: string) => {
+    const res = await fetch(`/api/admin/account/documents/${id}`, { headers: await authHeaders() });
+    const j = await res.json().catch(() => ({}));
+    if (j?.ok && j.url) window.open(j.url, "_blank", "noopener");
   };
 
   const sigHtml = useMemo(() => (sig ? DESIGN_BUILDERS[design](sig) : ""), [sig, design]);
@@ -148,6 +173,29 @@ export default function AccountPage() {
           </div>
         </section>
       )}
+
+      {/* My documents (read-only) */}
+      <section>
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3">Mín skjöl &amp; samningar</h2>
+        {documents.length === 0 ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500">Engin skjöl skráð.</div>
+        ) : (
+          <ul className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
+            {documents.map((d) => (
+              <li key={d.id} className="flex items-center gap-3 p-3 text-sm">
+                <FileText className="w-4 h-4 shrink-0 text-slate-400" />
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium text-slate-900 truncate">{d.title || d.filename}</div>
+                  <div className="text-[11px] text-slate-500">{DOC_KINDS[d.kind] || d.kind}{d.signed_at ? ` · undirritað ${d.signed_at}` : ""}</div>
+                </div>
+                <button onClick={() => downloadDoc(d.id)} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                  <Download className="w-4 h-4" /> Sækja
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
         </div>
 
         {roster && (
