@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Copy, Check } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import DoctorShifts from "@/app/vaktir/[token]/DoctorShifts";
+import MonthSchedule from "./MonthSchedule";
 import { DESIGN_BUILDERS, DESIGN_LABELS, type DesignKey, type SignatureFields } from "@/lib/signature";
 import type { RosterShift, RosterDoctor, RosterSwap, RosterSettings } from "@/lib/roster";
 
@@ -79,13 +80,15 @@ export default function AccountPage() {
   if (loading) return <div className="p-8 text-sm text-slate-500">Hleð…</div>;
 
   return (
-    <div className="p-6 lg:p-8 max-w-5xl space-y-10">
-      <div>
+    <div className="p-6 lg:p-8 max-w-6xl">
+      <div className="mb-8">
         <div className="text-[11px] font-semibold uppercase tracking-widest text-cyan-700 mb-1">Stjórnborð</div>
         <h1 className="text-2xl font-bold text-slate-900">Mín síða</h1>
         <p className="text-sm text-slate-600 mt-1">{me?.name} · {me?.email}</p>
       </div>
 
+      <div className={`grid gap-8 ${roster ? "lg:grid-cols-3" : ""}`}>
+        <div className={`space-y-10 ${roster ? "lg:col-span-2" : ""}`}>
       {/* Roster (doctors only) */}
       {roster ? (
         <section>
@@ -145,6 +148,15 @@ export default function AccountPage() {
           </div>
         </section>
       )}
+        </div>
+
+        {roster && (
+          <aside className="space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Vaktaplan</h2>
+            <MonthSchedule myDoctorId={roster.doctorId} />
+          </aside>
+        )}
+      </div>
     </div>
   );
 }
