@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Plus, Trash2, CalendarPlus, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Trash2, CalendarPlus, Users, Link2, Check } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
   monthKey,
@@ -28,6 +28,7 @@ export default function RosterPage() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [newDoc, setNewDoc] = useState({ name: "", color: "#00a8cc" });
+  const [copiedDoc, setCopiedDoc] = useState<string | null>(null);
 
   const authHeaders = async (): Promise<Record<string, string>> => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -102,6 +103,24 @@ export default function RosterPage() {
     await fetch(`/api/admin/roster/doctors/${id}`, { method: "DELETE", headers: await authHeaders() });
     load();
   };
+  const copyDoctorLink = async (d: RosterDoctor) => {
+    let token = d.access_token ?? undefined;
+    if (!token) {
+      const res = await fetch(`/api/admin/roster/doctors/${d.id}`, { method: "PATCH", headers: await authHeaders(), body: JSON.stringify({ regenerate_token: true }) });
+      const j = await res.json().catch(() => ({}));
+      token = j?.doctor?.access_token as string | undefined;
+      if (token) setDoctors((p) => p.map((x) => (x.id === d.id ? { ...x, access_token: token } : x)));
+    }
+    if (!token) { flash("err", "Mistókst að búa til hlekk"); return; }
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/vaktir/${token}`);
+      setCopiedDoc(d.id);
+      setTimeout(() => setCopiedDoc((c) => (c === d.id ? null : c)), 2000);
+    } catch {
+      flash("err", "Ekki tókst að afrita");
+    }
+  };
+
   const saveSalary = async () => {
     const n = Number(salaryDraft);
     if (!Number.isFinite(n) || n < 0) return;
@@ -162,6 +181,7 @@ export default function RosterPage() {
                     <span className="h-3 w-3 rounded-full" style={{ background: d.color }} />
                     <span className="font-medium text-slate-800">{d.name}</span>
                     <button onClick={() => patchDoctor(d.id, { active: !d.active })} className="text-[11px] text-slate-400 hover:text-slate-700">{d.active ? "virkur" : "óvirkur"}</button>
+                    <button onClick={() => copyDoctorLink(d)} title="Afrita persónulegan hlekk læknis" className="text-slate-300 hover:text-cyan-600">{copiedDoc === d.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Link2 className="w-3.5 h-3.5" />}</button>
                     <button onClick={() => deleteDoctor(d.id)} className="text-slate-300 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 ))}

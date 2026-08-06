@@ -1,6 +1,7 @@
 // Update / delete a roster doctor. Admin only.
 
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
 
@@ -23,6 +24,9 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (typeof body.email === "string") update.email = body.email.trim();
   if (typeof body.color === "string" && /^#[0-9a-fA-F]{6}$/.test(body.color)) update.color = body.color;
   if (typeof body.active === "boolean") update.active = body.active;
+  // Generate an access token on demand (e.g. for doctors created before tokens
+  // existed, or to revoke + reissue a personal link).
+  if (body.regenerate_token === true) update.access_token = randomBytes(24).toString("hex");
   if (Object.keys(update).length === 0) return NextResponse.json({ ok: true });
 
   const { data, error } = await supabaseAdmin.from("roster_doctors").update(update).eq("id", id).select("*").maybeSingle();

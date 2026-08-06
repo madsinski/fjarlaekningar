@@ -23,8 +23,13 @@ create table if not exists public.roster_doctors (
   color      text        not null default '#00a8cc',
   active     boolean     not null default true,
   staff_id   uuid        references public.staff(id) on delete set null,
+  access_token text,                 -- personal token for the doctor's /vaktir page + calendar feed
   created_at timestamptz not null default now()
 );
+
+-- Phase 2: personal access token (for DBs created before it existed).
+alter table public.roster_doctors add column if not exists access_token text;
+create unique index if not exists roster_doctors_token_idx on public.roster_doctors (access_token) where access_token is not null;
 
 create table if not exists public.roster_settings (
   id                 integer primary key default 1 check (id = 1),

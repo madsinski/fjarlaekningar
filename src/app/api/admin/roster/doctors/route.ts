@@ -1,6 +1,7 @@
 // Add a roster doctor. Admin only.
 
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
 
@@ -26,6 +27,7 @@ export async function POST(req: Request) {
       name,
       email: String(body.email || "").trim(),
       color: /^#[0-9a-fA-F]{6}$/.test(String(body.color)) ? String(body.color) : "#00a8cc",
+      access_token: randomBytes(24).toString("hex"),
     })
     .select("*")
     .single();

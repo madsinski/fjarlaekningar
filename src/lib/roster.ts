@@ -7,6 +7,7 @@ export interface RosterDoctor {
   color: string;
   active: boolean;
   staff_id: string | null;
+  access_token?: string | null;
   created_at?: string;
 }
 
