@@ -2,13 +2,13 @@
 
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getCallerStaff } from "@/lib/admin-auth";
+import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const caller = await getCallerStaff(req);
-  if (!caller) return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
+  if (!isAdmin(caller)) return NextResponse.json({ ok: false, error: "Admin role required" }, { status: 403 });
   const { id } = await ctx.params;
   const { data } = await supabaseAdmin.from("research_notes").select("*").eq("id", id).maybeSingle();
   if (!data) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
@@ -17,7 +17,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const caller = await getCallerStaff(req);
-  if (!caller) return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
+  if (!isAdmin(caller)) return NextResponse.json({ ok: false, error: "Admin role required" }, { status: 403 });
   const { id } = await ctx.params;
 
   let body: Record<string, unknown> = {};
@@ -44,7 +44,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 
 export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const caller = await getCallerStaff(req);
-  if (!caller) return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
+  if (!isAdmin(caller)) return NextResponse.json({ ok: false, error: "Admin role required" }, { status: 403 });
   const { id } = await ctx.params;
   const { error } = await supabaseAdmin.from("research_notes").delete().eq("id", id);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });

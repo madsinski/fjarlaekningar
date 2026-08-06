@@ -17,7 +17,7 @@ function isValidData(d: unknown): d is PresentationData {
 // GET /api/admin/presentations/:id — full row (any active staff).
 export async function GET(req: NextRequest, ctx: Ctx) {
   const caller = await getCallerStaff(req);
-  if (!caller) {
+  if (!isAdmin(caller)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
   const { id } = await ctx.params;

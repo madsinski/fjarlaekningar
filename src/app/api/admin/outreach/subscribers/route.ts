@@ -2,13 +2,13 @@
 
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getCallerStaff } from "@/lib/admin-auth";
+import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
   const caller = await getCallerStaff(req);
-  if (!caller) return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
+  if (!isAdmin(caller)) return NextResponse.json({ ok: false, error: "Admin role required" }, { status: 403 });
 
   const { data, error } = await supabaseAdmin
     .from("subscribers")

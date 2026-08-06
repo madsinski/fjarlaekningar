@@ -10,7 +10,7 @@ const COLS = "id, subject, preheader, status, sent_at, sent_count, created_at, u
 
 export async function GET(req: Request) {
   const caller = await getCallerStaff(req);
-  if (!caller) return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
+  if (!isAdmin(caller)) return NextResponse.json({ ok: false, error: "Admin role required" }, { status: 403 });
 
   const { data, error } = await supabaseAdmin
     .from("outreach_campaigns")

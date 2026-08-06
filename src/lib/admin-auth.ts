@@ -35,3 +35,8 @@ export function hasRole(staff: CallerStaff | null, role: string): boolean {
 export function isAdmin(staff: CallerStaff | null): boolean {
   return hasRole(staff, "admin");
 }
+
+/** Who may READ the legal module: admins and lawyers. */
+export function isLegalReader(staff: CallerStaff | null): boolean {
+  return isAdmin(staff) || hasRole(staff, "lawyer");
+}

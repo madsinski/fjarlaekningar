@@ -5,7 +5,7 @@
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
+import { getCallerStaff, isAdmin, isLegalReader } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
@@ -14,7 +14,7 @@ const LANGS = ["is", "en"];
 
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const caller = await getCallerStaff(req);
-  if (!caller) return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
+  if (!isLegalReader(caller)) return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
   const { id } = await ctx.params;
 
   const { data: document } = await supabaseAdmin.from("legal_documents").select("*").eq("id", id).maybeSingle();

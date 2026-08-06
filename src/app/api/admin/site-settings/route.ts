@@ -26,7 +26,7 @@ async function readGate(): Promise<boolean> {
 
 export async function GET(req: Request) {
   const caller = await getCallerStaff(req);
-  if (!caller) return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
+  if (!isAdmin(caller)) return NextResponse.json({ ok: false, error: "Admin role required" }, { status: 403 });
   try {
     return NextResponse.json({ ok: true, coming_soon: await readGate() });
   } catch {

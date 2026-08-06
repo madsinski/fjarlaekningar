@@ -5,7 +5,7 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getCallerStaff } from "@/lib/admin-auth";
+import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
 import { monthKey, shiftMonth } from "@/lib/roster";
 
 export const runtime = "nodejs";
@@ -52,7 +52,7 @@ async function syncDoctors() {
 
 export async function GET(req: Request) {
   const caller = await getCallerStaff(req);
-  if (!caller) return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
+  if (!isAdmin(caller)) return NextResponse.json({ ok: false, error: "Admin role required" }, { status: 403 });
 
   const month = new URL(req.url).searchParams.get("month") || monthKey(new Date());
   const first = `${month}-01`;

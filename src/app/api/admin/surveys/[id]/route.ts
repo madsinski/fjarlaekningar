@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const caller = await getCallerStaff(req);
-  if (!caller) return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
+  if (!isAdmin(caller)) return NextResponse.json({ ok: false, error: "Admin role required" }, { status: 403 });
   const { id } = await ctx.params;
 
   const { data: survey } = await supabaseAdmin.from("surveys").select("*").eq("id", id).maybeSingle();

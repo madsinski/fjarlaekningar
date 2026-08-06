@@ -9,7 +9,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 // the client merges it over DEFAULT_CONTENT.
 export async function GET(req: NextRequest) {
   const caller = await getCallerStaff(req);
-  if (!caller) {
+  if (!isAdmin(caller)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
   const { data, error } = await supabaseAdmin

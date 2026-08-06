@@ -6,7 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getCallerStaff } from "@/lib/admin-auth";
+import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
@@ -16,7 +16,7 @@ const RISK = ["unclassified", "I", "IIa", "IIb", "III"];
 
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const caller = await getCallerStaff(req);
-  if (!caller) return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
+  if (!isAdmin(caller)) return NextResponse.json({ ok: false, error: "Admin role required" }, { status: 403 });
   const { id } = await ctx.params;
   const { data: protocol } = await supabaseAdmin.from("clinical_protocols").select("*").eq("id", id).maybeSingle();
   if (!protocol) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
@@ -30,7 +30,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const caller = await getCallerStaff(req);
-  if (!caller) return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
+  if (!isAdmin(caller)) return NextResponse.json({ ok: false, error: "Admin role required" }, { status: 403 });
   const { id } = await ctx.params;
 
   let body: Record<string, unknown> = {};
@@ -54,7 +54,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (!current) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
 
   const nextVersion = (current.version as number) + 1;
-  const update: Record<string, unknown> = { version: nextVersion, updated_by: caller.id };
+  const update: Record<string, unknown> = { version: nextVersion, updated_by: caller!.id };
   if (typeof body.title === "string" && body.title.trim()) update.title = body.title.trim();
   if (typeof body.summary === "string") update.summary = body.summary;
   if (typeof body.algorithm === "string") update.algorithm = body.algorithm;
@@ -83,8 +83,8 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     rationale,
     algorithm_snapshot: String(updated.algorithm ?? ""),
     title_snapshot: String(updated.title ?? ""),
-    changed_by: caller.id,
-    changed_by_name: caller.name,
+    changed_by: caller!.id,
+    changed_by_name: caller!.name,
   });
   if (logErr) return NextResponse.json({ ok: false, error: logErr.message }, { status: 500 });
 
