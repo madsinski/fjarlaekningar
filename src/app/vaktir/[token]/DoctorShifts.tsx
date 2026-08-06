@@ -148,6 +148,9 @@ export default function DoctorShifts({
             {copied ? "Afritað!" : "Afrita hlekk"}
           </button>
         </div>
+        <p className="mt-2 text-[11px] text-slate-400">
+          Apple/iPhone: smelltu á „Gerast áskrifandi“. Google dagatal: afritaðu hlekkinn og bættu við undir „Önnur dagatöl → Frá vefslóð“.
+        </p>
       </div>
 
       {/* Shifts */}
