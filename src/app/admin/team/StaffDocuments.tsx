@@ -90,6 +90,16 @@ export default function StaffDocuments({ staffId }: { staffId: string }) {
     setCBody("");
   };
 
+  const contractAction = async (contractId: string, action: "void" | "resend") => {
+    if (action === "void" && !confirm("Afturkalla samning sem bíður undirritunar?")) return;
+    await fetch(`/api/admin/staff/${staffId}/contracts/${contractId}`, {
+      method: "PATCH",
+      headers: { ...(await authHeaders()), "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    });
+    load();
+  };
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
@@ -169,13 +179,22 @@ export default function StaffDocuments({ staffId }: { staffId: string }) {
             {contracts.map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-2 p-2 text-sm">
                 <span className="truncate text-slate-800">{c.title}</span>
-                {c.status === "signed" ? (
-                  <span className="shrink-0 text-xs text-emerald-700">Undirritað{c.signed_at ? ` ${c.signed_at.slice(0, 10)}` : ""}</span>
-                ) : c.status === "void" ? (
-                  <span className="shrink-0 text-xs text-slate-400">Ógilt</span>
-                ) : (
-                  <span className="shrink-0 text-xs text-amber-600">Bíður undirritunar</span>
-                )}
+                <span className="flex shrink-0 items-center gap-2">
+                  {c.status === "signed" ? (
+                    <span className="text-xs text-emerald-700">Undirritað{c.signed_at ? ` ${c.signed_at.slice(0, 10)}` : ""}</span>
+                  ) : c.status === "void" ? (
+                    <>
+                      <span className="text-xs text-slate-400">Ógilt</span>
+                      <button onClick={() => contractAction(c.id, "resend")} className="text-xs text-cyan-700 hover:underline">Senda aftur</button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-xs text-amber-600">Bíður undirritunar</span>
+                      <button onClick={() => contractAction(c.id, "resend")} className="text-xs text-cyan-700 hover:underline">Senda aftur</button>
+                      <button onClick={() => contractAction(c.id, "void")} className="text-xs text-slate-400 hover:text-red-600">Afturkalla</button>
+                    </>
+                  )}
+                </span>
               </li>
             ))}
           </ul>
