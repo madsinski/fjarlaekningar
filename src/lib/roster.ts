@@ -29,6 +29,17 @@ export interface RosterSettings {
   currency: string;
 }
 
+export type SwapStatus = "pending" | "accepted" | "declined" | "cancelled";
+
+export interface RosterSwap {
+  id: string;
+  shift_id: string;
+  from_doctor: string | null;
+  to_doctor: string | null; // null = open on the market
+  status: SwapStatus;
+  shift?: { shift_date: string; starts: string; ends: string } | null;
+}
+
 /** Current month key in YYYY-MM (server-safe: derived from a passed Date). */
 export function monthKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;

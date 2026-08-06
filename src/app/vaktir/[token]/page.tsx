@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { PUBLIC_SITE_URL } from "@/lib/public-site";
-import { monthKey, type RosterShift, type RosterSettings } from "@/lib/roster";
+import { monthKey, type RosterShift, type RosterSettings, type RosterDoctor, type RosterSwap } from "@/lib/roster";
 import DoctorShifts from "./DoctorShifts";
 
 // Personal, token-gated doctor page (no login). Chrome-free, proxy-bypassed.
@@ -48,13 +48,27 @@ export default async function DoctorRosterPage({ params }: { params: Promise<{ t
     .eq("id", 1)
     .maybeSingle();
 
+  const { data: doctors } = await supabaseAdmin
+    .from("roster_doctors")
+    .select("id, name, color, active, staff_id")
+    .eq("active", true)
+    .order("name");
+
+  const { data: swaps } = await supabaseAdmin
+    .from("roster_swaps")
+    .select("id, shift_id, from_doctor, to_doctor, status, shift:roster_shifts(shift_date, starts, ends)")
+    .eq("status", "pending");
+
   return (
     <div className="min-h-screen bg-slate-50 py-10 sm:py-14">
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
         <DoctorShifts
           token={token}
+          doctorId={doctor.id}
           doctorName={doctor.name}
           initialShifts={(shifts ?? []) as RosterShift[]}
+          doctors={(doctors ?? []) as RosterDoctor[]}
+          initialSwaps={(swaps ?? []) as unknown as RosterSwap[]}
           settings={(settings ?? { per_patient_salary: 3000, currency: "kr." }) as RosterSettings}
           calendarUrl={`${PUBLIC_SITE_URL}/api/vaktir/${token}/calendar.ics`}
         />

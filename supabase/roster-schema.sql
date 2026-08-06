@@ -59,6 +59,22 @@ create or replace function public.touch_updated_at() returns trigger language pl
 drop trigger if exists trg_roster_shifts_updated_at on public.roster_shifts;
 create trigger trg_roster_shifts_updated_at before update on public.roster_shifts for each row execute function public.touch_updated_at();
 
+-- Phase 3: shift swaps + market. A swap offers `shift_id` (from_doctor's shift).
+-- to_doctor NULL = open on the market (any doctor may claim); set = a targeted
+-- offer that the recipient accepts/declines. While pending the shift shows as
+-- 'open' (market) or 'swap' (targeted); on accept the shift's doctor changes.
+create table if not exists public.roster_swaps (
+  id          uuid primary key default gen_random_uuid(),
+  shift_id    uuid        not null references public.roster_shifts(id) on delete cascade,
+  from_doctor uuid        references public.roster_doctors(id) on delete cascade,
+  to_doctor   uuid        references public.roster_doctors(id) on delete set null,
+  status      text        not null default 'pending' check (status in ('pending','accepted','declined','cancelled')),
+  created_at  timestamptz not null default now(),
+  resolved_at timestamptz
+);
+create index if not exists roster_swaps_status_idx on public.roster_swaps (status);
+create index if not exists roster_swaps_shift_idx on public.roster_swaps (shift_id);
+
 -- ── RLS: staff read; writes via service-role API only ───────────────────────
 alter table public.roster_doctors  enable row level security;
 alter table public.roster_settings enable row level security;
@@ -72,3 +88,7 @@ create policy roster_settings_staff_read on public.roster_settings for select to
 
 drop policy if exists roster_shifts_staff_read on public.roster_shifts;
 create policy roster_shifts_staff_read on public.roster_shifts for select to authenticated using (public.is_active_staff());
+
+alter table public.roster_swaps enable row level security;
+drop policy if exists roster_swaps_staff_read on public.roster_swaps;
+create policy roster_swaps_staff_read on public.roster_swaps for select to authenticated using (public.is_active_staff());
