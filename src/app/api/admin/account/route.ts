@@ -73,11 +73,19 @@ export async function GET(req: Request) {
     .eq("staff_id", caller.id)
     .order("uploaded_at", { ascending: false });
 
+  const { data: pendingContracts } = await supabaseAdmin
+    .from("staff_contracts")
+    .select("id, title, body, version, created_at")
+    .eq("staff_id", caller.id)
+    .eq("status", "sent")
+    .order("created_at", { ascending: false });
+
   return NextResponse.json({
     ok: true,
     me: { name: caller.name, email: caller.email, roles: caller.roles },
     signature,
     roster,
     documents: documents ?? [],
+    contracts: pendingContracts ?? [],
   });
 }

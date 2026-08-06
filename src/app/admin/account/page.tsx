@@ -5,6 +5,7 @@ import { Copy, Check, Download, FileText } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import DoctorShifts from "@/app/vaktir/[token]/DoctorShifts";
 import MonthSchedule from "./MonthSchedule";
+import ContractSign, { type PendingContract } from "./ContractSign";
 import { DESIGN_BUILDERS, DESIGN_LABELS, type DesignKey, type SignatureFields } from "@/lib/signature";
 import type { RosterShift, RosterDoctor, RosterSwap, RosterSettings } from "@/lib/roster";
 
@@ -41,6 +42,7 @@ export default function AccountPage() {
   const [sig, setSig] = useState<SignatureFields | null>(null);
   const [roster, setRoster] = useState<RosterBlock | null>(null);
   const [documents, setDocuments] = useState<StaffDoc[]>([]);
+  const [contracts, setContracts] = useState<PendingContract[]>([]);
   const [loading, setLoading] = useState(true);
   const [design, setDesign] = useState<DesignKey>("stacked");
   const [copied, setCopied] = useState(false);
@@ -60,6 +62,7 @@ export default function AccountPage() {
       setSig(j.signature);
       setRoster(j.roster);
       setDocuments(j.documents ?? []);
+      setContracts(j.contracts ?? []);
     }
     setLoading(false);
   }, []);
@@ -114,6 +117,15 @@ export default function AccountPage() {
 
       <div className={`grid gap-8 ${roster ? "lg:grid-cols-3" : ""}`}>
         <div className={`space-y-10 ${roster ? "lg:col-span-2" : ""}`}>
+      {/* Contracts awaiting signature */}
+      {contracts.length > 0 && (
+        <section className="space-y-4">
+          {contracts.map((c) => (
+            <ContractSign key={c.id} contract={c} defaultName={me?.name ?? ""} onSigned={load} />
+          ))}
+        </section>
+      )}
+
       {/* Roster (doctors only) */}
       {roster ? (
         <section>

@@ -28,11 +28,24 @@ function fmtSize(n: number | null) {
   return n > 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`;
 }
 
+interface Contract {
+  id: string;
+  title: string;
+  status: string;
+  signatory_name: string | null;
+  signed_at: string | null;
+  created_at: string;
+}
+
 export default function StaffDocuments({ staffId }: { staffId: string }) {
   const [docs, setDocs] = useState<Doc[]>([]);
+  const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [cTitle, setCTitle] = useState("Ráðningarsamningur");
+  const [cBody, setCBody] = useState("");
+  const [cBusy, setCBusy] = useState(false);
   const [kind, setKind] = useState("employment_contract");
   const [title, setTitle] = useState("");
   const [signer, setSigner] = useState("");
@@ -46,11 +59,36 @@ export default function StaffDocuments({ staffId }: { staffId: string }) {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`/api/admin/staff/${staffId}/documents`, { headers: await authHeaders() });
-    const j = await res.json().catch(() => ({}));
-    if (j?.ok) setDocs(j.documents);
+    const h = await authHeaders();
+    const [dRes, cRes] = await Promise.all([
+      fetch(`/api/admin/staff/${staffId}/documents`, { headers: h }),
+      fetch(`/api/admin/staff/${staffId}/contracts`, { headers: h }),
+    ]);
+    const dj = await dRes.json().catch(() => ({}));
+    const cj = await cRes.json().catch(() => ({}));
+    if (dj?.ok) setDocs(dj.documents);
+    if (cj?.ok) setContracts(cj.contracts);
     setLoading(false);
   }, [staffId]);
+
+  const createContract = async () => {
+    if (cBody.trim().length < 20 || cBusy) return;
+    setCBusy(true);
+    setErr(null);
+    const res = await fetch(`/api/admin/staff/${staffId}/contracts`, {
+      method: "POST",
+      headers: { ...(await authHeaders()), "Content-Type": "application/json" },
+      body: JSON.stringify({ title: cTitle, body: cBody }),
+    });
+    const j = await res.json().catch(() => ({}));
+    setCBusy(false);
+    if (!res.ok || !j.ok) {
+      setErr(j.error || "Mistókst");
+      return;
+    }
+    setContracts((p) => [j.contract, ...p]);
+    setCBody("");
+  };
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -123,8 +161,34 @@ export default function StaffDocuments({ staffId }: { staffId: string }) {
         </ul>
       )}
 
+      {/* E-sign contracts */}
+      <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-2">
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Rafræn undirritun</div>
+        {contracts.length > 0 && (
+          <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+            {contracts.map((c) => (
+              <li key={c.id} className="flex items-center justify-between gap-2 p-2 text-sm">
+                <span className="truncate text-slate-800">{c.title}</span>
+                {c.status === "signed" ? (
+                  <span className="shrink-0 text-xs text-emerald-700">Undirritað{c.signed_at ? ` ${c.signed_at.slice(0, 10)}` : ""}</span>
+                ) : c.status === "void" ? (
+                  <span className="shrink-0 text-xs text-slate-400">Ógilt</span>
+                ) : (
+                  <span className="shrink-0 text-xs text-amber-600">Bíður undirritunar</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        <input value={cTitle} onChange={(e) => setCTitle(e.target.value)} placeholder="Heiti samnings" className={`${inputCls} w-full`} />
+        <textarea value={cBody} onChange={(e) => setCBody(e.target.value)} rows={5} placeholder="Samningstexti — birtist starfsmanni á Mín síðu til rafrænnar undirritunar." className={`${inputCls} w-full`} />
+        <button onClick={createContract} disabled={cBusy || cBody.trim().length < 20} className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-600 px-3 py-1.5 text-sm font-medium text-cyan-700 hover:bg-cyan-50 disabled:opacity-50">
+          {cBusy ? "Sendi…" : "Senda til undirritunar"}
+        </button>
+      </div>
+
       <div className="rounded-lg border border-dashed border-slate-300 bg-white p-3 space-y-2">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Bæta við skjali</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Bæta við skjali (þegar undirritað)</div>
         <div className="flex flex-wrap gap-2">
           <select value={kind} onChange={(e) => setKind(e.target.value)} className={`${inputCls} bg-white`}>
             {Object.entries(KINDS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
