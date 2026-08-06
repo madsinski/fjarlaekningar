@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Mail } from "lucide-react";
+import { Mail, Paperclip } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import StaffDocuments from "./StaffDocuments";
 
 interface StaffRow {
   id: string;
@@ -40,6 +41,7 @@ export default function TeamPage() {
   const [role, setRole] = useState("member");
   const [title, setTitle] = useState("");
   const [phone, setPhone] = useState("");
+  const [openDocs, setOpenDocs] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
@@ -268,7 +270,8 @@ export default function TeamPage() {
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.id} className="border-b border-slate-100 last:border-0">
+                <Fragment key={r.id}>
+                <tr className="border-b border-slate-100 last:border-0">
                   <td className="px-4 py-3">
                     <div className="font-medium text-slate-900">{r.name}</div>
                     <div className="text-xs text-slate-500">{r.email}</div>
@@ -320,9 +323,26 @@ export default function TeamPage() {
                           Afrita boðshlekk
                         </button>
                       )}
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => setOpenDocs((c) => (c === r.id ? null : r.id))}
+                          className={`inline-flex items-center gap-1 text-xs ${openDocs === r.id ? "text-cyan-700" : "text-slate-500 hover:text-slate-800"}`}
+                        >
+                          <Paperclip className="w-3.5 h-3.5" /> Skjöl
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
+                {isAdmin && openDocs === r.id && (
+                  <tr className="border-b border-slate-100 last:border-0">
+                    <td colSpan={3} className="px-4 pb-4">
+                      <StaffDocuments staffId={r.id} />
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               ))}
             </tbody>
           </table>
