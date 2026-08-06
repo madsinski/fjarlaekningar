@@ -10,6 +10,7 @@ interface StaffRow {
   name: string;
   email: string;
   role: string;
+  roles: string[];
   title: string | null;
   active: boolean;
   invited: boolean;
@@ -86,9 +87,9 @@ export default function TeamPage() {
     }
     const { data } = await supabase
       .from("staff")
-      .select("id, name, email, role, title, active, invited, onboarded_at, created_at")
+      .select("id, name, email, role, roles, title, active, invited, onboarded_at, created_at")
       .order("created_at", { ascending: true });
-    setRows((data as StaffRow[]) || []);
+    setRows(((data as StaffRow[]) || []).map((r) => ({ ...r, roles: r.roles?.length ? r.roles : [r.role] })));
     setLoading(false);
   }, []);
 
@@ -126,6 +127,22 @@ export default function TeamPage() {
     setTitle("");
     setRole("member");
     load();
+  };
+
+  const saveRoles = async (id: string, roles: string[]) => {
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, roles } : r)));
+    const res = await fetch(`/api/admin/staff/${id}`, { method: "PATCH", headers: await authHeaders(), body: JSON.stringify({ roles }) });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || !j.ok) {
+      setMsg({ type: "err", text: j.error || "Ekki tókst að vista hlutverk." });
+      load();
+    } else if (j.staff) {
+      setRows((prev) => prev.map((r) => (r.id === id ? { ...r, roles: j.staff.roles ?? roles, role: j.staff.role } : r)));
+    }
+  };
+  const toggleRole = (r: StaffRow, role: string) => {
+    const has = (r.roles || []).includes(role);
+    saveRoles(r.id, has ? r.roles.filter((x) => x !== role) : [...(r.roles || []), role]);
   };
 
   return (
@@ -244,7 +261,24 @@ export default function TeamPage() {
                     <div className="text-xs text-slate-500">{r.email}</div>
                     {r.title && <div className="text-[11px] text-slate-400">{r.title}</div>}
                   </td>
-                  <td className="px-4 py-3 text-slate-700">{ROLE_LABELS[r.role] || r.role}</td>
+                  <td className="px-4 py-3">
+                    {isAdmin ? (
+                      <div className="flex flex-wrap gap-x-3 gap-y-1">
+                        {Object.entries(ROLE_LABELS).map(([v, l]) => (
+                          <label key={v} className="inline-flex items-center gap-1 text-xs text-slate-600">
+                            <input type="checkbox" checked={(r.roles || []).includes(v)} onChange={() => toggleRole(r, v)} className="accent-cyan-600" />
+                            {l.split(" — ")[0]}
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-1 text-xs text-slate-700">
+                        {(r.roles?.length ? r.roles : [r.role]).map((v) => (
+                          <span key={v} className="rounded-full bg-slate-100 px-2 py-0.5">{ROLE_LABELS[v]?.split(" — ")[0] || v}</span>
+                        ))}
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       {!r.active ? (

@@ -31,6 +31,10 @@ create table if not exists public.roster_doctors (
 alter table public.roster_doctors add column if not exists access_token text;
 create unique index if not exists roster_doctors_token_idx on public.roster_doctors (access_token) where access_token is not null;
 
+-- Doctors are derived from staff (role 'doctor'); each staff-doctor has exactly
+-- one roster profile. One profile per staff member.
+create unique index if not exists roster_doctors_staff_uidx on public.roster_doctors (staff_id) where staff_id is not null;
+
 create table if not exists public.roster_settings (
   id                 integer primary key default 1 check (id = 1),
   per_patient_salary integer not null default 3000,

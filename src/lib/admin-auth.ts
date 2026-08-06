@@ -4,7 +4,8 @@ export interface CallerStaff {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: string; // primary role (drives RLS is_admin_staff)
+  roles: string[]; // full set of roles a member holds
   active: boolean;
 }
 
@@ -18,13 +19,19 @@ export async function getCallerStaff(req: Request): Promise<CallerStaff | null> 
   if (error || !data.user?.id) return null;
   const { data: staff } = await supabaseAdmin
     .from("staff")
-    .select("id, name, email, role, active")
+    .select("id, name, email, role, roles, active")
     .eq("id", data.user.id)
     .maybeSingle();
   if (!staff || !staff.active) return null;
-  return staff as CallerStaff;
+  const roles = Array.isArray(staff.roles) && staff.roles.length ? (staff.roles as string[]) : [staff.role];
+  return { ...(staff as Omit<CallerStaff, "roles">), roles } as CallerStaff;
+}
+
+/** True if the member holds `role` (primary or in the roles set). */
+export function hasRole(staff: CallerStaff | null, role: string): boolean {
+  return !!staff && staff.active && (staff.role === role || (staff.roles?.includes(role) ?? false));
 }
 
 export function isAdmin(staff: CallerStaff | null): boolean {
-  return !!staff && staff.active && staff.role === "admin";
+  return hasRole(staff, "admin");
 }

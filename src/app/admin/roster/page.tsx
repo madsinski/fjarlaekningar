@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Plus, Trash2, CalendarPlus, Users, Link2, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Trash2, CalendarPlus, Users, Link2, Check } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
   monthKey,
@@ -29,7 +29,6 @@ export default function RosterPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
-  const [newDoc, setNewDoc] = useState({ name: "", color: "#00a8cc" });
   const [copiedDoc, setCopiedDoc] = useState<string | null>(null);
 
   const authHeaders = async (): Promise<Record<string, string>> => {
@@ -89,22 +88,9 @@ export default function RosterPage() {
     if (j?.ok) { flash("ok", `${j.created} vaktir búnar til`); load(); }
     else flash("err", j.error || "Mistókst");
   };
-  const addDoctor = async () => {
-    if (!newDoc.name.trim()) return;
-    const res = await fetch("/api/admin/roster/doctors", { method: "POST", headers: await authHeaders(), body: JSON.stringify(newDoc) });
-    const j = await res.json().catch(() => ({}));
-    if (j?.ok) { setDoctors((p) => [...p, j.doctor]); setNewDoc({ name: "", color: "#00a8cc" }); }
-    else flash("err", j.error || "Mistókst");
-  };
   const patchDoctor = async (id: string, patch: Partial<RosterDoctor>) => {
     setDoctors((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
     await fetch(`/api/admin/roster/doctors/${id}`, { method: "PATCH", headers: await authHeaders(), body: JSON.stringify(patch) });
-  };
-  const deleteDoctor = async (id: string) => {
-    if (!confirm("Fjarlægja lækni? Vaktir haldast en verða óúthlutaðar.")) return;
-    setDoctors((prev) => prev.filter((d) => d.id !== id));
-    await fetch(`/api/admin/roster/doctors/${id}`, { method: "DELETE", headers: await authHeaders() });
-    load();
   };
   const copyDoctorLink = async (d: RosterDoctor) => {
     let token = d.access_token ?? undefined;
@@ -181,26 +167,24 @@ export default function RosterPage() {
         <p className="text-sm text-slate-500">Hleð…</p>
       ) : (
         <div className="space-y-8">
-          {/* Doctors */}
+          {/* Doctors — derived from staff with the 'doctor' role */}
           {isAdmin && (
             <section>
               <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 flex items-center gap-2"><Users className="w-4 h-4" /> Læknar</h2>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {doctors.map((d) => (
-                  <div key={d.id} className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm ${d.active ? "border-slate-200 bg-white" : "border-slate-200 bg-slate-50 text-slate-400"}`}>
-                    <span className="h-3 w-3 rounded-full" style={{ background: d.color }} />
-                    <span className="font-medium text-slate-800">{d.name}</span>
-                    <button onClick={() => patchDoctor(d.id, { active: !d.active })} className="text-[11px] text-slate-400 hover:text-slate-700">{d.active ? "virkur" : "óvirkur"}</button>
-                    <button onClick={() => copyDoctorLink(d)} title="Afrita persónulegan hlekk læknis" className="text-slate-300 hover:text-cyan-600">{copiedDoc === d.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Link2 className="w-3.5 h-3.5" />}</button>
-                    <button onClick={() => deleteDoctor(d.id)} className="text-slate-300 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
-                  </div>
-                ))}
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <input value={newDoc.name} onChange={(e) => setNewDoc((n) => ({ ...n, name: e.target.value }))} placeholder="Nafn læknis" className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm" />
-                <input type="color" value={newDoc.color} onChange={(e) => setNewDoc((n) => ({ ...n, color: e.target.value }))} className="h-9 w-9 rounded border border-slate-200 p-0.5" />
-                <button onClick={addDoctor} className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-cyan-700"><Plus className="w-4 h-4" /> Bæta við</button>
-              </div>
+              {doctors.length === 0 ? (
+                <p className="text-sm text-slate-500">Engir læknar. Gefðu starfsmanni hlutverkið „Læknir“ í <a href="/admin/team" className="text-cyan-700 underline">Starfsfólki</a>.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {doctors.map((d) => (
+                    <div key={d.id} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm">
+                      <input type="color" value={d.color} onChange={(e) => patchDoctor(d.id, { color: e.target.value })} title="Litur" className="h-4 w-4 rounded-full border-0 bg-transparent p-0 cursor-pointer" />
+                      <span className="font-medium text-slate-800">{d.name}</span>
+                      <button onClick={() => copyDoctorLink(d)} title="Afrita persónulegan hlekk læknis" className="text-slate-300 hover:text-cyan-600">{copiedDoc === d.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Link2 className="w-3.5 h-3.5" />}</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="mt-2 text-[11px] text-slate-400">Læknar koma úr <a href="/admin/team" className="underline">Starfsfólki</a> (hlutverk „Læknir“). 🔗 afritar persónulegan hlekk læknis.</p>
             </section>
           )}
 

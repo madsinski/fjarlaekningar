@@ -122,6 +122,7 @@ export async function POST(req: Request) {
         phone: phone || null,
         title: title || null,
         role,
+        roles: [role],
         active: true,
         invited: sendInvite,
       },
