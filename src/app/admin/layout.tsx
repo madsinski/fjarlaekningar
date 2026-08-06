@@ -22,6 +22,7 @@ import {
   Mail,
   Building2,
   CalendarClock,
+  UserRound,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import Navbar from "@/app/components/Navbar";
@@ -43,6 +44,7 @@ interface StaffProfile {
 // research, communication, surveys, privacy requests, releases, errors).
 const NAV: { href: string; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
   { href: "/admin", label: "Yfirlit", icon: <LayoutDashboard className="w-5 h-5" /> },
+  { href: "/admin/account", label: "Mín síða", icon: <UserRound className="w-5 h-5" /> },
   { href: "/admin/website", label: "Vefsíða", icon: <Globe className="w-5 h-5" /> },
   { href: "/admin/legal", label: "Lögfræðiskjöl", icon: <FileText className="w-5 h-5" /> },
   { href: "/admin/presentations", label: "Kynningar & prentefni", icon: <Presentation className="w-5 h-5" /> },
@@ -133,23 +135,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return;
     }
 
-    // ── Legal-only (lawyer) gate ─────────────────────────────────────────
-    // A 'lawyer' account is scoped to the legal module + their own settings.
+    // ── Role-scoped access ───────────────────────────────────────────────
+    // Only 'admin' (stjórnandi) sees all of the admin. A 'lawyer' is scoped to
+    // the legal module; everyone else is scoped to their own account page. All
+    // keep access to their settings + the MFA/onboarding flows.
+    const common = pathname.startsWith("/admin/settings") || pathname === "/admin/mfa" || pathname === "/admin/onboard" || pathname === "/admin/account";
     if (profile.role === "lawyer") {
-      const allowed =
-        pathname.startsWith("/admin/legal") ||
-        pathname.startsWith("/admin/settings") ||
-        pathname === "/admin/mfa" ||
-        pathname === "/admin/onboard";
-      if (!allowed) {
+      if (!(pathname.startsWith("/admin/legal") || common)) {
         router.replace("/admin/legal");
+        return;
+      }
+    } else if (profile.role !== "admin") {
+      if (!common) {
+        router.replace("/admin/account");
         return;
       }
     }
 
     // Fully cleared. If they somehow sit on a bare route, send them home.
     if (isBare) {
-      router.replace(profile.role === "lawyer" ? "/admin/legal" : "/admin");
+      router.replace(profile.role === "admin" ? "/admin" : profile.role === "lawyer" ? "/admin/legal" : "/admin/account");
       return;
     }
     setReady(true);
@@ -180,9 +185,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const isAdmin = staff?.role === "admin";
   const isLawyer = staff?.role === "lawyer";
-  const nav = isLawyer
-    ? NAV.filter((n) => n.href.startsWith("/admin/legal") || n.href === "/admin/settings")
-    : NAV.filter((n) => !n.adminOnly || isAdmin);
+  const nav = isAdmin
+    ? NAV.filter((n) => !n.adminOnly || isAdmin)
+    : isLawyer
+      ? NAV.filter((n) => n.href.startsWith("/admin/legal") || n.href === "/admin/settings" || n.href === "/admin/account")
+      : NAV.filter((n) => n.href === "/admin/account" || n.href === "/admin/settings");
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
