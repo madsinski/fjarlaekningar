@@ -35,7 +35,9 @@ async function syncDoctors() {
       color: PALETTE[((existing?.length ?? 0) + i) % PALETTE.length],
       access_token: randomBytes(24).toString("hex"),
     }));
-    await supabaseAdmin.from("roster_doctors").upsert(rows, { onConflict: "staff_id", ignoreDuplicates: true });
+    // Plain insert (not upsert): the staff_id unique index is partial, which
+    // ON CONFLICT can't infer. `missing` is already the set without a profile.
+    await supabaseAdmin.from("roster_doctors").insert(rows);
   }
 
   const { data: profiles } = await supabaseAdmin.from("roster_doctors").select("*").in("staff_id", staffIds);
