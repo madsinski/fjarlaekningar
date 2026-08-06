@@ -9,6 +9,7 @@ interface StaffRow {
   id: string;
   name: string;
   email: string;
+  phone: string | null;
   role: string;
   roles: string[];
   title: string | null;
@@ -38,6 +39,7 @@ export default function TeamPage() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("member");
   const [title, setTitle] = useState("");
+  const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
@@ -87,7 +89,7 @@ export default function TeamPage() {
     }
     const { data } = await supabase
       .from("staff")
-      .select("id, name, email, role, roles, title, active, invited, onboarded_at, created_at")
+      .select("id, name, email, phone, role, roles, title, active, invited, onboarded_at, created_at")
       .order("created_at", { ascending: true });
     setRows(((data as StaffRow[]) || []).map((r) => ({ ...r, roles: r.roles?.length ? r.roles : [r.role] })));
     setLoading(false);
@@ -107,7 +109,7 @@ export default function TeamPage() {
     const res = await fetch("/api/admin/staff/create", {
       method: "POST",
       headers: await authHeaders(),
-      body: JSON.stringify({ name, email, role, title, send_invite: true }),
+      body: JSON.stringify({ name, email, phone, role, title, send_invite: true }),
     });
     const j = await res.json().catch(() => ({}));
     setBusy(false);
@@ -125,6 +127,7 @@ export default function TeamPage() {
     setName("");
     setEmail("");
     setTitle("");
+    setPhone("");
     setRole("member");
     load();
   };
@@ -143,6 +146,10 @@ export default function TeamPage() {
   const toggleRole = (r: StaffRow, role: string) => {
     const has = (r.roles || []).includes(role);
     saveRoles(r.id, has ? r.roles.filter((x) => x !== role) : [...(r.roles || []), role]);
+  };
+  const savePhone = async (id: string, phone: string) => {
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, phone } : r)));
+    await fetch(`/api/admin/staff/${id}`, { method: "PATCH", headers: await authHeaders(), body: JSON.stringify({ phone }) });
   };
 
   return (
@@ -184,6 +191,12 @@ export default function TeamPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Titill (valfrjálst)"
+              className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none"
+            />
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="Sími (valfrjálst)"
               className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none"
             />
             <select
@@ -260,6 +273,16 @@ export default function TeamPage() {
                     <div className="font-medium text-slate-900">{r.name}</div>
                     <div className="text-xs text-slate-500">{r.email}</div>
                     {r.title && <div className="text-[11px] text-slate-400">{r.title}</div>}
+                    {isAdmin ? (
+                      <input
+                        defaultValue={r.phone || ""}
+                        onBlur={(e) => e.target.value !== (r.phone || "") && savePhone(r.id, e.target.value.trim())}
+                        placeholder="Sími"
+                        className="mt-1 w-36 px-2 py-1 border border-slate-200 rounded text-[11px] outline-none focus:ring-2 focus:ring-cyan-200"
+                      />
+                    ) : (
+                      r.phone && <div className="text-[11px] text-slate-400">{r.phone}</div>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     {isAdmin ? (

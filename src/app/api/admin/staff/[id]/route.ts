@@ -42,13 +42,15 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     update.role = primaryRole(roles);
   }
   if (typeof body.active === "boolean") update.active = body.active;
+  if (typeof body.phone === "string") update.phone = body.phone.trim() || null;
+  if (typeof body.title === "string") update.title = body.title.trim() || null;
   if (Object.keys(update).length === 0) return NextResponse.json({ ok: true });
 
   const { data, error } = await supabaseAdmin
     .from("staff")
     .update(update)
     .eq("id", id)
-    .select("id, name, email, role, roles, title, active, invited, onboarded_at, created_at")
+    .select("id, name, email, phone, role, roles, title, active, invited, onboarded_at, created_at")
     .maybeSingle();
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true, staff: data });
