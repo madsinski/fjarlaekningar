@@ -217,7 +217,7 @@ export default function HomeView({
 
     // Team — a human face right before the final ask, linking to /um-okkur.
     team: (
-      <div className="grid items-center gap-8 rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 md:grid-cols-2">
+      <div className="grid items-center gap-8 sm:gap-12 md:grid-cols-2">
         <div className="order-2 md:order-1">
           <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{renderHighlighted(c.team_heading)}</h2>
           <p className="mt-4 max-w-prose text-slate-600">{c.team_body}</p>
