@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Upload, Download, Trash2, FileText } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { DEFAULT_CONTRACT_TITLE, DEFAULT_CONTRACT_BODY } from "@/lib/contract-template";
 
 interface Doc {
   id: string;
@@ -43,8 +44,8 @@ export default function StaffDocuments({ staffId }: { staffId: string }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [cTitle, setCTitle] = useState("Ráðningarsamningur");
-  const [cBody, setCBody] = useState("");
+  const [cTitle, setCTitle] = useState(DEFAULT_CONTRACT_TITLE);
+  const [cBody, setCBody] = useState(DEFAULT_CONTRACT_BODY);
   const [cBusy, setCBusy] = useState(false);
   const [kind, setKind] = useState("employment_contract");
   const [title, setTitle] = useState("");
@@ -87,7 +88,8 @@ export default function StaffDocuments({ staffId }: { staffId: string }) {
       return;
     }
     setContracts((p) => [j.contract, ...p]);
-    setCBody("");
+    setCTitle(DEFAULT_CONTRACT_TITLE);
+    setCBody(DEFAULT_CONTRACT_BODY);
   };
 
   const contractAction = async (contractId: string, action: "void" | "resend") => {
