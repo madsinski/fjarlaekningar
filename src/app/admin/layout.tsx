@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import Navbar from "@/app/components/Navbar";
+import { ADMIN_NAV, applyNavConfig, type NavConfig } from "@/lib/admin-nav";
 
 // Routes that render WITHOUT the admin shell and don't require full clearance
 // (session may exist but MFA / onboarding not yet complete).
@@ -40,33 +41,34 @@ interface StaffProfile {
   onboarded_at: string | null;
 }
 
-// Phase 1 nav. Later phases append modules here (legal, presentations,
-// research, communication, surveys, privacy requests, releases, errors).
-const NAV: { href: string; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
-  { href: "/admin", label: "Yfirlit", icon: <LayoutDashboard className="w-5 h-5" /> },
-  { href: "/admin/account", label: "Mín síða", icon: <UserRound className="w-5 h-5" /> },
-  { href: "/admin/website", label: "Vefsíða", icon: <Globe className="w-5 h-5" /> },
-  { href: "/admin/legal", label: "Lögfræðiskjöl", icon: <FileText className="w-5 h-5" /> },
-  { href: "/admin/presentations", label: "Kynningar & prentefni", icon: <Presentation className="w-5 h-5" /> },
-  { href: "/admin/stofnanir", label: "Samstarfsstofnanir", icon: <Building2 className="w-5 h-5" /> },
-  { href: "/admin/research", label: "Rannsóknir", icon: <FlaskConical className="w-5 h-5" /> },
-  { href: "/admin/clinical", label: "Klínísk reiknirit", icon: <Activity className="w-5 h-5" /> },
-  { href: "/admin/surveys", label: "Kannanir", icon: <ClipboardList className="w-5 h-5" /> },
-  { href: "/admin/roster", label: "Vaktakerfi", icon: <CalendarClock className="w-5 h-5" /> },
-  { href: "/admin/communication", label: "Samskipti", icon: <MessageSquare className="w-5 h-5" /> },
-  { href: "/admin/outreach", label: "Fréttabréf", icon: <Mail className="w-5 h-5" /> },
-  { href: "/admin/data-requests", label: "Persónuverndarbeiðnir", icon: <ShieldAlert className="w-5 h-5" /> },
-  { href: "/admin/releases", label: "Útgáfusaga", icon: <Rocket className="w-5 h-5" /> },
-  { href: "/admin/errors", label: "Villuskráning", icon: <AlertTriangle className="w-5 h-5" /> },
-  { href: "/admin/team", label: "Starfsfólk", icon: <Users className="w-5 h-5" />, adminOnly: true },
-  { href: "/admin/settings", label: "Stillingar", icon: <Settings className="w-5 h-5" /> },
-];
+// Item labels + order come from src/lib/admin-nav.ts (editable in Stillingar).
+// Icons stay here, keyed by href.
+const NAV_ICONS: Record<string, React.ReactNode> = {
+  "/admin": <LayoutDashboard className="w-5 h-5" />,
+  "/admin/account": <UserRound className="w-5 h-5" />,
+  "/admin/website": <Globe className="w-5 h-5" />,
+  "/admin/legal": <FileText className="w-5 h-5" />,
+  "/admin/presentations": <Presentation className="w-5 h-5" />,
+  "/admin/stofnanir": <Building2 className="w-5 h-5" />,
+  "/admin/research": <FlaskConical className="w-5 h-5" />,
+  "/admin/clinical": <Activity className="w-5 h-5" />,
+  "/admin/surveys": <ClipboardList className="w-5 h-5" />,
+  "/admin/roster": <CalendarClock className="w-5 h-5" />,
+  "/admin/communication": <MessageSquare className="w-5 h-5" />,
+  "/admin/outreach": <Mail className="w-5 h-5" />,
+  "/admin/data-requests": <ShieldAlert className="w-5 h-5" />,
+  "/admin/releases": <Rocket className="w-5 h-5" />,
+  "/admin/errors": <AlertTriangle className="w-5 h-5" />,
+  "/admin/team": <Users className="w-5 h-5" />,
+  "/admin/settings": <Settings className="w-5 h-5" />,
+};
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const [staff, setStaff] = useState<StaffProfile | null>(null);
+  const [navConfig, setNavConfig] = useState<NavConfig>({});
 
   const isBare = BARE_ROUTES.includes(pathname);
 
@@ -167,6 +169,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     runGate();
   }, [runGate]);
 
+  useEffect(() => {
+    if (!staff) return;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/admin/nav", { headers: { Authorization: session?.access_token ? `Bearer ${session.access_token}` : "" } });
+      const j = await res.json().catch(() => ({}));
+      if (j?.ok) setNavConfig(j.config || {});
+    })();
+  }, [staff]);
+
   const signOut = async () => {
     await supabase.auth.signOut();
     router.replace("/admin/login");
@@ -185,11 +197,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const isAdmin = staff?.role === "admin";
   const isLawyer = staff?.role === "lawyer";
-  const nav = isAdmin
-    ? NAV.filter((n) => !n.adminOnly || isAdmin)
+  const ordered = applyNavConfig(ADMIN_NAV, navConfig);
+  const nav = (isAdmin
+    ? ordered.filter((n) => !n.adminOnly || isAdmin)
     : isLawyer
-      ? NAV.filter((n) => n.href.startsWith("/admin/legal") || n.href === "/admin/settings" || n.href === "/admin/account")
-      : NAV.filter((n) => n.href === "/admin/account" || n.href === "/admin/settings");
+      ? ordered.filter((n) => n.href.startsWith("/admin/legal") || n.href === "/admin/settings" || n.href === "/admin/account")
+      : ordered.filter((n) => n.href === "/admin/account" || n.href === "/admin/settings")
+  ).map((n) => ({ ...n, icon: NAV_ICONS[n.href] }));
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">

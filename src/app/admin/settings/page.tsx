@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Users, KeyRound, ShieldCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import NavEditor from "./NavEditor";
 
 interface Me {
   name: string;
@@ -103,6 +104,15 @@ export default function SettingsPage() {
           >
             <Users className="w-4 h-4" /> Opna starfsfólk
           </Link>
+        </section>
+      )}
+
+      {/* Sidebar (labels + order) */}
+      {isAdmin && (
+        <section className="mt-6 rounded-xl border border-slate-200 bg-white p-5">
+          <div className="font-semibold text-slate-900 text-sm mb-1">Valmynd stjórnborðs</div>
+          <p className="text-sm text-slate-600 mb-4">Breyttu heitum og röð atriða í hliðarvalmyndinni.</p>
+          <NavEditor />
         </section>
       )}
     </div>
