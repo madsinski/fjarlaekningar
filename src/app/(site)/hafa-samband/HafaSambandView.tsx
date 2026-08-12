@@ -1,3 +1,4 @@
+import Link from "next/link";
 import PortalButton from "../../components/PortalButton";
 import NewsletterInline from "../../components/NewsletterInline";
 import SiteIcon from "@/lib/site-content/SiteIcon";
@@ -52,6 +53,18 @@ export default function HafaSambandView({
               />
             </svg>
           </a>
+          {/* Deflect common questions to the FAQ before someone emails. */}
+          {c.card2_faq_label && (
+            <Link
+              href="/thjonusta#faq"
+              className="mt-4 flex w-fit items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-[var(--primary)]"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {c.card2_faq_label}
+            </Link>
+          )}
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200 p-8">
