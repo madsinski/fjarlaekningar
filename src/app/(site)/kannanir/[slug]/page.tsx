@@ -78,6 +78,13 @@ export default function PublicSurveyPage() {
     load();
   }, [load]);
 
+  // The submit button sits at the bottom of a long form, so submitting leaves
+  // the viewport scrolled down; the thank-you screen then renders below the
+  // fold. Jump back to the top when it appears so the confirmation is in view.
+  useEffect(() => {
+    if (done) window.scrollTo({ top: 0, behavior: "auto" });
+  }, [done]);
+
   const visibleQuestions = useMemo(
     () => (survey?.questions || []).filter((q) => isQuestionVisible(q, answers)),
     [survey, answers],
