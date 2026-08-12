@@ -540,6 +540,116 @@ function CoopCardsEditor({
   );
 }
 
+// Numbered-steps editor for the "Ferlið" sections (home summary + /thjonusta
+// process). Steps are stored one per line PER LOCALE, so add / remove / reorder
+// keep the two languages index-aligned. `withDesc` adds a description field and
+// stores each step as "Titill | Lýsing".
+type StepRow = { title: string; desc: string };
+function StepsEditor({
+  isValue,
+  enValue,
+  withDesc,
+  disabled,
+  onChange,
+}: {
+  isValue: string;
+  enValue: string;
+  withDesc: boolean;
+  disabled: boolean;
+  onChange: (isVal: string, enVal: string) => void;
+}) {
+  const parse = (v: string): StepRow[] =>
+    v.trim()
+      ? v.split("\n").map((line) => {
+          if (!withDesc) return { title: line.trim(), desc: "" };
+          const [t, ...r] = line.split("|");
+          return { title: t.trim(), desc: r.join("|").trim() };
+        })
+      : [];
+  const isRows = parse(isValue);
+  const enRows = parse(enValue);
+  const n = Math.max(isRows.length, enRows.length);
+  const rows = Array.from({ length: n }, (_, i) => ({
+    is: isRows[i] ?? { title: "", desc: "" },
+    en: enRows[i] ?? { title: "", desc: "" },
+  }));
+  const serialize = (arr: { is: StepRow; en: StepRow }[], loc: "is" | "en") =>
+    arr.map((r) => (withDesc ? `${r[loc].title} | ${r[loc].desc}` : r[loc].title)).join("\n");
+  const commit = (arr: { is: StepRow; en: StepRow }[]) =>
+    onChange(serialize(arr, "is"), serialize(arr, "en"));
+  const update = (i: number, loc: "is" | "en", patch: Partial<StepRow>) =>
+    commit(rows.map((r, j) => (j === i ? { ...r, [loc]: { ...r[loc], ...patch } } : r)));
+  const add = () =>
+    commit([...rows, { is: { title: "", desc: "" }, en: { title: "", desc: "" } }]);
+  const del = (i: number) => commit(rows.filter((_, j) => j !== i));
+  const move = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= rows.length) return;
+    const cp = [...rows];
+    [cp[i], cp[j]] = [cp[j], cp[i]];
+    commit(cp);
+  };
+  const ibtn = "rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30";
+  const inputCls =
+    "w-full px-2 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50";
+  return (
+    <div className="space-y-3">
+      {rows.map((r, i) => (
+        <div key={i} className="rounded-lg border border-slate-200 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center gap-2 text-[11px] font-medium text-slate-500">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--primary)] text-[10px] font-bold text-white">
+                {i + 1}
+              </span>
+              Skref {i + 1}
+            </span>
+            {!disabled && (
+              <div className="flex items-center gap-1">
+                <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className={ibtn} aria-label="Færa upp">↑</button>
+                <button type="button" onClick={() => move(i, 1)} disabled={i === rows.length - 1} className={ibtn} aria-label="Færa niður">↓</button>
+                <button type="button" onClick={() => del(i)} className="rounded px-2 py-1 text-[11px] text-red-500 hover:bg-red-50">Eyða</button>
+              </div>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {(["is", "en"] as const).map((loc) => (
+              <div key={loc} className="space-y-1">
+                <span className="text-[10px] uppercase tracking-wide text-slate-400">{loc}</span>
+                <input
+                  value={r[loc].title}
+                  onChange={(e) => update(i, loc, { title: e.target.value })}
+                  disabled={disabled}
+                  placeholder={loc === "is" ? "Titill" : "(þýðing)"}
+                  className={inputCls}
+                />
+                {withDesc && (
+                  <textarea
+                    value={r[loc].desc}
+                    onChange={(e) => update(i, loc, { desc: e.target.value })}
+                    disabled={disabled}
+                    rows={2}
+                    placeholder={loc === "is" ? "Lýsing" : "(þýðing)"}
+                    className={inputCls}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      {!disabled && (
+        <button
+          type="button"
+          onClick={add}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
+        >
+          + Bæta við skrefi
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function SiteContentEditor() {
   const params = useParams<{ page: string }>();
   const pageKey = params?.page ?? "home";
@@ -965,6 +1075,29 @@ export default function SiteContentEditor() {
                   value={draft.is?.coop_list ?? page.defaultsIs.coop_list ?? ""}
                   disabled={!isAdmin}
                   onChange={(v) => setField("is", "coop_list", v)}
+                />
+              </section>
+            )}
+            {page.fields.some(
+              (f) => (f.editor === "steps" || f.editor === "steps-desc") && f.group === g.group,
+            ) && (
+              <section className="rounded-xl border border-slate-200 bg-white p-4">
+                <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-cyan-700">
+                  Skref
+                </h2>
+                <p className="mb-3 text-[11px] text-slate-400">
+                  Bættu við eða fjarlægðu skref með hnöppunum. Röðin hér er röðin á vefnum og
+                  númerin uppfærast sjálfkrafa.
+                </p>
+                <StepsEditor
+                  withDesc={page.fields.some((f) => f.editor === "steps-desc" && f.group === g.group)}
+                  isValue={draft.is?.steps ?? page.defaultsIs.steps ?? ""}
+                  enValue={draft.en?.steps ?? ""}
+                  disabled={!isAdmin}
+                  onChange={(iv, ev) => {
+                    setField("is", "steps", iv);
+                    setField("en", "steps", ev);
+                  }}
                 />
               </section>
             )}

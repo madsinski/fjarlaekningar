@@ -33,24 +33,9 @@ export const THJONUSTA_FIELDS: SiteField[] = [
   // reads the process once, in order, in one place.
   { key: "how_heading", label: "Fyrirsögn", group: "Ferlið", type: "heading" },
   { key: "how_body", label: "Texti", group: "Ferlið", type: "textarea" },
-  { key: "step1_title", label: "Skref 1 — titill", group: "Ferlið", type: "text" },
-  { key: "step1_desc", label: "Skref 1 — lýsing", group: "Ferlið", type: "textarea" },
-  { key: "step2_title", label: "Skref 2 — titill", group: "Ferlið", type: "text" },
-  { key: "step2_desc", label: "Skref 2 — lýsing", group: "Ferlið", type: "textarea" },
-  { key: "step3_title", label: "Skref 3 — titill", group: "Ferlið", type: "text" },
-  { key: "step3_desc", label: "Skref 3 — lýsing", group: "Ferlið", type: "textarea" },
-  { key: "step4_title", label: "Skref 4 — titill", group: "Ferlið", type: "text" },
-  { key: "step4_desc", label: "Skref 4 — lýsing", group: "Ferlið", type: "textarea" },
-  { key: "step5_title", label: "Skref 5 — titill", group: "Ferlið", type: "text" },
-  { key: "step5_desc", label: "Skref 5 — lýsing", group: "Ferlið", type: "textarea" },
-  // Optional extra steps. Filled slots render in order and auto-number, so
-  // staff can add or remove numbered points from the CMS without a gap.
-  { key: "step6_title", label: "Skref 6 — titill (valfrjálst)", group: "Ferlið", type: "text" },
-  { key: "step6_desc", label: "Skref 6 — lýsing", group: "Ferlið", type: "textarea" },
-  { key: "step7_title", label: "Skref 7 — titill (valfrjálst)", group: "Ferlið", type: "text" },
-  { key: "step7_desc", label: "Skref 7 — lýsing", group: "Ferlið", type: "textarea" },
-  { key: "step8_title", label: "Skref 8 — titill (valfrjálst)", group: "Ferlið", type: "text" },
-  { key: "step8_desc", label: "Skref 8 — lýsing", group: "Ferlið", type: "textarea" },
+  // Numbered steps, edited by a repeatable control (add / remove / reorder).
+  // Stored one step per line as "Titill | Lýsing"; auto-numbered by position.
+  { key: "steps", label: "Skref", group: "Ferlið", type: "textarea", editor: "steps-desc" },
 
   // Heimapróf. Step 2 of the process mentions these in passing; this section is
   // the practical detail, because fetching a test yourself is the one piece of
@@ -267,21 +252,14 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
   how_body:
     "Sömu spurningar og sama fagmennska og á læknastofu — bara skilvirkari leið til að leysa erindið. Þú svarar spurningalista heima eða þar sem þú ert, og læknir svarar innan tveggja klukkustunda á opnunartíma milli 10 og 22.",
 
-  step1_title: "Þú velur erindi af vandamálalista",
-  step1_desc:
-    "Skráðu þig inn með rafrænum skilríkjum og farðu í viðeigandi ferli eftir einkennum.",
-  step2_title: "Þú svarar spurningalista",
-  step2_desc:
-    "Spurningalistar eru sérhannaðir í samstarfi við íslenska sérfræðilækna tengt hverju vandamáli — ferlið er hannað eins og viðtal við lækni. Þegar heimapróf bætir greiningu er þér leiðbeint að taka það, t.d. þvagpróf sem sækja má á heilsugæslu eða í næsta apóteki, og skrá niðurstöðuna beint í gáttina.",
-  step3_title: "Öryggisnetið metur svörin",
-  step3_desc:
-    "Rauð flögg í spurningalistunum vísa alvarlegum einkennum strax í rétta þjónustu. Fjarlækningar taka ekki að sér erindi sem eiga heima annars staðar — og þú greiðir ekki ef þér er vísað frá.",
-  step4_title: "Læknir metur og leggur til meðferð",
-  step4_desc:
-    "Læknir fer yfir svörin og leggur til viðeigandi meðferð út frá sínu læknisfræðilega mati. Engin meðferð án mats læknis.",
-  step5_title: "Niðurstaða, ráðleggingar og lyfseðill",
-  step5_desc:
-    "Þú færð skriflega niðurstöðu og ráðleggingar, og lyfseðill fer rafrænt í lyfjagátt ef þörf er á — tilbúinn í næsta apóteki. Niðurstöðunni fylgir fræðsluefni tengt þínu vandamáli: ráðleggingar, fyrirbyggjandi ráð og vörur án lyfseðils sem geta hjálpað.",
+  // One step per line, "Titill | Lýsing". Edited by the add/remove control.
+  steps: [
+    "Þú velur erindi af vandamálalista | Skráðu þig inn með rafrænum skilríkjum og farðu í viðeigandi ferli eftir einkennum.",
+    "Þú svarar spurningalista | Spurningalistar eru sérhannaðir í samstarfi við íslenska sérfræðilækna tengt hverju vandamáli — ferlið er hannað eins og viðtal við lækni. Þegar heimapróf bætir greiningu er þér leiðbeint að taka það, t.d. þvagpróf sem sækja má á heilsugæslu eða í næsta apóteki, og skrá niðurstöðuna beint í gáttina.",
+    "Öryggisnetið metur svörin | Rauð flögg í spurningalistunum vísa alvarlegum einkennum strax í rétta þjónustu. Fjarlækningar taka ekki að sér erindi sem eiga heima annars staðar — og þú greiðir ekki ef þér er vísað frá.",
+    "Læknir metur og leggur til meðferð | Læknir fer yfir svörin og leggur til viðeigandi meðferð út frá sínu læknisfræðilega mati. Engin meðferð án mats læknis.",
+    "Niðurstaða, ráðleggingar og lyfseðill | Þú færð skriflega niðurstöðu og ráðleggingar, og lyfseðill fer rafrænt í lyfjagátt ef þörf er á — tilbúinn í næsta apóteki. Niðurstöðunni fylgir fræðsluefni tengt þínu vandamáli: ráðleggingar, fyrirbyggjandi ráð og vörur án lyfseðils sem geta hjálpað.",
+  ].join("\n"),
 
   // NEEDS CLINICAL SIGN-OFF. Step 2 already says heimapróf exist and that
   // þvagpróf is fetched "á heilsugæslu eða í næsta apóteki" — that part is

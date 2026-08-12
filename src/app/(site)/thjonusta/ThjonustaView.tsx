@@ -30,12 +30,15 @@ export default function ThjonustaView({
 }) {
   const erindi = localizeErindi(locale);
   const tr = ui(locale);
-  // Numbered slots (up to 8) so the process steps are add/remove-editable in
-  // the CMS; empty ones drop out and the rest auto-number by position.
-  const steps = Array.from({ length: 8 }, (_, i) => ({
-    title: c[`step${i + 1}_title`],
-    description: c[`step${i + 1}_desc`],
-  })).filter((s) => s.title);
+  // One step per line as "Titill | Lýsing" (edited by the add/remove control in
+  // the CMS); auto-numbered by position.
+  const steps = (c.steps ?? "")
+    .split("\n")
+    .map((line) => {
+      const [title, ...rest] = line.split("|");
+      return { title: title.trim(), description: rest.join("|").trim() };
+    })
+    .filter((s) => s.title);
   const tests = [
     { title: c.test1_title, desc: c.test1_desc, when: c.test1_when, where: c.test1_where, img: c.test1_img, icon: c.test1_icon, fallback: "droplet" },
     { title: c.test2_title, desc: c.test2_desc, when: c.test2_when, where: c.test2_where, img: c.test2_img, icon: c.test2_icon, fallback: "test-tube" },

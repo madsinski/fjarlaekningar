@@ -65,17 +65,9 @@ export const HOME_FIELDS: SiteField[] = [
   // detail lives once on /thjonusta#ferlid, which this section links to.
   { key: "how_heading", label: "Fyrirsögn", group: "Ferlið", type: "heading" },
   { key: "how_body", label: "Texti", group: "Ferlið", type: "textarea" },
-  // Numbered steps. Filled slots render in order and auto-number, so staff can
-  // add (fill the next empty one) or remove (clear one) from the CMS without a
-  // gap in the numbering. Leave the trailing ones blank to hide them.
-  { key: "step1_title", label: "Skref 1", group: "Ferlið", type: "text" },
-  { key: "step2_title", label: "Skref 2", group: "Ferlið", type: "text" },
-  { key: "step3_title", label: "Skref 3", group: "Ferlið", type: "text" },
-  { key: "step4_title", label: "Skref 4", group: "Ferlið", type: "text" },
-  { key: "step5_title", label: "Skref 5", group: "Ferlið", type: "text" },
-  { key: "step6_title", label: "Skref 6 (valfrjálst)", group: "Ferlið", type: "text" },
-  { key: "step7_title", label: "Skref 7 (valfrjálst)", group: "Ferlið", type: "text" },
-  { key: "step8_title", label: "Skref 8 (valfrjálst)", group: "Ferlið", type: "text" },
+  // Numbered steps, edited by a repeatable control (add / remove / reorder).
+  // Stored one step title per line; the view auto-numbers by position.
+  { key: "steps", label: "Skref", group: "Ferlið", type: "textarea", editor: "steps" },
   { key: "how_cta", label: "Hnappur", group: "Ferlið", type: "text" },
 
   // HSU
@@ -165,11 +157,13 @@ export const HOME_DEFAULTS_IS: LocaleContent = {
   how_heading: "Ferlið frá ==upphafi til enda==",
   how_body:
     "Þú svarar spurningalista heima eða þar sem þú ert stödd eða staddur — læknir svarar erindum innan tveggja klukkustunda á opnunartíma.",
-  step1_title: "Þú velur erindi af vandamálalista",
-  step2_title: "Svarar spurningalista",
-  step3_title: "Öryggisnetið metur svörin",
-  step4_title: "Læknir metur og leggur til meðferð",
-  step5_title: "Niðurstaða, ráðleggingar og lyfseðill",
+  steps: [
+    "Þú velur erindi af vandamálalista",
+    "Svarar spurningalista",
+    "Öryggisnetið metur svörin",
+    "Læknir metur og leggur til meðferð",
+    "Niðurstaða, ráðleggingar og lyfseðill",
+  ].join("\n"),
   how_cta: "Sjá hvernig þjónustan virkar",
 
   coop_eyebrow: "Samstarf við heilbrigðisstofnanir",

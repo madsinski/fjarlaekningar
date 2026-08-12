@@ -31,9 +31,9 @@ export default function HomeView({
   const t = ui(locale);
   // Titles only. The descriptions used to live here too, which meant the home
   // page and /thjonusta each carried a different half of the same explanation.
-  // Numbered slots (up to 8) so steps are add/remove-editable in the CMS; empty
-  // ones drop out and the rest auto-number by position.
-  const steps = Array.from({ length: 8 }, (_, i) => c[`step${i + 1}_title`]).filter(Boolean);
+  // One step title per line (edited by the add/remove control in the CMS);
+  // auto-numbered by position.
+  const steps = (c.steps ?? "").split("\n").map((s) => s.trim()).filter(Boolean);
   const stats = [
     { value: c.stat1_value, label: c.stat1_label },
     { value: c.stat2_value, label: c.stat2_label },
