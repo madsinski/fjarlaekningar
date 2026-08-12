@@ -24,6 +24,7 @@ export const CHROME_FIELDS: SiteField[] = [
   // Header
   { key: "nav_home", label: "Valmynd — Heim", group: "Haus (valmynd)", type: "text" },
   { key: "nav_thjonusta", label: "Valmynd — Þjónusta", group: "Haus (valmynd)", type: "text" },
+  { key: "nav_faq", label: "Valmynd — Algengar spurningar", group: "Haus (valmynd)", type: "text", help: "Hlekkur á algengar spurningar (/thjonusta#faq)." },
   { key: "nav_um_okkur", label: "Valmynd — Um okkur", group: "Haus (valmynd)", type: "text" },
   { key: "nav_hafa_samband", label: "Valmynd — Hafa samband", group: "Haus (valmynd)", type: "text" },
   { key: "nav_cta", label: "Hnappur í haus", group: "Haus (valmynd)", type: "text" },
@@ -52,6 +53,7 @@ export const CHROME_DEFAULTS_IS: LocaleContent = {
 
   nav_home: "Heim",
   nav_thjonusta: "Þjónusta",
+  nav_faq: "Algengar spurningar",
   nav_um_okkur: "Um okkur",
   nav_hafa_samband: "Hafa samband",
   nav_cta: "Opna sjúklingagátt",
