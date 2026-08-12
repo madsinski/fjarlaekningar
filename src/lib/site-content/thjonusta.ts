@@ -11,6 +11,7 @@ export const THJONUSTA_SECTIONS: SiteSection[] = [
   { id: "live", label: "Virk þjónusta" },
   { id: "limits", label: "Hvenær hentar ekki" },
   { id: "faq", label: "Algengar spurningar" },
+  { id: "cta", label: "Ákall (CTA)" },
 ];
 
 
@@ -231,8 +232,10 @@ export const THJONUSTA_FIELDS: SiteField[] = [
   { key: "meds_d_items", label: "Lyfjaflokkur D — lyf (# = undirflokkur, ein lína hvert)", group: "Algengar spurningar", type: "textarea" },
 
   // Closing CTA
-  { key: "cta_text", label: "Texti", group: "Ákall (CTA)", type: "text" },
+  { key: "cta_heading", label: "Fyrirsögn", group: "Ákall (CTA)", type: "heading" },
+  { key: "cta_body", label: "Texti", group: "Ákall (CTA)", type: "textarea" },
   { key: "cta_button", label: "Hnappur", group: "Ákall (CTA)", type: "text" },
+  { key: "cta_footer", label: "Neðanmálstexti", group: "Ákall (CTA)", type: "text" },
 ];
 
 export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
@@ -601,8 +604,12 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
     "Krabbameinslyf, ónæmisbælandi lyf og líftæknilyf",
   ].join("\n"),
 
-  cta_text: "Tilbúin(n) að senda inn erindi?",
+  cta_heading: "Tilbúin(n) að senda inn erindi?",
+  cta_body:
+    "Skráðu þig inn í sjúklingagáttina og veldu erindi. Einfalt, öruggt og flest erindi afgreidd innan tveggja klukkustunda á opnunartíma.",
   cta_button: "Opna sjúklingagátt",
+  cta_footer:
+    "Meðan á tilraunaverkefninu stendur er þjónustan aðeins í boði fyrir skjólstæðinga sem eru skráðir hjá HSU.",
 };
 
 export const THJONUSTA_DEFAULTS_EN: LocaleContent = emptyDefaults(THJONUSTA_FIELDS);

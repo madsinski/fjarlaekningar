@@ -604,13 +604,25 @@ export default function ThjonustaView({
             noResults: tr.faqNoResults,
           }}
         />
-
-        <div className="mt-16 max-w-3xl">
-          <p className="text-slate-600 mb-6">{c.cta_text}</p>
-          <PortalButton size="lg" label={c.cta_button} />
-        </div>
       </>
     ),
+
+    // Closing CTA — its own band, styled as the gradient card used on the home
+    // page so the "send in an erindi" prompt reads the same across the site.
+    cta: c.cta_heading ? (
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] p-10 sm:p-16 text-white">
+        <h2 className="text-3xl sm:text-4xl font-bold max-w-2xl">{renderHighlighted(c.cta_heading)}</h2>
+        {c.cta_body && <p className="mt-4 text-brand-cyan-subtle max-w-xl">{c.cta_body}</p>}
+        <div className="mt-8">
+          <PortalButton
+            size="lg"
+            label={c.cta_button}
+            className="bg-white !text-[var(--primary-dark)] hover:!bg-brand-cyan-subtle"
+          />
+        </div>
+        {c.cta_footer && <p className="mt-6 text-sm text-brand-cyan-subtle/90">{c.cta_footer}</p>}
+      </div>
+    ) : null,
   };
 
   const visible = resolveOrder(THJONUSTA_SECTIONS, order ? { order } : null).filter(
