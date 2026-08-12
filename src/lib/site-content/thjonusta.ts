@@ -149,6 +149,13 @@ export const THJONUSTA_FIELDS: SiteField[] = [
   // the title), auto-linked URLs, and the token {{lyfjalisti}}, which expands
   // into the collapsible medication list (the meds_* fields below).
   { key: "faq_heading", label: "Fyrirsögn", group: "Algengar spurningar", type: "heading" },
+  {
+    key: "faq_categories",
+    label: "Flokkar (ein lína hver, í réttri röð)",
+    group: "Algengar spurningar",
+    type: "textarea",
+    help: "Flokkarnir birtast sem pillu-hnappar undir fyrirsögninni. Hver spurning fær flokk (Flokkur 1–24) sem verður að stemma við eitt af heitunum hér.",
+  },
   { key: "faq1_q", label: "Spurning 1", group: "Algengar spurningar", type: "text" },
   { key: "faq1_a", label: "Svar 1", group: "Algengar spurningar", type: "textarea" },
   { key: "faq2_q", label: "Spurning 2", group: "Algengar spurningar", type: "text" },
@@ -197,6 +204,33 @@ export const THJONUSTA_FIELDS: SiteField[] = [
   { key: "faq23_a", label: "Svar 23", group: "Algengar spurningar", type: "textarea" },
   { key: "faq24_q", label: "Spurning 24", group: "Algengar spurningar", type: "text" },
   { key: "faq24_a", label: "Svar 24", group: "Algengar spurningar", type: "textarea" },
+
+  // Flokkur hverrar spurningar — verður að stemma við eina línu í faq_categories.
+  // (Ekki þýtt: sami flokkur á báðum tungumálum.)
+  { key: "faq1_cat", label: "Flokkur — spurning 1", group: "Algengar spurningar", type: "text" },
+  { key: "faq2_cat", label: "Flokkur — spurning 2", group: "Algengar spurningar", type: "text" },
+  { key: "faq3_cat", label: "Flokkur — spurning 3", group: "Algengar spurningar", type: "text" },
+  { key: "faq4_cat", label: "Flokkur — spurning 4", group: "Algengar spurningar", type: "text" },
+  { key: "faq5_cat", label: "Flokkur — spurning 5", group: "Algengar spurningar", type: "text" },
+  { key: "faq6_cat", label: "Flokkur — spurning 6", group: "Algengar spurningar", type: "text" },
+  { key: "faq7_cat", label: "Flokkur — spurning 7", group: "Algengar spurningar", type: "text" },
+  { key: "faq8_cat", label: "Flokkur — spurning 8", group: "Algengar spurningar", type: "text" },
+  { key: "faq9_cat", label: "Flokkur — spurning 9", group: "Algengar spurningar", type: "text" },
+  { key: "faq10_cat", label: "Flokkur — spurning 10", group: "Algengar spurningar", type: "text" },
+  { key: "faq11_cat", label: "Flokkur — spurning 11", group: "Algengar spurningar", type: "text" },
+  { key: "faq12_cat", label: "Flokkur — spurning 12", group: "Algengar spurningar", type: "text" },
+  { key: "faq13_cat", label: "Flokkur — spurning 13", group: "Algengar spurningar", type: "text" },
+  { key: "faq14_cat", label: "Flokkur — spurning 14", group: "Algengar spurningar", type: "text" },
+  { key: "faq15_cat", label: "Flokkur — spurning 15", group: "Algengar spurningar", type: "text" },
+  { key: "faq16_cat", label: "Flokkur — spurning 16", group: "Algengar spurningar", type: "text" },
+  { key: "faq17_cat", label: "Flokkur — spurning 17", group: "Algengar spurningar", type: "text" },
+  { key: "faq18_cat", label: "Flokkur — spurning 18", group: "Algengar spurningar", type: "text" },
+  { key: "faq19_cat", label: "Flokkur — spurning 19", group: "Algengar spurningar", type: "text" },
+  { key: "faq20_cat", label: "Flokkur — spurning 20", group: "Algengar spurningar", type: "text" },
+  { key: "faq21_cat", label: "Flokkur — spurning 21", group: "Algengar spurningar", type: "text" },
+  { key: "faq22_cat", label: "Flokkur — spurning 22", group: "Algengar spurningar", type: "text" },
+  { key: "faq23_cat", label: "Flokkur — spurning 23", group: "Algengar spurningar", type: "text" },
+  { key: "faq24_cat", label: "Flokkur — spurning 24", group: "Algengar spurningar", type: "text" },
 
   // Lyfjalisti — birtist þar sem {{lyfjalisti}} kemur fyrir í svari. Hver
   // flokkur verður að undirflokka-fellilista. Í lyfjareitunum táknar lína sem
@@ -388,6 +422,39 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
   limits_note: "Í bráðatilfellum hringdu í 112.",
 
   faq_heading: "Algengar spurningar",
+  faq_categories: [
+    "Þjónustan",
+    "Öryggi og gæði",
+    "Skilríki og persónuvernd",
+    "Lyf og lyfseðlar",
+    "Niðurstöður og næstu skref",
+  ].join("\n"),
+
+  // Category per question (must match a line in faq_categories).
+  faq1_cat: "Þjónustan",
+  faq2_cat: "Þjónustan",
+  faq3_cat: "Þjónustan",
+  faq4_cat: "Þjónustan",
+  faq5_cat: "Þjónustan",
+  faq6_cat: "Öryggi og gæði",
+  faq7_cat: "Öryggi og gæði",
+  faq8_cat: "Skilríki og persónuvernd",
+  faq9_cat: "Skilríki og persónuvernd",
+  faq10_cat: "Skilríki og persónuvernd",
+  faq11_cat: "Lyf og lyfseðlar",
+  faq12_cat: "Niðurstöður og næstu skref",
+  faq13_cat: "Niðurstöður og næstu skref",
+  faq14_cat: "Niðurstöður og næstu skref",
+  faq15_cat: "Niðurstöður og næstu skref",
+  faq16_cat: "Öryggi og gæði",
+  faq17_cat: "Niðurstöður og næstu skref",
+  faq18_cat: "Þjónustan",
+  faq19_cat: "Öryggi og gæði",
+  faq20_cat: "Öryggi og gæði",
+  faq21_cat: "Niðurstöður og næstu skref",
+  faq22_cat: "Niðurstöður og næstu skref",
+  faq23_cat: "Þjónustan",
+  faq24_cat: "Niðurstöður og næstu skref",
 
   faq1_q: "Hvernig virkar læknisþjónustan?",
   faq1_a:

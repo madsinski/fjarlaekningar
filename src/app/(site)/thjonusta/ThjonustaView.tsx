@@ -1,5 +1,5 @@
-import { Fragment } from "react";
 import PortalButton from "../../components/PortalButton";
+import FaqSection, { type FaqItem, type MedCategory } from "./FaqSection";
 import PageHero from "../PageHero";
 import Band from "../Band";
 import Screenshot from "../Screenshot";
@@ -9,175 +9,6 @@ import { renderHighlighted } from "@/lib/site-content/highlight";
 import { THJONUSTA_SECTIONS } from "@/lib/site-content/thjonusta";
 import { resolveOrder, type LocaleContent } from "@/lib/site-content/types";
 import { ui } from "@/lib/site-content/ui-strings";
-
-// ---------------------------------------------------------------------------
-// FAQ answer rendering.
-//
-// Answers are plain CMS textareas, but a few need light structure, so the
-// renderer understands a tiny, editor-friendly syntax:
-//   • blank line            -> new paragraph
-//   • "· " / "•" / "- " line -> bullet ("Titill | lýsing" bolds the title)
-//   • a bare http(s) URL     -> auto-linked (opens in a new tab)
-//   • {{lyfjalisti}}         -> the collapsible medication list
-// Everything is native <details>, so no client JS is needed.
-
-const URL_RE = /(https?:\/\/[^\s]+)/g;
-const IS_URL = /^https?:\/\//i;
-
-function linkify(text: string): React.ReactNode[] {
-  // split() keeps the captured URL as its own chunk; a chunk is a link iff it
-  // starts with the scheme. (Deliberately not URL_RE.test — a /g regex is
-  // stateful across calls and would flip results.)
-  return text.split(URL_RE).map((part, i) => {
-    if (!IS_URL.test(part)) return <Fragment key={i}>{part}</Fragment>;
-    // Keep trailing sentence punctuation outside the link.
-    const m = part.match(/^(.*?)([.,;:)]*)$/);
-    const href = m ? m[1] : part;
-    const tail = m ? m[2] : "";
-    return (
-      <Fragment key={i}>
-        <a
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[var(--primary)] underline underline-offset-2 hover:text-[var(--primary-dark)] break-words"
-        >
-          {href}
-        </a>
-        {tail}
-      </Fragment>
-    );
-  });
-}
-
-const BULLET_RE = /^([·•‣]|-)\s+/;
-
-function Bullets({ items }: { items: string[] }) {
-  return (
-    <ul className="space-y-2">
-      {items.map((raw) => {
-        const line = raw.replace(BULLET_RE, "").trim();
-        const [head, ...rest] = line.split(" | ");
-        const desc = rest.join(" | ").trim();
-        return (
-          <li key={line} className="flex gap-2.5 text-slate-600 leading-relaxed">
-            <span aria-hidden className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--primary)]" />
-            <span>
-              <span className={desc ? "font-semibold text-slate-800" : ""}>{linkify(head)}</span>
-              {desc && <span> — {linkify(desc)}</span>}
-            </span>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-// One category = one nested sub-dropdown. Inside, "# " lines are sub-headings
-// and every other line is a drug ("Virkt efni: sérlyf, sérlyf").
-function MedsList({
-  categories,
-  note,
-}: {
-  categories: { title: string; items: string }[];
-  note?: string;
-}) {
-  const parse = (items: string) => {
-    const groups: { heading?: string; drugs: { label: string; brands?: string }[] }[] = [];
-    for (const raw of items.split("\n")) {
-      const line = raw.trim();
-      if (!line) continue;
-      if (line.startsWith("#")) {
-        groups.push({ heading: line.replace(/^#\s*/, ""), drugs: [] });
-        continue;
-      }
-      if (!groups.length) groups.push({ drugs: [] });
-      const idx = line.indexOf(":");
-      const drug =
-        idx > 0
-          ? { label: line.slice(0, idx).trim(), brands: line.slice(idx + 1).trim() }
-          : { label: line };
-      groups[groups.length - 1].drugs.push(drug);
-    }
-    return groups;
-  };
-
-  return (
-    <div className="not-prose space-y-2.5">
-      {categories.map((cat) => (
-        <details
-          key={cat.title}
-          className="group/med rounded-xl border border-slate-200 bg-slate-50/70 [&_summary]:cursor-pointer"
-        >
-          <summary className="flex items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-800 list-none">
-            {cat.title}
-            <svg
-              className="w-4 h-4 shrink-0 text-[var(--primary)] transition-transform group-open/med:rotate-180"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </summary>
-          <div className="px-4 pb-4">
-            {parse(cat.items).map((group, gi) => (
-              <div key={group.heading ?? gi} className="mt-4 first:mt-1">
-                {group.heading && (
-                  <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    {group.heading}
-                  </div>
-                )}
-                <ul className="space-y-1">
-                  {group.drugs.map((d) => (
-                    <li key={d.label} className="flex gap-2 text-sm text-slate-600 leading-relaxed">
-                      <span aria-hidden className="mt-2 h-1 w-1 shrink-0 rounded-full bg-slate-300" />
-                      <span>
-                        <span className="font-medium text-slate-800">{d.label}</span>
-                        {d.brands && <span className="text-slate-500">: {d.brands}</span>}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </details>
-      ))}
-      {note && <p className="pt-1 text-xs text-slate-500">{note}</p>}
-    </div>
-  );
-}
-
-function FaqAnswer({
-  text,
-  meds,
-  note,
-}: {
-  text: string;
-  meds: { title: string; items: string }[];
-  note?: string;
-}) {
-  const blocks = text.split(/\n{2,}/).map((b) => b.trim()).filter(Boolean);
-  return (
-    <div className="mt-4 space-y-3">
-      {blocks.map((block, i) => {
-        if (block === "{{lyfjalisti}}") {
-          return meds.length ? <MedsList key={i} categories={meds} note={note} /> : null;
-        }
-        const lines = block.split("\n").map((l) => l.trim()).filter(Boolean);
-        if (lines.length && lines.every((l) => BULLET_RE.test(l))) {
-          return <Bullets key={i} items={lines} />;
-        }
-        return (
-          <p key={i} className="text-slate-600 leading-relaxed">
-            {linkify(block)}
-          </p>
-        );
-      })}
-    </div>
-  );
-}
 
 // Presentational Þjónusta page.
 //
@@ -292,11 +123,19 @@ export default function ThjonustaView({
   // Built from numbered slots so staff can add/remove questions in the CMS;
   // empty pairs drop out. Bump FAQ_SLOTS if more than this many are ever needed.
   const FAQ_SLOTS = 24;
-  const faqs = Array.from({ length: FAQ_SLOTS }, (_, i) => ({
+  const faqs: FaqItem[] = Array.from({ length: FAQ_SLOTS }, (_, i) => ({
     q: c[`faq${i + 1}_q`],
     a: c[`faq${i + 1}_a`],
+    cat: c[`faq${i + 1}_cat`] ?? "",
   })).filter((f) => f.q);
-  const medsCategories = [
+  // Pill order comes from the CMS list, but only keep categories that actually
+  // have a visible question, so an empty pill never shows.
+  const usedCats = new Set(faqs.map((f) => f.cat).filter(Boolean));
+  const faqCategories = (c.faq_categories ?? "")
+    .split("\n")
+    .map((s) => s.trim())
+    .filter((s) => s && usedCats.has(s));
+  const medsCategories: MedCategory[] = [
     { title: c.meds_a_title, items: c.meds_a_items },
     { title: c.meds_b_title, items: c.meds_b_items },
     { title: c.meds_c_title, items: c.meds_c_items },
@@ -747,28 +586,21 @@ export default function ThjonustaView({
           </h2>
         </div>
         {/* Band container is full width so the left edge aligns with every other
-            section; the list itself stays at a readable measure. */}
-        <div className="space-y-4 max-w-3xl">
-          {faqs.map((item) => (
-            <details
-              key={item.q}
-              className="group bg-white rounded-2xl border border-slate-200 p-6 [&_summary]:cursor-pointer"
-            >
-              <summary className="flex items-center justify-between gap-4 font-semibold text-slate-900 list-none">
-                {item.q}
-                <svg
-                  className="w-5 h-5 shrink-0 text-[var(--primary)] transition-transform group-open:rotate-180"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </summary>
-              <FaqAnswer text={item.a} meds={medsCategories} note={c.meds_note} />
-            </details>
-          ))}
-        </div>
+            section; the interactive list (search, category pills, view-more)
+            stays at a readable measure inside FaqSection. */}
+        <FaqSection
+          faqs={faqs}
+          categories={faqCategories}
+          meds={medsCategories}
+          medsNote={c.meds_note}
+          labels={{
+            all: tr.faqAll,
+            search: tr.faqSearch,
+            more: tr.faqMore,
+            less: tr.faqLess,
+            noResults: tr.faqNoResults,
+          }}
+        />
 
         <div className="mt-16 max-w-3xl">
           <p className="text-slate-600 mb-6">{c.cta_text}</p>

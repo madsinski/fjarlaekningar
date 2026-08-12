@@ -28,6 +28,11 @@ const IS = {
     submitting: "Skrái…",
     subscribeError: "Ekki tókst að skrá netfangið.",
     networkError: "Netvilla — reyndu aftur.",
+    faqAll: "Allt",
+    faqSearch: "Leita í spurningum…",
+    faqMore: "Sjá fleiri spurningar ({n})",
+    faqLess: "Sýna færri",
+    faqNoResults: "Engar spurningar fundust.",
 };
 
 export type UiStrings = { [K in keyof typeof IS]: string };
@@ -53,6 +58,11 @@ const EN: UiStrings = {
     submitting: "Signing up…",
     subscribeError: "Could not sign up this email address.",
     networkError: "Network error — please try again.",
+    faqAll: "All",
+    faqSearch: "Search questions…",
+    faqMore: "Show more questions ({n})",
+    faqLess: "Show fewer",
+    faqNoResults: "No questions found.",
 };
 
 const STRINGS: Record<Locale, UiStrings> = { is: IS, en: EN };
