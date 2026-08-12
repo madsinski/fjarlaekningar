@@ -8,6 +8,19 @@
 import { emptyDefaults, type LocaleContent, type SiteField } from "./types";
 
 export const CHROME_FIELDS: SiteField[] = [
+  // Site-wide appearance. Applies on every page via a class on <main>.
+  {
+    key: "show_eyebrows",
+    label: "Merkipillur fyrir ofan fyrirsagnir",
+    group: "Útlit (allar síður)",
+    type: "choice",
+    help: "Sýna eða fela litlu merkin (t.d. „Íslensk fjarheilbrigðisþjónusta“) fyrir ofan fyrirsagnir á öllum síðum vefsins.",
+    options: [
+      { value: "on", label: "Sýna", hint: "Merkin birtast fyrir ofan fyrirsagnir." },
+      { value: "off", label: "Fela", hint: "Öll merki eru falin á öllum síðum." },
+    ],
+  },
+
   // Header
   { key: "nav_home", label: "Valmynd — Heim", group: "Haus (valmynd)", type: "text" },
   { key: "nav_thjonusta", label: "Valmynd — Þjónusta", group: "Haus (valmynd)", type: "text" },
@@ -35,6 +48,8 @@ export const CHROME_FIELDS: SiteField[] = [
 ];
 
 export const CHROME_DEFAULTS_IS: LocaleContent = {
+  show_eyebrows: "on",
+
   nav_home: "Heim",
   nav_thjonusta: "Þjónusta",
   nav_um_okkur: "Um okkur",

@@ -31,9 +31,9 @@ export default function HomeView({
   const t = ui(locale);
   // Titles only. The descriptions used to live here too, which meant the home
   // page and /thjonusta each carried a different half of the same explanation.
-  const steps = [c.step1_title, c.step2_title, c.step3_title, c.step4_title, c.step5_title].filter(
-    Boolean,
-  );
+  // Numbered slots (up to 8) so steps are add/remove-editable in the CMS; empty
+  // ones drop out and the rest auto-number by position.
+  const steps = Array.from({ length: 8 }, (_, i) => c[`step${i + 1}_title`]).filter(Boolean);
   const stats = [
     { value: c.stat1_value, label: c.stat1_label },
     { value: c.stat2_value, label: c.stat2_label },
@@ -118,9 +118,11 @@ export default function HomeView({
         {/* Glanceable summary: the five steps in order, titles only. Someone
             who wants to know what each step involves follows the button to
             the full process on /thjonusta, where it is written out once. */}
-        <ol className="flex flex-col sm:flex-row sm:flex-wrap gap-x-4 gap-y-3">
+        {/* Single vertical column so every number badge lines up on the same
+            left edge, whatever the title lengths. */}
+        <ol className="flex flex-col gap-3 max-w-2xl">
           {steps.map((title, i) => (
-            <li key={title} className="flex items-center gap-3 sm:flex-1 sm:min-w-[15rem]">
+            <li key={title} className="flex items-center gap-3">
               <span className="shrink-0 w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm font-bold">
                 {i + 1}
               </span>
@@ -165,7 +167,7 @@ export default function HomeView({
           )}
           <div className="max-w-2xl">
             {c.coop_eyebrow && (
-              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-cyan-subtle/60 border border-brand-cyan-muted text-xs font-medium text-[var(--primary-dark)] mb-4">
+              <span className="site-eyebrow inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-cyan-subtle/60 border border-brand-cyan-muted text-xs font-medium text-[var(--primary-dark)] mb-4">
                 <span className="w-2 h-2 rounded-full bg-[var(--primary)]" />
                 {c.coop_eyebrow}
               </span>
@@ -291,7 +293,7 @@ export default function HomeView({
         <div className="absolute inset-0 bg-gradient-to-br from-brand-cyan-subtle via-[var(--background)] to-brand-cyan-subtle" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
           <div className="max-w-3xl">
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 border border-brand-cyan-muted text-xs font-medium text-[var(--primary-dark)] mb-6">
+            <span className="site-eyebrow inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 border border-brand-cyan-muted text-xs font-medium text-[var(--primary-dark)] mb-6">
               <span className="w-2 h-2 rounded-full bg-[var(--primary)]" />
               {c.hero_eyebrow}
             </span>

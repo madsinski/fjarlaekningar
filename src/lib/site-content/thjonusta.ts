@@ -43,6 +43,14 @@ export const THJONUSTA_FIELDS: SiteField[] = [
   { key: "step4_desc", label: "Skref 4 — lýsing", group: "Ferlið", type: "textarea" },
   { key: "step5_title", label: "Skref 5 — titill", group: "Ferlið", type: "text" },
   { key: "step5_desc", label: "Skref 5 — lýsing", group: "Ferlið", type: "textarea" },
+  // Optional extra steps. Filled slots render in order and auto-number, so
+  // staff can add or remove numbered points from the CMS without a gap.
+  { key: "step6_title", label: "Skref 6 — titill (valfrjálst)", group: "Ferlið", type: "text" },
+  { key: "step6_desc", label: "Skref 6 — lýsing", group: "Ferlið", type: "textarea" },
+  { key: "step7_title", label: "Skref 7 — titill (valfrjálst)", group: "Ferlið", type: "text" },
+  { key: "step7_desc", label: "Skref 7 — lýsing", group: "Ferlið", type: "textarea" },
+  { key: "step8_title", label: "Skref 8 — titill (valfrjálst)", group: "Ferlið", type: "text" },
+  { key: "step8_desc", label: "Skref 8 — lýsing", group: "Ferlið", type: "textarea" },
 
   // Heimapróf. Step 2 of the process mentions these in passing; this section is
   // the practical detail, because fetching a test yourself is the one piece of
@@ -135,6 +143,11 @@ export const THJONUSTA_FIELDS: SiteField[] = [
   { key: "limits3_icon", label: "Atriði 3 — tákn", group: "Hvenær hentar ekki", type: "icon" },
   { key: "limits_note", label: "Áherslulína (neyðartilvik)", group: "Hvenær hentar ekki", type: "text" },
 
+  // FAQ. One question/answer pair per number; empty pairs are dropped by the
+  // view, so staff can add or remove questions from the admin editor. Answers
+  // support blank-line paragraphs, "· " bullet lines ("Titill | lýsing" bolds
+  // the title), auto-linked URLs, and the token {{lyfjalisti}}, which expands
+  // into the collapsible medication list (the meds_* fields below).
   { key: "faq_heading", label: "Fyrirsögn", group: "Algengar spurningar", type: "heading" },
   { key: "faq1_q", label: "Spurning 1", group: "Algengar spurningar", type: "text" },
   { key: "faq1_a", label: "Svar 1", group: "Algengar spurningar", type: "textarea" },
@@ -148,6 +161,55 @@ export const THJONUSTA_FIELDS: SiteField[] = [
   { key: "faq5_a", label: "Svar 5", group: "Algengar spurningar", type: "textarea" },
   { key: "faq6_q", label: "Spurning 6", group: "Algengar spurningar", type: "text" },
   { key: "faq6_a", label: "Svar 6", group: "Algengar spurningar", type: "textarea" },
+  { key: "faq7_q", label: "Spurning 7", group: "Algengar spurningar", type: "text" },
+  { key: "faq7_a", label: "Svar 7", group: "Algengar spurningar", type: "textarea" },
+  { key: "faq8_q", label: "Spurning 8", group: "Algengar spurningar", type: "text" },
+  { key: "faq8_a", label: "Svar 8", group: "Algengar spurningar", type: "textarea" },
+  { key: "faq9_q", label: "Spurning 9", group: "Algengar spurningar", type: "text" },
+  { key: "faq9_a", label: "Svar 9", group: "Algengar spurningar", type: "textarea" },
+  { key: "faq10_q", label: "Spurning 10", group: "Algengar spurningar", type: "text" },
+  { key: "faq10_a", label: "Svar 10", group: "Algengar spurningar", type: "textarea" },
+  { key: "faq11_q", label: "Spurning 11", group: "Algengar spurningar", type: "text" },
+  { key: "faq11_a", label: "Svar 11 (nota {{lyfjalisti}} til að birta lyfjalistann)", group: "Algengar spurningar", type: "textarea" },
+  { key: "faq12_q", label: "Spurning 12", group: "Algengar spurningar", type: "text" },
+  { key: "faq12_a", label: "Svar 12", group: "Algengar spurningar", type: "textarea" },
+  { key: "faq13_q", label: "Spurning 13", group: "Algengar spurningar", type: "text" },
+  { key: "faq13_a", label: "Svar 13", group: "Algengar spurningar", type: "textarea" },
+  { key: "faq14_q", label: "Spurning 14", group: "Algengar spurningar", type: "text" },
+  { key: "faq14_a", label: "Svar 14", group: "Algengar spurningar", type: "textarea" },
+  { key: "faq15_q", label: "Spurning 15", group: "Algengar spurningar", type: "text" },
+  { key: "faq15_a", label: "Svar 15", group: "Algengar spurningar", type: "textarea" },
+  { key: "faq16_q", label: "Spurning 16", group: "Algengar spurningar", type: "text" },
+  { key: "faq16_a", label: "Svar 16", group: "Algengar spurningar", type: "textarea" },
+  { key: "faq17_q", label: "Spurning 17", group: "Algengar spurningar", type: "text" },
+  { key: "faq17_a", label: "Svar 17", group: "Algengar spurningar", type: "textarea" },
+  { key: "faq18_q", label: "Spurning 18", group: "Algengar spurningar", type: "text" },
+  { key: "faq18_a", label: "Svar 18", group: "Algengar spurningar", type: "textarea" },
+  { key: "faq19_q", label: "Spurning 19", group: "Algengar spurningar", type: "text" },
+  { key: "faq19_a", label: "Svar 19", group: "Algengar spurningar", type: "textarea" },
+  { key: "faq20_q", label: "Spurning 20", group: "Algengar spurningar", type: "text" },
+  { key: "faq20_a", label: "Svar 20", group: "Algengar spurningar", type: "textarea" },
+  { key: "faq21_q", label: "Spurning 21", group: "Algengar spurningar", type: "text" },
+  { key: "faq21_a", label: "Svar 21", group: "Algengar spurningar", type: "textarea" },
+  { key: "faq22_q", label: "Spurning 22", group: "Algengar spurningar", type: "text" },
+  { key: "faq22_a", label: "Svar 22", group: "Algengar spurningar", type: "textarea" },
+  { key: "faq23_q", label: "Spurning 23", group: "Algengar spurningar", type: "text" },
+  { key: "faq23_a", label: "Svar 23", group: "Algengar spurningar", type: "textarea" },
+  { key: "faq24_q", label: "Spurning 24", group: "Algengar spurningar", type: "text" },
+  { key: "faq24_a", label: "Svar 24", group: "Algengar spurningar", type: "textarea" },
+
+  // Lyfjalisti — birtist þar sem {{lyfjalisti}} kemur fyrir í svari. Hver
+  // flokkur verður að undirflokka-fellilista. Í lyfjareitunum táknar lína sem
+  // byrjar á "# " undirfyrirsögn; aðrar línur eru lyf ("Virkt efni: sérlyf").
+  { key: "meds_note", label: "Lyfjalisti — athugasemd (t.d. „listinn er ekki tæmandi“)", group: "Algengar spurningar", type: "text" },
+  { key: "meds_a_title", label: "Lyfjaflokkur A — titill", group: "Algengar spurningar", type: "text" },
+  { key: "meds_a_items", label: "Lyfjaflokkur A — lyf (# = undirflokkur, ein lína hvert)", group: "Algengar spurningar", type: "textarea" },
+  { key: "meds_b_title", label: "Lyfjaflokkur B — titill", group: "Algengar spurningar", type: "text" },
+  { key: "meds_b_items", label: "Lyfjaflokkur B — lyf (# = undirflokkur, ein lína hvert)", group: "Algengar spurningar", type: "textarea" },
+  { key: "meds_c_title", label: "Lyfjaflokkur C — titill", group: "Algengar spurningar", type: "text" },
+  { key: "meds_c_items", label: "Lyfjaflokkur C — lyf (# = undirflokkur, ein lína hvert)", group: "Algengar spurningar", type: "textarea" },
+  { key: "meds_d_title", label: "Lyfjaflokkur D — titill", group: "Algengar spurningar", type: "text" },
+  { key: "meds_d_items", label: "Lyfjaflokkur D — lyf (# = undirflokkur, ein lína hvert)", group: "Algengar spurningar", type: "textarea" },
 
   // Closing CTA
   { key: "cta_text", label: "Texti", group: "Ákall (CTA)", type: "text" },
@@ -326,24 +388,173 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
   limits_note: "Í bráðatilfellum hringdu í 112.",
 
   faq_heading: "Algengar spurningar",
-  faq1_q: "Hverjir geta notað þjónustuna?",
+
+  faq1_q: "Hvernig virkar læknisþjónustan?",
   faq1_a:
-    "Meðan á tilraunaverkefninu stendur er þjónustan aðeins í boði fyrir skjólstæðinga sem eru skráðir hjá Heilbrigðisstofnun Suðurlands (HSU). Þjónustan verður opnuð fyrir fleiri eftir því sem verkefninu vindur fram.",
-  faq2_q: "Af hverju fæ ég ekki aðstoð við öll vandamál hér?",
-  faq2_a:
-    "Fjarlækningar leysa afmörkuð erindi þar sem óhætt er að meta einkenni út frá markvissum spurningalista og læknisfræðilegu mati, án líkamsskoðunar. Vandamál sem krefjast skoðunar hjá lækni, myndgreiningar eða frumgreiningar — eða sem gætu verið alvarleg — eiga heima hjá heilsugæslu, Læknavaktinni eða bráðamóttöku. Öryggisnetið í spurningalistunum vísar slíkum erindum strax í rétta þjónustu.",
-  faq3_q: "Hvar nálgast ég heimapróf (sjálfspróf)?",
+    "Læknisþjónusta frá læknum Fjarlækninga er aðgengileg í gegnum heimasíðu Fjarlækninga, þar sem þér hentar. Þar færð þú meðferðarúrræði við skilgreindum, algengum vandamálum. Með Fjarlækningum færð þú þægilegri leið til læknis þar sem þú færð niðurstöðu læknis, og lyfseðil ef við á, innan 2 klukkustunda alla daga milli 10:00–22:00.\n\nÞú ferð í gegnum ferli þar sem þú svarar stöðluðum spurningum læknis um þig og þína heilsu. Þegar þú hefur lokið við að svara spurningum greiðir þú sama og komugjald á heilsugæslu og erindi þitt fer áfram til læknis. Læknir Fjarlækninga veitir þér sérsniðið meðferðarúrræði og niðurstaðan þín birtist í sjúklingagáttinni þar sem þú getur nálgast meðferðarúrræði og skilaboð frá lækni. Ef greining gefur til kynna að þörf sé á uppáskrifuðu lyfi færð þú einnig sendan lyfseðil í lyfjagáttina sem hægt er að leysa út í næsta apóteki.",
+
+  faq2_q: "Hvaða læknisfræðilegu vandamál leysir þjónusta Fjarlækninga?",
+  faq2_a: [
+    "Fjarlækningar veita læknisþjónustu við eftirfarandi vandamálum:",
+    "",
+    "· Kvef, hósti og hálsbólga | Einfaldar öndunarfærasýkingar, hálsbólga, ennis- og kinnholusýkingar",
+    "· Þvagfæra- og leggangasýkingar | Þvagfærasýkingar kvenna, sveppasýkingar í leggöngum og bakteríusýkingar í leggöngum",
+    "· Risvandamál",
+    "· Frunsa (ekki frumgreining)",
+    "· Ristill í húð (ekki frumgreining)",
+    "· Njálgur | Lausn fyrir alla fjölskyldumeðlimi",
+    "· Frjókornaofnæmi",
+    "· Lyfjaendurnýjanir | Þjónustan gerir þér kleift að endurnýja lyf sem þú notar að staðaldri. Ekki er hægt að endurnýja öll lyf í gegnum þessa þjónustu — þú færð leiðbeiningar um hvaða lyf er ekki hægt að endurnýja þegar þú ferð í gegnum ferlið.",
+    "· Læknisvottorð | Veikindavottorð til vinnuveitanda og skóla. Þessi þjónusta er einungis í boði fyrir þá sem þurfa fjarvistarvottorð tengt vandamáli sem hefur verið afgreitt í gegnum fjarlækningaþjónustuna.",
+  ].join("\n"),
+
+  faq3_q: "Hvað kostar læknisþjónusta Fjarlækninga?",
   faq3_a:
-    "Þegar sjálfspróf bætir greiningu færð þú leiðbeiningar um hvaða próf á að taka. Þvag-stix, strep-próf og CRP má sækja á heilsugæslu þar sem þú ert skráð eða staddur, eða í næsta apóteki. Þú skráir niðurstöðuna beint í sjúklingagáttina og hún fylgir erindinu til læknis.",
-  faq4_q: "Hvað gerist ef einkennin eru alvarleg?",
+    "Læknisþjónusta Fjarlækninga er sambærileg og koma á heilsugæslu, en þú greiðir einungis komugjald 1.000 kr. fyrir erindi líkt og á heilsugæslu. Gjald fyrir veikindavottorð er samkvæmt gjaldskrá heilsugæslunnar.",
+
+  faq4_q: "Fyrir hvern er þjónustan?",
   faq4_a:
-    "Ef svörin benda til alvarlegri veikinda, t.d. hita yfir 38°C, stöðvast ferlið sjálfkrafa og þú færð skýrar leiðbeiningar um rétt úrræði — vaktþjónustu heilsugæslunnar, Læknavaktina, 1700 eða bráðamóttöku eftir alvarleika.",
-  faq5_q: "Hvað kostar þjónustan og greiði ég ef mér er vísað frá?",
+    "Læknisþjónustan er aðgengileg fyrir 18 ára og eldri sem eru með rafræn skilríki. Nánari upplýsingar um hvar þjónustan er aðgengileg má finna hér: https://www.fjarlaekningar.is/thjonusta",
+
+  faq5_q: "Hvernig get ég nýtt mér læknisþjónustuna?",
   faq5_a:
-    "Þú greiðir ekki ef þér er vísað frá vegna þess að erindið á heima annars staðar. Fjarlækningar taka ekki að sér erindi sem þarfnast skoðunar hjá lækni á stofu.",
-  faq6_q: "Hversu fljótt fæ ég svar?",
+    "Læknisþjónusta Fjarlækninga er aðgengileg í gegnum heimasíðu Fjarlækninga með því að smella á „sjúklingagátt“ og heimasíðu HSU: https://island.is/s/hsu",
+
+  faq6_q: "Er þjónustan örugg lausn á læknisfræðilegum vandamálum?",
   faq6_a:
-    "Flest erindi eru afgreidd innan tveggja klukkustunda á opnunartíma. Opið er alla daga milli 10 og 22 — beiðnum sem berast eftir kl. 22 er svarað daginn eftir.",
+    "Læknisþjónusta Fjarlækninga leiðir þig í gegnum staðlaðar spurningar byggðar á sannreyndum læknisfræðilegum aðferðum sem safna ítarlegum upplýsingum um þig, þína sögu og heilsu, sem læknir nýtir svo til greiningar. Allt ferlið er þróað í samstarfi við sérfræðilækna.\n\nMeð því að svara stöðluðum spurningum frá lækni veitir þú þær upplýsingar sem læknir þarf til að geta tekið ákvörðun um greiningu og meðferð á þínu tiltekna vandamáli. Læknisfræðilegir ferlar tryggja stöðluð vinnubrögð og er fræðsla og ráðgjöf mikilvægur hluti meðferðarúrræða Fjarlækninga. Allar ákvarðanir um greiningu og meðferð eru teknar af lækni sem sinnir þínu erindi.\n\nÖll meðhöndlun persónuupplýsinga stenst ströngustu öryggiskröfur landlæknis, sem er jafnframt í samræmi við Evrópulög um meðhöndlun viðkvæmra gagna og unnin í viðurkenndu sjúkraskrárkerfi.",
+
+  faq7_q: "Þarf ekki læknisskoðun til að fá lausn?",
+  faq7_a:
+    "Mörg vandamál eru þess eðlis að læknir þarf ekki nauðsynlega að skoða þig til að veita meðferð. Ítarlegar spurningar um þína líðan og sjúkrasaga þín gera lækninum kleift að greina vandamálið og leggja til meðferð. Fjarlækningar leysa slík vandamál á einfaldan og þægilegan hátt. Það eru þó einstaka tilfelli sem krefjast frekari rannsókna til að meta ástandið enn frekar og auka nákvæmni greiningar, s.s. CRP, streptókokkapróf og þvagprufa. Fjarlækningar leysa slík mál með því að nýta sjálfspróf sem þú getur sótt á þína heilsugæslu eða næsta apótek.\n\nSum vandamál þarfnast skoðunar hjá lækni fyrir örugga greiningu og meðferð. Ef svörin þín við spurningum gefa til kynna að þú þarfnist læknisskoðunar, þá leysa Fjarlækningar ekki málið þitt heldur beina þér í réttan farveg.",
+
+  faq8_q: "Hvað ef ég er ekki með rafræn skilríki?",
+  faq8_a:
+    "Til að tryggja öryggi þitt og upplýsinga þinna er rafræn auðkenning nauðsynleg. Þannig fá læknarnir staðfestingu á því hver óskar eftir þjónustunni.",
+
+  faq9_q: "Hvernig fæ ég rafræn skilríki?",
+  faq9_a:
+    "Þú getur kannað hvort SIM-kortið þitt styður rafræn skilríki. Ef þú ert með rétta tegund af SIM-korti þá geturðu mætt á næsta afgreiðslustað rafrænna skilríkja með gilt ökuskírteini (ekki stafrænt), vegabréf eða íslenskt nafnskírteini og fengið rafræn skilríki í símann þinn.",
+
+  faq10_q: "Eru persónuupplýsingar mínar öruggar?",
+  faq10_a:
+    "Öll meðhöndlun persónuupplýsinga stenst ströngustu öryggiskröfur embættis landlæknis sem er einnig í samræmi við Evrópulög um meðhöndlun viðkvæmra gagna. Fjarlækningar nota öruggt og vottað sjúkraskrárkerfi þar sem upplýsingarnar eru geymdar samkvæmt lögum um heilbrigðisupplýsingar.\n\nÖll meðferð persónu- og heilbrigðisupplýsinga hjá Fjarlækningum uppfyllir strangar kröfur um öryggi og persónuvernd samkvæmt íslenskum lögum og evrópskri persónuverndarlöggjöf (GDPR). Fjarlækningar nota öruggt og vottað sjúkraskrárkerfi þar sem heilbrigðisupplýsingar eru varðveittar og meðhöndlaðar í samræmi við gildandi lög og reglur.",
+
+  faq11_q: "Get ég endurnýjað alla lyfseðla?",
+  faq11_a:
+    "Hægt er að endurnýja lyfseðla fyrir lyfjum sem þú tekur að staðaldri. Við vekjum athygli á að sumar lyfjameðferðir þurfa reglulega eftirfylgni, t.d. blóðþrýstingslyf, hjartalyf og kvíða- og þunglyndislyf. Þessi þjónusta kemur ekki í stað reglulegs eftirlits hjá heimilislækni, en er hentugur kostur ef þig vantar skjóta endurnýjun á lyfi. Þú færð lyfseðil í lyfjagáttina þegar læknir hefur lokið yfirferð. Lyfseðilinn er hægt að leysa út í hvaða apóteki sem er.\n\nAthugaðu að einungis er hægt að fá einfaldan lyfseðil, þ.e. ekki fjölnota lyfseðil. Við endurnýjun ákveðinna lyfja er nauðsynlegt að tala við lækninn sem hefur áður skrifað upp á slík lyf fyrir þig. Þessi lyf geta til dæmis verið flokkuð sem ávanabindandi, örvandi eða sem geðlyf.\n\nHér er listi yfir öll helstu lyf sem Fjarlækningar geta ekki endurnýjað:\n\n{{lyfjalisti}}",
+
+  faq12_q: "Hvað ef ekki fæst lausn á mínu máli?",
+  faq12_a:
+    "Ef læknar Fjarlækninga geta ekki leyst úr erindinu þínu er þér vísað áfram í viðeigandi þjónustu, til dæmis á heilsugæslu, Læknavakt eða aðra heilbrigðisstofnun.",
+
+  faq13_q: "Hvenær get ég ekki fengið niðurstöðu og lausn frá lækni?",
+  faq13_a:
+    "Ef svör þín eða sjúkrasaga gefa til kynna að öruggasta leiðin sé skoðun hjá lækni, þá færðu upplýsingar og ráð sem hjálpa þér með næstu skref. Ef við eigum ekki lausn fyrir þig greiðir þú ekkert fyrir þjónustuna. Þjónustan er ekki fyrir þau sem telja sig í bráðri lífshættu. Í öllum þjónustuþáttum er spurt ítarlega um alvarleg einkenni og um sjúkdómssögu sem nýtt er til að meta hvort um alvarleg veikindi gæti verið að ræða.",
+
+  faq14_q: "Hvað ef ég vil hitta lækninn?",
+  faq14_a:
+    "Læknisþjónusta Fjarlækninga er einungis stafræn. Ef ástand þitt batnar ekki eða þú versnar er alltaf hægt að fara aftur í gegnum spurningaformið eða fara í læknisskoðun. Ef þú ert ekki sammála niðurstöðu læknis getur þú smellt á „Senda fyrirspurn“ í sjúklingagátt Fjarlækninga.",
+
+  faq15_q: "Hvað ef ég er ósátt/ur við niðurstöðu læknis?",
+  faq15_a:
+    "Ef ástand þitt batnar ekki eða versnar getur þú sent inn nýtt erindi til Fjarlækninga eða leitað til heilsugæslu eða annarrar heilbrigðisstofnunar til frekara mats. Ef þú ert ósammála niðurstöðu læknis eða hefur spurningar eða áhyggjur af henni getur þú smellt á „Senda fyrirspurn“ í sjúklingagátt Fjarlækninga.",
+
+  faq16_q: "Er gervigreind að svara mér eða manneskja?",
+  faq16_a:
+    "Lausnin er hvorki gervigreind né spjallmenni. Læknisþjónustan leiðir þig í gegnum staðlaðar spurningar sem veita ítarlegar upplýsingar um þig, þína sögu og heilsu, sem læknir nýtir svo til greiningar. Allt ferlið er þróað af sérfræðilæknum Fjarlækninga. Allar niðurstöður eru ráðlagðar af lækni, bæði meðferðarúrræði og almennar ráðleggingar tengdar þínum kvilla.",
+
+  faq17_q: "Af hverju get ég ekki svarað fyrir barnið mitt?",
+  faq17_a:
+    "Rétt læknisráðgjöf og öryggi meðferðar skiptir okkur öllu máli og er það læknisfræðilegt mat Fjarlækna að ávallt sé best að fara með börn undir 18 ára í skoðun hjá lækni. Fjarlækningar eru því aðeins fyrir 18 ára og eldri.",
+
+  faq18_q: "Af hverju eru ekki fleiri þjónustur eða önnur vandamál?",
+  faq18_a:
+    "Þjónustuframboðið er metið út frá áhættu og umfangi greiningar. Vandamálin sem við leysum eru einföld og afmörkuð sem þarfnast alla jafna ekki skoðunar læknis. Við vinnum stöðugt að því að útvíkka þjónustuframboð okkar.",
+
+  faq19_q: "Er hætta á ofnotkun sýklalyfja með þjónustunni?",
+  faq19_a:
+    "Markmið þjónustunnar og verklags Fjarlækninga er að tryggja stöðluð vinnubrögð sem byggð eru á læknisfræðilegum ferlum. Ávinningurinn er nákvæmari úrlausn sem gefur skýra mynd af því hvort vandamál krefjist sýklalyfja eða ekki. Staðlaðir ferlar og vinnubrögð eru í raun líklegri til að koma í veg fyrir ofnotkun sýklalyfja. Ofnotkun sýklalyfja er því miður þekkt vandamál í íslensku samfélagi sem og erlendis, en markmið Fjarlækninga er að stuðla að öruggri lyfjameðferð og lyfjanotkun.",
+
+  faq20_q: "Er aukin hætta á oflækningum?",
+  faq20_a:
+    "Þjónustan er þróuð með íslenskum sérfræðilæknum og einnig í nánu samtali við fyrirtæki í sambærilegri fjarheilbrigðisþjónustu á Norðurlöndum. Læknisfræðilegir ferlar sem Fjarlækningar bera ábyrgð á eru til staðar til að koma í veg fyrir oflækningar og ónauðsynlega meðferð skjólstæðinga. Við vinnum markvisst að fræðslu og ráðgjöf til skjólstæðinga því við trúum að upplýsingar og fræðsla um eigin heilsu og heilsutengd vandamál séu lykillinn að betri ákvarðanatöku — þess vegna er góð fræðsla og ráðgjöf hluti af meðferðarúrræðum Fjarlækninga.\n\nMeð því að svara stöðluðum og mikilvægum spurningum frá lækni veitir þú lækninum þær upplýsingar sem hann þarf til að geta tekið ákvörðun um greiningu og meðferð. Öll ferli eru unnin á læknisfræðilegum forsendum með það að markmiði að veita sem nákvæmasta niðurstöðu og meðferð.",
+
+  faq21_q: "Get ég farið oft í gegnum ferlið?",
+  faq21_a:
+    "Þú getur nýtt þér þjónustuna aftur ef einkennin þín breytast eða ef þú ert með nýtt vandamál. Með því að fara í gegnum þjónustuna staðfestir þú að öllum spurningum sé svarað heiðarlega og eftir bestu getu. Læknirinn hefur yfirsýn yfir þína sjúkrasögu og til þess getur komið að haft verði samband við þig símleiðis ef svör eru óljós.",
+
+  faq22_q: "Fæ ég alltaf lausn á mínu máli?",
+  faq22_a:
+    "Ef svör þín gefa til kynna að öruggasta leiðin sé skoðun hjá lækni, þá færðu upplýsingar og ráð sem hjálpa þér með næstu skref. Ef við höfum ekki lausnina fyrir þig greiðir þú ekki fyrir þjónustuna.",
+
+  faq23_q: "Er hægt að fá myndsímtal við lækni?",
+  faq23_a:
+    "Til að byrja með er þjónustan einungis aðgengileg í formi staðlaðra spurninga frá læknum Fjarlækninga og greiningar á skilgreindum, algengum vandamálum.",
+
+  faq24_q: "Hvað ef ég er í lífshættu?",
+  faq24_a:
+    "Ef um er að ræða alvarleg veikindi ráðleggjum við alltaf skoðun hjá lækni. Fjarlækningar eru ekki fyrir þau sem telja sig í bráðri lífshættu. Í öllum þjónustuþáttum er spurt ítarlega um alvarleg einkenni og um sjúkdómssögu sem gætu gefið til kynna alvarleg veikindi. Ef svo er þá veita Fjarlækningar þér ráðleggingar um hvert best sé að leita.",
+
+  // Lyfjalisti — birtist í svari 11 í gegnum {{lyfjalisti}}. "# " byrjar
+  // undirflokk; aðrar línur eru lyf ("Virkt efni: sérlyf"). Listinn er ekki
+  // tæmandi og er ætlaður til skýringar.
+  meds_note: "Athugið að þessi listi er ekki tæmandi.",
+  meds_a_title: "A. Eftirritunarskyld lyf",
+  meds_a_items: [
+    "# Ópíóíðar / sterk verkjalyf",
+    "Morfín: Contalgin, Morfin",
+    "Oxýkódon: OxyContin, OxyNorm, Targin (oxýkódon + naloxon)",
+    "Ketóbemídón: Ketogan",
+    "Fentanýl-plástrar: Durogesic, Matrifen, Fentanyl",
+    "Tapentadól: Palexia",
+    "Petidín og metadon (sjá einnig flokk D)",
+    "Tramadól: Tradolan, Nobligan, Tramadol",
+    "# Kódeín-samsett lyf",
+    "Parkódín / Parkódín forte (parasetamól + kódeín)",
+    "Kódímagnýl (asetýlsalisýlsýra + kódeín)",
+    "# Benzódíazepín",
+    "Díazepam: Stesolid, Diazepam",
+    "Oxazepam: Sobril",
+    "Klónazepam: Rivotril",
+    "Alprazólam: Xanax, Tafil, Alprazolam",
+    "Lorazepam: Lorazepam, Temesta",
+    "Midazólam: Dormicum, Midazolam",
+    "# Svefnlyf — Z-lyf (benzódíazepín-skyld)",
+    "Zópíklón: Imovane, Zopiclone, Imozop",
+    "Zolpidem: Stilnoct, Zolpidem",
+    "# Örvandi lyf / ADHD-lyf",
+    "Metýlfenídat: Ritalin, Concerta, Medikinet, Equasym",
+    "Lísdexamfetamín: Elvanse",
+    "Dexamfetamín: Attentin",
+    "# Gabapentínóíð",
+    "Pregabalín: Lyrica, Pregabalin",
+    "Gabapentín: Neurontin, Gabapentin",
+    "# Barbitúröt",
+    "Fenóbarbital: Fenemal",
+  ].join("\n"),
+  meds_b_title: "B. Lyf við fíkn / viðhaldsmeðferð",
+  meds_b_items: [
+    "Búprenorfín: Norspan (plástur), Subutex",
+    "Búprenorfín + naloxón: Suboxone",
+    "Metadon",
+    "Naltrexón / dísúlfíram: Antabus",
+  ].join("\n"),
+  meds_c_title: "C. Lyf sem þurfa eftirlit með blóðprufum",
+  meds_c_items: [
+    "Warfarín: Kóvar, Marevan",
+    "Litíum",
+    "Klózapín: Leponex",
+    "Metótrexat",
+    "Ísótretínóín: Roaccutan",
+    "DOAC-blóðþynnar: Xarelto, Eliquis, Pradaxa",
+  ].join("\n"),
+  meds_d_title: "D. Lyf sem einungis sérfræðingar skrifa upp á",
+  meds_d_items: [
+    "Geðrofslyf",
+    "Testósterón",
+    "Krabbameinslyf, ónæmisbælandi lyf og líftæknilyf",
+  ].join("\n"),
 
   cta_text: "Tilbúin(n) að senda inn erindi?",
   cta_button: "Opna sjúklingagátt",

@@ -25,7 +25,7 @@ export default function PageHero({ c }: { c: LocaleContent }) {
     <section className="border-b border-slate-200 bg-gradient-to-b from-brand-cyan-subtle to-[var(--background)] py-14">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {c.hero_eyebrow && (
-          <span className="inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--primary-dark)]">
+          <span className="site-eyebrow inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--primary-dark)]">
             <span aria-hidden className="h-px w-6 bg-[var(--primary)]" />
             {c.hero_eyebrow}
           </span>

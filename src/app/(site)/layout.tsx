@@ -14,10 +14,14 @@ export default async function SiteLayout({
   children: React.ReactNode;
 }>) {
   const chrome = await getPageContent("chrome");
+  // Site-wide toggle for the small eyebrow pill labels above headings. A class
+  // on <main> lets one setting hide every eyebrow (marked .site-eyebrow) across
+  // all pages without threading a prop into each hero — see globals.css.
+  const eyebrowsOff = chrome.show_eyebrows === "off";
   return (
     <>
       <Navbar content={chrome} />
-      <main className="flex-1">{children}</main>
+      <main className={`flex-1${eyebrowsOff ? " eyebrows-off" : ""}`}>{children}</main>
       <Footer content={chrome} />
     </>
   );

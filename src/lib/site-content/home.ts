@@ -65,11 +65,17 @@ export const HOME_FIELDS: SiteField[] = [
   // detail lives once on /thjonusta#ferlid, which this section links to.
   { key: "how_heading", label: "Fyrirsögn", group: "Ferlið", type: "heading" },
   { key: "how_body", label: "Texti", group: "Ferlið", type: "textarea" },
+  // Numbered steps. Filled slots render in order and auto-number, so staff can
+  // add (fill the next empty one) or remove (clear one) from the CMS without a
+  // gap in the numbering. Leave the trailing ones blank to hide them.
   { key: "step1_title", label: "Skref 1", group: "Ferlið", type: "text" },
   { key: "step2_title", label: "Skref 2", group: "Ferlið", type: "text" },
   { key: "step3_title", label: "Skref 3", group: "Ferlið", type: "text" },
   { key: "step4_title", label: "Skref 4", group: "Ferlið", type: "text" },
   { key: "step5_title", label: "Skref 5", group: "Ferlið", type: "text" },
+  { key: "step6_title", label: "Skref 6 (valfrjálst)", group: "Ferlið", type: "text" },
+  { key: "step7_title", label: "Skref 7 (valfrjálst)", group: "Ferlið", type: "text" },
+  { key: "step8_title", label: "Skref 8 (valfrjálst)", group: "Ferlið", type: "text" },
   { key: "how_cta", label: "Hnappur", group: "Ferlið", type: "text" },
 
   // HSU

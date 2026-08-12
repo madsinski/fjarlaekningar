@@ -299,7 +299,7 @@ export default function UmOkkurView({
     <div className="max-w-2xl">
       {c.team_heading && (
         <span
-          className={`mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${
+          className={`site-eyebrow mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${
             onDark
               ? "border-white/30 bg-white/15 text-white"
               : "border-brand-cyan-muted bg-brand-cyan-subtle/60 text-[var(--primary-dark)]"

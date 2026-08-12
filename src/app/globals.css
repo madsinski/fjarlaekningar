@@ -77,3 +77,8 @@ html {
 .animate-delay-200 { animation-delay: 200ms; }
 .animate-delay-300 { animation-delay: 300ms; }
 .animate-delay-400 { animation-delay: 400ms; }
+
+/* Site-wide toggle for the small "eyebrow" pill labels above headings
+   (admin → Haus & fótur → Útlit → Merkipillur). The class is set on <main>
+   in the (site) layout; every eyebrow carries .site-eyebrow. */
+.eyebrows-off .site-eyebrow { display: none; }
