@@ -84,8 +84,14 @@
     margin: 0 0 4px;
   }
   .strip-sub { color: var(--ink-soft); font-size: 17px; margin: 0 0 20px; }
+  /* One template drives the strip and its labels, so every caption stays
+     locked to the pad above it. Blank cells sit between the pads, as on the
+     physical strip. */
+  .strip, .strip-labels {
+    display: grid;
+    grid-template-columns: 30px 92px 30px 92px 30px 92px 30px 92px 1fr;
+  }
   .strip {
-    display: flex;
     align-items: stretch;
     border: 2px solid var(--line-strong);
     border-radius: 5px;
@@ -93,12 +99,10 @@
     height: 62px;
     background: #fff;
   }
-  .strip .pad { width: 92px; border-right: 1px solid var(--line-strong); }
-  .strip .handle { flex: 1; background: #fff; }
-  .strip .lead { width: 30px; background: #fff; border-right: 1px solid var(--line-strong); }
+  .strip > * { border-right: 1px solid var(--line-strong); }
+  .strip > *:last-child { border-right: 0; }
   .strip-labels {
-    display: flex;
-    align-items: flex-start;
+    align-items: start;
     margin-top: 8px;
     font-family: "Ubuntu Mono", monospace;
     font-size: 13px;
@@ -108,8 +112,7 @@
     text-transform: uppercase;
     color: var(--ink-soft);
   }
-  .strip-labels .lead { width: 32px; }
-  .strip-labels span { width: 93px; text-align: center; }
+  .strip-labels span { text-align: center; }
 
   /* ---------- Rows ---------- */
   .rows { display: flex; flex-direction: column; gap: 14px; }
@@ -195,19 +198,26 @@
     <p class="strip-title">Neikvætt próf</p>
     <p class="strip-sub">Allir fjórir reitir halda sínum lit.</p>
     <div class="strip">
-      <div class="lead"></div>
-      <div class="pad" style="background: var(--pad-leu-neg)"></div>
-      <div class="pad" style="background: var(--pad-blo-neg)"></div>
-      <div class="pad" style="background: var(--pad-nit-neg)"></div>
-      <div class="pad" style="background: var(--pad-pro-neg)"></div>
-      <div class="handle"></div>
+      <div></div>
+      <div style="background: var(--pad-leu-neg)"></div>
+      <div></div>
+      <div style="background: var(--pad-blo-neg)"></div>
+      <div></div>
+      <div style="background: var(--pad-nit-neg)"></div>
+      <div></div>
+      <div style="background: var(--pad-pro-neg)"></div>
+      <div></div>
     </div>
     <div class="strip-labels">
-      <div class="lead"></div>
+      <div></div>
       <span>Hvít blóðkorn</span>
+      <div></div>
       <span>Blóð</span>
+      <div></div>
       <span>Nítrít</span>
+      <div></div>
       <span>Prótein</span>
+      <div></div>
     </div>
   </section>
 
