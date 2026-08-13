@@ -7,6 +7,16 @@ import type { SurveyQuestion } from "@/lib/survey-types";
 
 export const runtime = "nodejs";
 
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const caller = await getCallerStaff(req);
   if (!isAdmin(caller)) return NextResponse.json({ ok: false, error: "Admin role required" }, { status: 403 });
@@ -37,6 +47,11 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 
   const update: Record<string, unknown> = {};
   if (typeof body.title === "string" && body.title.trim()) update.title = body.title.trim();
+  if (typeof body.slug === "string") {
+    const slug = slugify(body.slug);
+    if (!slug) return NextResponse.json({ ok: false, error: "Ógild slóð" }, { status: 400 });
+    update.slug = slug;
+  }
   if (typeof body.description === "string") update.description = body.description;
   if (typeof body.title_en === "string") update.title_en = body.title_en;
   if (typeof body.description_en === "string") update.description_en = body.description_en;
@@ -53,6 +68,9 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   }
 
   const { data, error } = await supabaseAdmin.from("surveys").update(update).eq("id", id).select().single();
+  if (error?.code === "23505") {
+    return NextResponse.json({ ok: false, error: "Slóð er þegar í notkun" }, { status: 409 });
+  }
   if (error || !data) return NextResponse.json({ ok: false, error: error?.message || "Villa" }, { status: 500 });
   return NextResponse.json({ ok: true, survey: data });
 }

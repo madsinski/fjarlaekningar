@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Trash2, ChevronUp, ChevronDown, Save, Globe, Languages, Sparkles, Copy, Check, Download } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, ChevronUp, ChevronDown, Save, Globe, Languages, Sparkles, Copy, Check, Download, Pencil } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import SurveyFields from "@/app/components/SurveyFields";
 import {
@@ -76,6 +76,8 @@ export default function SurveyEditPage() {
   const [brandMode, setBrandMode] = useState<"both" | "fjarlaekningar" | "client">("both");
   const [logoBusy, setLogoBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [editingSlug, setEditingSlug] = useState(false);
+  const [slugDraft, setSlugDraft] = useState("");
   const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
@@ -213,10 +215,21 @@ export default function SurveyEditPage() {
     setBusy(false);
     if (!res.ok || !j.ok) {
       setMsg({ type: "err", text: j.error || "Villa" });
-      return;
+      return false;
     }
     setMsg({ type: "ok", text: okText });
     await load();
+    return true;
+  };
+
+  // Slug is the public URL (/kannanir/<slug>) — editable inline from the header.
+  const saveSlug = async () => {
+    const next = slugDraft.trim();
+    if (!next || next === survey?.slug) {
+      setEditingSlug(false);
+      return;
+    }
+    if (await patch({ slug: next }, "Slóð uppfærð.")) setEditingSlug(false);
   };
 
   const brandPayload = () => ({ brand_name: brandName, brand_logo_url: brandLogoUrl, brand_mode: brandMode });
@@ -385,9 +398,39 @@ export default function SurveyEditPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-slate-900 truncate">{survey.title}</h1>
-          <div className="text-sm text-slate-500 mt-1">
-            /{survey.slug} · {survey.status === "published" ? <span className="text-emerald-700">Birt</span> : <span className="text-amber-600">Drög</span>}
-          </div>
+          {editingSlug ? (
+            <div className="mt-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm text-slate-500">/kannanir/</span>
+                <input
+                  value={slugDraft}
+                  onChange={(e) => setSlugDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveSlug();
+                    if (e.key === "Escape") setEditingSlug(false);
+                  }}
+                  autoFocus
+                  aria-label="Slóð könnunar"
+                  className="px-2 py-1 border border-slate-300 rounded-lg text-sm w-64 focus:ring-2 focus:ring-cyan-200 outline-none"
+                />
+                <button onClick={saveSlug} disabled={busy} className="py-1 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold disabled:opacity-50">Vista slóð</button>
+                <button onClick={() => setEditingSlug(false)} className="py-1 px-2 rounded-lg text-xs text-slate-500 hover:text-slate-700">Hætta við</button>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">Aðeins a–z, tölur og bandstrik. Eldri hlekkur hættir að virka um leið og slóðinni er breytt.</p>
+            </div>
+          ) : (
+            <div className="text-sm text-slate-500 mt-1 flex items-center gap-2 flex-wrap">
+              <span>/{survey.slug} · {survey.status === "published" ? <span className="text-emerald-700">Birt</span> : <span className="text-amber-600">Drög</span>}</span>
+              <button
+                onClick={() => { setSlugDraft(survey.slug); setEditingSlug(true); }}
+                title="Breyta slóð"
+                aria-label="Breyta slóð könnunar"
+                className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-cyan-700"
+              >
+                <Pencil className="w-3.5 h-3.5" /> Breyta slóð
+              </button>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button onClick={copyLink} className="inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg px-3 py-1.5">
