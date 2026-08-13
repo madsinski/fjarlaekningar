@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ClipboardList, Plus, Globe, Pencil } from "lucide-react";
+import { ClipboardList, Plus, Globe, Pencil, Copy, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface Survey {
@@ -24,6 +24,7 @@ export default function SurveysListPage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [title, setTitle] = useState("");
+  const [rowBusy, setRowBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -80,6 +81,42 @@ export default function SurveysListPage() {
     router.push(`/admin/surveys/${j.survey.id}`);
   };
 
+  const authHeaders = async (): Promise<HeadersInit> => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    return { "Content-Type": "application/json", Authorization: session?.access_token ? `Bearer ${session.access_token}` : "" };
+  };
+
+  const duplicate = async (s: Survey) => {
+    if (rowBusy) return;
+    setRowBusy(s.id);
+    setErr(null);
+    const res = await fetch(`/api/admin/surveys/${s.id}/duplicate`, { method: "POST", headers: await authHeaders() });
+    const j = await res.json().catch(() => ({}));
+    setRowBusy(null);
+    if (!res.ok || !j.ok) {
+      setErr(j.error || "Ekki tókst að afrita könnun.");
+      return;
+    }
+    router.push(`/admin/surveys/${j.survey.id}`);
+  };
+
+  const remove = async (s: Survey) => {
+    if (rowBusy) return;
+    if (!confirm(`Eyða könnuninni „${s.title}“ og öllum svörum (${s.responseCount ?? 0})? Þetta er óafturkræft.`)) return;
+    setRowBusy(s.id);
+    setErr(null);
+    const res = await fetch(`/api/admin/surveys/${s.id}`, { method: "DELETE", headers: await authHeaders() });
+    const j = await res.json().catch(() => ({}));
+    setRowBusy(null);
+    if (!res.ok || !j.ok) {
+      setErr(j.error || "Ekki tókst að eyða könnun.");
+      return;
+    }
+    setSurveys((prev) => prev.filter((x) => x.id !== s.id));
+  };
+
   return (
     <div className="p-8 max-w-4xl">
       <div className="flex items-start justify-between gap-4">
@@ -107,6 +144,10 @@ export default function SurveysListPage() {
         </form>
       )}
 
+      {err && !creating && (
+        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">{err}</div>
+      )}
+
       <div className="mt-6 rounded-xl border border-slate-200 bg-white divide-y divide-slate-100">
         {loading ? (
           <div className="p-6 text-sm text-slate-500">Hleð…</div>
@@ -117,20 +158,46 @@ export default function SurveysListPage() {
           </div>
         ) : (
           surveys.map((s) => (
-            <Link key={s.id} href={`/admin/surveys/${s.id}`} className="flex items-center justify-between gap-4 p-4 hover:bg-slate-50">
-              <div className="min-w-0">
-                <div className="font-medium text-slate-900 truncate">{s.title}</div>
-                <div className="text-xs text-slate-500">/{s.slug} · {s.responseCount ?? 0} svör</div>
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                {s.status === "published" ? (
-                  <span className="inline-flex items-center gap-1 text-xs text-emerald-700"><Globe className="w-3.5 h-3.5" /> Birt</span>
-                ) : (
-                  <span className="text-xs text-amber-600">Drög</span>
-                )}
-                <Pencil className="w-4 h-4 text-slate-400" />
-              </div>
-            </Link>
+            <div key={s.id} className="flex items-center justify-between gap-2 hover:bg-slate-50">
+              <Link href={`/admin/surveys/${s.id}`} className="flex flex-1 items-center justify-between gap-4 p-4 min-w-0">
+                <div className="min-w-0">
+                  <div className="font-medium text-slate-900 truncate">{s.title}</div>
+                  <div className="text-xs text-slate-500">/{s.slug} · {s.responseCount ?? 0} svör</div>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  {s.status === "published" ? (
+                    <span className="inline-flex items-center gap-1 text-xs text-emerald-700"><Globe className="w-3.5 h-3.5" /> Birt</span>
+                  ) : (
+                    <span className="text-xs text-amber-600">Drög</span>
+                  )}
+                  <Pencil className="w-4 h-4 text-slate-400" />
+                </div>
+              </Link>
+              {isAdmin && (
+                <div className="flex items-center gap-1 shrink-0 pr-4">
+                  <button
+                    type="button"
+                    onClick={() => duplicate(s)}
+                    disabled={rowBusy !== null}
+                    title="Afrita könnun"
+                    aria-label={`Afrita könnunina ${s.title}`}
+                    className="p-2 rounded-lg text-slate-400 hover:bg-cyan-50 hover:text-cyan-700 disabled:opacity-40"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => remove(s)}
+                    disabled={rowBusy !== null}
+                    title="Eyða könnun"
+                    aria-label={`Eyða könnuninni ${s.title}`}
+                    className="p-2 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
           ))
         )}
       </div>

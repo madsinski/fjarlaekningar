@@ -345,6 +345,15 @@ export default function SurveyEditPage() {
     setAi(j.summary as AiSummary);
   };
 
+  const duplicate = async () => {
+    setBusy(true);
+    const res = await fetch(`/api/admin/surveys/${id}/duplicate`, { method: "POST", headers: await authHeaders() });
+    const j = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (res.ok && j.ok) router.push(`/admin/surveys/${j.survey.id}`);
+    else setMsg({ type: "err", text: j.error || "Ekki tókst að afrita könnun." });
+  };
+
   const remove = async () => {
     if (!confirm("Eyða þessari könnun og öllum svörum?")) return;
     setBusy(true);
@@ -713,7 +722,10 @@ export default function SurveyEditPage() {
                     <Globe className="w-4 h-4" /> Vista og birta
                   </button>
                 )}
-                <button onClick={remove} disabled={busy} className="ml-auto inline-flex items-center gap-2 py-2 px-3 rounded-lg text-sm text-red-600 hover:bg-red-50 disabled:opacity-50">
+                <button onClick={duplicate} disabled={busy} className="ml-auto inline-flex items-center gap-2 py-2 px-3 rounded-lg text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-50" title="Býr til afrit sem drög (án svara)">
+                  <Copy className="w-4 h-4" /> Afrita
+                </button>
+                <button onClick={remove} disabled={busy} className="inline-flex items-center gap-2 py-2 px-3 rounded-lg text-sm text-red-600 hover:bg-red-50 disabled:opacity-50">
                   <Trash2 className="w-4 h-4" /> Eyða
                 </button>
               </div>
