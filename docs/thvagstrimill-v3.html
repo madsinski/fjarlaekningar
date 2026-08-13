@@ -1,0 +1,187 @@
+<title>Þvagstrimill — báðar blóðútgáfur</title>
+<style>
+  :root {
+    --ground: #F6F9F9;
+    --surface: #FFFFFF;
+    --ink: #14232A;
+    --ink-soft: #4C6570;
+    --line: #D9E4E6;
+    --line-strong: #B9CCD0;
+    --accent: #0E7490;
+    --pad-leu-neg: #F3EFD8;
+    --pad-leu-pos: #B78CC8;
+    --pad-blo-neg: #E09B3A;
+    --pad-blo-pos: #4E9E56;
+    --pad-nit-neg: #F8F5E9;
+    --pad-nit-pos: #EE5D95;
+    --pad-pro-neg: #E2DB80;
+    --pad-pro-pos: #90D2A6;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    width: 1240px;
+    margin: 0;
+    padding: 44px 64px;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Ubuntu", "Ubuntu Sans", "Segoe UI", system-ui, sans-serif;
+    font-size: 18px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .sheet { display: flex; flex-direction: column; gap: 30px; }
+
+  .timing {
+    font-size: 92px;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-align: center;
+    margin: 0;
+  }
+
+  .strip-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 28px 32px 26px;
+  }
+  .strip-title {
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    margin: 0 0 2px;
+  }
+  .neg .strip-title { color: var(--ink-soft); }
+  .pos .strip-title { color: var(--accent); }
+  .strip-sub { color: var(--ink); font-size: 19px; margin: 0 0 22px; }
+
+  /* One template drives the strip and its labels, so every caption stays
+     locked to the pad above it. Blank cells sit between the pads, as on the
+     physical strip. */
+  .strip, .strip-labels {
+    display: grid;
+    grid-template-columns: 30px 92px 30px 92px 30px 92px 30px 92px 1fr;
+  }
+  .strip {
+    align-items: stretch;
+    border: 2px solid var(--line-strong);
+    border-radius: 5px;
+    overflow: hidden;
+    height: 70px;
+    background: #fff;
+  }
+  .strip > * { border-right: 1px solid var(--line-strong); }
+  .strip > *:last-child { border-right: 0; }
+  /* The blood pad's other positive form: green speckles on the unchanged pad. */
+  .spots {
+    background-color: var(--pad-blo-neg);
+    background-image: radial-gradient(var(--pad-blo-pos) 3px, transparent 3.2px);
+    background-size: 15px 15px;
+  }
+  .strip-labels {
+    align-items: start;
+    margin-top: 10px;
+    font-family: "Ubuntu Mono", monospace;
+    font-size: 13px;
+    line-height: 1.25;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .strip-labels span { text-align: center; }
+</style>
+
+<div class="sheet">
+  <p class="timing">2 mín</p>
+
+  <section class="strip-card neg">
+    <p class="strip-title">Neikvætt</p>
+    <p class="strip-sub">Allir reitir halda sínum lit.</p>
+    <div class="strip">
+      <div></div>
+      <div style="background: var(--pad-leu-neg)"></div>
+      <div></div>
+      <div style="background: var(--pad-blo-neg)"></div>
+      <div></div>
+      <div style="background: var(--pad-nit-neg)"></div>
+      <div></div>
+      <div style="background: var(--pad-pro-neg)"></div>
+      <div></div>
+    </div>
+    <div class="strip-labels">
+      <div></div>
+      <span>Hvít blóðkorn</span>
+      <div></div>
+      <span>Blóð</span>
+      <div></div>
+      <span>Nítrít</span>
+      <div></div>
+      <span>Prótein</span>
+      <div></div>
+    </div>
+  </section>
+
+  <section class="strip-card pos">
+    <p class="strip-title">Jákvætt</p>
+    <p class="strip-sub">Hver reitur sem skiptir um lit er jákvæður.</p>
+    <!-- blood: solid green -->
+    <div class="strip">
+      <div></div>
+      <div style="background: var(--pad-leu-pos)"></div>
+      <div></div>
+      <div style="background: var(--pad-blo-pos)"></div>
+      <div></div>
+      <div style="background: var(--pad-nit-pos)"></div>
+      <div></div>
+      <div style="background: var(--pad-pro-pos)"></div>
+      <div></div>
+    </div>
+    <div class="strip-labels">
+      <div></div>
+      <span>Hvít blóðkorn</span>
+      <div></div>
+      <span>Blóð</span>
+      <div></div>
+      <span>Nítrít</span>
+      <div></div>
+      <span>Prótein</span>
+      <div></div>
+    </div>
+  </section>
+
+  <section class="strip-card pos">
+    <p class="strip-title">Jákvætt — grænir dílar</p>
+    <p class="strip-sub">Blóðreiturinn getur líka orðið grænflekkóttur í stað þess að verða allur grænn. Það telst líka jákvætt.</p>
+    <div class="strip">
+      <div></div>
+      <div style="background: var(--pad-leu-pos)"></div>
+      <div></div>
+      <div class="spots"></div>
+      <div></div>
+      <div style="background: var(--pad-nit-pos)"></div>
+      <div></div>
+      <div style="background: var(--pad-pro-pos)"></div>
+      <div></div>
+    </div>
+    <div class="strip-labels">
+      <div></div>
+      <span>Hvít blóðkorn</span>
+      <div></div>
+      <span>Blóð</span>
+      <div></div>
+      <span>Nítrít</span>
+      <div></div>
+      <span>Prótein</span>
+      <div></div>
+    </div>
+  </section>
+</div>
