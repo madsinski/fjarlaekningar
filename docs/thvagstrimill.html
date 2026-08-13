@@ -137,8 +137,15 @@
   }
   .row-name b { font-size: 27px; letter-spacing: -0.015em; line-height: 1.1; }
 
-  .compare { display: flex; align-items: center; gap: 16px; }
-  .state { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; min-width: 186px; }
+  /* Fixed columns, so the arrow and the explanation start at the same x on
+     every row — the blood row's extra chip can't shove them sideways. */
+  .compare {
+    display: grid;
+    grid-template-columns: 190px 40px 252px 1fr;
+    align-items: center;
+    gap: 18px;
+  }
+  .state { display: flex; align-items: center; gap: 12px; }
   .chip {
     width: 58px;
     height: 58px;
@@ -168,9 +175,8 @@
     line-height: 1.4;
     color: var(--ink);
     border-left: 3px solid var(--accent-soft);
-    padding-left: 18px;
+    padding-left: 26px;
     margin: 0;
-    flex: 1 1 300px;
   }
   .meaning em { font-style: normal; color: var(--ink-soft); }
 
