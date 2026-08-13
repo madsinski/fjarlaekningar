@@ -24,7 +24,7 @@
   body {
     width: 1240px;
     margin: 0;
-    padding: 56px 64px 48px;
+    padding: 44px 64px 44px;
     background: var(--ground);
     color: var(--ink);
     font-family: "Ubuntu", "Ubuntu Sans", "Segoe UI", system-ui, sans-serif;
@@ -35,29 +35,16 @@
 
   .sheet { display: flex; flex-direction: column; gap: 34px; }
 
-  /* ---------- Header ---------- */
-  .eyebrow {
-    font-family: "Ubuntu Mono", monospace;
-    font-size: 15px;
+  /* ---------- Read time ---------- */
+  .timing {
+    font-size: 92px;
+    line-height: 1;
     font-weight: 700;
-    letter-spacing: 0.18em;
+    letter-spacing: -0.02em;
     text-transform: uppercase;
     color: var(--accent);
-    margin: 0 0 10px;
-  }
-  h1 {
-    font-size: 54px;
-    line-height: 1.02;
-    font-weight: 700;
-    letter-spacing: -0.022em;
+    text-align: center;
     margin: 0;
-    text-wrap: balance;
-  }
-  .lede {
-    font-size: 22px;
-    color: var(--ink-soft);
-    margin: 12px 0 0;
-    max-width: 62ch;
   }
 
   /* ---------- The one rule ---------- */
@@ -70,14 +57,19 @@
     overflow: hidden;
     background: var(--surface);
   }
-  .rule > div { padding: 22px 26px; }
+  .rule > div { padding: 22px 30px; }
   .rule > div + div { border-left: 2px solid var(--line-strong); }
   .rule b {
     display: block;
-    font-size: 24px;
-    letter-spacing: -0.01em;
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    margin-bottom: 2px;
   }
-  .rule span { color: var(--ink-soft); font-size: 19px; }
+  .rule .neg b { color: var(--ink-soft); }
+  .rule .pos b { color: var(--accent); }
+  .rule span { color: var(--ink); font-size: 20px; }
 
   /* ---------- Reference strip ---------- */
   .strip-card {
@@ -101,21 +93,23 @@
     height: 62px;
     background: #fff;
   }
-  .strip .pad { width: 74px; border-right: 1px solid var(--line-strong); }
+  .strip .pad { width: 92px; border-right: 1px solid var(--line-strong); }
   .strip .handle { flex: 1; background: #fff; }
   .strip .lead { width: 30px; background: #fff; border-right: 1px solid var(--line-strong); }
   .strip-labels {
     display: flex;
+    align-items: flex-start;
     margin-top: 8px;
     font-family: "Ubuntu Mono", monospace;
-    font-size: 14px;
+    font-size: 13px;
+    line-height: 1.25;
     font-weight: 700;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--ink-soft);
   }
   .strip-labels .lead { width: 32px; }
-  .strip-labels span { width: 75px; text-align: center; }
+  .strip-labels span { width: 93px; text-align: center; }
 
   /* ---------- Rows ---------- */
   .rows { display: flex; flex-direction: column; gap: 14px; }
@@ -156,13 +150,14 @@
   .state-text small {
     display: block;
     font-family: "Ubuntu Mono", monospace;
-    font-size: 12.5px;
+    font-size: 14px;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--ink-soft);
     margin-bottom: 2px;
   }
+  .state-text small.neg { color: var(--ink-soft); }
+  .state-text small.pos { color: var(--accent); }
   .state-text b { font-size: 19px; font-weight: 700; }
   .arrow { font-size: 30px; color: var(--line-strong); line-height: 1; }
   .meaning {
@@ -176,46 +171,29 @@
   }
   .meaning em { font-style: normal; color: var(--ink-soft); }
 
-  /* ---------- Footer ---------- */
-  .notes {
-    background: var(--accent-soft);
-    border-radius: 14px;
-    padding: 24px 28px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .notes p { margin: 0; font-size: 19px; }
-  .notes p b { font-weight: 700; }
-  .fine {
-    font-size: 15px;
-    color: var(--ink-soft);
-    margin: 0;
-    text-align: center;
-  }
+  
+  
+  
+  
 </style>
 
 <div class="sheet">
-  <header>
-    <p class="eyebrow">Heimapróf</p>
-    <h1>Að lesa þvagstrimil</h1>
-    <p class="lede">Berðu strimilinn þinn saman við litina hér að neðan.</p>
-  </header>
+  <p class="timing">2 mín</p>
 
   <section class="rule">
-    <div>
-      <b>Reiturinn heldur sínum lit</b>
-      <span>Ekkert fannst.</span>
+    <div class="neg">
+      <b>Neikvætt</b>
+      <span>Reiturinn heldur sínum lit.</span>
     </div>
-    <div>
-      <b>Reiturinn skiptir um lit</b>
-      <span>Eitthvað fannst.</span>
+    <div class="pos">
+      <b>Jákvætt</b>
+      <span>Reiturinn skiptir um lit.</span>
     </div>
   </section>
 
   <section class="strip-card">
-    <p class="strip-title">Svona lítur strimillinn út þegar ekkert finnst</p>
-    <p class="strip-sub">Fjórir reitir, allir óbreyttir.</p>
+    <p class="strip-title">Neikvætt próf</p>
+    <p class="strip-sub">Allir fjórir reitir halda sínum lit.</p>
     <div class="strip">
       <div class="lead"></div>
       <div class="pad" style="background: var(--pad-leu-neg)"></div>
@@ -226,7 +204,7 @@
     </div>
     <div class="strip-labels">
       <div class="lead"></div>
-      <span>Hvítkorn</span>
+      <span>Hvít blóðkorn</span>
       <span>Blóð</span>
       <span>Nítrít</span>
       <span>Prótein</span>
@@ -243,7 +221,7 @@
         <div class="state">
           <div class="chip" style="background: var(--pad-leu-neg)"></div>
           <div class="state-text">
-            <small>Óbreytt</small>
+            <small class="neg">Neikvætt</small>
             <b>Beinhvítt</b>
           </div>
         </div>
@@ -251,7 +229,7 @@
         <div class="state">
           <div class="chip" style="background: var(--pad-leu-pos)"></div>
           <div class="state-text">
-            <small>Skiptir um lit</small>
+            <small class="pos">Jákvætt</small>
             <b>Fjólublátt</b>
           </div>
         </div>
@@ -268,7 +246,7 @@
         <div class="state">
           <div class="chip" style="background: var(--pad-blo-neg)"></div>
           <div class="state-text">
-            <small>Óbreytt</small>
+            <small class="neg">Neikvætt</small>
             <b>Sinnepsgult</b>
           </div>
         </div>
@@ -277,7 +255,7 @@
           <div class="chip" style="background: var(--pad-blo-pos)"></div>
           <div class="chip spots" style="background-color: var(--pad-blo-neg)"></div>
           <div class="state-text">
-            <small>Skiptir um lit</small>
+            <small class="pos">Jákvætt</small>
             <b>Grænt</b>
           </div>
         </div>
@@ -294,7 +272,7 @@
         <div class="state">
           <div class="chip" style="background: var(--pad-nit-neg)"></div>
           <div class="state-text">
-            <small>Óbreytt</small>
+            <small class="neg">Neikvætt</small>
             <b>Hvítt</b>
           </div>
         </div>
@@ -302,7 +280,7 @@
         <div class="state">
           <div class="chip" style="background: var(--pad-nit-pos)"></div>
           <div class="state-text">
-            <small>Skiptir um lit</small>
+            <small class="pos">Jákvætt</small>
             <b>Bleikt</b>
           </div>
         </div>
@@ -319,7 +297,7 @@
         <div class="state">
           <div class="chip" style="background: var(--pad-pro-neg)"></div>
           <div class="state-text">
-            <small>Óbreytt</small>
+            <small class="neg">Neikvætt</small>
             <b>Ljósgult</b>
           </div>
         </div>
@@ -327,7 +305,7 @@
         <div class="state">
           <div class="chip" style="background: var(--pad-pro-pos)"></div>
           <div class="state-text">
-            <small>Skiptir um lit</small>
+            <small class="pos">Jákvætt</small>
             <b>Grænt</b>
           </div>
         </div>
@@ -336,10 +314,4 @@
     </div>
   </section>
 
-  <section class="notes">
-    <p><b>Lestu strimilinn á réttum tíma</b> — farðu eftir tímanum sem stendur á umbúðunum.</p>
-    <p><b>Sendu mynd af strimlinum</b> með erindinu þínu. Læknirinn metur niðurstöðuna.</p>
-  </section>
-
-  <p class="fine">Reitirnir geta verið í annarri röð eftir framleiðanda — farðu eftir merkingunum á umbúðunum.</p>
 </div>
