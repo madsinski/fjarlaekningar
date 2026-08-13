@@ -1,0 +1,345 @@
+<title>Að lesa þvagstrimil</title>
+<style>
+  :root {
+    --ground: #F6F9F9;
+    --surface: #FFFFFF;
+    --ink: #14232A;
+    --ink-soft: #4C6570;
+    --line: #D9E4E6;
+    --line-strong: #B9CCD0;
+    --accent: #0E7490;
+    --accent-soft: #E4F1F4;
+    --pad-leu-neg: #F3EFD8;
+    --pad-leu-pos: #B78CC8;
+    --pad-blo-neg: #E09B3A;
+    --pad-blo-pos: #4E9E56;
+    --pad-nit-neg: #F8F5E9;
+    --pad-nit-pos: #EE5D95;
+    --pad-pro-neg: #E2DB80;
+    --pad-pro-pos: #90D2A6;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    width: 1240px;
+    margin: 0;
+    padding: 56px 64px 48px;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Ubuntu", "Ubuntu Sans", "Segoe UI", system-ui, sans-serif;
+    font-size: 18px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .sheet { display: flex; flex-direction: column; gap: 34px; }
+
+  /* ---------- Header ---------- */
+  .eyebrow {
+    font-family: "Ubuntu Mono", monospace;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 10px;
+  }
+  h1 {
+    font-size: 54px;
+    line-height: 1.02;
+    font-weight: 700;
+    letter-spacing: -0.022em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .lede {
+    font-size: 22px;
+    color: var(--ink-soft);
+    margin: 12px 0 0;
+    max-width: 62ch;
+  }
+
+  /* ---------- The one rule ---------- */
+  .rule {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 2px solid var(--line-strong);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .rule > div { padding: 22px 26px; }
+  .rule > div + div { border-left: 2px solid var(--line-strong); }
+  .rule b {
+    display: block;
+    font-size: 24px;
+    letter-spacing: -0.01em;
+  }
+  .rule span { color: var(--ink-soft); font-size: 19px; }
+
+  /* ---------- Reference strip ---------- */
+  .strip-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 26px 30px 24px;
+  }
+  .strip-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+  .strip-sub { color: var(--ink-soft); font-size: 17px; margin: 0 0 20px; }
+  .strip {
+    display: flex;
+    align-items: stretch;
+    border: 2px solid var(--line-strong);
+    border-radius: 5px;
+    overflow: hidden;
+    height: 62px;
+    background: #fff;
+  }
+  .strip .pad { width: 74px; border-right: 1px solid var(--line-strong); }
+  .strip .handle { flex: 1; background: #fff; }
+  .strip .lead { width: 30px; background: #fff; border-right: 1px solid var(--line-strong); }
+  .strip-labels {
+    display: flex;
+    margin-top: 8px;
+    font-family: "Ubuntu Mono", monospace;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .strip-labels .lead { width: 32px; }
+  .strip-labels span { width: 75px; text-align: center; }
+
+  /* ---------- Rows ---------- */
+  .rows { display: flex; flex-direction: column; gap: 14px; }
+  .row {
+    display: grid;
+    grid-template-columns: 210px 1fr;
+    align-items: center;
+    gap: 22px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 24px;
+  }
+  .row-name { display: flex; flex-direction: column; gap: 4px; }
+  .row-pos {
+    font-family: "Ubuntu Mono", monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .row-name b { font-size: 27px; letter-spacing: -0.015em; line-height: 1.1; }
+
+  .compare { display: flex; align-items: center; gap: 16px; }
+  .state { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; min-width: 186px; }
+  .chip {
+    width: 58px;
+    height: 58px;
+    border-radius: 7px;
+    border: 2px solid var(--line-strong);
+    flex-shrink: 0;
+  }
+  .chip.spots {
+    background-image: radial-gradient(var(--pad-blo-pos) 2.2px, transparent 2.4px);
+    background-size: 11px 11px;
+  }
+  .state-text small {
+    display: block;
+    font-family: "Ubuntu Mono", monospace;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 2px;
+  }
+  .state-text b { font-size: 19px; font-weight: 700; }
+  .arrow { font-size: 30px; color: var(--line-strong); line-height: 1; }
+  .meaning {
+    font-size: 19px;
+    line-height: 1.4;
+    color: var(--ink);
+    border-left: 3px solid var(--accent-soft);
+    padding-left: 18px;
+    margin: 0;
+    flex: 1 1 300px;
+  }
+  .meaning em { font-style: normal; color: var(--ink-soft); }
+
+  /* ---------- Footer ---------- */
+  .notes {
+    background: var(--accent-soft);
+    border-radius: 14px;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .notes p { margin: 0; font-size: 19px; }
+  .notes p b { font-weight: 700; }
+  .fine {
+    font-size: 15px;
+    color: var(--ink-soft);
+    margin: 0;
+    text-align: center;
+  }
+</style>
+
+<div class="sheet">
+  <header>
+    <p class="eyebrow">Heimapróf</p>
+    <h1>Að lesa þvagstrimil</h1>
+    <p class="lede">Berðu strimilinn þinn saman við litina hér að neðan.</p>
+  </header>
+
+  <section class="rule">
+    <div>
+      <b>Reiturinn heldur sínum lit</b>
+      <span>Ekkert fannst.</span>
+    </div>
+    <div>
+      <b>Reiturinn skiptir um lit</b>
+      <span>Eitthvað fannst.</span>
+    </div>
+  </section>
+
+  <section class="strip-card">
+    <p class="strip-title">Svona lítur strimillinn út þegar ekkert finnst</p>
+    <p class="strip-sub">Fjórir reitir, allir óbreyttir.</p>
+    <div class="strip">
+      <div class="lead"></div>
+      <div class="pad" style="background: var(--pad-leu-neg)"></div>
+      <div class="pad" style="background: var(--pad-blo-neg)"></div>
+      <div class="pad" style="background: var(--pad-nit-neg)"></div>
+      <div class="pad" style="background: var(--pad-pro-neg)"></div>
+      <div class="handle"></div>
+    </div>
+    <div class="strip-labels">
+      <div class="lead"></div>
+      <span>Hvítkorn</span>
+      <span>Blóð</span>
+      <span>Nítrít</span>
+      <span>Prótein</span>
+    </div>
+  </section>
+
+  <section class="rows">
+    <div class="row">
+      <div class="row-name">
+        <span class="row-pos">Reitur 1</span>
+        <b>Hvít blóðkorn</b>
+      </div>
+      <div class="compare">
+        <div class="state">
+          <div class="chip" style="background: var(--pad-leu-neg)"></div>
+          <div class="state-text">
+            <small>Óbreytt</small>
+            <b>Beinhvítt</b>
+          </div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="state">
+          <div class="chip" style="background: var(--pad-leu-pos)"></div>
+          <div class="state-text">
+            <small>Skiptir um lit</small>
+            <b>Fjólublátt</b>
+          </div>
+        </div>
+        <p class="meaning">Fjólublátt þýðir að <b>hvít blóðkorn</b> fundust í þvaginu.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-name">
+        <span class="row-pos">Reitur 2</span>
+        <b>Blóð</b>
+      </div>
+      <div class="compare">
+        <div class="state">
+          <div class="chip" style="background: var(--pad-blo-neg)"></div>
+          <div class="state-text">
+            <small>Óbreytt</small>
+            <b>Sinnepsgult</b>
+          </div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="state">
+          <div class="chip" style="background: var(--pad-blo-pos)"></div>
+          <div class="chip spots" style="background-color: var(--pad-blo-neg)"></div>
+          <div class="state-text">
+            <small>Skiptir um lit</small>
+            <b>Grænt</b>
+          </div>
+        </div>
+        <p class="meaning">Grænt <em>— eða grænir dílar —</em> þýðir að <b>blóð</b> fannst í þvaginu.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-name">
+        <span class="row-pos">Reitur 3</span>
+        <b>Nítrít</b>
+      </div>
+      <div class="compare">
+        <div class="state">
+          <div class="chip" style="background: var(--pad-nit-neg)"></div>
+          <div class="state-text">
+            <small>Óbreytt</small>
+            <b>Hvítt</b>
+          </div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="state">
+          <div class="chip" style="background: var(--pad-nit-pos)"></div>
+          <div class="state-text">
+            <small>Skiptir um lit</small>
+            <b>Bleikt</b>
+          </div>
+        </div>
+        <p class="meaning">Bleikt þýðir að <b>nítrít</b> fannst í þvaginu.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-name">
+        <span class="row-pos">Reitur 4</span>
+        <b>Prótein</b>
+      </div>
+      <div class="compare">
+        <div class="state">
+          <div class="chip" style="background: var(--pad-pro-neg)"></div>
+          <div class="state-text">
+            <small>Óbreytt</small>
+            <b>Ljósgult</b>
+          </div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="state">
+          <div class="chip" style="background: var(--pad-pro-pos)"></div>
+          <div class="state-text">
+            <small>Skiptir um lit</small>
+            <b>Grænt</b>
+          </div>
+        </div>
+        <p class="meaning">Grænt þýðir að <b>prótein</b> fannst í þvaginu.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="notes">
+    <p><b>Lestu strimilinn á réttum tíma</b> — farðu eftir tímanum sem stendur á umbúðunum.</p>
+    <p><b>Sendu mynd af strimlinum</b> með erindinu þínu. Læknirinn metur niðurstöðuna.</p>
+  </section>
+
+  <p class="fine">Reitirnir geta verið í annarri röð eftir framleiðanda — farðu eftir merkingunum á umbúðunum.</p>
+</div>
