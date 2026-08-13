@@ -25,6 +25,7 @@ async function getPublishedLegalDocs(): Promise<{ title: string; slug: string }[
 export interface FooterContent {
   nav_home?: string;
   nav_thjonusta?: string;
+  nav_faq?: string;
   nav_um_okkur?: string;
   nav_hafa_samband?: string;
   footer_blurb?: string;
@@ -42,6 +43,7 @@ export interface FooterContent {
 const FOOTER_DEFAULTS: Required<FooterContent> = {
   nav_home: "Heim",
   nav_thjonusta: "Þjónusta",
+  nav_faq: "Algengar spurningar",
   nav_um_okkur: "Um okkur",
   nav_hafa_samband: "Hafa samband",
   footer_blurb:
@@ -63,6 +65,7 @@ export default async function Footer({ content }: { content?: FooterContent }) {
   const pages = [
     { href: "/", label: t.nav_home },
     { href: "/thjonusta", label: t.nav_thjonusta },
+    { href: "/thjonusta#faq", label: t.nav_faq },
     { href: "/um-okkur", label: t.nav_um_okkur },
     { href: "/hafa-samband", label: t.nav_hafa_samband },
   ];
