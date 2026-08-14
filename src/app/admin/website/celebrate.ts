@@ -1,8 +1,9 @@
 // Celebration for putting the site live: a confetti burst plus a short cheer.
 //
-// No dependency and no bundled audio — the confetti is a few hundred rectangles
-// on a throwaway canvas, and the cheer is synthesised with Web Audio. Drop a
-// real crowd recording at /public/sounds/cheer.mp3 and it is used instead.
+// The confetti is a few hundred rectangles on a throwaway canvas — no
+// dependency. The cheer is a real crowd recording at /sounds/cheer.mp3
+// (public domain, see docs/cheer-sound.md); if it ever fails to load we fall
+// back to a synthesised one so the button still celebrates.
 
 const COLORS = ["#0891B2", "#10B981", "#38BDF8", "#F59E0B", "#A78BFA", "#FFFFFF"];
 const CHEER_URL = "/sounds/cheer.mp3";
@@ -142,15 +143,13 @@ function synthCheer() {
 
 async function cheer() {
   try {
-    const res = await fetch(CHEER_URL, { method: "HEAD" });
-    if (res.ok) {
-      const audio = new Audio(CHEER_URL);
-      audio.volume = 0.6;
-      await audio.play();
-      return;
-    }
+    const audio = new Audio(CHEER_URL);
+    audio.volume = 0.6;
+    // Rejects if the file is missing or the browser won't play it.
+    await audio.play();
+    return;
   } catch {
-    // No recording available (or it refused to play) — fall through to the synth.
+    // Fall through to the synthesised cheer.
   }
   synthCheer();
 }
