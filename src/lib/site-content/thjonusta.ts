@@ -334,17 +334,16 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
   // VERIFY BEFORE PUBLISHING. Written from public knowledge of the institution,
   // not from a Fjarlækningar source document:
   //   - the roster of HSU heilsugæslur, and that Vestmannaeyjar is genuinely live
-  //   - the pickup points: the pharmacy NAME is a best guess and the addresses
-  //     are deliberately left blank rather than invented. Sending a patient to a
-  //     wrong address for a test is a real failure, so these must be filled in
-  //     and checked before this section goes public.
+  //   - the pickup points: addresses are deliberately left blank rather than
+  //     invented. Sending a patient to a wrong address for a test is a real
+  //     failure, so these must be filled in and checked before this section
+  //     goes public.
   live_locations: [
     "Heilbrigðisstofnun Suðurlands | Fyrsta stofnunin sem opnar fyrir þjónustuna | /hsu-logo.webp",
     "+ Heilsugæslan í Vestmannaeyjum | Fyrsta heilsugæslan til að opna.",
     // ADDRESSES INTENTIONALLY BLANK — see the note above. The middle field is
     // the street address; fill it in from a source you trust.
     "* Heilsugæslan í Vestmannaeyjum |  | CRP-próf, þvagstix, strep-próf",
-    "* Apótek Vestmannaeyja |  | Þvagstix, strep-próf",
     "- Heilsugæslan á Selfossi",
     "- Heilsugæslan í Hveragerði",
     "- Heilsugæslan í Þorlákshöfn",
