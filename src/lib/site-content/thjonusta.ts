@@ -342,13 +342,13 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
     "+ Heilsugæslan í Vestmannaeyjum | Fyrsta heilsugæslan til að opna.",
     // ADDRESSES INTENTIONALLY BLANK — see the note above. The middle field is
     // the street address; fill it in from a source you trust.
-    "* Heilsugæslan í Vestmannaeyjum |  | CRP-próf, þvag próf, streptókokka próf",
+    "* Heilsugæslan í Vestmannaeyjum |  | CRP-próf, þvagpróf, streptókokkapróf",
     "- Heilsugæslan á Selfossi",
     "- Heilsugæslan í Hveragerði",
     "- Heilsugæslan á Höfn í Hornafirði",
     "- Heilsugæslan á Kirkjubæjarklaustri",
     "- Heilsugæslan í Uppsveitum",
-    "- Heilsugæslan í Rangárþingi",
+    "- Heilsugæsla Rangárþings",
     "- Heilsugæslan í Vík í Mýrdal",
     "- Heilsugæslan í Þorlákshöfn",
   ].join("\n"),
