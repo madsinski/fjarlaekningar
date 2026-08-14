@@ -331,28 +331,26 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
   live_heading: "Hvar er þjónustan ==virk==?",
   live_body:
     "Við opnum þjónustuna í samstarfi við heilbrigðisstofnanir, eina heilsugæslu í einu. Heilbrigðisstofnun Suðurlands er fyrsta stofnunin sem opnar fyrir þjónustuna.",
-  // VERIFY BEFORE PUBLISHING. Written from public knowledge of the institution,
-  // not from a Fjarlækningar source document:
-  //   - the roster of HSU heilsugæslur, and that Vestmannaeyjar is genuinely live
-  //   - the pickup points: addresses are deliberately left blank rather than
-  //     invented. Sending a patient to a wrong address for a test is a real
-  //     failure, so these must be filled in and checked before this section
-  //     goes public.
+  // The "væntanlegt" roster below is Fjarlækningar's own list. Vestmannaeyjar is
+  // the live heilsugæsla ("+") and so is not repeated among them.
+  //
+  // STILL TO VERIFY: pickup addresses are deliberately left blank rather than
+  // invented. Sending a patient to a wrong address for a test is a real failure,
+  // so fill them in from a source you trust before this section goes public.
   live_locations: [
     "Heilbrigðisstofnun Suðurlands | Fyrsta stofnunin sem opnar fyrir þjónustuna | /hsu-logo.webp",
     "+ Heilsugæslan í Vestmannaeyjum | Fyrsta heilsugæslan til að opna.",
     // ADDRESSES INTENTIONALLY BLANK — see the note above. The middle field is
     // the street address; fill it in from a source you trust.
-    "* Heilsugæslan í Vestmannaeyjum |  | CRP-próf, þvagstix, strep-próf",
+    "* Heilsugæslan í Vestmannaeyjum |  | CRP-próf, þvag próf, streptókokka próf",
     "- Heilsugæslan á Selfossi",
     "- Heilsugæslan í Hveragerði",
-    "- Heilsugæslan í Þorlákshöfn",
-    "- Heilsugæslan í Laugarási",
-    "- Heilsugæslan á Hellu",
-    "- Heilsugæslan á Hvolsvelli",
-    "- Heilsugæslan í Vík í Mýrdal",
-    "- Heilsugæslan á Kirkjubæjarklaustri",
     "- Heilsugæslan á Höfn í Hornafirði",
+    "- Heilsugæslan á Kirkjubæjarklaustri",
+    "- Heilsugæslan í Uppsveitum",
+    "- Heilsugæslan í Rangárþingi",
+    "- Heilsugæslan í Vík í Mýrdal",
+    "- Heilsugæslan í Þorlákshöfn",
   ].join("\n"),
   live_pickup_label: "Hvar fæ ég heimapróf?",
   live_footer:
