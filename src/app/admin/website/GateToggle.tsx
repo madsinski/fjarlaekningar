@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Globe, Lock } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { celebrate } from "./celebrate";
 
 // Coming-soon gate toggle.
 //
@@ -64,6 +65,8 @@ export default function GateToggle() {
       return;
     }
     setGated(next);
+    // Going live is worth a party; re-gating is not.
+    if (!next) celebrate();
   };
 
   if (gated === null) {
