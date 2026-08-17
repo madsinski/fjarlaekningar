@@ -23,14 +23,13 @@ export const PORTAL_URL = "https://app.medalia.is/fjarlaekningar-hsu";
 // sizes keep the A4 artwork exactly as designed and scale it into the sheet,
 // leaving a wide white mat — `margin` is the SMALLEST white edge in mm; the
 // axis that doesn't bind gets more, because the aspect ratios differ from A4.
-export type PosterFrame = "a4" | "a4print" | "30x40" | "40x50" | "40x60" | "50x60";
+export type PosterFrame = "a4" | "a4print" | "30x40" | "40x50" | "50x60";
 
 export const POSTER_FRAMES: Record<PosterFrame, { label: string; w: number; h: number; margin: number }> = {
   a4: { label: "A4 — stafrænt (heilflötur)", w: 210, h: 297, margin: 0 },
   a4print: { label: "A4 — til prentunar (spássía)", w: 210, h: 297, margin: 12 },
   "30x40": { label: "Rammi 30×40 cm", w: 300, h: 400, margin: 26 },
   "40x50": { label: "Rammi 40×50 cm", w: 400, h: 500, margin: 34 },
-  "40x60": { label: "Rammi 40×60 cm", w: 400, h: 600, margin: 34 },
   "50x60": { label: "Rammi 50×60 cm", w: 500, h: 600, margin: 44 },
 };
 
@@ -48,9 +47,14 @@ const ART_EDGE_WHITE = {
  * differ, so on a big sheet that gap is magnified (17mm at 50×60 with the hero
  * header). `shiftY` moves the artwork so the INK sits optically centred.
  */
+/** A stored frame that no longer exists (a retired size) falls back to A4. */
+export function normalizeFrame(frame: string | undefined): PosterFrame {
+  return frame && frame in POSTER_FRAMES ? (frame as PosterFrame) : "a4";
+}
+
 export function frameGeometry(frame: PosterFrame | undefined, headerLayout: "hero" | "poster" = "poster") {
-  const key = frame ?? "a4";
-  const f = POSTER_FRAMES[key] ?? POSTER_FRAMES.a4;
+  const key = normalizeFrame(frame);
+  const f = POSTER_FRAMES[key];
   const scale = f.margin === 0 ? 1 : Math.min((f.w - 2 * f.margin) / 210, (f.h - 2 * f.margin) / 297);
   const edge = ART_EDGE_WHITE[headerLayout] ?? ART_EDGE_WHITE.poster;
   const framed = key !== "a4";

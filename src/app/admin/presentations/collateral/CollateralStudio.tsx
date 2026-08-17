@@ -18,6 +18,7 @@ import { CollateralDoc, AFTER_ICON_KEYS, BENEFIT_ICON_KEYS } from "./docs";
 import {
   defaultDoc,
   frameGeometry,
+  normalizeFrame,
   POSTER_FRAMES,
   SERVICE_ICONS,
   type PosterFrame,
@@ -492,7 +493,7 @@ export function CollateralStudio({
                 <label className="block">
                   <span className="mb-1 block text-xs font-medium text-gray-600">Prentstærð</span>
                   <select
-                    value={active.poster.frame ?? "a4"}
+                    value={normalizeFrame(active.poster.frame)}
                     onChange={(e) => patchPoster({ frame: e.target.value as PosterFrame })}
                     className={inputCls}
                   >
