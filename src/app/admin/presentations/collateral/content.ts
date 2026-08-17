@@ -18,8 +18,31 @@ export type DocType = "poster" | "referral" | "advert" | "lifelinecheck";
 // actually land, so it is a real URL rather than a brand reference.
 export const PORTAL_URL = "https://app.medalia.is/fjarlaekningar-hsu";
 
+// Sheet the poster is printed on. A4 is the reception hand-out; the rest are
+// standard Nordic frame sizes, for a poster someone hangs on a wall. Framed
+// sizes keep the A4 artwork exactly as designed and scale it into the sheet,
+// leaving a wide white mat — `margin` is the SMALLEST white edge in mm; the
+// axis that doesn't bind gets more, because the aspect ratios differ from A4.
+export type PosterFrame = "a4" | "30x40" | "50x60" | "40x60";
+
+export const POSTER_FRAMES: Record<PosterFrame, { label: string; w: number; h: number; margin: number }> = {
+  a4: { label: "A4 — 210×297 mm", w: 210, h: 297, margin: 0 },
+  "30x40": { label: "Rammi 30×40 cm", w: 300, h: 400, margin: 26 },
+  "50x60": { label: "Rammi 50×60 cm", w: 500, h: 600, margin: 44 },
+  "40x60": { label: "Rammi 40×60 cm", w: 400, h: 600, margin: 34 },
+};
+
+/** Scale + sheet size for a frame. A4 renders unscaled, exactly as before. */
+export function frameGeometry(frame: PosterFrame | undefined) {
+  const f = POSTER_FRAMES[frame ?? "a4"] ?? POSTER_FRAMES.a4;
+  const scale = f.margin === 0 ? 1 : Math.min((f.w - 2 * f.margin) / 210, (f.h - 2 * f.margin) / 297);
+  return { ...f, scale, framed: (frame ?? "a4") !== "a4" };
+}
+
 export type PosterFields = {
   badge: string;
+  /** Print sheet — A4 by default, so existing saved posters are unaffected. */
+  frame?: PosterFrame;
   // "poster" = logos on a white strip + inset hero; "hero" = full-bleed dark hero.
   headerLayout: "hero" | "poster";
   cobrandLines: "1" | "2" | "3";
@@ -164,6 +187,7 @@ const DEFAULT_SERVICES: Service[] = [
 // ── Default field sets (team-reviewed HSN presentation language) ──────────
 export const DEFAULT_POSTER: PosterFields = {
   badge: "Í samstarfi við HSU",
+  frame: "a4",
   headerLayout: "poster",
   cobrandLines: "2",
   cobrandStroke: true,

@@ -36,7 +36,19 @@ export const COLLATERAL_CSS = `
    up by the space the scale frees — otherwise stacked pages sit 297mm apart on
    screen. Print drops both (PRINT_CSS sets margin:0 !important on .a4). */
 .llcol .a4 + .a4{margin-top:6mm;}
-.llcol .a4{margin-bottom:calc(-297mm * (1 - var(--fit,1)));}
+.llcol .a4{margin-bottom:calc(-1 * var(--sheet-h,297mm) * (1 - var(--fit,1)));}
+
+/* ── framed poster sheets (30×40, 50×60, 40×60 cm) ─────────────────────────
+   The sheet grows to the frame size and the A4 artwork is scaled into the
+   middle of it, so the design never needs re-tuning per size and the white
+   around it reads as a mat. .frame-art carries the column layout the artwork
+   expects (the footer pushes itself down with margin-top:auto). */
+.llcol .a4.framed{align-items:center; justify-content:center; padding:0;}
+.llcol .frame-art{
+  width:210mm; height:297mm; flex:0 0 auto;
+  display:flex; flex-direction:column;
+  transform-origin:center center;
+}
 
 /* ── shared atoms ──────────────────────────────────────────────────────── */
 .llcol .fjar-logo{display:block; height:11mm; width:auto;}

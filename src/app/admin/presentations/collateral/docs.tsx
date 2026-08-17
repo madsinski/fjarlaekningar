@@ -28,6 +28,7 @@ const BENEFIT_ICONS: Record<string, LucideIcon> = {
   list: ClipboardList, leaf: Leaf, calendar: CalendarClock,
 };
 export const BENEFIT_ICON_KEYS = Object.keys(BENEFIT_ICONS);
+import { frameGeometry } from "./content";
 import type {
   Doc,
   PosterFields,
@@ -128,9 +129,37 @@ function HsuCobrand({ label = "Í samstarfi við HSU", height = "11mm", onDark =
 }
 
 // ── 1. Reception poster ──────────────────────────────────────────────────
+//
+// On a framed sheet the A4 artwork is kept exactly as designed and scaled into
+// the middle of a larger page, so the layout never has to be re-tuned per size
+// and the surrounding white acts as a mat.
 function Poster({ p }: { p: PosterFields }) {
+  const g = frameGeometry(p.frame);
+  const sheet = (
+    <div
+      className={g.framed ? "a4 framed" : "a4"}
+      style={{
+        width: `${g.w}mm`,
+        height: `${g.h}mm`,
+        ["--sheet-h" as string]: `${g.h}mm`,
+      }}
+    >
+      {g.framed ? (
+        <div className="frame-art" style={{ transform: `scale(${g.scale})` }}>
+          <PosterArt p={p} />
+        </div>
+      ) : (
+        <PosterArt p={p} />
+      )}
+    </div>
+  );
+  return sheet;
+}
+
+// The artwork itself, always laid out at A4 size.
+function PosterArt({ p }: { p: PosterFields }) {
   return (
-    <div className="a4">
+    <>
       {p.headerLayout === "hero" ? (
         // Full-bleed dark hero with the logos inside it.
         <div className="hero" style={{ padding: "14mm 14mm 12mm" }}>
@@ -203,7 +232,7 @@ function Poster({ p }: { p: PosterFields }) {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

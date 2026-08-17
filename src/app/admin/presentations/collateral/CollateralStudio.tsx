@@ -17,7 +17,10 @@ import { COLLATERAL_CSS } from "./collateral-css";
 import { CollateralDoc, AFTER_ICON_KEYS, BENEFIT_ICON_KEYS } from "./docs";
 import {
   defaultDoc,
+  frameGeometry,
+  POSTER_FRAMES,
   SERVICE_ICONS,
+  type PosterFrame,
   type CollateralContent,
   type ArchivedDoc,
   type Benefit,
@@ -31,10 +34,11 @@ import {
   type MedGroup,
 } from "./content";
 
-const A4_W = 793.7;
-const A4_H = 1122.5;
+const PX_PER_MM = 96 / 25.4; // CSS px per mm, so a sheet in mm can be previewed
 
-const PRINT_CSS = `
+// The print sheet follows the active document: A4 for everything except a
+// poster on a framed size, which prints at the frame's own dimensions.
+const printCss = (w: number, h: number) => `
 .llcol-print{position:fixed;left:-99999px;top:0;}
 @media print{
   html,body{margin:0!important;padding:0!important;background:#fff!important;}
@@ -44,7 +48,7 @@ const PRINT_CSS = `
     break-after:page;page-break-after:always;}
   .llcol-print .a4:last-child{break-after:auto;page-break-after:auto;}
   .llcol-print .a4,.llcol-print .a4 *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
-  @page{size:A4;margin:0;}
+  @page{size:${w}mm ${h}mm;margin:0;}
 }
 `;
 
@@ -282,11 +286,17 @@ export function CollateralStudio({
   const index = Math.min(sel, docs.length - 1);
   const active = docs[index];
 
+  // The active sheet — A4 unless this is a poster on a framed size. Drives the
+  // preview scale and the @page size, so both follow the picker.
+  const sheet = frameGeometry(active?.type === "poster" ? active.poster.frame : "a4");
+  const sheetW = sheet.w * PX_PER_MM;
+  const sheetH = sheet.h * PX_PER_MM;
+
   const measure = useCallback(() => {
     const el = stageRef.current;
     if (!el) return;
-    setFit(Math.min(1, Math.max(0.2, (el.clientWidth - 32) / A4_W)));
-  }, []);
+    setFit(Math.min(1, Math.max(0.2, (el.clientWidth - 32) / sheetW)));
+  }, [sheetW]);
   useEffect(() => {
     measure();
     const ro = new ResizeObserver(measure);
@@ -381,7 +391,7 @@ export function CollateralStudio({
 
   return (
     <div className="llcol mx-auto max-w-7xl px-4 py-6">
-      <style dangerouslySetInnerHTML={{ __html: COLLATERAL_CSS + PRINT_CSS }} />
+      <style dangerouslySetInnerHTML={{ __html: COLLATERAL_CSS + printCss(sheet.w, sheet.h) }} />
 
       {/* header */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -462,6 +472,26 @@ export function CollateralStudio({
 
           {active.type === "poster" ? (
             <>
+              <Section title="Stærð">
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-gray-600">Prentstærð</span>
+                  <select
+                    value={active.poster.frame ?? "a4"}
+                    onChange={(e) => patchPoster({ frame: e.target.value as PosterFrame })}
+                    className={inputCls}
+                  >
+                    {(Object.keys(POSTER_FRAMES) as PosterFrame[]).map((k) => (
+                      <option key={k} value={k}>{POSTER_FRAMES[k].label}</option>
+                    ))}
+                  </select>
+                </label>
+                <p className="text-xs text-gray-500">
+                  {sheet.framed
+                    ? `Sama útlit, stækkað í ${sheet.w / 10}×${sheet.h / 10} cm með a.m.k. ${sheet.margin} mm hvítum spássíum — tilbúið í ramma.`
+                    : "A4 fyrir móttöku. Veldu rammastærð fyrir veggspjald í ramma."}
+                </p>
+              </Section>
+
               <Section title="Haus">
                 <label className="block">
                   <span className="mb-1 block text-xs font-medium text-gray-600">Framsetning haus</span>
@@ -655,7 +685,7 @@ export function CollateralStudio({
           <div ref={stageRef} className="flex justify-center rounded-xl bg-gray-100 p-4">
             {/* Height is intrinsic: a document may be several A4 sheets, which
                 stack via the negative-margin rule in COLLATERAL_CSS. */}
-            <div style={{ width: A4_W * fit, minHeight: A4_H * fit, overflowX: "hidden", ["--fit" as string]: String(fit) }}>
+            <div style={{ width: sheetW * fit, minHeight: sheetH * fit, overflowX: "hidden", ["--fit" as string]: String(fit) }}>
               <CollateralDoc doc={active} />
             </div>
           </div>
