@@ -3,7 +3,7 @@ import FaqSection, { type FaqItem, type MedCategory } from "./FaqSection";
 import PageHero from "../PageHero";
 import Band from "../Band";
 import Screenshot from "../Screenshot";
-import { localizeErindi } from "../../../erindi";
+import { erindiDescKey, localizeErindi } from "../../../erindi";
 import SiteIcon from "@/lib/site-content/SiteIcon";
 import { renderHighlighted } from "@/lib/site-content/highlight";
 import { THJONUSTA_SECTIONS } from "@/lib/site-content/thjonusta";
@@ -28,7 +28,12 @@ export default function ThjonustaView({
    *  resolved, but the erindi are code, so the view must pick the language. */
   locale?: "is" | "en";
 }) {
-  const erindi = localizeErindi(locale);
+  // Titles come from code; each card's subtext is CMS-editable and falls back
+  // to the code default when the field is blank.
+  const erindi = localizeErindi(locale).map((e) => ({
+    ...e,
+    description: c[erindiDescKey(e.slug)]?.trim() || e.description,
+  }));
   const tr = ui(locale);
   // One step per line as "Titill | Lýsing" (edited by the add/remove control in
   // the CMS); auto-numbered by position.

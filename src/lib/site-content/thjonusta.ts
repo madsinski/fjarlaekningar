@@ -2,6 +2,23 @@
 // Defaults are verbatim from the original hard-coded page.
 
 import { emptyDefaults, type LocaleContent, type SiteField, type SiteSection } from "./types";
+import { erindi, erindiDescKey } from "@/erindi";
+
+// One editable subtext per erindi card, generated from the canonical list so a
+// new erindi turns up in the CMS on its own. Titles are deliberately not
+// editable here — the home page and /admin/clinical render the same titles from
+// code, and a CMS override would only apply to this page.
+const ERINDI_CARD_FIELDS: SiteField[] = erindi.map((e) => ({
+  key: erindiDescKey(e.slug),
+  label: `${e.title} — undirtexti`,
+  group: "Algeng erindi",
+  type: "textarea",
+}));
+
+const erindiCardDefaults = (locale: "is" | "en"): LocaleContent =>
+  Object.fromEntries(
+    erindi.map((e) => [erindiDescKey(e.slug), locale === "en" ? e.descriptionEn : e.description]),
+  );
 // Reorderable bands, in their built-in order. The hero/page header is not
 // listed: it is structural and always renders first.
 export const THJONUSTA_SECTIONS: SiteSection[] = [
@@ -25,6 +42,7 @@ export const THJONUSTA_FIELDS: SiteField[] = [
   { key: "erindi_heading", label: "Fyrirsögn", group: "Algeng erindi", type: "heading" },
   { key: "erindi_body", label: "Texti", group: "Algeng erindi", type: "textarea" },
   { key: "erindi_footer", label: "Neðanmálstexti", group: "Algeng erindi", type: "text" },
+  ...ERINDI_CARD_FIELDS,
 
   // The process — the single canonical description of how the service works.
   // This used to be split in two: five numbered steps on the home page and six
@@ -239,6 +257,7 @@ export const THJONUSTA_FIELDS: SiteField[] = [
 ];
 
 export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
+  ...erindiCardDefaults("is"),
   hero_eyebrow: "Þjónusta Fjarlækninga",
   hero_heading: "Læknisþjónusta fyrir ==algeng erindi==",
   hero_body:
@@ -609,4 +628,10 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
     "Meðan á tilraunaverkefninu stendur er þjónustan aðeins í boði fyrir skjólstæðinga sem eru skráðir hjá HSU.",
 };
 
-export const THJONUSTA_DEFAULTS_EN: LocaleContent = emptyDefaults(THJONUSTA_FIELDS);
+// English defaults are empty everywhere except the erindi cards, whose English
+// copy already exists in code — without it the English page would render the
+// cards with no subtext until someone pressed "Þýða".
+export const THJONUSTA_DEFAULTS_EN: LocaleContent = {
+  ...emptyDefaults(THJONUSTA_FIELDS),
+  ...erindiCardDefaults("en"),
+};

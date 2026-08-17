@@ -2,11 +2,14 @@
 // Order, labels and icons mirror the canonical presentation collateral
 // (/admin/presentations/collateral) — icons live in /public/erindi-icons/.
 //
-// English lives HERE, not in the CMS: this list is static code, so the admin
-// "Þýða" button never sees it — which is exactly why the cards stayed
-// Icelandic on the English page. The EN strings are faithful translations of
-// the approved Icelandic scope copy, not new claims; they carry the same
-// referral caveats and should be reviewed with the rest of the English content.
+// The strings below are the DEFAULTS. On /thjonusta each card's subtext is
+// CMS-editable (group "Algeng erindi") and overrides `description` here; the
+// titles stay code, because the home page and /admin/clinical render the same
+// list and would drift apart otherwise.
+//
+// The EN strings are faithful translations of the approved Icelandic scope
+// copy, not new claims; they carry the same referral caveats and should be
+// reviewed with the rest of the English content.
 export type Erindi = {
   slug: string;
   title: string;
@@ -14,6 +17,12 @@ export type Erindi = {
   titleEn: string;
   descriptionEn: string;
 };
+
+/**
+ * CMS key holding an erindi card's subtext on /thjonusta. Derived from the
+ * slug, so adding an erindi gives it an editable field with no further wiring.
+ */
+export const erindiDescKey = (slug: string): string => `erindi_${slug.replace(/-/g, "_")}_desc`;
 
 /** The list with the requested locale's strings in `title`/`description`. */
 export function localizeErindi(locale: "is" | "en"): { slug: string; title: string; description: string }[] {
@@ -90,9 +99,9 @@ export const erindi: Erindi[] = [
     slug: "lyfjuendurnyjun",
     title: "Lyfjaendurnýjun",
     description:
-      "Endurnýjun á föstum lyfjum fyrir utan ávanabindandi lyf.",
+      "Skjót endurnýjun á föstum lyfjum sem þolir ekki bið.",
     titleEn: "Prescription renewal",
-    descriptionEn: "Renewal of regular medication, excluding addictive medicines.",
+    descriptionEn: "Fast renewal of regular medication that cannot wait.",
   },
   {
     slug: "laeknisvottord",
