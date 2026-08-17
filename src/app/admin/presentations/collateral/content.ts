@@ -23,20 +23,42 @@ export const PORTAL_URL = "https://app.medalia.is/fjarlaekningar-hsu";
 // sizes keep the A4 artwork exactly as designed and scale it into the sheet,
 // leaving a wide white mat — `margin` is the SMALLEST white edge in mm; the
 // axis that doesn't bind gets more, because the aspect ratios differ from A4.
-export type PosterFrame = "a4" | "30x40" | "50x60" | "40x60";
+export type PosterFrame = "a4" | "a4print" | "30x40" | "50x60" | "40x60";
 
 export const POSTER_FRAMES: Record<PosterFrame, { label: string; w: number; h: number; margin: number }> = {
-  a4: { label: "A4 — 210×297 mm", w: 210, h: 297, margin: 0 },
+  a4: { label: "A4 — stafrænt (heilflötur)", w: 210, h: 297, margin: 0 },
+  a4print: { label: "A4 — til prentunar (spássía)", w: 210, h: 297, margin: 12 },
   "30x40": { label: "Rammi 30×40 cm", w: 300, h: 400, margin: 26 },
   "50x60": { label: "Rammi 50×60 cm", w: 500, h: 600, margin: 44 },
   "40x60": { label: "Rammi 40×60 cm", w: 400, h: 600, margin: 34 },
 };
 
-/** Scale + sheet size for a frame. A4 renders unscaled, exactly as before. */
-export function frameGeometry(frame: PosterFrame | undefined) {
-  const f = POSTER_FRAMES[frame ?? "a4"] ?? POSTER_FRAMES.a4;
+// White the artwork itself carries at its top and bottom edge, in A4 mm. The
+// hero header bleeds to the top edge (no white); the veggspjald header opens
+// with an 11mm white strip. Both close with a 10mm footer padding.
+const ART_EDGE_WHITE = {
+  hero: { top: 0, bottom: 10 },
+  poster: { top: 11, bottom: 10 },
+};
+
+/**
+ * Sheet, scale and vertical nudge for a frame. Centring the artwork BOX is not
+ * the same as centring what you see: the artwork's own top and bottom white
+ * differ, so on a big sheet that gap is magnified (17mm at 50×60 with the hero
+ * header). `shiftY` moves the artwork so the INK sits optically centred.
+ */
+export function frameGeometry(frame: PosterFrame | undefined, headerLayout: "hero" | "poster" = "poster") {
+  const key = frame ?? "a4";
+  const f = POSTER_FRAMES[key] ?? POSTER_FRAMES.a4;
   const scale = f.margin === 0 ? 1 : Math.min((f.w - 2 * f.margin) / 210, (f.h - 2 * f.margin) / 297);
-  return { ...f, scale, framed: (frame ?? "a4") !== "a4" };
+  const edge = ART_EDGE_WHITE[headerLayout] ?? ART_EDGE_WHITE.poster;
+  const framed = key !== "a4";
+  return {
+    ...f,
+    scale,
+    framed,
+    shiftY: framed ? ((edge.bottom - edge.top) * scale) / 2 : 0,
+  };
 }
 
 export type PosterFields = {

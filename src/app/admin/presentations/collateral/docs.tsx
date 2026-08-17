@@ -134,7 +134,7 @@ function HsuCobrand({ label = "Í samstarfi við HSU", height = "11mm", onDark =
 // the middle of a larger page, so the layout never has to be re-tuned per size
 // and the surrounding white acts as a mat.
 function Poster({ p }: { p: PosterFields }) {
-  const g = frameGeometry(p.frame);
+  const g = frameGeometry(p.frame, p.headerLayout);
   const sheet = (
     <div
       className={g.framed ? "a4 framed" : "a4"}
@@ -145,7 +145,10 @@ function Poster({ p }: { p: PosterFields }) {
       }}
     >
       {g.framed ? (
-        <div className="frame-art" style={{ transform: `scale(${g.scale})` }}>
+        <div
+          className="frame-art"
+          style={{ transform: `scale(${g.scale})`, position: "relative", top: `${g.shiftY}mm` }}
+        >
           <PosterArt p={p} />
         </div>
       ) : (

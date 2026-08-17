@@ -292,16 +292,32 @@ export function CollateralStudio({
   const sheetW = sheet.w * PX_PER_MM;
   const sheetH = sheet.h * PX_PER_MM;
 
+  // A4 keeps its long-standing width-based fit. Sheets larger than A4 are also
+  // capped by the height left in the viewport — a 50×60 poster is 2.4× an A4 in
+  // both directions, so fitting the width alone still leaves it off-screen.
+  const oversize = sheet.w > 210 || sheet.h > 297;
   const measure = useCallback(() => {
     const el = stageRef.current;
     if (!el) return;
-    setFit(Math.min(1, Math.max(0.2, (el.clientWidth - 32) / sheetW)));
-  }, [sheetW]);
+    let f = Math.min(1, Math.max(0.2, (el.clientWidth - 32) / sheetW));
+    if (oversize) {
+      const top = el.getBoundingClientRect().top;
+      const budget = Math.max(320, window.innerHeight - Math.max(top, 0) - 32);
+      f = Math.max(0.08, Math.min(f, budget / sheetH));
+    }
+    setFit(f);
+  }, [sheetW, sheetH, oversize]);
   useEffect(() => {
     measure();
     const ro = new ResizeObserver(measure);
     if (stageRef.current) ro.observe(stageRef.current);
-    return () => ro.disconnect();
+    // The observer only sees the stage; a shorter window changes the height
+    // budget without changing its width.
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
   }, [measure]);
 
   async function save() {
@@ -680,12 +696,16 @@ export function CollateralStudio({
         {/* preview */}
         <div>
           <p className="mb-2 text-xs text-gray-400">
-            Í prentglugganum: veldu <b>A4</b>, spássíur <b>Engar</b> og kveiktu á <b>Bakgrunnsgrafík</b>.
+            Í prentglugganum: pappír <b>{sheet.w}×{sheet.h} mm</b>, spássíur <b>Engar</b> og kveiktu á{" "}
+            <b>Bakgrunnsgrafík</b>. Forskoðun er minnkuð um {Math.round(fit * 100)}%.
           </p>
           <div ref={stageRef} className="flex justify-center rounded-xl bg-gray-100 p-4">
             {/* Height is intrinsic: a document may be several A4 sheets, which
                 stack via the negative-margin rule in COLLATERAL_CSS. */}
-            <div style={{ width: sheetW * fit, minHeight: sheetH * fit, overflowX: "hidden", ["--fit" as string]: String(fit) }}>
+            {/* transform:scale leaves the layout box at full sheet size, so the
+                box is clipped on both axes — otherwise the un-shrunk sheet
+                pushes scrollbars onto the studio. */}
+            <div style={{ width: sheetW * fit, minHeight: sheetH * fit, overflow: "hidden", ["--fit" as string]: String(fit) }}>
               <CollateralDoc doc={active} />
             </div>
           </div>
