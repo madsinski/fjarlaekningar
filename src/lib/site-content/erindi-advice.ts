@@ -177,6 +177,8 @@ Hér eru almennar ráðleggingar og fyrirbyggjandi ráð um bakteríusýkingu í
 - Forðast sterka sápu og ilmefni á kynfærasvæði.
 - Gæta að jafnvægi ef nota þarf sýklalyf.
 - Nota vörur sem styðja við náttúrulega flóru ef þörf krefur.
+## Hvað getur raskað jafnvæginu?
+Ýmsir þættir geta haft áhrif á bakteríuflóru legganga og aukið líkur á sýkingu:
 ## Góð ráð
 - Nota vörur sem styðja við eðlilegt sýrustig
 - Gæta að hreinlæti án þess að nota sterka sápu

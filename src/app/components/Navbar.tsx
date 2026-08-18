@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Logo from "./Logo";
 import PortalButton from "./PortalButton";
-import { localeHref, stripLocale } from "@/lib/locale";
+import { isLocalizedPath, localeHref, stripLocale } from "@/lib/locale";
 import type { Locale } from "@/lib/site-content/types";
 
 /**
@@ -18,26 +18,56 @@ import type { Locale } from "@/lib/site-content/types";
  * go on. Pages that live at two URLs ignore it entirely.
  */
 function LangToggle({ locale }: { locale: Locale }) {
-  const pathname = usePathname();
-  const isPath = stripLocale(pathname || "/");
+  const pathname = usePathname() || "/";
+  const router = useRouter();
+  const isPath = stripLocale(pathname);
+  // Marketing pages exist at two URLs, so there the toggle NAVIGATES — that is
+  // what makes an English link shareable and indexable. Everything else
+  // (/breytingaskra, /skjol/…, /kannanir/…, the admin) has a single URL and
+  // takes its language from the cookie, so there the toggle has to flip the
+  // cookie and re-render. Linking on those pages pointed both halves at the
+  // same address and the toggle did nothing at all.
+  const twoUrls = isLocalizedPath(isPath);
+
   const remember = (l: Locale) => {
     // eslint-disable-next-line react-hooks/immutability
     document.cookie = `lang=${l}; path=/; max-age=${60 * 60 * 24 * 365}`;
   };
+
+  const cls = (l: Locale) =>
+    `px-2.5 py-1 font-medium transition-colors ${
+      locale === l ? "bg-[var(--primary)] text-white" : "text-slate-600 hover:bg-white/60"
+    }`;
+
   return (
     <div className="inline-flex shrink-0 rounded-full border border-brand-cyan-muted overflow-hidden text-xs">
-      {(["is", "en"] as const).map((l) => (
-        <Link
-          key={l}
-          href={localeHref(isPath, l)}
-          hrefLang={l}
-          onClick={() => remember(l)}
-          aria-current={locale === l ? "true" : undefined}
-          className={`px-2.5 py-1 font-medium transition-colors ${locale === l ? "bg-[var(--primary)] text-white" : "text-slate-600 hover:bg-white/60"}`}
-        >
-          {l.toUpperCase()}
-        </Link>
-      ))}
+      {(["is", "en"] as const).map((l) =>
+        twoUrls ? (
+          <Link
+            key={l}
+            href={localeHref(isPath, l)}
+            hrefLang={l}
+            onClick={() => remember(l)}
+            aria-current={locale === l ? "true" : undefined}
+            className={cls(l)}
+          >
+            {l.toUpperCase()}
+          </Link>
+        ) : (
+          <button
+            key={l}
+            type="button"
+            onClick={() => {
+              remember(l);
+              router.refresh();
+            }}
+            aria-pressed={locale === l}
+            className={cls(l)}
+          >
+            {l.toUpperCase()}
+          </button>
+        ),
+      )}
     </div>
   );
 }
