@@ -24,6 +24,9 @@ async function load(slug: string) {
     slug,
     title: localized.title,
     lead: c[`${k}_lead`]?.trim() || localized.description,
+    about: c[`${k}_about`] ?? "",
+    selftest: c[`${k}_selftest`] ?? "",
+    advice: c[`${k}_advice`] ?? "",
     suitable: erindiLines(c[`${k}_suitable`]),
     refer: erindiLines(c[`${k}_refer`]),
   };
@@ -78,6 +81,9 @@ export default async function ErindiPage({ params }: Params) {
         slug={slug}
         title={d.title}
         lead={d.lead}
+        about={d.about}
+        selftest={d.selftest}
+        advice={d.advice}
         suitable={d.suitable}
         refer={d.refer}
         others={others}

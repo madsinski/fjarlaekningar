@@ -10,12 +10,35 @@ export type ErindiViewProps = {
   slug: string;
   title: string;
   lead: string;
+  about: string;
+  selftest: string;
+  advice: string;
   suitable: string[];
   refer: string[];
   others: { slug: string; title: string }[];
   /** The CMS preview is not a routed page, so its links stay inert. */
   linked?: boolean;
 };
+
+/** Blank-line-separated prose → paragraphs. */
+export function erindiParagraphs(v?: string): string[] {
+  return (v ?? "").split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+}
+
+/** "## x" sub-heading, "- x" bullet, anything else a paragraph. */
+export function adviceBlocks(v?: string): { kind: "h" | "li" | "p"; text: string }[] {
+  return (v ?? "")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((l) =>
+      l.startsWith("## ")
+        ? { kind: "h" as const, text: l.slice(3).trim() }
+        : l.startsWith("- ")
+          ? { kind: "li" as const, text: l.slice(2).trim() }
+          : { kind: "p" as const, text: l },
+    );
+}
 
 export function erindiLines(v?: string): string[] {
   return (v ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
@@ -26,6 +49,9 @@ export default function ErindiView({
   slug,
   title,
   lead,
+  about,
+  selftest,
+  advice,
   suitable,
   refer,
   others,
@@ -55,6 +81,17 @@ export default function ErindiView({
       </div>
       <p className="mt-5 text-lg text-slate-600 leading-relaxed">{lead}</p>
 
+      {erindiParagraphs(about).length > 0 && (
+        <div className="mt-12">
+          <h2 className="text-xl font-bold text-slate-900">{c.about_heading}</h2>
+          <div className="mt-4 space-y-4">
+            {erindiParagraphs(about).map((para) => (
+              <p key={para.slice(0, 40)} className="text-slate-700 leading-relaxed">{para}</p>
+            ))}
+          </div>
+        </div>
+      )}
+
       {suitable.length > 0 && (
         <div className="mt-12">
           <h2 className="text-xl font-bold text-slate-900">{c.suitable_heading}</h2>
@@ -66,6 +103,38 @@ export default function ErindiView({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {erindiParagraphs(selftest).length > 0 && (
+        <div className="mt-12 rounded-2xl border border-slate-200 bg-slate-50 p-6 sm:p-8">
+          <h2 className="text-xl font-bold text-slate-900">{c.selftest_heading}</h2>
+          <div className="mt-3 space-y-3">
+            {erindiParagraphs(selftest).map((para) => (
+              <p key={para.slice(0, 40)} className="text-slate-700 leading-relaxed">{para}</p>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {adviceBlocks(advice).length > 0 && (
+        <div className="mt-12">
+          <h2 className="text-xl font-bold text-slate-900">{c.advice_heading}</h2>
+          <div className="mt-4 space-y-3">
+            {adviceBlocks(advice).map((b, i) =>
+              b.kind === "h" ? (
+                <h3 key={i} className="pt-3 text-base font-bold text-slate-900">{b.text}</h3>
+              ) : b.kind === "li" ? (
+                <div key={i} className="flex gap-3 text-slate-700 leading-relaxed">
+                  <span aria-hidden className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                  <span>{b.text}</span>
+                </div>
+              ) : (
+                <p key={i} className="text-slate-700 leading-relaxed">{b.text}</p>
+              ),
+            )}
+          </div>
+          {c.advice_note && <p className="mt-5 text-sm text-slate-500">{c.advice_note}</p>}
         </div>
       )}
 

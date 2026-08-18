@@ -51,6 +51,9 @@ function ErindiPreview({ c, locale }: { c: LocaleContent; locale: Locale }) {
         slug={slug}
         title={title}
         lead={c[`${k}_lead`]?.trim() || (locale === "en" ? item.descriptionEn : item.description)}
+        about={c[`${k}_about`] ?? ""}
+        selftest={c[`${k}_selftest`] ?? ""}
+        advice={c[`${k}_advice`] ?? ""}
         suitable={erindiLines(c[`${k}_suitable`])}
         refer={erindiLines(c[`${k}_refer`])}
         others={ERINDI_LIST.filter((e) => e.slug !== slug).slice(0, 6).map((e) => ({
