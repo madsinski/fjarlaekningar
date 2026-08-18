@@ -15,10 +15,52 @@ import type { Locale, LocaleContent, SiteContentBlob, SiteFieldOption } from "@/
 import { TEAM_MEMBER_SLOTS, TEAM_ROSTER_GROUP, teamSize } from "@/lib/site-content/um-okkur";
 import IconPicker from "../IconPicker";
 
+import ErindiView, { erindiLines } from "@/app/(site)/erindi/[slug]/ErindiView";
+import { erindi as ERINDI_LIST } from "@/erindi";
+import { erindiKey } from "@/lib/site-content/erindi-pages";
+
 type SaveState = "idle" | "saving" | "saved" | "error";
 
 // Preview renderer per page key. "chrome" previews the live header (the footer
 // is server-rendered — it reads published legal docs — so it isn't previewed here).
+// One CMS page drives ten public pages, so the preview needs to say which.
+function ErindiPreview({ c, locale }: { c: LocaleContent; locale: Locale }) {
+  const [slug, setSlug] = useState(ERINDI_LIST[0].slug);
+  const item = ERINDI_LIST.find((e) => e.slug === slug)!;
+  const title = locale === "en" ? item.titleEn : item.title;
+  const k = erindiKey(slug);
+  return (
+    <div>
+      <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2.5">
+        <label className="text-xs font-medium text-slate-600">Forskoða erindi</label>
+        <select
+          value={slug}
+          onChange={(e) => setSlug(e.target.value)}
+          className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-800"
+        >
+          {ERINDI_LIST.map((e) => (
+            <option key={e.slug} value={e.slug}>{locale === "en" ? e.titleEn : e.title}</option>
+          ))}
+        </select>
+        <span className="ml-auto text-[11px] text-slate-400">/erindi/{slug}</span>
+      </div>
+      <ErindiView
+        c={c}
+        slug={slug}
+        title={title}
+        lead={c[`${k}_lead`]?.trim() || (locale === "en" ? item.descriptionEn : item.description)}
+        suitable={erindiLines(c[`${k}_suitable`])}
+        refer={erindiLines(c[`${k}_refer`])}
+        others={ERINDI_LIST.filter((e) => e.slug !== slug).slice(0, 6).map((e) => ({
+          slug: e.slug,
+          title: locale === "en" ? e.titleEn : e.title,
+        }))}
+        linked={false}
+      />
+    </div>
+  );
+}
+
 function Preview({ pageKey, c, order, locale }: { pageKey: string; c: LocaleContent; order: string[]; locale: Locale }) {
   switch (pageKey) {
     case "home":
@@ -29,6 +71,8 @@ function Preview({ pageKey, c, order, locale }: { pageKey: string; c: LocaleCont
       return <UmOkkurView c={c} order={order} locale={locale} />;
     case "hafa-samband":
       return <HafaSambandView c={c} order={order} />;
+    case "erindi":
+      return <ErindiPreview c={c} locale={locale} />;
     case "chrome":
       return (
         <div>
