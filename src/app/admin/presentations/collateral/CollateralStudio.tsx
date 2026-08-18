@@ -34,6 +34,8 @@ import {
   type AfterItem,
   type MedCategory,
   type MedGroup,
+  FRIDGE_LAYOUTS,
+  type FridgeLayout,
 } from "./content";
 
 const PX_PER_MM = 96 / 25.4; // CSS px per mm, so a sheet in mm can be previewed
@@ -501,6 +503,21 @@ export function CollateralStudio({
                 <p className="text-xs text-gray-500">
                   A6 ({FRIDGE_CARD.w}×{FRIDGE_CARD.h} mm) — tvíhliða. Prentast 4 á A4-örk.
                 </p>
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-gray-700">Útlit</span>
+                  <select
+                    value={active.fridge.layout ?? "classic"}
+                    onChange={(e) => patchFridge({ layout: e.target.value as FridgeLayout })}
+                    className={inputCls}
+                  >
+                    {FRIDGE_LAYOUTS.map((l) => (
+                      <option key={l.value} value={l.value}>{l.label}</option>
+                    ))}
+                  </select>
+                  <span className="mt-1 block text-xs text-gray-500">
+                    {FRIDGE_LAYOUTS.find((l) => l.value === (active.fridge.layout ?? "classic"))?.hint}
+                  </span>
+                </label>
                 <Field label="Slagorð" value={active.fridge.slogan} onChange={(v) => patchFridge({ slogan: v })} area />
                 <Field label="Undirtexti" value={active.fridge.lead} onChange={(v) => patchFridge({ lead: v })} area />
                 <Field label="QR-texti" value={active.fridge.qrLabel} onChange={(v) => patchFridge({ qrLabel: v })} />

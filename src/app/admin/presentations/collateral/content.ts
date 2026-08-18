@@ -182,7 +182,27 @@ export type LifelineFields = {
   footerNote: string;
 };
 
+/**
+ * Front-of-card layouts. The card is a fridge magnet: it is read from two
+ * metres away by someone who is not looking for it, and its only job is to get
+ * a phone pointed at the QR. Each layout is a different bet on what earns that.
+ *   minimal — logo, one very large QR, the address. Nothing else.
+ *   scan    — the same, inverted onto the brand gradient, for maximum contrast.
+ *   list    — leads with the ten erindi and puts the scan face on the back.
+ *   classic — the original: slogan and lead paragraph above a smaller QR.
+ */
+export type FridgeLayout = "minimal" | "scan" | "list" | "classic";
+
+export const FRIDGE_LAYOUTS: { value: FridgeLayout; label: string; hint: string }[] = [
+  { value: "minimal", label: "Mínimal", hint: "Merki, stór QR-kóði og vefslóð. Ekkert annað." },
+  { value: "scan", label: "Skanna", hint: "Sama uppsetning á lit — mest áberandi á ísskápshurð." },
+  { value: "list", label: "Listi", hint: "Erindin framan á, skönnunarhliðin aftan á." },
+  { value: "classic", label: "Klassískt", hint: "Upprunalega kortið: slagorð og undirtexti yfir QR-kóða." },
+];
+
 export type FridgeFields = {
+  /** Missing on cards saved before layouts existed — those keep the original. */
+  layout?: FridgeLayout;
   badge: string;
   slogan: string;
   lead: string;
@@ -233,6 +253,7 @@ const DEFAULT_SERVICES: Service[] = [
 
 // ── Default field sets (team-reviewed HSN presentation language) ──────────
 export const DEFAULT_FRIDGE: FridgeFields = {
+  layout: "minimal",
   badge: "Í samstarfi við HSU",
   slogan: "Læknisþjónusta þar sem þér hentar",
   lead: "Sendu erindi í gegnum örugga sjúklingagátt. Læknir metur málið og leggur til meðferð.",

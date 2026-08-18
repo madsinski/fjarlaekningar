@@ -149,65 +149,211 @@ function FridgeCardSheet({ children }: { children: React.ReactNode }) {
   );
 }
 
-function FridgeCard({ f }: { f: FridgeFields }) {
+/**
+ * Front of the card, in one of four layouts — see FridgeLayout in content.ts.
+ *
+ * The constraint that shapes all of them: this is a magnet on a fridge door,
+ * read at two metres by someone who was not looking for it. Whatever is biggest
+ * has to be the thing that gets a phone pointed at it, and on every layout but
+ * "classic" that is the QR code itself.
+ */
+/**
+ * The scan face: logo, one very large QR, the address. Nothing else.
+ *
+ * This is the whole bet behind the "minimal" and "scan" layouts, and it is the
+ * back of the "list" layout too. The card is a magnet read from two metres by
+ * someone who was not looking for it, so the only thing that earns size is the
+ * code that gets a phone pointed at it.
+ */
+function QrFace({ f, onDark }: { f: FridgeFields; onDark: boolean }) {
   return (
-    <>
-      {/* Front */}
-      <FridgeCardSheet>
-        <div className="hero" style={{ padding: "9mm 8mm 8mm" }}>
+    <FridgeCardSheet>
+      <div
+        className={onDark ? "hero" : undefined}
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          padding: "11mm 8mm 8mm",
+          background: onDark ? undefined : "#fff",
+        }}
+      >
+        <FjarLogo onDark={onDark} />
+
+        <div
+          style={{
+            marginTop: "auto",
+            background: "#fff",
+            border: onDark ? "none" : "1px solid var(--line)",
+            borderRadius: "3mm",
+            padding: onDark ? "3mm" : "2.5mm",
+            boxShadow: onDark ? "0 6mm 14mm -8mm rgba(0,0,0,.5)" : "none",
+          }}
+        >
+          <QrSvg value={f.portalUrl} size="52mm" />
+        </div>
+
+        <div style={{ marginTop: "6mm", textAlign: "center" }}>
+          <div
+            className="eyebrow"
+            style={{ fontSize: "10px", letterSpacing: ".12em", color: onDark ? "var(--cyan)" : undefined }}
+          >
+            {f.qrLabel}
+          </div>
+          <div
+            style={{
+              fontSize: "22px",
+              fontWeight: 800,
+              color: onDark ? "#fff" : "var(--ink)",
+              lineHeight: 1.1,
+              marginTop: "3mm",
+            }}
+          >
+            {f.url}
+          </div>
+        </div>
+
+        <div style={{ marginTop: "auto", width: "100%", paddingTop: "6mm" }}>
+          <HsuCobrand label={f.badge} lines="3" height="9mm" onDark={onDark} stroke={!onDark} />
+        </div>
+      </div>
+    </FridgeCardSheet>
+  );
+}
+
+/** The ten erindi, as the whole face. Answers "can they help with MY problem?" */
+function ServicesFace({ f, hero }: { f: FridgeFields; hero: boolean }) {
+  return (
+    <FridgeCardSheet>
+      {hero ? (
+        <div className="hero" style={{ padding: "8mm 8mm 6mm" }}>
           <FjarLogo onDark />
-          <h1 style={{ fontSize: "18px", marginTop: "6mm", lineHeight: 1.15 }}>{renderHeading(f.slogan)}</h1>
-          <p style={{ marginTop: "3mm", fontSize: "11px", lineHeight: 1.45, color: "#cdeefb" }}>{f.lead}</p>
+          <h1 style={{ fontSize: "15px", marginTop: "4mm", lineHeight: 1.15 }}>
+            {renderHeading(f.servicesTitle)}
+          </h1>
         </div>
-
-        <div style={{ marginTop: "auto", padding: "7mm 8mm 0", display: "flex", alignItems: "center", gap: "5mm" }}>
-          <div style={{ border: "1px solid var(--line)", borderRadius: "2mm", padding: "1.5mm", background: "#fff", flexShrink: 0 }}>
-            <QrSvg value={f.portalUrl} size="27mm" />
-          </div>
-          <div style={{ minWidth: 0 }}>
-            <div className="eyebrow" style={{ fontSize: "10px", letterSpacing: ".1em", marginBottom: "2mm" }}>{f.qrLabel}</div>
-            <div className="grad-text" style={{ fontSize: "17px", fontWeight: 800, color: "var(--ink)", lineHeight: 1.1 }}>{f.url}</div>
-            <p style={{ fontSize: "10.5px", color: "var(--muted)", marginTop: "2mm", lineHeight: 1.35 }}>{f.footerNote}</p>
-          </div>
-        </div>
-
-        <div style={{ marginTop: "auto", padding: "0 8mm 8mm" }}>
-          <div style={{ borderTop: "1px solid var(--line)", paddingTop: "5mm" }}>
-            <HsuCobrand label={f.badge} lines="3" height="9mm" />
-          </div>
-        </div>
-      </FridgeCardSheet>
-
-      {/* Back */}
-      <FridgeCardSheet>
+      ) : (
         <div style={{ padding: "9mm 8mm 5mm" }}>
           <h2 style={{ fontSize: "13px", lineHeight: 1.2 }}>{f.servicesTitle}</h2>
         </div>
-        <div style={{ padding: "0 8mm", display: "flex", flexDirection: "column", gap: "3.8mm" }}>
-          {f.services.map((s, i) => (
-            <div key={`${s.icon}-${i}`} style={{ display: "flex", alignItems: "center", gap: "3mm" }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={ico(s.icon)} alt="" style={{ width: "7mm", height: "7mm", flexShrink: 0 }} />
-              <span style={{ fontSize: "11.5px", fontWeight: 700, color: "var(--ink)", lineHeight: 1.2 }}>{s.label}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{ marginTop: "auto", padding: "5mm 8mm 8mm" }}>
-          <div style={{ borderTop: "1px solid var(--line)", paddingTop: "4mm", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "4mm" }}>
-            <p style={{ fontSize: "10.5px", color: "var(--muted)", lineHeight: 1.35, margin: 0 }}>{f.backNote}</p>
-            <span className="grad-text" style={{ fontSize: "12px", fontWeight: 800, whiteSpace: "nowrap" }}>{f.url}</span>
+      )}
+      {/* On the front the list shares the card with a header, so it is set a
+          step smaller — ten rows at back-of-card size do not fit above one. */}
+      <div
+        style={{
+          padding: hero ? "5mm 8mm 0" : "0 8mm",
+          display: "flex",
+          flexDirection: "column",
+          gap: hero ? "2.4mm" : "3.8mm",
+        }}
+      >
+        {f.services.map((s, i) => (
+          <div key={`${s.icon}-${i}`} style={{ display: "flex", alignItems: "center", gap: hero ? "2.5mm" : "3mm" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={ico(s.icon)}
+              alt=""
+              style={{ width: hero ? "5.5mm" : "7mm", height: hero ? "5.5mm" : "7mm", flexShrink: 0 }}
+            />
+            <span
+              style={{
+                fontSize: hero ? "10px" : "11.5px",
+                fontWeight: 700,
+                color: "var(--ink)",
+                lineHeight: 1.2,
+              }}
+            >
+              {s.label}
+            </span>
           </div>
+        ))}
+      </div>
+      <div style={{ marginTop: "auto", padding: "5mm 8mm 8mm" }}>
+        <div
+          style={{
+            borderTop: "1px solid var(--line)",
+            paddingTop: "4mm",
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            gap: "4mm",
+          }}
+        >
+          <p style={{ fontSize: "10.5px", color: "var(--muted)", lineHeight: 1.35, margin: 0 }}>{f.backNote}</p>
+          <span className="grad-text" style={{ fontSize: "12px", fontWeight: 800, whiteSpace: "nowrap" }}>
+            {f.url}
+          </span>
         </div>
-      </FridgeCardSheet>
+      </div>
+    </FridgeCardSheet>
+  );
+}
+
+/** The original card: slogan and lead paragraph above a smaller QR. */
+function ClassicFace({ f }: { f: FridgeFields }) {
+  return (
+    <FridgeCardSheet>
+      <div className="hero" style={{ padding: "9mm 8mm 8mm" }}>
+        <FjarLogo onDark />
+        <h1 style={{ fontSize: "18px", marginTop: "6mm", lineHeight: 1.15 }}>{renderHeading(f.slogan)}</h1>
+        <p style={{ marginTop: "3mm", fontSize: "11px", lineHeight: 1.45, color: "#cdeefb" }}>{f.lead}</p>
+      </div>
+
+      <div style={{ marginTop: "auto", padding: "7mm 8mm 0", display: "flex", alignItems: "center", gap: "5mm" }}>
+        <div style={{ border: "1px solid var(--line)", borderRadius: "2mm", padding: "1.5mm", background: "#fff", flexShrink: 0 }}>
+          <QrSvg value={f.portalUrl} size="27mm" />
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <div className="eyebrow" style={{ fontSize: "10px", letterSpacing: ".1em", marginBottom: "2mm" }}>{f.qrLabel}</div>
+          <div className="grad-text" style={{ fontSize: "17px", fontWeight: 800, color: "var(--ink)", lineHeight: 1.1 }}>{f.url}</div>
+          <p style={{ fontSize: "10.5px", color: "var(--muted)", marginTop: "2mm", lineHeight: 1.35 }}>{f.footerNote}</p>
+        </div>
+      </div>
+
+      <div style={{ marginTop: "auto", padding: "0 8mm 8mm" }}>
+        <div style={{ borderTop: "1px solid var(--line)", paddingTop: "5mm" }}>
+          <HsuCobrand label={f.badge} lines="3" height="9mm" />
+        </div>
+      </div>
+    </FridgeCardSheet>
+  );
+}
+
+/**
+ * Front and back, per layout — see FridgeLayout in content.ts.
+ *
+ * "list" is the one that reorders rather than restyles: it spends its front on
+ * the erindi and its back on the scan face, so the card reads "here is what we
+ * treat" / "here is how you reach us" instead of saying the same thing twice.
+ */
+function FridgeCard({ f }: { f: FridgeFields }) {
+  const layout = f.layout ?? "classic";
+  if (layout === "minimal" || layout === "scan") {
+    const onDark = layout === "scan";
+    return (
+      <>
+        <QrFace f={f} onDark={onDark} />
+        <ServicesFace f={f} hero={false} />
+      </>
+    );
+  }
+  if (layout === "list") {
+    return (
+      <>
+        <ServicesFace f={f} hero />
+        <QrFace f={f} onDark={false} />
+      </>
+    );
+  }
+  return (
+    <>
+      <ClassicFace f={f} />
+      <ServicesFace f={f} hero={false} />
     </>
   );
 }
 
-// ── 1. Reception poster ──────────────────────────────────────────────────
-//
-// On a framed sheet the A4 artwork is kept exactly as designed and scaled into
-// the middle of a larger page, so the layout never has to be re-tuned per size
-// and the surrounding white acts as a mat.
 function Poster({ p }: { p: PosterFields }) {
   const g = frameGeometry(p.frame, p.headerLayout);
   const sheet = (
