@@ -4,6 +4,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
+import { pingIndexNow, urlsForPage } from "@/lib/indexnow";
 
 export const runtime = "nodejs";
 
@@ -25,5 +26,10 @@ export async function POST(req: Request, ctx: { params: Promise<{ page: string }
     .single();
 
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true, published_at: data.published_at });
+
+  // Tell IndexNow the page changed. Best-effort: a failure here must not make
+  // a successful publish look like it failed.
+  const indexnow = await pingIndexNow(urlsForPage(page));
+
+  return NextResponse.json({ ok: true, published_at: data.published_at, indexnow: indexnow.ok });
 }

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { getPage, getPageContent } from "@/lib/site-content/server";
 import { erindiPagesLive } from "@/lib/site-content/erindi-pages";
+import { faqJsonLd } from "@/lib/faq-jsonld";
+import { SITE_URL } from "@/lib/seo";
 import ThjonustaView from "./ThjonustaView";
 
 export const metadata: Metadata = {
@@ -19,5 +21,14 @@ export default async function ThjonustaPage() {
   const { c, order, locale } = await getPage("thjonusta");
   // Cards become links only once the erindi pages are published.
   const erindiLive = erindiPagesLive(await getPageContent("erindi"));
-  return <ThjonustaView c={c} order={order} locale={locale} erindiLive={erindiLive} />;
+  // FAQ structured data, from the same content the page renders below.
+  const faq = faqJsonLd(c, `${SITE_URL}/thjonusta`);
+  return (
+    <>
+      {faq && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }} />
+      )}
+      <ThjonustaView c={c} order={order} locale={locale} erindiLive={erindiLive} />
+    </>
+  );
 }
