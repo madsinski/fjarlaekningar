@@ -92,8 +92,8 @@ export const SITE_PAGES: SitePage[] = [
   },
   {
     key: "chrome",
-    label: "Haus & fótur",
-    desc: "Valmynd efst og fótur — gildir á öllum síðum.",
+    label: "Haus & fótur + SEO",
+    desc: "Valmynd efst, fótur og leitarvélastillingar (titill, lýsing, leitarorð, deilimynd, samfélagsmiðlar) — gildir á öllum síðum.",
     path: null,
     fields: CHROME_FIELDS,
     sections: [],

@@ -6,7 +6,7 @@
 // from /admin/legal), so it is deliberately NOT a CMS field here.
 
 import { emptyDefaults, type LocaleContent, type SiteField } from "./types";
-import { SITE_DESCRIPTION, SITE_KEYWORDS, OG_IMAGE_PATH, SITE_TITLE } from "@/lib/seo";
+import { SITE_DESCRIPTION, SITE_KEYWORDS, OG_IMAGE_PATH, SITE_TITLE, INSTAGRAM_URL, FACEBOOK_URL } from "@/lib/seo";
 
 export const CHROME_FIELDS: SiteField[] = [
   // What search engines and link previews show. The structured data that puts
@@ -32,6 +32,20 @@ export const CHROME_FIELDS: SiteField[] = [
     group: "Leitarvélar (SEO)",
     type: "textarea",
     help: "Orðin sem fólk slær inn. Google raðar ekki eftir þessum lista beint — notaðu sömu orð í lýsingunni og á síðunum sjálfum.",
+  },
+  {
+    key: "social_instagram",
+    label: "Instagram (slóð)",
+    group: "Leitarvélar (SEO)",
+    type: "text",
+    help: "Tengir reikninginn við fyrirtækið í leitarniðurstöðum (schema.org sameAs). Skildu eftir autt til að sleppa.",
+  },
+  {
+    key: "social_facebook",
+    label: "Facebook (slóð)",
+    group: "Leitarvélar (SEO)",
+    type: "text",
+    help: "Sama og að ofan — hjálpar Google að tengja síðuna við vörumerkið.",
   },
   {
     key: "seo_og_image",
@@ -85,6 +99,8 @@ export const CHROME_DEFAULTS_IS: LocaleContent = {
   seo_description: SITE_DESCRIPTION,
   seo_keywords: SITE_KEYWORDS.join(", "),
   seo_og_image: OG_IMAGE_PATH,
+  social_instagram: INSTAGRAM_URL,
+  social_facebook: FACEBOOK_URL,
   show_eyebrows: "on",
 
   nav_home: "Heim",

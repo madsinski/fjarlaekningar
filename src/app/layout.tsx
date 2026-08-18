@@ -37,6 +37,7 @@ async function seoFacts(): Promise<SeoFacts> {
     email: c.footer_email?.trim() || "",
     address: c.footer_address?.trim() || "",
     country: c.footer_country?.trim() || "Ísland",
+    sameAs: [c.social_instagram, c.social_facebook].map((u) => u?.trim()).filter((u): u is string => !!u),
   };
 }
 

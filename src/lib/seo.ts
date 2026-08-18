@@ -13,6 +13,11 @@ export const LOGO_URL = `${SITE_URL}/fjarlaekningar-logo.png`;
 export const EMAIL = "fjarlaekningar@fjarlaekningar.is";
 export const SITE_TITLE = "Fjarlækningar — læknisþjónusta þar sem þér hentar";
 
+/** Official profiles. Fed to schema.org `sameAs`, which is how a search engine
+ *  ties a social account to the organisation behind it. */
+export const INSTAGRAM_URL = "https://www.instagram.com/fjarlaekningar";
+export const FACEBOOK_URL = "https://www.facebook.com/fjarlaekningar";
+
 /**
  * The description Google is most likely to show. Leads with what the service
  * IS and who it is for, then the terms people actually search for — "læknir á
@@ -54,6 +59,8 @@ export type SeoFacts = {
   /** Footer address, "Langholtsvegi 111\n104 Reykjavík" — street on line 1. */
   address: string;
   country: string;
+  /** Official profile URLs, blank entries dropped. */
+  sameAs: string[];
 };
 
 /** Split the footer's two-line address into the parts schema.org expects. */
@@ -95,6 +102,7 @@ export function organizationJsonLd(services: { title: string }[], facts: SeoFact
         areaServed: { "@type": "Country", name: "Ísland" },
         medicalSpecialty: "PrimaryCare",
         availableLanguage: ["is", "en"],
+        ...(facts.sameAs.length ? { sameAs: facts.sameAs } : {}),
         availableService: services.map((s) => ({
           "@type": "MedicalProcedure",
           name: s.title,
