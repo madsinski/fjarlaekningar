@@ -35,7 +35,6 @@ import {
   type MedCategory,
   type MedGroup,
   FRIDGE_LAYOUTS,
-  type FridgeLayout,
 } from "./content";
 
 const PX_PER_MM = 96 / 25.4; // CSS px per mm, so a sheet in mm can be previewed
@@ -503,27 +502,53 @@ export function CollateralStudio({
                 <p className="text-xs text-gray-500">
                   A6 ({FRIDGE_CARD.w}×{FRIDGE_CARD.h} mm) — tvíhliða. Prentast 4 á A4-örk.
                 </p>
-                <label className="block">
-                  <span className="mb-1 block text-xs font-medium text-gray-700">Útlit</span>
-                  <select
-                    value={active.fridge.layout ?? "classic"}
-                    onChange={(e) => patchFridge({ layout: e.target.value as FridgeLayout })}
-                    className={inputCls}
-                  >
-                    {FRIDGE_LAYOUTS.map((l) => (
-                      <option key={l.value} value={l.value}>{l.label}</option>
-                    ))}
-                  </select>
-                  <span className="mt-1 block text-xs text-gray-500">
-                    {FRIDGE_LAYOUTS.find((l) => l.value === (active.fridge.layout ?? "classic"))?.hint}
-                  </span>
-                </label>
-                <Field label="Slagorð" value={active.fridge.slogan} onChange={(v) => patchFridge({ slogan: v })} area />
-                <Field label="Undirtexti" value={active.fridge.lead} onChange={(v) => patchFridge({ lead: v })} area />
+                {/* A visual pick rather than a dropdown: the four layouts are
+                    genuinely different cards, and the preview beside this pane
+                    updates as soon as one is chosen. */}
+                <div>
+                  <span className="mb-2 block text-xs font-medium text-gray-700">Útlit framhliðar</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {FRIDGE_LAYOUTS.map((l) => {
+                      const on = (active.fridge.layout ?? "classic") === l.value;
+                      return (
+                        <button
+                          key={l.value}
+                          type="button"
+                          aria-pressed={on}
+                          onClick={() => patchFridge({ layout: l.value })}
+                          className={`rounded-lg border p-2.5 text-left transition-colors ${
+                            on
+                              ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500"
+                              : "border-gray-300 bg-white hover:border-gray-400 hover:bg-gray-50"
+                          }`}
+                        >
+                          <span className={`block text-xs font-semibold ${on ? "text-emerald-900" : "text-gray-800"}`}>
+                            {l.label}
+                          </span>
+                          <span className={`mt-0.5 block text-[11px] leading-snug ${on ? "text-emerald-800" : "text-gray-500"}`}>
+                            {l.hint}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Slagorð and undirtexti are only rendered by Klassískt (front)
+                    and Listi (back). Showing them under Mínimal would invite an
+                    edit that visibly does nothing. */}
+                {["classic", "list"].includes(active.fridge.layout ?? "classic") && (
+                  <>
+                    <Field label="Slagorð" value={active.fridge.slogan} onChange={(v) => patchFridge({ slogan: v })} area />
+                    <Field label="Undirtexti" value={active.fridge.lead} onChange={(v) => patchFridge({ lead: v })} area />
+                  </>
+                )}
                 <Field label="QR-texti" value={active.fridge.qrLabel} onChange={(v) => patchFridge({ qrLabel: v })} />
                 <Field label="Tengill fyrir QR-kóða (sjúklingagátt)" value={active.fridge.portalUrl} onChange={(v) => patchFridge({ portalUrl: v })} />
                 <Field label="Vefslóð (birt)" value={active.fridge.url} onChange={(v) => patchFridge({ url: v })} />
-                <Field label="Smáletur undir vefslóð" value={active.fridge.footerNote} onChange={(v) => patchFridge({ footerNote: v })} />
+                {(active.fridge.layout ?? "classic") === "classic" && (
+                  <Field label="Smáletur undir vefslóð" value={active.fridge.footerNote} onChange={(v) => patchFridge({ footerNote: v })} />
+                )}
                 <Field label="Samstarfstexti (HSU)" value={active.fridge.badge} onChange={(v) => patchFridge({ badge: v })} />
               </Section>
 
