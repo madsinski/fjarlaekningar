@@ -157,7 +157,7 @@ function FridgeCard({ f }: { f: FridgeFields }) {
         <div className="hero" style={{ padding: "9mm 8mm 8mm" }}>
           <FjarLogo onDark />
           <h1 style={{ fontSize: "18px", marginTop: "6mm", lineHeight: 1.15 }}>{renderHeading(f.slogan)}</h1>
-          <p style={{ marginTop: "3mm", fontSize: "9.5px", lineHeight: 1.45, color: "#cdeefb" }}>{f.lead}</p>
+          <p style={{ marginTop: "3mm", fontSize: "11px", lineHeight: 1.45, color: "#cdeefb" }}>{f.lead}</p>
         </div>
 
         <div style={{ marginTop: "auto", padding: "7mm 8mm 0", display: "flex", alignItems: "center", gap: "5mm" }}>
@@ -165,9 +165,9 @@ function FridgeCard({ f }: { f: FridgeFields }) {
             <QrSvg value={f.portalUrl} size="27mm" />
           </div>
           <div style={{ minWidth: 0 }}>
-            <div className="eyebrow" style={{ fontSize: "8px", letterSpacing: ".12em", marginBottom: "2mm" }}>{f.qrLabel}</div>
+            <div className="eyebrow" style={{ fontSize: "10px", letterSpacing: ".1em", marginBottom: "2mm" }}>{f.qrLabel}</div>
             <div className="grad-text" style={{ fontSize: "17px", fontWeight: 800, color: "var(--ink)", lineHeight: 1.1 }}>{f.url}</div>
-            <p style={{ fontSize: "8.5px", color: "var(--muted)", marginTop: "2mm", lineHeight: 1.35 }}>{f.footerNote}</p>
+            <p style={{ fontSize: "10.5px", color: "var(--muted)", marginTop: "2mm", lineHeight: 1.35 }}>{f.footerNote}</p>
           </div>
         </div>
 
@@ -188,14 +188,14 @@ function FridgeCard({ f }: { f: FridgeFields }) {
             <div key={`${s.icon}-${i}`} style={{ display: "flex", alignItems: "center", gap: "3mm" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={ico(s.icon)} alt="" style={{ width: "7mm", height: "7mm", flexShrink: 0 }} />
-              <span style={{ fontSize: "9.5px", fontWeight: 700, color: "var(--ink)", lineHeight: 1.2 }}>{s.label}</span>
+              <span style={{ fontSize: "11.5px", fontWeight: 700, color: "var(--ink)", lineHeight: 1.2 }}>{s.label}</span>
             </div>
           ))}
         </div>
         <div style={{ marginTop: "auto", padding: "5mm 8mm 8mm" }}>
           <div style={{ borderTop: "1px solid var(--line)", paddingTop: "4mm", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "4mm" }}>
-            <p style={{ fontSize: "8.5px", color: "var(--muted)", lineHeight: 1.35, margin: 0 }}>{f.backNote}</p>
-            <span className="grad-text" style={{ fontSize: "11px", fontWeight: 800, whiteSpace: "nowrap" }}>{f.url}</span>
+            <p style={{ fontSize: "10.5px", color: "var(--muted)", lineHeight: 1.35, margin: 0 }}>{f.backNote}</p>
+            <span className="grad-text" style={{ fontSize: "12px", fontWeight: 800, whiteSpace: "nowrap" }}>{f.url}</span>
           </div>
         </div>
       </FridgeCardSheet>
