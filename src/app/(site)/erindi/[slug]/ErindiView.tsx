@@ -26,7 +26,7 @@ export function erindiParagraphs(v?: string): string[] {
 }
 
 /** "## x" sub-heading, "- x" bullet, anything else a paragraph. */
-export function adviceBlocks(v?: string): { kind: "h" | "li" | "p"; text: string }[] {
+export function adviceBlocks(v?: string): { kind: "h" | "li" | "p" | "warn"; text: string }[] {
   return (v ?? "")
     .split("\n")
     .map((l) => l.trim())
@@ -34,10 +34,21 @@ export function adviceBlocks(v?: string): { kind: "h" | "li" | "p"; text: string
     .map((l) =>
       l.startsWith("## ")
         ? { kind: "h" as const, text: l.slice(3).trim() }
+        : l.startsWith("!! ")
+          ? { kind: "warn" as const, text: l.slice(3).trim() }
         : l.startsWith("- ")
           ? { kind: "li" as const, text: l.slice(2).trim() }
           : { kind: "p" as const, text: l },
     );
+}
+
+/** "Heiti | /mynd.webp | Lýsing" per line. */
+export function selfTests(v?: string): { title: string; img?: string; body: string }[] {
+  return (v ?? "")
+    .split("\n")
+    .map((l) => l.split("|").map((x) => x.trim()))
+    .map(([title, img, body]) => ({ title, img: img || undefined, body: body ?? "" }))
+    .filter((t) => t.title);
 }
 
 export function erindiLines(v?: string): string[] {
@@ -93,7 +104,7 @@ export default function ErindiView({
       )}
 
       {suitable.length > 0 && (
-        <div className="mt-12">
+        <div className="mt-12 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
           <h2 className="text-xl font-bold text-slate-900">{c.suitable_heading}</h2>
           <ul className="mt-4 space-y-2.5">
             {suitable.map((line) => (
@@ -106,16 +117,50 @@ export default function ErindiView({
         </div>
       )}
 
-      {erindiParagraphs(selftest).length > 0 && (
-        <div className="mt-12 rounded-2xl border border-slate-200 bg-slate-50 p-6 sm:p-8">
+      {selfTests(selftest).length > 0 && (
+        <div className="mt-12">
           <h2 className="text-xl font-bold text-slate-900">{c.selftest_heading}</h2>
-          <div className="mt-3 space-y-3">
-            {erindiParagraphs(selftest).map((para) => (
-              <p key={para.slice(0, 40)} className="text-slate-700 leading-relaxed">{para}</p>
+          {c.selftest_body && <p className="mt-3 text-slate-600 leading-relaxed">{c.selftest_body}</p>}
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            {selfTests(selftest).map((t) => (
+              <div
+                key={t.title}
+                className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+              >
+                {t.img && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={t.img}
+                    alt={t.title}
+                    className="mb-4 h-32 w-full rounded-xl bg-slate-50 object-contain p-3"
+                  />
+                )}
+                <h3 className="text-base font-bold text-slate-900">{t.title}</h3>
+                {t.body && <p className="mt-2 text-sm text-slate-600 leading-relaxed">{t.body}</p>}
+              </div>
             ))}
           </div>
         </div>
       )}
+
+      <div className="mt-12 rounded-2xl border border-amber-200 bg-amber-50/60 p-6 sm:p-8">
+        <div className="flex items-center gap-2.5">
+          <span aria-hidden className="text-lg leading-none text-amber-600">⚠</span>
+          <h2 className="text-xl font-bold text-slate-900">{c.refer_heading}</h2>
+        </div>
+        {refer.length > 0 ? (
+          <ul className="mt-4 space-y-2.5">
+            {refer.map((line) => (
+              <li key={line} className="flex gap-3 text-slate-800">
+                <span aria-hidden className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-3 text-slate-700 leading-relaxed">{c.refer_body}</p>
+        )}
+      </div>
 
       {adviceBlocks(advice).length > 0 && (
         <div className="mt-12">
@@ -124,6 +169,14 @@ export default function ErindiView({
             {adviceBlocks(advice).map((b, i) =>
               b.kind === "h" ? (
                 <h3 key={i} className="pt-3 text-base font-bold text-slate-900">{b.text}</h3>
+              ) : b.kind === "warn" ? (
+                <div
+                  key={i}
+                  className="mt-4 flex gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900"
+                >
+                  <span aria-hidden className="text-lg leading-none">⚠</span>
+                  <p className="font-semibold leading-relaxed">{b.text}</p>
+                </div>
               ) : b.kind === "li" ? (
                 <div key={i} className="flex gap-3 text-slate-700 leading-relaxed">
                   <span aria-hidden className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
@@ -137,22 +190,6 @@ export default function ErindiView({
           {c.advice_note && <p className="mt-5 text-sm text-slate-500">{c.advice_note}</p>}
         </div>
       )}
-
-      <div className="mt-12">
-        <h2 className="text-xl font-bold text-slate-900">{c.refer_heading}</h2>
-        {refer.length > 0 ? (
-          <ul className="mt-4 space-y-2.5">
-            {refer.map((line) => (
-              <li key={line} className="flex gap-3 text-slate-700">
-                <span aria-hidden className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
-                <span>{line}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-4 text-slate-600 leading-relaxed">{c.refer_body}</p>
-        )}
-      </div>
 
       <div className="mt-14 rounded-3xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] p-8 sm:p-10 text-white">
         <h2 className="text-2xl font-bold">{c.cta_heading}</h2>

@@ -61,10 +61,12 @@ const DRAFT_ABOUT: Record<string, string> = {
 
 // The two erindi where a home test is part of the assessment.
 const DRAFT_SELFTEST: Record<string, string> = {
-  "kvef-hosti-halsbolga":
-    "CRP-heimapróf mælir bólgusvörun í blóði með einum dropa úr fingurgómi. Niðurstaðan hjálpar lækninum að meta hvort einkennin séu líklega af völdum veiru eða bakteríu — og þar með hvort sýklalyf eigi við. Þú sækir prófið, tekur það heima og skráir niðurstöðuna í sjúklingagáttina.",
+  "kvef-hosti-halsbolga": [
+    "CRP-próf | /gatt/prima-crp.webp | Mælir bólgusvörun í blóði með einum dropa úr fingurgómi. Niðurstaðan hjálpar lækninum að meta hvort einkennin séu líklega af völdum veiru eða bakteríu — og þar með hvort sýklalyf eigi við.",
+    "Strep-próf | /gatt/prima-strep.webp | Strok úr hálsi sem leitar að streptókokkum, algengustu bakteríunni á bak við hálsbólgu sem þarf sýklalyf. Svar fæst á nokkrum mínútum heima.",
+  ].join("\n"),
   "thvagfaera-leggangasykingar":
-    "Þvagstix er einfalt heimapróf þar sem strimli er dýft í þvagsýni. Reitirnir á strimlinum skipta um lit eftir því hvað finnst í þvaginu — hvít blóðkorn, blóð, nítrít eða prótein — og læknirinn notar niðurstöðuna við mat á erindinu. Þú sækir prófið, tekur það heima og skráir niðurstöðuna í sjúklingagáttina.",
+    "Þvagpróf (stix) | /gatt/prima-thvagstix.webp | Strimli er dýft í þvagsýni og reitirnir skipta um lit eftir því hvað finnst — hvít blóðkorn, blóð, nítrít eða prótein. Læknirinn notar niðurstöðuna við mat á erindinu.",
 };
 
 export const ERINDI_FIELDS: SiteField[] = [
@@ -85,6 +87,7 @@ export const ERINDI_FIELDS: SiteField[] = [
   { key: "about_heading", label: "Fyrirsögn — um vandamálið", group: "Sameiginlegt", type: "text" },
   { key: "suitable_heading", label: "Fyrirsögn — hvað er hægt að leysa", group: "Sameiginlegt", type: "text" },
   { key: "selftest_heading", label: "Fyrirsögn — sjálfspróf", group: "Sameiginlegt", type: "text" },
+  { key: "selftest_body", label: "Inngangur — sjálfspróf", group: "Sameiginlegt", type: "textarea" },
   { key: "advice_heading", label: "Fyrirsögn — almennar ráðleggingar", group: "Sameiginlegt", type: "text" },
   { key: "advice_note", label: "Fyrirvari undir ráðleggingum", group: "Sameiginlegt", type: "textarea" },
   { key: "process_heading", label: "Fyrirsögn — ferlið", group: "Sameiginlegt", type: "text" },
@@ -116,7 +119,7 @@ export const ERINDI_FIELDS: SiteField[] = [
       label: `${e.title} — sjálfspróf`,
       group: e.title,
       type: "textarea",
-      help: "Á aðeins við þar sem heimapróf er notað (CRP, þvagstix). Skildu eftir autt til að fela kaflann.",
+      help: "Eitt próf í hverja línu. Snið: Heiti | /gatt/mynd.webp | Lýsing. Skildu eftir autt til að fela kaflann.",
     },
     {
       key: `${erindiKey(e.slug)}_advice`,
@@ -148,6 +151,8 @@ export const ERINDI_DEFAULTS_IS: LocaleContent = {
   about_heading: "Um vandamálið",
   suitable_heading: "Hvað er hægt að leysa?",
   selftest_heading: "Sjálfspróf heima",
+  selftest_body:
+    "Þú sækir prófið á næsta afhendingarstað, tekur það heima og skráir niðurstöðuna í sjúklingagáttina. Læknir metur hana með svörunum þínum.",
   advice_heading: "Almennar ráðleggingar",
   advice_note:
     "Ráðleggingarnar hér að ofan eru almennar og koma ekki í stað læknisráðgjafar. Leitaðu til læknis ef einkenni versna eða ganga ekki yfir.",

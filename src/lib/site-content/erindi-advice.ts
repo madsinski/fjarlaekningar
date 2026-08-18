@@ -41,7 +41,7 @@ Margir þættir geta haft áhrif á stinningu, bæði líkamlegir og sálfélags
 Hiti er eðlilegt viðbragð líkamans við sýkingu og hjálpar ónæmiskerfinu að berjast við veiruna. Hiti í sjálfu sér er ekki hættulegur og það er ekki nauðsynlegt að lækka hann nema þér líði illa. Það er sjálfsagt að taka inn lyf ef einkenni eru óþægileg.
 - Paracetamol 500 mg — 1-2 töflur í einu, 4 sinnum á dag
 - Ibufen 400 mg — 1 tafla í einu, 3 sinnum á dag (ef Paracetamol nægir ekki)
-## Varúð: Ekki nota bólgueyðandi lyf (t.d. Ibufen) ef þú ert með:
+!! Varúð: Ekki nota bólgueyðandi lyf (t.d. Ibufen) ef þú ert með:
 - Hjartabilun
 - Nýrnabilun
 - Bakflæði, magabólgu eða magasár
@@ -225,7 +225,7 @@ Hér eru almennar ráðleggingar og fyrirbyggjandi ráð um þvagfærasýkingu.
 Ef óþægindi í þvagblöðru eru mikil getur þú notað Ibuprofen 400 mg þrisvar á dag samhliða sýklalyfjameðferð.
 ## Ráðlegging
 - Ráðfærðu þig við lækni ef þú ert óviss um lyfjanotkun.
-## Ekki nota Ibuprofen ef þú ert með:
+!! Ekki nota Ibuprofen ef þú ert með:
 - Hjartabilun eða nýrnabilun
 - Bakflæði, magabólgu eða magasár
 - Farið í magaermis- eða hjáveituaðgerð

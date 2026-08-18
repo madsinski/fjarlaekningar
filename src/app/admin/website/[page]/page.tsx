@@ -1087,7 +1087,16 @@ export default function SiteContentEditor() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {(["is", "en"] as Locale[]).map((loc) => {
                           const val = draft[loc]?.[f.key] ?? "";
-                          const placeholder = loc === "is" ? page.defaultsIs[f.key] : "(þýðing)";
+                          // The current text is only a placeholder, so the box
+                          // is empty and editing it would mean retyping the lot.
+                          // Clicking into an untouched field seeds it with that
+                          // text, which keeps "empty = use the default" intact
+                          // until someone actually starts editing.
+                          const seed = (loc === "is" ? page.defaultsIs[f.key] : page.defaultsEn[f.key]) ?? "";
+                          const placeholder = loc === "is" ? page.defaultsIs[f.key] : seed || "(þýðing)";
+                          const seedOnFocus = () => {
+                            if (isAdmin && !val && seed) setField(loc, f.key, seed);
+                          };
                           return (
                             <label key={loc} className="block">
                               <span className="text-[10px] uppercase tracking-wide text-slate-400">{loc}</span>
@@ -1095,6 +1104,7 @@ export default function SiteContentEditor() {
                                 <textarea
                                   value={val}
                                   onChange={(e) => setField(loc, f.key, e.target.value)}
+                                  onFocus={seedOnFocus}
                                   disabled={!isAdmin}
                                   rows={3}
                                   placeholder={placeholder}
@@ -1104,6 +1114,7 @@ export default function SiteContentEditor() {
                                 <input
                                   value={val}
                                   onChange={(e) => setField(loc, f.key, e.target.value)}
+                                  onFocus={seedOnFocus}
                                   disabled={!isAdmin}
                                   placeholder={placeholder}
                                   className="w-full px-2 py-1.5 border border-slate-200 rounded-md text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50"
