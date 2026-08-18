@@ -28,9 +28,10 @@ const BENEFIT_ICONS: Record<string, LucideIcon> = {
   list: ClipboardList, leaf: Leaf, calendar: CalendarClock,
 };
 export const BENEFIT_ICON_KEYS = Object.keys(BENEFIT_ICONS);
-import { frameGeometry } from "./content";
+import { frameGeometry, FRIDGE_CARD } from "./content";
 import type {
   Doc,
+  FridgeFields,
   PosterFields,
   ReferralFields,
   AdvertFields,
@@ -125,6 +126,80 @@ function HsuCobrand({ label = "Í samstarfi við HSU", height = "11mm", onDark =
         style={{ height, width: "auto", display: "block", ...(onDark && stroke ? { filter: HSU_OUTLINE } : {}) }}
       />
     </div>
+  );
+}
+
+// ── 0. Fridge card ───────────────────────────────────────────────────────
+//
+// A6 take-home card, printed both sides: the offer + QR on the front, the list
+// of erindi on the back. Sized so a phone camera can read the QR from the
+// distance you stand at a fridge door.
+function FridgeCardSheet({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="a4"
+      style={{
+        width: `${FRIDGE_CARD.w}mm`,
+        height: `${FRIDGE_CARD.h}mm`,
+        ["--sheet-h" as string]: `${FRIDGE_CARD.h}mm`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function FridgeCard({ f }: { f: FridgeFields }) {
+  return (
+    <>
+      {/* Front */}
+      <FridgeCardSheet>
+        <div className="hero" style={{ padding: "9mm 8mm 8mm" }}>
+          <FjarLogo onDark />
+          <h1 style={{ fontSize: "18px", marginTop: "6mm", lineHeight: 1.15 }}>{renderHeading(f.slogan)}</h1>
+          <p style={{ marginTop: "3mm", fontSize: "9.5px", lineHeight: 1.45, color: "#cdeefb" }}>{f.lead}</p>
+        </div>
+
+        <div style={{ marginTop: "auto", padding: "7mm 8mm 0", display: "flex", alignItems: "center", gap: "5mm" }}>
+          <div style={{ border: "1px solid var(--line)", borderRadius: "2mm", padding: "1.5mm", background: "#fff", flexShrink: 0 }}>
+            <QrSvg value={f.portalUrl} size="27mm" />
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div className="eyebrow" style={{ fontSize: "8px", letterSpacing: ".12em", marginBottom: "2mm" }}>{f.qrLabel}</div>
+            <div className="grad-text" style={{ fontSize: "17px", fontWeight: 800, color: "var(--ink)", lineHeight: 1.1 }}>{f.url}</div>
+            <p style={{ fontSize: "8.5px", color: "var(--muted)", marginTop: "2mm", lineHeight: 1.35 }}>{f.footerNote}</p>
+          </div>
+        </div>
+
+        <div style={{ marginTop: "auto", padding: "0 8mm 8mm" }}>
+          <div style={{ borderTop: "1px solid var(--line)", paddingTop: "5mm" }}>
+            <HsuCobrand label={f.badge} lines="3" height="9mm" />
+          </div>
+        </div>
+      </FridgeCardSheet>
+
+      {/* Back */}
+      <FridgeCardSheet>
+        <div style={{ padding: "9mm 8mm 5mm" }}>
+          <h2 style={{ fontSize: "13px", lineHeight: 1.2 }}>{f.servicesTitle}</h2>
+        </div>
+        <div style={{ padding: "0 8mm", display: "flex", flexDirection: "column", gap: "3.8mm" }}>
+          {f.services.map((s, i) => (
+            <div key={`${s.icon}-${i}`} style={{ display: "flex", alignItems: "center", gap: "3mm" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={ico(s.icon)} alt="" style={{ width: "7mm", height: "7mm", flexShrink: 0 }} />
+              <span style={{ fontSize: "9.5px", fontWeight: 700, color: "var(--ink)", lineHeight: 1.2 }}>{s.label}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: "auto", padding: "5mm 8mm 8mm" }}>
+          <div style={{ borderTop: "1px solid var(--line)", paddingTop: "4mm", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "4mm" }}>
+            <p style={{ fontSize: "8.5px", color: "var(--muted)", lineHeight: 1.35, margin: 0 }}>{f.backNote}</p>
+            <span className="grad-text" style={{ fontSize: "11px", fontWeight: 800, whiteSpace: "nowrap" }}>{f.url}</span>
+          </div>
+        </div>
+      </FridgeCardSheet>
+    </>
   );
 }
 
@@ -575,6 +650,7 @@ export function CollateralDoc({ doc }: { doc: Doc }) {
       </>
     );
   }
+  if (doc.type === "fridge") return <FridgeCard f={doc.fridge} />;
   if (doc.type === "advert") return <Advert a={doc.advert} />;
   if (doc.type === "lifelinecheck") return <LifelinePoster l={doc.lifeline} />;
   return <Poster p={doc.poster} />;

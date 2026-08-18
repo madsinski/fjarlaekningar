@@ -18,6 +18,7 @@ import { CollateralDoc, AFTER_ICON_KEYS, BENEFIT_ICON_KEYS } from "./docs";
 import {
   defaultDoc,
   frameGeometry,
+  FRIDGE_CARD,
   normalizeFrame,
   POSTER_FRAMES,
   SERVICE_ICONS,
@@ -55,6 +56,7 @@ const printCss = (w: number, h: number) => `
 
 const NEW_TYPES: { type: DocType; label: string }[] = [
   { type: "poster", label: "Veggspjald" },
+  { type: "fridge", label: "Ísskápskort" },
   { type: "referral", label: "Tilvísunarleiðbeiningar" },
   { type: "advert", label: "Blaðaauglýsing" },
   { type: "lifelinecheck", label: "Lifeline heilsufarsmat" },
@@ -289,7 +291,11 @@ export function CollateralStudio({
 
   // The active sheet — A4 unless this is a poster on a framed size. Drives the
   // preview scale and the @page size, so both follow the picker.
-  const sheet = frameGeometry(active?.type === "poster" ? active.poster.frame : "a4");
+  const posterGeom = frameGeometry(
+    active?.type === "poster" ? active.poster.frame : "a4",
+    active?.type === "poster" ? active.poster.headerLayout : "poster",
+  );
+  const sheet = active?.type === "fridge" ? FRIDGE_CARD : { w: posterGeom.w, h: posterGeom.h };
   const sheetW = sheet.w * PX_PER_MM;
   const sheetH = sheet.h * PX_PER_MM;
 
@@ -378,6 +384,8 @@ export function CollateralStudio({
 
   // ── field setters for the active doc ────────────────────────────────────
   const patchMeta = (p: { name?: string; sub?: string }) => updateDoc(index, (d) => ({ ...d, ...p }));
+  const patchFridge = (p: Partial<Extract<Doc, { type: "fridge" }>["fridge"]>) =>
+    updateDoc(index, (d) => (d.type === "fridge" ? { ...d, fridge: { ...d.fridge, ...p } } : d));
   const patchPoster = (p: Partial<Extract<Doc, { type: "poster" }>["poster"]>) =>
     updateDoc(index, (d) => (d.type === "poster" ? { ...d, poster: { ...d.poster, ...p } } : d));
   const patchReferral = (p: Partial<Extract<Doc, { type: "referral" }>["referral"]>) =>
@@ -487,7 +495,28 @@ export function CollateralStudio({
             <Field label="Undirtexti" value={active.sub} onChange={(v) => patchMeta({ sub: v })} />
           </Section>
 
-          {active.type === "poster" ? (
+          {active.type === "fridge" ? (
+            <>
+              <Section title="Framhlið">
+                <p className="text-xs text-gray-500">
+                  A6 ({FRIDGE_CARD.w}×{FRIDGE_CARD.h} mm) — tvíhliða. Prentast 4 á A4-örk.
+                </p>
+                <Field label="Slagorð" value={active.fridge.slogan} onChange={(v) => patchFridge({ slogan: v })} area />
+                <Field label="Undirtexti" value={active.fridge.lead} onChange={(v) => patchFridge({ lead: v })} area />
+                <Field label="QR-texti" value={active.fridge.qrLabel} onChange={(v) => patchFridge({ qrLabel: v })} />
+                <Field label="Tengill fyrir QR-kóða (sjúklingagátt)" value={active.fridge.portalUrl} onChange={(v) => patchFridge({ portalUrl: v })} />
+                <Field label="Vefslóð (birt)" value={active.fridge.url} onChange={(v) => patchFridge({ url: v })} />
+                <Field label="Smáletur undir vefslóð" value={active.fridge.footerNote} onChange={(v) => patchFridge({ footerNote: v })} />
+                <Field label="Samstarfstexti (HSU)" value={active.fridge.badge} onChange={(v) => patchFridge({ badge: v })} />
+              </Section>
+
+              <Section title="Bakhlið — erindi">
+                <Field label="Fyrirsögn" value={active.fridge.servicesTitle} onChange={(v) => patchFridge({ servicesTitle: v })} />
+                <ServicesEditor services={active.fridge.services} onChange={(services) => patchFridge({ services })} />
+                <Field label="Fyrirvari neðst" value={active.fridge.backNote} onChange={(v) => patchFridge({ backNote: v })} area />
+              </Section>
+            </>
+          ) : active.type === "poster" ? (
             <>
               <Section title="Stærð">
                 <label className="block">
@@ -503,8 +532,8 @@ export function CollateralStudio({
                   </select>
                 </label>
                 <p className="text-xs text-gray-500">
-                  {sheet.framed
-                    ? `Sama útlit, stækkað í ${sheet.w / 10}×${sheet.h / 10} cm með a.m.k. ${sheet.margin} mm hvítum spássíum — tilbúið í ramma.`
+                  {posterGeom.framed
+                    ? `Sama útlit, stækkað í ${posterGeom.w / 10}×${posterGeom.h / 10} cm með a.m.k. ${posterGeom.margin} mm hvítum spássíum — tilbúið í ramma.`
                     : "A4 fyrir móttöku. Veldu rammastærð fyrir veggspjald í ramma."}
                 </p>
               </Section>

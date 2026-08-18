@@ -12,7 +12,13 @@ export type Service = { icon: string; label: string };
 export type Safety = { bold: string; text: string };
 export type AfterItem = { k: string; bold: string; text: string; icon?: string };
 
-export type DocType = "poster" | "referral" | "advert" | "lifelinecheck";
+export type DocType = "poster" | "referral" | "advert" | "lifelinecheck" | "fridge";
+
+// Take-home card for the fridge door, printed both sides. A6 rather than a
+// business card: ten erindi, two logos and a QR big enough to scan from a
+// phone do not fit on 85×55mm, and nobody carries these in a wallet anyway.
+// A6 is a standard postcard — 4-up on an A4 sheet, and magnet-sized.
+export const FRIDGE_CARD = { w: 105, h: 148 };
 
 // Vendor-provisioned portal address. Kept verbatim: it is where patients
 // actually land, so it is a real URL rather than a brand reference.
@@ -176,7 +182,21 @@ export type LifelineFields = {
   footerNote: string;
 };
 
+export type FridgeFields = {
+  badge: string;
+  slogan: string;
+  lead: string;
+  qrLabel: string;
+  url: string;
+  portalUrl: string;
+  servicesTitle: string;
+  services: Service[];
+  footerNote: string;
+  backNote: string;
+};
+
 export type Doc =
+  | { id: string; type: "fridge"; name: string; sub: string; fridge: FridgeFields }
   | { id: string; type: "poster"; name: string; sub: string; poster: PosterFields }
   | { id: string; type: "referral"; name: string; sub: string; referral: ReferralFields }
   | { id: string; type: "advert"; name: string; sub: string; advert: AdvertFields }
@@ -212,6 +232,19 @@ const DEFAULT_SERVICES: Service[] = [
 ];
 
 // ── Default field sets (team-reviewed HSN presentation language) ──────────
+export const DEFAULT_FRIDGE: FridgeFields = {
+  badge: "Í samstarfi við HSU",
+  slogan: "Læknisþjónusta þar sem þér hentar",
+  lead: "Sendu erindi í gegnum örugga sjúklingagátt. Læknir metur málið og leggur til meðferð.",
+  qrLabel: "Skannaðu til að hefja erindi",
+  url: "fjarlaekningar.is",
+  portalUrl: PORTAL_URL,
+  servicesTitle: "Við getum aðstoðað með:",
+  services: DEFAULT_SERVICES,
+  footerNote: "Geymdu kortið á ísskápnum.",
+  backNote: "Alvarlegum einkennum er vísað í annan farveg.",
+};
+
 export const DEFAULT_POSTER: PosterFields = {
   badge: "Í samstarfi við HSU",
   frame: "a4",
@@ -471,12 +504,14 @@ export const DEFAULT_CONTENT: CollateralContent = {
     { id: "poster", type: "poster", name: "Veggspjald", sub: "Fyrir móttöku HSU — fyrir sjúklinga", poster: DEFAULT_POSTER },
     { id: "referral", type: "referral", name: "Tilvísunarleiðbeiningar", sub: "A4 — fyrir heilbrigðisstarfsfólk", referral: DEFAULT_REFERRAL },
     { id: "advert", type: "advert", name: "Blaðaauglýsing", sub: "A4 — dagblaðsauglýsing", advert: DEFAULT_ADVERT },
+    { id: "fridge", type: "fridge", name: "Ísskápskort", sub: "A6 — tvíhliða, fyrir sjúklinga", fridge: DEFAULT_FRIDGE },
   ],
 };
 
 // Return the default field set for a document layout type (used when adding a
 // new document in the studio).
 export function defaultDoc(type: DocType, id: string): Doc {
+  if (type === "fridge") return { id, type, name: "Ísskápskort", sub: "A6 — tvíhliða", fridge: DEFAULT_FRIDGE };
   if (type === "poster") return { id, type, name: "Veggspjald", sub: "A4", poster: DEFAULT_POSTER };
   if (type === "referral") return { id, type, name: "Tilvísunarleiðbeiningar", sub: "A4", referral: DEFAULT_REFERRAL };
   if (type === "lifelinecheck") return { id, type, name: "Lifeline × Lyfja", sub: "A4 — heilsufarsmat", lifeline: DEFAULT_LIFELINE };
@@ -526,6 +561,7 @@ function coerceDoc(raw: unknown, i: number): Doc | null {
   const id = typeof d.id === "string" && d.id ? d.id : `doc-${i}`;
   const name = typeof d.name === "string" ? d.name : "";
   const sub = typeof d.sub === "string" ? d.sub : "";
+  if (type === "fridge") return { id, type, name: name || "Ísskápskort", sub, fridge: { ...DEFAULT_FRIDGE, ...(d.fridge as object ?? {}) } };
   if (type === "poster") return { id, type, name: name || "Veggspjald", sub, poster: { ...DEFAULT_POSTER, ...(d.poster as object ?? {}) } };
   if (type === "referral") return { id, type, name: name || "Tilvísunarleiðbeiningar", sub, referral: { ...DEFAULT_REFERRAL, ...(d.referral as object ?? {}) } };
   if (type === "advert") return { id, type, name: name || "Blaðaauglýsing", sub, advert: { ...DEFAULT_ADVERT, ...(d.advert as object ?? {}) } };
