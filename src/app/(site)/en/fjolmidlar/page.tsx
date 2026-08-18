@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import ThjonustaPage, { thjonustaMetadata } from "./thjonusta-page";
+import FjolmidlarPage, { fjolmidlarMetadata } from "../../fjolmidlar/fjolmidlar-page";
 
 export const dynamic = "force-dynamic";
 
 export function generateMetadata(): Promise<Metadata> {
-  return thjonustaMetadata("is");
+  return fjolmidlarMetadata("en");
 }
 
 export default function Page() {
-  return <ThjonustaPage locale="is" />;
+  return <FjolmidlarPage locale="en" />;
 }

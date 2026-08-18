@@ -1,6 +1,22 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { isGateEnabled } from "@/lib/site-gate";
+import { PATHNAME_HEADER } from "@/lib/locale";
+
+/**
+ * Forward the request path to the app as a header.
+ *
+ * A layout gets no route params, so `src/app/layout.tsx` (which sets <html lang>)
+ * and the site chrome would have no way to know whether they are rendering
+ * /thjonusta or /en/thjonusta. Stamping the path here is what lets getLocale()
+ * read the language off the URL instead of off the cookie. Every branch below
+ * goes through this, so the header is never missing on a page request.
+ */
+function withPathname(request: NextRequest) {
+  const headers = new Headers(request.headers);
+  headers.set(PATHNAME_HEADER, request.nextUrl.pathname);
+  return { request: { headers } };
+}
 
 /**
  * Coming-soon gate.
@@ -16,7 +32,7 @@ export async function proxy(request: NextRequest) {
   // Gate state lives in the DB (toggleable from /admin/website) and falls back
   // to the COMING_SOON env var. Cached ~30s — see src/lib/site-gate.ts.
   if (!(await isGateEnabled())) {
-    return NextResponse.next();
+    return NextResponse.next(withPathname(request));
   }
 
   // Preview bypass: a shareable `?preview=<key>` link ungates the ENTIRE site
@@ -30,7 +46,7 @@ export async function proxy(request: NextRequest) {
   const previewParam = request.nextUrl.searchParams.get("preview");
   const previewCookie = request.cookies.get("site_preview")?.value;
   if (previewParam === PREVIEW_KEY || previewCookie === PREVIEW_KEY) {
-    const res = NextResponse.next();
+    const res = NextResponse.next(withPathname(request));
     if (previewParam === PREVIEW_KEY) {
       res.cookies.set("site_preview", PREVIEW_KEY, { path: "/", maxAge: 60 * 60 * 24 * 30 });
     }
@@ -39,7 +55,7 @@ export async function proxy(request: NextRequest) {
 
   // Let the coming-soon screen itself render.
   if (request.nextUrl.pathname === "/coming-soon") {
-    return NextResponse.next();
+    return NextResponse.next(withPathname(request));
   }
 
   // The staff admin has its own auth + MFA gate and must stay reachable even
@@ -50,12 +66,12 @@ export async function proxy(request: NextRequest) {
   // marketing email has to work unconditionally.
   const alwaysPublic = ["/admin", "/skjol", "/kynning", "/breytingaskra", "/fyrirspurn", "/personuverndarbeidni", "/kannanir", "/present", "/afskra", "/vaktir", "/samstarf"];
   if (alwaysPublic.some((p) => request.nextUrl.pathname.startsWith(p))) {
-    return NextResponse.next();
+    return NextResponse.next(withPathname(request));
   }
 
   const url = request.nextUrl.clone();
   url.pathname = "/coming-soon";
-  return NextResponse.rewrite(url);
+  return NextResponse.rewrite(url, withPathname(request));
 }
 
 export const config = {

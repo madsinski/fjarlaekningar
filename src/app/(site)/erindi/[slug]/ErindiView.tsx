@@ -3,7 +3,9 @@
 // while the text is being edited.
 
 import Link from "next/link";
-import type { LocaleContent } from "@/lib/site-content/types";
+import { localeHref } from "@/lib/locale";
+import { ui } from "@/lib/site-content/ui-strings";
+import type { Locale, LocaleContent } from "@/lib/site-content/types";
 
 export type ErindiViewProps = {
   c: LocaleContent;
@@ -16,6 +18,8 @@ export type ErindiViewProps = {
   suitable: string[];
   refer: string[];
   others: { slug: string; title: string }[];
+  /** Keeps cross-links inside the visitor's language (/en/erindi/… on /en). */
+  locale?: Locale;
   /** The CMS preview is not a routed page, so its links stay inert. */
   linked?: boolean;
 };
@@ -66,15 +70,17 @@ export default function ErindiView({
   suitable,
   refer,
   others,
+  locale = "is",
   linked = true,
 }: ErindiViewProps) {
+  const t = ui(locale);
   return (
     <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
-      <nav aria-label="Brauðmylsna" className="text-sm text-slate-500 mb-6">
+      <nav aria-label={t.breadcrumb} className="text-sm text-slate-500 mb-6">
         {linked ? (
-          <Link href="/thjonusta" className="hover:text-slate-700">Þjónusta</Link>
+          <Link href={localeHref("/thjonusta", locale)} className="hover:text-slate-700">{t.services}</Link>
         ) : (
-          <span>Þjónusta</span>
+          <span>{t.services}</span>
         )}
         <span className="mx-2 text-slate-300">/</span>
         <span className="text-slate-700">{title}</span>
@@ -196,7 +202,7 @@ export default function ErindiView({
         {c.cta_body && <p className="mt-3 text-brand-cyan-subtle max-w-xl">{c.cta_body}</p>}
         {linked ? (
           <Link
-            href="/hafa-samband"
+            href={localeHref("/hafa-samband", locale)}
             className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[var(--primary-dark)] hover:bg-slate-50"
           >
             {c.cta_label}
@@ -216,7 +222,7 @@ export default function ErindiView({
               linked ? (
                 <Link
                   key={o.slug}
-                  href={`/erindi/${o.slug}`}
+                  href={localeHref(`/erindi/${o.slug}`, locale)}
                   className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:border-brand-cyan hover:text-brand-cyan-dark"
                 >
                   {o.title}

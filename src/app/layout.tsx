@@ -3,13 +3,17 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { erindi } from "@/erindi";
 import { getPageContent, getLocale } from "@/lib/site-content/server";
+import type { Locale } from "@/lib/site-content/types";
 import {
   organizationJsonLd,
   OG_IMAGE_PATH,
   SITE_DESCRIPTION,
+  SITE_DESCRIPTION_EN,
   SITE_KEYWORDS,
+  SITE_KEYWORDS_EN,
   SITE_NAME,
   SITE_TITLE,
+  SITE_TITLE_EN,
   SITE_URL,
   type SeoFacts,
 } from "@/lib/seo";
@@ -26,12 +30,12 @@ const inter = Inter({
  * constants are the defaults, so the site is fully described even before
  * anyone opens the editor.
  */
-async function seoFacts(): Promise<SeoFacts> {
-  const c = await getPageContent("chrome").catch(() => ({}) as Record<string, string>);
+async function seoFacts(locale: Locale): Promise<SeoFacts> {
+  const c = await getPageContent("chrome", locale).catch(() => ({}) as Record<string, string>);
   const img = c.seo_og_image?.trim() || OG_IMAGE_PATH;
   return {
-    title: c.seo_title?.trim() || SITE_TITLE,
-    description: c.seo_description?.trim() || SITE_DESCRIPTION,
+    title: c.seo_title?.trim() || (locale === "en" ? SITE_TITLE_EN : SITE_TITLE),
+    description: c.seo_description?.trim() || (locale === "en" ? SITE_DESCRIPTION_EN : SITE_DESCRIPTION),
     ogImage: img.startsWith("http") ? img : `${SITE_URL}${img}`,
     company: c.footer_company?.trim() || SITE_NAME,
     email: c.footer_email?.trim() || "",
@@ -42,19 +46,20 @@ async function seoFacts(): Promise<SeoFacts> {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const f = await seoFacts();
   const locale = await getLocale();
-  const c = await getPageContent("chrome").catch(() => ({}) as Record<string, string>);
+  const f = await seoFacts(locale);
+  const c = await getPageContent("chrome", locale).catch(() => ({}) as Record<string, string>);
   const keywords = (c.seo_keywords ?? "")
     .split(",")
     .map((k) => k.trim())
     .filter(Boolean);
+  const fallbackKeywords = locale === "en" ? SITE_KEYWORDS_EN : SITE_KEYWORDS;
 
   return {
     metadataBase: new URL(SITE_URL),
     title: { default: f.title, template: "%s — Fjarlækningar" },
     description: f.description,
-    keywords: keywords.length ? keywords : SITE_KEYWORDS,
+    keywords: keywords.length ? keywords : fallbackKeywords,
     applicationName: f.company,
     authors: [{ name: f.company, url: SITE_URL }],
     creator: f.company,
@@ -63,7 +68,8 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       siteName: f.company,
       locale: locale === "en" ? "en_GB" : "is_IS",
-      url: SITE_URL,
+      // Per-page canonicals override this; it is only the site-level default.
+      url: locale === "en" ? `${SITE_URL}/en` : SITE_URL,
       title: f.title,
       description: f.description,
       images: [{ url: f.ogImage, width: 1200, height: 630, alt: f.title }],
@@ -87,7 +93,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [facts, locale] = await Promise.all([seoFacts(), getLocale()]);
+  const locale = await getLocale();
+  const facts = await seoFacts(locale);
   return (
     <html lang={locale} className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
@@ -97,7 +104,9 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(organizationJsonLd(erindi.map((e) => ({ title: e.title })), facts)),
+            __html: JSON.stringify(
+              organizationJsonLd(erindi.map((e) => ({ title: e.title })), facts, locale),
+            ),
           }}
         />
         {children}

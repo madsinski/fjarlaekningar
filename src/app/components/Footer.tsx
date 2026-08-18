@@ -2,6 +2,8 @@ import Link from "next/link";
 import Logo from "./Logo";
 import { getPageContent } from "@/lib/site-content/server";
 import { pressItems } from "@/lib/site-content/fjolmidlar";
+import { localeHref } from "@/lib/locale";
+import type { Locale } from "@/lib/site-content/types";
 
 // Single source of truth: published legal documents managed in /admin/legal
 // auto-appear here. Publish a doc → it shows in the footer + is live at
@@ -61,19 +63,31 @@ const FOOTER_DEFAULTS: Required<FooterContent> = {
   footer_admin_link: "Stjórnborð",
 };
 
-export default async function Footer({ content }: { content?: FooterContent }) {
+export default async function Footer({
+  content,
+  locale = "is",
+}: {
+  content?: FooterContent;
+  locale?: Locale;
+}) {
   const t = { ...FOOTER_DEFAULTS, ...(content ?? {}) };
   const legalDocs = await getPublishedLegalDocs();
   // Press page is linked only once it has something on it (it 404s when empty).
-  const pressContent = await getPageContent("fjolmidlar").catch(() => ({}) as Record<string, string>);
+  const pressContent = await getPageContent("fjolmidlar", locale).catch(
+    () => ({}) as Record<string, string>,
+  );
   const hasPress = pressItems(pressContent).length > 0;
+  // localeHref leaves paths with no English twin alone (/skjol/…, /admin), so
+  // it is safe to route every link below through it.
   const pages = [
-    { href: "/", label: t.nav_home },
-    { href: "/thjonusta", label: t.nav_thjonusta },
-    { href: "/thjonusta#faq", label: t.nav_faq },
-    { href: "/um-okkur", label: t.nav_um_okkur },
-    { href: "/hafa-samband", label: t.nav_hafa_samband },
-    ...(hasPress ? [{ href: "/fjolmidlar", label: pressContent.nav_label || "Fjölmiðlar" }] : []),
+    { href: localeHref("/", locale), label: t.nav_home },
+    { href: localeHref("/thjonusta", locale), label: t.nav_thjonusta },
+    { href: localeHref("/thjonusta#faq", locale), label: t.nav_faq },
+    { href: localeHref("/um-okkur", locale), label: t.nav_um_okkur },
+    { href: localeHref("/hafa-samband", locale), label: t.nav_hafa_samband },
+    ...(hasPress
+      ? [{ href: localeHref("/fjolmidlar", locale), label: pressContent.nav_label || "Fjölmiðlar" }]
+      : []),
   ];
 
   return (

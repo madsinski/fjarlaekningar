@@ -5,6 +5,7 @@
 import {
   resolveFields,
   resolveOrder,
+  type FieldType,
   type Locale,
   type LocaleContent,
   type SiteContentBlob,
@@ -137,6 +138,45 @@ export function sectionsOf(key: string, c: LocaleContent): SiteSection[] {
   const page = getSitePage(key);
   if (!page) return [];
   return page.sectionsFor ? page.sectionsFor(c) : page.sections;
+}
+
+/**
+ * Fields a visitor actually reads. Images, choices and internal bookkeeping are
+ * language-independent, so they say nothing about whether a page is translated.
+ */
+const TRANSLATABLE: FieldType[] = ["text", "textarea", "heading"];
+
+/**
+ * Share of a page's Icelandic text that has an English counterpart, 0–1.
+ *
+ * Only fields that say something in Icelandic are counted: an empty field is
+ * not a missing translation. A page with no text at all counts as fully
+ * covered, so a content-free page is never held back.
+ */
+export function englishCoverage(key: string, blob: SiteContentBlob | null | undefined): number {
+  const page = getSitePage(key);
+  if (!page) return 0;
+  const has = (v: string | undefined) => !!v?.trim();
+  const written = page.fields
+    .filter((f) => TRANSLATABLE.includes(f.type))
+    .filter((f) => has(blob?.is?.[f.key]) || has(page.defaultsIs[f.key]));
+  if (!written.length) return 1;
+  const translated = written.filter((f) => has(blob?.en?.[f.key]) || has(page.defaultsEn[f.key]));
+  return translated.length / written.length;
+}
+
+/**
+ * How much of a page must exist in English before /en/<page> is worth indexing.
+ * Below this the English URL is mostly Icelandic text — a duplicate of the
+ * Icelandic page rather than an alternative to it — so it is served `noindex`,
+ * kept out of the sitemap and dropped from the hreflang map. The page itself
+ * still renders and is still reachable from the language toggle.
+ */
+export const EN_INDEX_THRESHOLD = 0.6;
+
+/** Is the English rendering of this page translated enough to index? */
+export function englishReady(key: string, blob: SiteContentBlob | null | undefined): boolean {
+  return englishCoverage(key, blob) >= EN_INDEX_THRESHOLD;
 }
 
 /** Section ids in display order for a page, honouring any CMS reordering. */

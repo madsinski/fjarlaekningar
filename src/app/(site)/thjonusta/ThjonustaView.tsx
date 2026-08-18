@@ -10,6 +10,7 @@ import { renderHighlighted } from "@/lib/site-content/highlight";
 import { THJONUSTA_SECTIONS } from "@/lib/site-content/thjonusta";
 import { resolveOrder, type LocaleContent } from "@/lib/site-content/types";
 import { ui } from "@/lib/site-content/ui-strings";
+import { localeHref } from "@/lib/locale";
 
 // Presentational Þjónusta page.
 //
@@ -185,7 +186,7 @@ export default function ThjonustaView({
             );
             // Until the erindi pages are published the card is plain markup.
             return erindiLive ? (
-              <Link key={s.slug} href={`/erindi/${s.slug}`} className={cardCls}>{inner}</Link>
+              <Link key={s.slug} href={localeHref(`/erindi/${s.slug}`, locale)} className={cardCls}>{inner}</Link>
             ) : (
               <div key={s.slug} className={cardCls}>{inner}</div>
             );

@@ -33,6 +33,8 @@ const IS = {
     faqMore: "Sjá fleiri spurningar ({n})",
     faqLess: "Sýna færri",
     faqNoResults: "Engar spurningar fundust.",
+    breadcrumb: "Brauðmylsna",
+    services: "Þjónusta",
 };
 
 export type UiStrings = { [K in keyof typeof IS]: string };
@@ -63,6 +65,8 @@ const EN: UiStrings = {
     faqMore: "Show more questions ({n})",
     faqLess: "Show fewer",
     faqNoResults: "No questions found.",
+    breadcrumb: "Breadcrumb",
+    services: "Services",
 };
 
 const STRINGS: Record<Locale, UiStrings> = { is: IS, en: EN };

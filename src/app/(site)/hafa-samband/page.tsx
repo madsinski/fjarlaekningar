@@ -1,19 +1,12 @@
 import type { Metadata } from "next";
-import { getPage } from "@/lib/site-content/server";
-import HafaSambandView from "./HafaSambandView";
+import HafaSambandPage, { hafaSambandMetadata } from "./hafa-samband-page";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/hafa-samband" },
-  title: "Hafa samband",
-  description:
-    "Hafðu samband við Fjarlækningar ehf. Fyrir læknisþjónustu, opnaðu sjúklingagátt Fjarlækninga.",
-};
-
-// Per-request render: `lang` cookie + latest PUBLISHED content, falling back to
-// the built-in Icelandic defaults so nothing changes until someone publishes.
 export const dynamic = "force-dynamic";
 
-export default async function HafaSambandPage() {
-  const { c, order } = await getPage("hafa-samband");
-  return <HafaSambandView c={c} order={order} />;
+export function generateMetadata(): Promise<Metadata> {
+  return hafaSambandMetadata("is");
+}
+
+export default function Page() {
+  return <HafaSambandPage locale="is" />;
 }

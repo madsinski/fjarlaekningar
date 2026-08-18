@@ -1,6 +1,21 @@
 # Plan: real `/en` routes
 
-Written 2026-08-18. Execute in a fresh session.
+Written 2026-08-18. **Shipped 2026-08-18** — kept as the rationale behind the
+routing, not as outstanding work.
+
+What landed differs from the plan in one place worth knowing about. Step 2 says
+`getLocale()` must prefer the route segment over the cookie, but a *layout* gets
+no route params, and both `src/app/layout.tsx` (which sets `<html lang>`) and the
+site chrome need the language. So `src/proxy.ts` stamps the request path onto an
+`x-pathname` header and `getLocale()` reads the locale off that; pages pass their
+locale explicitly and never depend on the header. See `src/lib/locale.ts`.
+
+Step 7's audit is enforced in code rather than done by hand: `englishCoverage()`
+in the content registry measures how much of a page's Icelandic text has an
+English counterpart, and anything under `EN_INDEX_THRESHOLD` is served `noindex`,
+dropped from the sitemap and left out of the hreflang map. All five marketing
+pages are over the line today; erindi is not, which is why its English pages
+would stay out of the index if the erindi pages were switched on tomorrow.
 
 ## Why
 

@@ -61,6 +61,31 @@ export const SITE_DESCRIPTION_EN =
 
 
 /**
+ * Canonical + hreflang for a page that exists in both languages.
+ *
+ * hreflang needs two distinct URLs pointing at each other, in both directions —
+ * which is exactly what the /en routes exist to provide. Pass the ICELANDIC
+ * path ("/thjonusta", "/" for the front page) and the locale being rendered.
+ *
+ * `enReady` false means the English page is still mostly Icelandic text; it is
+ * then dropped from the map entirely rather than advertised as an English
+ * alternative, because pointing hreflang at a `noindex` page is a contradictory
+ * signal. x-default stays Icelandic: that is the language of the site.
+ */
+export function alternatesFor(path: string, locale: "is" | "en", enReady = true) {
+  const isUrl = path === "/" ? `${SITE_URL}/` : `${SITE_URL}${path}`;
+  const enUrl = path === "/" ? `${SITE_URL}/en` : `${SITE_URL}/en${path}`;
+  return {
+    canonical: locale === "en" ? enUrl : isUrl,
+    languages: {
+      is: isUrl,
+      ...(enReady ? { en: enUrl } : {}),
+      "x-default": isUrl,
+    },
+  };
+}
+
+/**
  * Organization + WebSite graph. Typed as MedicalClinic as well as Organization
  * so search engines read it as a healthcare provider rather than a generic
  * company.
@@ -91,7 +116,11 @@ function postalAddress(address: string, country: string) {
   };
 }
 
-export function organizationJsonLd(services: { title: string }[], facts: SeoFacts) {
+export function organizationJsonLd(
+  services: { title: string }[],
+  facts: SeoFacts,
+  locale: "is" | "en" = "is",
+) {
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -130,7 +159,7 @@ export function organizationJsonLd(services: { title: string }[], facts: SeoFact
         name: facts.company || SITE_NAME,
         description: facts.description,
         publisher: { "@id": `${SITE_URL}/#organization` },
-        inLanguage: "is",
+        inLanguage: locale,
       },
     ],
   };

@@ -7,6 +7,7 @@ import { renderHighlighted } from "@/lib/site-content/highlight";
 import { HOME_SECTIONS } from "@/lib/site-content/home";
 import { resolveOrder, type LocaleContent } from "@/lib/site-content/types";
 import { ui } from "@/lib/site-content/ui-strings";
+import { localeHref } from "@/lib/locale";
 
 // Presentational Home page. Renders from a resolved content map `c` so the same
 // component powers the public page (server) and the CMS live preview (client).
@@ -37,6 +38,8 @@ export default function HomeView({
 }) {
   const erindi = localizeErindi(locale);
   const t = ui(locale);
+  // Keeps the visitor inside their language: on /en every link below is /en/…
+  const href = (path: string) => localeHref(path, locale);
   // Titles only. The descriptions used to live here too, which meant the home
   // page and /thjonusta each carried a different half of the same explanation.
   // One step title per line (edited by the add/remove control in the CMS);
@@ -72,7 +75,7 @@ export default function HomeView({
             .map((s) => (
               <Link
                 key={s.slug}
-                href="/thjonusta"
+                href={href("/thjonusta")}
                 className="group flex items-center gap-3 bg-white rounded-xl border border-slate-200 px-4 py-3 hover:shadow-md hover:border-brand-cyan transition-all"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -91,7 +94,7 @@ export default function HomeView({
         </div>
         <p className="mt-8 text-sm text-slate-500">
           {c.services_footer_pre}{" "}
-          <Link href="/thjonusta" className="text-[var(--primary)] font-medium hover:underline">
+          <Link href={href("/thjonusta")} className="text-[var(--primary)] font-medium hover:underline">
             {c.services_footer_link}
           </Link>
           .
@@ -140,7 +143,7 @@ export default function HomeView({
         </ol>
 
         <Link
-          href="/thjonusta#ferlid"
+          href={href("/thjonusta#ferlid")}
           className="mt-10 inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-white border-2 border-[var(--primary)] text-[var(--primary-dark)] font-semibold hover:bg-brand-cyan-subtle transition-colors"
         >
           {c.how_cta || t.seeHow}
@@ -213,7 +216,7 @@ export default function HomeView({
           )}
 
           <Link
-            href="/thjonusta#live"
+            href={href("/thjonusta#live")}
             className="mt-10 inline-flex items-center gap-2 px-7 py-3 rounded-full border-2 border-[var(--primary)] text-[var(--primary-dark)] font-semibold hover:bg-brand-cyan-subtle transition-colors"
           >
             {c.coop_cta || t.whereLive}
@@ -232,7 +235,7 @@ export default function HomeView({
           <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{renderHighlighted(c.team_heading)}</h2>
           <p className="mt-4 max-w-prose text-slate-600">{c.team_body}</p>
           <Link
-            href="/um-okkur"
+            href={href("/um-okkur")}
             className="mt-6 inline-flex items-center gap-2 px-7 py-3 rounded-full border-2 border-[var(--primary)] text-[var(--primary-dark)] font-semibold hover:bg-brand-cyan-subtle transition-colors"
           >
             {c.team_cta || "Kynnast teyminu"}
@@ -264,7 +267,7 @@ export default function HomeView({
           <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500">
             {pressHeading || "Fjallað um okkur"}
           </h2>
-          <Link href="/fjolmidlar" className="text-sm font-semibold text-brand-cyan-dark hover:underline">
+          <Link href={href("/fjolmidlar")} className="text-sm font-semibold text-brand-cyan-dark hover:underline">
             {pressLink || "Sjá alla umfjöllun"} →
           </Link>
         </div>
@@ -350,7 +353,7 @@ export default function HomeView({
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
               <PortalButton size="lg" label={c.hero_cta_primary} />
               <Link
-                href="/thjonusta"
+                href={href("/thjonusta")}
                 className="inline-flex items-center justify-center px-10 py-4 rounded-full border-2 border-slate-300 text-slate-700 font-semibold hover:border-slate-400 transition-colors"
               >
                 {c.hero_cta_secondary}
