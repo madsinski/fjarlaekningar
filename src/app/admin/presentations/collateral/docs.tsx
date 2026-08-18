@@ -80,13 +80,14 @@ function renderHeading(text: string, accent = "#5fe0ff") {
   ));
 }
 
-function FjarLogo({ onDark = false }: { onDark?: boolean }) {
+function FjarLogo({ onDark = false, height }: { onDark?: boolean; height?: string }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       className="fjar-logo"
       src={onDark ? "/fjarlaekningar-logo-white.svg" : "/fjarlaekningar-logo.svg"}
       alt="Fjarlækningar"
+      style={height ? { height } : undefined}
     />
   );
 }
@@ -165,6 +166,18 @@ function FridgeCardSheet({ children }: { children: React.ReactNode }) {
  * someone who was not looking for it, so the only thing that earns size is the
  * code that gets a phone pointed at it.
  */
+/**
+ * The scan face: the wordmark, the instruction, one very large QR, the address.
+ *
+ * Used by "minimal" and "scan", and as the back of "list". Everything on it is
+ * sized for a fridge door read at two metres, which is also why there is no
+ * co-branding here — the HSU lockup is legible at arm's length at best, and at
+ * this distance it only competed with the code for attention. It still appears
+ * on the Klassískt front, where the card is read close up.
+ *
+ * The instruction sits ABOVE the code: you want it read before the camera comes
+ * up, not after.
+ */
 function QrFace({ f, onDark }: { f: FridgeFields; onDark: boolean }) {
   return (
     <FridgeCardSheet>
@@ -175,47 +188,51 @@ function QrFace({ f, onDark }: { f: FridgeFields; onDark: boolean }) {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          padding: "11mm 8mm 8mm",
+          justifyContent: "center",
+          gap: "7mm",
+          padding: "10mm 7mm 10mm",
           background: onDark ? undefined : "#fff",
         }}
       >
-        <FjarLogo onDark={onDark} />
+        <FjarLogo onDark={onDark} height="21mm" />
 
-        <div
-          style={{
-            marginTop: "auto",
-            background: "#fff",
-            border: onDark ? "none" : "1px solid var(--line)",
-            borderRadius: "3mm",
-            padding: onDark ? "3mm" : "2.5mm",
-            boxShadow: onDark ? "0 6mm 14mm -8mm rgba(0,0,0,.5)" : "none",
-          }}
-        >
-          <QrSvg value={f.portalUrl} size="52mm" />
-        </div>
-
-        <div style={{ marginTop: "6mm", textAlign: "center" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "5mm" }}>
           <div
             className="eyebrow"
-            style={{ fontSize: "10px", letterSpacing: ".12em", color: onDark ? "var(--cyan)" : undefined }}
+            style={{
+              fontSize: "13px",
+              letterSpacing: ".1em",
+              textAlign: "center",
+              color: onDark ? "var(--cyan)" : undefined,
+            }}
           >
             {f.qrLabel}
           </div>
+
           <div
             style={{
-              fontSize: "22px",
-              fontWeight: 800,
-              color: onDark ? "#fff" : "var(--ink)",
-              lineHeight: 1.1,
-              marginTop: "3mm",
+              background: "#fff",
+              border: onDark ? "none" : "1px solid var(--line)",
+              borderRadius: "3mm",
+              padding: onDark ? "3.5mm" : "3mm",
+              boxShadow: onDark ? "0 6mm 14mm -8mm rgba(0,0,0,.5)" : "none",
             }}
           >
-            {f.url}
+            <QrSvg value={f.portalUrl} size="60mm" />
           </div>
         </div>
 
-        <div style={{ marginTop: "auto", width: "100%", paddingTop: "6mm" }}>
-          <HsuCobrand label={f.badge} lines="3" height="9mm" onDark={onDark} stroke={!onDark} />
+        <div
+          style={{
+            fontSize: "30px",
+            fontWeight: 800,
+            color: onDark ? "#fff" : "var(--ink)",
+            lineHeight: 1.05,
+            letterSpacing: "-.01em",
+            textAlign: "center",
+          }}
+        >
+          {f.url}
         </div>
       </div>
     </FridgeCardSheet>
