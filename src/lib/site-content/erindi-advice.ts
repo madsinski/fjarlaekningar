@@ -3,9 +3,17 @@
 // text is editable per erindi at /admin/website → Erindissíður.
 //
 // Mini-markup, so the CMS stays a plain textarea:
+//   "# Kafli"      section (used where one erindi covers several conditions)
 //   "## Fyrirsögn"  sub-heading
+//   "!! Varúð…"     warning box
 //   "- atriði"      bullet
-//   anything else   paragraph
+//   plain line      paragraph — but a plain line DIRECTLY UNDER a bullet is
+//                   that bullet's explanation and renders with it as one block
+//   blank line      ends a bullet's explanation, so the next paragraph belongs
+//                   to the section rather than to the bullet above it
+//
+// The pairing rule is why "- Saltvatnsnefsprey" and the sentence telling you
+// how to use it sit on consecutive lines: they are one item, not two.
 export const ERINDI_ADVICE: Record<string, string> = {
   "njalgur": `Njálgur er lítill, hvítur hringormur sem er algeng sýking hjá börnum og einnig fullorðnum einstaklingum.
 ## Almennar ráðleggingar
@@ -13,6 +21,7 @@ Smit geta komið upp á stöðum þar sem mörg börn eru saman komin, t.d. í l
 ## Einkenni
 - Þriðjungur smita er einkennalaus.
 - Helsta einkenni er kláði við endaþarm sem ágerist á nóttunni.
+
 Hætta er á því að ef einstaklingur klórar sér á nóttunni getur hann ert húðina og valdið húðsýkingu. Í sjaldgæfari tilfellum ef um marga orma er að ræða þá getur njálgssýking lýst sér sem minnkuð matarlyst, kviðverkir og ógleði.
 ## Smitleiðir
 Njálgur smitast þegar egg komast í snertingu við munn og þaðan ofan í maga. Eggin klekjast í meltingarvegi og ormar verpa svo eggjum á svæði við endaþarm, en þau berast svo með óhreinum höndum út í umhverfi á næsta einstakling.`,
@@ -25,17 +34,17 @@ Margir þættir geta haft áhrif á stinningu, bæði líkamlegir og sálfélags
 - Lífsstíll eins og reykingar, áfengisneysla eða fíknefnaneysla.
 ## Meðferð og næstu skref
 - Samtalsmeðferð
-- Gagnlegt ef orsakir eru sálrænar eða tengjast samskiptum.
+Gagnlegt ef orsakir eru sálrænar eða tengjast samskiptum.
 - Yfirfara lyfjanotkun
-- Ræddu við lækninn þinn hvort núverandi lyf gætu verið að valda vandanum.
+Ræddu við lækninn þinn hvort núverandi lyf gætu verið að valda vandanum.
 - Bæta lífsstíl
-- Draga úr áfengisneyslu og hætta reykingum.
+Draga úr áfengisneyslu og hætta reykingum.
 - Lyfjameðferð
-- Stinningarlyf eins og t.d. Sildenafil (Viagra) geta hjálpað mörgum.
+Stinningarlyf eins og t.d. Sildenafil (Viagra) geta hjálpað mörgum.
 ## Hvenær á að leita aðstoðar?
-## Bókaðu tíma hjá lækni
-- Ef engin augljós skýring er á vandamálinu er rétt að leita til þvagfærasérfræðings.
-- Ef þú vilt ræða möguleika á lyfjameðferð eða breytingar á núverandi lyfjum.`,
+- Bókaðu tíma hjá lækni
+Ef engin augljós skýring er á vandamálinu er rétt að leita til þvagfærasérfræðings.
+Ef þú vilt ræða möguleika á lyfjameðferð eða breytingar á núverandi lyfjum.`,
   "kvef-hosti-halsbolga": `Hér eru almennar ráðleggingar um meðferð við algengum einkennum öndunarfærasýkinga.
 ## Hiti og beinverkir
 Hiti er eðlilegt viðbragð líkamans við sýkingu og hjálpar ónæmiskerfinu að berjast við veiruna. Hiti í sjálfu sér er ekki hættulegur og það er ekki nauðsynlegt að lækka hann nema þér líði illa. Það er sjálfsagt að taka inn lyf ef einkenni eru óþægileg.
@@ -63,11 +72,11 @@ Einnig er hægt að nota Túfen slímlosandi mixtúru.
 - Særindi og verkur við að kyngja eru algeng einkenni.
 - Orsakast af bólgu í slímhúð og stækkun eitla.
 - Smitvarnir
-- Ef þú ert með staðfesta streptókokka, forðastu náin samskipti þar til 24 klst eru liðnar frá fyrsta sýklalyfjaskammti.
+Ef þú ert með staðfesta streptókokka, forðastu náin samskipti þar til 24 klst eru liðnar frá fyrsta sýklalyfjaskammti.
 - Önnur meðferð
-- Heitir vökvar (te með hunangi) og hálsmolar (t.d. Strepsils).
+Heitir vökvar (te með hunangi) og hálsmolar (t.d. Strepsils).
 - Verkjastilling
-- Paracetamol eða Ibufen ef þörf krefur.
+Paracetamol eða Ibufen ef þörf krefur.
 ## Melting og sýklalyf
 Sýklalyf geta raskað meltingarflóru. Mælt er með góðgerlum (t.d. Optibac) að minnsta kosti 1 klukkustund fyrir eða eftir sýklalyfjainntöku. Einnig gott að taka í einhverja daga eftir að meðferð með sýklalyfjum lýkur.
 ## Hvíld og vökvi
@@ -85,14 +94,11 @@ Sýklalyf geta raskað meltingarflóru. Mælt er með góðgerlum (t.d. Optibac)
 - Leitaðu læknis ef útbrot koma nálægt auga eða andliti.
 ## Einkenni
 Í byrjun getur komið fram sviði, kláði eða verkur í húð áður en útbrot og blöðrur koma fram. Húðin verður mjög viðkvæm við snertingu. Hiti og höfuðverkur geta einnig verið forboði útbrota.
-- Dagur 1-3
-Roði og blöðrur
+- Dagur 1-3 — Roði og blöðrur
 Roði myndast og fyllist af vökva. Blöðrurnar valda verkjum og kláða.
-- Dagur 7-10
-Sár gróa
+- Dagur 7-10 — Sár gróa
 Blöðrurnar opnast, vökvinn rennur út og hrúður byrjar að myndast.
-- Vika 3-4
-Bati
+- Vika 3-4 — Bati
 Útbrotin hverfa yfirleitt á þessu tímabili.
 ## Góð ráð
 - Þvoðu þér um hendur með sápu ef þú snertir útbrotin.
@@ -101,20 +107,20 @@ Bati
 ## Varast skal
 - Forðastu nálægð við barnshafandi konur og ungabörn á meðan sár eru ógróin.
 - Forðastu samskipti við fólk með skert ónæmiskerfi (t.d. í krabbameinsmeðferð).
-Leiðbeiningar um verkjastillingu
+## Leiðbeiningar um verkjastillingu
 - Paracetamol (500 mg) — 1-2 töflur í einu, 4 sinnum á dag
 - Ibuprofen (400 mg) — 1 tafla í einu, 3 sinnum á dag
-Athugið : Ekki nota Ibuprofen ef þú ert með hjartabilun, nýrnabilun, magasár eða hefur farið í magaermis - eða hjáveituaðgerð.
+!! Athugið: Ekki nota Ibuprofen ef þú ert með hjartabilun, nýrnabilun, magasár eða hefur farið í magaermis- eða hjáveituaðgerð.
 ## Hvenær á að leita aðstoðar?
-## Bráðatilfelli
-- Ef útbrot koma nálægt auga eða andliti (augað verður rautt, þurrt, ljósnæmt eða sjón breytist).
-## Hafðu samband við heilsugæslu
-- Ef sár virðast sýkt (aukin gröftur, hiti eða vaxandi roði).
-- Ef verkir eru óbærilegir þrátt fyrir verkjalyf.
-## Orðaskýringar
-Varicella zoster
+- Bráðatilfelli
+Ef útbrot koma nálægt auga eða andliti (augað verður rautt, þurrt, ljósnæmt eða sjón breytist).
+- Hafðu samband við heilsugæslu
+Ef sár virðast sýkt (aukin gröftur, hiti eða vaxandi roði).
+Ef verkir eru óbærilegir þrátt fyrir verkjalyf.
+## Orðskýringar
+- Varicella zoster
 Veiran sem veldur bæði hlaupabólu og ristli.
-Húðgeiri
+- Húðgeiri
 Ákveðið svæði á húðinni sem fylgir taugastofni, þar sem útbrotin koma fram.`,
   "frunsa": `Frunsa (áblástur) er algeng veirusýking sem lýsir sér sem vökvafylltar blöðrur, oftast á eða við varir.
 ## Hvað er frunsa?
@@ -127,31 +133,22 @@ Frunsa er af völdum herpes simplex veirunnar. Veiran dvelur í líkamanum alla 
 - Ekki kroppa í sárin, láttu þau gróa í friði
 - Forðast að deila mataráhöldum eða kyssa aðra á meðan smitgluggi er opinn
 - Forðast súra ávexti (t.d. sítrónu) og saltan mat sem getur ert sárin
-Verkjastilling við óþægindum
-Lyf
-Skammtastærð
-Hámark á dag
-Paracetamol 500 mg
-1-2 töflur
-4 sinnum á dag
-Ibuprofen 400 mg
-1 tafla
-3 sinnum á dag
-Athugið : Ef þú ert með hjartabilun, nýrnabilun, bakflæði eða magasár er ekki ráðlagt að nota bólgueyðandi lyf eins og Ibuprofen.
+## Verkjastilling við óþægindum
+- Paracetamol 500 mg — 1-2 töflur í einu, mest 4 sinnum á dag
+- Ibuprofen 400 mg — 1 tafla í einu, mest 3 sinnum á dag
+!! Athugið: Ef þú ert með hjartabilun, nýrnabilun, bakflæði eða magasár er ekki ráðlagt að nota bólgueyðandi lyf eins og Ibuprofen.
 ## Meðferð og smitvarnir
 - Hefja meðferð með veiruhamlandi lyfjum
-- Við fyrstu merki (kláða/ eymsli)
-- Hægt er að kaupa lyf án lyfseðils í apóteki. Bestur árangur næst innan 3 sólarhringa.
+Við fyrstu merki (kláða eða eymsli). Hægt er að kaupa lyf án lyfseðils í apóteki. Bestur árangur næst innan 3 sólarhringa.
 - Sýna sérstaka varkárni gagnvart ungbörnum
-- Á meðan sár eru til staðar
-- Varist að kyssa eða knúsa nýbura þar sem þeir eru mjög viðkvæmir fyrir herpes sýkingum.
-## Orðaskýringar
-Áblástur
+Á meðan sár eru til staðar. Varist að kyssa eða knúsa nýbura þar sem þeir eru mjög viðkvæmir fyrir herpes sýkingum.
+## Orðskýringar
+- Áblástur
 Annað heiti yfir frunsu eða herpes sýkingu á vörum.
-Smitgluggi
-Tímabilið frá því að fyrstu einkenni koma þar til sár hafa lokast með hrúðri.
-## Sveppasýking í leggöngum`,
-  "thvagfaera-leggangasykingar": `## Fyrirbyggjandi ráð
+- Smitgluggi
+Tímabilið frá því að fyrstu einkenni koma þar til sár hafa lokast með hrúðri.`,
+  "thvagfaera-leggangasykingar": `# Sveppasýking í leggöngum
+Hér eru almennar ráðleggingar og fyrirbyggjandi ráð um sveppasýkingu í leggöngum.
 ## Góð ráð
 - Gæta að hreinlæti og halda kynfærasvæði þurru og hreinu
 - Leyfa svæðinu að anda með því að forðast þröngar buxur og nærbuxur
@@ -166,22 +163,20 @@ Tímabilið frá því að fyrstu einkenni koma þar til sár hafa lokast með h
 ## Vörur sem geta hjálpað
 - Optibac góðgerlar fyrir konur
 Notað til að fyrirbyggja endurteknar sýkingar. Stuðlar að heilbrigðri örveruflóru í meltingu og á kynfærasvæði.
-- Multi- Gyn FloraPlus
+- Multi-Gyn FloraPlus
 Áhrifaríkt gel við sveppasýkingu og einkennum eins og kláða, ertingu og þykkri hvítri útferð. Styður við vöxt góðra Lactobacillus baktería.
-- Multi -Gyn Calming Cream
+- Multi-Gyn Calming Cream
 Slær hratt á óþægindi og róar erta húð á kynfærasvæði.
 ## Orðskýringar
-Lactobacillus
+- Lactobacillus
 Góðar bakteríur sem hjálpa til við að viðhalda réttu sýrustigi og heilbrigðri flóru í leggöngum.
-## Bakteríusýking í leggöngum
+# Bakteríusýking í leggöngum
 Hér eru almennar ráðleggingar og fyrirbyggjandi ráð um bakteríusýkingu í leggöngum til að stuðla að eðlilegu sýrustigi og góðri flóru.
 ## Helstu ráð til að fyrirbyggja sýkingu
 - Stuðla að eðlilegu sýrustigi og góðri flóru í leggöngum.
 - Forðast sterka sápu og ilmefni á kynfærasvæði.
 - Gæta að jafnvægi ef nota þarf sýklalyf.
 - Nota vörur sem styðja við náttúrulega flóru ef þörf krefur.
-## Hvað getur raskað jafnvæginu?
-Ýmsir þættir geta haft áhrif á bakteríuflóru legganga og aukið líkur á sýkingu :
 ## Góð ráð
 - Nota vörur sem styðja við eðlilegt sýrustig
 - Gæta að hreinlæti án þess að nota sterka sápu
@@ -192,25 +187,20 @@ Hér eru almennar ráðleggingar og fyrirbyggjandi ráð um bakteríusýkingu í
 - Óvarið kynlíf með mörgum einstaklingum
 ## Vörur sem geta hjálpað
 Dæmi um vörur sem fást í apótekum án lyfseðils.
-Vara
-Lýsing
-Notkun
-Optibac góðgerlar
-Fyrirbyggir endurteknar sýkingar
-Stuðlar að heilbrigðri flóru í meltingu og á kynfærasvæði
-Multi - Gyn Actigel
-Skeiðarkrem sem fyrirbyggir og meðhöndlar
-Veitir sýkingavörn, kælingu og græðandi áhrif
-Rosonia hylki
-Fyrirbyggjandi og viðbótarmeðferð
-Notað gegn bakteríu -, sveppa- og veirusýkingum
+- Optibac góðgerlar
+Fyrirbyggir endurteknar sýkingar. Stuðlar að heilbrigðri flóru í meltingu og á kynfærasvæði.
+- Multi-Gyn Actigel
+Skeiðarkrem sem fyrirbyggir og meðhöndlar. Veitir sýkingavörn, kælingu og græðandi áhrif.
+- Rosonia hylki
+Fyrirbyggjandi og viðbótarmeðferð. Notað gegn bakteríu-, sveppa- og veirusýkingum.
 ## Sérstakar aðstæður
 Meðganga og hormónabreytingar geta aukið líkurnar á bakteríusýkingu. Einnig getur leggangaþurrkur stuðlað að ójafnvægi á örveruflóru legganga.
 ## Orðskýringar
-Bakteríuflóra
+- Bakteríuflóra
 Safn náttúrulegra örvera sem lifa í leggöngum og verja þau gegn sýkingum.
-Sýrustig (pH)
-Mælikvarði á hversu súrt eða basískt umhverfið er; leggöng þurfa að vera súr til að halast heilbrigð.
+- Sýrustig (pH)
+Mælikvarði á hversu súrt eða basískt umhverfið er; leggöng þurfa að vera súr til að haldast heilbrigð.
+# Þvagfærasýking
 Hér eru almennar ráðleggingar og fyrirbyggjandi ráð um þvagfærasýkingu.
 ## Helstu ráðleggingar
 - Drekktu nóg af vökva, meira en vanalega.
@@ -218,21 +208,23 @@ Hér eru almennar ráðleggingar og fyrirbyggjandi ráð um þvagfærasýkingu.
 - Forðastu að nota krem eða sprey á kynfærasvæðið.
 - Gættu þess að láta þér ekki verða kalt, þar sem kuldi getur aukið hættu á blöðrubólgu.
 ## Fyrirbyggjandi vörur og lyf án lyfseðils
-- Natures Plus Cranberry — Andoxunarefni sem kemur í veg fyrir að bakteríur festist við slímhúð blöðrunnar.
-- Optibac góðgerlar — Stuðlar að heilbrigðri örveruflóru í meltingu og á kynfærasvæði kvenna.
-- Ovestin (krem/ stílar) — Inniheldur estríól. Hjálpar gegn leggangaþurrki sem getur valdið þrálátum sýkingum.
+- Natures Plus Cranberry
+Andoxunarefni sem kemur í veg fyrir að bakteríur festist við slímhúð blöðrunnar.
+- Optibac góðgerlar
+Stuðlar að heilbrigðri örveruflóru í meltingu og á kynfærasvæði kvenna.
+- Ovestin (krem/stílar)
+Inniheldur estríól. Hjálpar gegn leggangaþurrki sem getur valdið þrálátum sýkingum.
 ## Verkjastilling
 Ef óþægindi í þvagblöðru eru mikil getur þú notað Ibuprofen 400 mg þrisvar á dag samhliða sýklalyfjameðferð.
-## Ráðlegging
-- Ráðfærðu þig við lækni ef þú ert óviss um lyfjanotkun.
+Ráðfærðu þig við lækni ef þú ert óviss um lyfjanotkun.
 !! Ekki nota Ibuprofen ef þú ert með:
 - Hjartabilun eða nýrnabilun
 - Bakflæði, magabólgu eða magasár
 - Farið í magaermis- eða hjáveituaðgerð
 ## Orðskýringar
-Estríól
+- Estríól
 Náttúrulegt kvenhormón (estrógen) sem hjálpar til við að viðhalda heilbrigðri slímhúð í leggöngum.
-Örveruflóra
+- Örveruflóra
 Safn náttúrulegra og gagnlegra baktería sem finnast í líkamanum.`,
   "frjokornaofnaemi": `Hér eru hagnýt ráð til að draga úr einkennum frjókornaofnæmis í daglegu lífi.
 ## Helstu atriði
@@ -246,7 +238,7 @@ Safn náttúrulegra og gagnlegra baktería sem finnast í líkamanum.`,
 - Þvoðu og þurrkaðu föt innandyra.
 - Þurrkaðu af gæludýrum með blautum klút þegar þau koma inn.
 ## Forðastu
-- Forðastu garðyrkju (eða notaðu grímu/ hlífðargleraugu).
+- Forðastu garðyrkju (eða notaðu grímu/hlífðargleraugu).
 - Ekki hafa fersk blóm inni á heimilinu.
 - Takmarkaðu notkun á ilmvatni og rakspíra.
 - Forðastu þvottaefni með ilmefnum.
@@ -267,21 +259,16 @@ Við skolun fjarlægjast frjókorn sem sitja í slímhúðinni.
   "getnadarvorn": `Getnaðarvarnir eru notaðar til að koma í veg fyrir þungun. Þær hjálpa til við að stjórna barneignum á meðan þær eru notaðar, en þær trufla ekki frjósemi til frambúðar og valda ekki ófrjósemi.
 Engin ein getnaðarvörn hentar öllum — það er einstaklingsbundið hvað hentar hverjum og einum.
 ## Þrír flokkar getnaðarvarna
-- Án hormóna : smokkur, koparlykkja og hetta.
+- Án hormóna: smokkur, koparlykkja og hetta.
 - Með hormónum: samsett pilla, minipilla, hormónahringur, hormónastafur, hormónaplástur, hormónasprauta og hormónalykkja.
 - Ófrjósemisaðgerðir (varanleg lausn).
 ## Öryggi — það sem skiptir mestu máli
-„99% öryggi " þýðir að ein af hverjum 100 konum getur orðið þunguð á ári. Öryggi margra aðferða ræðst af réttri og reglulegri notkun.
-Samanburður á öryggi
-Tegund
-Dæmi
-Hvað ræður örygginu ?
-Notendaháðar
-Pilla, hringur, plástur, smokkur
-Nákvæm fylgni við leiðbeiningar
-Langtímagetnaðarvarnir
-Hormónastafur, lykkjur, sprauta
-Öruggastar - þarf aðeins að muna endurnýjun
+„99% öryggi“ þýðir að ein af hverjum 100 konum getur orðið þunguð á ári. Öryggi margra aðferða ræðst af réttri og reglulegri notkun.
+## Samanburður á öryggi
+- Notendaháðar — pilla, hringur, plástur, smokkur
+Öryggið ræðst af nákvæmri fylgni við leiðbeiningar.
+- Langtímagetnaðarvarnir — hormónastafur, lykkjur, sprauta
+Öruggastar — þarf aðeins að muna endurnýjun.
 ## Ráð um val og notkun
 - Notaðu smokkinn til að verjast kynsjúkdómum
 - Hugaðu að blóðtappaáhættu ef þú notar samsetta vörn (estrógen)
@@ -303,5 +290,6 @@ Ef innan við 7 pillur eru eftir á spjaldinu, haltu beint áfram á næsta spja
 Hjá heilsugæslulæknum, hjúkrunarfræðingum og ljósmæðrum.
 - Kvensjúkdómalæknar
 Sérfræðiráðgjöf og ávísanir.
+
 Flestar getnaðarvarnir eru lyfseðilsskyldar.`,
 };

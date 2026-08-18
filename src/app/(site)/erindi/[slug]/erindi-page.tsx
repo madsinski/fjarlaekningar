@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { erindi, localizeErindi } from "@/erindi";
-import { getPage } from "@/lib/site-content/server";
-import { erindiKey, erindiPagesLive } from "@/lib/site-content/erindi-pages";
+import { getPage, getPageContent } from "@/lib/site-content/server";
+import { ERINDI_WITH_MEDS, erindiKey, erindiPagesLive } from "@/lib/site-content/erindi-pages";
 import { ui } from "@/lib/site-content/ui-strings";
 import type { Locale } from "@/lib/site-content/types";
 import { alternatesFor, SITE_URL } from "@/lib/seo";
@@ -59,6 +59,18 @@ export default async function ErindiPage({ params, locale }: Params & { locale: 
   const d = await load(slug, locale);
   if (!d) notFound();
   const t = ui(locale);
+  // The medications that cannot be renewed are edited on the Þjónusta page and
+  // shown in its FAQ; the lyfjaendurnýjun page shows the very same list rather
+  // than keeping a second copy that could fall out of date.
+  const meds = ERINDI_WITH_MEDS.includes(slug) ? await getPageContent("thjonusta", locale) : null;
+  const medsCategories = meds
+    ? [
+        { title: meds.meds_a_title, items: meds.meds_a_items },
+        { title: meds.meds_b_title, items: meds.meds_b_items },
+        { title: meds.meds_c_title, items: meds.meds_c_items },
+        { title: meds.meds_d_title, items: meds.meds_d_items },
+      ].filter((m) => m.title)
+    : [];
   const others = localizeErindi(locale)
     .filter((e) => e.slug !== slug)
     .slice(0, 6)
@@ -98,6 +110,9 @@ export default async function ErindiPage({ params, locale }: Params & { locale: 
         suitable={d.suitable}
         refer={d.refer}
         others={others}
+        meds={medsCategories}
+        medsIntro={medsCategories.length ? t.medsIntro : ""}
+        medsNote={meds?.meds_note ?? ""}
         locale={locale}
       />
     </>

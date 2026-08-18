@@ -54,7 +54,7 @@ const DRAFT_ABOUT: Record<string, string> = {
   njalgur:
     "Njálgur er algeng sníkjudýrasýking, einkum hjá börnum. Helsta einkennið er kláði við endaþarm sem er verstur á nóttunni og getur truflað svefn.\n\nSmit berst auðveldlega innan heimilis og milli barna í leikskóla eða skóla, og því er yfirleitt mælt með að allir á heimilinu fái meðferð á sama tíma.",
   lyfjuendurnyjun:
-    "Föst lyf þarf að endurnýja reglulega og flestar endurnýjanir má afgreiða án þess að hitta lækni.\n\nSum lyf krefjast þó reglulegrar eftirfylgni eða samtals við þann lækni sem ávísaði þeim upphaflega — það á meðal annars við um ávanabindandi lyf, örvandi lyf og geðlyf.",
+    "Þessi þjónusta er fyrir endurnýjun á allt að 3 lyfjum sem þú hefur notað áður, og getur ekki beðið eftir hefðbundna lyfjaendurnýjun. Athugaðu að ekki er hægt að endurnýja öll lyf í gegnum þessa þjónustu.\n\nSum lyf krefjast reglulegrar eftirfylgni eða samtals við þann lækni sem ávísaði þeim upphaflega — það á meðal annars við um ávanabindandi lyf, örvandi lyf og geðlyf.",
   laeknisvottord:
     "Veikindavottorð staðfestir að þú hafir verið óvinnufær eða fjarverandi vegna veikinda. Vinnuveitendur og skólar óska oft eftir vottorði eftir tiltekinn fjölda veikindadaga.\n\nVottorð er gefið út í tengslum við erindi sem hefur verið afgreitt í gegnum þjónustuna, enda byggir það á mati læknis á veikindunum sjálfum.",
 };
@@ -68,6 +68,39 @@ const DRAFT_SELFTEST: Record<string, string> = {
   "thvagfaera-leggangasykingar":
     "Þvagpróf (stix) | /gatt/prima-thvagstix.webp | Strimli er dýft í þvagsýni og reitirnir skipta um lit eftir því hvað finnst — hvít blóðkorn, blóð, nítrít eða prótein. Læknirinn notar niðurstöðuna við mat á erindinu.",
 };
+
+/**
+ * What each erindi will NOT cover, one line each. Where the answer is already
+ * published elsewhere it is reused rather than rewritten: the lyfjaendurnýjun
+ * list is the /thjonusta FAQ answer "Get ég endurnýjað alla lyfseðla?" reduced
+ * to its exclusions, and the medication list that answer shows is rendered on
+ * the page too — see ERINDI_WITH_MEDS.
+ *
+ * Left empty for an erindi, the page falls back to the shared `refer_body`.
+ */
+const DRAFT_REFER: Record<string, string> = {
+  lyfjuendurnyjun: [
+    "Lyf sem krefjast reglulegrar eftirfylgni, t.d. blóðþrýstingslyf, hjartalyf og kvíða- og þunglyndislyf — þjónustan kemur ekki í stað reglulegs eftirlits hjá heimilislækni.",
+    "Fjölnota lyfseðlar — einungis er hægt að fá einfaldan lyfseðil.",
+    "Lyf sem flokkast sem ávanabindandi, örvandi eða geðlyf — við endurnýjun þeirra þarf að tala við lækninn sem hefur áður skrifað upp á þau fyrir þig.",
+    "Fleiri en 3 lyf í einu erindi.",
+  ].join("\n"),
+  laeknisvottord: [
+    "Veikindavottorð vegna erinda sem hafa ekki verið afgreidd í gegnum þessa þjónustu.",
+    "Ökuvottorð.",
+    "Sjúkradagpeningavottorð.",
+    "Örorkuvottorð.",
+    "Endurhæfingarvottorð.",
+    "Önnur vottorð sem tengjast ekki erindi sem afgreitt hefur verið hjá Fjarlækningum.",
+  ].join("\n"),
+};
+
+/**
+ * Erindi whose page also shows the collapsible list of medications that cannot
+ * be renewed. The list itself lives in the Þjónusta CMS content (meds_* fields)
+ * and is shared with the FAQ, so it is only ever written in one place.
+ */
+export const ERINDI_WITH_MEDS = ["lyfjuendurnyjun"];
 
 export const ERINDI_FIELDS: SiteField[] = [
   {
@@ -125,7 +158,9 @@ export const ERINDI_FIELDS: SiteField[] = [
       label: `${e.title} — almennar ráðleggingar`,
       group: e.title,
       type: "textarea",
-      help: "SKRIFAÐ OG YFIRFARIÐ AF LÆKNI. Snið: \"## Fyrirsögn\" = undirfyrirsögn, \"- atriði\" = punktur, annað verður málsgrein.",
+      help:
+        "SKRIFAÐ OG YFIRFARIÐ AF LÆKNI. Snið: \"# Kafli\" = aðalkafli, \"## Fyrirsögn\" = undirfyrirsögn, \"!! Varúð…\" = viðvörunarkassi, " +
+        "\"- atriði\" = punktur. Lína beint undir punkti er skýring hans og birtist með honum; auð lína slítur tenginguna.",
     },
     {
       key: `${erindiKey(e.slug)}_suitable`,
@@ -171,7 +206,7 @@ export const ERINDI_DEFAULTS_IS: LocaleContent = {
       [`${erindiKey(e.slug)}_selftest`, DRAFT_SELFTEST[e.slug] ?? ""],
       [`${erindiKey(e.slug)}_advice`, ERINDI_ADVICE[e.slug] ?? ""],
       [`${erindiKey(e.slug)}_suitable`, PUBLISHED_DETAIL[e.slug] ?? ""],
-      [`${erindiKey(e.slug)}_refer`, ""],
+      [`${erindiKey(e.slug)}_refer`, DRAFT_REFER[e.slug] ?? ""],
     ]),
   ),
 };

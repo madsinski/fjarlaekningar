@@ -38,6 +38,7 @@ const IS = {
     readAt: "Lesa hjá",
     pressHeading: "Fjallað um okkur",
     pressLink: "Sjá alla umfjöllun",
+    medsIntro: "Hér er listi yfir öll helstu lyf sem Fjarlækningar geta ekki endurnýjað:",
 };
 
 export type UiStrings = { [K in keyof typeof IS]: string };
@@ -73,6 +74,7 @@ const EN: UiStrings = {
     readAt: "Read at",
     pressHeading: "In the media",
     pressLink: "See all coverage",
+    medsIntro: "Here is a list of the main medications Fjarlækningar cannot renew:",
 };
 
 const STRINGS: Record<Locale, UiStrings> = { is: IS, en: EN };

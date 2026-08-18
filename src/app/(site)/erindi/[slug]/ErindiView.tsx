@@ -5,6 +5,7 @@
 import Link from "next/link";
 import { localeHref } from "@/lib/locale";
 import { ui } from "@/lib/site-content/ui-strings";
+import MedsList, { type MedCategory } from "../../thjonusta/MedsList";
 import type { Locale, LocaleContent } from "@/lib/site-content/types";
 
 export type ErindiViewProps = {
@@ -18,6 +19,12 @@ export type ErindiViewProps = {
   suitable: string[];
   refer: string[];
   others: { slug: string; title: string }[];
+  /** Medications that cannot be renewed — only the lyfjaendurnýjun page passes
+   *  these. Same CMS fields the /thjonusta FAQ reads, so the list is written
+   *  once and cannot drift between the two pages. */
+  meds?: MedCategory[];
+  medsIntro?: string;
+  medsNote?: string;
   /** Keeps cross-links inside the visitor's language (/en/erindi/… on /en). */
   locale?: Locale;
   /** The CMS preview is not a routed page, so its links stay inert. */
@@ -29,21 +36,47 @@ export function erindiParagraphs(v?: string): string[] {
   return (v ?? "").split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
 }
 
-/** "## x" sub-heading, "- x" bullet, anything else a paragraph. */
-export function adviceBlocks(v?: string): { kind: "h" | "li" | "p" | "warn"; text: string }[] {
-  return (v ?? "")
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean)
-    .map((l) =>
-      l.startsWith("## ")
-        ? { kind: "h" as const, text: l.slice(3).trim() }
-        : l.startsWith("!! ")
-          ? { kind: "warn" as const, text: l.slice(3).trim() }
-        : l.startsWith("- ")
-          ? { kind: "li" as const, text: l.slice(2).trim() }
-          : { kind: "p" as const, text: l },
-    );
+export type AdviceBlock =
+  | { kind: "h1"; text: string }
+  | { kind: "h"; text: string }
+  | { kind: "warn"; text: string }
+  | { kind: "p"; text: string }
+  | { kind: "li"; text: string; detail: string[] };
+
+/**
+ * "# x" section, "## x" sub-heading, "!! x" warning, "- x" bullet, anything else
+ * a paragraph. The two heading levels matter on the erindi that covers three
+ * separate conditions: without them "Sveppasýking í leggöngum" would sit at the
+ * same rank as its own "Góð ráð", and the page reads as one undifferentiated
+ * list rather than three sections.
+ *
+ * A plain line directly under a bullet is that bullet's EXPLANATION and is kept
+ * with it as one block — "Saltvatnsnefsprey" and the sentence telling you how to
+ * use it are one thing, and rendering them as two siblings a paragraph apart is
+ * what made these pages read as a jumble of disconnected lines. A blank line
+ * ends the group, which is how an author detaches a paragraph that belongs to
+ * the section rather than to the bullet above it.
+ */
+export function adviceBlocks(v?: string): AdviceBlock[] {
+  const out: AdviceBlock[] = [];
+  for (const raw of (v ?? "").split("\n")) {
+    const l = raw.trim();
+    // Blank line: close any open bullet so the next paragraph stands alone.
+    if (!l) {
+      if (out[out.length - 1]?.kind === "li") out.push({ kind: "p", text: "" });
+      continue;
+    }
+    if (l.startsWith("## ")) out.push({ kind: "h", text: l.slice(3).trim() });
+    else if (l.startsWith("# ")) out.push({ kind: "h1", text: l.slice(2).trim() });
+    else if (l.startsWith("!! ")) out.push({ kind: "warn", text: l.slice(3).trim() });
+    else if (l.startsWith("- ")) out.push({ kind: "li", text: l.slice(2).trim(), detail: [] });
+    else {
+      const prev = out[out.length - 1];
+      if (prev?.kind === "li") prev.detail.push(l);
+      else out.push({ kind: "p", text: l });
+    }
+  }
+  return out.filter((b) => b.kind !== "p" || b.text);
 }
 
 /** "Heiti | /mynd.webp | Lýsing" per line. */
@@ -70,6 +103,9 @@ export default function ErindiView({
   suitable,
   refer,
   others,
+  meds = [],
+  medsIntro = "",
+  medsNote = "",
   locale = "is",
   linked = true,
 }: ErindiViewProps) {
@@ -166,6 +202,12 @@ export default function ErindiView({
         ) : (
           <p className="mt-3 text-slate-700 leading-relaxed">{c.refer_body}</p>
         )}
+        {meds.length > 0 && (
+          <div className="mt-6">
+            {medsIntro && <p className="mb-3 text-slate-700 leading-relaxed">{medsIntro}</p>}
+            <MedsList categories={meds} note={medsNote} />
+          </div>
+        )}
       </div>
 
       {adviceBlocks(advice).length > 0 && (
@@ -173,8 +215,15 @@ export default function ErindiView({
           <h2 className="text-xl font-bold text-slate-900">{c.advice_heading}</h2>
           <div className="mt-4 space-y-3">
             {adviceBlocks(advice).map((b, i) =>
-              b.kind === "h" ? (
-                <h3 key={i} className="pt-3 text-base font-bold text-slate-900">{b.text}</h3>
+              b.kind === "h1" ? (
+                <h3
+                  key={i}
+                  className="mt-8 border-t border-slate-200 pt-6 text-lg font-bold text-slate-900 first:mt-0 first:border-0 first:pt-0"
+                >
+                  {b.text}
+                </h3>
+              ) : b.kind === "h" ? (
+                <h4 key={i} className="pt-3 text-base font-bold text-slate-900">{b.text}</h4>
               ) : b.kind === "warn" ? (
                 <div
                   key={i}
@@ -186,7 +235,17 @@ export default function ErindiView({
               ) : b.kind === "li" ? (
                 <div key={i} className="flex gap-3 text-slate-700 leading-relaxed">
                   <span aria-hidden className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-                  <span>{b.text}</span>
+                  <div>
+                    {/* A bullet that carries an explanation reads as a label, so
+                        it is set in bold with its text beneath it. A plain
+                        bullet keeps the normal weight. */}
+                    <span className={b.detail.length ? "font-semibold text-slate-900" : undefined}>
+                      {b.text}
+                    </span>
+                    {b.detail.map((d, j) => (
+                      <p key={j} className="mt-1 text-slate-600">{d}</p>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <p key={i} className="text-slate-700 leading-relaxed">{b.text}</p>
