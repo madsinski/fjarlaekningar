@@ -7,6 +7,8 @@
 // duplicated, deleted and reordered in the studio (page.tsx / CollateralStudio).
 // Persisted as one JSONB blob in a single-row Supabase table.
 
+import { erindi } from "@/erindi";
+
 export type Step = { title: string; body: string };
 export type Service = { icon: string; label: string };
 export type Safety = { bold: string; text: string };
@@ -257,17 +259,22 @@ export const SERVICE_ICONS = [
   "lyfjuendurnyjun",
 ] as const;
 
-const DEFAULT_SERVICES: Service[] = [
-  { icon: "kvef-hosti-halsbolga", label: "Kvef, hósti og hálsbólga" },
-  { icon: "thvagfaera-leggangasykingar", label: "Þvagfæra- og leggangasýkingar" },
-  { icon: "getnadarvorn", label: "Getnaðarvörn" },
-  { icon: "frjokornaofnaemi", label: "Frjókornaofnæmi" },
-  { icon: "frunsa", label: "Frunsa" },
-  { icon: "ristill", label: "Ristill" },
-  { icon: "risvandamal", label: "Risvandamál" },
-  { icon: "njalgur", label: "Njálgur" },
-  { icon: "lyfjuendurnyjun", label: "Lyfjaendurnýjun" },
-];
+/**
+ * The erindi, taken from the site's own list rather than retyped here.
+ *
+ * The hand-maintained copy had already drifted: it said "Ristill" where the site
+ * says "Ristill á húð", and it never gained Læknisvottorð. A printed card is the
+ * worst place to discover a stale list, because it cannot be corrected once it
+ * is on someone's fridge.
+ *
+ * Læknisvottorð is left out for the same reason the front page leaves it out of
+ * its erindi grid — it is an errand rather than a problem someone recognises
+ * having. The list stays editable per card in the studio, so it can be added
+ * back there without touching code.
+ */
+const DEFAULT_SERVICES: Service[] = erindi
+  .filter((e) => e.slug !== "laeknisvottord")
+  .map((e) => ({ icon: e.slug, label: e.title }));
 
 // ── Default field sets (team-reviewed HSN presentation language) ──────────
 export const DEFAULT_FRIDGE: FridgeFields = {

@@ -147,10 +147,35 @@ function ErindiPreview({ c, locale }: { c: LocaleContent; locale: Locale }) {
   );
 }
 
-function Preview({ pageKey, c, order, locale }: { pageKey: string; c: LocaleContent; order: string[]; locale: Locale }) {
+function Preview({
+  pageKey,
+  c,
+  order,
+  locale,
+  press,
+}: {
+  pageKey: string;
+  c: LocaleContent;
+  order: string[];
+  locale: Locale;
+  /** Fjölmiðlar content, so the home page's press band renders here too. It
+   *  lives on a different CMS page, and without it HomeView drops the band
+   *  entirely — which read as "the section is broken" rather than "its content
+   *  is edited elsewhere". */
+  press?: LocaleContent;
+}) {
   switch (pageKey) {
     case "home":
-      return <HomeView c={c} order={order} locale={locale} />;
+      return (
+        <HomeView
+          c={c}
+          order={order}
+          locale={locale}
+          press={pressItems(press ?? {})}
+          pressHeading={press?.front_heading}
+          pressLink={press?.front_link}
+        />
+      );
     case "thjonusta":
       return <ThjonustaView c={c} order={order} locale={locale} />;
     case "um-okkur":
@@ -808,6 +833,7 @@ export default function SiteContentEditor() {
 
   const [draft, setDraft] = useState<SiteContentBlob>({ is: {}, en: {} });
   const [publishedAt, setPublishedAt] = useState<string | null>(null);
+  const [pressBlob, setPressBlob] = useState<SiteContentBlob | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [previewLocale, setPreviewLocale] = useState<Locale>("is");
@@ -828,6 +854,7 @@ export default function SiteContentEditor() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setPressBlob(null);
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data: me } = await supabase.from("staff").select("role").eq("id", user.id).maybeSingle();
@@ -842,6 +869,13 @@ export default function SiteContentEditor() {
     } else {
       setDraft({ is: {}, en: {} });
       setPublishedAt(null);
+    }
+    // The home preview renders a band whose content is edited on the Fjölmiðlar
+    // page, so that page's draft is fetched too.
+    if (pageKey === "home") {
+      const pr = await fetch(`/api/admin/site-content/fjolmidlar`, { headers: await authHeaders() });
+      const pj = await pr.json().catch(() => ({}));
+      setPressBlob(pj.ok ? ((pj.content?.draft as SiteContentBlob) ?? {}) : {});
     }
     skipSave.current = true;
     setLoading(false);
@@ -1292,7 +1326,13 @@ export default function SiteContentEditor() {
           <div className="rounded-xl border border-slate-200 bg-white overflow-hidden" style={{ height: "calc(100vh - 180px)" }}>
             <div className="overflow-auto h-full">
               <div style={{ width: "200%", transform: "scale(0.5)", transformOrigin: "top left" }}>
-                <Preview pageKey={pageKey} c={previewContent} order={sectionOrder} locale={previewLocale} />
+                <Preview
+                  pageKey={pageKey}
+                  c={previewContent}
+                  order={sectionOrder}
+                  locale={previewLocale}
+                  press={pressBlob ? resolveContent("fjolmidlar", pressBlob, previewLocale) : undefined}
+                />
               </div>
             </div>
           </div>
