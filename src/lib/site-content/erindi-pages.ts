@@ -76,9 +76,59 @@ const DRAFT_SELFTEST: Record<string, string> = {
  * to its exclusions, and the medication list that answer shows is rendered on
  * the page too — see ERINDI_WITH_MEDS.
  *
- * Left empty for an erindi, the page falls back to the shared `refer_body`.
+ * DRAFTS, except lyfjaendurnýjun and læknisvottorð, which Mads supplied. The
+ * rest are written from what the site already publishes — the approved red-flag
+ * list and the "frumgreining" rule on /thjonusta, plus each erindi's own stated
+ * scope — and still need a doctor to sign them off before the pages go live.
  */
 const DRAFT_REFER: Record<string, string> = {
+  "kvef-hosti-halsbolga": [
+    "Öndunarerfiðleikar, andnauð eða brjóstverkur.",
+    "Erfiðleikar við að kyngja eigin munnvatni eða að opna munninn.",
+    "Hár hiti með hnakkastífleika eða húðblæðingum.",
+    "Einkenni sem hafa varað lengur en tíu daga eða versna eftir að bata var náð.",
+  ].join("\n"),
+  "thvagfaera-leggangasykingar": [
+    "Hiti, hrollur eða verkur í baki eða síðu.",
+    "Þungun eða grunur um þungun.",
+    "Endurteknar sýkingar eða einkenni sem svara ekki meðferð.",
+    "Einkenni frá þvagfærum hjá körlum — þjónustan nær til þvagfærasýkinga kvenna.",
+  ].join("\n"),
+  "getnadarvorn": [
+    "Uppsetning eða fjarlæging á lykkju eða hormónastaf, sem krefst skoðunar.",
+    "Neyðargetnaðarvörn.",
+    "Ófrjósemisaðgerðir.",
+    "Val á getnaðarvörn þegar meta þarf áhættuþætti með skoðun eða mælingu.",
+  ].join("\n"),
+  "frjokornaofnaemi": [
+    "Öndunarerfiðleikar, andnauð eða versnandi astmi.",
+    "Alvarleg ofnæmisviðbrögð, svo sem bjúgur í andliti eða hálsi.",
+    "Ofnæmispróf, afnæming eða greining á nýju ofnæmi.",
+    "Einkenni sem svara ekki ofnæmislyfjum.",
+  ].join("\n"),
+  "frunsa": [
+    "Frumgreining — fyrsta greining þarf mat læknis með skoðun. Endurtekin einkenni sem þú þekkir má afgreiða hér.",
+    "Sár eða einkenni nálægt auga.",
+    "Skert ónæmiskerfi.",
+    "Útbreidd sár eða merki um að sýking sé að versna.",
+  ].join("\n"),
+  "ristill": [
+    "Frumgreining — fyrsta greining þarf mat læknis með skoðun.",
+    "Útbrot nálægt auga eða í andliti.",
+    "Skert ónæmiskerfi.",
+    "Miklir verkir sem svara ekki verkjalyfjum.",
+  ].join("\n"),
+  "risvandamal": [
+    "Brjóstverkur eða andnauð við áreynslu.",
+    "Verkur, aflögun eða langvarandi sársaukafull stinning.",
+    "Einkenni sem koma fram skyndilega eða eftir áverka.",
+    "Þörf á blóðprufum eða skoðun áður en meðferð er valin.",
+  ].join("\n"),
+  "njalgur": [
+    "Einkenni sem hverfa ekki eftir meðferð.",
+    "Miklir kviðverkir, blóð í hægðum eða óútskýrt þyngdartap.",
+    "Þungun eða brjóstagjöf.",
+  ].join("\n"),
   lyfjuendurnyjun: [
     "Lyf sem krefjast reglulegrar eftirfylgni, t.d. blóðþrýstingslyf, hjartalyf og kvíða- og þunglyndislyf — þjónustan kemur ekki í stað reglulegs eftirlits hjá heimilislækni.",
     "Fjölnota lyfseðlar — einungis er hægt að fá einfaldan lyfseðil.",
@@ -124,7 +174,14 @@ export const ERINDI_FIELDS: SiteField[] = [
   { key: "advice_note", label: "Fyrirvari undir ráðleggingum", group: "Sameiginlegt", type: "textarea" },
   { key: "process_heading", label: "Fyrirsögn — ferlið", group: "Sameiginlegt", type: "text" },
   { key: "refer_heading", label: "Fyrirsögn — hvenær á ekki við", group: "Sameiginlegt", type: "text" },
-  { key: "refer_body", label: "Texti — hvenær á ekki við", group: "Sameiginlegt", type: "textarea" },
+  {
+    key: "note_heading",
+    label: "Fyrirsögn — almennur fyrirvari",
+    group: "Sameiginlegt",
+    type: "text",
+    help: "Gula spjaldið neðst á hverri erindissíðu, fyrir ofan ákallið. Sama á öllum síðum.",
+  },
+  { key: "note_body", label: "Texti — almennur fyrirvari", group: "Sameiginlegt", type: "textarea" },
   { key: "cta_heading", label: "Ákall — fyrirsögn", group: "Sameiginlegt", type: "heading" },
   { key: "cta_body", label: "Ákall — texti", group: "Sameiginlegt", type: "textarea" },
   { key: "cta_label", label: "Ákall — hnappur", group: "Sameiginlegt", type: "text" },
@@ -192,8 +249,9 @@ export const ERINDI_DEFAULTS_IS: LocaleContent = {
     "Ráðleggingarnar hér að ofan eru almennar og koma ekki í stað læknisráðgjafar. Leitaðu til læknis ef einkenni versna eða ganga ekki yfir.",
   process_heading: "Svona virkar það",
   refer_heading: "Hvenær á þjónustan ekki við?",
+  note_heading: "Athugaðu",
   // Verbatim from the published /thjonusta "Hvenær hentar ekki" band.
-  refer_body:
+  note_body:
     "Fjarlækningar leysa einföld og afmörkuð erindi. Sum erindi þarfnast skoðunar, rannsóknar eða bráðaþjónustu — og þeim er vísað í annan farveg. Í bráðatilfellum hringdu í 112.",
   cta_heading: "Sendu inn erindi",
   cta_body:
