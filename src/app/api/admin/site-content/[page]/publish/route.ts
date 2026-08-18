@@ -29,7 +29,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ page: string }
 
   // Tell IndexNow the page changed. Best-effort: a failure here must not make
   // a successful publish look like it failed.
-  const indexnow = await pingIndexNow(urlsForPage(page));
+  const indexnow = await pingIndexNow(await urlsForPage(page));
 
   return NextResponse.json({ ok: true, published_at: data.published_at, indexnow: indexnow.ok });
 }
