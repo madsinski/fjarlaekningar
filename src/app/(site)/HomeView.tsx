@@ -262,89 +262,86 @@ export default function HomeView({
     // consolation prize for people who aren't ready to book, so asking for
     // an email first would interrupt the path to the actual conversion.
     // Social proof, and the only place on the front page where someone other
-    // than us is doing the talking — so it gets a real band rather than the
-    // three-headline strip it used to be: the newest piece leads with its photo
-    // and our summary, the rest follow as compact rows. Nothing renders at all
-    // when there is no press.
+    // than us is doing the talking.
+    //
+    // Built to the same pattern as every other band — section heading, then
+    // white bordered cards — rather than the self-contained panel with its own
+    // gradient header bar it used to be, which read as a widget dropped onto
+    // the page. The outlet's name is the credibility, so it leads each item;
+    // the newest piece gets the photo and the summary, the rest stay compact.
     press: press.length ? (
-      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-wrap items-end justify-between gap-4 bg-gradient-to-r from-brand-cyan-subtle to-white px-6 py-5 sm:px-8">
-          <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">
+      <>
+        <div className="mb-10 flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
+          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">
             {pressHeading || t.pressHeading}
           </h2>
           <Link
             href={href("/fjolmidlar")}
-            className="text-sm font-semibold text-brand-cyan-dark hover:underline"
+            className="text-sm font-semibold text-[var(--primary-dark)] hover:underline"
           >
-            {pressLink || t.pressLink} →
+            {pressLink || t.pressLink} <span aria-hidden>→</span>
           </Link>
         </div>
 
-        <a
-          href={press[0].url}
-          target="_blank"
-          rel="noopener"
-          className="group grid border-t border-slate-100 sm:grid-cols-5"
-        >
-          {press[0].image && (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={press[0].image}
-              alt={press[0].title}
-              width={1600}
-              height={1085}
-              className="aspect-[16/10] w-full object-cover object-top sm:col-span-2 sm:aspect-auto sm:h-full"
-            />
-          )}
-          {/* Centred against the photo so the two columns read as one unit
-              rather than text hanging from the top of a taller image. */}
-          <div
-            className={`flex flex-col justify-center p-6 sm:p-8 ${press[0].image ? "sm:col-span-3" : "sm:col-span-5"}`}
+        <div className="grid gap-6 lg:grid-cols-12">
+          <a
+            href={press[0].url}
+            target="_blank"
+            rel="noopener"
+            className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition-colors hover:border-brand-cyan-muted lg:col-span-7"
           >
-            <PressMeta item={press[0]} locale={locale} />
-            <p className="mt-2.5 text-lg font-bold leading-snug text-slate-900 group-hover:text-brand-cyan-dark sm:text-xl">
-              {press[0].title}
-            </p>
-            {press[0].summary && (
-              <p className="mt-2.5 line-clamp-3 text-sm leading-relaxed text-slate-600">
-                {press[0].summary}
-              </p>
+            {press[0].image && (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={press[0].image}
+                alt={press[0].title}
+                width={1600}
+                height={1085}
+                className="aspect-[16/9] w-full object-cover object-top"
+              />
             )}
-            <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-cyan-dark">
-              {t.readAt} {press[0].outlet}
-              <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>
-            </span>
-          </div>
-        </a>
+            <div className="p-6 sm:p-8">
+              <PressMeta item={press[0]} locale={locale} />
+              <p className="mt-3 text-xl font-bold leading-snug text-slate-900 group-hover:text-brand-cyan-dark">
+                {press[0].title}
+              </p>
+              {press[0].summary && (
+                <p className="mt-3 line-clamp-3 text-slate-600 leading-relaxed">{press[0].summary}</p>
+              )}
+            </div>
+          </a>
 
-        {press.length > 1 && (
-          <ul className="divide-y divide-slate-100 border-t border-slate-100">
-            {press.slice(1, 3).map((p) => (
-              <li key={p.url}>
-                <a
-                  href={p.url}
-                  target="_blank"
-                  rel="noopener"
-                  className="group flex items-start justify-between gap-6 px-6 py-5 hover:bg-slate-50 sm:px-8"
-                >
-                  <div className="min-w-0">
-                    <PressMeta item={p} locale={locale} />
-                    <p className="mt-1.5 font-semibold leading-snug text-slate-900 group-hover:text-brand-cyan-dark">
-                      {p.title}
-                    </p>
-                  </div>
-                  <span
-                    aria-hidden
-                    className="mt-1 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-cyan"
+          {press.length > 1 && (
+            /* self-start so the shorter column hugs its two items instead of
+               stretching to the height of the photo beside it. */
+            <ul className="divide-y divide-slate-100 self-start rounded-2xl border border-slate-200 bg-white lg:col-span-5">
+              {press.slice(1, 3).map((p) => (
+                <li key={p.url}>
+                  <a
+                    href={p.url}
+                    target="_blank"
+                    rel="noopener"
+                    className="group flex h-full items-start justify-between gap-5 p-6 sm:p-8"
                   >
-                    ↗
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+                    <div className="min-w-0">
+                      <PressMeta item={p} locale={locale} />
+                      <p className="mt-3 font-semibold leading-snug text-slate-900 group-hover:text-brand-cyan-dark">
+                        {p.title}
+                      </p>
+                    </div>
+                    <span
+                      aria-hidden
+                      className="mt-1 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-cyan"
+                    >
+                      ↗
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </>
     ) : null,
 
     cta: (
