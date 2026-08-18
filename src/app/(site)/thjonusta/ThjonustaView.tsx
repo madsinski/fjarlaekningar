@@ -393,7 +393,7 @@ export default function ThjonustaView({
                 <div className="flex items-center gap-4 pb-5 mb-6 border-b border-slate-200">
                   {u.logo && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={u.logo} alt="" width={56} height={56} className="w-14 h-14 shrink-0 object-contain" />
+                    <img src={u.logo} alt={`Merki ${u.name}`} width={56} height={56} className="w-14 h-14 shrink-0 object-contain" />
                   )}
                   <div>
                     <h3 className="text-lg font-bold text-slate-900">{u.name}</h3>
