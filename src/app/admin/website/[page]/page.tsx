@@ -17,7 +17,8 @@ import IconPicker from "../IconPicker";
 
 import ErindiView, { erindiLines } from "@/app/(site)/erindi/[slug]/ErindiView";
 import { erindi as ERINDI_LIST } from "@/erindi";
-import { erindiKey } from "@/lib/site-content/erindi-pages";
+import { ERINDI_WITH_MEDS, erindiKey } from "@/lib/site-content/erindi-pages";
+import { ui } from "@/lib/site-content/ui-strings";
 import { pressItems } from "@/lib/site-content/fjolmidlar";
 import { SEO_LIMITS } from "@/lib/site-content/seo";
 import PressList from "@/app/(site)/fjolmidlar/PressList";
@@ -107,7 +108,28 @@ function SeoPreview({ c }: { c: Record<string, string> }) {
   );
 }
 
-function ErindiPreview({ c, locale }: { c: LocaleContent; locale: Locale }) {
+/** The four medication categories, for the erindi that shows them. */
+function medsFor(slug: string, t?: LocaleContent) {
+  if (!t || !ERINDI_WITH_MEDS.includes(slug)) return [];
+  return [
+    { title: t.meds_a_title, items: t.meds_a_items },
+    { title: t.meds_b_title, items: t.meds_b_items },
+    { title: t.meds_c_title, items: t.meds_c_items },
+    { title: t.meds_d_title, items: t.meds_d_items },
+  ].filter((m) => m.title);
+}
+
+function ErindiPreview({
+  c,
+  locale,
+  thjonusta,
+}: {
+  c: LocaleContent;
+  locale: Locale;
+  /** Þjónusta content — the medication list lives there and is shown on the
+   *  lyfjaendurnýjun page, so the preview has to read it from the same place. */
+  thjonusta?: LocaleContent;
+}) {
   const [slug, setSlug] = useState(ERINDI_LIST[0].slug);
   const item = ERINDI_LIST.find((e) => e.slug === slug)!;
   const title = locale === "en" ? item.titleEn : item.title;
@@ -141,28 +163,39 @@ function ErindiPreview({ c, locale }: { c: LocaleContent; locale: Locale }) {
           slug: e.slug,
           title: locale === "en" ? e.titleEn : e.title,
         }))}
+        locale={locale}
+        meds={medsFor(slug, thjonusta)}
+        medsIntro={medsFor(slug, thjonusta).length ? ui(locale).medsIntro : ""}
+        medsNote={thjonusta?.meds_note ?? ""}
         linked={false}
       />
     </div>
   );
 }
 
+/**
+ * Pages whose preview needs a SECOND page's content to render truthfully.
+ * Without it the preview silently drops a whole section — which reads as "this
+ * is broken" rather than "its content is edited elsewhere".
+ */
+export const PREVIEW_SIBLING: Record<string, string> = {
+  home: "fjolmidlar",   // the press band
+  erindi: "thjonusta",  // the medication list on lyfjaendurnýjun
+};
+
 function Preview({
   pageKey,
   c,
   order,
   locale,
-  press,
+  sibling,
 }: {
   pageKey: string;
   c: LocaleContent;
   order: string[];
   locale: Locale;
-  /** Fjölmiðlar content, so the home page's press band renders here too. It
-   *  lives on a different CMS page, and without it HomeView drops the band
-   *  entirely — which read as "the section is broken" rather than "its content
-   *  is edited elsewhere". */
-  press?: LocaleContent;
+  /** Resolved content of PREVIEW_SIBLING[pageKey], when there is one. */
+  sibling?: LocaleContent;
 }) {
   switch (pageKey) {
     case "home":
@@ -171,9 +204,9 @@ function Preview({
           c={c}
           order={order}
           locale={locale}
-          press={pressItems(press ?? {})}
-          pressHeading={press?.front_heading}
-          pressLink={press?.front_link}
+          press={pressItems(sibling ?? {})}
+          pressHeading={sibling?.front_heading}
+          pressLink={sibling?.front_link}
         />
       );
     case "thjonusta":
@@ -183,7 +216,7 @@ function Preview({
     case "hafa-samband":
       return <HafaSambandView c={c} order={order} />;
     case "erindi":
-      return <ErindiPreview c={c} locale={locale} />;
+      return <ErindiPreview c={c} locale={locale} thjonusta={sibling} />;
     case "fjolmidlar": {
       const items = pressItems(c);
       return (
@@ -833,7 +866,7 @@ export default function SiteContentEditor() {
 
   const [draft, setDraft] = useState<SiteContentBlob>({ is: {}, en: {} });
   const [publishedAt, setPublishedAt] = useState<string | null>(null);
-  const [pressBlob, setPressBlob] = useState<SiteContentBlob | null>(null);
+  const [siblingBlob, setSiblingBlob] = useState<SiteContentBlob | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [previewLocale, setPreviewLocale] = useState<Locale>("is");
@@ -854,7 +887,7 @@ export default function SiteContentEditor() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    setPressBlob(null);
+    setSiblingBlob(null);
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data: me } = await supabase.from("staff").select("role").eq("id", user.id).maybeSingle();
@@ -870,12 +903,12 @@ export default function SiteContentEditor() {
       setDraft({ is: {}, en: {} });
       setPublishedAt(null);
     }
-    // The home preview renders a band whose content is edited on the Fjölmiðlar
-    // page, so that page's draft is fetched too.
-    if (pageKey === "home") {
-      const pr = await fetch(`/api/admin/site-content/fjolmidlar`, { headers: await authHeaders() });
+    // Some previews render a section whose content is edited on another page.
+    const siblingKey = PREVIEW_SIBLING[pageKey];
+    if (siblingKey) {
+      const pr = await fetch(`/api/admin/site-content/${siblingKey}`, { headers: await authHeaders() });
       const pj = await pr.json().catch(() => ({}));
-      setPressBlob(pj.ok ? ((pj.content?.draft as SiteContentBlob) ?? {}) : {});
+      setSiblingBlob(pj.ok ? ((pj.content?.draft as SiteContentBlob) ?? {}) : {});
     }
     skipSave.current = true;
     setLoading(false);
@@ -1331,7 +1364,11 @@ export default function SiteContentEditor() {
                   c={previewContent}
                   order={sectionOrder}
                   locale={previewLocale}
-                  press={pressBlob ? resolveContent("fjolmidlar", pressBlob, previewLocale) : undefined}
+                  sibling={
+                    siblingBlob && PREVIEW_SIBLING[pageKey]
+                      ? resolveContent(PREVIEW_SIBLING[pageKey], siblingBlob, previewLocale)
+                      : undefined
+                  }
                 />
               </div>
             </div>

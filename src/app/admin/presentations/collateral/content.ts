@@ -289,7 +289,7 @@ export const DEFAULT_FRIDGE: FridgeFields = {
   servicesTitle: "Við getum aðstoðað með:",
   services: DEFAULT_SERVICES,
   footerNote: "Geymdu kortið á ísskápnum.",
-  backNote: "Alvarlegum einkennum er vísað í annan farveg.",
+  backNote: "Ef þú ert með alvarleg einkenni þarft þú að leita í hefðbundna læknisþjónustu.",
 };
 
 export const DEFAULT_POSTER: PosterFields = {

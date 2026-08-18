@@ -314,7 +314,7 @@ function ServicesFace({ f, hero }: { f: FridgeFields; hero: boolean }) {
             padding: hero ? "5mm 8mm 0" : "0 8mm",
             display: "flex",
             flexDirection: "column",
-            gap: hero ? "2.4mm" : "2.6mm",
+            gap: hero ? "2.4mm" : "2.1mm",
           }}
         >
           {f.services.map((s, i) => (
@@ -340,21 +340,25 @@ function ServicesFace({ f, hero }: { f: FridgeFields; hero: boolean }) {
         </div>
       )}
 
+      {/* The one thing on this side that must not be skimmed past. It was a
+          grey footnote beside the web address; the address is on the other side
+          in 30px, so this gets the space instead. */}
       <div style={{ marginTop: "auto", padding: "5mm 8mm 8mm" }}>
         <div
           style={{
-            borderTop: "1px solid var(--line)",
-            paddingTop: "4mm",
             display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            gap: "4mm",
+            gap: "3mm",
+            alignItems: "flex-start",
+            border: "1px solid #E9C46A",
+            background: "#FDF6E3",
+            borderRadius: "2.5mm",
+            padding: "3.5mm",
           }}
         >
-          <p style={{ fontSize: "10.5px", color: "var(--muted)", lineHeight: 1.35, margin: 0 }}>{f.backNote}</p>
-          <span className="grad-text" style={{ fontSize: "12px", fontWeight: 800, whiteSpace: "nowrap" }}>
-            {f.url}
-          </span>
+          <span aria-hidden style={{ fontSize: "13px", lineHeight: 1.1, color: "#B4801A" }}>⚠</span>
+          <p style={{ fontSize: "10.5px", fontWeight: 600, color: "#6B4E16", lineHeight: 1.35, margin: 0 }}>
+            {f.backNote}
+          </p>
         </div>
       </div>
     </FridgeCardSheet>
