@@ -8,6 +8,8 @@ import { HOME_SECTIONS } from "@/lib/site-content/home";
 import { resolveOrder, type LocaleContent } from "@/lib/site-content/types";
 import { ui } from "@/lib/site-content/ui-strings";
 import { localeHref } from "@/lib/locale";
+import { PressMeta } from "./fjolmidlar/PressList";
+import type { PressItem } from "@/lib/site-content/fjolmidlar";
 
 // Presentational Home page. Renders from a resolved content map `c` so the same
 // component powers the public page (server) and the CMS live preview (client).
@@ -30,8 +32,8 @@ export default function HomeView({
   /** Locale for the static erindi list — CMS strings in `c` are already
    *  resolved, but the erindi are code, so the view must pick the language. */
   locale?: "is" | "en";
-  /** Newest press coverage; empty means the strip does not render at all. */
-  press?: { title: string; outlet: string; date: string; url: string }[];
+  /** Newest press coverage first; empty means the band does not render at all. */
+  press?: PressItem[];
   /** Labels live on the Fjölmiðlar CMS page, next to the list itself. */
   pressHeading?: string;
   pressLink?: string;
@@ -259,30 +261,89 @@ export default function HomeView({
     // Deliberately placed BEFORE the newsletter: the newsletter is the
     // consolation prize for people who aren't ready to book, so asking for
     // an email first would interrupt the path to the actual conversion.
-    // Deliberately a quiet strip, not a full band: three headlines as social
-    // proof, then out to the full list. Nothing renders when there is no press.
+    // Social proof, and the only place on the front page where someone other
+    // than us is doing the talking — so it gets a real band rather than the
+    // three-headline strip it used to be: the newest piece leads with its photo
+    // and our summary, the rest follow as compact rows. Nothing renders at all
+    // when there is no press.
     press: press.length ? (
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 sm:p-10">
-        <div className="flex items-end justify-between gap-6 flex-wrap">
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500">
-            {pressHeading || "Fjallað um okkur"}
+      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-wrap items-end justify-between gap-4 bg-gradient-to-r from-brand-cyan-subtle to-white px-6 py-5 sm:px-8">
+          <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">
+            {pressHeading || t.pressHeading}
           </h2>
-          <Link href={href("/fjolmidlar")} className="text-sm font-semibold text-brand-cyan-dark hover:underline">
-            {pressLink || "Sjá alla umfjöllun"} →
+          <Link
+            href={href("/fjolmidlar")}
+            className="text-sm font-semibold text-brand-cyan-dark hover:underline"
+          >
+            {pressLink || t.pressLink} →
           </Link>
         </div>
-        <ul className="mt-6 grid gap-x-8 gap-y-5 sm:grid-cols-3">
-          {press.slice(0, 3).map((p) => (
-            <li key={p.url}>
-              <a href={p.url} target="_blank" rel="noopener" className="group block">
-                <span className="text-xs font-semibold uppercase tracking-wider text-brand-cyan-dark">{p.outlet}</span>
-                <p className="mt-1.5 font-semibold text-slate-900 leading-snug group-hover:text-brand-cyan-dark">
-                  {p.title}
-                </p>
-              </a>
-            </li>
-          ))}
-        </ul>
+
+        <a
+          href={press[0].url}
+          target="_blank"
+          rel="noopener"
+          className="group grid border-t border-slate-100 sm:grid-cols-5"
+        >
+          {press[0].image && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={press[0].image}
+              alt={press[0].title}
+              width={1600}
+              height={1085}
+              className="aspect-[16/10] w-full object-cover object-top sm:col-span-2 sm:aspect-auto sm:h-full"
+            />
+          )}
+          {/* Centred against the photo so the two columns read as one unit
+              rather than text hanging from the top of a taller image. */}
+          <div
+            className={`flex flex-col justify-center p-6 sm:p-8 ${press[0].image ? "sm:col-span-3" : "sm:col-span-5"}`}
+          >
+            <PressMeta item={press[0]} locale={locale} />
+            <p className="mt-2.5 text-lg font-bold leading-snug text-slate-900 group-hover:text-brand-cyan-dark sm:text-xl">
+              {press[0].title}
+            </p>
+            {press[0].summary && (
+              <p className="mt-2.5 line-clamp-3 text-sm leading-relaxed text-slate-600">
+                {press[0].summary}
+              </p>
+            )}
+            <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-cyan-dark">
+              {t.readAt} {press[0].outlet}
+              <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>
+            </span>
+          </div>
+        </a>
+
+        {press.length > 1 && (
+          <ul className="divide-y divide-slate-100 border-t border-slate-100">
+            {press.slice(1, 3).map((p) => (
+              <li key={p.url}>
+                <a
+                  href={p.url}
+                  target="_blank"
+                  rel="noopener"
+                  className="group flex items-start justify-between gap-6 px-6 py-5 hover:bg-slate-50 sm:px-8"
+                >
+                  <div className="min-w-0">
+                    <PressMeta item={p} locale={locale} />
+                    <p className="mt-1.5 font-semibold leading-snug text-slate-900 group-hover:text-brand-cyan-dark">
+                      {p.title}
+                    </p>
+                  </div>
+                  <span
+                    aria-hidden
+                    className="mt-1 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-cyan"
+                  >
+                    ↗
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     ) : null,
 
