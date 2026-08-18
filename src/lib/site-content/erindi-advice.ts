@@ -4,6 +4,8 @@
 //
 // Mini-markup, so the CMS stays a plain textarea:
 //   "# Kafli"      section (used where one erindi covers several conditions)
+//   "++ Góð ráð"    green do-card; pairs with the "--" heading right after it
+//   "-- Varast"     red don't-card — the two render side by side
 //   "## Fyrirsögn"  sub-heading
 //   "!! Varúð…"     warning box
 //   "- atriði"      bullet
@@ -100,11 +102,11 @@ Roði myndast og fyllist af vökva. Blöðrurnar valda verkjum og kláða.
 Blöðrurnar opnast, vökvinn rennur út og hrúður byrjar að myndast.
 - Vika 3-4 — Bati
 Útbrotin hverfa yfirleitt á þessu tímabili.
-## Góð ráð
+++ Góð ráð
 - Þvoðu þér um hendur með sápu ef þú snertir útbrotin.
 - Haltu útbrotum hreinum og þurrum til að fyrirbyggja sýkingu.
 - Notaðu kalda bakstra til að lina einkenni.
-## Varast skal
+-- Varast skal
 - Forðastu nálægð við barnshafandi konur og ungabörn á meðan sár eru ógróin.
 - Forðastu samskipti við fólk með skert ónæmiskerfi (t.d. í krabbameinsmeðferð).
 ## Leiðbeiningar um verkjastillingu
@@ -125,11 +127,11 @@ Veiran sem veldur bæði hlaupabólu og ristli.
   "frunsa": `Frunsa (áblástur) er algeng veirusýking sem lýsir sér sem vökvafylltar blöðrur, oftast á eða við varir.
 ## Hvað er frunsa?
 Frunsa er af völdum herpes simplex veirunnar. Veiran dvelur í líkamanum alla ævi eftir smit og getur brotist út þegar ónæmiskerfið er undir álagi, svo sem við aðrar sýkingar eða streitu. Einkenni byrja oft með kláða eða eymslum degi áður en blöðrurnar myndast.
-## Góð ráð
+++ Góð ráð
 - Þvo hendur reglulega með sápu ef þú snertir frunsuna
 - Nota sólarvörn á frunsuna ef þú ert úti í sól
 - Borða holla fæðu, hreyfa sig og sofa vel til að styrkja ónæmiskerfið
-## Varast skal
+-- Varast skal
 - Ekki kroppa í sárin, láttu þau gróa í friði
 - Forðast að deila mataráhöldum eða kyssa aðra á meðan smitgluggi er opinn
 - Forðast súra ávexti (t.d. sítrónu) og saltan mat sem getur ert sárin
@@ -149,11 +151,11 @@ Annað heiti yfir frunsu eða herpes sýkingu á vörum.
 Tímabilið frá því að fyrstu einkenni koma þar til sár hafa lokast með hrúðri.`,
   "thvagfaera-leggangasykingar": `# Sveppasýking í leggöngum
 Hér eru almennar ráðleggingar og fyrirbyggjandi ráð um sveppasýkingu í leggöngum.
-## Góð ráð
+++ Góð ráð
 - Gæta að hreinlæti og halda kynfærasvæði þurru og hreinu
 - Leyfa svæðinu að anda með því að forðast þröngar buxur og nærbuxur
 - Draga úr neyslu á geri, áfengi, sykri og mjólkurvörum
-## Varast ber
+-- Varast ber
 - Sterk ilmefni í sápum, snyrtivörum og tíðarvörum
 - Óvarið kynlíf með mismunandi einstaklingum
 - Sýklalyf geta raskað bakteríuflóru og gefið tækifæri fyrir sveppasýkingu
@@ -179,11 +181,11 @@ Hér eru almennar ráðleggingar og fyrirbyggjandi ráð um bakteríusýkingu í
 - Nota vörur sem styðja við náttúrulega flóru ef þörf krefur.
 ## Hvað getur raskað jafnvæginu?
 Ýmsir þættir geta haft áhrif á bakteríuflóru legganga og aukið líkur á sýkingu:
-## Góð ráð
+++ Góð ráð
 - Nota vörur sem styðja við eðlilegt sýrustig
 - Gæta að hreinlæti án þess að nota sterka sápu
 - Nota smokkinn ef skipt er oft um bólfélaga
-## Varast skal
+-- Varast skal
 - Sterk ilmefni í sápum, snyrtivörum og tíðarvörum
 - Óþarfa notkun á sýklalyfjum
 - Óvarið kynlíf með mörgum einstaklingum
@@ -233,13 +235,13 @@ Safn náttúrulegra og gagnlegra baktería sem finnast í líkamanum.`,
 - Forðastu aðstæður sem kalla fram mikil einkenni.
 - Skolaðu nef og augu með saltvatni áður en ofnæmislyf eru notuð.
 - Gættu vel að hreinlæti og rykstjórnun á heimilinu.
-## Góð ráð
+++ Góð ráð
 - Loftaðu vel út og ryksugaðu reglulega.
 - Farðu í sturtu og skiptu um föt þegar mikið er um frjókorn úti.
 - Skiptu reglulega um koddaver.
 - Þvoðu og þurrkaðu föt innandyra.
 - Þurrkaðu af gæludýrum með blautum klút þegar þau koma inn.
-## Forðastu
+-- Forðastu
 - Forðastu garðyrkju (eða notaðu grímu/hlífðargleraugu).
 - Ekki hafa fersk blóm inni á heimilinu.
 - Takmarkaðu notkun á ilmvatni og rakspíra.

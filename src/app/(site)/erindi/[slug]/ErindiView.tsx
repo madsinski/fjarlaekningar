@@ -36,12 +36,19 @@ export function erindiParagraphs(v?: string): string[] {
   return (v ?? "").split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
 }
 
+export type AdviceItem = { text: string; detail: string[] };
+export type AdviceCard = { title: string; items: AdviceItem[] };
+
 export type AdviceBlock =
   | { kind: "h1"; text: string }
   | { kind: "h"; text: string }
   | { kind: "warn"; text: string }
   | { kind: "p"; text: string }
-  | { kind: "li"; text: string; detail: string[] };
+  | { kind: "li"; text: string; detail: string[] }
+  | { kind: "do"; text: string }
+  | { kind: "dont"; text: string }
+  /** A do/don't pair, rendered as two cards side by side. */
+  | { kind: "cards"; good: AdviceCard; bad: AdviceCard };
 
 /**
  * "# x" section, "## x" sub-heading, "!! x" warning, "- x" bullet, anything else
@@ -66,7 +73,9 @@ export function adviceBlocks(v?: string): AdviceBlock[] {
       if (out[out.length - 1]?.kind === "li") out.push({ kind: "p", text: "" });
       continue;
     }
-    if (l.startsWith("## ")) out.push({ kind: "h", text: l.slice(3).trim() });
+    if (l.startsWith("++ ")) out.push({ kind: "do", text: l.slice(3).trim() });
+    else if (l.startsWith("-- ")) out.push({ kind: "dont", text: l.slice(3).trim() });
+    else if (l.startsWith("## ")) out.push({ kind: "h", text: l.slice(3).trim() });
     else if (l.startsWith("# ")) out.push({ kind: "h1", text: l.slice(2).trim() });
     else if (l.startsWith("!! ")) out.push({ kind: "warn", text: l.slice(3).trim() });
     else if (l.startsWith("- ")) out.push({ kind: "li", text: l.slice(2).trim(), detail: [] });
@@ -76,7 +85,54 @@ export function adviceBlocks(v?: string): AdviceBlock[] {
       else out.push({ kind: "p", text: l });
     }
   }
-  return out.filter((b) => b.kind !== "p" || b.text);
+  return foldCards(out.filter((b) => b.kind !== "p" || b.text));
+}
+
+/**
+ * Fold a "++ do" heading and the "-- don't" heading after it into one paired
+ * block, each with the bullets that followed it. Advice of the shape "here is
+ * what helps / here is what makes it worse" is read by comparison, and two
+ * stacked lists of identical grey bullets make the reader do that work
+ * themselves. A "++" with no "--" after it degrades to an ordinary heading.
+ */
+function foldCards(blocks: AdviceBlock[]): AdviceBlock[] {
+  const out: AdviceBlock[] = [];
+  const take = (from: number): [AdviceItem[], number] => {
+    const items: AdviceItem[] = [];
+    let i = from;
+    for (; i < blocks.length; i++) {
+      const b = blocks[i];
+      if (b.kind !== "li") break;
+      items.push({ text: b.text, detail: b.detail });
+    }
+    return [items, i];
+  };
+
+  for (let i = 0; i < blocks.length; i++) {
+    const b = blocks[i];
+    if (b.kind === "do") {
+      const [goodItems, afterGood] = take(i + 1);
+      const next = blocks[afterGood];
+      if (next?.kind === "dont") {
+        const [badItems, afterBad] = take(afterGood + 1);
+        out.push({
+          kind: "cards",
+          good: { title: b.text, items: goodItems },
+          bad: { title: next.text, items: badItems },
+        });
+        i = afterBad - 1;
+        continue;
+      }
+      out.push({ kind: "h", text: b.text });
+      continue;
+    }
+    if (b.kind === "dont") {
+      out.push({ kind: "h", text: b.text });
+      continue;
+    }
+    out.push(b);
+  }
+  return out;
 }
 
 /** "Heiti | /mynd.webp | Lýsing" per line. */
@@ -90,6 +146,51 @@ export function selfTests(v?: string): { title: string; img?: string; body: stri
 
 export function erindiLines(v?: string): string[] {
   return (v ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
+}
+
+/**
+ * One half of a do/don't pair. The mark in the corner carries the meaning at a
+ * glance; the colour alone would not, for a reader who cannot distinguish red
+ * from green, which is why the tick and the cross are there rather than a
+ * coloured border on its own.
+ */
+function AdviceCardBox({ card, tone }: { card: AdviceCard; tone: "good" | "bad" }) {
+  const good = tone === "good";
+  return (
+    <div
+      className={`rounded-2xl border p-5 sm:p-6 ${
+        good ? "border-emerald-200 bg-emerald-50/60" : "border-rose-200 bg-rose-50/60"
+      }`}
+    >
+      <span
+        aria-hidden
+        className={`flex h-8 w-8 items-center justify-center rounded-full text-base font-bold text-white ${
+          good ? "bg-emerald-500" : "bg-rose-500"
+        }`}
+      >
+        {good ? "✓" : "✕"}
+      </span>
+      <h3 className={`mt-3 text-base font-bold ${good ? "text-emerald-900" : "text-rose-900"}`}>
+        {card.title}
+      </h3>
+      <ul className="mt-3 space-y-2.5">
+        {card.items.map((it) => (
+          <li key={it.text} className="flex gap-2.5 leading-relaxed">
+            <span
+              aria-hidden
+              className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${good ? "bg-emerald-500" : "bg-rose-400"}`}
+            />
+            <div className={good ? "text-emerald-950" : "text-rose-950"}>
+              <span className={it.detail.length ? "font-semibold" : undefined}>{it.text}</span>
+              {it.detail.map((d, j) => (
+                <p key={j} className="mt-1 text-slate-600">{d}</p>
+              ))}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 export default function ErindiView({
@@ -215,7 +316,12 @@ export default function ErindiView({
           <h2 className="text-xl font-bold text-slate-900">{c.advice_heading}</h2>
           <div className="mt-4 space-y-3">
             {adviceBlocks(advice).map((b, i) =>
-              b.kind === "h1" ? (
+              b.kind === "cards" ? (
+                <div key={i} className="grid gap-4 pt-2 sm:grid-cols-2">
+                  <AdviceCardBox card={b.good} tone="good" />
+                  <AdviceCardBox card={b.bad} tone="bad" />
+                </div>
+              ) : b.kind === "h1" ? (
                 <h3
                   key={i}
                   className="mt-8 border-t border-slate-200 pt-6 text-lg font-bold text-slate-900 first:mt-0 first:border-0 first:pt-0"

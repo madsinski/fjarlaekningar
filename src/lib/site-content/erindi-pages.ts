@@ -160,7 +160,8 @@ export const ERINDI_FIELDS: SiteField[] = [
       type: "textarea",
       help:
         "SKRIFAÐ OG YFIRFARIÐ AF LÆKNI. Snið: \"# Kafli\" = aðalkafli, \"## Fyrirsögn\" = undirfyrirsögn, \"!! Varúð…\" = viðvörunarkassi, " +
-        "\"- atriði\" = punktur. Lína beint undir punkti er skýring hans og birtist með honum; auð lína slítur tenginguna.",
+        "\"- atriði\" = punktur. Lína beint undir punkti er skýring hans og birtist með honum; auð lína slítur tenginguna. " +
+        "\"++ Góð ráð\" og \"-- Varast skal\" hlið við hlið verða að grænu og rauðu spjaldi með haki og krossi.",
     },
     {
       key: `${erindiKey(e.slug)}_suitable`,
