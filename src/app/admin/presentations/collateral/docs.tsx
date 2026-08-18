@@ -239,8 +239,15 @@ function QrFace({ f, onDark }: { f: FridgeFields; onDark: boolean }) {
   );
 }
 
-/** The ten erindi, as the whole face. Answers "can they help with MY problem?" */
+/**
+ * The erindi, as the whole face. `hero` is the "list" FRONT (a header above a
+ * tighter list); everything else is the back, where the layout is chosen per
+ * card — see FridgeBackLayout.
+ */
 function ServicesFace({ f, hero }: { f: FridgeFields; hero: boolean }) {
+  const back = f.backLayout ?? "cards";
+  const cols = !hero && back === "grid" ? 3 : !hero && back === "cards" ? 2 : 1;
+
   return (
     <FridgeCardSheet>
       {hero ? (
@@ -251,41 +258,88 @@ function ServicesFace({ f, hero }: { f: FridgeFields; hero: boolean }) {
           </h1>
         </div>
       ) : (
-        <div style={{ padding: "9mm 8mm 5mm" }}>
-          <h2 style={{ fontSize: "13px", lineHeight: 1.2 }}>{f.servicesTitle}</h2>
+        <div style={{ padding: "10mm 8mm 6mm" }}>
+          <h2 style={{ fontSize: "15px", lineHeight: 1.2 }}>{f.servicesTitle}</h2>
         </div>
       )}
-      {/* On the front the list shares the card with a header, so it is set a
-          step smaller — ten rows at back-of-card size do not fit above one. */}
-      <div
-        style={{
-          padding: hero ? "5mm 8mm 0" : "0 8mm",
-          display: "flex",
-          flexDirection: "column",
-          gap: hero ? "2.4mm" : "3.8mm",
-        }}
-      >
-        {f.services.map((s, i) => (
-          <div key={`${s.icon}-${i}`} style={{ display: "flex", alignItems: "center", gap: hero ? "2.5mm" : "3mm" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={ico(s.icon)}
-              alt=""
-              style={{ width: hero ? "5.5mm" : "7mm", height: hero ? "5.5mm" : "7mm", flexShrink: 0 }}
-            />
-            <span
+
+      {cols > 1 ? (
+        // Cards fill the width the single column left empty, and the icon sits
+        // above the label so a long erindi name gets the whole card to wrap in.
+        <div
+          style={{
+            padding: "0 8mm",
+            display: "grid",
+            gridTemplateColumns: `repeat(${cols}, 1fr)`,
+            gap: cols === 3 ? "2.5mm" : "3mm",
+          }}
+        >
+          {f.services.map((s, i) => (
+            <div
+              key={`${s.icon}-${i}`}
               style={{
-                fontSize: hero ? "10px" : "11.5px",
-                fontWeight: 700,
-                color: "var(--ink)",
-                lineHeight: 1.2,
+                display: "flex",
+                flexDirection: cols === 3 ? "column" : "row",
+                alignItems: "center",
+                gap: cols === 3 ? "1.5mm" : "2.5mm",
+                textAlign: cols === 3 ? "center" : "left",
+                border: "1px solid var(--line)",
+                borderRadius: "2.5mm",
+                background: "var(--wash)",
+                padding: cols === 3 ? "2.5mm 1.5mm" : "2.5mm 2.5mm",
               }}
             >
-              {s.label}
-            </span>
-          </div>
-        ))}
-      </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={ico(s.icon)}
+                alt=""
+                style={{ width: "8mm", height: "8mm", flexShrink: 0 }}
+              />
+              <span
+                style={{
+                  fontSize: cols === 3 ? "8.5px" : "9.5px",
+                  fontWeight: 700,
+                  color: "var(--ink)",
+                  lineHeight: 1.15,
+                }}
+              >
+                {s.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div
+          style={{
+            padding: hero ? "5mm 8mm 0" : "0 8mm",
+            display: "flex",
+            flexDirection: "column",
+            gap: hero ? "2.4mm" : "2.6mm",
+          }}
+        >
+          {f.services.map((s, i) => (
+            <div key={`${s.icon}-${i}`} style={{ display: "flex", alignItems: "center", gap: hero ? "2.5mm" : "4mm" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={ico(s.icon)}
+                alt=""
+                style={{ width: hero ? "5.5mm" : "9mm", height: hero ? "5.5mm" : "9mm", flexShrink: 0 }}
+              />
+              <span
+                style={{
+                  fontSize: hero ? "10px" : "12px",
+                  fontWeight: 700,
+                  color: "var(--ink)",
+                  lineHeight: 1.2,
+                }}
+              >
+                {s.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div style={{ marginTop: "auto", padding: "5mm 8mm 8mm" }}>
         <div
           style={{

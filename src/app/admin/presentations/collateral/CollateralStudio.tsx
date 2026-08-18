@@ -35,6 +35,7 @@ import {
   type MedCategory,
   type MedGroup,
   FRIDGE_LAYOUTS,
+  FRIDGE_BACKS,
 } from "./content";
 
 const PX_PER_MM = 96 / 25.4; // CSS px per mm, so a sheet in mm can be previewed
@@ -553,6 +554,34 @@ export function CollateralStudio({
               </Section>
 
               <Section title="Bakhlið — erindi">
+                <div>
+                  <span className="mb-2 block text-xs font-medium text-gray-700">Uppsetning erinda</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {FRIDGE_BACKS.map((l) => {
+                      const on = (active.fridge.backLayout ?? "cards") === l.value;
+                      return (
+                        <button
+                          key={l.value}
+                          type="button"
+                          aria-pressed={on}
+                          onClick={() => patchFridge({ backLayout: l.value })}
+                          className={`rounded-lg border p-2.5 text-left transition-colors ${
+                            on
+                              ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500"
+                              : "border-gray-300 bg-white hover:border-gray-400 hover:bg-gray-50"
+                          }`}
+                        >
+                          <span className={`block text-xs font-semibold ${on ? "text-emerald-900" : "text-gray-800"}`}>
+                            {l.label}
+                          </span>
+                          <span className={`mt-0.5 block text-[11px] leading-snug ${on ? "text-emerald-800" : "text-gray-500"}`}>
+                            {l.hint}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
                 <Field label="Fyrirsögn" value={active.fridge.servicesTitle} onChange={(v) => patchFridge({ servicesTitle: v })} />
                 <ServicesEditor services={active.fridge.services} onChange={(services) => patchFridge({ services })} />
                 <Field label="Fyrirvari neðst" value={active.fridge.backNote} onChange={(v) => patchFridge({ backNote: v })} area />

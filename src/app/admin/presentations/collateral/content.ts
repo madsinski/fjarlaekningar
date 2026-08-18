@@ -193,6 +193,22 @@ export type LifelineFields = {
  */
 export type FridgeLayout = "minimal" | "scan" | "list" | "classic";
 
+/**
+ * How the erindi are set out on the side that lists them. The A6 back was a
+ * single column of small rows that left the bottom third empty, and the erindi
+ * are the reason someone keeps the card — so they get the room.
+ *   cards   — two columns of bordered cards, icon above the label
+ *   grid    — three across, tightest, fits ten without crowding
+ *   large   — one column, big icons and type, read from further away
+ */
+export type FridgeBackLayout = "cards" | "grid" | "large";
+
+export const FRIDGE_BACKS: { value: FridgeBackLayout; label: string; hint: string }[] = [
+  { value: "cards", label: "Spjöld", hint: "Tveir dálkar af römmuðum spjöldum — merki yfir heiti." },
+  { value: "grid", label: "Reitir", hint: "Þrír í röð, þéttast — rúmar tíu erindi án þrengsla." },
+  { value: "large", label: "Stór listi", hint: "Einn dálkur, stór merki og texti — lesið úr fjarlægð." },
+];
+
 export const FRIDGE_LAYOUTS: { value: FridgeLayout; label: string; hint: string }[] = [
   { value: "minimal", label: "Mínimal", hint: "Merki, stór QR-kóði og vefslóð. Ekkert annað." },
   { value: "scan", label: "Skanna", hint: "Sama uppsetning á lit — mest áberandi á ísskápshurð." },
@@ -203,6 +219,8 @@ export const FRIDGE_LAYOUTS: { value: FridgeLayout; label: string; hint: string 
 export type FridgeFields = {
   /** Missing on cards saved before layouts existed — those keep the original. */
   layout?: FridgeLayout;
+  /** How the erindi side is set out. Missing means the original single column. */
+  backLayout?: FridgeBackLayout;
   badge: string;
   slogan: string;
   lead: string;
@@ -254,6 +272,7 @@ const DEFAULT_SERVICES: Service[] = [
 // ── Default field sets (team-reviewed HSN presentation language) ──────────
 export const DEFAULT_FRIDGE: FridgeFields = {
   layout: "minimal",
+  backLayout: "cards",
   badge: "Í samstarfi við HSU",
   slogan: "Læknisþjónusta þar sem þér hentar",
   lead: "Sendu erindi í gegnum örugga sjúklingagátt. Læknir metur málið og leggur til meðferð.",
