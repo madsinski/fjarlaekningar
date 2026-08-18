@@ -116,10 +116,15 @@ export default function Navbar({
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => {
-              const active =
-                link.href === home
+              // An in-page link (/thjonusta#faq) never claims the active state:
+              // it shares a pathname with the section link above it, and marking
+              // both lights up two items at once.
+              const [base, hash] = link.href.split("#");
+              const active = hash
+                ? false
+                : base === home
                   ? pathname === home
-                  : pathname.startsWith(link.href.split("#")[0]);
+                  : pathname.startsWith(base);
               return (
                 <Link
                   key={link.href}
