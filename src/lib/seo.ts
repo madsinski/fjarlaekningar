@@ -20,7 +20,7 @@ export const SITE_TITLE = "Fjarlækningar — læknisþjónusta þar sem þér h
  * keyword list, which is all modern ranking pays attention to.
  */
 export const SITE_DESCRIPTION =
-  "Fjarlækningar er íslensk fjarlæknisþjónusta fyrir algeng erindi. Þú sendir erindi í gegnum örugga sjúklingagátt með rafrænum skilríkjum, læknir metur málið og leggur til meðferð — lyfseðill fer rafrænt í lyfjagátt. Engin bið á biðstofu, óháð staðsetningu.";
+  "Íslensk fjarlæknisþjónusta fyrir algeng erindi. Sendu erindi með rafrænum skilríkjum, læknir metur málið og lyfseðill fer rafrænt í lyfjagátt.";
 
 /** Terms the pages should rank for, kept in one place so they stay consistent. */
 export const SITE_KEYWORDS = [

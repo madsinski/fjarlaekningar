@@ -57,7 +57,6 @@ export async function generateMetadata(): Promise<Metadata> {
     authors: [{ name: f.company, url: SITE_URL }],
     creator: f.company,
     publisher: f.company,
-    alternates: { canonical: "/" },
     openGraph: {
       type: "website",
       siteName: f.company,

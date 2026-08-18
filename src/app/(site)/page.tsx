@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import { getPage } from "@/lib/site-content/server";
 import HomeView from "./HomeView";
+
+// Title and description come from the root layout (CMS-editable); the home
+// page only needs to claim itself as the canonical root.
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 // Rendered per request: picks up the `lang` cookie + the latest PUBLISHED
 // content. Draft content never touches the public page (it's only read by the

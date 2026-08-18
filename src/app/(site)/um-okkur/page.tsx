@@ -3,7 +3,8 @@ import { getPage } from "@/lib/site-content/server";
 import UmOkkurView from "./UmOkkurView";
 
 export const metadata: Metadata = {
-  title: "Um okkur — Fjarlækningar ehf.",
+  alternates: { canonical: "/um-okkur" },
+  title: "Um okkur",
   description:
     "Fjarlækningar ehf. er íslenskt fyrirtæki sem býður upp á örugga fjarlæknisþjónustu í gegnum sjúklingagátt Fjarlækninga.",
 };

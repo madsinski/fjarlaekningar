@@ -3,7 +3,8 @@ import { getPage } from "@/lib/site-content/server";
 import HafaSambandView from "./HafaSambandView";
 
 export const metadata: Metadata = {
-  title: "Hafa samband — Fjarlækningar ehf.",
+  alternates: { canonical: "/hafa-samband" },
+  title: "Hafa samband",
   description:
     "Hafðu samband við Fjarlækningar ehf. Fyrir læknisþjónustu, opnaðu sjúklingagátt Fjarlækninga.",
 };

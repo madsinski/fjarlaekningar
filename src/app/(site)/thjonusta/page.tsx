@@ -3,7 +3,8 @@ import { getPage } from "@/lib/site-content/server";
 import ThjonustaView from "./ThjonustaView";
 
 export const metadata: Metadata = {
-  title: "Þjónusta — Fjarlækningar ehf.",
+  alternates: { canonical: "/thjonusta" },
+  title: "Þjónusta",
   description:
     "Algeng heilsugæsluerindi leyst í gegnum örugga sjúklingagátt Fjarlækninga — spurningalistar samdir af læknum, sjálfspróf heima og lyfseðill rafrænt í lyfjagátt.",
 };
