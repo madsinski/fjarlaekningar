@@ -22,6 +22,7 @@ modules also need a **Storage bucket** — noted inline.
 | 14 | `supabase/site-content-schema.sql` | Website CMS (site content, draft/publish) | ✅ done |
 | 15 | `supabase/site-settings-schema.sql` | Coming-soon gate toggle (site_settings) | ✅ done |
 | 16 | `supabase/outreach-schema.sql` | Fréttabréf — subscribers + campaigns | ⬜ run this |
+| 17 | `supabase/admin-read-lockdown.sql` | Admin-module reads restricted to `admin` via RLS (legal stays admin + lawyer). Doctor data is unaffected — it goes through service-role APIs. | ✅ done |
 
 > After running a migration, the matching admin module works immediately (no
 > redeploy needed — the tables just start returning data).
