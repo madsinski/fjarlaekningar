@@ -6,8 +6,40 @@
 // from /admin/legal), so it is deliberately NOT a CMS field here.
 
 import { emptyDefaults, type LocaleContent, type SiteField } from "./types";
+import { SITE_DESCRIPTION, SITE_KEYWORDS, OG_IMAGE_PATH, SITE_TITLE } from "@/lib/seo";
 
 export const CHROME_FIELDS: SiteField[] = [
+  // What search engines and link previews show. The structured data that puts
+  // the logo in Google results also reads the footer fields below (company
+  // name, address, e-mail), so those stay in one place.
+  {
+    key: "seo_title",
+    label: "Titill í leitarniðurstöðum",
+    group: "Leitarvélar (SEO)",
+    type: "text",
+    help: "Birtist sem bláa fyrirsögnin í Google og í flipanum. Haltu þig við ~60 stafi.",
+  },
+  {
+    key: "seo_description",
+    label: "Lýsing í leitarniðurstöðum",
+    group: "Leitarvélar (SEO)",
+    type: "textarea",
+    help: "Gráa textabrotið undir titlinum í Google. Um 150–160 stafir; segðu hvað þjónustan er og fyrir hvern.",
+  },
+  {
+    key: "seo_keywords",
+    label: "Leitarorð (aðskilin með kommu)",
+    group: "Leitarvélar (SEO)",
+    type: "textarea",
+    help: "Orðin sem fólk slær inn. Google raðar ekki eftir þessum lista beint — notaðu sömu orð í lýsingunni og á síðunum sjálfum.",
+  },
+  {
+    key: "seo_og_image",
+    label: "Deilimynd (slóð)",
+    group: "Leitarvélar (SEO)",
+    type: "text",
+    help: "Myndin sem birtist þegar hlekk er deilt á Facebook, Messenger eða í SMS. 1200×630 px.",
+  },
   // Site-wide appearance. Applies on every page via a class on <main>.
   {
     key: "show_eyebrows",
@@ -49,6 +81,10 @@ export const CHROME_FIELDS: SiteField[] = [
 ];
 
 export const CHROME_DEFAULTS_IS: LocaleContent = {
+  seo_title: SITE_TITLE,
+  seo_description: SITE_DESCRIPTION,
+  seo_keywords: SITE_KEYWORDS.join(", "),
+  seo_og_image: OG_IMAGE_PATH,
   show_eyebrows: "on",
 
   nav_home: "Heim",

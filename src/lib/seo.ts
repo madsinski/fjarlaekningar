@@ -7,9 +7,11 @@
 
 export const SITE_URL = "https://www.fjarlaekningar.is";
 export const SITE_NAME = "Fjarlækningar ehf.";
-export const OG_IMAGE = `${SITE_URL}/og-fjarlaekningar.png`;
+export const OG_IMAGE_PATH = "/og-fjarlaekningar.png";
+export const OG_IMAGE = `${SITE_URL}${OG_IMAGE_PATH}`;
 export const LOGO_URL = `${SITE_URL}/fjarlaekningar-logo.png`;
 export const EMAIL = "fjarlaekningar@fjarlaekningar.is";
+export const SITE_TITLE = "Fjarlækningar — læknisþjónusta þar sem þér hentar";
 
 /**
  * The description Google is most likely to show. Leads with what the service
@@ -43,14 +45,38 @@ export const SITE_KEYWORDS = [
  * so search engines read it as a healthcare provider rather than a generic
  * company.
  */
-export function organizationJsonLd(services: { title: string }[]) {
+export type SeoFacts = {
+  title: string;
+  description: string;
+  ogImage: string;
+  company: string;
+  email: string;
+  /** Footer address, "Langholtsvegi 111\n104 Reykjavík" — street on line 1. */
+  address: string;
+  country: string;
+};
+
+/** Split the footer's two-line address into the parts schema.org expects. */
+function postalAddress(address: string, country: string) {
+  const [street = "", cityLine = ""] = address.split("\n").map((l) => l.trim());
+  const m = cityLine.match(/^(\d{3})\s+(.*)$/);
+  return {
+    "@type": "PostalAddress",
+    streetAddress: street,
+    postalCode: m ? m[1] : undefined,
+    addressLocality: m ? m[2] : cityLine || undefined,
+    addressCountry: country?.toLowerCase().startsWith("ísl") ? "IS" : country || "IS",
+  };
+}
+
+export function organizationJsonLd(services: { title: string }[], facts: SeoFacts) {
   return {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": ["Organization", "MedicalClinic"],
         "@id": `${SITE_URL}/#organization`,
-        name: SITE_NAME,
+        name: facts.company || SITE_NAME,
         alternateName: "Fjarlækningar",
         url: SITE_URL,
         logo: {
@@ -60,18 +86,12 @@ export function organizationJsonLd(services: { title: string }[]) {
           contentUrl: LOGO_URL,
           width: 1920,
           height: 660,
-          caption: SITE_NAME,
+          caption: facts.company || SITE_NAME,
         },
-        image: OG_IMAGE,
-        description: SITE_DESCRIPTION,
-        email: EMAIL,
-        address: {
-          "@type": "PostalAddress",
-          streetAddress: "Langholtsvegi 111",
-          postalCode: "104",
-          addressLocality: "Reykjavík",
-          addressCountry: "IS",
-        },
+        image: facts.ogImage,
+        description: facts.description,
+        email: facts.email || EMAIL,
+        address: postalAddress(facts.address, facts.country),
         areaServed: { "@type": "Country", name: "Ísland" },
         medicalSpecialty: "PrimaryCare",
         availableLanguage: ["is", "en"],
@@ -84,8 +104,8 @@ export function organizationJsonLd(services: { title: string }[]) {
         "@type": "WebSite",
         "@id": `${SITE_URL}/#website`,
         url: SITE_URL,
-        name: SITE_NAME,
-        description: SITE_DESCRIPTION,
+        name: facts.company || SITE_NAME,
+        description: facts.description,
         publisher: { "@id": `${SITE_URL}/#organization` },
         inLanguage: "is",
       },
