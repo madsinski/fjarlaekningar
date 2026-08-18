@@ -29,21 +29,36 @@ export const SITE_DESCRIPTION =
 
 /** Terms the pages should rank for, kept in one place so they stay consistent. */
 export const SITE_KEYWORDS = [
-  "fjarlækningar",
-  "læknir á netinu",
-  "netlæknir",
-  "læknisþjónusta á netinu",
-  "fjarheilbrigðisþjónusta",
-  "sjúklingagátt",
-  "endurnýjun lyfseðils",
-  "lyfseðill á netinu",
-  "læknisvottorð",
-  "þvagfærasýking",
-  "hálsbólga",
-  "frjókornaofnæmi",
-  "heilsugæsla á netinu",
-  "Heilbrigðisstofnun Suðurlands",
+  // What the service is
+  "fjarlækningar", "læknir á netinu", "netlæknir", "læknisþjónusta á netinu",
+  "fjarheilbrigðisþjónusta", "heilsugæsla á netinu", "sjúklingagátt",
+  "læknisráðgjöf á netinu", "Heilbrigðisstofnun Suðurlands",
+  // The erindi, in the words people type
+  "kvef", "hósti", "hálsbólga", "ennisholusýking", "kinnholusýking",
+  "þvagfærasýking", "blöðrubólga", "sveppasýking í leggöngum",
+  "bakteríusýking í leggöngum", "getnaðarvörn", "pillan", "frjókornaofnæmi",
+  "ofnæmislyf", "frunsa", "áblástur", "ristill", "risvandamál", "njálgur",
+  // Errands rather than symptoms
+  "endurnýjun lyfseðils", "lyfseðill á netinu", "læknisvottorð",
+  "veikindavottorð", "sýklalyf",
 ];
+
+/** English equivalents, for the English rendering of the site. */
+export const SITE_KEYWORDS_EN = [
+  "telemedicine Iceland", "online doctor Iceland", "see a doctor online",
+  "remote GP Iceland", "patient portal", "digital healthcare Iceland",
+  "cold cough sore throat", "sinus infection", "urinary tract infection",
+  "vaginal yeast infection", "bacterial vaginosis", "contraception",
+  "birth control prescription", "pollen allergy", "hay fever", "cold sore",
+  "shingles", "erectile dysfunction", "pinworm",
+  "prescription renewal", "repeat prescription", "medical certificate",
+  "sick note",
+];
+
+export const SITE_TITLE_EN = "Fjarlækningar — see a doctor from where you are";
+export const SITE_DESCRIPTION_EN =
+  "Icelandic telemedicine for everyday medical problems. Send your case with electronic ID; a doctor reviews it and any prescription goes to the pharmacy portal.";
+
 
 /**
  * Organization + WebSite graph. Typed as MedicalClinic as well as Organization

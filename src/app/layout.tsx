@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { erindi } from "@/erindi";
-import { getPageContent } from "@/lib/site-content/server";
+import { getPageContent, getLocale } from "@/lib/site-content/server";
 import {
   organizationJsonLd,
   OG_IMAGE_PATH,
@@ -43,6 +43,7 @@ async function seoFacts(): Promise<SeoFacts> {
 
 export async function generateMetadata(): Promise<Metadata> {
   const f = await seoFacts();
+  const locale = await getLocale();
   const c = await getPageContent("chrome").catch(() => ({}) as Record<string, string>);
   const keywords = (c.seo_keywords ?? "")
     .split(",")
@@ -61,7 +62,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       type: "website",
       siteName: f.company,
-      locale: "is_IS",
+      locale: locale === "en" ? "en_GB" : "is_IS",
       url: SITE_URL,
       title: f.title,
       description: f.description,
@@ -86,9 +87,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const facts = await seoFacts();
+  const [facts, locale] = await Promise.all([seoFacts(), getLocale()]);
   return (
-    <html lang="is" className={`${inter.variable} h-full antialiased`}>
+    <html lang={locale} className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
         {/* Organization + WebSite structured data: what lets Google show the
             logo next to the result. The company name, e-mail and address come

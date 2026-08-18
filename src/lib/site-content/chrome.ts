@@ -6,7 +6,7 @@
 // from /admin/legal), so it is deliberately NOT a CMS field here.
 
 import { emptyDefaults, type LocaleContent, type SiteField } from "./types";
-import { SITE_DESCRIPTION, SITE_KEYWORDS, OG_IMAGE_PATH, SITE_TITLE, INSTAGRAM_URL, FACEBOOK_URL } from "@/lib/seo";
+import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_DESCRIPTION_EN, SITE_KEYWORDS_EN, SITE_TITLE_EN, OG_IMAGE_PATH, SITE_TITLE, INSTAGRAM_URL, FACEBOOK_URL } from "@/lib/seo";
 
 export const CHROME_FIELDS: SiteField[] = [
   // What search engines and link previews show. The structured data that puts
@@ -126,4 +126,15 @@ export const CHROME_DEFAULTS_IS: LocaleContent = {
   footer_admin_link: "Stjórnborð",
 };
 
-export const CHROME_DEFAULTS_EN: LocaleContent = emptyDefaults(CHROME_FIELDS);
+// English is empty everywhere except the search fields: a page that falls back
+// to Icelandic titles and descriptions describes itself in the wrong language
+// to anyone sharing or searching in English.
+export const CHROME_DEFAULTS_EN: LocaleContent = {
+  ...emptyDefaults(CHROME_FIELDS),
+  seo_title: SITE_TITLE_EN,
+  seo_description: SITE_DESCRIPTION_EN,
+  seo_keywords: SITE_KEYWORDS_EN.join(", "),
+  seo_og_image: OG_IMAGE_PATH,
+  social_instagram: INSTAGRAM_URL,
+  social_facebook: FACEBOOK_URL,
+};
