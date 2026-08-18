@@ -90,17 +90,17 @@ export default function ErindiView({
           <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">{title}</h1>
         </div>
       </div>
-      <p className="mt-5 text-lg text-slate-600 leading-relaxed">{lead}</p>
-
-      {erindiParagraphs(about).length > 0 && (
-        <div className="mt-12">
-          <h2 className="text-xl font-bold text-slate-900">{c.about_heading}</h2>
-          <div className="mt-4 space-y-4">
-            {erindiParagraphs(about).map((para) => (
-              <p key={para.slice(0, 40)} className="text-slate-700 leading-relaxed">{para}</p>
-            ))}
-          </div>
+      {/* The description of the problem is the page's opening text — there is
+          no separate one-line summary above it. `lead` still exists, but only
+          as the search-result snippet. */}
+      {erindiParagraphs(about).length > 0 ? (
+        <div className="mt-5 space-y-4">
+          {erindiParagraphs(about).map((para) => (
+            <p key={para.slice(0, 40)} className="text-lg text-slate-600 leading-relaxed">{para}</p>
+          ))}
         </div>
+      ) : (
+        <p className="mt-5 text-lg text-slate-600 leading-relaxed">{lead}</p>
       )}
 
       {suitable.length > 0 && (

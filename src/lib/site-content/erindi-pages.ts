@@ -84,7 +84,6 @@ export const ERINDI_FIELDS: SiteField[] = [
 
   // Shared furniture, same on every erindi page.
   { key: "eyebrow", label: "Merki fyrir ofan fyrirsögn", group: "Sameiginlegt", type: "text" },
-  { key: "about_heading", label: "Fyrirsögn — um vandamálið", group: "Sameiginlegt", type: "text" },
   { key: "suitable_heading", label: "Fyrirsögn — hvað er hægt að leysa", group: "Sameiginlegt", type: "text" },
   { key: "selftest_heading", label: "Fyrirsögn — sjálfspróf", group: "Sameiginlegt", type: "text" },
   { key: "selftest_body", label: "Inngangur — sjálfspróf", group: "Sameiginlegt", type: "textarea" },
@@ -105,14 +104,14 @@ export const ERINDI_FIELDS: SiteField[] = [
       label: `${e.title} — inngangur`,
       group: e.title,
       type: "textarea",
-      help: "Fyrsta málsgreinin á síðunni og lýsingin sem Google sýnir. 2–3 setningar.",
+      help: "Birtist EKKI á síðunni — þetta er lýsingin sem Google sýnir í leitarniðurstöðum. Um 150 stafir.",
     },
     {
       key: `${erindiKey(e.slug)}_about`,
       label: `${e.title} — um vandamálið`,
       group: e.title,
       type: "textarea",
-      help: "DRÖG — ÞARF YFIRFERÐ LÆKNIS. Lýsing á vandamálinu sjálfu: hvað það er, dæmigerð einkenni, hvað er algengt. Þetta er meginefnið sem leitarvélar og gervigreind lesa. Auð lína skilur að málsgreinar.",
+      help: "DRÖG — ÞARF YFIRFERÐ LÆKNIS. Opnunartexti síðunnar, beint undir fyrirsögninni: hvað vandamálið er, dæmigerð einkenni, hvað er algengt. Auð lína skilur að málsgreinar.",
     },
     {
       key: `${erindiKey(e.slug)}_selftest`,
@@ -148,7 +147,6 @@ export const ERINDI_FIELDS: SiteField[] = [
 export const ERINDI_DEFAULTS_IS: LocaleContent = {
   pages_live: "off",
   eyebrow: "Algeng erindi",
-  about_heading: "Um vandamálið",
   suitable_heading: "Hvað er hægt að leysa?",
   selftest_heading: "Sjálfspróf heima",
   selftest_body:
