@@ -43,7 +43,13 @@ function LangToggle({ locale }: { locale: Locale }) {
     <div className="inline-flex shrink-0 rounded-full border border-brand-cyan-muted overflow-hidden text-xs">
       {(["is", "en"] as const).map((l) =>
         twoUrls ? (
-          <Link
+          // A plain <a>, not <Link>, on purpose. The header and footer are
+          // rendered by (site)/layout.tsx, which wraps BOTH /thjonusta and
+          // /en/thjonusta — App Router keeps a shared layout mounted across a
+          // client navigation, so the nav labels and this pill kept the old
+          // language until the page was reloaded by hand. A document navigation
+          // re-renders the layout with the new locale.
+          <a
             key={l}
             href={localeHref(isPath, l)}
             hrefLang={l}
@@ -52,7 +58,7 @@ function LangToggle({ locale }: { locale: Locale }) {
             className={cls(l)}
           >
             {l.toUpperCase()}
-          </Link>
+          </a>
         ) : (
           <button
             key={l}
