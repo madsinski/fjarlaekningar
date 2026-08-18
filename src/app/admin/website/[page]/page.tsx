@@ -19,6 +19,7 @@ import ErindiView, { erindiLines } from "@/app/(site)/erindi/[slug]/ErindiView";
 import { erindi as ERINDI_LIST } from "@/erindi";
 import { erindiKey } from "@/lib/site-content/erindi-pages";
 import { pressItems } from "@/lib/site-content/fjolmidlar";
+import { SEO_LIMITS } from "@/lib/site-content/seo";
 import PressList from "@/app/(site)/fjolmidlar/PressList";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -26,6 +27,86 @@ type SaveState = "idle" | "saving" | "saved" | "error";
 // Preview renderer per page key. "chrome" previews the live header (the footer
 // is server-rendered — it reads published legal docs — so it isn't previewed here).
 // One CMS page drives ten public pages, so the preview needs to say which.
+/** Character count against the limit Google truncates at. */
+function SeoMeter({ label, value, limit }: { label: string; value: string; limit: number }) {
+  const over = value.length > limit;
+  return (
+    <div className="flex items-center justify-between gap-4 border-t border-slate-100 py-2 text-xs">
+      <span className="text-slate-500">{label}</span>
+      <span className={over ? "font-semibold text-amber-600" : "text-slate-600"}>
+        {value.length} / {limit}{over ? " — styttist í Google" : ""}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * A search result, at the width Google renders one, plus the two limits that
+ * decide whether it gets truncated. A character counter beside a text box is
+ * abstract; seeing the ellipsis appear is not.
+ */
+function SeoPreview({ c }: { c: Record<string, string> }) {
+  const title = (c.seo_title ?? "").trim();
+  const desc = (c.seo_description ?? "").trim();
+  const keywords = (c.seo_keywords ?? "").split(",").map((k) => k.trim()).filter(Boolean);
+  const clip = (v: string, n: number) => (v.length > n ? v.slice(0, n - 1).trimEnd() + "…" : v);
+
+  return (
+    <div className="space-y-6 p-8">
+      <div>
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-cyan-700">
+          Svona birtist síðan í Google
+        </p>
+        <div className="max-w-[600px] rounded-xl border border-slate-200 bg-white p-4">
+          <div className="flex items-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/fjarlaekningar-mark.svg" alt="" className="h-6 w-6 rounded-full border border-slate-200 p-0.5" />
+            <div className="leading-tight">
+              <div className="text-sm text-slate-800">Fjarlækningar</div>
+              <div className="text-xs text-slate-500">https://www.fjarlaekningar.is</div>
+            </div>
+          </div>
+          <div className="mt-2 text-xl leading-snug text-[#1a0dab]">{clip(title, SEO_LIMITS.title) || "—"}</div>
+          <p className="mt-1 text-sm leading-relaxed text-slate-600">
+            {clip(desc, SEO_LIMITS.description) || "—"}
+          </p>
+        </div>
+        <div className="mt-3 max-w-[600px]">
+          <SeoMeter label="Titill" value={title} limit={SEO_LIMITS.title} />
+          <SeoMeter label="Lýsing" value={desc} limit={SEO_LIMITS.description} />
+        </div>
+      </div>
+
+      {c.seo_og_image && (
+        <div>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-cyan-700">
+            Deilimynd (Facebook, Messenger, SMS)
+          </p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={c.seo_og_image}
+            alt="Deilimynd"
+            className="max-w-[600px] rounded-xl border border-slate-200"
+          />
+        </div>
+      )}
+
+      {keywords.length > 0 && (
+        <div>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-cyan-700">
+            Leitarorð ({keywords.length})
+          </p>
+          <div className="flex max-w-[600px] flex-wrap gap-1.5">
+            {keywords.map((k) => (
+              <span key={k} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700">{k}</span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ErindiPreview({ c, locale }: { c: LocaleContent; locale: Locale }) {
   const [slug, setSlug] = useState(ERINDI_LIST[0].slug);
   const item = ERINDI_LIST.find((e) => e.slug === slug)!;
@@ -97,6 +178,8 @@ function Preview({ pageKey, c, order, locale }: { pageKey: string; c: LocaleCont
         </div>
       );
     }
+    case "seo":
+      return <SeoPreview c={c} />;
     case "chrome":
       return (
         <div>

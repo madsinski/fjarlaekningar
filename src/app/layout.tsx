@@ -31,16 +31,22 @@ const inter = Inter({
  * anyone opens the editor.
  */
 async function seoFacts(locale: Locale): Promise<SeoFacts> {
-  const c = await getPageContent("chrome", locale).catch(() => ({}) as Record<string, string>);
+  // Search settings live on their own page; the company name, address and
+  // e-mail that the structured data also needs stay with the footer that shows
+  // them. Both are read here and merged into one set of facts.
+  const [c, chrome] = await Promise.all([
+    getPageContent("seo", locale).catch(() => ({}) as Record<string, string>),
+    getPageContent("chrome", locale).catch(() => ({}) as Record<string, string>),
+  ]);
   const img = c.seo_og_image?.trim() || OG_IMAGE_PATH;
   return {
     title: c.seo_title?.trim() || (locale === "en" ? SITE_TITLE_EN : SITE_TITLE),
     description: c.seo_description?.trim() || (locale === "en" ? SITE_DESCRIPTION_EN : SITE_DESCRIPTION),
     ogImage: img.startsWith("http") ? img : `${SITE_URL}${img}`,
-    company: c.footer_company?.trim() || SITE_NAME,
-    email: c.footer_email?.trim() || "",
-    address: c.footer_address?.trim() || "",
-    country: c.footer_country?.trim() || "Ísland",
+    company: chrome.footer_company?.trim() || SITE_NAME,
+    email: chrome.footer_email?.trim() || "",
+    address: chrome.footer_address?.trim() || "",
+    country: chrome.footer_country?.trim() || "Ísland",
     sameAs: [c.social_instagram, c.social_facebook].map((u) => u?.trim()).filter((u): u is string => !!u),
   };
 }
@@ -48,7 +54,7 @@ async function seoFacts(locale: Locale): Promise<SeoFacts> {
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   const f = await seoFacts(locale);
-  const c = await getPageContent("chrome", locale).catch(() => ({}) as Record<string, string>);
+  const c = await getPageContent("seo", locale).catch(() => ({}) as Record<string, string>);
   const keywords = (c.seo_keywords ?? "")
     .split(",")
     .map((k) => k.trim())

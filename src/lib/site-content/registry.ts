@@ -17,6 +17,7 @@ import { THJONUSTA_FIELDS, THJONUSTA_SECTIONS, THJONUSTA_DEFAULTS_IS, THJONUSTA_
 import { UM_OKKUR_FIELDS, UM_OKKUR_SECTIONS, UM_OKKUR_DEFAULTS_IS, UM_OKKUR_DEFAULTS_EN, umOkkurSections } from "./um-okkur";
 import { HAFA_SAMBAND_FIELDS, HAFA_SAMBAND_SECTIONS, HAFA_SAMBAND_DEFAULTS_IS, HAFA_SAMBAND_DEFAULTS_EN } from "./hafa-samband";
 import { CHROME_FIELDS, CHROME_DEFAULTS_IS, CHROME_DEFAULTS_EN } from "./chrome";
+import { SEO_FIELDS, SEO_DEFAULTS_IS, SEO_DEFAULTS_EN } from "./seo";
 import { ERINDI_FIELDS, ERINDI_SECTIONS, ERINDI_DEFAULTS_IS, ERINDI_DEFAULTS_EN } from "./erindi-pages";
 import { FJOLMIDLAR_FIELDS, FJOLMIDLAR_SECTIONS, FJOLMIDLAR_DEFAULTS_IS, FJOLMIDLAR_DEFAULTS_EN } from "./fjolmidlar";
 
@@ -103,9 +104,19 @@ export const SITE_PAGES: SitePage[] = [
     defaultsEn: ERINDI_DEFAULTS_EN,
   },
   {
+    key: "seo",
+    label: "Leitarvélar (SEO)",
+    desc: "Titill og lýsing í Google, leitarorð, deilimynd og samfélagsmiðlar — gildir á öllum síðum.",
+    path: null,
+    fields: SEO_FIELDS,
+    sections: [],
+    defaultsIs: SEO_DEFAULTS_IS,
+    defaultsEn: SEO_DEFAULTS_EN,
+  },
+  {
     key: "chrome",
-    label: "Haus & fótur + SEO",
-    desc: "Valmynd efst, fótur og leitarvélastillingar (titill, lýsing, leitarorð, deilimynd, samfélagsmiðlar) — gildir á öllum síðum.",
+    label: "Haus & fótur",
+    desc: "Valmynd efst og fótur — gildir á öllum síðum.",
     path: null,
     fields: CHROME_FIELDS,
     sections: [],

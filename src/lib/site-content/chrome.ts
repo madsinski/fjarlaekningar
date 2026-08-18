@@ -1,4 +1,9 @@
 // Editable content model for the site CHROME — the header (Navbar) and footer.
+//
+// Search-engine settings used to live here too; they moved to their own page
+// (see seo.ts) because they apply site-wide and are tuned far more often than a
+// nav label. The footer's company name, address and e-mail stay here and still
+// feed the structured data.
 // Edited separately from page content so a nav label or footer line can change
 // without touching a page.
 //
@@ -6,54 +11,8 @@
 // from /admin/legal), so it is deliberately NOT a CMS field here.
 
 import { emptyDefaults, type LocaleContent, type SiteField } from "./types";
-import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_DESCRIPTION_EN, SITE_KEYWORDS_EN, SITE_TITLE_EN, OG_IMAGE_PATH, SITE_TITLE, INSTAGRAM_URL, FACEBOOK_URL } from "@/lib/seo";
 
 export const CHROME_FIELDS: SiteField[] = [
-  // What search engines and link previews show. The structured data that puts
-  // the logo in Google results also reads the footer fields below (company
-  // name, address, e-mail), so those stay in one place.
-  {
-    key: "seo_title",
-    label: "Titill í leitarniðurstöðum",
-    group: "Leitarvélar (SEO)",
-    type: "text",
-    help: "Birtist sem bláa fyrirsögnin í Google og í flipanum. Haltu þig við ~60 stafi.",
-  },
-  {
-    key: "seo_description",
-    label: "Lýsing í leitarniðurstöðum",
-    group: "Leitarvélar (SEO)",
-    type: "textarea",
-    help: "Gráa textabrotið undir titlinum í Google. Um 150–160 stafir; segðu hvað þjónustan er og fyrir hvern.",
-  },
-  {
-    key: "seo_keywords",
-    label: "Leitarorð (aðskilin með kommu)",
-    group: "Leitarvélar (SEO)",
-    type: "textarea",
-    help: "Orðin sem fólk slær inn. Google raðar ekki eftir þessum lista beint — notaðu sömu orð í lýsingunni og á síðunum sjálfum.",
-  },
-  {
-    key: "social_instagram",
-    label: "Instagram (slóð)",
-    group: "Leitarvélar (SEO)",
-    type: "text",
-    help: "Tengir reikninginn við fyrirtækið í leitarniðurstöðum (schema.org sameAs). Skildu eftir autt til að sleppa.",
-  },
-  {
-    key: "social_facebook",
-    label: "Facebook (slóð)",
-    group: "Leitarvélar (SEO)",
-    type: "text",
-    help: "Sama og að ofan — hjálpar Google að tengja síðuna við vörumerkið.",
-  },
-  {
-    key: "seo_og_image",
-    label: "Deilimynd (slóð)",
-    group: "Leitarvélar (SEO)",
-    type: "text",
-    help: "Myndin sem birtist þegar hlekk er deilt á Facebook, Messenger eða í SMS. 1200×630 px.",
-  },
   // Site-wide appearance. Applies on every page via a class on <main>.
   {
     key: "show_eyebrows",
@@ -95,12 +54,6 @@ export const CHROME_FIELDS: SiteField[] = [
 ];
 
 export const CHROME_DEFAULTS_IS: LocaleContent = {
-  seo_title: SITE_TITLE,
-  seo_description: SITE_DESCRIPTION,
-  seo_keywords: SITE_KEYWORDS.join(", "),
-  seo_og_image: OG_IMAGE_PATH,
-  social_instagram: INSTAGRAM_URL,
-  social_facebook: FACEBOOK_URL,
   show_eyebrows: "on",
 
   nav_home: "Heim",
@@ -131,10 +84,4 @@ export const CHROME_DEFAULTS_IS: LocaleContent = {
 // to anyone sharing or searching in English.
 export const CHROME_DEFAULTS_EN: LocaleContent = {
   ...emptyDefaults(CHROME_FIELDS),
-  seo_title: SITE_TITLE_EN,
-  seo_description: SITE_DESCRIPTION_EN,
-  seo_keywords: SITE_KEYWORDS_EN.join(", "),
-  seo_og_image: OG_IMAGE_PATH,
-  social_instagram: INSTAGRAM_URL,
-  social_facebook: FACEBOOK_URL,
 };
