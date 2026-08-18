@@ -16,6 +16,7 @@ import { THJONUSTA_FIELDS, THJONUSTA_SECTIONS, THJONUSTA_DEFAULTS_IS, THJONUSTA_
 import { UM_OKKUR_FIELDS, UM_OKKUR_SECTIONS, UM_OKKUR_DEFAULTS_IS, UM_OKKUR_DEFAULTS_EN, umOkkurSections } from "./um-okkur";
 import { HAFA_SAMBAND_FIELDS, HAFA_SAMBAND_SECTIONS, HAFA_SAMBAND_DEFAULTS_IS, HAFA_SAMBAND_DEFAULTS_EN } from "./hafa-samband";
 import { CHROME_FIELDS, CHROME_DEFAULTS_IS, CHROME_DEFAULTS_EN } from "./chrome";
+import { ERINDI_FIELDS, ERINDI_SECTIONS, ERINDI_DEFAULTS_IS, ERINDI_DEFAULTS_EN } from "./erindi-pages";
 
 export interface SitePage {
   key: string;
@@ -78,6 +79,16 @@ export const SITE_PAGES: SitePage[] = [
     sections: HAFA_SAMBAND_SECTIONS,
     defaultsIs: HAFA_SAMBAND_DEFAULTS_IS,
     defaultsEn: HAFA_SAMBAND_DEFAULTS_EN,
+  },
+  {
+    key: "erindi",
+    label: "Erindissíður",
+    desc: "Ein síða á hvert erindi (/erindi/…). Falið þar til kveikt er á birtingu.",
+    path: null,
+    fields: ERINDI_FIELDS,
+    sections: ERINDI_SECTIONS,
+    defaultsIs: ERINDI_DEFAULTS_IS,
+    defaultsEn: ERINDI_DEFAULTS_EN,
   },
   {
     key: "chrome",

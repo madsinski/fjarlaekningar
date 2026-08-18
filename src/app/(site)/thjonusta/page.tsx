@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { getPage } from "@/lib/site-content/server";
+import { getPage, getPageContent } from "@/lib/site-content/server";
+import { erindiPagesLive } from "@/lib/site-content/erindi-pages";
 import ThjonustaView from "./ThjonustaView";
 
 export const metadata: Metadata = {
@@ -16,5 +17,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ThjonustaPage() {
   const { c, order, locale } = await getPage("thjonusta");
-  return <ThjonustaView c={c} order={order} locale={locale} />;
+  // Cards become links only once the erindi pages are published.
+  const erindiLive = erindiPagesLive(await getPageContent("erindi"));
+  return <ThjonustaView c={c} order={order} locale={locale} erindiLive={erindiLive} />;
 }

@@ -3,6 +3,7 @@ import FaqSection, { type FaqItem, type MedCategory } from "./FaqSection";
 import PageHero from "../PageHero";
 import Band from "../Band";
 import Screenshot from "../Screenshot";
+import Link from "next/link";
 import { erindiDescKey, localizeErindi } from "../../../erindi";
 import SiteIcon from "@/lib/site-content/SiteIcon";
 import { renderHighlighted } from "@/lib/site-content/highlight";
@@ -21,12 +22,15 @@ export default function ThjonustaView({
   c,
   order,
   locale = "is",
+  erindiLive = false,
 }: {
   c: LocaleContent;
   order?: string[];
   /** Locale for the static erindi list — CMS strings in `c` are already
    *  resolved, but the erindi are code, so the view must pick the language. */
   locale?: "is" | "en";
+  /** Erindi landing pages published? Cards link through only when true. */
+  erindiLive?: boolean;
 }) {
   // Titles come from code; each card's subtext is CMS-editable and falls back
   // to the code default when the field is blank.
@@ -160,11 +164,11 @@ export default function ThjonustaView({
           <p className="mt-3 text-slate-600">{c.erindi_body}</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {erindi.map((s) => (
-            <div
-              key={s.slug}
-              className="group bg-white rounded-2xl border border-slate-200 p-8 flex items-start gap-5 hover:shadow-lg hover:border-brand-cyan hover:-translate-y-0.5 transition-all"
-            >
+          {erindi.map((s) => {
+            const cardCls =
+              "group bg-white rounded-2xl border border-slate-200 p-8 flex items-start gap-5 hover:shadow-lg hover:border-brand-cyan hover:-translate-y-0.5 transition-all";
+            const inner = (
+              <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={`/erindi-icons/${s.slug}.png`}
@@ -177,8 +181,15 @@ export default function ThjonustaView({
                 <h3 className="text-xl font-semibold text-slate-900 mb-2">{s.title}</h3>
                 <p className="text-slate-600">{s.description}</p>
               </div>
-            </div>
-          ))}
+              </>
+            );
+            // Until the erindi pages are published the card is plain markup.
+            return erindiLive ? (
+              <Link key={s.slug} href={`/erindi/${s.slug}`} className={cardCls}>{inner}</Link>
+            ) : (
+              <div key={s.slug} className={cardCls}>{inner}</div>
+            );
+          })}
         </div>
         <p className="mt-8 text-sm text-slate-500">{c.erindi_footer}</p>
       </>

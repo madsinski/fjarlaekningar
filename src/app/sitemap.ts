@@ -1,6 +1,9 @@
 import type { MetadataRoute } from "next";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { SITE_URL } from "@/lib/seo";
+import { erindi } from "@/erindi";
+import { getPageContent } from "@/lib/site-content/server";
+import { erindiPagesLive } from "@/lib/site-content/erindi-pages";
 
 // Public marketing pages plus every published legal document, so the same
 // single source of truth that fills the footer also feeds the sitemap.
@@ -22,6 +25,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: p.changeFrequency,
     priority: p.priority,
   }));
+
+  try {
+    // Erindi landing pages are listed only once they are published.
+    if (erindiPagesLive(await getPageContent("erindi"))) {
+      for (const e of erindi) {
+        base.push({
+          url: `${SITE_URL}/erindi/${e.slug}`,
+          lastModified: now,
+          changeFrequency: "monthly",
+          priority: 0.8,
+        });
+      }
+    }
+  } catch {
+    // Sitemap must never fail; the static pages above are enough.
+  }
 
   try {
     const { data } = await supabaseAdmin
