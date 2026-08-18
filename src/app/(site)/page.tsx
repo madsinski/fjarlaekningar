@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { getPage } from "@/lib/site-content/server";
+import { getPage, getPageContent } from "@/lib/site-content/server";
+import { pressItems } from "@/lib/site-content/fjolmidlar";
 import HomeView from "./HomeView";
 
 // Title and description come from the root layout (CMS-editable); the home
@@ -20,5 +21,16 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const { c, order, locale } = await getPage("home");
-  return <HomeView c={c} order={order} locale={locale} />;
+  const pressContent = await getPageContent("fjolmidlar");
+  const press = pressItems(pressContent);
+  return (
+    <HomeView
+      c={c}
+      order={order}
+      locale={locale}
+      press={press}
+      pressHeading={pressContent.front_heading}
+      pressLink={pressContent.front_link}
+    />
+  );
 }

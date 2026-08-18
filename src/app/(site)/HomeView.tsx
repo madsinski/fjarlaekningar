@@ -20,12 +20,20 @@ export default function HomeView({
   c,
   order,
   locale = "is",
+  press = [],
+  pressHeading = "",
+  pressLink = "",
 }: {
   c: LocaleContent;
   order?: string[];
   /** Locale for the static erindi list — CMS strings in `c` are already
    *  resolved, but the erindi are code, so the view must pick the language. */
   locale?: "is" | "en";
+  /** Newest press coverage; empty means the strip does not render at all. */
+  press?: { title: string; outlet: string; date: string; url: string }[];
+  /** Labels live on the Fjölmiðlar CMS page, next to the list itself. */
+  pressHeading?: string;
+  pressLink?: string;
 }) {
   const erindi = localizeErindi(locale);
   const t = ui(locale);
@@ -248,6 +256,33 @@ export default function HomeView({
     // Deliberately placed BEFORE the newsletter: the newsletter is the
     // consolation prize for people who aren't ready to book, so asking for
     // an email first would interrupt the path to the actual conversion.
+    // Deliberately a quiet strip, not a full band: three headlines as social
+    // proof, then out to the full list. Nothing renders when there is no press.
+    press: press.length ? (
+      <div className="rounded-3xl border border-slate-200 bg-white p-8 sm:p-10">
+        <div className="flex items-end justify-between gap-6 flex-wrap">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500">
+            {pressHeading || "Fjallað um okkur"}
+          </h2>
+          <Link href="/fjolmidlar" className="text-sm font-semibold text-brand-cyan-dark hover:underline">
+            {pressLink || "Sjá alla umfjöllun"} →
+          </Link>
+        </div>
+        <ul className="mt-6 grid gap-x-8 gap-y-5 sm:grid-cols-3">
+          {press.slice(0, 3).map((p) => (
+            <li key={p.url}>
+              <a href={p.url} target="_blank" rel="noopener" className="group block">
+                <span className="text-xs font-semibold uppercase tracking-wider text-brand-cyan-dark">{p.outlet}</span>
+                <p className="mt-1.5 font-semibold text-slate-900 leading-snug group-hover:text-brand-cyan-dark">
+                  {p.title}
+                </p>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ) : null,
+
     cta: (
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] p-10 sm:p-16 text-white">
         <h2 className="text-3xl sm:text-4xl font-bold max-w-2xl">{renderHighlighted(c.cta_heading)}</h2>

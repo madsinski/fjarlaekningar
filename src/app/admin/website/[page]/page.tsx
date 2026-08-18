@@ -18,6 +18,8 @@ import IconPicker from "../IconPicker";
 import ErindiView, { erindiLines } from "@/app/(site)/erindi/[slug]/ErindiView";
 import { erindi as ERINDI_LIST } from "@/erindi";
 import { erindiKey } from "@/lib/site-content/erindi-pages";
+import { pressItems } from "@/lib/site-content/fjolmidlar";
+import PressList from "@/app/(site)/fjolmidlar/PressList";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -73,6 +75,25 @@ function Preview({ pageKey, c, order, locale }: { pageKey: string; c: LocaleCont
       return <HafaSambandView c={c} order={order} />;
     case "erindi":
       return <ErindiPreview c={c} locale={locale} />;
+    case "fjolmidlar": {
+      const items = pressItems(c);
+      return (
+        <div className="p-8">
+          <h2 className="text-2xl font-bold text-slate-900">{(c.hero_heading ?? "").replace(/==/g, "")}</h2>
+          {c.hero_body && <p className="mt-3 text-slate-600">{c.hero_body}</p>}
+          <div className="mt-6">
+            {items.length ? (
+              <PressList items={items} locale={locale} />
+            ) : (
+              <p className="rounded-xl border border-dashed border-slate-300 p-6 text-sm text-slate-500">
+                Enginn hlekkur skráður enn — síðan og forsíðuræman birtast ekki fyrr en listinn er fylltur.
+                Snið: Fyrirsögn | Miðill | Dagsetning | Slóð
+              </p>
+            )}
+          </div>
+        </div>
+      );
+    }
     case "chrome":
       return (
         <div>

@@ -4,6 +4,7 @@ import { SITE_URL } from "@/lib/seo";
 import { erindi } from "@/erindi";
 import { getPageContent } from "@/lib/site-content/server";
 import { erindiPagesLive } from "@/lib/site-content/erindi-pages";
+import { pressItems } from "@/lib/site-content/fjolmidlar";
 
 // Public marketing pages plus every published legal document, so the same
 // single source of truth that fills the footer also feeds the sitemap.
@@ -25,6 +26,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: p.changeFrequency,
     priority: p.priority,
   }));
+
+  try {
+    if (pressItems(await getPageContent("fjolmidlar")).length) {
+      base.push({ url: `${SITE_URL}/fjolmidlar`, lastModified: now, changeFrequency: "monthly", priority: 0.5 });
+    }
+  } catch {
+    // best effort
+  }
 
   try {
     // Erindi landing pages are listed only once they are published.

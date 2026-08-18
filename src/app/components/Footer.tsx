@@ -1,5 +1,7 @@
 import Link from "next/link";
 import Logo from "./Logo";
+import { getPageContent } from "@/lib/site-content/server";
+import { pressItems } from "@/lib/site-content/fjolmidlar";
 
 // Single source of truth: published legal documents managed in /admin/legal
 // auto-appear here. Publish a doc → it shows in the footer + is live at
@@ -62,12 +64,16 @@ const FOOTER_DEFAULTS: Required<FooterContent> = {
 export default async function Footer({ content }: { content?: FooterContent }) {
   const t = { ...FOOTER_DEFAULTS, ...(content ?? {}) };
   const legalDocs = await getPublishedLegalDocs();
+  // Press page is linked only once it has something on it (it 404s when empty).
+  const pressContent = await getPageContent("fjolmidlar").catch(() => ({}) as Record<string, string>);
+  const hasPress = pressItems(pressContent).length > 0;
   const pages = [
     { href: "/", label: t.nav_home },
     { href: "/thjonusta", label: t.nav_thjonusta },
     { href: "/thjonusta#faq", label: t.nav_faq },
     { href: "/um-okkur", label: t.nav_um_okkur },
     { href: "/hafa-samband", label: t.nav_hafa_samband },
+    ...(hasPress ? [{ href: "/fjolmidlar", label: pressContent.nav_label || "Fjölmiðlar" }] : []),
   ];
 
   return (

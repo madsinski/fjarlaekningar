@@ -22,6 +22,7 @@ export const HOME_SECTIONS: SiteSection[] = [
   { id: "how", label: "Ferlið" },
   { id: "coop", label: "Samstarf" },
   { id: "team", label: "Teymið" },
+  { id: "press", label: "Fjölmiðlaumfjöllun" },
   { id: "cta", label: "Ákall (CTA)" },
   { id: "news", label: "Fréttabréf" },
 ];

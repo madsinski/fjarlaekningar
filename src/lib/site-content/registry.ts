@@ -17,6 +17,7 @@ import { UM_OKKUR_FIELDS, UM_OKKUR_SECTIONS, UM_OKKUR_DEFAULTS_IS, UM_OKKUR_DEFA
 import { HAFA_SAMBAND_FIELDS, HAFA_SAMBAND_SECTIONS, HAFA_SAMBAND_DEFAULTS_IS, HAFA_SAMBAND_DEFAULTS_EN } from "./hafa-samband";
 import { CHROME_FIELDS, CHROME_DEFAULTS_IS, CHROME_DEFAULTS_EN } from "./chrome";
 import { ERINDI_FIELDS, ERINDI_SECTIONS, ERINDI_DEFAULTS_IS, ERINDI_DEFAULTS_EN } from "./erindi-pages";
+import { FJOLMIDLAR_FIELDS, FJOLMIDLAR_SECTIONS, FJOLMIDLAR_DEFAULTS_IS, FJOLMIDLAR_DEFAULTS_EN } from "./fjolmidlar";
 
 export interface SitePage {
   key: string;
@@ -79,6 +80,16 @@ export const SITE_PAGES: SitePage[] = [
     sections: HAFA_SAMBAND_SECTIONS,
     defaultsIs: HAFA_SAMBAND_DEFAULTS_IS,
     defaultsEn: HAFA_SAMBAND_DEFAULTS_EN,
+  },
+  {
+    key: "fjolmidlar",
+    label: "Fjölmiðlar",
+    desc: "Umfjöllun fjölmiðla — sérstök síða og ræma á forsíðu. Birtist ekki fyrr en listinn er fylltur.",
+    path: "/fjolmidlar",
+    fields: FJOLMIDLAR_FIELDS,
+    sections: FJOLMIDLAR_SECTIONS,
+    defaultsIs: FJOLMIDLAR_DEFAULTS_IS,
+    defaultsEn: FJOLMIDLAR_DEFAULTS_EN,
   },
   {
     key: "erindi",
