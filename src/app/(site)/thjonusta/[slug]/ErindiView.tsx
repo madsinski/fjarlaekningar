@@ -25,7 +25,7 @@ export type ErindiViewProps = {
   meds?: MedCategory[];
   medsIntro?: string;
   medsNote?: string;
-  /** Keeps cross-links inside the visitor's language (/en/erindi/… on /en). */
+  /** Keeps cross-links inside the visitor's language (/en/thjonusta/… on /en). */
   locale?: Locale;
   /** The CMS preview is not a routed page, so its links stay inert. */
   linked?: boolean;
@@ -399,7 +399,7 @@ export default function ErindiView({
               linked ? (
                 <Link
                   key={o.slug}
-                  href={localeHref(`/erindi/${o.slug}`, locale)}
+                  href={localeHref(`/thjonusta/${o.slug}`, locale)}
                   className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:border-brand-cyan hover:text-brand-cyan-dark"
                 >
                   {o.title}

@@ -186,7 +186,7 @@ export default function ThjonustaView({
             );
             // Until the erindi pages are published the card is plain markup.
             return erindiLive ? (
-              <Link key={s.slug} href={localeHref(`/erindi/${s.slug}`, locale)} className={cardCls}>{inner}</Link>
+              <Link key={s.slug} href={localeHref(`/thjonusta/${s.slug}`, locale)} className={cardCls}>{inner}</Link>
             ) : (
               <div key={s.slug} className={cardCls}>{inner}</div>
             );

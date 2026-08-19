@@ -92,7 +92,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (erindiPagesLive(c)) {
       for (const e of erindi) {
         base.push(
-          ...localizedEntries(`/erindi/${e.slug}`, enReady, {
+          ...localizedEntries(`/thjonusta/${e.slug}`, enReady, {
             lastModified: now,
             changeFrequency: "monthly",
             priority: 0.8,

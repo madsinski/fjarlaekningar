@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import ErindiPage, { erindiMetadata, type Params } from "../../../erindi/[slug]/erindi-page";
+import ErindiPage, { erindiMetadata, type Params } from "../../../thjonusta/[slug]/erindi-page";
 
 export const dynamic = "force-dynamic";
 

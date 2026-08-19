@@ -42,7 +42,7 @@ export async function urlsForPage(pageKey: string): Promise<string[]> {
     return perPage.flat();
   }
   if (pageKey === "erindi") {
-    return bothLocales("erindi", erindi.map((e) => `/erindi/${e.slug}`));
+    return bothLocales("erindi", erindi.map((e) => `/thjonusta/${e.slug}`));
   }
   const path = SITE_PAGES.find((p) => p.key === pageKey)?.path;
   return path ? bothLocales(pageKey, [path]) : [];

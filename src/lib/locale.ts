@@ -32,7 +32,6 @@ export const LOCALIZED_ROOTS = [
   "/um-okkur",
   "/hafa-samband",
   "/fjolmidlar",
-  "/erindi",
 ] as const;
 
 /** Trailing slash, query and fragment removed; "" becomes "/". */

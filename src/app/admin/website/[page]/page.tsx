@@ -15,7 +15,7 @@ import type { Locale, LocaleContent, SiteContentBlob, SiteFieldOption } from "@/
 import { TEAM_MEMBER_SLOTS, TEAM_ROSTER_GROUP, teamSize } from "@/lib/site-content/um-okkur";
 import IconPicker from "../IconPicker";
 
-import ErindiView, { erindiLines } from "@/app/(site)/erindi/[slug]/ErindiView";
+import ErindiView, { erindiLines } from "@/app/(site)/thjonusta/[slug]/ErindiView";
 import { erindi as ERINDI_LIST } from "@/erindi";
 import { ERINDI_WITH_MEDS, erindiKey } from "@/lib/site-content/erindi-pages";
 import { ui } from "@/lib/site-content/ui-strings";
@@ -147,7 +147,7 @@ function ErindiPreview({
             <option key={e.slug} value={e.slug}>{locale === "en" ? e.titleEn : e.title}</option>
           ))}
         </select>
-        <span className="ml-auto text-[11px] text-slate-400">/erindi/{slug}</span>
+        <span className="ml-auto text-[11px] text-slate-400">/thjonusta/{slug}</span>
       </div>
       <ErindiView
         c={c}

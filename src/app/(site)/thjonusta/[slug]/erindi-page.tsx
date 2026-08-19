@@ -9,7 +9,7 @@ import { alternatesFor, SITE_URL } from "@/lib/seo";
 import { localeHref } from "@/lib/locale";
 import ErindiView, { erindiLines } from "./ErindiView";
 
-// One implementation, two URLs: /erindi/<slug> and /en/erindi/<slug>. The slug
+// One implementation, two URLs: /thjonusta/<slug> and /en/thjonusta/<slug>. The
 // is the same in both languages — it is the canonical name of the page.
 //
 // These pages are DARK by default: until `pages_live` is switched on in the CMS
@@ -48,7 +48,7 @@ export async function erindiMetadata({ params }: Params, locale: Locale): Promis
   return {
     title: d.title,
     description: d.lead.slice(0, 160),
-    alternates: alternatesFor(`/erindi/${slug}`, locale, d.enReady),
+    alternates: alternatesFor(`/thjonusta/${slug}`, locale, d.enReady),
     ...(locale === "en" && !d.enReady ? { robots: { index: false, follow: true } } : {}),
     openGraph: { title: `${d.title} — Fjarlækningar`, description: d.lead.slice(0, 200) },
   };
@@ -82,7 +82,7 @@ export default async function ErindiPage({ params, locale }: Params & { locale: 
     "@type": "MedicalWebPage",
     name: `${d.title} — Fjarlækningar`,
     description: d.lead,
-    url: url(`/erindi/${slug}`),
+    url: url(`/thjonusta/${slug}`),
     inLanguage: locale,
     about: { "@type": "MedicalCondition", name: d.title },
     publisher: { "@id": `${SITE_URL}/#organization` },
@@ -91,7 +91,7 @@ export default async function ErindiPage({ params, locale }: Params & { locale: 
       itemListElement: [
         { "@type": "ListItem", position: 1, name: locale === "en" ? "Home" : "Forsíða", item: url("/") },
         { "@type": "ListItem", position: 2, name: t.services, item: url("/thjonusta") },
-        { "@type": "ListItem", position: 3, name: d.title, item: url(`/erindi/${slug}`) },
+        { "@type": "ListItem", position: 3, name: d.title, item: url(`/thjonusta/${slug}`) },
       ],
     },
   };

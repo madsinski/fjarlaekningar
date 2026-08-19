@@ -96,7 +96,7 @@ export const SITE_PAGES: SitePage[] = [
   {
     key: "erindi",
     label: "Erindissíður",
-    desc: "Ein síða á hvert erindi (/erindi/…). Falið þar til kveikt er á birtingu.",
+    desc: "Ein síða á hvert erindi (/thjonusta/…). Falið þar til kveikt er á birtingu.",
     path: null,
     fields: ERINDI_FIELDS,
     sections: ERINDI_SECTIONS,

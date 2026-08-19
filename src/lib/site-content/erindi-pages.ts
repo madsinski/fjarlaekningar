@@ -1,11 +1,11 @@
-// Editable content model for the per-erindi landing pages (/erindi/<slug>).
+// Editable content model for the per-erindi landing pages (/thjonusta/<slug>).
 //
 // One page per medical problem, so the site can answer the searches people
 // actually make ("þvagfærasýking læknir", "endurnýja lyfseðil") instead of
 // putting all ten on /thjonusta.
 //
 // NOT LIVE BY DEFAULT. `pages_live` starts at "off": until it is switched on
-// and published, /erindi/<slug> returns 404, the cards on /thjonusta stay
+// and published, /thjonusta/<slug> returns 404, the cards on /thjonusta stay
 // plain (not links) and the pages are kept out of the sitemap. That way the
 // draft medical text is never public and never indexed.
 //
@@ -158,7 +158,7 @@ export const ERINDI_FIELDS: SiteField[] = [
     label: "Birta erindissíður",
     group: "Birting",
     type: "choice",
-    help: "Þar til kveikt er á þessu skila /erindi/… síður 404, kortin á /thjonusta eru ekki tenglar og síðurnar eru ekki í sitemap. Kveiktu fyrst þegar texti hvers erindis hefur verið yfirfarinn af lækni.",
+    help: "Þar til kveikt er á þessu skila /thjonusta/… síður 404, kortin á /thjonusta eru ekki tenglar og síðurnar eru ekki í sitemap. Kveiktu fyrst þegar texti hvers erindis hefur verið yfirfarinn af lækni.",
     options: [
       { value: "off", label: "Falið (drög)", hint: "Enginn kemst á síðurnar." },
       { value: "on", label: "Birt", hint: "Síðurnar fara í loftið og í sitemap." },
