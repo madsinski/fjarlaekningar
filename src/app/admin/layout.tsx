@@ -57,6 +57,7 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
   "/admin/communication": <MessageSquare className="w-5 h-5" />,
   "/admin/outreach": <Mail className="w-5 h-5" />,
   "/admin/data-requests": <ShieldAlert className="w-5 h-5" />,
+  "/admin/onboarding": <ClipboardList className="w-5 h-5" />,
   "/admin/releases": <Rocket className="w-5 h-5" />,
   "/admin/errors": <AlertTriangle className="w-5 h-5" />,
   "/admin/team": <Users className="w-5 h-5" />,
