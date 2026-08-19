@@ -95,8 +95,8 @@ export const SITE_PAGES: SitePage[] = [
   },
   {
     key: "erindi",
-    label: "Erindissíður",
-    desc: "Ein síða á hvert erindi (/thjonusta/…). Falið þar til kveikt er á birtingu.",
+    label: "Þjónustusíður",
+    desc: "Ein síða á hvert erindi (/thjonusta/…) — nánari umfjöllun undir Þjónustu.",
     path: null,
     fields: ERINDI_FIELDS,
     sections: ERINDI_SECTIONS,

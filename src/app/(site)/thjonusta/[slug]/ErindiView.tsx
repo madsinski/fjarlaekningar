@@ -286,6 +286,29 @@ export default function ErindiView({
         </div>
       )}
 
+      {refer.length > 0 && (
+        <div className="mt-12 rounded-2xl border border-amber-200 bg-amber-50/60 p-6 sm:p-8">
+          <div className="flex items-center gap-2.5">
+            <span aria-hidden className="text-lg leading-none text-amber-600">⚠</span>
+            <h2 className="text-xl font-bold text-slate-900">{c.refer_heading}</h2>
+          </div>
+          <ul className="mt-4 space-y-2.5">
+            {refer.map((line) => (
+              <li key={line} className="flex gap-3 text-slate-800">
+                <span aria-hidden className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
+          {meds.length > 0 && (
+            <div className="mt-6">
+              {medsIntro && <p className="mb-3 text-slate-700 leading-relaxed">{medsIntro}</p>}
+              <MedsList categories={meds} note={medsNote} />
+            </div>
+          )}
+        </div>
+      )}
+
       {adviceBlocks(advice).length > 0 && (
         <div className="mt-12">
           <h2 className="text-xl font-bold text-slate-900">{c.advice_heading}</h2>
@@ -337,35 +360,12 @@ export default function ErindiView({
         </div>
       )}
 
-      {/* Both cautions sit here, directly above the ask — the last thing read
-          before someone decides to send a case in. The specific one carries the
-          weight; the standing note under it is the same on every erindi, so it
-          is set lighter rather than shouting twice. */}
-      {refer.length > 0 && (
-        <div className="mt-14 rounded-2xl border border-amber-200 bg-amber-50/60 p-6 sm:p-8">
-          <div className="flex items-center gap-2.5">
-            <span aria-hidden className="text-lg leading-none text-amber-600">⚠</span>
-            <h2 className="text-xl font-bold text-slate-900">{c.refer_heading}</h2>
-          </div>
-          <ul className="mt-4 space-y-2.5">
-            {refer.map((line) => (
-              <li key={line} className="flex gap-3 text-slate-800">
-                <span aria-hidden className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
-                <span>{line}</span>
-              </li>
-            ))}
-          </ul>
-          {meds.length > 0 && (
-            <div className="mt-6">
-              {medsIntro && <p className="mb-3 text-slate-700 leading-relaxed">{medsIntro}</p>}
-              <MedsList categories={meds} note={medsNote} />
-            </div>
-          )}
-        </div>
-      )}
-
+      {/* What the service will NOT take comes before the self-care advice:
+          finding out the service is not for you is not worth discovering after
+          reading a page of it. The standing note stays at the bottom, directly
+          above the ask. */}
       {c.note_body && (
-        <div className={`rounded-2xl border border-amber-200 bg-amber-50/40 p-5 sm:p-6 ${refer.length > 0 ? "mt-4" : "mt-14"}`}>
+        <div className="mt-14 rounded-2xl border border-amber-200 bg-amber-50/40 p-5 sm:p-6">
           <div className="flex items-center gap-2">
             <span aria-hidden className="text-base leading-none text-amber-600">⚠</span>
             <h2 className="text-base font-bold text-slate-900">{c.note_heading}</h2>

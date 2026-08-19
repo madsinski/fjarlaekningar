@@ -155,7 +155,7 @@ export const ERINDI_WITH_MEDS = ["lyfjuendurnyjun"];
 export const ERINDI_FIELDS: SiteField[] = [
   {
     key: "pages_live",
-    label: "Birta erindissíður",
+    label: "Birta þjónustusíður",
     group: "Birting",
     type: "choice",
     help: "Þar til kveikt er á þessu skila /thjonusta/… síður 404, kortin á /thjonusta eru ekki tenglar og síðurnar eru ekki í sitemap. Kveiktu fyrst þegar texti hvers erindis hefur verið yfirfarinn af lækni.",

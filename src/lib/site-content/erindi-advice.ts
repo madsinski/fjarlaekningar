@@ -1,6 +1,6 @@
 // Almennar ráðleggingar per erindi — written and verified by Fjarlækningar
 // doctors, converted from their source document. These are the DEFAULTS; the
-// text is editable per erindi at /admin/website → Erindissíður.
+// text is editable per erindi at /admin/website → Þjónustusíður.
 //
 // Mini-markup, so the CMS stays a plain textarea:
 //   "# Kafli"      section (used where one erindi covers several conditions)

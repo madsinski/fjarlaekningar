@@ -136,18 +136,38 @@ function ErindiPreview({
   const k = erindiKey(slug);
   return (
     <div>
-      <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2.5">
-        <label className="text-xs font-medium text-slate-600">Forskoða erindi</label>
-        <select
-          value={slug}
-          onChange={(e) => setSlug(e.target.value)}
-          className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-800"
-        >
-          {ERINDI_LIST.map((e) => (
-            <option key={e.slug} value={e.slug}>{locale === "en" ? e.titleEn : e.title}</option>
-          ))}
-        </select>
-        <span className="ml-auto text-[11px] text-slate-400">/thjonusta/{slug}</span>
+      {/* Every erindi visible at once, not hidden behind a dropdown. This page
+          holds ten pages' worth of fields, and the single most confusing thing
+          about it was not knowing which one you were looking at. Sticky, so it
+          stays put while the preview scrolls. */}
+      <div className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur">
+        <div className="mb-2 flex flex-wrap items-baseline gap-x-2">
+          <span className="text-sm font-semibold text-slate-900">Þú ert að forskoða:</span>
+          <span className="text-sm font-bold text-cyan-700">{title}</span>
+          <span className="ml-auto font-mono text-[11px] text-slate-400">/thjonusta/{slug}</span>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {ERINDI_LIST.map((e) => {
+            const on = e.slug === slug;
+            return (
+              <button
+                key={e.slug}
+                type="button"
+                aria-pressed={on}
+                onClick={() => setSlug(e.slug)}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                  on
+                    ? "border-cyan-600 bg-cyan-600 text-white"
+                    : "border-slate-300 bg-white text-slate-700 hover:border-cyan-400 hover:bg-cyan-50"
+                }`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/erindi-icons/${e.slug}.png`} alt="" className="h-4 w-4 shrink-0 object-contain" />
+                {locale === "en" ? e.titleEn : e.title}
+              </button>
+            );
+          })}
+        </div>
       </div>
       <ErindiView
         c={c}
