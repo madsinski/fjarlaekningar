@@ -1,11 +1,14 @@
-// Opening a new station — the checklist, the print run and the self-test supply.
+// Opening new stations — the checklist, the print run and the self-test supply.
 //
-// Fjarlækningar goes live one health centre at a time (HSU first, HSN and others
-// after), and each opening repeats the same work: a day on site with the people
-// who will field the calls, a fixed print run, and enough self-tests on the
-// shelf that the first patient who asks for one does not leave empty-handed.
-// This is that procedure, written down once so the second station does not
-// depend on remembering how the first went.
+// Fjarlækningar goes live one health centre at a time, and each opening repeats
+// the same work: a day on site with the people who will field the calls, a fixed
+// print run, and enough self-tests on the shelf that the first patient who asks
+// for one does not leave empty-handed. This is that procedure, written down once
+// so the second station does not depend on remembering how the first went.
+//
+// The shape is INSTITUTION → STATIONS, because that is how the health service is
+// actually organised: HSU is one agreement and one set of contacts, but nine
+// heilsugæslustöðvar that each need their own visit, print run and go-live date.
 //
 // State lives as a single JSONB row in `site_settings` (key `station_onboarding`)
 // rather than its own table — it is one small document, edited by one or two
@@ -15,25 +18,38 @@ export type TaskState = { done: boolean; note?: string };
 
 export type Contact = { name: string; role?: string; email?: string; phone?: string };
 
+/** One heilsugæslustöð. */
 export type Station = {
+  id: string;
+  /** Location, as the institution writes it — "Vestmannaeyjar", "Vík í Mýrdal". */
+  name: string;
+  /** Innleiðing — the day the service goes live here. ISO yyyy-mm-dd. */
+  goLiveAt?: string;
+  /** Who to call at this station. */
+  contact: Contact;
+  /** Checklist item id → state. */
+  tasks: Record<string, TaskState>;
+  /** Self-test key → packages currently on the shelf here. */
+  stock: Record<string, number>;
+};
+
+/** One institution — HSU, HSN and so on. */
+export type Institution = {
   id: string;
   /** Full name, e.g. "Heilbrigðisstofnun Suðurlands". */
   name: string;
   /** What everyone actually calls it, e.g. "HSU". */
   short: string;
-  /** Where the station is, for the list. */
-  place?: string;
-  /** ISO date the opening work started. */
-  startedAt?: string;
-  /** Checklist item id → state. */
-  tasks: Record<string, TaskState>;
-  /** Self-test key → packages currently on the shelf AT THE STATION. */
-  stock: Record<string, number>;
-  /** Who to call at the station, and at the supplier. */
-  contacts: { station: Contact; supplier: Contact };
+  /** The contact for the agreement itself, not for any one station. */
+  contact: Contact;
+  stations: Station[];
 };
 
-export type OnboardingState = { stations: Station[] };
+export type OnboardingState = {
+  institutions: Institution[];
+  /** Heilsa supplies every station, so the contact is held once. */
+  supplier: Contact;
+};
 
 // ── The print run ───────────────────────────────────────────────────────────
 // Every printed item lives in this one section, whatever size it is, because
@@ -192,50 +208,156 @@ export const CHECKLIST: ChecklistSection[] = [
 
 export const ALL_ITEM_IDS = CHECKLIST.flatMap((s) => s.items.map((i) => i.id));
 
+/**
+ * HSU's own nine heilsugæslustöðvar, from its list of starfsstöðvar. Seeded so
+ * the rollout starts as a real plan rather than an empty page; Vestmannaeyjar is
+ * the pilot that is already live, leaving eight to open.
+ */
+export const HSU_STATIONS = [
+  "Vestmannaeyjar",
+  "Selfoss",
+  "Hveragerði",
+  "Þorlákshöfn",
+  "Uppsveitir",
+  "Rangárþing",
+  "Vík í Mýrdal",
+  "Kirkjubæjarklaustur",
+  "Höfn í Hornafirði",
+];
+
+const slug = (s: string) =>
+  s.toLowerCase().replace(/[^a-záðéíóúýþæö0-9]+/g, "-").replace(/^-|-$/g, "") || "stod";
+
 /** A station that has just been added: nothing done, nothing on the shelf. */
-export function newStation(id: string, name: string, short: string, place = ""): Station {
+export function newStation(name: string, id?: string): Station {
   return {
-    id,
+    id: id || `${slug(name)}-${Math.abs(hash(name))}`,
     name,
-    short,
-    place,
+    contact: { name: "" },
     tasks: {},
     stock: Object.fromEntries(SELF_TESTS.map((t) => [t.key, 0])),
-    contacts: { station: { name: "" }, supplier: { name: "Heilsa" } },
   };
 }
 
-/** Share of the checklist done, 0–1. */
+/** Stable id from a name, so seeding twice does not duplicate a station. */
+function hash(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return h;
+}
+
+export function newInstitution(name: string, short: string, stations: string[] = []): Institution {
+  return {
+    id: `${slug(short || name)}-${Math.abs(hash(short || name))}`,
+    name,
+    short,
+    contact: { name: "" },
+    stations: stations.map((s) => newStation(s)),
+  };
+}
+
+/** Share of the checklist done at one station, 0–1. */
 export function progress(s: Station): number {
   const done = ALL_ITEM_IDS.filter((id) => s.tasks[id]?.done).length;
   return ALL_ITEM_IDS.length ? done / ALL_ITEM_IDS.length : 0;
 }
 
-/** Tolerates a partial or legacy blob, so a hand-edited row cannot break the page. */
-export function mergeOnboarding(stored: unknown): OnboardingState {
-  const raw = (stored ?? {}) as { stations?: unknown };
-  const stations = Array.isArray(raw.stations) ? raw.stations : [];
-  const clean = stations
-    .map((s, i): Station | null => {
-      const d = (s ?? {}) as Partial<Station>;
-      if (!d.name && !d.short) return null;
-      const base = newStation(d.id || `station-${i}`, d.name || d.short || "", d.short || d.name || "", d.place || "");
-      return {
-        ...base,
-        startedAt: d.startedAt,
-        tasks: { ...(d.tasks ?? {}) },
-        stock: { ...base.stock, ...(d.stock ?? {}) },
-        contacts: {
-          station: { ...base.contacts.station, ...(d.contacts?.station ?? {}) },
-          supplier: { ...base.contacts.supplier, ...(d.contacts?.supplier ?? {}) },
-        },
-      };
-    })
-    .filter((s): s is Station => s !== null);
+/** Share of an institution's stations that are fully through the checklist. */
+export function institutionProgress(inst: Institution): number {
+  if (!inst.stations.length) return 0;
+  return inst.stations.reduce((sum, s) => sum + progress(s), 0) / inst.stations.length;
+}
 
-  // First run: seed the station this procedure was written for.
-  if (!clean.length) {
-    clean.push(newStation("hsu", "Heilbrigðisstofnun Suðurlands", "HSU", "Vestmannaeyjar"));
+/** Stations in innleiðing order; undated ones last, alphabetical within. */
+export function timeline(inst: Institution): Station[] {
+  return [...inst.stations].sort((a, b) => {
+    if (a.goLiveAt && b.goLiveAt) return a.goLiveAt.localeCompare(b.goLiveAt);
+    if (a.goLiveAt) return -1;
+    if (b.goLiveAt) return 1;
+    return a.name.localeCompare(b.name, "is");
+  });
+}
+
+/** "2026-09-01" → "1. september 2026". Anything unparseable is returned as-is. */
+export function formatDate(v?: string): string {
+  if (!v) return "";
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v.trim());
+  if (!m) return v;
+  return new Intl.DateTimeFormat("is-IS", { day: "numeric", month: "long", year: "numeric" }).format(
+    new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])),
+  );
+}
+
+function contact(c: unknown, fallbackName = ""): Contact {
+  const d = (c ?? {}) as Partial<Contact>;
+  return { name: d.name ?? fallbackName, role: d.role, email: d.email, phone: d.phone };
+}
+
+/**
+ * Tolerates a partial, legacy or hand-edited blob, so a bad row cannot break the
+ * page. Understands the ORIGINAL flat shape — one level of "stations", each with
+ * its own supplier contact — and lifts it into the institution → stations shape
+ * without losing ticks, stock counts or contacts.
+ */
+export function mergeOnboarding(stored: unknown): OnboardingState {
+  const raw = (stored ?? {}) as { institutions?: unknown; stations?: unknown; supplier?: unknown };
+
+  const readStation = (s: unknown, i: number): Station | null => {
+    const d = (s ?? {}) as Partial<Station> & { short?: string; place?: string; contacts?: { station?: unknown } };
+    const name = d.name || d.short || d.place || "";
+    if (!name) return null;
+    const base = newStation(name, d.id || `station-${i}`);
+    return {
+      ...base,
+      goLiveAt: d.goLiveAt,
+      contact: contact(d.contact ?? d.contacts?.station),
+      tasks: { ...(d.tasks ?? {}) },
+      stock: { ...base.stock, ...(d.stock ?? {}) },
+    };
+  };
+
+  let institutions: Institution[] = [];
+  let supplier = contact(raw.supplier, "Heilsa");
+
+  if (Array.isArray(raw.institutions) && raw.institutions.length) {
+    institutions = raw.institutions
+      .map((x): Institution | null => {
+        const d = (x ?? {}) as Partial<Institution>;
+        const name = d.name || d.short || "";
+        if (!name) return null;
+        const base = newInstitution(name, d.short || name);
+        return {
+          ...base,
+          id: d.id || base.id,
+          contact: contact(d.contact),
+          stations: (Array.isArray(d.stations) ? d.stations : [])
+            .map(readStation)
+            .filter((s): s is Station => s !== null),
+        };
+      })
+      .filter((x): x is Institution => x !== null);
+  } else if (Array.isArray(raw.stations) && raw.stations.length) {
+    // Legacy flat shape: each entry was an institution AND its only station.
+    const legacy = raw.stations as (Partial<Station> & {
+      short?: string;
+      place?: string;
+      contacts?: { station?: unknown; supplier?: unknown };
+    })[];
+    supplier = contact(legacy.find((s) => s.contacts?.supplier)?.contacts?.supplier, "Heilsa");
+    institutions = legacy
+      .map((s, idx): Institution | null => {
+        const instName = s.name || s.short || "";
+        if (!instName) return null;
+        const inst = newInstitution(instName, s.short || instName);
+        const station = readStation({ ...s, name: s.place || s.short || instName }, idx);
+        return { ...inst, id: s.id || inst.id, stations: station ? [station] : [] };
+      })
+      .filter((x): x is Institution => x !== null);
   }
-  return { stations: clean };
+
+  // First run: seed HSU with the stations it actually operates.
+  if (!institutions.length) {
+    institutions = [newInstitution("Heilbrigðisstofnun Suðurlands", "HSU", HSU_STATIONS)];
+  }
+  return { institutions, supplier };
 }
