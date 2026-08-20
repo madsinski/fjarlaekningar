@@ -446,75 +446,157 @@ function FridgeCard({ f }: { f: FridgeFields }) {
 
 // ── Fridge card, imposed 4-up on A4 for double-sided printing ───────────────
 //
-// Four A6 cards tile an A4 sheet exactly: 2 × 105mm across, 2 × 148.5mm down.
-// That exactness is the whole point of the layout, for two reasons.
+// Four cards on an A4 sheet, each with its own crop marks — the form a print
+// shop expects, where every mark sits OUTSIDE the trim box and is thrown away
+// with the waste. That is what sets the geometry: butting the cards together
+// would leave nowhere to put a mark except on the neighbouring card, so the
+// trim boxes need a gutter between them and a margin to the paper edge, and the
+// cards give up the space.
 //
-// 1. The cards stay TRUE A6, so they still fit an A6 laminating pouch. Leaving
-//    a margin for crop marks would mean shrinking them, and a card that is 96%
-//    of A6 laminates badly.
-// 2. It makes the sheet FLIP-INVARIANT. The grid is symmetric about both centre
-//    lines, so whichever way the printer turns the paper for the second side —
-//    long edge or short edge — every cell lands back on a cell. Front and back
-//    register either way, and the only misalignment left is the printer's own
-//    duplex tolerance, which no layout can fix.
+// So they are no longer true A6. The face is still DESIGNED at 105×148 and
+// scaled down as a whole (transform, not a smaller box) — the layout uses px
+// type against mm padding, so resizing the box would reflow the card while
+// scaling it just makes the same card smaller.
 //
-// The cut marks follow from the same geometry: with the cards filling the sheet,
-// the only cuts are the two centre lines, so the marks are short ticks sitting
-// ON those lines at the four sheet edges — never full lines across the artwork,
-// and consumed by the blade when you cut. Each tick is a dark hairline inside a
-// white halo so it reads on the dark "scan" face as well as on white.
-const IMPOSE = { cols: 2, rows: 2, cellW: 105, cellH: 148.5, markLen: 10 };
+// The block stays centred, which keeps the sheet FLIP-INVARIANT: margins and
+// gutters are equal on opposite sides, so whichever way the printer turns the
+// paper for the second side — long edge or short — every trim box lands back on
+// a trim box. Front and back register either way, leaving only the printer's
+// own duplex tolerance, which no layout can fix.
+const A4 = { w: 210, h: 297 };
 
-function CropTicks() {
-  const { cellW, cellH, markLen: L } = IMPOSE;
-  const hair: React.CSSProperties = {
-    position: "absolute",
-    background: "#111",
-    boxShadow: "0 0 0 0.35mm #fff",
-  };
-  // Vertical cut at x = cellW: ticks down from the top edge and up from the
-  // bottom. Horizontal cut at y = cellH: ticks in from the left and right.
+const IMPOSE = {
+  cols: 2,
+  rows: 2,
+  /** Paper edge → trim box. Holds the outer marks clear of the unprintable rim. */
+  margin: 12,
+  /** Between two trim boxes. Holds the two marks that face each other. */
+  gutter: 12,
+  /** Trim edge → start of a mark, so no mark ever touches the card. */
+  markOffset: 2,
+  markLen: 4,
+  hair: 0.25,
+};
+
+/**
+ * Where the four trim boxes sit and how far the design is scaled to fit them.
+ * Derived rather than hard-coded, so changing a margin re-fits the cards.
+ */
+function impositionLayout() {
+  const { cols, rows, margin, gutter } = IMPOSE;
+  const availW = A4.w - 2 * margin - (cols - 1) * gutter;
+  const availH = A4.h - 2 * margin - (rows - 1) * gutter;
+  // One scale for both axes: the card keeps its A6 proportions.
+  const scale = Math.min(availW / (cols * FRIDGE_CARD.w), availH / (rows * FRIDGE_CARD.h));
+  const w = FRIDGE_CARD.w * scale;
+  const h = FRIDGE_CARD.h * scale;
+  const x0 = (A4.w - (cols * w + (cols - 1) * gutter)) / 2;
+  const y0 = (A4.h - (rows * h + (rows - 1) * gutter)) / 2;
+  const cards: { x: number; y: number }[] = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) cards.push({ x: x0 + c * (w + gutter), y: y0 + r * (h + gutter) });
+  }
+  return { scale, w, h, cards };
+}
+
+export const FRIDGE_TRIM = (() => {
+  const { w, h, scale } = impositionLayout();
+  return { w: Math.round(w * 10) / 10, h: Math.round(h * 10) / 10, scale };
+})();
+
+/**
+ * Standard corner crop marks for one trim box: at each corner, one mark on the
+ * vertical trim line and one on the horizontal, both running AWAY from the card
+ * so the cut removes them. Never an L touching the corner — that would mark the
+ * card itself.
+ */
+function CornerMarks({ x, y, w, h }: { x: number; y: number; w: number; h: number }) {
+  const { markOffset: o, markLen: L, hair } = IMPOSE;
+  const base: React.CSSProperties = { position: "absolute", background: "#111" };
+  const marks: React.CSSProperties[] = [];
+
+  for (const [cx, isLeft] of [[x, true], [x + w, false]] as const) {
+    for (const [cy, isTop] of [[y, true], [y + h, false]] as const) {
+      // On the vertical trim line, extending up from the top edge / down from
+      // the bottom.
+      marks.push({
+        left: `${cx - hair / 2}mm`,
+        top: `${isTop ? cy - o - L : cy + o}mm`,
+        width: `${hair}mm`,
+        height: `${L}mm`,
+      });
+      // On the horizontal trim line, extending left / right.
+      marks.push({
+        top: `${cy - hair / 2}mm`,
+        left: `${isLeft ? cx - o - L : cx + o}mm`,
+        height: `${hair}mm`,
+        width: `${L}mm`,
+      });
+    }
+  }
   return (
-    <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 5 }}>
-      <div style={{ ...hair, left: `${cellW}mm`, top: 0, width: "0.25mm", height: `${L}mm`, marginLeft: "-0.125mm" }} />
-      <div style={{ ...hair, left: `${cellW}mm`, bottom: 0, width: "0.25mm", height: `${L}mm`, marginLeft: "-0.125mm" }} />
-      <div style={{ ...hair, top: `${cellH}mm`, left: 0, height: "0.25mm", width: `${L}mm`, marginTop: "-0.125mm" }} />
-      <div style={{ ...hair, top: `${cellH}mm`, right: 0, height: "0.25mm", width: `${L}mm`, marginTop: "-0.125mm" }} />
-    </div>
+    <>
+      {marks.map((m, i) => (
+        <div key={i} style={{ ...base, ...m }} />
+      ))}
+    </>
   );
 }
 
-/** One A4 sheet carrying four copies of a single face, plus the cut marks. */
+/** One A4 sheet carrying four copies of a single face, each with its own marks. */
 function ImposedSheet({ face }: { face: React.ReactNode }) {
-  const { cols, rows, cellW, cellH } = IMPOSE;
+  const { w, h, scale, cards } = impositionLayout();
   return (
     <div
       className="a4 imposed"
       style={{
-        width: `${cellW * cols}mm`,
-        height: `${cellH * rows}mm`,
-        ["--sheet-h" as string]: `${cellH * rows}mm`,
-        display: "grid",
-        gridTemplateColumns: `repeat(${cols}, ${cellW}mm)`,
-        gridTemplateRows: `repeat(${rows}, ${cellH}mm)`,
+        width: `${A4.w}mm`,
+        height: `${A4.h}mm`,
+        ["--sheet-h" as string]: `${A4.h}mm`,
+        display: "block",
         position: "relative",
         padding: 0,
       }}
     >
-      {Array.from({ length: cols * rows }, (_, i) => (
-        <div key={i} style={{ width: `${cellW}mm`, height: `${cellH}mm`, overflow: "hidden", position: "relative" }}>
-          {face}
+      {cards.map((c, i) => (
+        <div
+          key={i}
+          style={{
+            position: "absolute",
+            left: `${c.x}mm`,
+            top: `${c.y}mm`,
+            width: `${w}mm`,
+            height: `${h}mm`,
+            overflow: "hidden",
+          }}
+        >
+          {/* The face is built at 105×148mm; scaling it keeps the design intact
+              where resizing the box would reflow it. */}
+          <div
+            style={{
+              width: `${FRIDGE_CARD.w}mm`,
+              height: `${FRIDGE_CARD.h}mm`,
+              transform: `scale(${scale})`,
+              transformOrigin: "top left",
+            }}
+          >
+            {face}
+          </div>
         </div>
       ))}
-      <CropTicks />
+      <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 5 }}>
+        {cards.map((c, i) => (
+          <CornerMarks key={i} x={c.x} y={c.y} w={w} h={h} />
+        ))}
+      </div>
     </div>
   );
 }
 
 /**
  * The print form of the fridge card: two A4 sheets, four cards each. Sheet one
- * is the front, sheet two the back — print double-sided, cut on the two centre
- * lines, and you have four finished cards.
+ * is the front, sheet two the back — print double-sided, cut each card out on
+ * its own crop marks, and you have four finished cards.
  */
 export function FridgeImposition({ f }: { f: FridgeFields }) {
   const [front, back] = fridgeFaces(f, true);
@@ -988,5 +1070,5 @@ export function CollateralPrintDoc({ doc }: { doc: Doc }) {
 
 /** The paper size a document prints on, in mm. */
 export function printSheetSize(doc: Doc | undefined): { w: number; h: number } | null {
-  return doc?.type === "fridge" ? { w: IMPOSE.cellW * IMPOSE.cols, h: IMPOSE.cellH * IMPOSE.rows } : null;
+  return doc?.type === "fridge" ? { ...A4 } : null;
 }

@@ -14,7 +14,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { COLLATERAL_CSS } from "./collateral-css";
-import { CollateralDoc, CollateralPrintDoc, printSheetSize, AFTER_ICON_KEYS, BENEFIT_ICON_KEYS } from "./docs";
+import { CollateralDoc, CollateralPrintDoc, printSheetSize, FRIDGE_TRIM, AFTER_ICON_KEYS, BENEFIT_ICON_KEYS } from "./docs";
 import {
   defaultDoc,
   frameGeometry,
@@ -508,15 +508,20 @@ export function CollateralStudio({
                   A6 ({FRIDGE_CARD.w}×{FRIDGE_CARD.h} mm) — tvíhliða. Prentast 4 á A4-örk.
                 </p>
                 {/* The one thing that breaks the sheet is the printer scaling
-                    it: "fit to page" shrinks the cards off A6 and out of an A6
-                    plasthulstur. Everything else about the layout is symmetric,
+                    it: at anything but 100% the trim size stops matching the
+                    crop marks. Everything else about the layout is symmetric,
                     so the sides register whichever way the paper turns. */}
                 <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
                   <b>Prentstillingar:</b> A4, tvíhliða, <b>100% stærð</b> — ekki „passa á síðu“ eða
-                  „fit to page“, þá verða kortin ekki lengur A6 og passa illa í plasthulstur.
-                  Örkin er samhverf, svo það skiptir ekki máli hvort prentarinn snýr blaðinu um
-                  lengri eða styttri kant — fram- og bakhlið standast alltaf á. Skerið eftir
-                  miðlínunum tveimur; skurðmerkin eru á jöðrunum.
+                  „fit to page“, þá passa skurðmerkin ekki lengur við kortin. Hvert kort hefur sín
+                  eigin skurðmerki utan við sniðflötinn, eins og prentsmiðja gerir kröfu um; þau
+                  hverfa í afskurðinn. Fullunnið kort verður{" "}
+                  <b>
+                    {FRIDGE_TRIM.w}×{FRIDGE_TRIM.h} mm
+                  </b>{" "}
+                  (aðeins minna en A6, því merkin þurfa pláss). Örkin er samhverf, svo það skiptir
+                  ekki máli hvort prentarinn snýr blaðinu um lengri eða styttri kant — fram- og
+                  bakhlið standast alltaf á.
                 </p>
                 {/* A visual pick rather than a dropdown: the four layouts are
                     genuinely different cards, and the preview beside this pane
