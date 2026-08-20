@@ -468,8 +468,14 @@ const A4 = { w: 210, h: 297 };
 const IMPOSE = {
   cols: 2,
   rows: 2,
-  /** Paper edge → trim box. Holds the outer marks clear of the unprintable rim. */
-  margin: 12,
+  /**
+   * Paper edge → trim box. Sized for the sheet's real destination: an office
+   * laser printer, which cannot print to the edge at all. 14mm leaves the
+   * outermost mark 8mm in, clearing even the ~6.35mm rim of the worst offenders
+   * — and since no bleed is possible on that hardware, nothing on the sheet
+   * wants to reach the edge anyway.
+   */
+  margin: 14,
   /** Between two trim boxes. Holds the two marks that face each other. */
   gutter: 12,
   /** Trim edge → start of a mark, so no mark ever touches the card. */
