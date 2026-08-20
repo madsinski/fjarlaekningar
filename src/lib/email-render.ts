@@ -220,6 +220,11 @@ export interface FjarlaekningarEmailInput {
   ctaHref?: string;
   /** Required for marketing email — every send must be opt-out-able. */
   unsubscribeUrl: string;
+  /**
+   * Replaces the "you signed up for our newsletter" line and its unsubscribe
+   * link. Set this on transactional mail, where neither statement is true.
+   */
+  footerNote?: string;
   /** Visual design; defaults to "classic". */
   template?: EmailTemplate;
 }
@@ -242,16 +247,25 @@ const ctaBlock = (label?: string, href?: string, margin = "28px 0 4px") =>
       </table>`
     : "";
 
-const footerRow = (unsubscribeUrl: string) =>
+// The second line explains why the message arrived. For newsletters that is the
+// mailing list and an unsubscribe link; a transactional email — sent to one
+// named person because of something we agreed with them — passes `footerNote`
+// instead, since telling a hospital contact they joined a mailing list would be
+// untrue and the unsubscribe would do nothing for them.
+const footerRow = (unsubscribeUrl: string, footerNote?: string) =>
   `<tr><td style="padding:20px 32px 28px;border-top:1px solid ${BORDER};background:#fbfcfd;">
     <p style="margin:0 0 6px;color:${MUTED};font-size:12px;line-height:1.6;">
       Fjarlækningar ehf. · Ísland ·
       <a href="mailto:fjarlaekningar@fjarlaekningar.is" style="color:${CYAN_DARK};text-decoration:none;">fjarlaekningar@fjarlaekningar.is</a>
     </p>
-    <p style="margin:0;color:${MUTED};font-size:12px;line-height:1.6;">
+    ${
+      footerNote
+        ? `<p style="margin:0;color:${MUTED};font-size:12px;line-height:1.6;">${escapeHtml(footerNote)}</p>`
+        : `<p style="margin:0;color:${MUTED};font-size:12px;line-height:1.6;">
       Þú færð þennan póst af því að þú skráðir þig á fréttalista okkar.
       <a href="${escapeHtml(unsubscribeUrl)}" style="color:${MUTED};text-decoration:underline;">Afskrá mig</a>.
-    </p>
+    </p>`
+    }
   </td></tr>`;
 
 const card = (rows: string, radius = true) =>
@@ -281,7 +295,7 @@ const annTail = (input: FjarlaekningarEmailInput) => `
         <tr><td style="padding:0 32px 30px;">
           ${ctaBlock(input.ctaLabel, input.ctaHref, "12px 0 0")}
         </td></tr>
-        ${footerRow(input.unsubscribeUrl)}`;
+        ${footerRow(input.unsubscribeUrl, input.footerNote)}`;
 
 /**
  * Wrap body HTML in the Fjarlækningar look. Selectable designs share the logo,
@@ -306,7 +320,7 @@ export function renderFjarlaekningarEmail(input: FjarlaekningarEmailInput): stri
           ${input.bodyHtml}
           ${cta}
         </td></tr>
-        ${footerRow(input.unsubscribeUrl)}`)}
+        ${footerRow(input.unsubscribeUrl, input.footerNote)}`)}
       ${wwwLine}`);
 
     // Letter style: no card chrome, small left logo, generous whitespace.
@@ -387,7 +401,7 @@ export function renderFjarlaekningarEmail(input: FjarlaekningarEmailInput): stri
           ${input.bodyHtml}
           ${cta}
         </td></tr>
-        ${footerRow(input.unsubscribeUrl)}`)}
+        ${footerRow(input.unsubscribeUrl, input.footerNote)}`)}
       ${wwwLine}`);
   }
 }

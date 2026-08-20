@@ -31,6 +31,13 @@ export type Station = {
   tasks: Record<string, TaskState>;
   /** Self-test key → packages currently on the shelf here. */
   stock: Record<string, number>;
+  /** When the innleiðingarpakki was last emailed. ISO timestamp. */
+  packageSentAt?: string;
+  /**
+   * The address it went to. Recorded next to the timestamp because the contact
+   * can change afterwards, and "sent" then means nothing without knowing where.
+   */
+  packageSentTo?: string;
 };
 
 /** One institution — HSU, HSN and so on. */
@@ -313,6 +320,8 @@ export function mergeOnboarding(stored: unknown): OnboardingState {
       contact: contact(d.contact ?? d.contacts?.station),
       tasks: { ...(d.tasks ?? {}) },
       stock: { ...base.stock, ...(d.stock ?? {}) },
+      packageSentAt: d.packageSentAt,
+      packageSentTo: d.packageSentTo,
     };
   };
 

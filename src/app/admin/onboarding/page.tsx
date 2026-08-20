@@ -1,8 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ClipboardList, Plus, Trash2, ExternalLink, Minus, AlertTriangle, CheckCircle2 } from "lucide-react";
+import {
+  ClipboardList,
+  Plus,
+  Trash2,
+  ExternalLink,
+  Minus,
+  AlertTriangle,
+  CheckCircle2,
+  Send,
+  Eye,
+  Presentation,
+} from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { packageUrl } from "@/lib/onboarding-package";
 import {
   CHECKLIST,
   SELF_TESTS,
@@ -63,6 +75,10 @@ export default function OnboardingPage() {
   const [denied, setDenied] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [skipSave, setSkipSave] = useState(true);
+  // Innleiðingarpakki: one send at a time, with the rendered text on demand.
+  const [sending, setSending] = useState(false);
+  const [sendMsg, setSendMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [preview, setPreview] = useState<{ to: string; subject: string; markdown: string } | null>(null);
 
   const authHeaders = async (): Promise<Record<string, string>> => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -123,6 +139,13 @@ export default function OnboardingPage() {
     [inst, stationId],
   );
 
+  // A preview or a "sent" line belongs to one station; switching stations must
+  // not leave the previous station's message sitting under the new one.
+  useEffect(() => {
+    setPreview(null);
+    setSendMsg(null);
+  }, [station?.id]);
+
   const patchInst = (id: string, fn: (i: Institution) => Institution) =>
     setState((prev) => ({ ...prev, institutions: prev.institutions.map((i) => (i.id === id ? fn(i) : i)) }));
 
@@ -142,6 +165,75 @@ export default function OnboardingPage() {
     if (!confirm(`Fjarlægja ${s?.name || "stöðina"} og gátlistann hennar?`)) return;
     patchInst(inst.id, (i) => ({ ...i, stations: i.stations.filter((x) => x.id !== sid) }));
     setStationId("");
+  };
+
+  /**
+   * The send route builds the email from the SAVED state, so anything typed in
+   * the last second — a contact's address, say — has to land first. Cheaper and
+   * safer than sending the browser's copy: the email is always built from what
+   * the database actually holds.
+   */
+  const flushSave = async () => {
+    const res = await fetch("/api/admin/onboarding", {
+      method: "POST",
+      headers: await authHeaders(),
+      body: JSON.stringify({ state }),
+    });
+    setSaveState(res.ok ? "saved" : "error");
+    return res.ok;
+  };
+
+  const previewPackage = async () => {
+    if (!inst || !station) return;
+    setSendMsg(null);
+    if (!(await flushSave())) {
+      setSendMsg({ kind: "err", text: "Gat ekki vistað breytingar — forskoðun gæti verið úrelt." });
+    }
+    const res = await fetch(
+      `/api/admin/onboarding/send?institution=${encodeURIComponent(inst.id)}&station=${encodeURIComponent(station.id)}`,
+      { headers: await authHeaders() },
+    );
+    const j = await res.json().catch(() => ({}));
+    if (!j.ok) {
+      setSendMsg({ kind: "err", text: j.error || "Gat ekki sótt forskoðun." });
+      return;
+    }
+    setPreview({ to: j.to, subject: j.subject, markdown: j.markdown });
+  };
+
+  const sendPackage = async () => {
+    if (!inst || !station) return;
+    const to = (station.contact.email || "").trim();
+    const again = station.packageSentAt
+      ? `Innleiðingarpakkinn hefur þegar verið sendur á ${station.packageSentTo || to}. Senda aftur?`
+      : `Senda innleiðingarpakkann á ${to}?`;
+    if (!confirm(again)) return;
+
+    setSending(true);
+    setSendMsg(null);
+    try {
+      if (!(await flushSave())) {
+        setSendMsg({ kind: "err", text: "Gat ekki vistað breytingar — hætti við sendingu." });
+        return;
+      }
+      const res = await fetch("/api/admin/onboarding/send", {
+        method: "POST",
+        headers: await authHeaders(),
+        body: JSON.stringify({ institutionId: inst.id, stationId: station.id }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!j.ok) {
+        setSendMsg({ kind: "err", text: j.error || "Sending mistókst." });
+        return;
+      }
+      // The route recorded the send; mirror it locally rather than reloading, so
+      // nothing else the admin has typed is thrown away.
+      patchStation(station.id, (s) => ({ ...s, packageSentAt: j.sentAt, packageSentTo: j.to }));
+      setSkipSave(true);
+      setSendMsg({ kind: "ok", text: j.warning || `Sent á ${j.to}.` });
+    } finally {
+      setSending(false);
+    }
   };
 
   const addInstitution = () => {
@@ -387,6 +479,99 @@ export default function OnboardingPage() {
                     onChange={(p) => patchStation(station.id, (s) => ({ ...s, contact: { ...s.contact, ...p } }))}
                   />
                 </div>
+              </section>
+
+              {/* Innleiðingarpakki — the covering email plus the deck, sent to
+                  the contact above. Sits directly under the contact fields
+                  because that is the field it depends on. */}
+              <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2 className="text-lg font-bold text-slate-900">Innleiðingarpakki</h2>
+                    <p className="mt-1.5 max-w-2xl text-sm text-slate-600">
+                      Sendir tengilið stöðvarinnar kynningu með öllu sem þarf fyrir opnun: þjónustuna,
+                      samstarfið, innleiðingaráætlunina, dagskrá heimsóknardagsins, prentefnið og sjálfsprófin.
+                    </p>
+                  </div>
+                  <a
+                    href={packageUrl()}
+                    target="_blank"
+                    rel="noopener"
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    <Presentation className="h-3.5 w-3.5" /> Skoða pakkann
+                  </a>
+                </div>
+
+                {station.packageSentAt ? (
+                  <p className="mt-4 flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>
+                      Sent {formatDate(station.packageSentAt.slice(0, 10))} á{" "}
+                      <b>{station.packageSentTo || station.contact.email}</b>.
+                    </span>
+                  </p>
+                ) : !station.contact.email?.trim() ? (
+                  <p className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                    Skráðu netfang tengiliðar hér að ofan til að geta sent pakkann.
+                  </p>
+                ) : (
+                  <p className="mt-4 text-sm text-slate-600">
+                    Fer á <b>{station.contact.email}</b>
+                    {station.contact.name ? ` (${station.contact.name})` : ""}.
+                    {!station.goLiveAt && " Engin innleiðingardagsetning skráð — pakkinn biður þá um dagsetningu."}
+                  </p>
+                )}
+
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={sendPackage}
+                    disabled={sending || !station.contact.email?.trim()}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-cyan-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                    {sending ? "Sendi…" : station.packageSentAt ? "Senda aftur" : "Senda innleiðingarpakka"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={previewPackage}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    <Eye className="h-3.5 w-3.5" /> Forskoða póstinn
+                  </button>
+                </div>
+
+                {sendMsg && (
+                  <p
+                    className={`mt-3 text-sm ${sendMsg.kind === "ok" ? "text-emerald-700" : "text-red-700"}`}
+                    role="status"
+                  >
+                    {sendMsg.text}
+                  </p>
+                )}
+
+                {preview && (
+                  <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs text-slate-500">
+                      Til: <b className="text-slate-700">{preview.to || "—"}</b>
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Efni: <b className="text-slate-700">{preview.subject}</b>
+                    </p>
+                    <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-700">
+                      {preview.markdown}
+                    </pre>
+                    <button
+                      type="button"
+                      onClick={() => setPreview(null)}
+                      className="mt-3 text-xs font-medium text-slate-500 hover:underline"
+                    >
+                      Loka forskoðun
+                    </button>
+                  </div>
+                )}
               </section>
 
               {/* Checklist */}
