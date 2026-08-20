@@ -12,6 +12,7 @@ import {
   Send,
   Eye,
   Presentation,
+  Copy,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { packageUrl } from "@/lib/onboarding-package";
@@ -22,6 +23,8 @@ import {
   SELF_TEST_PRICE_ISK,
   SELF_TEST_TARGET,
   formatDate,
+  duplicateInstitution,
+  duplicateStation,
   institutionProgress,
   mergeOnboarding,
   newInstitution,
@@ -243,6 +246,31 @@ export default function OnboardingPage() {
     setStationId("");
   };
 
+  const duplicateStationHere = () => {
+    if (!inst || !station) return;
+    const copy = duplicateStation(station, inst.stations.map((s) => s.name));
+    patchInst(inst.id, (i) => ({ ...i, stations: [...i.stations, copy] }));
+    setStationId(copy.id);
+  };
+
+  const duplicateInstitutionHere = () => {
+    if (!inst) return;
+    const copy = duplicateInstitution(inst, state.institutions.map((i) => i.short || i.name));
+    setState((prev) => ({ ...prev, institutions: [...prev.institutions, copy] }));
+    setInstId(copy.id);
+    setStationId("");
+  };
+
+  const removeInstitution = (id: string) => {
+    const target = state.institutions.find((i) => i.id === id);
+    if (!target) return;
+    const label = target.short || target.name || "stofnunina";
+    if (!confirm(`Fjarlægja ${label} og allar ${target.stations.length} stöðvar hennar?`)) return;
+    setState((prev) => ({ ...prev, institutions: prev.institutions.filter((i) => i.id !== id) }));
+    setInstId("");
+    setStationId("");
+  };
+
   if (denied) {
     return (
       <div className="p-8">
@@ -320,6 +348,33 @@ export default function OnboardingPage() {
           {/* Details and contacts, at the top — the things you look up rather
               than work through. */}
           <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-cyan-700">Valin stofnun</p>
+                <h2 className="mt-0.5 truncate text-lg font-bold text-slate-900">
+                  {inst.short || inst.name || "Ónefnd stofnun"}
+                </h2>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={duplicateInstitutionHere}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                  title="Afrita stofnunina með öllum stöðvum"
+                >
+                  <Copy className="h-3.5 w-3.5" /> Afrita stofnun
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeInstitution(inst.id)}
+                  className="rounded-lg border border-slate-200 p-1.5 text-slate-400 hover:border-red-300 hover:bg-red-50 hover:text-red-600"
+                  title="Fjarlægja stofnun"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
                 <span className="mb-1 block text-xs font-medium text-slate-600">Heiti stofnunar</span>
@@ -440,6 +495,14 @@ export default function OnboardingPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold tabular-nums text-slate-700">{pct}%</span>
+                    <button
+                      type="button"
+                      onClick={duplicateStationHere}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                      title="Afrita stöðina með gátlista og birgðum"
+                    >
+                      <Copy className="h-3.5 w-3.5" /> Afrita stöð
+                    </button>
                     <button
                       type="button"
                       onClick={() => removeStation(station.id)}

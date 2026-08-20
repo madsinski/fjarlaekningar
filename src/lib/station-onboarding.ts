@@ -263,6 +263,67 @@ export function newInstitution(name: string, short: string, stations: string[] =
   };
 }
 
+/**
+ * Ids for copies. Names are derived from a hash, which is what stops seeding
+ * twice from duplicating a station — but it also means two copies of the same
+ * name would collide, so a copy gets a random id instead.
+ */
+const copyId = (prefix: string) => `${prefix}-${Math.random().toString(36).slice(2, 8)}`;
+
+/** "Selfoss" → "Selfoss (afrit)", or "(afrit 2)" if that is taken. */
+export function copyName(base: string, taken: string[]): string {
+  const stem = base.trim() || "Ónefnd";
+  const first = `${stem} (afrit)`;
+  if (!taken.includes(first)) return first;
+  for (let n = 2; ; n++) {
+    const candidate = `${stem} (afrit ${n})`;
+    if (!taken.includes(candidate)) return candidate;
+  }
+}
+
+/**
+ * A copy of a station, ready to stand on its own.
+ *
+ * Everything the admin entered comes along — contact, ticks, stock, date — on
+ * the principle that "duplicate" should mean duplicate, and anything wrong is
+ * one click from being corrected. The send record is the exception: it is not
+ * bookkeeping but a record that an email actually went to a named address, and
+ * carrying it over would make the new station claim a send that never happened.
+ */
+export function duplicateStation(s: Station, taken: string[]): Station {
+  return {
+    ...s,
+    id: copyId(slug(s.name)),
+    name: copyName(s.name, taken),
+    tasks: { ...s.tasks },
+    stock: { ...s.stock },
+    contact: { ...s.contact },
+    packageSentAt: undefined,
+    packageSentTo: undefined,
+  };
+}
+
+/** A copy of an institution and every station under it. */
+export function duplicateInstitution(inst: Institution, taken: string[]): Institution {
+  return {
+    ...inst,
+    id: copyId(slug(inst.short || inst.name)),
+    name: inst.name,
+    short: copyName(inst.short || inst.name, taken),
+    contact: { ...inst.contact },
+    // Station names are unique within the copy already, so each is duplicated
+    // against its own growing list rather than the original's.
+    stations: inst.stations.reduce<Station[]>((acc, s) => {
+      acc.push({
+        ...duplicateStation(s, acc.map((x) => x.name)),
+        // Inside a fresh institution the original names are free again.
+        name: s.name,
+      });
+      return acc;
+    }, []),
+  };
+}
+
 /** Share of the checklist done at one station, 0–1. */
 export function progress(s: Station): number {
   const done = ALL_ITEM_IDS.filter((id) => s.tasks[id]?.done).length;
@@ -364,8 +425,12 @@ export function mergeOnboarding(stored: unknown): OnboardingState {
       .filter((x): x is Institution => x !== null);
   }
 
-  // First run: seed HSU with the stations it actually operates.
-  if (!institutions.length) {
+  // Seed HSU on the FIRST run only — when nothing has ever been stored. An
+  // explicitly empty list is a choice (the last institution was deleted) and
+  // must survive a reload; seeding on "empty" instead of "absent" would keep
+  // resurrecting HSU the moment someone cleared the page.
+  const neverStored = !Array.isArray(raw.institutions) && !Array.isArray(raw.stations);
+  if (!institutions.length && neverStored) {
     institutions = [newInstitution("Heilbrigðisstofnun Suðurlands", "HSU", HSU_STATIONS)];
   }
   return { institutions, supplier };
