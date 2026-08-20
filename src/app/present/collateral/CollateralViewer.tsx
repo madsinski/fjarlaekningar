@@ -24,7 +24,7 @@ const useMounted = () =>
     () => false,
   );
 import { COLLATERAL_CSS } from "@/app/admin/presentations/collateral/collateral-css";
-import { CollateralDoc } from "@/app/admin/presentations/collateral/docs";
+import { CollateralDoc, CollateralPrintDoc } from "@/app/admin/presentations/collateral/docs";
 import type { CollateralContent } from "@/app/admin/presentations/collateral/content";
 
 const A4_W = 793.7;
@@ -149,7 +149,7 @@ export default function CollateralViewer({
       {mounted &&
         createPortal(
           <div className="llcol-print llcol">
-            <CollateralDoc doc={active} />
+            <CollateralPrintDoc doc={active} />
           </div>,
           document.body,
         )}

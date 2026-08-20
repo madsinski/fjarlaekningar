@@ -31,6 +31,18 @@ export const COLLATERAL_CSS = `
   -webkit-font-smoothing:antialiased;
 }
 .llcol .a4 *{box-sizing:border-box;}
+
+/* ── imposed A6 cell ──────────────────────────────────────────────────────
+   One card inside the 4-up A4 sheet (see FridgeImposition). Carries what the
+   face expects from a page — white ground, column flow, clipped overflow —
+   without being a page, since a nested .a4 would force a print page break. */
+.llcol .a6cell{
+  background:#fff; color:var(--body);
+  position:relative; overflow:hidden;
+  display:flex; flex-direction:column;
+  -webkit-font-smoothing:antialiased;
+}
+.llcol .a6cell *{box-sizing:border-box;}
 /* A document may be more than one sheet (e.g. the referral guide + its back
    side). transform:scale does not shrink the layout box, so pull the next page
    up by the space the scale frees — otherwise stacked pages sit 297mm apart on

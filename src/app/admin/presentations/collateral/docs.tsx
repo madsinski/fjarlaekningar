@@ -135,7 +135,19 @@ function HsuCobrand({ label = "Í samstarfi við HSU", height = "11mm", onDark =
 // A6 take-home card, printed both sides: the offer + QR on the front, the list
 // of erindi on the back. Sized so a phone camera can read the QR from the
 // distance you stand at a fridge door.
-function FridgeCardSheet({ children }: { children: React.ReactNode }) {
+//
+// A face is normally its own page (`.a4` at A6 size). When imposed 4-up on an
+// A4 sheet it must NOT be a page: `.a4` inside `.a4` would give every card its
+// own page break in print. In that mode it becomes a plain cell filling the
+// grid slot instead — see FridgeImposition.
+function FridgeCardSheet({ children, imposed }: { children: React.ReactNode; imposed?: boolean }) {
+  if (imposed) {
+    return (
+      <div className="a6cell" style={{ width: "100%", height: "100%" }}>
+        {children}
+      </div>
+    );
+  }
   return (
     <div
       className="a4"
@@ -178,9 +190,9 @@ function FridgeCardSheet({ children }: { children: React.ReactNode }) {
  * The instruction sits ABOVE the code: you want it read before the camera comes
  * up, not after.
  */
-function QrFace({ f, onDark }: { f: FridgeFields; onDark: boolean }) {
+function QrFace({ f, onDark, imposed }: { f: FridgeFields; onDark: boolean; imposed?: boolean }) {
   return (
-    <FridgeCardSheet>
+    <FridgeCardSheet imposed={imposed}>
       <div
         className={onDark ? "hero" : undefined}
         style={{
@@ -244,12 +256,12 @@ function QrFace({ f, onDark }: { f: FridgeFields; onDark: boolean }) {
  * tighter list); everything else is the back, where the layout is chosen per
  * card — see FridgeBackLayout.
  */
-function ServicesFace({ f, hero }: { f: FridgeFields; hero: boolean }) {
+function ServicesFace({ f, hero, imposed }: { f: FridgeFields; hero: boolean; imposed?: boolean }) {
   const back = f.backLayout ?? "cards";
   const cols = !hero && back === "grid" ? 3 : !hero && back === "cards" ? 2 : 1;
 
   return (
-    <FridgeCardSheet>
+    <FridgeCardSheet imposed={imposed}>
       {hero ? (
         <div className="hero" style={{ padding: "8mm 8mm 6mm" }}>
           <FjarLogo onDark />
@@ -366,9 +378,9 @@ function ServicesFace({ f, hero }: { f: FridgeFields; hero: boolean }) {
 }
 
 /** The original card: slogan and lead paragraph above a smaller QR. */
-function ClassicFace({ f }: { f: FridgeFields }) {
+function ClassicFace({ f, imposed }: { f: FridgeFields; imposed?: boolean }) {
   return (
-    <FridgeCardSheet>
+    <FridgeCardSheet imposed={imposed}>
       <div className="hero" style={{ padding: "9mm 8mm 8mm" }}>
         <FjarLogo onDark />
         <h1 style={{ fontSize: "18px", marginTop: "6mm", lineHeight: 1.15 }}>{renderHeading(f.slogan)}</h1>
@@ -402,29 +414,114 @@ function ClassicFace({ f }: { f: FridgeFields }) {
  * the erindi and its back on the scan face, so the card reads "here is what we
  * treat" / "here is how you reach us" instead of saying the same thing twice.
  */
-function FridgeCard({ f }: { f: FridgeFields }) {
+function fridgeFaces(f: FridgeFields, imposed?: boolean): [React.ReactNode, React.ReactNode] {
   const layout = f.layout ?? "classic";
   if (layout === "minimal" || layout === "scan") {
-    const onDark = layout === "scan";
-    return (
-      <>
-        <QrFace f={f} onDark={onDark} />
-        <ServicesFace f={f} hero={false} />
-      </>
-    );
+    return [
+      <QrFace key="f" f={f} onDark={layout === "scan"} imposed={imposed} />,
+      <ServicesFace key="b" f={f} hero={false} imposed={imposed} />,
+    ];
   }
   if (layout === "list") {
-    return (
-      <>
-        <ServicesFace f={f} hero />
-        <QrFace f={f} onDark={false} />
-      </>
-    );
+    return [
+      <ServicesFace key="f" f={f} hero imposed={imposed} />,
+      <QrFace key="b" f={f} onDark={false} imposed={imposed} />,
+    ];
   }
+  return [
+    <ClassicFace key="f" f={f} imposed={imposed} />,
+    <ServicesFace key="b" f={f} hero={false} imposed={imposed} />,
+  ];
+}
+
+function FridgeCard({ f }: { f: FridgeFields }) {
+  const [front, back] = fridgeFaces(f);
   return (
     <>
-      <ClassicFace f={f} />
-      <ServicesFace f={f} hero={false} />
+      {front}
+      {back}
+    </>
+  );
+}
+
+// ── Fridge card, imposed 4-up on A4 for double-sided printing ───────────────
+//
+// Four A6 cards tile an A4 sheet exactly: 2 × 105mm across, 2 × 148.5mm down.
+// That exactness is the whole point of the layout, for two reasons.
+//
+// 1. The cards stay TRUE A6, so they still fit an A6 laminating pouch. Leaving
+//    a margin for crop marks would mean shrinking them, and a card that is 96%
+//    of A6 laminates badly.
+// 2. It makes the sheet FLIP-INVARIANT. The grid is symmetric about both centre
+//    lines, so whichever way the printer turns the paper for the second side —
+//    long edge or short edge — every cell lands back on a cell. Front and back
+//    register either way, and the only misalignment left is the printer's own
+//    duplex tolerance, which no layout can fix.
+//
+// The cut marks follow from the same geometry: with the cards filling the sheet,
+// the only cuts are the two centre lines, so the marks are short ticks sitting
+// ON those lines at the four sheet edges — never full lines across the artwork,
+// and consumed by the blade when you cut. Each tick is a dark hairline inside a
+// white halo so it reads on the dark "scan" face as well as on white.
+const IMPOSE = { cols: 2, rows: 2, cellW: 105, cellH: 148.5, markLen: 10 };
+
+function CropTicks() {
+  const { cellW, cellH, markLen: L } = IMPOSE;
+  const hair: React.CSSProperties = {
+    position: "absolute",
+    background: "#111",
+    boxShadow: "0 0 0 0.35mm #fff",
+  };
+  // Vertical cut at x = cellW: ticks down from the top edge and up from the
+  // bottom. Horizontal cut at y = cellH: ticks in from the left and right.
+  return (
+    <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 5 }}>
+      <div style={{ ...hair, left: `${cellW}mm`, top: 0, width: "0.25mm", height: `${L}mm`, marginLeft: "-0.125mm" }} />
+      <div style={{ ...hair, left: `${cellW}mm`, bottom: 0, width: "0.25mm", height: `${L}mm`, marginLeft: "-0.125mm" }} />
+      <div style={{ ...hair, top: `${cellH}mm`, left: 0, height: "0.25mm", width: `${L}mm`, marginTop: "-0.125mm" }} />
+      <div style={{ ...hair, top: `${cellH}mm`, right: 0, height: "0.25mm", width: `${L}mm`, marginTop: "-0.125mm" }} />
+    </div>
+  );
+}
+
+/** One A4 sheet carrying four copies of a single face, plus the cut marks. */
+function ImposedSheet({ face }: { face: React.ReactNode }) {
+  const { cols, rows, cellW, cellH } = IMPOSE;
+  return (
+    <div
+      className="a4 imposed"
+      style={{
+        width: `${cellW * cols}mm`,
+        height: `${cellH * rows}mm`,
+        ["--sheet-h" as string]: `${cellH * rows}mm`,
+        display: "grid",
+        gridTemplateColumns: `repeat(${cols}, ${cellW}mm)`,
+        gridTemplateRows: `repeat(${rows}, ${cellH}mm)`,
+        position: "relative",
+        padding: 0,
+      }}
+    >
+      {Array.from({ length: cols * rows }, (_, i) => (
+        <div key={i} style={{ width: `${cellW}mm`, height: `${cellH}mm`, overflow: "hidden", position: "relative" }}>
+          {face}
+        </div>
+      ))}
+      <CropTicks />
+    </div>
+  );
+}
+
+/**
+ * The print form of the fridge card: two A4 sheets, four cards each. Sheet one
+ * is the front, sheet two the back — print double-sided, cut on the two centre
+ * lines, and you have four finished cards.
+ */
+export function FridgeImposition({ f }: { f: FridgeFields }) {
+  const [front, back] = fridgeFaces(f, true);
+  return (
+    <>
+      <ImposedSheet face={front} />
+      <ImposedSheet face={back} />
     </>
   );
 }
@@ -875,4 +972,21 @@ export function CollateralDoc({ doc }: { doc: Doc }) {
   if (doc.type === "advert") return <Advert a={doc.advert} />;
   if (doc.type === "lifelinecheck") return <LifelinePoster l={doc.lifeline} />;
   return <Poster p={doc.poster} />;
+}
+
+/**
+ * What goes on PAPER, which is not always what goes on screen.
+ *
+ * The fridge card is designed and previewed as a single A6 card, but printed
+ * four-up on A4 so an office printer can produce a batch double-sided and the
+ * cards can be cut apart. Every other document prints as it previews.
+ */
+export function CollateralPrintDoc({ doc }: { doc: Doc }) {
+  if (doc.type === "fridge") return <FridgeImposition f={doc.fridge} />;
+  return <CollateralDoc doc={doc} />;
+}
+
+/** The paper size a document prints on, in mm. */
+export function printSheetSize(doc: Doc | undefined): { w: number; h: number } | null {
+  return doc?.type === "fridge" ? { w: IMPOSE.cellW * IMPOSE.cols, h: IMPOSE.cellH * IMPOSE.rows } : null;
 }

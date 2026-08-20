@@ -14,7 +14,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { COLLATERAL_CSS } from "./collateral-css";
-import { CollateralDoc, AFTER_ICON_KEYS, BENEFIT_ICON_KEYS } from "./docs";
+import { CollateralDoc, CollateralPrintDoc, printSheetSize, AFTER_ICON_KEYS, BENEFIT_ICON_KEYS } from "./docs";
 import {
   defaultDoc,
   frameGeometry,
@@ -298,6 +298,10 @@ export function CollateralStudio({
     active?.type === "poster" ? active.poster.headerLayout : "poster",
   );
   const sheet = active?.type === "fridge" ? FRIDGE_CARD : { w: posterGeom.w, h: posterGeom.h };
+  // The paper can differ from the preview: the fridge card is designed as one
+  // A6 card but printed four-up on A4. @page follows the paper, the preview
+  // scale follows the design.
+  const paper = printSheetSize(active) ?? sheet;
   const sheetW = sheet.w * PX_PER_MM;
   const sheetH = sheet.h * PX_PER_MM;
 
@@ -418,7 +422,7 @@ export function CollateralStudio({
 
   return (
     <div className="llcol mx-auto max-w-7xl px-4 py-6">
-      <style dangerouslySetInnerHTML={{ __html: COLLATERAL_CSS + printCss(sheet.w, sheet.h) }} />
+      <style dangerouslySetInnerHTML={{ __html: COLLATERAL_CSS + printCss(paper.w, paper.h) }} />
 
       {/* header */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -502,6 +506,17 @@ export function CollateralStudio({
               <Section title="Framhlið">
                 <p className="text-xs text-gray-500">
                   A6 ({FRIDGE_CARD.w}×{FRIDGE_CARD.h} mm) — tvíhliða. Prentast 4 á A4-örk.
+                </p>
+                {/* The one thing that breaks the sheet is the printer scaling
+                    it: "fit to page" shrinks the cards off A6 and out of an A6
+                    plasthulstur. Everything else about the layout is symmetric,
+                    so the sides register whichever way the paper turns. */}
+                <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
+                  <b>Prentstillingar:</b> A4, tvíhliða, <b>100% stærð</b> — ekki „passa á síðu“ eða
+                  „fit to page“, þá verða kortin ekki lengur A6 og passa illa í plasthulstur.
+                  Örkin er samhverf, svo það skiptir ekki máli hvort prentarinn snýr blaðinu um
+                  lengri eða styttri kant — fram- og bakhlið standast alltaf á. Skerið eftir
+                  miðlínunum tveimur; skurðmerkin eru á jöðrunum.
                 </p>
                 {/* A visual pick rather than a dropdown: the four layouts are
                     genuinely different cards, and the preview beside this pane
@@ -816,7 +831,7 @@ export function CollateralStudio({
       {/* print surface (portalled to body; shown only in @media print) */}
       {mounted && createPortal(
         <div className="llcol-print llcol">
-          <CollateralDoc doc={active} />
+          <CollateralPrintDoc doc={active} />
         </div>,
         document.body,
       )}
