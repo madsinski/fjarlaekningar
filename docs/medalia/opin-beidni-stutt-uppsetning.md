@@ -26,7 +26,7 @@ Búið til beint úr `opin-beidni.json` svo textinn og rökin séu örugglega þ
 
 Skýringartexti
 
-> Þú lýsir vandamálinu, læknir les og svarar þér skriflega [SVARTÍMI – t.d. innan 24 klst. á virkum dögum]. Læknirinn getur ekki skoðað þig og gæti því vísað þér í skoðun eða hafnað erindinu. Ekki er ávísað ávana- og fíknilyfjum í fjarþjónustu.
+> Þú lýsir vandamálinu, læknir les og svarar þér skriflega innan tveggja klukkustunda á opnunartíma, alla daga milli 10 og 22. Læknirinn getur ekki skoðað þig og gæti því vísað þér í skoðun eða hafnað erindinu. Ekki er ávísað ávana- og fíknilyfjum í fjarþjónustu.
 >
 > ⚠️ Þetta er ekki neyðarþjónusta. Hringdu í 112 vegna bráðra veikinda eða slysa, 1700 til að fá ráðgjöf strax, 543 2222 vegna eitrunar.
 >

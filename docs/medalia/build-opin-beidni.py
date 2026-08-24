@@ -135,7 +135,8 @@ P1 = page("p1-fyrirvari", "Áður en þú byrjar", [
     )),
     display("intro-scope", (
         "Gott að vita áður en þú heldur áfram:\n\n"
-        "• Svar berst [SVARTÍMI – t.d. innan 24 klst. á virkum dögum].\n"
+        "• Svar berst innan tveggja klukkustunda á opnunartíma, alla daga\n"
+        "milli 10 og 22.\n"
         "• Læknirinn getur hafnað erindinu eða vísað þér í staðbundna skoðun ef "
         "málið hentar ekki fjarþjónustu. Það gerist meðal annars þegar þarf að "
         "hlusta lungu, skoða eyru eða háls, þreifa kvið eða meta áverka.\n"
@@ -614,7 +615,7 @@ P11 = page("p11-lok", "Væntingar og staðfesting", [
       "boolean", required=True, ext=[control("check-box", "Check Box")]),
     q("final-notemergency",
       "Ég skil að þetta er ekki neyðarþjónusta og að svar berst "
-      "[SVARTÍMI – t.d. innan 24 klst. á virkum dögum].",
+      "innan tveggja klukkustunda á opnunartíma, alla daga milli 10 og 22.",
       "boolean", required=True, ext=[control("check-box", "Check Box")]),
     q("final-privacy",
       "Ég samþykki að Fjarlækningar vinni þessar heilsufarsupplýsingar í "

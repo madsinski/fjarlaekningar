@@ -1,9 +1,9 @@
 {
   "resourceType": "Questionnaire",
   "status": "active",
-  "title": "Opin beiðni – stutt útgáfa",
-  "name": "OpinBeidniStutt",
-  "description": "Stutt útgáfa opna erindaflokksins. Öryggisskimun, frjáls texti með leiðarvísi, og aðeins þær skipulögðu spurningar sem myndu annars kalla á aukafyrirspurn frá lækni.",
+  "title": "Augnsýkingar og augnlokavandamál",
+  "name": "Augnsykingar",
+  "description": "Erindi vegna vægra augnvandamála sem eru ekki bráð: hvarmabólga, vogrís og hvarmakýli, og óbrotin tárubólga. Öryggisskimun, sérstakt hlið fyrir linsunotendur, markviss forsaga, frjáls lýsing og skyldubundin mynd.",
   "subjectType": [
     "Patient"
   ],
@@ -52,14 +52,24 @@
       ],
       "item": [
         {
-          "linkId": "intro-all",
+          "linkId": "intro-what",
           "type": "display",
-          "text": "Þú lýsir vandamálinu, læknir les og svarar þér skriflega innan tveggja klukkustunda á opnunartíma, alla daga milli 10 og 22. Læknirinn getur ekki skoðað þig og gæti því vísað þér í skoðun eða hafnað erindinu. Ekki er ávísað ávana- og fíknilyfjum í fjarþjónustu.\n\n⚠️ Þetta er ekki neyðarþjónusta. Hringdu í 112 vegna bráðra veikinda eða slysa, 1700 til að fá ráðgjöf strax, 543 2222 vegna eitrunar.\n\n[GJALDSKRÁ – t.d. Gjald fyrir erindið er X kr.]\n\nLæknirinn sér aðeins það sem þú skrifar hér."
+          "text": "Þetta erindi er fyrir væg augnvandamál sem eru ekki bráð.\n\nÞú lýsir einkennunum, sendir mynd og læknir metur málið og leggur til meðferð. Læknirinn getur ekki skoðað augað í smásjá, mælt augnþrýsting eða litað hornhimnuna."
+        },
+        {
+          "linkId": "intro-emergency",
+          "type": "display",
+          "text": "⚠️ Fjarlækningar eru ekki bráðaþjónusta.\n\nHringdu í 112 vegna bráðra veikinda eða slysa.\nHringdu í 1700 (Læknavaktin) til að fá ráðgjöf strax.\nHringdu í 543 2222 (Eitrunarmiðstöð) vegna eitrunar."
+        },
+        {
+          "linkId": "intro-scope",
+          "type": "display",
+          "text": "Gott að vita:\n\n• Hentar: hvarmabólga, vogrís og hvarmakýli á augnloki, og óbrotin tárubólga.\n• Hentar ekki: sjónskerðing, augnverkur, ljósfælni, áverki á auga, efni í auga, og rautt auga hjá þeim sem nota augnlinsur.\n• Þurfir þú skoðun eða frekari rannsókn vísar læknir aftur í hefðbundna þjónustu. Mat læknis ræður alltaf.\n• Leggi læknir til lyfjameðferð fer lyfseðill rafrænt í lyfjagátt og er tilbúinn í því apóteki sem þú velur.\n• Svar berst innan tveggja klukkustunda á opnunartíma, alla daga milli 10 og 22.\n• Læknirinn sér aðeins það sem þú skrifar og sendir hér."
         },
         {
           "linkId": "intro-ack",
           "type": "boolean",
-          "text": "Ég hef lesið ofangreint og skil að þetta er ekki neyðarþjónusta.",
+          "text": "Ég hef lesið ofangreint og skil að þetta er ekki bráðaþjónusta.",
           "required": true,
           "extension": [
             {
@@ -101,7 +111,7 @@
         {
           "linkId": "rf-intro",
           "type": "display",
-          "text": "Lestu listann og svaraðu svo spurningunni fyrir neðan:\n\n• Verkur eða þyngsli fyrir brjósti\n• Andþyngsli eða öndunarerfiðleikar í hvíld\n• Skyndilegt máttleysi, dofi, talörðugleikar eða sjónskerðing\n• Skyndilegur og mjög mikill höfuðverkur, ólíkur öllu fyrri\n• Meðvitundarleysi, yfirlið eða rugl\n• Miklir eða vaxandi kviðverkir\n• Blóð í uppköstum, svartar eða blóðugar hægðir\n• Hiti með stífum hnakka, ljósfælni eða útbrotum sem hverfa ekki við þrýsting\n• Bólga í andliti, vörum eða tungu eftir lyf, fæðu eða stungu\n• Blæðing eða verkir á meðgöngu\n• Alvarlegur áverki eða mikil blæðing\n• Sjálfsvígshugsanir eða hugsanir um að skaða þig eða aðra"
+          "text": "Fyrst þurfum við að útiloka einkenni sem þola enga bið. Lestu listann og svaraðu svo spurningunni fyrir neðan:\n\n• Sjónin hefur versnað, orðið þokukennd eða þú sérð skugga eða bletti\n• Verulegur verkur í auganu, ekki bara sviði eða aðskotatilfinning\n• Þú þolir illa ljós\n• Áverki á auga, eða þú færð ekki aðskotahlut úr auganu\n• Efni, sápa eða hreinsivökvi fór í augað\n• Hvítur eða skýjaður blettur á sjáaldrinu eða hornhimnunni\n• Blöðruútbrot á enni, augnloki eða nefbroddi\n• Augað stendur út, þú sérð tvöfalt, eða þú getur ekki hreyft augað eðlilega\n• Roði og bólga sem breiðist út í kringum augað ásamt hita\n• Ógleði eða uppköst ásamt augnverk og þokusýn\n• Barn yngra en eins mánaðar með rautt auga eða útferð"
         },
         {
           "linkId": "rf-gate",
@@ -140,79 +150,73 @@
         {
           "linkId": "rf-which",
           "type": "choice",
-          "text": "Hvað af þessu á við?",
+          "text": "Hvað af þessu á við? Merktu við allt sem á við.",
           "repeats": true,
           "answerOption": [
             {
               "valueCoding": {
-                "code": "chest",
-                "display": "Verkur eða þyngsli fyrir brjósti"
+                "code": "vision",
+                "display": "Sjónin hefur versnað eða orðið þokukennd"
               }
             },
             {
               "valueCoding": {
-                "code": "breathing",
-                "display": "Andþyngsli eða öndunarerfiðleikar"
+                "code": "pain",
+                "display": "Verulegur verkur í auganu"
               }
             },
             {
               "valueCoding": {
-                "code": "stroke",
-                "display": "Máttleysi, dofi, talörðugleikar eða sjónskerðing"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "headache",
-                "display": "Skyndilegur og mjög mikill höfuðverkur"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "consciousness",
-                "display": "Meðvitundarleysi, yfirlið eða rugl"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "abdomen",
-                "display": "Miklir kviðverkir"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "bleeding-gi",
-                "display": "Blóð í uppköstum eða hægðum"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "meningitis",
-                "display": "Hiti með stífum hnakka eða útbrotum"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "anaphylaxis",
-                "display": "Bólga í andliti eða tungu, bráðaofnæmi"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "pregnancy",
-                "display": "Blæðing eða verkir á meðgöngu"
+                "code": "photophobia",
+                "display": "Ég þoli illa ljós"
               }
             },
             {
               "valueCoding": {
                 "code": "trauma",
-                "display": "Alvarlegur áverki eða mikil blæðing"
+                "display": "Áverki eða aðskotahlutur í auga"
               }
             },
             {
               "valueCoding": {
-                "code": "self-harm",
-                "display": "Sjálfsvígshugsanir"
+                "code": "chemical",
+                "display": "Efni fór í augað"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "corneal",
+                "display": "Hvítur eða skýjaður blettur á auganu"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "zoster",
+                "display": "Blöðruútbrot á enni, augnloki eða nefi"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "orbital",
+                "display": "Augað stendur út, tvísýni eða skert augnhreyfing"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "periorbital",
+                "display": "Útbreiddur roði og bólga með hita"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "glaucoma",
+                "display": "Ógleði eða uppköst með augnverk og þokusýn"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "neonate",
+                "display": "Barn yngra en eins mánaðar"
               }
             }
           ],
@@ -246,7 +250,7 @@
         {
           "linkId": "rf-warning",
           "type": "display",
-          "text": "⚠️ Stöðvaðu hér og leitaðu aðstoðar strax.\n\nHringdu í 112 ef ástandið er bráðt, 1700 til að fá ráðgjöf strax, eða farðu á næstu bráðamóttöku. Sjálfsvígshugsanir: 1717 eða 112.\n\nÞú mátt senda erindið samt, en það kemur ekki í stað bráðaþjónustu.",
+          "text": "⚠️ Stöðvaðu hér og leitaðu aðstoðar strax.\n\nEinkennin sem þú merktir við þola ekki bið eftir skriflegu svari.\n\n• Hringdu í 112 ef ástandið er bráðt.\n• Hringdu í 1700 til að fá ráðgjöf strax.\n• Farðu á næstu bráðamóttöku eða heilsugæslu.\n\nEfni í auga: skolaðu augað strax með rennandi vatni í minnst fimmtán mínútur og hringdu í 112 eða Eitrunarmiðstöð í 543 2222 á meðan.\n\nÞú mátt senda erindið samt, en það kemur ekki í stað bráðaþjónustu og gæti verið afgreitt of seint.",
           "enableWhen": [
             {
               "question": "rf-gate",
@@ -296,9 +300,9 @@
       "enableBehavior": "all"
     },
     {
-      "linkId": "p3-erindid",
+      "linkId": "p3-linsur",
       "type": "group",
-      "text": "Hvað er að?",
+      "text": "Augnlinsur",
       "extension": [
         {
           "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
@@ -315,45 +319,182 @@
       ],
       "item": [
         {
-          "linkId": "erindi-type",
+          "linkId": "cl-use",
           "type": "choice",
-          "text": "Hvers eðlis er erindið?",
+          "text": "Notar þú augnlinsur?",
           "required": true,
           "answerOption": [
             {
               "valueCoding": {
-                "code": "new-problem",
-                "display": "Nýtt einkenni eða nýtt heilsuvandamál"
+                "code": "yes",
+                "display": "Já, ég nota linsur"
               }
             },
             {
               "valueCoding": {
-                "code": "known-problem",
-                "display": "Þekkt vandamál sem hefur breyst eða versnað"
+                "code": "stopped",
+                "display": "Já, en ég tók þær úr vegna einkennanna"
               }
             },
             {
               "valueCoding": {
-                "code": "medication",
-                "display": "Lyf – endurnýjun, aukaverkun eða spurning"
+                "code": "no",
+                "display": "Nei"
+              }
+            }
+          ],
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "code": "radio-button",
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "display": "Radio Button"
+                  }
+                ]
+              }
+            }
+          ],
+          "item": [
+            {
+              "linkId": "cl-use-help",
+              "type": "display",
+              "text": "Þessi spurning ræður úrslitum um hvort erindið hentar fjarþjónustu.",
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+                  "valueCodeableConcept": {
+                    "coding": [
+                      {
+                        "code": "help",
+                        "system": "http://hl7.org/fhir/questionnaire-item-control"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "linkId": "cl-warning",
+          "type": "display",
+          "text": "⚠️ Rautt auga hjá linsunotanda þarf skoðun samdægurs.\n\nSýking í hornhimnu er algengari hjá þeim sem nota linsur og getur skaðað sjónina á fáum dögum. Hana er ekki hægt að greina af mynd — það þarf smásjárskoðun.\n\n• Taktu linsurnar úr strax og notaðu þær ekki aftur fyrr en augað hefur verið skoðað.\n• Hafðu samband við augnlækni, Læknavaktina í 1700 eða bráðamóttöku augndeildar samdægurs.\n• Hentu linsunum og hylkinu sem voru í notkun.\n\nÞú mátt senda erindið, en læknir mun að öllum líkindum vísa þér í skoðun frekar en að leggja til meðferð.",
+          "enableWhen": [
+            {
+              "question": "cl-use",
+              "operator": "=",
+              "answerCoding": {
+                "code": "yes",
+                "display": "",
+                "system": ""
+              }
+            },
+            {
+              "question": "cl-use",
+              "operator": "=",
+              "answerCoding": {
+                "code": "stopped",
+                "display": "",
+                "system": ""
+              }
+            }
+          ],
+          "enableBehavior": "any"
+        },
+        {
+          "linkId": "cl-ack",
+          "type": "boolean",
+          "text": "Ég skil að ég á að taka linsurnar úr og leita skoðunar samdægurs.",
+          "required": true,
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "code": "check-box",
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "display": "Check Box"
+                  }
+                ]
+              }
+            }
+          ],
+          "enableWhen": [
+            {
+              "question": "cl-use",
+              "operator": "=",
+              "answerCoding": {
+                "code": "yes",
+                "display": "",
+                "system": ""
+              }
+            },
+            {
+              "question": "cl-use",
+              "operator": "=",
+              "answerCoding": {
+                "code": "stopped",
+                "display": "",
+                "system": ""
+              }
+            }
+          ],
+          "enableBehavior": "any"
+        }
+      ],
+      "enableBehavior": "all"
+    },
+    {
+      "linkId": "p4-saga",
+      "type": "group",
+      "text": "Um einkennin",
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+          "valueCodeableConcept": {
+            "coding": [
+              {
+                "code": "page",
+                "system": "http://hl7.org/fhir/questionnaire-item-control",
+                "display": "Page"
+              }
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "linkId": "ey-side",
+          "type": "choice",
+          "text": "Hvort augað?",
+          "required": true,
+          "answerOption": [
+            {
+              "valueCoding": {
+                "code": "right",
+                "display": "Hægra"
               }
             },
             {
               "valueCoding": {
-                "code": "results",
-                "display": "Niðurstöður úr rannsókn eða eftirfylgd"
+                "code": "left",
+                "display": "Vinstra"
               }
             },
             {
               "valueCoding": {
-                "code": "certificate",
-                "display": "Vottorð eða staðfesting"
+                "code": "both-together",
+                "display": "Bæði, byrjuðu á sama tíma"
               }
             },
             {
               "valueCoding": {
-                "code": "other",
-                "display": "Annað eða ég er ekki viss"
+                "code": "both-spread",
+                "display": "Byrjaði í öðru og færðist yfir í hitt"
               }
             }
           ],
@@ -373,77 +514,7 @@
           ]
         },
         {
-          "linkId": "free-guide",
-          "type": "display",
-          "text": "Skrifaðu eins og þú værir að segja lækninum frá þessu. Reyndu að koma þessu að:\n\n1. Hvað er að og hvar á líkamanum?\n2. Hvenær byrjaði það, byrjaði það skyndilega, og gerðist eitthvað sérstakt á undan?\n3. Hvernig lýsir þetta sér — hvernig lítur það út eða hvernig finnst þér það?\n4. Hvað gerir það betra eða verra?\n5. Hvað hefur þú prófað sjálf eða sjálfur og virkaði það?\n6. Hefur þú fengið þetta áður og hvað var gert þá?\n\nEngin þörf á læknisfræðilegum orðum. Skrifaðu frekar of mikið en of lítið."
-        },
-        {
-          "linkId": "free-text",
-          "type": "text",
-          "text": "Lýsing á vandamálinu",
-          "required": true,
-          "extension": [
-            {
-              "url": "http://hl7.org/fhir/StructureDefinition/entryFormat",
-              "valueString": "Byrjaðu hér. Notaðu punktana að ofan sem leiðarvísi."
-            }
-          ]
-        },
-        {
-          "linkId": "free-worry",
-          "type": "text",
-          "text": "Hvað hefur þú mestar áhyggjur af eða hvað óttast þú að þetta gæti verið?",
-          "extension": [
-            {
-              "url": "http://hl7.org/fhir/StructureDefinition/entryFormat",
-              "valueString": "Það er í lagi að segja það hreint út. Læknirinn svarar því sérstaklega."
-            }
-          ],
-          "item": [
-            {
-              "linkId": "free-worry-help",
-              "type": "display",
-              "text": "Áhyggjur sjúklings eru oft besta vísbendingin um hvað þarf að útiloka.",
-              "extension": [
-                {
-                  "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
-                  "valueCodeableConcept": {
-                    "coding": [
-                      {
-                        "code": "help",
-                        "system": "http://hl7.org/fhir/questionnaire-item-control"
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          ]
-        }
-      ],
-      "enableBehavior": "all"
-    },
-    {
-      "linkId": "p4-einkenni",
-      "type": "group",
-      "text": "Nokkur atriði sem gleymast oft",
-      "extension": [
-        {
-          "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
-          "valueCodeableConcept": {
-            "coding": [
-              {
-                "code": "page",
-                "system": "http://hl7.org/fhir/questionnaire-item-control",
-                "display": "Page"
-              }
-            ]
-          }
-        }
-      ],
-      "item": [
-        {
-          "linkId": "sym-duration",
+          "linkId": "ey-duration",
           "type": "choice",
           "text": "Hversu lengi hefur þetta staðið yfir?",
           "required": true,
@@ -513,7 +584,7 @@
           ]
         },
         {
-          "linkId": "sym-course",
+          "linkId": "ey-course",
           "type": "choice",
           "text": "Hvernig hefur þetta þróast?",
           "required": true,
@@ -559,33 +630,122 @@
           ]
         },
         {
-          "linkId": "sym-impact",
+          "linkId": "ey-symptoms",
           "type": "choice",
-          "text": "Hversu mikil áhrif hefur þetta á daglegt líf þitt?",
+          "text": "Hvaða einkenni ertu með? Merktu við allt sem á við.",
+          "required": true,
+          "repeats": true,
+          "answerOption": [
+            {
+              "valueCoding": {
+                "code": "redness",
+                "display": "Roði í auganu"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "discharge",
+                "display": "Útferð úr auganu"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "crusting",
+                "display": "Skorpur á augnhárum, sérstaklega á morgnana"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "itch",
+                "display": "Kláði"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "grit",
+                "display": "Aðskotatilfinning eða sandtilfinning"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "watering",
+                "display": "Augað rennur"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "lid-swelling",
+                "display": "Bólgið augnlok"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "lump",
+                "display": "Hnútur eða kúla á augnlokinu"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "lid-margin",
+                "display": "Roði og flögnun á augnlokabrúninni"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "dryness",
+                "display": "Þurrkur eða sviði"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "sticky-morning",
+                "display": "Augað er límt aftur á morgnana"
+              }
+            }
+          ],
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "code": "check-box",
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "display": "Check Box"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "ey-discharge",
+          "type": "choice",
+          "text": "Hvernig er útferðin?",
           "required": true,
           "answerOption": [
             {
               "valueCoding": {
                 "code": "none",
-                "display": "Engin"
+                "display": "Engin útferð"
               }
             },
             {
               "valueCoding": {
-                "code": "mild",
-                "display": "Lítil – ég næ að sinna flestu"
+                "code": "watery",
+                "display": "Vatnskennd og tær"
               }
             },
             {
               "valueCoding": {
-                "code": "moderate",
-                "display": "Töluverð – ég hef þurft að draga úr"
+                "code": "mucous",
+                "display": "Slímkennd og hvítleit"
               }
             },
             {
               "valueCoding": {
-                "code": "severe",
-                "display": "Mikil – ég kemst ekki í vinnu eða skóla"
+                "code": "purulent",
+                "display": "Gulleit eða grænleit og þykk"
               }
             }
           ],
@@ -601,280 +761,13 @@
                   }
                 ]
               }
-            }
-          ]
-        },
-        {
-          "linkId": "sym-fever",
-          "type": "choice",
-          "text": "Ertu með hita?",
-          "required": true,
-          "answerOption": [
-            {
-              "valueCoding": {
-                "code": "measured",
-                "display": "Já, ég hef mælt hann"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "feels",
-                "display": "Mér finnst það en hef ekki mælt"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "no",
-                "display": "Nei"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "unsure",
-                "display": "Veit ekki"
-              }
-            }
-          ],
-          "extension": [
-            {
-              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
-              "valueCodeableConcept": {
-                "coding": [
-                  {
-                    "code": "radio-button",
-                    "system": "http://hl7.org/fhir/questionnaire-item-control",
-                    "display": "Radio Button"
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "linkId": "sym-fever-temp",
-          "type": "quantity",
-          "text": "Hæsti mældur hiti (°C)",
-          "extension": [
-            {
-              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-unit",
-              "valueCoding": {
-                "code": "Cel",
-                "display": "°C",
-                "system": "http://unitsofmeasure.org"
-              }
-            }
-          ],
-          "enableWhen": [
-            {
-              "question": "sym-fever",
-              "operator": "=",
-              "answerCoding": {
-                "code": "measured",
-                "display": "",
-                "system": ""
-              }
-            }
-          ],
-          "enableBehavior": "all"
-        },
-        {
-          "linkId": "sym-pain-score",
-          "type": "integer",
-          "text": "Verkir núna? 0 = engir verkir, 10 = verstu verkir sem þú getur ímyndað þér.",
-          "extension": [
-            {
-              "url": "http://hl7.org/fhir/StructureDefinition/minValue",
-              "valueInteger": 0
-            },
-            {
-              "url": "http://hl7.org/fhir/StructureDefinition/maxValue",
-              "valueInteger": 10
-            },
-            {
-              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-sliderStepValue",
-              "valueInteger": 1
-            },
-            {
-              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
-              "valueCodeableConcept": {
-                "coding": [
-                  {
-                    "code": "buttons",
-                    "system": "http://hl7.org/fhir/questionnaire-item-control",
-                    "display": "Buttons"
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "linkId": "sym-seen-doctor",
-          "type": "choice",
-          "text": "Hefur þú þegar leitað til læknis eða heilsugæslu vegna þessa?",
-          "required": true,
-          "answerOption": [
-            {
-              "valueCoding": {
-                "code": "yes",
-                "display": "Já"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "no",
-                "display": "Nei"
-              }
-            }
-          ],
-          "extension": [
-            {
-              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
-              "valueCodeableConcept": {
-                "coding": [
-                  {
-                    "code": "radio-button",
-                    "system": "http://hl7.org/fhir/questionnaire-item-control",
-                    "display": "Radio Button"
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "linkId": "sym-seen-doctor-what",
-          "type": "text",
-          "text": "Hvert leitaðir þú, hvenær og hvað var gert?",
-          "required": true,
-          "extension": [
-            {
-              "url": "http://hl7.org/fhir/StructureDefinition/entryFormat",
-              "valueString": "t.d. heilsugæslan í síðustu viku, tekin þvagprufa, fékk sýklalyf í 5 daga"
-            }
-          ],
-          "enableWhen": [
-            {
-              "question": "sym-seen-doctor",
-              "operator": "=",
-              "answerCoding": {
-                "code": "yes",
-                "display": "",
-                "system": ""
-              }
-            }
-          ],
-          "enableBehavior": "all"
-        }
-      ],
-      "enableWhen": [
-        {
-          "question": "erindi-type",
-          "operator": "=",
-          "answerCoding": {
-            "code": "new-problem",
-            "display": "",
-            "system": ""
-          }
-        },
-        {
-          "question": "erindi-type",
-          "operator": "=",
-          "answerCoding": {
-            "code": "known-problem",
-            "display": "",
-            "system": ""
-          }
-        }
-      ],
-      "enableBehavior": "any"
-    },
-    {
-      "linkId": "p5-lyf",
-      "type": "group",
-      "text": "Lyfið",
-      "extension": [
-        {
-          "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
-          "valueCodeableConcept": {
-            "coding": [
-              {
-                "code": "page",
-                "system": "http://hl7.org/fhir/questionnaire-item-control",
-                "display": "Page"
-              }
-            ]
-          }
-        }
-      ],
-      "item": [
-        {
-          "linkId": "med-type",
-          "type": "choice",
-          "text": "Hvers konar lyfjaerindi er þetta?",
-          "required": true,
-          "answerOption": [
-            {
-              "valueCoding": {
-                "code": "renewal",
-                "display": "Endurnýjun á lyfi sem ég nota nú þegar"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "side-effect",
-                "display": "Aukaverkun eða vandamál af lyfi"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "question",
-                "display": "Spurning um lyf, skammta eða milliverkanir"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "new",
-                "display": "Nýtt lyf sem ég tel mig þurfa"
-              }
-            }
-          ],
-          "extension": [
-            {
-              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
-              "valueCodeableConcept": {
-                "coding": [
-                  {
-                    "code": "radio-button",
-                    "system": "http://hl7.org/fhir/questionnaire-item-control",
-                    "display": "Radio Button"
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "linkId": "med-controlled",
-          "type": "display",
-          "text": "Ekki er ávísað ávana- og fíknilyfjum í fjarþjónustu — meðal annars ópíóíðum, róandi lyfjum, svefnlyfjum og ADHD-lyfjum."
-        },
-        {
-          "linkId": "med-name",
-          "type": "string",
-          "text": "Heiti lyfs og styrkur",
-          "required": true,
-          "extension": [
-            {
-              "url": "http://hl7.org/fhir/StructureDefinition/entryFormat",
-              "valueString": "t.d. Losartan 50 mg"
             }
           ],
           "item": [
             {
-              "linkId": "med-name-help",
+              "linkId": "ey-discharge-help",
               "type": "display",
-              "text": "Skrifaðu nákvæmlega eins og stendur á pakkningunni, eða sendu mynd af henni aftar í þessari beiðni.",
+              "text": "Litur og þykkt útferðarinnar segir til um hvers konar tárubólga þetta er og hvort sýklalyf eiga við.",
               "extension": [
                 {
                   "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
@@ -892,45 +785,51 @@
           ]
         },
         {
-          "linkId": "med-dose",
-          "type": "string",
-          "text": "Skammtur og hversu oft þú tekur lyfið",
+          "linkId": "ey-lump-where",
+          "type": "text",
+          "text": "Hvar er hnúturinn og hvernig hefur hann breyst?",
           "required": true,
           "extension": [
             {
               "url": "http://hl7.org/fhir/StructureDefinition/entryFormat",
-              "valueString": "t.d. 1 tafla að morgni"
+              "valueString": "t.d. á efra augnloki, á stærð við baun, byrjaði aumur fyrir viku en er núna verkjalaus"
             }
-          ]
+          ],
+          "enableWhen": [
+            {
+              "question": "ey-symptoms",
+              "operator": "=",
+              "answerCoding": {
+                "code": "lump",
+                "display": "",
+                "system": ""
+              }
+            }
+          ],
+          "enableBehavior": "all"
         },
         {
-          "linkId": "med-supply",
+          "linkId": "ey-vision-check",
           "type": "choice",
-          "text": "Hvenær klárast lyfið hjá þér?",
+          "text": "Sérðu jafn vel og venjulega með auganu?",
           "required": true,
           "answerOption": [
             {
               "valueCoding": {
-                "code": "out",
-                "display": "Það er þegar búið"
+                "code": "normal",
+                "display": "Já, sjónin er óbreytt"
               }
             },
             {
               "valueCoding": {
-                "code": "week",
-                "display": "Innan viku"
+                "code": "blurry-clears",
+                "display": "Þokukennt en skýrist þegar ég blikka"
               }
             },
             {
               "valueCoding": {
-                "code": "month",
-                "display": "Innan mánaðar"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "later",
-                "display": "Seinna en eftir mánuð"
+                "code": "worse",
+                "display": "Nei, ég sé verr"
               }
             }
           ],
@@ -948,12 +847,37 @@
               }
             }
           ],
+          "item": [
+            {
+              "linkId": "ey-vision-check-help",
+              "type": "display",
+              "text": "Þoka sem hverfur við blikk stafar oftast af útferð. Sjón sem er raunverulega verri er annað mál.",
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+                  "valueCodeableConcept": {
+                    "coding": [
+                      {
+                        "code": "help",
+                        "system": "http://hl7.org/fhir/questionnaire-item-control"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "linkId": "ey-vision-warning",
+          "type": "display",
+          "text": "⚠️ Sjónskerðing á ekki heima í fjarþjónustu. Hafðu samband við Læknavaktina í 1700 eða augnlækni samdægurs.",
           "enableWhen": [
             {
-              "question": "med-type",
+              "question": "ey-vision-check",
               "operator": "=",
               "answerCoding": {
-                "code": "renewal",
+                "code": "worse",
                 "display": "",
                 "system": ""
               }
@@ -962,33 +886,144 @@
           "enableBehavior": "all"
         },
         {
-          "linkId": "med-side-effect-what",
-          "type": "text",
-          "text": "Hvaða aukaverkun finnur þú fyrir og hvenær byrjaði hún?",
+          "linkId": "ey-eyepain",
+          "type": "choice",
+          "text": "Ertu með verk í auganu?",
           "required": true,
+          "answerOption": [
+            {
+              "valueCoding": {
+                "code": "none",
+                "display": "Nei"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "burning",
+                "display": "Sviði eða óþægindi"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "real-pain",
+                "display": "Já, raunverulegan verk í auganu"
+              }
+            }
+          ],
           "extension": [
             {
-              "url": "http://hl7.org/fhir/StructureDefinition/entryFormat",
-              "valueString": "Segðu líka hvort þú hefur breytt skammti eða hætt að taka lyfið"
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "code": "radio-button",
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "display": "Radio Button"
+                  }
+                ]
+              }
             }
-          ],
-          "enableWhen": [
+          ]
+        },
+        {
+          "linkId": "ey-contacts-sick",
+          "type": "choice",
+          "text": "Er einhver í kringum þig með rautt auga, kvef eða hálsbólgu?",
+          "required": true,
+          "answerOption": [
             {
-              "question": "med-type",
-              "operator": "=",
-              "answerCoding": {
-                "code": "side-effect",
-                "display": "",
-                "system": ""
+              "valueCoding": {
+                "code": "yes",
+                "display": "Já"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "no",
+                "display": "Nei"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "unsure",
+                "display": "Veit ekki"
               }
             }
           ],
-          "enableBehavior": "all"
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "code": "radio-button",
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "display": "Radio Button"
+                  }
+                ]
+              }
+            }
+          ],
+          "item": [
+            {
+              "linkId": "ey-contacts-sick-help",
+              "type": "display",
+              "text": "Veirutárubólga smitast auðveldlega og fylgir oft kvefi.",
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+                  "valueCodeableConcept": {
+                    "coding": [
+                      {
+                        "code": "help",
+                        "system": "http://hl7.org/fhir/questionnaire-item-control"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
         },
         {
-          "linkId": "med-monitoring",
+          "linkId": "ey-urti",
           "type": "choice",
-          "text": "Hefur þú farið í eftirlit eða blóðprufu vegna þessa lyfs síðustu 12 mánuði?",
+          "text": "Ertu með kvef, hálsbólgu eða hita núna?",
+          "required": true,
+          "answerOption": [
+            {
+              "valueCoding": {
+                "code": "yes",
+                "display": "Já"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "no",
+                "display": "Nei"
+              }
+            }
+          ],
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "code": "radio-button",
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "display": "Radio Button"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "ey-allergy-season",
+          "type": "choice",
+          "text": "Ertu með frjókornaofnæmi eða koma einkennin á sama árstíma og áður?",
+          "required": true,
           "answerOption": [
             {
               "valueCoding": {
@@ -1023,136 +1058,29 @@
               }
             }
           ]
-        }
-      ],
-      "enableWhen": [
-        {
-          "question": "erindi-type",
-          "operator": "=",
-          "answerCoding": {
-            "code": "medication",
-            "display": "",
-            "system": ""
-          }
-        }
-      ],
-      "enableBehavior": "all"
-    },
-    {
-      "linkId": "p6-nidurstodur",
-      "type": "group",
-      "text": "Rannsóknin",
-      "extension": [
-        {
-          "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
-          "valueCodeableConcept": {
-            "coding": [
-              {
-                "code": "page",
-                "system": "http://hl7.org/fhir/questionnaire-item-control",
-                "display": "Page"
-              }
-            ]
-          }
-        }
-      ],
-      "item": [
-        {
-          "linkId": "res-what",
-          "type": "string",
-          "text": "Hvaða rannsókn eða niðurstöður snýst erindið um?",
-          "required": true,
-          "extension": [
-            {
-              "url": "http://hl7.org/fhir/StructureDefinition/entryFormat",
-              "valueString": "t.d. blóðprufa, röntgen, sýnataka"
-            }
-          ]
         },
         {
-          "linkId": "res-where",
-          "type": "string",
-          "text": "Hvar og hvenær var hún gerð?",
-          "required": true,
-          "extension": [
-            {
-              "url": "http://hl7.org/fhir/StructureDefinition/entryFormat",
-              "valueString": "t.d. Heilsugæslan Árbæ, 12. mars"
-            }
-          ]
-        }
-      ],
-      "enableWhen": [
-        {
-          "question": "erindi-type",
-          "operator": "=",
-          "answerCoding": {
-            "code": "results",
-            "display": "",
-            "system": ""
-          }
-        }
-      ],
-      "enableBehavior": "all"
-    },
-    {
-      "linkId": "p7-vottord",
-      "type": "group",
-      "text": "Vottorðið",
-      "extension": [
-        {
-          "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
-          "valueCodeableConcept": {
-            "coding": [
-              {
-                "code": "page",
-                "system": "http://hl7.org/fhir/questionnaire-item-control",
-                "display": "Page"
-              }
-            ]
-          }
-        }
-      ],
-      "item": [
-        {
-          "linkId": "cert-policy",
-          "type": "display",
-          "text": "Læknir getur aðeins vottað það sem hann getur staðfest með mati sínu. Vottorð aftur í tímann fyrir veikindi sem enginn læknir hefur metið eru almennt ekki gefin út."
-        },
-        {
-          "linkId": "cert-type",
+          "linkId": "ey-history",
           "type": "choice",
-          "text": "Hvers konar vottorð þarft þú?",
+          "text": "Hefur þú fengið þetta áður?",
           "required": true,
           "answerOption": [
             {
               "valueCoding": {
-                "code": "sick-work",
-                "display": "Veikindavottorð fyrir vinnuveitanda"
+                "code": "no",
+                "display": "Nei, þetta er í fyrsta sinn"
               }
             },
             {
               "valueCoding": {
-                "code": "sick-school",
-                "display": "Vottorð fyrir skóla"
+                "code": "once",
+                "display": "Já, einu sinni áður"
               }
             },
             {
               "valueCoding": {
-                "code": "travel",
-                "display": "Ferðavottorð"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "sports",
-                "display": "Íþrótta- eða heilbrigðisvottorð"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "other",
-                "display": "Annað"
+                "code": "recurrent",
+                "display": "Já, þetta kemur endurtekið"
               }
             }
           ],
@@ -1172,35 +1100,275 @@
           ]
         },
         {
-          "linkId": "cert-period",
+          "linkId": "ey-history-what",
+          "type": "text",
+          "text": "Hvað var gert síðast og hvað hjálpaði?",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/entryFormat",
+              "valueString": "t.d. fékk augndropa með sýklalyfi, lagaðist á þremur dögum"
+            }
+          ],
+          "enableWhen": [
+            {
+              "question": "ey-history",
+              "operator": "=",
+              "answerCoding": {
+                "code": "once",
+                "display": "",
+                "system": ""
+              }
+            },
+            {
+              "question": "ey-history",
+              "operator": "=",
+              "answerCoding": {
+                "code": "recurrent",
+                "display": "",
+                "system": ""
+              }
+            }
+          ],
+          "enableBehavior": "any"
+        },
+        {
+          "linkId": "ey-eyedisease",
+          "type": "choice",
+          "text": "Ertu með þekktan augnsjúkdóm eða hefur farið í augnaðgerð?",
+          "required": true,
+          "answerOption": [
+            {
+              "valueCoding": {
+                "code": "yes",
+                "display": "Já"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "no",
+                "display": "Nei"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "unsure",
+                "display": "Veit ekki"
+              }
+            }
+          ],
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "code": "radio-button",
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "display": "Radio Button"
+                  }
+                ]
+              }
+            }
+          ],
+          "item": [
+            {
+              "linkId": "ey-eyedisease-help",
+              "type": "display",
+              "text": "t.d. gláka, augnþurrkur, sjónlagsaðgerð eða dreraðgerð.",
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+                  "valueCodeableConcept": {
+                    "coding": [
+                      {
+                        "code": "help",
+                        "system": "http://hl7.org/fhir/questionnaire-item-control"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "linkId": "ey-eyedisease-what",
           "type": "string",
-          "text": "Fyrir hvaða tímabil?",
+          "text": "Hvað og hvenær?",
           "required": true,
           "extension": [
             {
               "url": "http://hl7.org/fhir/StructureDefinition/entryFormat",
-              "valueString": "t.d. 3.–7. maí"
+              "valueString": "t.d. dreraðgerð á hægra auga 2023"
+            }
+          ],
+          "enableWhen": [
+            {
+              "question": "ey-eyedisease",
+              "operator": "=",
+              "answerCoding": {
+                "code": "yes",
+                "display": "",
+                "system": ""
+              }
+            }
+          ],
+          "enableBehavior": "all"
+        },
+        {
+          "linkId": "ey-tried",
+          "type": "choice",
+          "text": "Hvað hefur þú prófað?",
+          "repeats": true,
+          "answerOption": [
+            {
+              "valueCoding": {
+                "code": "warm",
+                "display": "Heita bakstra á augnlokið"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "lid-hygiene",
+                "display": "Hreinsun á augnlokabrún"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "artificial-tears",
+                "display": "Gervitár eða rakadropa"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "antihistamine-drops",
+                "display": "Ofnæmisdropa"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "antibiotic-drops",
+                "display": "Sýklalyfjadropa"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "old-drops",
+                "display": "Augndropa sem ég átti frá fyrri tíð"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "nothing",
+                "display": "Ekkert"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "other",
+                "display": "Annað"
+              }
+            }
+          ],
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "code": "check-box",
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "display": "Check Box"
+                  }
+                ]
+              }
             }
           ]
-        }
-      ],
-      "enableWhen": [
+        },
         {
-          "question": "erindi-type",
-          "operator": "=",
-          "answerCoding": {
-            "code": "certificate",
-            "display": "",
-            "system": ""
-          }
+          "linkId": "ey-tried-detail",
+          "type": "text",
+          "text": "Hvað nákvæmlega, hversu lengi og virkaði það?",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/entryFormat",
+              "valueString": "t.d. heitir bakstrar tvisvar á dag í fimm daga, kúlan minnkaði lítillega"
+            }
+          ],
+          "enableWhen": [
+            {
+              "question": "ey-tried",
+              "operator": "=",
+              "answerCoding": {
+                "code": "warm",
+                "display": "",
+                "system": ""
+              }
+            },
+            {
+              "question": "ey-tried",
+              "operator": "=",
+              "answerCoding": {
+                "code": "lid-hygiene",
+                "display": "",
+                "system": ""
+              }
+            },
+            {
+              "question": "ey-tried",
+              "operator": "=",
+              "answerCoding": {
+                "code": "artificial-tears",
+                "display": "",
+                "system": ""
+              }
+            },
+            {
+              "question": "ey-tried",
+              "operator": "=",
+              "answerCoding": {
+                "code": "antihistamine-drops",
+                "display": "",
+                "system": ""
+              }
+            },
+            {
+              "question": "ey-tried",
+              "operator": "=",
+              "answerCoding": {
+                "code": "antibiotic-drops",
+                "display": "",
+                "system": ""
+              }
+            },
+            {
+              "question": "ey-tried",
+              "operator": "=",
+              "answerCoding": {
+                "code": "old-drops",
+                "display": "",
+                "system": ""
+              }
+            },
+            {
+              "question": "ey-tried",
+              "operator": "=",
+              "answerCoding": {
+                "code": "other",
+                "display": "",
+                "system": ""
+              }
+            }
+          ],
+          "enableBehavior": "any"
         }
       ],
       "enableBehavior": "all"
     },
     {
-      "linkId": "p8-oryggi",
+      "linkId": "p-bakgrunnur",
       "type": "group",
-      "text": "Öryggisatriði og myndir",
+      "text": "Um heilsu þína",
       "extension": [
         {
           "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
@@ -1219,7 +1387,7 @@
         {
           "linkId": "bg-intro",
           "type": "display",
-          "text": "Þessar fjórar spurningar ráða því hvaða meðferð er örugg fyrir þig. Svaraðu þeim jafnvel þótt þér finnist þær ótengdar."
+          "text": "Þessar spurningar ráða því hvaða meðferð er örugg fyrir þig. Svaraðu þeim jafnvel þótt þér finnist þær ótengdar erindinu."
         },
         {
           "linkId": "bg-meds",
@@ -1381,6 +1549,26 @@
                 ]
               }
             }
+          ],
+          "item": [
+            {
+              "linkId": "bg-chronic-help",
+              "type": "display",
+              "text": "Sérstaklega sykursýki, ónæmisbælingu, krabbameinsmeðferð eða sjúkdóm sem hefur áhrif á ónæmiskerfið.",
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+                  "valueCodeableConcept": {
+                    "coding": [
+                      {
+                        "code": "help",
+                        "system": "http://hl7.org/fhir/questionnaire-item-control"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
           ]
         },
         {
@@ -1391,7 +1579,7 @@
           "extension": [
             {
               "url": "http://hl7.org/fhir/StructureDefinition/entryFormat",
-              "valueString": "t.d. sykursýki, astmi, háþrýstingur, skjaldkirtilssjúkdómur"
+              "valueString": "t.d. sykursýki, exem, psoriasis, ónæmisbæling, líftæknilyf"
             }
           ],
           "enableWhen": [
@@ -1457,46 +1645,12 @@
                 ]
               }
             }
-          ]
-        },
-        {
-          "linkId": "img-gate",
-          "type": "choice",
-          "text": "Er eitthvað sýnilegt sem myndi hjálpa lækninum að sjá?",
-          "required": true,
-          "answerOption": [
-            {
-              "valueCoding": {
-                "code": "yes",
-                "display": "Já"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "no",
-                "display": "Nei"
-              }
-            }
-          ],
-          "extension": [
-            {
-              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
-              "valueCodeableConcept": {
-                "coding": [
-                  {
-                    "code": "radio-button",
-                    "system": "http://hl7.org/fhir/questionnaire-item-control",
-                    "display": "Radio Button"
-                  }
-                ]
-              }
-            }
           ],
           "item": [
             {
-              "linkId": "img-gate-help",
+              "linkId": "bg-pregnancy-help",
               "type": "display",
-              "text": "t.d. útbrot, sár, bólga, auga, lyfjapakkning eða niðurstöður úr rannsókn.",
+              "text": "Mörg lyf, líka krem og augndropar, eru ekki örugg á meðgöngu eða við brjóstagjöf.",
               "extension": [
                 {
                   "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
@@ -1512,49 +1666,123 @@
               ]
             }
           ]
-        },
-        {
-          "linkId": "img-tips",
-          "type": "display",
-          "text": "Góð mynd: dagsbirta og ekkert flass, ein nærmynd og ein þar sem sést hvar á líkamanum þetta er, fingur eða mynt við hliðina svo stærðin sjáist, og krem eða farði þurrkað af.",
-          "enableWhen": [
-            {
-              "question": "img-gate",
-              "operator": "=",
-              "answerCoding": {
-                "code": "yes",
-                "display": "",
-                "system": ""
-              }
-            }
-          ],
-          "enableBehavior": "all"
-        },
-        {
-          "linkId": "img-files",
-          "type": "attachment",
-          "text": "Hengdu myndir við hér",
-          "repeats": true,
-          "enableWhen": [
-            {
-              "question": "img-gate",
-              "operator": "=",
-              "answerCoding": {
-                "code": "yes",
-                "display": "",
-                "system": ""
-              }
-            }
-          ],
-          "enableBehavior": "all"
         }
       ],
       "enableBehavior": "all"
     },
     {
-      "linkId": "p9-lok",
+      "linkId": "p-lysing",
       "type": "group",
-      "text": "Staðfesting",
+      "text": "Lýstu vandamálinu með þínum eigin orðum",
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+          "valueCodeableConcept": {
+            "coding": [
+              {
+                "code": "page",
+                "system": "http://hl7.org/fhir/questionnaire-item-control",
+                "display": "Page"
+              }
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "linkId": "free-guide",
+          "type": "display",
+          "text": "Skrifaðu eins og þú værir að segja lækninum frá þessu. Reyndu að koma þessu að:\n\n1. Hvenær byrjaði þetta og í hvoru auganu byrjaði það?\n2. Hvernig lítur augað út og hvernig finnst þér það?\n3. Er útferð, og hvernig er hún á morgnana miðað við á kvöldin?\n4. Hvað hefur þú prófað og hvað gerðist?\n5. Hefur þetta áhrif á vinnu, skjánotkun eða akstur?\n\nEngin þörf á læknisfræðilegum orðum. Skrifaðu frekar of mikið en of lítið."
+        },
+        {
+          "linkId": "free-text",
+          "type": "text",
+          "text": "Lýsing á vandamálinu",
+          "required": true,
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/entryFormat",
+              "valueString": "Byrjaðu hér. Notaðu punktana að ofan sem leiðarvísi."
+            }
+          ]
+        },
+        {
+          "linkId": "free-worry",
+          "type": "text",
+          "text": "Hvað hefur þú mestar áhyggjur af eða hvað óttast þú að þetta gæti verið?",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/entryFormat",
+              "valueString": "Það er í lagi að segja það hreint út. Læknirinn svarar því sérstaklega."
+            }
+          ],
+          "item": [
+            {
+              "linkId": "free-worry-help",
+              "type": "display",
+              "text": "Áhyggjur sjúklings eru oft besta vísbendingin um hvað þarf að útiloka.",
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+                  "valueCodeableConcept": {
+                    "coding": [
+                      {
+                        "code": "help",
+                        "system": "http://hl7.org/fhir/questionnaire-item-control"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "enableBehavior": "all"
+    },
+    {
+      "linkId": "p-myndir",
+      "type": "group",
+      "text": "Myndir",
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+          "valueCodeableConcept": {
+            "coding": [
+              {
+                "code": "page",
+                "system": "http://hl7.org/fhir/questionnaire-item-control",
+                "display": "Page"
+              }
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "linkId": "img-intro",
+          "type": "display",
+          "text": "Læknirinn getur ekki skoðað þig. Myndin kemur í stað skoðunarinnar, svo hún skiptir öllu máli."
+        },
+        {
+          "linkId": "img-tips",
+          "type": "display",
+          "text": "Svona verður myndin gagnleg:\n\n• Taktu myndirnar í góðri dagsbirtu, ekki með flassi.\n• Sendu tvær myndir: eina beint framan á augað með augað opið, og eina þar sem þú dregur neðra augnlokið varlega niður svo innra borðið sjáist.\n• Sértu með hnút á augnloki, taktu líka mynd frá hlið.\n• Haltu símanum í um 20 cm fjarlægð og passaðu að myndin sé í fókus.\n• Fáðu einhvern til að taka myndina fyrir þig ef það er hægt — það verður skýrari mynd en sjálfsmynd.\n• Ekki nota augndropa rétt áður en myndin er tekin."
+        },
+        {
+          "linkId": "img-files",
+          "type": "attachment",
+          "text": "Hengdu myndir við hér",
+          "required": true,
+          "repeats": true
+        }
+      ],
+      "enableBehavior": "all"
+    },
+    {
+      "linkId": "p-lok",
+      "type": "group",
+      "text": "Væntingar og staðfesting",
       "extension": [
         {
           "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
@@ -1573,32 +1801,26 @@
         {
           "linkId": "exp-wish",
           "type": "choice",
-          "text": "Hverju vonast þú eftir?",
+          "text": "Hverju vonast þú eftir frá þessu erindi?",
           "required": true,
           "repeats": true,
           "answerOption": [
             {
               "valueCoding": {
                 "code": "advice",
-                "display": "Mati og ráðgjöf"
+                "display": "Mati og ráðgjöf um hvað ég á að gera"
               }
             },
             {
               "valueCoding": {
                 "code": "prescription",
-                "display": "Lyfseðli"
+                "display": "Lyfseðli, t.d. augndropum eða smyrsli"
               }
             },
             {
               "valueCoding": {
                 "code": "referral",
-                "display": "Tilvísun til sérfræðings"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "tests",
-                "display": "Beiðni um rannsókn"
+                "display": "Tilvísun til augnlæknis"
               }
             },
             {
@@ -1650,9 +1872,54 @@
           ]
         },
         {
-          "linkId": "final-all",
+          "linkId": "final-intro",
+          "type": "display",
+          "text": "Að lokum, staðfestu eftirfarandi:"
+        },
+        {
+          "linkId": "final-truth",
           "type": "boolean",
-          "text": "Ég staðfesti að upplýsingarnar eru réttar eftir minni bestu vitund, að ég skil að læknirinn getur ekki skoðað mig og gæti þurft að vísa mér áfram eða hafna erindinu, og ég samþykki að Fjarlækningar vinni þessar heilsufarsupplýsingar samkvæmt persónuverndarstefnu félagsins.",
+          "text": "Upplýsingarnar sem ég hef gefið eru réttar eftir minni bestu vitund.",
+          "required": true,
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "code": "check-box",
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "display": "Check Box"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "final-noexam",
+          "type": "boolean",
+          "text": "Ég skil að læknirinn getur ekki skoðað mig og gæti þurft að vísa mér í hefðbundna þjónustu eða hafna erindinu.",
+          "required": true,
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "code": "check-box",
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "display": "Check Box"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "final-privacy",
+          "type": "boolean",
+          "text": "Ég samþykki að Fjarlækningar vinni þessar heilsufarsupplýsingar í samræmi við persónuverndarstefnu félagsins.",
           "required": true,
           "extension": [
             {
@@ -1672,7 +1939,7 @@
         {
           "linkId": "final-thanks",
           "type": "display",
-          "text": "Takk fyrir. Læknir les erindið og svarar þér. Ef þér versnar á meðan þú bíður, hringdu í 1700 eða 112."
+          "text": "Takk fyrir. Læknir les erindið og svarar þér. Svar berst innan tveggja klukkustunda á opnunartíma, alla daga milli 10 og 22. Versni þér á meðan þú bíður, hringdu í 1700 eða 112."
         }
       ],
       "enableBehavior": "all"

@@ -64,7 +64,7 @@
         {
           "linkId": "intro-scope",
           "type": "display",
-          "text": "Gott að vita áður en þú heldur áfram:\n\n• Svar berst [SVARTÍMI – t.d. innan 24 klst. á virkum dögum].\n• Læknirinn getur hafnað erindinu eða vísað þér í staðbundna skoðun ef málið hentar ekki fjarþjónustu. Það gerist meðal annars þegar þarf að hlusta lungu, skoða eyru eða háls, þreifa kvið eða meta áverka.\n• Ekki er ávísað ávana- og fíknilyfjum í fjarþjónustu. Það á meðal annars við um sterk verkjalyf (ópíóíða), róandi lyf og svefnlyf (benzódíazepín og skyld lyf) og ADHD-lyf.\n• [GJALDSKRÁ – t.d. Gjald fyrir erindið er X kr. og er innheimt þegar læknir hefur afgreitt erindið.]\n• Læknirinn sér aðeins það sem þú skrifar hér. Því nákvæmari sem þú ert, því betra verður matið."
+          "text": "Gott að vita áður en þú heldur áfram:\n\n• Svar berst innan tveggja klukkustunda á opnunartíma, alla daga\nmilli 10 og 22.\n• Læknirinn getur hafnað erindinu eða vísað þér í staðbundna skoðun ef málið hentar ekki fjarþjónustu. Það gerist meðal annars þegar þarf að hlusta lungu, skoða eyru eða háls, þreifa kvið eða meta áverka.\n• Ekki er ávísað ávana- og fíknilyfjum í fjarþjónustu. Það á meðal annars við um sterk verkjalyf (ópíóíða), róandi lyf og svefnlyf (benzódíazepín og skyld lyf) og ADHD-lyf.\n• [GJALDSKRÁ – t.d. Gjald fyrir erindið er X kr. og er innheimt þegar læknir hefur afgreitt erindið.]\n• Læknirinn sér aðeins það sem þú skrifar hér. Því nákvæmari sem þú ert, því betra verður matið."
         },
         {
           "linkId": "intro-ack",
@@ -2744,7 +2744,7 @@
         {
           "linkId": "final-notemergency",
           "type": "boolean",
-          "text": "Ég skil að þetta er ekki neyðarþjónusta og að svar berst [SVARTÍMI – t.d. innan 24 klst. á virkum dögum].",
+          "text": "Ég skil að þetta er ekki neyðarþjónusta og að svar berst innan tveggja klukkustunda á opnunartíma, alla daga milli 10 og 22.",
           "required": true,
           "extension": [
             {

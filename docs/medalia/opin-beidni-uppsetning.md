@@ -48,7 +48,8 @@ Skýringartexti
 
 > Gott að vita áður en þú heldur áfram:
 >
-> • Svar berst [SVARTÍMI – t.d. innan 24 klst. á virkum dögum].
+> • Svar berst innan tveggja klukkustunda á opnunartíma, alla daga
+> milli 10 og 22.
 > • Læknirinn getur hafnað erindinu eða vísað þér í staðbundna skoðun ef málið hentar ekki fjarþjónustu. Það gerist meðal annars þegar þarf að hlusta lungu, skoða eyru eða háls, þreifa kvið eða meta áverka.
 > • Ekki er ávísað ávana- og fíknilyfjum í fjarþjónustu. Það á meðal annars við um sterk verkjalyf (ópíóíða), róandi lyf og svefnlyf (benzódíazepín og skyld lyf) og ADHD-lyf.
 > • [GJALDSKRÁ – t.d. Gjald fyrir erindið er X kr. og er innheimt þegar læknir hefur afgreitt erindið.]
@@ -922,7 +923,7 @@ Gátreitur — já/nei · **SKYLDA**
 
 Gátreitur — já/nei · **SKYLDA**
 
-**Spurning:** Ég skil að þetta er ekki neyðarþjónusta og að svar berst [SVARTÍMI – t.d. innan 24 klst. á virkum dögum].
+**Spurning:** Ég skil að þetta er ekki neyðarþjónusta og að svar berst innan tveggja klukkustunda á opnunartíma, alla daga milli 10 og 22.
 
 ### 11.7 · `final-privacy`
 

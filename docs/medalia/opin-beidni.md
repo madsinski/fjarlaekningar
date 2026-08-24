@@ -116,14 +116,16 @@ sem er raunverulega til í valmöguleikum þeirrar spurningar. Núverandi staða
 
 ## Áður en þetta fer í loftið
 
-**Þrjú gildi þarf að fylla út.** Þau eru merkt með hornklofum í JSON-skránni svo ekki sé
+**Eitt gildi þarf að fylla út.** Það er merkt með hornklofum í JSON-skránni svo ekki sé
 hægt að birta listann óvart óunninn:
 
 | Staður | Hvað vantar |
 |---|---|
-| `intro-scope` | `[SVARTÍMI]` — raunverulegur svartími |
 | `intro-scope` | `[GJALDSKRÁ]` — verð og hvenær innheimt |
-| `final-notemergency` | `[SVARTÍMI]` — sama gildi og að ofan |
+
+Svartíminn er kominn inn: *„innan tveggja klukkustunda á opnunartíma, alla daga milli 10 og
+22“*, tekinn úr kynningarefni Fjarlækninga svo hann sé sá sami og sjúklingum er lofað
+annars staðar. Breytist opnunartíminn þarf að breyta honum í `medalia_common.py` og hér.
 
 **Eitt þarf að prófa.** `img-files` er af gerðinni `attachment`. Medalia-útflutningurinn sem
 sniðið er byggt á notar ekki þá gerð, svo hún er óstaðfest í þessari uppsetningu. Flyttu

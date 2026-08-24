@@ -123,7 +123,7 @@ YES_NO_UNSURE = opts(("yes", "Já"), ("no", "Nei"), ("unsure", "Veit ekki"))
 P1 = page("p1-fyrirvari", "Áður en þú byrjar", [
     display("intro-all", (
         "Þú lýsir vandamálinu, læknir les og svarar þér skriflega "
-        "[SVARTÍMI – t.d. innan 24 klst. á virkum dögum]. "
+        "innan tveggja klukkustunda á opnunartíma, alla daga milli 10 og 22. "
         "Læknirinn getur ekki skoðað þig og gæti því vísað þér í skoðun eða "
         "hafnað erindinu. Ekki er ávísað ávana- og fíknilyfjum í fjarþjónustu.\n\n"
         "⚠️ Þetta er ekki neyðarþjónusta. Hringdu í 112 vegna bráðra veikinda "
