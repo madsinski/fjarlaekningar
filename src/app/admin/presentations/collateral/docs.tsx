@@ -39,7 +39,12 @@ import type {
 } from "./content";
 
 function ico(icon: string) {
-  // Icons matching the live patient portal, normalised onto white tiles.
+  // Icons matching the live patient portal: 256px tiles, artwork fitted to a
+  // 208px box, on a TRANSPARENT ground. They used to carry a white background,
+  // which drew a white square wherever an icon sat on a tint — visible on the
+  // fridge back, where the erindi cards use --wash. Whites inside the artwork
+  // (the sclera of the eye, highlights on the stethoscope) are preserved; only
+  // the background connected to the edge was cleared.
   return `/fjarlaekningar-icons/portal/${icon}.png`;
 }
 
