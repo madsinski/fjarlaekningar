@@ -126,12 +126,55 @@ function StrListEditor({ items, onChange, addLabel }: { items: string[]; onChang
   );
 }
 
+/**
+ * The erindi list, in the order they are printed. Rows can be dragged, and
+ * carry arrows as well — the arrows are what works from the keyboard, and what
+ * works when the list is long enough that the drop target is off screen.
+ */
 function ServicesEditor({ services, onChange }: { services: Service[]; onChange: (v: Service[]) => void }) {
+  const [drag, setDrag] = useState<number | null>(null);
+  const [over, setOver] = useState<number | null>(null);
   const set = (i: number, patch: Partial<Service>) => onChange(services.map((s, j) => (j === i ? { ...s, ...patch } : s)));
+
+  const move = (from: number, to: number) => {
+    if (to < 0 || to >= services.length || from === to) return;
+    const next = services.slice();
+    const [row] = next.splice(from, 1);
+    next.splice(to, 0, row);
+    onChange(next);
+  };
+
+  const arrowCls =
+    "h-3.5 w-4 leading-none text-[9px] text-gray-400 hover:text-gray-700 disabled:opacity-25 disabled:hover:text-gray-400";
+
   return (
     <div className="space-y-1.5">
       {services.map((s, i) => (
-        <div key={i} className="flex items-center gap-1.5">
+        <div
+          key={i}
+          onDragOver={(e) => { if (drag === null) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (over !== i) setOver(i); }}
+          onDragLeave={() => setOver((o) => (o === i ? null : o))}
+          onDrop={(e) => { e.preventDefault(); if (drag !== null) move(drag, i); setDrag(null); setOver(null); }}
+          className={`flex items-center gap-1.5 rounded-md border border-transparent ${
+            drag === i ? "opacity-40" : over === i && drag !== null ? "border-emerald-400 bg-emerald-50/60" : ""
+          }`}
+        >
+          {/* Only the grip starts a drag — a draggable row would stop you
+              selecting text inside the label field. */}
+          <span
+            draggable
+            onDragStart={(e) => { setDrag(i); e.dataTransfer.effectAllowed = "move"; }}
+            onDragEnd={() => { setDrag(null); setOver(null); }}
+            className="shrink-0 cursor-grab select-none px-0.5 text-sm leading-none text-gray-300 hover:text-gray-500"
+            title="Dragðu til að raða"
+            aria-hidden="true"
+          >
+            ⠿
+          </span>
+          <div className="flex shrink-0 flex-col">
+            <button onClick={() => move(i, i - 1)} disabled={i === 0} className={arrowCls} title="Færa upp" aria-label={`Færa „${s.label}“ upp`}>▲</button>
+            <button onClick={() => move(i, i + 1)} disabled={i === services.length - 1} className={arrowCls} title="Færa niður" aria-label={`Færa „${s.label}“ niður`}>▼</button>
+          </div>
           <select value={s.icon} onChange={(e) => set(i, { icon: e.target.value })} className="shrink-0 rounded-md border border-gray-300 px-1.5 py-1.5 text-xs text-gray-700">
             {SERVICE_ICONS.map((ic) => <option key={ic} value={ic}>{ic}</option>)}
           </select>
