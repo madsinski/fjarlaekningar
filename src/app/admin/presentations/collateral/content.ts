@@ -595,16 +595,52 @@ export function mergeContent(stored: unknown): CollateralContent {
   return DEFAULT_CONTENT;
 }
 
+/**
+ * A saved doc froze its own `services` array, so adding an erindi to the list
+ * never reached documents that already existed — the drift this file works to
+ * avoid, arriving by a different route. Adding "Húðvandamál og útbrot" and the
+ * other two changed the defaults and changed nothing on the saved card.
+ *
+ * A doc whose services are all still the list's own — every icon an erindi slug
+ * and every label that erindi's own title — has never been edited here, so it
+ * follows the list. Rename a label or add an entry by hand and the doc is the
+ * author's: it is then left exactly as saved.
+ *
+ * Returns null when the saved list should be kept.
+ */
+function servicesFollowingErindi(saved: unknown): Service[] | null {
+  if (!Array.isArray(saved) || saved.length === 0) return null;
+  const titleOf = new Map(erindi.map((e) => [e.slug, e.title]));
+  const untouched = saved.every((s) => {
+    const it = (s ?? {}) as Record<string, unknown>;
+    return typeof it.icon === "string" && titleOf.get(it.icon) === it.label;
+  });
+  if (!untouched) return null;
+  // Already current — don't hand back a new array for no reason.
+  const same =
+    saved.length === DEFAULT_SERVICES.length &&
+    saved.every((s, i) => (s as Service).icon === DEFAULT_SERVICES[i].icon);
+  return same ? null : DEFAULT_SERVICES;
+}
+
+/** Merge a saved doc over its defaults, letting an unedited service list follow erindi. */
+function withServices<T extends { services: Service[] }>(defaults: T, saved: unknown): T {
+  const merged = { ...defaults, ...(saved as object ?? {}) } as T;
+  const refreshed = servicesFollowingErindi((saved as Record<string, unknown> | undefined)?.services);
+  if (refreshed) merged.services = refreshed;
+  return merged;
+}
+
 function coerceDoc(raw: unknown, i: number): Doc | null {
   const d = (raw ?? {}) as Record<string, unknown>;
   const type = d.type as DocType;
   const id = typeof d.id === "string" && d.id ? d.id : `doc-${i}`;
   const name = typeof d.name === "string" ? d.name : "";
   const sub = typeof d.sub === "string" ? d.sub : "";
-  if (type === "fridge") return { id, type, name: name || "Ísskápskort", sub, fridge: { ...DEFAULT_FRIDGE, ...(d.fridge as object ?? {}) } };
-  if (type === "poster") return { id, type, name: name || "Veggspjald", sub, poster: { ...DEFAULT_POSTER, ...(d.poster as object ?? {}) } };
+  if (type === "fridge") return { id, type, name: name || "Ísskápskort", sub, fridge: withServices(DEFAULT_FRIDGE, d.fridge) };
+  if (type === "poster") return { id, type, name: name || "Veggspjald", sub, poster: withServices(DEFAULT_POSTER, d.poster) };
   if (type === "referral") return { id, type, name: name || "Tilvísunarleiðbeiningar", sub, referral: { ...DEFAULT_REFERRAL, ...(d.referral as object ?? {}) } };
-  if (type === "advert") return { id, type, name: name || "Blaðaauglýsing", sub, advert: { ...DEFAULT_ADVERT, ...(d.advert as object ?? {}) } };
+  if (type === "advert") return { id, type, name: name || "Blaðaauglýsing", sub, advert: withServices(DEFAULT_ADVERT, d.advert) };
   if (type === "lifelinecheck") return { id, type, name: name || "Lifeline × Lyfja", sub, lifeline: { ...DEFAULT_LIFELINE, ...(d.lifeline as object ?? {}) } };
   return null;
 }
