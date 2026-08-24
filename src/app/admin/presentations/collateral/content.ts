@@ -598,29 +598,33 @@ export function mergeContent(stored: unknown): CollateralContent {
 /**
  * A saved doc froze its own `services` array, so adding an erindi to the list
  * never reached documents that already existed — the drift this file works to
- * avoid, arriving by a different route. Adding "Húðvandamál og útbrot" and the
- * other two changed the defaults and changed nothing on the saved card.
+ * avoid, arriving by a different route.
  *
- * A doc whose services are all still the list's own — every icon an erindi slug
- * and every label that erindi's own title — has never been edited here, so it
- * follows the list. Rename a label or add an entry by hand and the doc is the
- * author's: it is then left exactly as saved.
+ * The rule is additive: an erindi the saved list does not mention yet is
+ * appended, and everything already saved is left exactly as it is — its label,
+ * its position, and any entry added by hand in the studio.
  *
- * Returns null when the saved list should be kept.
+ * It deliberately matches on `icon` alone and never on the label. The saved
+ * card really did carry "Ristill" where the list says "Ristill á húð" — the
+ * same historical drift documented above — so any rule that required the label
+ * to match would have decided the card was hand-curated and left it stale,
+ * which is exactly what happened to a stricter first attempt at this.
+ *
+ * The trade-off: an erindi deleted from a single doc reappears when the list
+ * next changes. That is the safer direction for a printed card, where silently
+ * omitting a service the clinic offers is worse than showing one that was
+ * removed — and it is undone by removing the erindi from the list itself.
+ *
+ * Returns null when the saved list already covers every erindi.
  */
 function servicesFollowingErindi(saved: unknown): Service[] | null {
   if (!Array.isArray(saved) || saved.length === 0) return null;
-  const titleOf = new Map(erindi.map((e) => [e.slug, e.title]));
-  const untouched = saved.every((s) => {
-    const it = (s ?? {}) as Record<string, unknown>;
-    return typeof it.icon === "string" && titleOf.get(it.icon) === it.label;
-  });
-  if (!untouched) return null;
-  // Already current — don't hand back a new array for no reason.
-  const same =
-    saved.length === DEFAULT_SERVICES.length &&
-    saved.every((s, i) => (s as Service).icon === DEFAULT_SERVICES[i].icon);
-  return same ? null : DEFAULT_SERVICES;
+  const present = new Set(
+    saved.map((s) => ((s ?? {}) as Record<string, unknown>).icon).filter((i): i is string => typeof i === "string"),
+  );
+  const missing = DEFAULT_SERVICES.filter((s) => !present.has(s.icon));
+  if (!missing.length) return null;
+  return [...(saved as Service[]), ...missing];
 }
 
 /** Merge a saved doc over its defaults, letting an unedited service list follow erindi. */
