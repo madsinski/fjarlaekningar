@@ -24,6 +24,13 @@ export type Erindi = {
  */
 export const erindiDescKey = (slug: string): string => `erindi_${slug.replace(/-/g, "_")}_desc`;
 
+/**
+ * CMS key holding whether an erindi is shown at all (Þjónusta CMS, group
+ * "Algeng erindi"). Absent means shown, so every erindi that existed before the
+ * switch did keeps appearing without anyone having to go and enable it.
+ */
+export const erindiOnKey = (slug: string): string => `erindi_${slug.replace(/-/g, "_")}_on`;
+
 /** The list with the requested locale's strings in `title`/`description`. */
 export function localizeErindi(locale: "is" | "en"): { slug: string; title: string; description: string }[] {
   return erindi.map((e) =>

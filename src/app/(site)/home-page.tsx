@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getPage, getPageContent } from "@/lib/site-content/server";
 import { pressItems } from "@/lib/site-content/fjolmidlar";
+import { hiddenErindiSlugs } from "@/lib/site-content/thjonusta";
 import { alternatesFor } from "@/lib/seo";
 import type { Locale } from "@/lib/site-content/types";
 import HomeView from "./HomeView";
@@ -28,11 +29,15 @@ export default async function HomePage({ locale }: { locale: Locale }) {
   const { c, order } = await getPage("home", locale);
   const pressContent = await getPageContent("fjolmidlar", locale);
   const press = pressItems(pressContent);
+  // The erindi switches live on the Þjónusta page, next to the list itself —
+  // one switch, every surface.
+  const thjonusta = await getPageContent("thjonusta", locale);
   return (
     <HomeView
       c={c}
       order={order}
       locale={locale}
+      hiddenErindi={hiddenErindiSlugs(thjonusta)}
       press={press}
       pressHeading={pressContent.front_heading}
       pressLink={pressContent.front_link}

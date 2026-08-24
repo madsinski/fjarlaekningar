@@ -2,23 +2,55 @@
 // Defaults are verbatim from the original hard-coded page.
 
 import { emptyDefaults, type LocaleContent, type SiteField, type SiteSection } from "./types";
-import { erindi, erindiDescKey } from "@/erindi";
+import { erindi, erindiDescKey, erindiOnKey } from "@/erindi";
 
-// One editable subtext per erindi card, generated from the canonical list so a
-// new erindi turns up in the CMS on its own. Titles are deliberately not
-// editable here — the home page and /admin/clinical render the same titles from
-// code, and a CMS override would only apply to this page.
-const ERINDI_CARD_FIELDS: SiteField[] = erindi.map((e) => ({
-  key: erindiDescKey(e.slug),
-  label: `${e.title} — undirtexti`,
-  group: "Algeng erindi",
-  type: "textarea",
-}));
+// A switch and an editable subtext per erindi card, generated from the canonical
+// list so a new erindi turns up in the CMS on its own, and paired so each
+// erindi's two controls sit together. Titles are deliberately not editable here
+// — the home page and /admin/clinical render the same titles from code, and a
+// CMS override would only apply to this page.
+const ERINDI_CARD_FIELDS: SiteField[] = erindi.flatMap((e): SiteField[] => [
+  {
+    key: erindiOnKey(e.slug),
+    label: `${e.title} — birting`,
+    group: "Algeng erindi",
+    type: "choice",
+    options: [
+      { value: "on", label: "Sýnt", hint: "Erindið birtist á forsíðu og á /thjonusta." },
+      {
+        value: "off",
+        label: "Falið",
+        hint: "Erindið hverfur af forsíðu, af /thjonusta, úr sitemap og af öðrum erindissíðum. Síða erindisins skilar 404.",
+      },
+    ],
+  },
+  {
+    key: erindiDescKey(e.slug),
+    label: `${e.title} — undirtexti`,
+    group: "Algeng erindi",
+    type: "textarea",
+  },
+]);
 
 const erindiCardDefaults = (locale: "is" | "en"): LocaleContent =>
   Object.fromEntries(
     erindi.map((e) => [erindiDescKey(e.slug), locale === "en" ? e.descriptionEn : e.description]),
   );
+
+/**
+ * Every erindi starts shown. The switch is language-independent, so the default
+ * lives only in the Icelandic map — resolveFields falls back to it for English,
+ * which is also what makes hiding an erindi hide it in BOTH languages.
+ */
+const erindiToggleDefaults = (): LocaleContent =>
+  Object.fromEntries(erindi.map((e) => [erindiOnKey(e.slug), "on"]));
+
+/** Is this erindi shown? Absent counts as shown. */
+export const erindiShown = (c: LocaleContent, slug: string): boolean => c[erindiOnKey(slug)] !== "off";
+
+/** The erindi slugs hidden in the Þjónusta CMS, for the surfaces that list them. */
+export const hiddenErindiSlugs = (c: LocaleContent): string[] =>
+  erindi.filter((e) => !erindiShown(c, e.slug)).map((e) => e.slug);
 // Reorderable bands, in their built-in order. The hero/page header is not
 // listed: it is structural and always renders first.
 export const THJONUSTA_SECTIONS: SiteSection[] = [
@@ -257,6 +289,7 @@ export const THJONUSTA_FIELDS: SiteField[] = [
 ];
 
 export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
+  ...erindiToggleDefaults(),
   ...erindiCardDefaults("is"),
   hero_eyebrow: "Þjónusta Fjarlækninga",
   hero_heading: "Læknisþjónusta fyrir ==algeng erindi==",

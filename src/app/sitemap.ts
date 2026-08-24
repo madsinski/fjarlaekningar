@@ -4,6 +4,7 @@ import { SITE_URL } from "@/lib/seo";
 import { erindi } from "@/erindi";
 import { getPage } from "@/lib/site-content/server";
 import { erindiPagesLive } from "@/lib/site-content/erindi-pages";
+import { erindiShown } from "@/lib/site-content/thjonusta";
 import { pressItems } from "@/lib/site-content/fjolmidlar";
 
 // Public marketing pages plus every published legal document, so the same
@@ -90,7 +91,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Erindi landing pages are listed only once they are published.
     const { c, enReady } = await getPage("erindi", "is");
     if (erindiPagesLive(c)) {
-      for (const e of erindi) {
+      // A hidden erindi has no page, so it must not be advertised in the sitemap.
+      const thj = await getPage("thjonusta", "is");
+      for (const e of erindi.filter((x) => erindiShown(thj.c, x.slug))) {
         base.push(
           ...localizedEntries(`/thjonusta/${e.slug}`, enReady, {
             lastModified: now,

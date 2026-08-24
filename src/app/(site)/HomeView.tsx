@@ -23,6 +23,7 @@ export default function HomeView({
   c,
   order,
   locale = "is",
+  hiddenErindi = [],
   press = [],
   pressHeading = "",
   pressLink = "",
@@ -32,13 +33,16 @@ export default function HomeView({
   /** Locale for the static erindi list — CMS strings in `c` are already
    *  resolved, but the erindi are code, so the view must pick the language. */
   locale?: "is" | "en";
+  /** Erindi hidden in the Þjónusta CMS. One switch governs every surface, so
+   *  the front page has to be told too — its own blob does not carry them. */
+  hiddenErindi?: string[];
   /** Newest press coverage first; empty means the band does not render at all. */
   press?: PressItem[];
   /** Labels live on the Fjölmiðlar CMS page, next to the list itself. */
   pressHeading?: string;
   pressLink?: string;
 }) {
-  const erindi = localizeErindi(locale);
+  const erindi = localizeErindi(locale).filter((e) => !hiddenErindi.includes(e.slug));
   const t = ui(locale);
   // Keeps the visitor inside their language: on /en every link below is /en/…
   const href = (path: string) => localeHref(path, locale);

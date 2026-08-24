@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { erindi, localizeErindi } from "@/erindi";
 import { getPage, getPageContent } from "@/lib/site-content/server";
 import { ERINDI_WITH_MEDS, erindiKey, erindiPagesLive } from "@/lib/site-content/erindi-pages";
+import { erindiShown } from "@/lib/site-content/thjonusta";
 import { ui } from "@/lib/site-content/ui-strings";
 import type { Locale } from "@/lib/site-content/types";
 import { alternatesFor, SITE_URL } from "@/lib/seo";
@@ -23,6 +24,9 @@ async function load(slug: string, locale: Locale) {
   if (!item) return null;
   const { c, enReady } = await getPage("erindi", locale);
   if (!erindiPagesLive(c)) return null;
+  // Hidden in the Þjónusta CMS: the page goes with the card, or the switch
+  // would leave an unlinked page in the index.
+  if (!erindiShown(await getPageContent("thjonusta", locale), slug)) return null;
   const k = erindiKey(slug);
   const localized = localizeErindi(locale).find((e) => e.slug === slug)!;
   return {
@@ -71,8 +75,9 @@ export default async function ErindiPage({ params, locale }: Params & { locale: 
         { title: meds.meds_d_title, items: meds.meds_d_items },
       ].filter((m) => m.title)
     : [];
+  const thj = await getPageContent("thjonusta", locale);
   const others = localizeErindi(locale)
-    .filter((e) => e.slug !== slug)
+    .filter((e) => e.slug !== slug && erindiShown(thj, e.slug))
     .slice(0, 6)
     .map((e) => ({ slug: e.slug, title: e.title }));
 

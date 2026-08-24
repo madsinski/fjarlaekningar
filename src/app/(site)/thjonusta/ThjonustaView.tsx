@@ -7,7 +7,7 @@ import Link from "next/link";
 import { erindiDescKey, localizeErindi } from "../../../erindi";
 import SiteIcon from "@/lib/site-content/SiteIcon";
 import { renderHighlighted } from "@/lib/site-content/highlight";
-import { THJONUSTA_SECTIONS } from "@/lib/site-content/thjonusta";
+import { erindiShown, THJONUSTA_SECTIONS } from "@/lib/site-content/thjonusta";
 import { resolveOrder, type LocaleContent } from "@/lib/site-content/types";
 import { ui } from "@/lib/site-content/ui-strings";
 import { localeHref } from "@/lib/locale";
@@ -35,10 +35,12 @@ export default function ThjonustaView({
 }) {
   // Titles come from code; each card's subtext is CMS-editable and falls back
   // to the code default when the field is blank.
-  const erindi = localizeErindi(locale).map((e) => ({
-    ...e,
-    description: c[erindiDescKey(e.slug)]?.trim() || e.description,
-  }));
+  const erindi = localizeErindi(locale)
+    .filter((e) => erindiShown(c, e.slug))
+    .map((e) => ({
+      ...e,
+      description: c[erindiDescKey(e.slug)]?.trim() || e.description,
+    }));
   const tr = ui(locale);
   // One step per line as "Titill | Lýsing" (edited by the add/remove control in
   // the CMS); auto-numbered by position.
