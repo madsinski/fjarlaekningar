@@ -206,9 +206,9 @@ export type FridgeLayout = "minimal" | "scan" | "list" | "classic";
 export type FridgeBackLayout = "cards" | "grid" | "large";
 
 export const FRIDGE_BACKS: { value: FridgeBackLayout; label: string; hint: string }[] = [
-  { value: "cards", label: "Spjöld", hint: "Tveir dálkar af römmuðum spjöldum — merki yfir heiti." },
-  { value: "grid", label: "Reitir", hint: "Þrír í röð, þéttast — rúmar tíu erindi án þrengsla." },
-  { value: "large", label: "Stór listi", hint: "Einn dálkur, stór merki og texti — lesið úr fjarlægð." },
+  { value: "cards", label: "Spjöld", hint: "Tveir dálkar af römmuðum spjöldum — merki yfir heiti. Ræður við öll erindin tólf." },
+  { value: "grid", label: "Reitir", hint: "Þrír í röð, þéttast. Þéttist verulega með tólf erindum og löngum heitum." },
+  { value: "large", label: "Stór listi", hint: "Einn dálkur, stór merki og texti — lesið úr fjarlægð. Rúmar um tíu erindi; flæðir út af A6 með fleirum." },
 ];
 
 export const FRIDGE_LAYOUTS: { value: FridgeLayout; label: string; hint: string }[] = [
@@ -245,19 +245,12 @@ export type Doc =
 export type ArchivedDoc = Doc & { archivedAt?: string };
 export type CollateralContent = { docs: Doc[]; archived?: ArchivedDoc[] };
 
-// The nine services from the portal menu „Hvernig getum við aðstoðað þig?“.
-// `icon` maps to /public/fjarlaekningar-icons/portal/<icon>.png — the fixed set.
-export const SERVICE_ICONS = [
-  "kvef-hosti-halsbolga",
-  "thvagfaera-leggangasykingar",
-  "frunsa",
-  "ristill",
-  "frjokornaofnaemi",
-  "getnadarvorn",
-  "risvandamal",
-  "njalgur",
-  "lyfjuendurnyjun",
-] as const;
+// Icon choices offered in the studio's service editor. Derived from the erindi
+// list rather than retyped, for the same reason DEFAULT_SERVICES is: the
+// hand-maintained copy had drifted once already, and a dropdown that is missing
+// a newly added erindi silently makes that erindi un-pickable on a card.
+// Every slug has a tile at /public/fjarlaekningar-icons/portal/<slug>.png.
+export const SERVICE_ICONS: string[] = erindi.map((e) => e.slug);
 
 /**
  * The erindi, taken from the site's own list rather than retyped here.

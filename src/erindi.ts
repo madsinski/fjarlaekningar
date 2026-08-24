@@ -82,6 +82,24 @@ export const erindi: Erindi[] = [
     descriptionEn: "Treatment of recurring shingles. First-time diagnosis is referred onwards.",
   },
   {
+    slug: "hudvandamal-utbrot",
+    title: "Húðvandamál og útbrot",
+    description:
+      "Exem, psoriasis, unglingabólur, sveppasýkingar og önnur afmörkuð húðvandamál. Mynd fylgir erindinu. Fæðingarblettum, sárum sem gróa ekki og bráðum útbrotum vísað í annan farveg.",
+    titleEn: "Skin problems and rashes",
+    descriptionEn:
+      "Eczema, psoriasis, acne, fungal infections and other well-defined skin problems. A photograph is submitted with the request. Changing moles, non-healing wounds and acute rashes are referred onwards.",
+  },
+  {
+    slug: "augnsykingar-augnlokavandamal",
+    title: "Augnsýkingar og augnlokavandamál",
+    description:
+      "Hvarmabólga, vogrís og óbrotin tárubólga. Mynd fylgir erindinu. Sjónskerðingu, augnverk og rauðu auga hjá linsunotendum vísað í annan farveg.",
+    titleEn: "Eye infections and eyelid problems",
+    descriptionEn:
+      "Blepharitis, styes and uncomplicated conjunctivitis. A photograph is submitted with the request. Reduced vision, eye pain and a red eye in contact-lens wearers are referred onwards.",
+  },
+  {
     slug: "risvandamal",
     title: "Risvandamál",
     description: "Mat og meðferð.",
@@ -102,6 +120,15 @@ export const erindi: Erindi[] = [
       "Skjót endurnýjun á föstum lyfjum sem þolir ekki bið.",
     titleEn: "Prescription renewal",
     descriptionEn: "Fast renewal of regular medication that cannot wait.",
+  },
+  {
+    slug: "almenn-laeknisthjonusta",
+    title: "Almenn læknisþjónusta",
+    description:
+      "Erindi sem falla ekki undir hina flokkana. Þú lýsir vandamálinu með eigin orðum og læknir metur málið. Bráðum og alvarlegum einkennum vísað í annan farveg.",
+    titleEn: "General medical service",
+    descriptionEn:
+      "Requests that do not fit the other categories. You describe the problem in your own words and a doctor assesses it. Acute and serious symptoms are referred onwards.",
   },
   {
     slug: "laeknisvottord",
