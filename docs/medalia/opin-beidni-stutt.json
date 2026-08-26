@@ -246,7 +246,7 @@
         {
           "linkId": "rf-warning",
           "type": "display",
-          "text": "⚠️ Stöðvaðu hér og leitaðu aðstoðar strax.\n\nHringdu í 112 ef ástandið er bráðt, 1700 til að fá ráðgjöf strax, eða farðu á næstu bráðamóttöku. Sjálfsvígshugsanir: 1717 eða 112.\n\nÞú mátt senda erindið samt, en það kemur ekki í stað bráðaþjónustu.",
+          "text": "⚠️ Stöðvaðu hér og leitaðu aðstoðar strax.\n\nHringdu í 112 ef ástandið er brátt, 1700 til að fá ráðgjöf strax, eða farðu á næstu bráðamóttöku. Sjálfsvígshugsanir: 1717 eða 112.\n\nÞú mátt senda erindið samt, en það kemur ekki í stað bráðaþjónustu.",
           "enableWhen": [
             {
               "question": "rf-gate",

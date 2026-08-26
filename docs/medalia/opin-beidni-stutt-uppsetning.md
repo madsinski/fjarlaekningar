@@ -105,7 +105,7 @@ Skýringartexti
 
 > ⚠️ Stöðvaðu hér og leitaðu aðstoðar strax.
 >
-> Hringdu í 112 ef ástandið er bráðt, 1700 til að fá ráðgjöf strax, eða farðu á næstu bráðamóttöku. Sjálfsvígshugsanir: 1717 eða 112.
+> Hringdu í 112 ef ástandið er brátt, 1700 til að fá ráðgjöf strax, eða farðu á næstu bráðamóttöku. Sjálfsvígshugsanir: 1717 eða 112.
 >
 > Þú mátt senda erindið samt, en það kemur ekki í stað bráðaþjónustu.
 
@@ -437,7 +437,7 @@ Langur texti — textareitur · **SKYLDA**
 
 **Birtist ef:** `bg-meds` = `yes`
 
-*Skýring í reit:* Líka getnaðarvarnir, bætiefni og lyf án lyfseðils. Eitt lyf í hverja línu.
+*Skýring í reit:* Skrifaðu líka getnaðarvarnir, bætiefni og lyf sem þú kaupir án lyfseðils. Eitt lyf í hverja línu.
 
 ### 8.4 · `bg-allergy`
 

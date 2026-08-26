@@ -124,7 +124,7 @@ Skýringartexti
 >
 > Einkennin sem þú merktir við þola ekki bið eftir skriflegu svari.
 >
-> • Hringdu í 112 ef ástandið er bráðt.
+> • Hringdu í 112 ef ástandið er brátt.
 > • Hringdu í 1700 til að fá ráðgjöf strax.
 > • Farðu á næstu bráðamóttöku eða heilsugæslu.
 >
@@ -455,7 +455,7 @@ Langur texti — textareitur · **SKYLDA**
 
 **Birtist ef:** `bg-meds` = `yes`
 
-*Skýring í reit:* Líka getnaðarvarnir, bætiefni og lyf án lyfseðils. Eitt lyf í hverja línu.
+*Skýring í reit:* Skrifaðu líka getnaðarvarnir, bætiefni og lyf sem þú kaupir án lyfseðils. Eitt lyf í hverja línu.
 
 ### 5.4 · `bg-allergy`
 

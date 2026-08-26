@@ -37,10 +37,10 @@ skoðunarinnar.
 > **Hentar ekki fyrir**
 >
 > - Fæðingarblett eða húðbreytingu sem hefur stækkað, breytt um lit eða lögun,
->   blæðir eða klæjar — það þarf skoðun með berum augum
+>   blæðir eða veldur kláða — það þarf skoðun með berum augum
 > - Sár sem hefur ekki gróið á fjórum vikum
 > - Sár á fæti hjá einstaklingi með sykursýki
-> - Brunasár, dýrabit og mannabit
+> - Brunasár og bit eftir dýr eða menn
 > - Útbrot sem hverfa ekki þegar þrýst er á þau, ásamt hita — hringdu í 112
 > - Roða sem breiðist hratt út ásamt hita, eða húð sem flagnar af eftir nýtt lyf
 > - Húðvandamál sem þarf að taka sýni úr, frysta eða skera í
@@ -51,7 +51,7 @@ skoðunarinnar.
 > - Tvær til þrjár myndir: ein nærmynd í um 15 cm fjarlægð og ein þar sem sést
 >   hvar á líkamanum útbrotin eru.
 > - Leggðu fingur eða mynt við hliðina svo stærðin sjáist.
-> - Þurrkaðu af krem, farða eða púður áður.
+> - Hreinsaðu krem, farða eða púður af húðinni áður.
 > - Eigirðu eldri mynd af sama svæði, sendu hana líka.
 >
 > Svar berst innan tveggja klukkustunda á opnunartíma, alla daga milli 10 og 22.
@@ -115,5 +115,5 @@ læknir, Fjarlækningar
 
 **Athugasemd um sterakrem.** Sá hluti sniðmátsins er skrifaður til að svara
 tveimur algengustu mistökunum í einu: að nota of lítið og hætta of snemma, eða
-að nota sterkt krem áfram á andliti mánuðum saman. Læknir sníður að tilfelli, en
+að nota sterkt krem áfram á andliti mánuðum saman. Læknir sníður textann að hverju tilfelli, en
 báðum atriðum ætti að vera svarað í hvert sinn sem sterakremi er ávísað.

@@ -256,7 +256,7 @@
         {
           "linkId": "rf-warning",
           "type": "display",
-          "text": "⚠️ Stöðvaðu hér og leitaðu aðstoðar strax.\n\nEinkennin sem þú merktir við þola ekki bið eftir skriflegu svari.\n\n• Hringdu í 112 ef ástandið er bráðt.\n• Hringdu í 1700 til að fá ráðgjöf strax.\n• Farðu á næstu bráðamóttöku eða heilsugæslu.\n\nEf þú ert með sjálfsvígshugsanir: hringdu í 1717 (Hjálparsíma Rauða krossins, opinn allan sólarhringinn) eða 112.\n\nÞú mátt senda erindið samt, en það kemur ekki í stað bráðaþjónustu og gæti verið afgreitt of seint.",
+          "text": "⚠️ Stöðvaðu hér og leitaðu aðstoðar strax.\n\nEinkennin sem þú merktir við þola ekki bið eftir skriflegu svari.\n\n• Hringdu í 112 ef ástandið er brátt.\n• Hringdu í 1700 til að fá ráðgjöf strax.\n• Farðu á næstu bráðamóttöku eða heilsugæslu.\n\nEf þú ert með sjálfsvígshugsanir: hringdu í 1717 (Hjálparsíma Rauða krossins, opinn allan sólarhringinn) eða 112.\n\nÞú mátt senda erindið samt, en það kemur ekki í stað bráðaþjónustu og gæti verið afgreitt of seint.",
           "enableWhen": [
             {
               "question": "rf-gate",
@@ -2552,7 +2552,7 @@
         {
           "linkId": "img-tips",
           "type": "display",
-          "text": "Svona verður myndin gagnleg:\n\n• Taktu myndina í góðri dagsbirtu, ekki með flassi.\n• Taktu tvær myndir: eina nærmynd og eina þar sem sést hvar á líkamanum þetta er.\n• Leggðu fingur eða mynt við hliðina svo stærðin sjáist.\n• Þurrkaðu af krem eða farða áður.\n• Ef þetta breytist dag frá degi, sendu líka eldri mynd ef þú átt hana.\n\nSendu ekki myndir sem sýna andlit eða kynfæri nema það sé nauðsynlegt fyrir matið.",
+          "text": "Svona verður myndin gagnleg:\n\n• Taktu myndina í góðri dagsbirtu, ekki með flassi.\n• Taktu tvær myndir: eina nærmynd og eina þar sem sést hvar á líkamanum þetta er.\n• Leggðu fingur eða mynt við hliðina svo stærðin sjáist.\n• Hreinsaðu krem eða farða af húðinni áður.\n• Ef þetta breytist dag frá degi, sendu líka eldri mynd ef þú átt hana.\n\nSendu ekki myndir sem sýna andlit eða kynfæri nema það sé nauðsynlegt fyrir matið.",
           "enableWhen": [
             {
               "question": "img-gate",

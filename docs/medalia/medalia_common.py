@@ -180,7 +180,7 @@ def redflag_page(intro_lines, which_options, extra_note=None):
                       "⚠️ Stöðvaðu hér og leitaðu aðstoðar strax.\n\n"
                       "Einkennin sem þú merktir við þola ekki bið eftir "
                       "skriflegu svari.\n\n"
-                      "• Hringdu í 112 ef ástandið er bráðt.\n"
+                      "• Hringdu í 112 ef ástandið er brátt.\n"
                       "• Hringdu í 1700 til að fá ráðgjöf strax.\n"
                       "• Farðu á næstu bráðamóttöku eða heilsugæslu.\n\n"
                       + (extra_note + "\n\n" if extra_note else "")
@@ -205,8 +205,8 @@ def background_page(extra_items=None):
           options=YES_NO, ext=RADIO),
         gated(q("bg-meds-list", "Hvaða lyf, styrk og skammt?", "text",
                 required=True,
-                ext=placeholder("Líka getnaðarvarnir, bætiefni og lyf án "
-                                "lyfseðils. Eitt lyf í hverja línu.")),
+                ext=placeholder("Skrifaðu líka getnaðarvarnir, bætiefni og lyf "
+                                "sem þú kaupir án lyfseðils. Eitt lyf í hverja línu.")),
               "bg-meds", "yes"),
         q("bg-allergy", "Ertu með lyfjaofnæmi eða annað ofnæmi?", "choice",
           required=True, options=YES_NO_UNSURE, ext=RADIO),

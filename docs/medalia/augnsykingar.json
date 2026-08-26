@@ -250,7 +250,7 @@
         {
           "linkId": "rf-warning",
           "type": "display",
-          "text": "⚠️ Stöðvaðu hér og leitaðu aðstoðar strax.\n\nEinkennin sem þú merktir við þola ekki bið eftir skriflegu svari.\n\n• Hringdu í 112 ef ástandið er bráðt.\n• Hringdu í 1700 til að fá ráðgjöf strax.\n• Farðu á næstu bráðamóttöku eða heilsugæslu.\n\nEfni í auga: skolaðu augað strax með rennandi vatni í minnst fimmtán mínútur og hringdu í 112 eða Eitrunarmiðstöð í 543 2222 á meðan.\n\nÞú mátt senda erindið samt, en það kemur ekki í stað bráðaþjónustu og gæti verið afgreitt of seint.",
+          "text": "⚠️ Stöðvaðu hér og leitaðu aðstoðar strax.\n\nEinkennin sem þú merktir við þola ekki bið eftir skriflegu svari.\n\n• Hringdu í 112 ef ástandið er brátt.\n• Hringdu í 1700 til að fá ráðgjöf strax.\n• Farðu á næstu bráðamóttöku eða heilsugæslu.\n\nEfni í auga: skolaðu augað strax með rennandi vatni í minnst fimmtán mínútur og hringdu í 112 eða Eitrunarmiðstöð í 543 2222 á meðan.\n\nÞú mátt senda erindið samt, en það kemur ekki í stað bráðaþjónustu og gæti verið afgreitt of seint.",
           "enableWhen": [
             {
               "question": "rf-gate",
@@ -1431,7 +1431,7 @@
           "extension": [
             {
               "url": "http://hl7.org/fhir/StructureDefinition/entryFormat",
-              "valueString": "Líka getnaðarvarnir, bætiefni og lyf án lyfseðils. Eitt lyf í hverja línu."
+              "valueString": "Skrifaðu líka getnaðarvarnir, bætiefni og lyf sem þú kaupir án lyfseðils. Eitt lyf í hverja línu."
             }
           ],
           "enableWhen": [

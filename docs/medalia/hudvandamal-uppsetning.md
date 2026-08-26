@@ -118,7 +118,7 @@ Skýringartexti
 >
 > Einkennin sem þú merktir við þola ekki bið eftir skriflegu svari.
 >
-> • Hringdu í 112 ef ástandið er bráðt.
+> • Hringdu í 112 ef ástandið er brátt.
 > • Hringdu í 1700 til að fá ráðgjöf strax.
 > • Farðu á næstu bráðamóttöku eða heilsugæslu.
 >
@@ -148,11 +148,11 @@ Skýringartexti
 
 > Sumt er ekki bráðatilfelli en verður samt ekki metið af mynd. Lestu listann og svaraðu spurningunni fyrir neðan:
 >
-> • Fæðingarblettur eða húðbreyting sem hefur stækkað, breytt um lit eða lögun, blæðir eða klæjar
+> • Fæðingarblettur eða húðbreyting sem hefur stækkað, breytt um lit eða lögun, blæðir eða veldur kláða
 > • Sár sem hefur ekki gróið á fjórum vikum
 > • Sár á fæti hjá einstaklingi með sykursýki
 > • Brunasár
-> • Dýrabit eða mannabit
+> • Bit eftir dýr eða menn
 > • Húðvandamál sem þarf að skera í, taka sýni úr eða frysta
 
 ### 3.2 · `suit-gate`
@@ -180,7 +180,7 @@ Fjölval — gátreitir
 | `chronic-wound` | Sár sem hefur ekki gróið á fjórum vikum |
 | `diabetic-foot` | Sár á fæti og ég er með sykursýki |
 | `burn` | Brunasár |
-| `bite` | Dýrabit eða mannabit |
+| `bite` | Bit eftir dýr eða menn |
 | `procedure` | Þarf sýnatöku, frystingu eða aðgerð |
 
 ### 3.4 · `suit-note`
@@ -430,7 +430,7 @@ Langur texti — textareitur · **SKYLDA**
 
 **Birtist ef:** `bg-meds` = `yes`
 
-*Skýring í reit:* Líka getnaðarvarnir, bætiefni og lyf án lyfseðils. Eitt lyf í hverja línu.
+*Skýring í reit:* Skrifaðu líka getnaðarvarnir, bætiefni og lyf sem þú kaupir án lyfseðils. Eitt lyf í hverja línu.
 
 ### 5.4 · `bg-allergy`
 
@@ -564,7 +564,7 @@ Skýringartexti
 > • Taktu myndina í góðri dagsbirtu, ekki með flassi — flass afmáir roða.
 > • Sendu tvær til þrjár myndir: eina nærmynd í um 15 cm fjarlægð og eina þar sem sést hvar á líkamanum útbrotin eru.
 > • Leggðu fingur eða mynt við hliðina svo stærðin sjáist.
-> • Þurrkaðu af krem, farða eða púður áður en þú tekur myndina.
+> • Hreinsaðu krem, farða eða púður af húðinni áður en þú tekur myndina.
 > • Haltu myndavélinni kyrri og passaðu að myndin sé í fókus.
 > • Breytist útbrotin dag frá degi, sendu líka eldri mynd ef þú átt hana.
 

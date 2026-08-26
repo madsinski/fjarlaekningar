@@ -232,7 +232,7 @@
         {
           "linkId": "rf-warning",
           "type": "display",
-          "text": "⚠️ Stöðvaðu hér og leitaðu aðstoðar strax.\n\nEinkennin sem þú merktir við þola ekki bið eftir skriflegu svari.\n\n• Hringdu í 112 ef ástandið er bráðt.\n• Hringdu í 1700 til að fá ráðgjöf strax.\n• Farðu á næstu bráðamóttöku eða heilsugæslu.\n\nÚtbrot sem hverfa ekki við þrýsting ásamt hita geta verið merki um heilahimnubólgu. Það þolir enga bið.\n\nÞú mátt senda erindið samt, en það kemur ekki í stað bráðaþjónustu og gæti verið afgreitt of seint.",
+          "text": "⚠️ Stöðvaðu hér og leitaðu aðstoðar strax.\n\nEinkennin sem þú merktir við þola ekki bið eftir skriflegu svari.\n\n• Hringdu í 112 ef ástandið er brátt.\n• Hringdu í 1700 til að fá ráðgjöf strax.\n• Farðu á næstu bráðamóttöku eða heilsugæslu.\n\nÚtbrot sem hverfa ekki við þrýsting ásamt hita geta verið merki um heilahimnubólgu. Það þolir enga bið.\n\nÞú mátt senda erindið samt, en það kemur ekki í stað bráðaþjónustu og gæti verið afgreitt of seint.",
           "enableWhen": [
             {
               "question": "rf-gate",
@@ -303,7 +303,7 @@
         {
           "linkId": "suit-intro",
           "type": "display",
-          "text": "Sumt er ekki bráðatilfelli en verður samt ekki metið af mynd. Lestu listann og svaraðu spurningunni fyrir neðan:\n\n• Fæðingarblettur eða húðbreyting sem hefur stækkað, breytt um lit eða lögun, blæðir eða klæjar\n• Sár sem hefur ekki gróið á fjórum vikum\n• Sár á fæti hjá einstaklingi með sykursýki\n• Brunasár\n• Dýrabit eða mannabit\n• Húðvandamál sem þarf að skera í, taka sýni úr eða frysta"
+          "text": "Sumt er ekki bráðatilfelli en verður samt ekki metið af mynd. Lestu listann og svaraðu spurningunni fyrir neðan:\n\n• Fæðingarblettur eða húðbreyting sem hefur stækkað, breytt um lit eða lögun, blæðir eða veldur kláða\n• Sár sem hefur ekki gróið á fjórum vikum\n• Sár á fæti hjá einstaklingi með sykursýki\n• Brunasár\n• Bit eftir dýr eða menn\n• Húðvandamál sem þarf að skera í, taka sýni úr eða frysta"
         },
         {
           "linkId": "suit-gate",
@@ -372,7 +372,7 @@
             {
               "valueCoding": {
                 "code": "bite",
-                "display": "Dýrabit eða mannabit"
+                "display": "Bit eftir dýr eða menn"
               }
             },
             {
@@ -1344,7 +1344,7 @@
           "extension": [
             {
               "url": "http://hl7.org/fhir/StructureDefinition/entryFormat",
-              "valueString": "Líka getnaðarvarnir, bætiefni og lyf án lyfseðils. Eitt lyf í hverja línu."
+              "valueString": "Skrifaðu líka getnaðarvarnir, bætiefni og lyf sem þú kaupir án lyfseðils. Eitt lyf í hverja línu."
             }
           ],
           "enableWhen": [
@@ -1713,7 +1713,7 @@
         {
           "linkId": "img-tips",
           "type": "display",
-          "text": "Svona verður myndin gagnleg:\n\n• Taktu myndina í góðri dagsbirtu, ekki með flassi — flass afmáir roða.\n• Sendu tvær til þrjár myndir: eina nærmynd í um 15 cm fjarlægð og eina þar sem sést hvar á líkamanum útbrotin eru.\n• Leggðu fingur eða mynt við hliðina svo stærðin sjáist.\n• Þurrkaðu af krem, farða eða púður áður en þú tekur myndina.\n• Haltu myndavélinni kyrri og passaðu að myndin sé í fókus.\n• Breytist útbrotin dag frá degi, sendu líka eldri mynd ef þú átt hana."
+          "text": "Svona verður myndin gagnleg:\n\n• Taktu myndina í góðri dagsbirtu, ekki með flassi — flass afmáir roða.\n• Sendu tvær til þrjár myndir: eina nærmynd í um 15 cm fjarlægð og eina þar sem sést hvar á líkamanum útbrotin eru.\n• Leggðu fingur eða mynt við hliðina svo stærðin sjáist.\n• Hreinsaðu krem, farða eða púður af húðinni áður en þú tekur myndina.\n• Haltu myndavélinni kyrri og passaðu að myndin sé í fókus.\n• Breytist útbrotin dag frá degi, sendu líka eldri mynd ef þú átt hana."
         },
         {
           "linkId": "img-files",

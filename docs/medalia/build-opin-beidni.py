@@ -197,7 +197,7 @@ P2 = page("p2-oryggisskimun", "Öryggisskimun", [
     gated(display("rf-warning", (
         "⚠️ Stöðvaðu hér og leitaðu aðstoðar strax.\n\n"
         "Einkennin sem þú merktir við þola ekki bið eftir skriflegu svari.\n\n"
-        "• Hringdu í 112 ef ástandið er bráðt.\n"
+        "• Hringdu í 112 ef ástandið er brátt.\n"
         "• Hringdu í 1700 til að fá ráðgjöf strax.\n"
         "• Farðu á næstu bráðamóttöku eða heilsugæslu.\n\n"
         "Ef þú ert með sjálfsvígshugsanir: hringdu í 1717 (Hjálparsíma Rauða "
@@ -579,7 +579,7 @@ P10 = page("p10-myndir", "Myndir", [
         "• Taktu tvær myndir: eina nærmynd og eina þar sem sést hvar á "
         "líkamanum þetta er.\n"
         "• Leggðu fingur eða mynt við hliðina svo stærðin sjáist.\n"
-        "• Þurrkaðu af krem eða farða áður.\n"
+        "• Hreinsaðu krem eða farða af húðinni áður.\n"
         "• Ef þetta breytist dag frá degi, sendu líka eldri mynd ef þú átt hana.\n\n"
         "Sendu ekki myndir sem sýna andlit eða kynfæri nema það sé nauðsynlegt "
         "fyrir matið."

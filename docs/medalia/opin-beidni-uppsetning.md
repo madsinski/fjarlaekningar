@@ -130,7 +130,7 @@ Skýringartexti
 >
 > Einkennin sem þú merktir við þola ekki bið eftir skriflegu svari.
 >
-> • Hringdu í 112 ef ástandið er bráðt.
+> • Hringdu í 112 ef ástandið er brátt.
 > • Hringdu í 1700 til að fá ráðgjöf strax.
 > • Farðu á næstu bráðamóttöku eða heilsugæslu.
 >
@@ -855,7 +855,7 @@ Skýringartexti
 > • Taktu myndina í góðri dagsbirtu, ekki með flassi.
 > • Taktu tvær myndir: eina nærmynd og eina þar sem sést hvar á líkamanum þetta er.
 > • Leggðu fingur eða mynt við hliðina svo stærðin sjáist.
-> • Þurrkaðu af krem eða farða áður.
+> • Hreinsaðu krem eða farða af húðinni áður.
 > • Ef þetta breytist dag frá degi, sendu líka eldri mynd ef þú átt hana.
 >
 > Sendu ekki myndir sem sýna andlit eða kynfæri nema það sé nauðsynlegt fyrir matið.

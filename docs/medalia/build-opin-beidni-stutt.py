@@ -174,7 +174,7 @@ P2 = page("p2-oryggisskimun", "Öryggisskimun", [
             )), "rf-gate", "yes"),
     gated(display("rf-warning", (
         "⚠️ Stöðvaðu hér og leitaðu aðstoðar strax.\n\n"
-        "Hringdu í 112 ef ástandið er bráðt, 1700 til að fá ráðgjöf strax, "
+        "Hringdu í 112 ef ástandið er brátt, 1700 til að fá ráðgjöf strax, "
         "eða farðu á næstu bráðamóttöku. Sjálfsvígshugsanir: 1717 eða 112.\n\n"
         "Þú mátt senda erindið samt, en það kemur ekki í stað bráðaþjónustu."
     )), "rf-gate", "yes"),
