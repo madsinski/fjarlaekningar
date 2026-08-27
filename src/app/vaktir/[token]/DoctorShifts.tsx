@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { CalendarPlus, Copy, Check, ArrowLeftRight, X } from "lucide-react";
 import GoogleCalendarCard from "./GoogleCalendarCard";
+import ShiftPrefs from "./ShiftPrefs";
 import {
   monthKey,
   monthLabel,
@@ -161,6 +162,9 @@ export default function DoctorShifts({
   );
 
   const googleCard = <GoogleCalendarCard token={token} />;
+  // Placed with the shifts rather than off in a settings page: what you ask for
+  // here is what the roster above is built from.
+  const prefsCard = <ShiftPrefs token={token} />;
 
   const calendarBox = (
     <div className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -362,6 +366,7 @@ export default function DoctorShifts({
             <div className="space-y-6 lg:col-span-2">
               {monthsBlock}
               {marketBlock}
+              {prefsCard}
             </div>
             <aside className="space-y-6">{sidebar}</aside>
           </div>
@@ -383,6 +388,7 @@ export default function DoctorShifts({
         {googleCard}
         {monthsBlock}
         {marketBlock}
+        {prefsCard}
         {calendarBox}
         {footNote}
       </div>

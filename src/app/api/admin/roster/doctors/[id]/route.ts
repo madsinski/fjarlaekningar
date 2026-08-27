@@ -47,8 +47,18 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
       ),
     ].sort((a, b) => a - b);
   }
+  if ("preferred_run_length" in body) {
+    const n = Number(body.preferred_run_length);
+    // Empty is "no preference"; anything else is clamped to the 1–10 the column
+    // allows, so a stray value cannot fail the whole save.
+    update.preferred_run_length =
+      body.preferred_run_length === null || body.preferred_run_length === "" || !Number.isFinite(n)
+        ? null
+        : Math.min(10, Math.max(1, Math.floor(n)));
+  }
   if (typeof body.shift_note === "string") update.shift_note = body.shift_note.trim().slice(0, 500);
-  if ("max_shifts_per_month" in body || "allowed_weekdays" in body || "shift_note" in body) {
+  if ("max_shifts_per_month" in body || "allowed_weekdays" in body || "shift_note" in body
+      || "preferred_run_length" in body) {
     update.prefs_updated_at = new Date().toISOString();
   }
 

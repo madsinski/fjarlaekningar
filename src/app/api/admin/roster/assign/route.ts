@@ -50,10 +50,10 @@ export async function POST(req: Request) {
   const doctorIds = Array.isArray(body.doctorIds) ? body.doctorIds.map(String) : undefined;
 
   const { first, next } = monthRange(month);
-  const [{ data: doctors, error: docErr }, { data: shifts, error: shiftErr }] = await Promise.all([
+  const [{ data: doctors, error: docErr }, { data: shifts, error: shiftErr }, { data: away }] = await Promise.all([
     supabaseAdmin
       .from("roster_doctors")
-      .select("id, name, active, max_shifts_per_month, allowed_weekdays")
+      .select("id, name, active, max_shifts_per_month, allowed_weekdays, preferred_run_length")
       .eq("active", true),
     supabaseAdmin
       .from("roster_shifts")
@@ -61,6 +61,14 @@ export async function POST(req: Request) {
       .gte("shift_date", first)
       .lt("shift_date", next)
       .order("shift_date"),
+    // Holidays overlapping this month. A period counts if it starts before the
+    // month ends and ends on or after it begins — the two-sided test, since a
+    // holiday spanning the whole month contains neither of its edges.
+    supabaseAdmin
+      .from("roster_doctor_absences")
+      .select("doctor_id, starts_on, ends_on")
+      .lt("starts_on", next)
+      .gte("ends_on", first),
   ]);
   // Say so rather than planning over an empty list. A failed read used to look
   // exactly like a month with nothing in it: "0 vaktir fá lækni", no error.
@@ -68,9 +76,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: (docErr ?? shiftErr)!.message }, { status: 500 });
   }
 
+  const awayBy = new Map<string, { starts_on: string; ends_on: string }[]>();
+  for (const a of (away ?? []) as { doctor_id: string; starts_on: string; ends_on: string }[]) {
+    awayBy.set(a.doctor_id, [...(awayBy.get(a.doctor_id) ?? []), { starts_on: a.starts_on, ends_on: a.ends_on }]);
+  }
+
   const plan = planAssignments(
     (shifts ?? []) as AssignShift[],
-    (doctors ?? []) as AssignDoctor[],
+    ((doctors ?? []) as AssignDoctor[]).map((d) => ({ ...d, absences: awayBy.get(d.id) ?? [] })),
     { mode, doctorIds },
   );
 

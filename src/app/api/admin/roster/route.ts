@@ -60,7 +60,7 @@ export async function GET(req: Request) {
 
   const doctors = await syncDoctors();
 
-  const [settings, shifts, swaps, google] = await Promise.all([
+  const [settings, shifts, swaps, absences, google] = await Promise.all([
     supabaseAdmin.from("roster_settings").select("per_patient_salary, currency").eq("id", 1).maybeSingle(),
     supabaseAdmin
       .from("roster_shifts")
@@ -73,6 +73,14 @@ export async function GET(req: Request) {
       .from("roster_swaps")
       .select("id, shift_id, from_doctor, to_doctor, status, shift:roster_shifts(shift_date, starts, ends)")
       .eq("status", "pending"),
+    // Holidays overlapping the month on screen, so an admin can see why a day
+    // could not be filled instead of guessing at it.
+    supabaseAdmin
+      .from("roster_doctor_absences")
+      .select("id, doctor_id, starts_on, ends_on, note")
+      .lt("starts_on", next)
+      .gte("ends_on", first)
+      .order("starts_on"),
     // Who has a live Google connection. Shown in the roster so an admin can see
     // at a glance which doctors get shift changes pushed to them straight away
     // and which are relying on a calendar subscription catching up later.
@@ -85,11 +93,19 @@ export async function GET(req: Request) {
   const googleByDoctor = Object.fromEntries(
     (google.data ?? []).map((g: { doctor_id: string }) => [g.doctor_id, g]),
   );
+  const awayByDoctor = new Map<string, unknown[]>();
+  for (const a of (absences.data ?? []) as { doctor_id: string }[]) {
+    awayByDoctor.set(a.doctor_id, [...(awayByDoctor.get(a.doctor_id) ?? []), a]);
+  }
 
   return NextResponse.json({
     ok: true,
     month,
-    doctors: (doctors ?? []).map((d: { id: string }) => ({ ...d, google: googleByDoctor[d.id] ?? null })),
+    doctors: (doctors ?? []).map((d: { id: string }) => ({
+      ...d,
+      google: googleByDoctor[d.id] ?? null,
+      absences: awayByDoctor.get(d.id) ?? [],
+    })),
     settings: settings.data ?? { per_patient_salary: 3000, currency: "kr." },
     shifts: shifts.data ?? [],
     swaps: swaps.data ?? [],

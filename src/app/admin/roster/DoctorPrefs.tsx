@@ -16,6 +16,7 @@ export default function DoctorPrefs({
 }) {
   const [open, setOpen] = useState(false);
   const days = doctor.allowed_weekdays ?? [];
+  const away = doctor.absences ?? [];
 
   const toggleDay = (d: number) => {
     const next = days.includes(d) ? days.filter((x) => x !== d) : [...days, d];
@@ -39,6 +40,8 @@ export default function DoctorPrefs({
         <span className="ml-auto text-[11px] text-slate-500">
           {weekdaySummary(days)}
           {doctor.max_shifts_per_month != null ? ` · hám. ${doctor.max_shifts_per_month}` : ""}
+          {doctor.preferred_run_length ? ` · ${doctor.preferred_run_length} í röð` : ""}
+          {away.length ? ` · ${away.length} frí` : ""}
         </span>
         {open ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
       </button>
@@ -58,6 +61,46 @@ export default function DoctorPrefs({
               className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-cyan-200"
             />
           </label>
+
+          <label className="block text-[11px] text-slate-500">
+            Vaktir í röð — ósk
+            <input
+              type="number"
+              min={1}
+              max={10}
+              value={doctor.preferred_run_length ?? ""}
+              placeholder="engin ósk"
+              onChange={(e) =>
+                onChange({ preferred_run_length: e.target.value === "" ? null : Math.min(10, Math.max(1, Math.floor(Number(e.target.value)))) })
+              }
+              className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-cyan-200"
+            />
+            <span className="mt-1 block text-[11px] text-slate-400">
+              Ósk, ekki þak: jöfn skipting gengur fyrir.
+            </span>
+          </label>
+
+          {/* Read-only here on purpose. Holidays are the doctor's own to book,
+              on their vaktahlekk; an admin editing them behind their back is how
+              someone ends up rostered on a day they had cleared. */}
+          <div>
+            <span className="block text-[11px] text-slate-500">Frí í þessum mánuði</span>
+            {away.length === 0 ? (
+              <p className="mt-1 text-[11px] text-slate-400">Ekkert skráð.</p>
+            ) : (
+              <ul className="mt-1 space-y-0.5">
+                {away.map((a) => (
+                  <li key={a.id ?? `${a.starts_on}-${a.ends_on}`} className="text-xs text-amber-700">
+                    {a.starts_on === a.ends_on ? a.starts_on : `${a.starts_on} – ${a.ends_on}`}
+                    {a.note ? <span className="text-slate-400"> · {a.note}</span> : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-1 text-[11px] text-slate-400">
+              Læknirinn skráir frí sjálfur. Sjálfvirk skipting sneiðir alltaf hjá þeim.
+            </p>
+          </div>
 
           <div>
             <span className="block text-[11px] text-slate-500">Vikudagar</span>

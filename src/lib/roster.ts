@@ -16,6 +16,10 @@ export interface RosterDoctor {
   /** 0=sun … 6=lau. Tómt = allir dagar. */
   allowed_weekdays?: number[] | null;
   shift_note?: string;
+  /** Ósk um fjölda vakta í röð (1–10). Mjúk regla. */
+  preferred_run_length?: number | null;
+  /** Frí sem skarast við mánuðinn sem verið er að skoða. Hörð regla. */
+  absences?: { id?: string; starts_on: string; ends_on: string; note?: string }[] | null;
 }
 
 export type ShiftStatus = "assigned" | "open" | "swap";
