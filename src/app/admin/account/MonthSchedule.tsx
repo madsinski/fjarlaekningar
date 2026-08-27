@@ -13,7 +13,6 @@ export default function MonthSchedule({ myDoctorId }: { myDoctorId?: string | nu
   const [doctors, setDoctors] = useState<RosterDoctor[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const listRef = useRef<HTMLUListElement>(null);
   const todayRef = useRef<HTMLLIElement>(null);
 
   const load = useCallback(async () => {
@@ -34,24 +33,12 @@ export default function MonthSchedule({ myDoctorId }: { myDoctorId?: string | nu
     load();
   }, [load]);
 
-  // Put today at the top of the card's own scroller. scrollTop rather than
-  // scrollIntoView(), which would drag the whole page along with it.
+  // The card no longer scrolls on its own, so the page is what moves. Only ever
+  // on a press of "í dag": scrolling the page for someone the moment they
+  // arrive, past the header they were about to read, is not a courtesy.
   const scrollToToday = useCallback(() => {
-    const list = listRef.current, row = todayRef.current;
-    if (!list || !row) return;
-    const delta = row.getBoundingClientRect().top - list.getBoundingClientRect().top;
-    list.scrollTop += delta - 8;
+    todayRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, []);
-
-  // Runs on shifts too, not just on load: a day holding two shifts is taller
-  // than a day holding none, so measuring before the rows carry their real
-  // content lands the list a few days off. The animation frame waits for the
-  // browser to lay them out before anything is measured.
-  useEffect(() => {
-    if (loading) return;
-    const id = requestAnimationFrame(scrollToToday);
-    return () => cancelAnimationFrame(id);
-  }, [loading, month, shifts, scrollToToday]);
 
   // Local date, not toISOString(): Iceland is UTC so the two agree at home, but
   // a doctor reading this from another timezone should see their own "today".
@@ -63,7 +50,7 @@ export default function MonthSchedule({ myDoctorId }: { myDoctorId?: string | nu
   for (const s of shifts) (byDate[s.shift_date] ||= []).push(s);
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden lg:sticky lg:top-6">
+    <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
       <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-2.5">
         <button onClick={() => setMonth((m) => shiftMonth(m, -1))} className="p-1.5 rounded-lg hover:bg-slate-100"><ChevronLeft className="w-4 h-4" /></button>
         <span className="flex items-baseline gap-2 truncate">
@@ -86,7 +73,7 @@ export default function MonthSchedule({ myDoctorId }: { myDoctorId?: string | nu
       {loading ? (
         <p className="p-4 text-sm text-slate-400">Hleð…</p>
       ) : (
-        <ul ref={listRef} className="max-h-[70vh] overflow-y-auto divide-y divide-slate-50">
+        <ul className="divide-y divide-slate-50">
           {datesInMonth(month).map((date) => {
             const rows = byDate[date] || [];
             const isToday = date === today;
