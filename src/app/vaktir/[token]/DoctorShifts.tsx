@@ -173,7 +173,8 @@ export default function DoctorShifts({
       <p className="mt-1 text-[11px] text-slate-400">
         Áskrift sækir breytingar þegar dagatalinu hentar: Apple á klukkustundarfresti (stillanlegt
         niður í 5 mín), Google á nokkurra klukkustunda fresti. Viltu fá breytingar samstundis skaltu
-        nota beinu Google-tenginguna hér fyrir ofan. Nýjustu vaktirnar sérðu alltaf hér að neðan.
+        nota beinu Google-tenginguna hér fyrir ofan. Nýjustu vaktirnar sérðu alltaf í
+        vaktalistanum sjálfum.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         <a href={googleUrl} target="_blank" rel="noopener noreferrer"
@@ -357,7 +358,6 @@ export default function DoctorShifts({
           {header}
           {stats}
           {googleCard}
-          {calendarBox}
           <div className="grid gap-8 lg:grid-cols-3">
             <div className="space-y-6 lg:col-span-2">
               {monthsBlock}
@@ -365,6 +365,9 @@ export default function DoctorShifts({
             </div>
             <aside className="space-y-6">{sidebar}</aside>
           </div>
+          {/* Subscription is the fallback for anyone not connected directly, so
+              it sits under the shifts rather than above them. */}
+          {calendarBox}
           {footNote}
         </div>
         {editModal}
@@ -378,9 +381,9 @@ export default function DoctorShifts({
         {header}
         {stats}
         {googleCard}
-        {calendarBox}
         {monthsBlock}
         {marketBlock}
+        {calendarBox}
         {footNote}
       </div>
       {editModal}

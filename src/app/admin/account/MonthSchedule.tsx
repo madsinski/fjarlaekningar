@@ -34,16 +34,24 @@ export default function MonthSchedule({ myDoctorId }: { myDoctorId?: string | nu
     load();
   }, [load]);
 
-  // Bring today into view once the month has rendered. Marking the row is no
-  // help if it is below the fold of the card's own scroller. Moved by setting
-  // scrollTop rather than scrollIntoView(), which would also drag the page.
-  useEffect(() => {
-    if (loading) return;
+  // Put today at the top of the card's own scroller. scrollTop rather than
+  // scrollIntoView(), which would drag the whole page along with it.
+  const scrollToToday = useCallback(() => {
     const list = listRef.current, row = todayRef.current;
     if (!list || !row) return;
     const delta = row.getBoundingClientRect().top - list.getBoundingClientRect().top;
     list.scrollTop += delta - 8;
-  }, [loading, month]);
+  }, []);
+
+  // Runs on shifts too, not just on load: a day holding two shifts is taller
+  // than a day holding none, so measuring before the rows carry their real
+  // content lands the list a few days off. The animation frame waits for the
+  // browser to lay them out before anything is measured.
+  useEffect(() => {
+    if (loading) return;
+    const id = requestAnimationFrame(scrollToToday);
+    return () => cancelAnimationFrame(id);
+  }, [loading, month, shifts, scrollToToday]);
 
   // Local date, not toISOString(): Iceland is UTC so the two agree at home, but
   // a doctor reading this from another timezone should see their own "today".
@@ -58,7 +66,21 @@ export default function MonthSchedule({ myDoctorId }: { myDoctorId?: string | nu
     <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden lg:sticky lg:top-6">
       <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-2.5">
         <button onClick={() => setMonth((m) => shiftMonth(m, -1))} className="p-1.5 rounded-lg hover:bg-slate-100"><ChevronLeft className="w-4 h-4" /></button>
-        <span className="text-sm font-semibold text-slate-900 capitalize">{monthLabel(month)}</span>
+        <span className="flex items-baseline gap-2 truncate">
+          <span className="truncate text-sm font-semibold capitalize text-slate-900">{monthLabel(month)}</span>
+          {/* Always available: the view scrolls to today by itself, but once you
+              have paged away or scrolled off there is otherwise no way back. */}
+          <button
+            onClick={() => {
+              const m = monthKey(new Date());
+              if (m !== month) setMonth(m); // the effect scrolls once it loads
+              else scrollToToday();
+            }}
+            className="shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-medium text-cyan-700 hover:bg-cyan-50"
+          >
+            í dag
+          </button>
+        </span>
         <button onClick={() => setMonth((m) => shiftMonth(m, 1))} className="p-1.5 rounded-lg hover:bg-slate-100"><ChevronRight className="w-4 h-4" /></button>
       </div>
       {loading ? (
