@@ -35,10 +35,11 @@ const ROLE_LABELS: Record<string, string> = {
 
 type TeamTab = "starfsfolk" | "vaktir" | "reikningar" | "undirskriftir";
 
+// Tab order only. The page still opens on Starfsfólk, wherever it sits.
 const TEAM_TABS: { key: TeamTab; label: string }[] = [
-  { key: "starfsfolk", label: "Starfsfólk" },
   { key: "vaktir", label: "Vaktakerfi" },
   { key: "reikningar", label: "Reikningar" },
+  { key: "starfsfolk", label: "Starfsfólk" },
   { key: "undirskriftir", label: "Netfangsundirskriftir" },
 ];
 
