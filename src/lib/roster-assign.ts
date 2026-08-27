@@ -4,6 +4,11 @@
 // that looks right until the month has an odd number of Saturdays, so it is
 // worth being able to run it on paper cases without a database.
 
+export interface AssignAbsence {
+  starts_on: string; // YYYY-MM-DD, inclusive
+  ends_on: string;   // YYYY-MM-DD, inclusive
+}
+
 export interface AssignDoctor {
   id: string;
   name: string;
@@ -12,6 +17,14 @@ export interface AssignDoctor {
   max_shifts_per_month?: number | null;
   /** 0=Sun … 6=Sat. Empty = every day allowed. */
   allowed_weekdays?: number[] | null;
+  /**
+   * How many shifts in a row this doctor would rather work. A WISH, not a rule:
+   * it breaks near-ties and nothing more, because an even split matters more
+   * than anyone's preferred rhythm. null = no preference.
+   */
+  preferred_run_length?: number | null;
+  /** Holidays. Unlike the above, a HARD rule — never rostered on these days. */
+  absences?: AssignAbsence[] | null;
 }
 
 export interface AssignShift {
@@ -20,7 +33,7 @@ export interface AssignShift {
   doctor_id: string | null;
 }
 
-export type UnfilledReason = "no-one-free" | "all-at-cap" | "no-one-works-that-day";
+export type UnfilledReason = "no-one-free" | "all-at-cap" | "no-one-works-that-day" | "all-away";
 
 export interface AssignPlan {
   /** shift id → doctor id */
@@ -51,6 +64,29 @@ export function weekdayOf(date: string): number {
 function worksThatDay(doc: AssignDoctor, date: string): boolean {
   const days = doc.allowed_weekdays ?? [];
   return days.length === 0 || days.includes(weekdayOf(date));
+}
+
+/** Both ends inclusive; a single day is a period where start equals end. */
+function isAway(doc: AssignDoctor, date: string): boolean {
+  return (doc.absences ?? []).some((a) => date >= a.starts_on && date <= a.ends_on);
+}
+
+function addDays(date: string, n: number): string {
+  const [y, m, d] = date.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+}
+
+/**
+ * Shifts already held immediately either side of `date`, so we can tell whether
+ * taking this one continues a run or starts a fresh one. Capped at 31 because
+ * the answer past a month is of no interest and an unbounded walk is a way to
+ * hang on bad data.
+ */
+function runAround(taken: Set<string>, date: string): { before: number; after: number } {
+  let before = 0, after = 0;
+  while (before < 31 && taken.has(addDays(date, -(before + 1)))) before++;
+  while (after < 31 && taken.has(addDays(date, after + 1))) after++;
+  return { before, after };
 }
 
 /**
@@ -101,12 +137,20 @@ export function planAssignments(
   const capOf = (d: AssignDoctor) =>
     d.max_shifts_per_month == null ? Infinity : Math.max(0, d.max_shifts_per_month);
 
-  // Hardest first: fewest doctors who could ever work that weekday.
-  const candidateCount = (s: AssignShift) => pool.filter((d) => worksThatDay(d, s.shift_date)).length;
+  // Hardest first: fewest doctors who could take that particular day. Holidays
+  // count here as much as weekday rules do — a day when four of five are away
+  // must be placed before the days anyone could cover.
+  const candidateCount = (s: AssignShift) =>
+    pool.filter((d) => worksThatDay(d, s.shift_date) && !isAway(d, s.shift_date)).length;
   const ordered = toPlace.slice().sort((a, b) => {
     const c = candidateCount(a) - candidateCount(b);
     return c !== 0 ? c : a.shift_date.localeCompare(b.shift_date);
   });
+
+  // What an even split would give each doctor. Used only to bound the run
+  // preference below — never to cap anyone, since a month rarely divides evenly
+  // and someone has to take the remainder.
+  const fairShare = pool.length ? Math.ceil(shifts.length / pool.length) : 0;
 
   const assignments: Record<string, string> = {};
   const unfilled: AssignPlan["unfilled"] = [];
@@ -117,7 +161,14 @@ export function planAssignments(
       unfilled.push({ shift_id: s.id, shift_date: s.shift_date, reason: "no-one-works-that-day" });
       continue;
     }
-    const underCap = worksToday.filter((d) => totals[d.id] < capOf(d));
+    // Holidays are absolute. Reported separately from the weekday rules so a
+    // gap in the roster says which of the two caused it.
+    const here = worksToday.filter((d) => !isAway(d, s.shift_date));
+    if (here.length === 0) {
+      unfilled.push({ shift_id: s.id, shift_date: s.shift_date, reason: "all-away" });
+      continue;
+    }
+    const underCap = here.filter((d) => totals[d.id] < capOf(d));
     if (underCap.length === 0) {
       unfilled.push({ shift_id: s.id, shift_date: s.shift_date, reason: "all-at-cap" });
       continue;
@@ -128,7 +179,26 @@ export function planAssignments(
       unfilled.push({ shift_id: s.id, shift_date: s.shift_date, reason: "no-one-free" });
       continue;
     }
-    free.sort((a, b) => totals[a.id] - totals[b.id] || a.name.localeCompare(b.name, "is"));
+    // Least loaded first, with the run preference bending the queue.
+    //
+    // A doctor part-way through a run they asked for is discounted by the
+    // length of that run, which is what lets them keep it rather than being
+    // displaced after one day by whoever is momentarily behind. The discount
+    // stops the moment they reach their fair share of the month: wanting long
+    // runs is a preference about rhythm, not a claim on more shifts than
+    // anyone else. Going past the requested length is penalised outright.
+    const effectiveLoad = (d: AssignDoctor) => {
+      const load = totals[d.id];
+      const pref = d.preferred_run_length ?? null;
+      if (!pref) return load;
+      const { before, after } = runAround(takenDates[d.id], s.shift_date);
+      if (before + 1 + after > pref) return load + 1;
+      if (before + after > 0 && load < fairShare) return load - (before + after);
+      return load;
+    };
+    // Name breaks the tie, and nothing else does: sorting on the raw total here
+    // would cancel the discount above and no run would ever reach day two.
+    free.sort((a, b) => effectiveLoad(a) - effectiveLoad(b) || a.name.localeCompare(b.name, "is"));
     const pick = free[0];
     assignments[s.id] = pick.id;
     totals[pick.id] += 1;
@@ -155,4 +225,5 @@ export const UNFILLED_REASON_IS: Record<UnfilledReason, string> = {
   "no-one-works-that-day": "Enginn læknir tekur þennan vikudag",
   "all-at-cap": "Allir komnir í hámarksfjölda vakta",
   "no-one-free": "Þeir sem mega taka daginn eru þegar á vakt þann dag",
+  "all-away": "Allir sem taka þennan vikudag eru í fríi",
 };
