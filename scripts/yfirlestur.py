@@ -75,7 +75,8 @@ ORDALISTI = {
     "psoriasis", "snertiexem", "rósroða", "rósroði", "sveppasýking",
     "sveppasýkingar", "graftarbólur", "unglingabólur", "vörtur", "Vörtur",
     "flagnar", "flögnun", "dýrabit", "mannabit", "skordýrabit", "húðbreytingu",
-    "sterakrem", "rakakrem", "hreistur", "vessandi",
+    "sterakrem", "rakakrem", "hreistur", "vessandi", "sápulaus", "ertir",
+    "snertiexem", "rósroði", "kláði", "útbrot",
     # augu
     "hvarmabólga", "hvarmabólgu", "vogrís", "hvarmakýli", "tárubólga",
     "tárubólgu", "táru", "útferð", "ljósfælni", "augnlokabrún", "gervitár",

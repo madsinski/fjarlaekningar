@@ -17,6 +17,70 @@
 // The pairing rule is why "- Saltvatnsnefsprey" and the sentence telling you
 // how to use it sit on consecutive lines: they are one item, not two.
 export const ERINDI_ADVICE: Record<string, string> = {
+  "hudvandamal-utbrot": `Hér eru almennar ráðleggingar um daglega umhirðu húðar sem eiga við flest væg húðvandamál.
+## Rakakrem er meðferð, ekki snyrting
+- Berðu rakakrem á daglega
+Líka þegar húðin lítur vel út. Reglusemin skiptir meira máli en tegundin.
+- Notaðu meira en þér finnst þurfa
+Þunnt lag sem gleymist á milli daga gerir lítið gagn.
+## Þvottur og sturtur
+- Stuttar og volgar sturtur
+Heitt vatn leysir upp fituna í húðinni og skilur hana eftir þurrari en áður.
+- Mild og sápulaus hreinsiefni
+Venjuleg sápa er basísk og ertir húð sem er þegar viðkvæm.
+- Klappaðu húðina þurra
+Að nudda með handklæði ertir húðina að óþörfu.
+++ Góð ráð
+- Berðu rakakrem á strax eftir sturtu, meðan húðin er enn rök.
+- Klipptu neglur stutt ef þig klæjar á nóttunni.
+- Skrifaðu hjá þér hvað þú notaðir og hversu lengi — það nýtist við matið.
+-- Varast skal
+- Að klóra. Klór opnar húðina og býður sýkingu heim.
+- Að nota sterakrem lengur en ráðlagt var, sérstaklega í andliti.
+- Að skipta ört um krem áður en það fyrra hefur fengið tíma til að virka.
+!! Útbrot sem hverfa ekki þegar þrýst er á þau, ásamt hita, geta verið merki um alvarlega sýkingu. Það þolir enga bið — hringdu í 112.`,
+  "augnsykingar-augnlokavandamal": `Hér eru almennar ráðleggingar við vægum augnvandamálum.
+## Heitir bakstrar
+- Fimm til tíu mínútur, tvisvar á dag
+Baksturinn þarf að haldast heitur allan tímann. Kaldur bakstur gerir ekkert gagn.
+- Strjúktu yfir augnlokabrúnina á eftir
+Volgur þvottapoki eða bómullarpinni losar skorpur og opnar stíflaða kirtla.
+- Haltu áfram eftir að einkennin fara að lagast
+Hvarmabólga og hvarmakýli taka vikur, ekki daga.
+## Hreinlæti og smitvarnir
+- Þvoðu hendur oft, sérstaklega eftir að þú snertir augað.
+- Ekki deila handklæðum eða koddaverum með öðrum á heimilinu.
+- Hentu augnfarða sem var notaður eftir að einkennin byrjuðu.
+++ Góð ráð
+- Skolaðu útferð úr auganu með hreinu vatni eða saltvatni.
+- Gervitár má nota eftir þörfum við þurrki og ertingu.
+- Taktu linsurnar úr og notaðu gleraugu á meðan.
+-- Varast skal
+- Að kreista hnút á augnloki.
+- Að nota augndropa sem einhver annar fékk ávísað.
+- Að setja linsur aftur í áður en augað er orðið einkennalaust.
+!! Rautt auga hjá linsunotanda getur verið sýking í hornhimnu og þarf skoðun samdægurs. Taktu linsurnar úr strax og hafðu samband við augnlækni eða Læknavaktina í 1700.`,
+  "almenn-laeknisthjonusta": `Því nákvæmari sem lýsingin er, því betra verður matið. Læknirinn sér ekkert annað en það sem þú skrifar og sendir.
+## Hvað er gagnlegt að nefna
+- Hvenær það byrjaði og hvernig það hefur þróast
+Nefndu dagafjölda eða vikur frekar en „fyrir nokkru síðan“.
+- Hvað gerir það betra eða verra
+Hvíld, hreyfing, matur, tími dags eða álag.
+- Hvað þú hefur þegar prófað
+Lyf, skammt og hversu lengi — og hvort það virkaði.
+- Öll lyf sem þú notar að staðaldri
+Líka getnaðarvarnir, bætiefni og lyf sem þú kaupir án lyfseðils.
+## Áhyggjurnar þínar skipta máli
+- Segðu hreint út hvað þú óttast að þetta gæti verið
+Það er ekki formsatriði. Áhyggjur sjúklings eru oft besta vísbendingin um hvað þarf að útiloka, og læknirinn svarar þeim sérstaklega.
+++ Góð ráð
+- Skrifaðu frekar of mikið en of lítið.
+- Sendu mynd ef eitthvað er sýnilegt.
+- Nefndu hverju þú vonast eftir út úr erindinu.
+-- Varast skal
+- Að sleppa lyfjum eða fyrri greiningum af því þau virðast ótengd.
+- Að bíða með bráð einkenni og senda erindi í staðinn.
+!! Fjarlækningar eru ekki bráðaþjónusta. Séu einkennin bráð eða alvarleg, hringdu í 112 eða Læknavaktina í 1700.`,
   "njalgur": `Njálgur er lítill, hvítur hringormur sem er algeng sýking hjá börnum og einnig fullorðnum einstaklingum.
 ## Almennar ráðleggingar
 Smit geta komið upp á stöðum þar sem mörg börn eru saman komin, t.d. í leikskóla eða skóla. Njálgur smitast auðveldlega til foreldra og aðstandenda.

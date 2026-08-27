@@ -24,6 +24,28 @@ export const ERINDI_SECTIONS: SiteSection[] = [];
 
 /** Extra detail already published in the /thjonusta FAQ, reused verbatim. */
 const PUBLISHED_DETAIL: Record<string, string> = {
+  "hudvandamal-utbrot": [
+    "Exem, þurrkur og kláði",
+    "Psoriasis sem þegar hefur verið greindur",
+    "Unglingabólur og rósroði",
+    "Sveppasýkingar í húð og nöglum",
+    "Ofnæmisútbrot og snertiexem",
+    "Skordýrabit og vægar húðsýkingar",
+    "Vörtur og önnur afmörkuð húðvandamál",
+  ].join("\n"),
+  "augnsykingar-augnlokavandamal": [
+    "Hvarmabólga — roði, flögnun og skorpur á augnlokabrún",
+    "Vogrís og hvarmakýli — hnútur á augnloki",
+    "Óbrotin tárubólga — rautt auga með útferð, óbreyttri sjón og engum verk",
+    "Þurrkur og erting í augum",
+  ].join("\n"),
+  "almenn-laeknisthjonusta": [
+    "Væg og afmörkuð einkenni sem þú vilt fá mat á",
+    "Þekkt vandamál sem hefur breyst eða versnað",
+    "Spurningar um lyf, skammta eða aukaverkanir",
+    "Niðurstöður úr rannsókn sem þú vilt fá útskýrðar",
+    "Vottorð vegna erindis sem þegar hefur verið afgreitt hjá okkur",
+  ].join("\n"),
   "kvef-hosti-halsbolga": "Einfaldar öndunarfærasýkingar, hálsbólga, ennis- og kinnholusýkingar",
   "thvagfaera-leggangasykingar":
     "Þvagfærasýkingar kvenna, sveppasýkingar í leggöngum og bakteríusýkingar í leggöngum",
@@ -37,6 +59,21 @@ const PUBLISHED_DETAIL: Record<string, string> = {
 // pages are switched on. Deliberately encyclopedic — what the problem is,
 // typical symptoms, how common — and never diagnostic advice for the reader.
 const DRAFT_ABOUT: Record<string, string> = {
+  "hudvandamal-utbrot": `Húðvandamál eru meðal algengustu erinda í heilsugæslu. Undir þau falla exem, psoriasis, unglingabólur, rósroði, sveppasýkingar, ofnæmisútbrot, skordýrabit og vörtur — ólík vandamál sem eiga það sameiginlegt að sjást utan á líkamanum.
+
+Einkennin eru oftast kláði, roði, flögnun, þurrkur eða útbrot sem breiðast út. Sum ganga yfir af sjálfu sér á nokkrum dögum, önnur eru langvinn og koma og fara árum saman.
+
+Húðvandamál henta vel til mats í fjarþjónustu, því útlit húðarinnar er stór hluti matsins. Þess vegna fylgir mynd alltaf erindi um húð.`,
+  "augnsykingar-augnlokavandamal": `Roði, kláði og útferð úr augum eru meðal algengustu augnvandamála, og langflest þeirra eru væg og ganga yfir.
+
+Hvarmabólga er bólga í augnlokabrúninni sem veldur roða, flögnun og skorpum, sérstaklega á morgnana. Hún er langvinn og kemur oft aftur. Vogrís og hvarmakýli eru hnútar á augnloki sem myndast þegar kirtill stíflast — vogrís er aumur og kemur snöggt, hvarmakýli er oftast verkjalaust og lengur að hverfa. Tárubólga er bólga í slímhúðinni sem þekur augnhvítuna og innra borð augnloksins, oftast af völdum veiru en stundum baktería eða ofnæmis.
+
+Þessi vandamál eiga það sameiginlegt að sjást utan á auganu og að sjónin helst óbreytt. Versni sjónin, verki augað eða þolir þú illa ljós er málið annars eðlis og þarf skoðun.`,
+  "almenn-laeknisthjonusta": `Sum erindi falla ekki undir neinn tiltekinn flokk. Það getur verið einkenni sem erfitt er að setja nafn á, spurning um lyf, niðurstaða úr rannsókn sem þú vilt fá útskýrða, eða vandamál sem hefur fylgt þér um hríð án þess að skýrast.
+
+Almenn læknisþjónusta er opinn flokkur fyrir slík erindi. Þú lýsir vandamálinu með þínum eigin orðum og svarar nokkrum spurningum sem hjálpa lækninum að meta málið — hversu lengi það hefur staðið, hvernig það hefur þróast, hvaða lyf þú notar og hvað þú hefur þegar reynt.
+
+Læknir les erindið og metur það. Niðurstaðan getur verið ráðgjöf, meðferð, beiðni um rannsókn, eða tilvísun í hefðbundna þjónustu ef málið þarf skoðun.`,
   "kvef-hosti-halsbolga":
     "Kvef, hósti og hálsbólga eru algengustu ástæður þess að fólk leitar til læknis. Langflestar sýkingar í efri öndunarvegi orsakast af veirum og ganga yfir á einni til tveimur vikum án sýklalyfja.\n\nStundum liggur þó bakteríusýking að baki — til dæmis streptókokkar í hálsi eða sýking í ennis- og kinnholum — og þá getur meðferð stytt veikindin. Mat á því hvort sýklalyf eigi við byggist á einkennum, tímalengd og eftir atvikum niðurstöðu sjálfsprófs.",
   "thvagfaera-leggangasykingar":
@@ -82,6 +119,31 @@ const DRAFT_SELFTEST: Record<string, string> = {
  * scope — and still need a doctor to sign them off before the pages go live.
  */
 const DRAFT_REFER: Record<string, string> = {
+  "hudvandamal-utbrot": [
+    "Fæðingarblettur eða húðbreyting sem hefur stækkað, breytt um lit eða lögun, blæðir eða veldur kláða.",
+    "Sár sem hefur ekki gróið á fjórum vikum, eða sár á fæti hjá einstaklingi með sykursýki.",
+    "Brunasár og bit eftir dýr eða menn.",
+    "Útbrot sem hverfa ekki þegar þrýst er á þau, ásamt hita.",
+    "Roði sem breiðist hratt út ásamt hita, eða húð sem flagnar af eftir að nýtt lyf var byrjað.",
+    "Húðvandamál sem þarf að taka sýni úr, frysta eða skera í.",
+  ].join("\n"),
+  "augnsykingar-augnlokavandamal": [
+    "Sjón sem hefur versnað eða orðið þokukennd.",
+    "Verkur í auganu, ekki bara sviði eða aðskotatilfinning.",
+    "Ljósfælni.",
+    "Rautt auga hjá þeim sem nota augnlinsur — það þarf skoðun samdægurs.",
+    "Áverki á auga, aðskotahlutur eða efni sem fór í augað.",
+    "Blöðruútbrot á enni, augnloki eða nefbroddi.",
+    "Auga sem stendur út, tvísýni eða skert augnhreyfing.",
+    "Barn yngra en eins mánaðar með rautt auga eða útferð.",
+  ].join("\n"),
+  "almenn-laeknisthjonusta": [
+    "Bráð eða alvarleg einkenni — hringdu í 112 eða Læknavaktina í 1700.",
+    "Einkenni sem þarf að skoða, hlusta eða þreifa til að meta.",
+    "Ávana- og fíknilyf, svefnlyf, róandi lyf og ADHD-lyf.",
+    "Vottorð aftur í tímann fyrir veikindi sem enginn læknir hefur metið.",
+    "Ný greining á flóknu eða langvinnu vandamáli sem krefst eftirfylgni.",
+  ].join("\n"),
   "kvef-hosti-halsbolga": [
     "Öndunarerfiðleikar, andnauð eða brjóstverkur.",
     "Erfiðleikar við að kyngja eigin munnvatni eða að opna munninn.",
