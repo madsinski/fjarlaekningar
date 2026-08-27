@@ -26,6 +26,32 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (typeof body.active === "boolean") update.active = body.active;
   // Generate an access token on demand (e.g. for doctors created before tokens
   // existed, or to revoke + reissue a personal link).
+  // Vaktaóskir. A cap of null means no cap; an empty weekday list means every
+  // day — both are "no restriction", kept distinct from 0 so that "zero shifts"
+  // stays sayable.
+  if ("max_shifts_per_month" in body) {
+    const n = Number(body.max_shifts_per_month);
+    update.max_shifts_per_month =
+      body.max_shifts_per_month === null || body.max_shifts_per_month === ""
+        ? null
+        : Number.isFinite(n) && n >= 0
+          ? Math.floor(n)
+          : null;
+  }
+  if (Array.isArray(body.allowed_weekdays)) {
+    update.allowed_weekdays = [
+      ...new Set(
+        (body.allowed_weekdays as unknown[])
+          .map(Number)
+          .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6),
+      ),
+    ].sort((a, b) => a - b);
+  }
+  if (typeof body.shift_note === "string") update.shift_note = body.shift_note.trim().slice(0, 500);
+  if ("max_shifts_per_month" in body || "allowed_weekdays" in body || "shift_note" in body) {
+    update.prefs_updated_at = new Date().toISOString();
+  }
+
   if (body.regenerate_token === true) update.access_token = randomBytes(24).toString("hex");
   if (Object.keys(update).length === 0) return NextResponse.json({ ok: true });
 

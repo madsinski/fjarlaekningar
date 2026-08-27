@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Trash2, CalendarPlus, Users, Link2, Check } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { Scale, CheckSquare, Square, X } from "lucide-react";
+import DoctorPrefs from "./DoctorPrefs";
+import { UNFILLED_REASON_IS, type AssignPlan } from "@/lib/roster-assign";
 import {
   monthKey,
   shiftMonth,
@@ -20,6 +23,12 @@ import {
 
 export default function RosterPage() {
   const [month, setMonth] = useState(() => monthKey(new Date()));
+  // Bulk selection + the fair-split preview. A plan is shown before it is
+  // written: reassigning a month is not something to discover afterwards.
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [bulkDoctor, setBulkDoctor] = useState("");
+  const [plan, setPlan] = useState<AssignPlan | null>(null);
+  const [planMode, setPlanMode] = useState<"empty" | "all">("empty");
   const [doctors, setDoctors] = useState<RosterDoctor[]>([]);
   const [shifts, setShifts] = useState<RosterShift[]>([]);
   const [swaps, setSwaps] = useState<RosterSwap[]>([]);
@@ -123,6 +132,55 @@ export default function RosterPage() {
     await fetch(`/api/admin/roster/swaps/${id}`, { method: "PATCH", headers: await authHeaders(), body: JSON.stringify({ action: "cancel" }) });
     load();
   };
+  const previewSplit = async (mode: "empty" | "all") => {
+    setPlanMode(mode);
+    setBusy(true);
+    const res = await fetch("/api/admin/roster/assign", {
+      method: "POST",
+      headers: await authHeaders(),
+      body: JSON.stringify({ month, mode }),
+    });
+    const j = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (j?.ok) setPlan(j.plan);
+  };
+
+  const applySplit = async () => {
+    setBusy(true);
+    const res = await fetch("/api/admin/roster/assign", {
+      method: "POST",
+      headers: await authHeaders(),
+      body: JSON.stringify({ month, mode: planMode, apply: true }),
+    });
+    const j = await res.json().catch(() => ({}));
+    setBusy(false);
+    setPlan(null);
+    if (j?.ok) load();
+  };
+
+  const assignPicked = async (doctorId: string) => {
+    if (!picked.size) return;
+    setBusy(true);
+    const res = await fetch("/api/admin/roster/assign", {
+      method: "POST",
+      headers: await authHeaders(),
+      body: JSON.stringify({ shiftIds: [...picked], doctorId: doctorId || null }),
+    });
+    setBusy(false);
+    if (res.ok) {
+      setShifts((prev) => prev.map((s) => (picked.has(s.id) ? { ...s, doctor_id: doctorId || null } : s)));
+      setPicked(new Set());
+      setBulkDoctor("");
+    }
+  };
+
+  const togglePick = (id: string) =>
+    setPicked((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+
   const docName = (id: string | null) => doctors.find((d) => d.id === id)?.name ?? "óþekktur";
 
   const shiftsByDate = useMemo(() => {
@@ -174,12 +232,21 @@ export default function RosterPage() {
               {doctors.length === 0 ? (
                 <p className="text-sm text-slate-500">Engir læknar. Gefðu starfsmanni hlutverkið „Læknir“ í <a href="/admin/team" className="text-cyan-700 underline">Starfsfólki</a>.</p>
               ) : (
-                <div className="flex flex-wrap gap-2">
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {doctors.map((d) => (
-                    <div key={d.id} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm">
-                      <input type="color" value={d.color} onChange={(e) => patchDoctor(d.id, { color: e.target.value })} title="Litur" className="h-4 w-4 rounded-full border-0 bg-transparent p-0 cursor-pointer" />
-                      <span className="font-medium text-slate-800">{d.name}</span>
-                      <button onClick={() => copyDoctorLink(d)} title="Afrita persónulegan hlekk læknis" className="text-slate-300 hover:text-cyan-600">{copiedDoc === d.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Link2 className="w-3.5 h-3.5" />}</button>
+                    <div key={d.id} className="space-y-1">
+                      <div className="flex items-center gap-2 px-1">
+                        <input type="color" value={d.color} onChange={(e) => patchDoctor(d.id, { color: e.target.value })} title="Litur" className="h-4 w-4 rounded-full border-0 bg-transparent p-0 cursor-pointer" />
+                        <button onClick={() => copyDoctorLink(d)} title="Afrita persónulegan hlekk læknis" className="text-slate-300 hover:text-cyan-600">{copiedDoc === d.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Link2 className="w-3.5 h-3.5" />}</button>
+                        <span className="text-[11px] text-slate-400">{d.active ? "virkur" : "óvirkur"}</span>
+                      </div>
+                      <DoctorPrefs
+                        doctor={d}
+                        onChange={(patch) => {
+                          setDoctors((prev) => prev.map((x) => (x.id === d.id ? { ...x, ...patch } : x)));
+                          patchDoctor(d.id, patch);
+                        }}
+                      />
                     </div>
                   ))}
                 </div>
@@ -188,20 +255,117 @@ export default function RosterPage() {
             </section>
           )}
 
+          {/* The plan is shown before anything is written — reassigning a
+              month is not a thing to discover after the fact. */}
+          {plan && (
+            <section className="rounded-2xl border border-cyan-200 bg-cyan-50/60 p-4">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="text-sm font-semibold text-slate-900">
+                  {planMode === "all" ? "Tillaga — allar vaktir endurraðaðar" : "Tillaga — óúthlutaðar vaktir"}
+                </h2>
+                <button onClick={() => setPlan(null)} className="text-slate-400 hover:text-slate-700" aria-label="Loka tillögu">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <p className="mt-1 text-sm text-slate-600">
+                {Object.keys(plan.assignments).length} vakt(ir) fá lækni.
+              </p>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {doctors.filter((d) => d.active).map((d) => (
+                  <span key={d.id} className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs">
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: d.color }} aria-hidden />
+                    {d.name}
+                    <strong className="tabular-nums text-slate-900">{plan.totals[d.id] ?? 0}</strong>
+                  </span>
+                ))}
+              </div>
+
+              {plan.unfilled.length > 0 && (
+                <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                  <strong>{plan.unfilled.length} vakt(ir) standa eftir óúthlutaðar.</strong>
+                  <ul className="mt-1 space-y-0.5">
+                    {plan.unfilled.slice(0, 6).map((u) => (
+                      <li key={u.shift_id}>{u.shift_date} — {UNFILLED_REASON_IS[u.reason]}</li>
+                    ))}
+                    {plan.unfilled.length > 6 && <li>… og {plan.unfilled.length - 6} til viðbótar</li>}
+                  </ul>
+                </div>
+              )}
+
+              <div className="mt-3 flex gap-2">
+                <button onClick={applySplit} disabled={busy || !Object.keys(plan.assignments).length}
+                  className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-700 disabled:opacity-40">
+                  Staðfesta
+                </button>
+                <button onClick={() => setPlan(null)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white">
+                  Hætta við
+                </button>
+              </div>
+            </section>
+          )}
+
+          {isAdmin && picked.size > 0 && (
+            <div className="sticky bottom-4 z-20 mx-auto flex w-fit flex-wrap items-center gap-3 rounded-full border border-slate-300 bg-white px-4 py-2.5 shadow-lg">
+              <span className="text-sm font-medium text-slate-800">
+                {picked.size} vakt{picked.size === 1 ? "" : "ir"} valdar
+              </span>
+              <select
+                value={bulkDoctor}
+                onChange={(e) => setBulkDoctor(e.target.value)}
+                className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                aria-label="Velja lækni fyrir valdar vaktir"
+              >
+                <option value="">— velja lækni —</option>
+                {activeDoctors.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+              <button
+                onClick={() => assignPicked(bulkDoctor)}
+                disabled={busy || !bulkDoctor}
+                className="rounded-lg bg-cyan-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-cyan-700 disabled:opacity-40"
+              >
+                Úthluta
+              </button>
+              <button
+                onClick={() => assignPicked("")}
+                disabled={busy}
+                title="Taka lækni af völdum vöktum"
+                className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+              >
+                Hreinsa
+              </button>
+              <button onClick={() => setPicked(new Set())} className="text-slate-400 hover:text-slate-700" aria-label="Hætta við val">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
           {/* Schedule */}
           <section>
             <div className="flex items-center justify-between gap-4 mb-3">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Vaktaplan</h2>
               {isAdmin && (
-                <button onClick={generateMonth} disabled={busy} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">
-                  <CalendarPlus className="w-4 h-4" /> Búa til vaktir mánaðarins
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button onClick={generateMonth} disabled={busy} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+                    <CalendarPlus className="w-4 h-4" /> Búa til vaktir mánaðarins
+                  </button>
+                  <button onClick={() => previewSplit("empty")} disabled={busy} title="Skiptir óúthlutuðum vöktum jafnt, eftir óskum hvers læknis"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-300 px-3 py-1.5 text-sm font-medium text-cyan-700 hover:bg-cyan-50 disabled:opacity-50">
+                    <Scale className="w-4 h-4" /> Skipta jafnt
+                  </button>
+                  <button onClick={() => previewSplit("all")} disabled={busy} title="Endurraðar ÖLLUM vöktum mánaðarins frá grunni"
+                    className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs text-slate-500 hover:bg-slate-50 disabled:opacity-50">
+                    Endurraða öllu
+                  </button>
+                </div>
               )}
             </div>
             <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-200">
+                    {isAdmin && <th className="px-2 py-2 w-8" />}
                     <th className="px-3 py-2 font-medium">Dagur</th>
                     <th className="px-3 py-2 font-medium">Tími</th>
                     <th className="px-3 py-2 font-medium">Læknir</th>
@@ -216,6 +380,7 @@ export default function RosterPage() {
                     if (rows.length === 0) {
                       return (
                         <tr key={date} className="border-b border-slate-100 last:border-0 text-slate-400">
+                          {isAdmin && <td className="px-2 py-2" />}
                           <td className="px-3 py-2 whitespace-nowrap"><span className="text-slate-500">{weekdayShort(date)}</span> {Number(date.slice(-2))}.</td>
                           <td className="px-3 py-2" colSpan={isAdmin ? 5 : 4}>
                             {isAdmin ? <button onClick={() => addShift(date)} className="text-xs text-cyan-700 hover:underline">+ vakt</button> : "engin vakt"}
@@ -224,7 +389,18 @@ export default function RosterPage() {
                       );
                     }
                     return rows.map((s) => (
-                      <tr key={s.id} className="border-b border-slate-100 last:border-0">
+                      <tr key={s.id} className={`border-b border-slate-100 last:border-0 ${picked.has(s.id) ? "bg-cyan-50/70" : ""}`}>
+                        {isAdmin && (
+                          <td className="px-2 py-2">
+                            <button onClick={() => togglePick(s.id)} aria-pressed={picked.has(s.id)}
+                              aria-label={picked.has(s.id) ? "Afvelja vakt" : "Velja vakt"}
+                              className="text-slate-300 hover:text-cyan-600">
+                              {picked.has(s.id)
+                                ? <CheckSquare className="h-4 w-4 text-cyan-600" />
+                                : <Square className="h-4 w-4" />}
+                            </button>
+                          </td>
+                        )}
                         <td className="px-3 py-2 whitespace-nowrap"><span className="text-slate-500">{weekdayShort(date)}</span> {Number(date.slice(-2))}.</td>
                         <td className="px-3 py-2 whitespace-nowrap text-slate-600">{hhmm(s.starts)}–{hhmm(s.ends)}</td>
                         <td className="px-3 py-2">

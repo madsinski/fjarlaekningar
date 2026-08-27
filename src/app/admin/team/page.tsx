@@ -1,6 +1,8 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useState } from "react";
+import RosterPage from "@/app/admin/roster/page";
+import InvoicesPage from "@/app/admin/invoices/page";
 import Link from "next/link";
 import { Mail, Paperclip } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -31,7 +33,16 @@ const ROLE_LABELS: Record<string, string> = {
   psychologist: "Sálfræðingur",
 };
 
+type TeamTab = "starfsfolk" | "vaktir" | "reikningar";
+
+const TEAM_TABS: { key: TeamTab; label: string }[] = [
+  { key: "starfsfolk", label: "Starfsfólk" },
+  { key: "vaktir", label: "Vaktakerfi" },
+  { key: "reikningar", label: "Reikningar" },
+];
+
 export default function TeamPage() {
+  const [tab, setTab] = useState<TeamTab>("starfsfolk");
   const [rows, setRows] = useState<StaffRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -155,12 +166,12 @@ export default function TeamPage() {
   };
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-8">
       <div className="text-[11px] font-semibold uppercase tracking-widest text-cyan-700 mb-1">Stjórnborð</div>
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Starfsfólk</h1>
-          <p className="text-sm text-slate-600 mt-1 mb-6">Fólk með aðgang að stjórnkerfinu.</p>
+          <p className="text-sm text-slate-600 mt-1">Fólk, vaktir og reikningar á einum stað.</p>
         </div>
         <Link
           href="/admin/signatures"
@@ -169,6 +180,29 @@ export default function TeamPage() {
           <Mail className="w-4 h-4" /> Netfangsundirskriftir
         </Link>
       </div>
+
+      <div className="mt-5 mb-6 flex flex-wrap gap-1 border-b border-slate-200">
+        {TEAM_TABS.map((x) => (
+          <button key={x.key} type="button" onClick={() => setTab(x.key)}
+            aria-current={tab === x.key ? "page" : undefined}
+            className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
+              tab === x.key
+                ? "border-cyan-600 text-cyan-700"
+                : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
+            }`}>
+            {x.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Vaktakerfi and Reikningar are whole pages of their own; they bring
+          their own padding, so the horizontal padding here is cancelled rather
+          than doubled. Both keep working as direct URLs too. */}
+      {tab === "vaktir" && <div className="-mx-8 -mt-2"><RosterPage /></div>}
+      {tab === "reikningar" && <div className="-mx-8 -mt-2"><InvoicesPage /></div>}
+
+      {tab === "starfsfolk" && (
+      <div className="max-w-4xl">
 
       {isAdmin && (
         <form onSubmit={invite} className="rounded-xl border border-slate-200 bg-white p-5 mb-8">
@@ -348,6 +382,8 @@ export default function TeamPage() {
           </table>
         )}
       </div>
+      </div>
+      )}
     </div>
   );
 }

@@ -9,6 +9,11 @@ export interface RosterDoctor {
   staff_id: string | null;
   access_token?: string | null;
   created_at?: string;
+  /** Vaktaóskir — sjá roster-preferences-schema.sql. */
+  max_shifts_per_month?: number | null;
+  /** 0=sun … 6=lau. Tómt = allir dagar. */
+  allowed_weekdays?: number[] | null;
+  shift_note?: string;
 }
 
 export type ShiftStatus = "assigned" | "open" | "swap";

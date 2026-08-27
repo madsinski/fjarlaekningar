@@ -13,6 +13,8 @@ export interface NavConfig {
   labels?: Record<string, string>; // href -> custom label
 }
 
+// Vaktakerfi og Reikningar eru ekki hér: þau eru flipar undir Starfsfólki.
+// Slóðirnar /admin/roster og /admin/invoices virka áfram beint.
 export const ADMIN_NAV: AdminNavItem[] = [
   { href: "/admin", label: "Yfirlit" },
   { href: "/admin/account", label: "Mín síða" },
@@ -24,8 +26,6 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: "/admin/research", label: "Rannsóknir" },
   { href: "/admin/clinical", label: "Klínísk reiknirit" },
   { href: "/admin/surveys", label: "Kannanir" },
-  { href: "/admin/roster", label: "Vaktakerfi" },
-  { href: "/admin/invoices", label: "Reikningar", adminOnly: true },
   { href: "/admin/communication", label: "Samskipti" },
   { href: "/admin/outreach", label: "Fréttabréf" },
   { href: "/admin/data-requests", label: "Persónuverndarbeiðnir" },
