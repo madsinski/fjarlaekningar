@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Copy, Check, Download, FileText } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import DoctorShifts from "@/app/vaktir/[token]/DoctorShifts";
+import DoctorBilling from "@/app/vaktir/[token]/DoctorBilling";
 import MonthSchedule from "./MonthSchedule";
 import ContractSign, { type PendingContract } from "./ContractSign";
 import { DESIGN_BUILDERS, DESIGN_LABELS, type DesignKey, type SignatureFields } from "@/lib/signature";
@@ -37,7 +38,17 @@ interface RosterBlock {
   swaps: RosterSwap[];
 }
 
+type TabKey = "vaktir" | "greidslur" | "skjol" | "undirskrift";
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: "vaktir", label: "Vaktir" },
+  { key: "greidslur", label: "Greiðslur og reikningar" },
+  { key: "skjol", label: "Skjöl og samningar" },
+  { key: "undirskrift", label: "Netfangsundirskrift" },
+];
+
 export default function AccountPage() {
+  const [tab, setTab] = useState<TabKey>("vaktir");
   const [me, setMe] = useState<{ name: string; email: string; roles: string[] } | null>(null);
   const [sig, setSig] = useState<SignatureFields | null>(null);
   const [roster, setRoster] = useState<RosterBlock | null>(null);
@@ -105,6 +116,12 @@ export default function AccountPage() {
     }
   };
 
+  // Tabs a person actually has: no shifts, no Vaktir or Greiðslur.
+  const visibleTabs = TABS.filter((x) =>
+    x.key === "vaktir" || x.key === "greidslur" ? !!roster : x.key === "undirskrift" ? !!sig : true,
+  );
+  const active = visibleTabs.some((x) => x.key === tab) ? tab : (visibleTabs[0]?.key ?? "skjol");
+
   if (loading) return <div className="p-8 text-sm text-slate-500">Hleð…</div>;
 
   return (
@@ -115,8 +132,6 @@ export default function AccountPage() {
         <p className="text-sm text-slate-600 mt-1">{me?.name} · {me?.email}</p>
       </div>
 
-      <div className={`grid gap-8 ${roster ? "lg:grid-cols-3" : ""}`}>
-        <div className={`space-y-10 ${roster ? "lg:col-span-2" : ""}`}>
       {/* Contracts awaiting signature */}
       {contracts.length > 0 && (
         <section className="space-y-4">
@@ -126,26 +141,83 @@ export default function AccountPage() {
         </section>
       )}
 
-      {/* Roster (doctors only) */}
-      {roster ? (
-        <section>
-          <DoctorShifts
-            token={roster.token}
-            doctorId={roster.doctorId}
-            doctorName={roster.doctorName}
-            initialShifts={roster.shifts}
-            doctors={roster.doctors}
-            initialSwaps={roster.swaps}
-            settings={roster.settings}
-            calendarUrl={roster.calendarUrl}
-          />
-        </section>
+
+      <div className="mb-6 flex flex-wrap gap-1 border-b border-slate-200">
+        {visibleTabs.map((x) => (
+          <button key={x.key} type="button" onClick={() => setTab(x.key)}
+            aria-current={active === x.key ? "page" : undefined}
+            className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
+              active === x.key
+                ? "border-cyan-600 text-cyan-700"
+                : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
+            }`}>
+            {x.label}
+          </button>
+        ))}
+      </div>
+
+      {active === "vaktir" && (roster ? (
+        <div className="grid gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <DoctorShifts
+              token={roster.token}
+              doctorId={roster.doctorId}
+              doctorName={roster.doctorName}
+              initialShifts={roster.shifts}
+              doctors={roster.doctors}
+              initialSwaps={roster.swaps}
+              settings={roster.settings}
+              calendarUrl={roster.calendarUrl}
+            />
+          </div>
+          <aside className="space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Vaktaplan</h2>
+            <MonthSchedule myDoctorId={roster.doctorId} />
+          </aside>
+        </div>
       ) : (
         <section className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
           Þú ert ekki með vaktir. Vaktir birtast hér ef þú hefur hlutverkið „Læknir“.
         </section>
+      ))}
+
+      {/* The very same panel as the personal /vaktir link, mounted with the
+          same token — one implementation, so the two cannot drift apart. */}
+      {active === "greidslur" && roster && (
+        <div className="-mt-8">
+          <DoctorBilling token={roster.token} doctorName={roster.doctorName} />
+        </div>
       )}
 
+      {active === "skjol" && (
+        <div className="space-y-10">
+      {/* My documents (read-only) */}
+      <section>
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3">Mín skjöl &amp; samningar</h2>
+        {documents.length === 0 ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500">Engin skjöl skráð.</div>
+        ) : (
+          <ul className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
+            {documents.map((d) => (
+              <li key={d.id} className="flex items-center gap-3 p-3 text-sm">
+                <FileText className="w-4 h-4 shrink-0 text-slate-400" />
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium text-slate-900 truncate">{d.title || d.filename}</div>
+                  <div className="text-[11px] text-slate-500">{DOC_KINDS[d.kind] || d.kind}{d.signed_at ? ` · undirritað ${d.signed_at}` : ""}</div>
+                </div>
+                <button onClick={() => downloadDoc(d.id)} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                  <Download className="w-4 h-4" /> Sækja
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+        </div>
+      )}
+
+      {active === "undirskrift" && (
+        <div className="space-y-10">
       {/* Own email signature */}
       {sig && (
         <section>
@@ -186,37 +258,8 @@ export default function AccountPage() {
         </section>
       )}
 
-      {/* My documents (read-only) */}
-      <section>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3">Mín skjöl &amp; samningar</h2>
-        {documents.length === 0 ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500">Engin skjöl skráð.</div>
-        ) : (
-          <ul className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
-            {documents.map((d) => (
-              <li key={d.id} className="flex items-center gap-3 p-3 text-sm">
-                <FileText className="w-4 h-4 shrink-0 text-slate-400" />
-                <div className="min-w-0 flex-1">
-                  <div className="font-medium text-slate-900 truncate">{d.title || d.filename}</div>
-                  <div className="text-[11px] text-slate-500">{DOC_KINDS[d.kind] || d.kind}{d.signed_at ? ` · undirritað ${d.signed_at}` : ""}</div>
-                </div>
-                <button onClick={() => downloadDoc(d.id)} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
-                  <Download className="w-4 h-4" /> Sækja
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
         </div>
-
-        {roster && (
-          <aside className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Vaktaplan</h2>
-            <MonthSchedule myDoctorId={roster.doctorId} />
-          </aside>
-        )}
-      </div>
+      )}
     </div>
   );
 }
