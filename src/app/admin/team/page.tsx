@@ -35,7 +35,6 @@ const ROLE_LABELS: Record<string, string> = {
 
 type TeamTab = "starfsfolk" | "vaktir" | "reikningar" | "undirskriftir";
 
-// Tab order only. The page still opens on Starfsfólk, wherever it sits.
 const TEAM_TABS: { key: TeamTab; label: string }[] = [
   { key: "vaktir", label: "Vaktakerfi" },
   { key: "reikningar", label: "Reikningar" },
@@ -44,7 +43,9 @@ const TEAM_TABS: { key: TeamTab; label: string }[] = [
 ];
 
 export default function TeamPage() {
-  const [tab, setTab] = useState<TeamTab>("starfsfolk");
+  // Opens on Vaktakerfi: the roster is what gets looked at daily, the staff
+  // list only when someone joins or leaves.
+  const [tab, setTab] = useState<TeamTab>("vaktir");
   const [rows, setRows] = useState<StaffRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
