@@ -25,7 +25,12 @@ const STATUS: Record<InvoiceStatus, { label: string; cls: string }> = {
   void: { label: "Ógiltur", cls: "bg-slate-100 text-slate-400 line-through" },
 };
 
-export default function InvoicesPage() {
+/**
+ * `embedded` is set when this renders inside the Starfsfólk tabs: the page then
+ * drops its own heading and outer padding, which the tab already provides.
+ * Visiting /admin/invoices directly still gets the full page.
+ */
+export default function InvoicesPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
@@ -68,12 +73,14 @@ export default function InvoicesPage() {
   const owed = outstanding.reduce((n, r) => n + r.amount, 0);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+    <div className={embedded ? "max-w-5xl" : "mx-auto max-w-5xl px-4 py-8 sm:px-6"}>
       <header className="mb-6">
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900">
-          <Receipt className="h-6 w-6 text-cyan-600" /> Reikningar verktaka
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        {!embedded && (
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900">
+            <Receipt className="h-6 w-6 text-cyan-600" /> Reikningar verktaka
+          </h1>
+        )}
+        <p className={embedded ? "text-sm text-slate-600" : "mt-1 text-sm text-slate-500"}>
           Verktakar gefa út reikninga sjálfir á sínum vaktahlekk. Upphæðin kemur úr fjölda sjúklinga
           sem þeir skráðu á vaktirnar — hún er hvergi slegin inn aftur.
         </p>

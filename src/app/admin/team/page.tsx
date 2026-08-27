@@ -190,11 +190,13 @@ export default function TeamPage() {
         ))}
       </div>
 
-      {/* Vaktakerfi and Reikningar are whole pages of their own; they bring
-          their own padding, so the horizontal padding here is cancelled rather
-          than doubled. Both keep working as direct URLs too. */}
+      {/* Vaktakerfi is a whole page of its own and brings its own padding, so the
+          padding here is cancelled rather than doubled. Reikningar and
+          Netfangsundirskriftir instead render an embedded variant, which lines
+          them up with the Starfsfólk tab rather than sitting in their own
+          differently-inset box. All three keep working as direct URLs. */}
       {tab === "vaktir" && <div className="-mx-8 -mt-2"><RosterPage /></div>}
-      {tab === "reikningar" && <div className="-mx-8 -mt-2"><InvoicesPage /></div>}
+      {tab === "reikningar" && <InvoicesPage embedded />}
       {tab === "undirskriftir" && <SignaturesPage embedded />}
 
       {tab === "starfsfolk" && (
