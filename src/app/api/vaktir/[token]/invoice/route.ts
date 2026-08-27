@@ -115,12 +115,15 @@ export async function GET(req: Request, ctx: { params: Promise<{ token: string }
 
   // An already-issued invoice is a document, not a live query: show what was
   // issued, never the recalculated figure.
+  // A period can now hold several rows: at most one live, plus any voided ones
+  // kept for the record. Only the live one is the invoice.
   const { data: existing } = await supabaseAdmin
     .from("contractor_invoices")
     .select("*")
     .eq("staff_id", c.doctor.staff_id)
     .eq("period_year", year)
     .eq("period_month", month)
+    .neq("status", "void")
     .maybeSingle();
 
   return NextResponse.json({
@@ -134,7 +137,9 @@ export async function GET(req: Request, ctx: { params: Promise<{ token: string }
     missing: missingBillingFields(c.billing),
     party: billingParty(c.billing, c.staffName),
     periods,
-    history: (allInvoices ?? []).filter((i) => i.status !== "void"),
+    // Voided invoices are listed as well: the number was issued, and a series
+    // with a silent hole in it is worse than one with a cancellation in it.
+    history: allInvoices ?? [],
   });
 }
 
@@ -162,7 +167,10 @@ export async function POST(req: Request, ctx: { params: Promise<{ token: string 
     .eq("staff_id", c.doctor.staff_id)
     .eq("period_year", year)
     .eq("period_month", month)
+    .neq("status", "void")
     .maybeSingle();
+  // A voided invoice no longer blocks the month. Voiding is the only way to
+  // correct one, and it used to lock the period out permanently.
   if (existing && existing.status !== "draft") {
     return NextResponse.json(
       { ok: false, error: `Reikningur ${existing.invoice_number ?? ""} hefur þegar verið gefinn út.` },
@@ -196,9 +204,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ token: string 
     vat_status: c.billing.vat_status,
   };
 
-  const { data: saved, error } = await supabaseAdmin
-    .from("contractor_invoices")
-    .upsert({
+  const row = {
       staff_id: c.doctor.staff_id,
       period_year: year,
       period_month: month,
@@ -211,9 +217,14 @@ export async function POST(req: Request, ctx: { params: Promise<{ token: string 
       status: "issued",
       issued_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    }, { onConflict: "staff_id,period_year,period_month" })
-    .select("*")
-    .single();
+  };
+
+  // Update the draft in place if there is one, otherwise a plain insert. Not an
+  // upsert: the conflict target is now a partial index, and a voided row for
+  // this period must be left standing rather than overwritten.
+  const { data: saved, error } = existing
+    ? await supabaseAdmin.from("contractor_invoices").update(row).eq("id", existing.id).select("*").single()
+    : await supabaseAdmin.from("contractor_invoices").insert(row).select("*").single();
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
 
   // Only advance the contractor's sequence once the invoice is safely stored,

@@ -347,10 +347,10 @@ export default function DoctorBilling({ token, doctorName }: { token: string; do
             <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Fyrri reikningar</h3>
             <ul className="mt-2 space-y-1">
               {history.map((h) => (
-                <li key={h.id} className="flex items-center justify-between gap-3 text-sm">
+                <li key={h.id} className={`flex items-center justify-between gap-3 text-sm ${h.status === "void" ? "opacity-50" : ""}`}>
                   <button
                     onClick={() => void loadInvoice(h.period_year, h.period_month)}
-                    className="truncate text-left text-slate-700 hover:text-cyan-700"
+                    className={`truncate text-left hover:text-cyan-700 ${h.status === "void" ? "text-slate-500 line-through" : "text-slate-700"}`}
                   >
                     <span className="font-mono text-xs text-slate-400">{h.invoice_number ?? "—"}</span>{" "}
                     {monthLabelIs(h.period_year, h.period_month)}
@@ -359,7 +359,8 @@ export default function DoctorBilling({ token, doctorName }: { token: string; do
                   <span className="w-20 shrink-0 text-right text-[11px] uppercase tracking-wide text-slate-400">
                     {h.status === "issued" ? "Útgefinn"
                       : h.status === "approved" ? "Samþykktur"
-                      : h.status === "paid" ? "Greiddur" : h.status}
+                      : h.status === "paid" ? "Greiddur"
+                      : h.status === "void" ? "Ógiltur" : h.status}
                   </span>
                 </li>
               ))}
