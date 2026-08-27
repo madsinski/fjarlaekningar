@@ -36,11 +36,14 @@ export async function GET(req: Request, ctx: { params: Promise<{ token: string }
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     `X-WR-CALNAME:Fjarlækningar — vaktir (${esc(doctor.name)})`,
-    // How often a subscribed calendar should come back for changes. Without
-    // these, Google decides on its own and can sit on a stale copy for a day —
-    // long enough for a swapped shift to be missed.
-    "REFRESH-INTERVAL;VALUE=DURATION:PT2H",
-    "X-PUBLISHED-TTL:PT2H",
+    // How often a subscribed calendar should come back for changes.
+    //
+    // Apple and Outlook honour this; Google does not — it refreshes external
+    // feeds on a schedule of its own (hours, sometimes a day) and offers no way
+    // to be pushed. So an hour here is the floor for the clients that listen,
+    // and Google users have to be told that their copy lags.
+    "REFRESH-INTERVAL;VALUE=DURATION:PT1H",
+    "X-PUBLISHED-TTL:PT1H",
     "X-WR-TIMEZONE:Atlantic/Reykjavik",
   ];
   for (const s of shifts ?? []) {

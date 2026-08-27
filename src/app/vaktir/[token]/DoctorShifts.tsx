@@ -144,7 +144,13 @@ export default function DoctorShifts({
         <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
           <CalendarPlus className="w-4 h-4 text-[var(--primary-dark)]" /> Bæta vöktum í dagatal
         </div>
-        <p className="mt-1 text-sm text-slate-600">Gerðu áskrift í Google eða Apple dagatali — vaktirnar uppfærast sjálfkrafa.</p>
+        <p className="mt-1 text-sm text-slate-600">
+          Gerðu áskrift í Google eða Apple dagatali — vaktirnar uppfærast sjálfkrafa.
+        </p>
+        <p className="mt-1 text-[11px] text-slate-400">
+          Dagatalið sækir breytingar sjálft: Apple á klukkustundar fresti (stillanlegt niður í 5 mín),
+          Google á nokkurra klukkustunda fresti. Nýjustu vaktirnar sérðu alltaf hér að neðan.
+        </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <a href={googleUrl} target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-lg bg-[var(--primary-dark)] px-4 py-2 text-sm font-semibold text-white hover:brightness-110">
