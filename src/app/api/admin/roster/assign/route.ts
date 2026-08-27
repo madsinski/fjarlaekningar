@@ -8,6 +8,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { syncDoctors, syncAllConnected } from "@/lib/roster-google-sync";
 import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
 import { planAssignments, type AssignDoctor, type AssignShift } from "@/lib/roster-assign";
+import { monthRange } from "@/lib/roster";
 
 export const runtime = "nodejs";
 
@@ -48,7 +49,8 @@ export async function POST(req: Request) {
   const mode = body.mode === "all" ? "all" : "empty";
   const doctorIds = Array.isArray(body.doctorIds) ? body.doctorIds.map(String) : undefined;
 
-  const [{ data: doctors }, { data: shifts }] = await Promise.all([
+  const { first, next } = monthRange(month);
+  const [{ data: doctors, error: docErr }, { data: shifts, error: shiftErr }] = await Promise.all([
     supabaseAdmin
       .from("roster_doctors")
       .select("id, name, active, max_shifts_per_month, allowed_weekdays")
@@ -56,10 +58,15 @@ export async function POST(req: Request) {
     supabaseAdmin
       .from("roster_shifts")
       .select("id, shift_date, doctor_id")
-      .gte("shift_date", `${month}-01`)
-      .lte("shift_date", `${month}-31`)
+      .gte("shift_date", first)
+      .lt("shift_date", next)
       .order("shift_date"),
   ]);
+  // Say so rather than planning over an empty list. A failed read used to look
+  // exactly like a month with nothing in it: "0 vaktir fá lækni", no error.
+  if (docErr || shiftErr) {
+    return NextResponse.json({ ok: false, error: (docErr ?? shiftErr)!.message }, { status: 500 });
+  }
 
   const plan = planAssignments(
     (shifts ?? []) as AssignShift[],

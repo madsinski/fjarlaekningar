@@ -67,6 +67,20 @@ export function shiftMonth(month: string, delta: number): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
+/**
+ * Half-open date range covering one month: shift_date >= first AND < next.
+ *
+ * Never build the upper bound as `${month}-31`. Postgres rejects "2026-09-31"
+ * outright — it is not a date — so the query errors, and a caller that only
+ * destructures `data` reads that as "no shifts" and carries on with an empty
+ * list. That is how "Skipta jafnt" came to divide 0 shifts in September and how
+ * an invoice for a 30-day month came to derive 0 patients: not a wrong answer
+ * from a working query, but a failed query mistaken for an empty one.
+ */
+export function monthRange(month: string): { first: string; next: string } {
+  return { first: `${month}-01`, next: `${shiftMonth(month, 1)}-01` };
+}
+
 const IS_MONTHS = [
   "janúar", "febrúar", "mars", "apríl", "maí", "júní",
   "júlí", "ágúst", "september", "október", "nóvember", "desember",

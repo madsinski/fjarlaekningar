@@ -8,6 +8,7 @@
 
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { monthRange } from "@/lib/roster";
 import {
   deriveInvoice, invoiceNumber, missingBillingFields, billingParty, payoutAccount,
   EMPTY_BILLING, type StaffBilling, type IssuerSnapshot,
@@ -55,12 +56,16 @@ export async function GET(req: Request, ctx: { params: Promise<{ token: string }
   if (!c) return NextResponse.json({ ok: false, error: "Ógildur hlekkur" }, { status: 404 });
   const { year, month } = period(new URL(req.url));
 
-  const { data: shifts } = await supabaseAdmin
+  const { first, next } = monthRange(`${year}-${String(month).padStart(2, "0")}`);
+  const { data: shifts, error: shiftErr } = await supabaseAdmin
     .from("roster_shifts")
     .select("shift_date, patients_seen")
     .eq("doctor_id", c.doctor.id)
-    .gte("shift_date", `${year}-${String(month).padStart(2, "0")}-01`)
-    .lte("shift_date", `${year}-${String(month).padStart(2, "0")}-31`);
+    .gte("shift_date", first)
+    .lt("shift_date", next);
+  // Never treat a failed read as a month with no patients — that is an invoice
+  // for 0 kr., or a refusal to issue one at all.
+  if (shiftErr) return NextResponse.json({ ok: false, error: shiftErr.message }, { status: 500 });
 
   const derived = deriveInvoice(shifts ?? [], year, month, c.rate);
 
@@ -119,12 +124,16 @@ export async function POST(req: Request, ctx: { params: Promise<{ token: string 
     );
   }
 
-  const { data: shifts } = await supabaseAdmin
+  const { first, next } = monthRange(`${year}-${String(month).padStart(2, "0")}`);
+  const { data: shifts, error: shiftErr } = await supabaseAdmin
     .from("roster_shifts")
     .select("shift_date, patients_seen")
     .eq("doctor_id", c.doctor.id)
-    .gte("shift_date", `${year}-${String(month).padStart(2, "0")}-01`)
-    .lte("shift_date", `${year}-${String(month).padStart(2, "0")}-31`);
+    .gte("shift_date", first)
+    .lt("shift_date", next);
+  // Never treat a failed read as a month with no patients — that is an invoice
+  // for 0 kr., or a refusal to issue one at all.
+  if (shiftErr) return NextResponse.json({ ok: false, error: shiftErr.message }, { status: 500 });
 
   const derived = deriveInvoice(shifts ?? [], year, month, c.rate);
   if (derived.patients_total <= 0) {
