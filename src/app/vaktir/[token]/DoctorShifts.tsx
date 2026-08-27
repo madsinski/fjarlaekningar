@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
-import { CalendarPlus, Copy, Check, ArrowLeftRight } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { CalendarPlus, Copy, Check, ArrowLeftRight, X } from "lucide-react";
 import GoogleCalendarCard from "./GoogleCalendarCard";
 import {
   monthKey,
@@ -47,7 +47,9 @@ export default function DoctorShifts({
   const [shifts, setShifts] = useState<RosterShift[]>(initialShifts);
   const [copied, setCopied] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
-  const [offerShift, setOfferShift] = useState("");
+  // Which shift's popup is open. Held by id, not by the row object, so the
+  // dialog follows the shift if the list re-renders underneath it.
+  const [editId, setEditId] = useState<string | null>(null);
   const [offerTarget, setOfferTarget] = useState(""); // "" = market, else doctor id
   const [busy, setBusy] = useState(false);
 
@@ -72,11 +74,10 @@ export default function DoctorShifts({
     return { days: own.length, patients, pay: patients * settings.per_patient_salary };
   }, [shifts, thisMonth, settings.per_patient_salary]);
 
-  // Swap buckets
-  const outgoing = initialSwaps.filter((s) => s.from_doctor === doctorId);
+  // Swap buckets. Outgoing offers need no bucket: a shift on the market keeps
+  // its row in the doctor's own table, so pendingFor() finds the offer there.
   const incoming = initialSwaps.filter((s) => s.to_doctor === doctorId);
   const market = initialSwaps.filter((s) => !s.to_doctor && s.from_doctor !== doctorId);
-  const offerableShifts = shifts.filter((s) => s.status === "assigned" && s.shift_date.slice(0, 7) >= thisMonth);
 
   const savePatients = async (shift: RosterShift, value: number) => {
     if (value === shift.patients_seen) return;
@@ -92,13 +93,13 @@ export default function DoctorShifts({
     }
   };
 
-  const createOffer = async () => {
-    if (!offerShift || busy) return;
+  const createOffer = async (shiftId: string) => {
+    if (!shiftId || busy) return;
     setBusy(true);
     const res = await fetch(`/api/vaktir/${token}/swaps`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ shift_id: offerShift, to_doctor: offerTarget || null }),
+      body: JSON.stringify({ shift_id: shiftId, to_doctor: offerTarget || null }),
     });
     if (res.ok) location.reload();
     else setBusy(false);
@@ -115,6 +116,13 @@ export default function DoctorShifts({
     if (res.ok) location.reload();
     else setBusy(false);
   };
+
+  useEffect(() => {
+    if (!editId) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setEditId(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [editId]);
 
   const copyUrl = async () => {
     try {
@@ -191,6 +199,11 @@ export default function DoctorShifts({
 
   // Wrapped so the months keep their own spacing wherever the block is placed.
   // Wrapped so the months keep their own spacing wherever the block is placed.
+  /** A live offer on this shift, if the doctor has already put one out. */
+  const pendingFor = (shiftId: string) =>
+    initialSwaps.find((sw) => sw.shift_id === shiftId && sw.status === "pending") ?? null;
+
+  // Wrapped so the months keep their own spacing wherever the block is placed.
   const monthsBlock = (
     <div className="space-y-6">
       {byMonth.length === 0 ? (
@@ -207,6 +220,7 @@ export default function DoctorShifts({
                     <th className="px-4 py-2 font-medium">Tími</th>
                     <th className="px-4 py-2 font-medium w-28">Sjúklingar</th>
                     <th className="px-4 py-2 font-medium">Staða</th>
+                    <th className="px-4 py-2" />
                   </tr>
                 </thead>
                 <tbody>
@@ -223,6 +237,13 @@ export default function DoctorShifts({
                       <td className="px-4 py-2 text-xs">
                         {s.status === "open" ? <span className="text-amber-600">Á markaði</span> : s.status === "swap" ? <span className="text-purple-600">Í boði</span> : <span className="text-slate-400">Úthlutað</span>}
                       </td>
+                      {/* Swap controls live on the shift they act on, rather than in
+                          a separate panel with its own "which shift?" dropdown. */}
+                      <td className="px-4 py-2 text-right">
+                        <button onClick={() => setEditId(s.id)} className={btnGhost} aria-label={`Breyta vakt ${s.shift_date}`}>
+                          Breyta
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -234,69 +255,91 @@ export default function DoctorShifts({
     </div>
   );
 
-  const swapsBlock = (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-5">
+  // Offers from other doctors. These are shifts the doctor does NOT hold, so
+  // they have no row of their own to sit in and keep a list of their own.
+  const marketBlock = (incoming.length > 0 || market.length > 0) ? (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3">
       <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-        <ArrowLeftRight className="w-4 h-4 text-[var(--primary-dark)]" /> Vaktaskipti og markaður
+        <ArrowLeftRight className="w-4 h-4 text-[var(--primary-dark)]" /> Í boði fyrir þig
       </div>
+      <ul className="space-y-1.5">
+        {incoming.map((sw) => (
+          <li key={sw.id} className="flex items-center justify-between gap-3 text-sm">
+            <span className="text-slate-700">{fmtSwap(sw.shift)} · frá {docName(sw.from_doctor)}</span>
+            <span className="flex gap-2">
+              <button onClick={() => swapAction(sw.id, "accept")} disabled={busy} className={btnPrimary}>Taka</button>
+              <button onClick={() => swapAction(sw.id, "decline")} disabled={busy} className={btnGhost}>Hafna</button>
+            </span>
+          </li>
+        ))}
+        {market.map((sw) => (
+          <li key={sw.id} className="flex items-center justify-between gap-3 text-sm">
+            <span className="text-slate-700">{fmtSwap(sw.shift)} · á markaði (frá {docName(sw.from_doctor)})</span>
+            <button onClick={() => swapAction(sw.id, "accept")} disabled={busy} className={btnPrimary}>Taka vakt</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  ) : null;
 
-      {/* Offer one of my shifts */}
-      <div className="flex flex-wrap items-end gap-2">
-        <label className="text-xs text-slate-500">Bjóða vakt
-          <select value={offerShift} onChange={(e) => setOfferShift(e.target.value)} className="mt-1 block w-56 px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white">
-            <option value="">— veldu vakt —</option>
-            {offerableShifts.map((s) => <option key={s.id} value={s.id}>{weekdayShort(s.shift_date)} {Number(s.shift_date.slice(-2))}. {monthLabel(s.shift_date.slice(0, 7))}</option>)}
-          </select>
-        </label>
-        <label className="text-xs text-slate-500">Til
-          <select value={offerTarget} onChange={(e) => setOfferTarget(e.target.value)} className="mt-1 block w-44 px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white">
-            <option value="">Á markað (allir)</option>
-            {doctors.filter((d) => d.id !== doctorId).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-          </select>
-        </label>
-        <button onClick={createOffer} disabled={!offerShift || busy} className={btnPrimary}>Bjóða</button>
+  const editShift = shifts.find((s) => s.id === editId) ?? null;
+  const editOffer = editShift ? pendingFor(editShift.id) : null;
+
+  const editModal = editShift && (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Breyta vakt"
+      onClick={() => setEditId(null)}
+      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 sm:items-center"
+    >
+      {/* Clicks inside must not reach the backdrop's close handler. */}
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-sm font-semibold capitalize text-slate-900">
+              {weekdayShort(editShift.shift_date)} {Number(editShift.shift_date.slice(-2))}. {monthLabel(editShift.shift_date.slice(0, 7))}
+            </div>
+            <div className="text-xs text-slate-500">{hhmm(editShift.starts)}–{hhmm(editShift.ends)}</div>
+          </div>
+          <button onClick={() => setEditId(null)} aria-label="Loka" className="text-slate-400 hover:text-slate-700">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {editOffer ? (
+          <div className="mt-4 space-y-3">
+            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
+              {editOffer.to_doctor
+                ? <>Vaktin er í boði til <span className="font-medium">{docName(editOffer.to_doctor)}</span>.</>
+                : "Vaktin er á markaði — hvaða læknir sem er getur tekið hana."}
+            </p>
+            <button onClick={() => swapAction(editOffer.id, "cancel")} disabled={busy} className={btnGhost}>
+              Afturkalla boð
+            </button>
+          </div>
+        ) : (
+          <div className="mt-4 space-y-3">
+            <label className="block text-xs text-slate-500">
+              Bjóða vaktina
+              <select
+                value={offerTarget}
+                onChange={(e) => setOfferTarget(e.target.value)}
+                className="mt-1 block w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm"
+              >
+                <option value="">Á markað (allir læknar)</option>
+                {doctors.filter((d) => d.id !== doctorId).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+            </label>
+            <button onClick={() => createOffer(editShift.id)} disabled={busy} className={btnPrimary}>
+              Bjóða vakt
+            </button>
+            <p className="text-[11px] text-slate-400">
+              Vaktin er áfram þín þar til annar læknir tekur hana.
+            </p>
+          </div>
+        )}
       </div>
-
-      {/* My outgoing offers */}
-      {outgoing.length > 0 && (
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">Mín boð</div>
-          <ul className="space-y-1.5">
-            {outgoing.map((sw) => (
-              <li key={sw.id} className="flex items-center justify-between gap-3 text-sm">
-                <span className="text-slate-700">{fmtSwap(sw.shift)} · {sw.to_doctor ? `til ${docName(sw.to_doctor)}` : "á markaði"}</span>
-                <button onClick={() => swapAction(sw.id, "cancel")} disabled={busy} className={btnGhost}>Afturkalla</button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Requests to me + market */}
-      {(incoming.length > 0 || market.length > 0) ? (
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">Í boði fyrir þig</div>
-          <ul className="space-y-1.5">
-            {incoming.map((sw) => (
-              <li key={sw.id} className="flex items-center justify-between gap-3 text-sm">
-                <span className="text-slate-700">{fmtSwap(sw.shift)} · frá {docName(sw.from_doctor)}</span>
-                <span className="flex gap-2">
-                  <button onClick={() => swapAction(sw.id, "accept")} disabled={busy} className={btnPrimary}>Taka</button>
-                  <button onClick={() => swapAction(sw.id, "decline")} disabled={busy} className={btnGhost}>Hafna</button>
-                </span>
-              </li>
-            ))}
-            {market.map((sw) => (
-              <li key={sw.id} className="flex items-center justify-between gap-3 text-sm">
-                <span className="text-slate-700">{fmtSwap(sw.shift)} · á markaði (frá {docName(sw.from_doctor)})</span>
-                <button onClick={() => swapAction(sw.id, "accept")} disabled={busy} className={btnPrimary}>Taka vakt</button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <p className="text-sm text-slate-400">Engar vaktir í boði fyrir þig núna.</p>
-      )}
     </div>
   );
 
@@ -304,37 +347,43 @@ export default function DoctorShifts({
     <p className="text-center text-xs text-slate-400">Skráðu fjölda sjúklinga eftir hverja vakt. Stjórnandi sér yfirlitið.</p>
   );
 
-  // Two columns only where there is room for them. Swaps sit top-right, since
-  // that is the part with something to act on; the month list is a reference
-  // you scan, so it keeps the wider left column.
+  // Two columns only where there is room. The header, totals and calendar boxes
+  // run full width; the split starts at the month list so Vaktaplan sits level
+  // with it — the two are read against each other, so they should line up.
   if (layout === "split") {
     return (
-      <div className="grid gap-8 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+      <>
+        <div className="space-y-6">
           {header}
           {stats}
           {googleCard}
           {calendarBox}
-          {monthsBlock}
+          <div className="grid gap-8 lg:grid-cols-3">
+            <div className="space-y-6 lg:col-span-2">
+              {monthsBlock}
+              {marketBlock}
+            </div>
+            <aside className="space-y-6">{sidebar}</aside>
+          </div>
           {footNote}
         </div>
-        <aside className="space-y-6">
-          {swapsBlock}
-          {sidebar}
-        </aside>
-      </div>
+        {editModal}
+      </>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {header}
-      {stats}
-      {googleCard}
-      {calendarBox}
-      {monthsBlock}
-      {swapsBlock}
-      {footNote}
-    </div>
+    <>
+      <div className="space-y-6">
+        {header}
+        {stats}
+        {googleCard}
+        {calendarBox}
+        {monthsBlock}
+        {marketBlock}
+        {footNote}
+      </div>
+      {editModal}
+    </>
   );
 }
