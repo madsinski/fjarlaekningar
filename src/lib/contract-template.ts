@@ -17,10 +17,10 @@ Verktaki sinnir mati og meðferð á einföldum og afmörkuðum erindum í gegnu
 Verktaki starfar sem sjálfstæður verktaki og ber ábyrgð á eigin sköttum og skyldum. Verktaki skal hafa gilt lækningaleyfi og starfa eftir lögum nr. 34/2012 og leiðbeiningum Landlæknis. Verktaki ber faglega ábyrgð á eigin ákvörðunum um greiningu og meðferð.
 
 4. Þóknun og uppgjör
-Fyrir hvert leyst erindi (sjúkling) greiðir Fjarlækningar Verktaka þóknun að fjárhæð [þóknun] kr. Uppgjör fer fram mánaðarlega á grundvelli skráðs fjölda sjúklinga á vöktum Verktaka, sem gefur út reikning fyrir þóknun.
+Fyrir hvert leyst erindi (sjúkling) greiðir Fjarlækningar Verktaka þóknun samkvæmt gildandi taxta félagsins á hverjum tíma. Taxtinn er birtur Verktaka í vaktakerfi Fjarlækninga og er [þóknun] kr. við undirritun samnings þessa. Á uppbyggingarskeiði þjónustunnar er Fjarlækningum heimilt að breyta taxtanum með eins mánaðar fyrirvara, tilkynntum Verktaka með sannanlegum hætti; taki Verktaki ekki breytingunni er honum heimilt að segja samningnum upp samkvæmt 8. gr. Þegar unnar vaktir gerast ávallt upp á þeim taxta sem í gildi var þegar vaktin var unnin. Uppgjör fer fram mánaðarlega á grundvelli skráðs fjölda sjúklinga á vöktum Verktaka, sem gefur út reikning fyrir þóknun.
 
 5. Vaktir
-Vaktir eru skipulagðar í vaktakerfi Fjarlækninga. Verktaki getur boðið vaktir til skipta eða á vaktamarkað og skráir fjölda sjúklinga eftir hverja vakt.
+Vaktir eru skipulagðar í vaktakerfi Fjarlækninga. Verktaki ber ábyrgð á þeim vöktum sem honum hafa verið úthlutaðar og skal sinna þeim á umsömdum tíma. Verktaka er heimilt að bjóða vaktir til skipta eða á vaktamarkað, en vaktin telst áfram á ábyrgð hans þar til annar læknir hefur tekið hana að sér í vaktakerfinu. Forföll skal tilkynna án tafar. Verktaki skráir fjölda sjúklinga eftir hverja vakt.
 
 6. Þagnarskylda og persónuvernd
 Verktaki er bundinn þagnarskyldu og fer að lögum nr. 90/2018 og reglugerð (ESB) 2016/679 (GDPR). Persónuupplýsingar eru einungis unnar innan öruggra kerfa félagsins.
@@ -67,6 +67,11 @@ export function fillContract(opts: {
   if (companyKennitala) {
     body = body.replace("[kennitala Fjarlækninga]", formatKennitala(companyKennitala));
   }
+  // The rate is named as the one in force at signing, not as the agreed price
+  // for the life of the contract — clause 4 carries the mechanism for changing
+  // it. A price term still has to be determinable to bind, so "whatever we
+  // decide later" is not an option; "the published rate, changeable on a
+  // month's notice, and you may leave if you dislike it" is.
   if (rate && rate > 0) {
     body = body.replace("[þóknun]", new Intl.NumberFormat("is-IS").format(rate));
   }
