@@ -338,7 +338,7 @@ export default function TeamPage() {
                 {isAdmin && openDocs === r.id && (
                   <tr className="border-b border-slate-100 last:border-0">
                     <td colSpan={3} className="px-4 pb-4">
-                      <StaffDocuments staffId={r.id} />
+                      <StaffDocuments staffId={r.id} staffName={r.name} />
                     </td>
                   </tr>
                 )}

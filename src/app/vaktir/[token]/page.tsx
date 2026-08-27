@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { PUBLIC_SITE_URL } from "@/lib/public-site";
 import { monthKey, type RosterShift, type RosterSettings, type RosterDoctor, type RosterSwap } from "@/lib/roster";
 import DoctorShifts from "./DoctorShifts";
+import DoctorBilling from "./DoctorBilling";
 
 // Personal, token-gated doctor page (no login). Chrome-free, proxy-bypassed.
 export const dynamic = "force-dynamic";
@@ -72,6 +73,7 @@ export default async function DoctorRosterPage({ params }: { params: Promise<{ t
           settings={(settings ?? { per_patient_salary: 3000, currency: "kr." }) as RosterSettings}
           calendarUrl={`${PUBLIC_SITE_URL}/api/vaktir/${token}/calendar.ics`}
         />
+        <DoctorBilling token={token} doctorName={doctor.name} />
       </div>
     </div>
   );

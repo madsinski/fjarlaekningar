@@ -6,6 +6,17 @@ import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
+export async function GET(req: Request) {
+  const caller = await getCallerStaff(req);
+  if (!isAdmin(caller)) return NextResponse.json({ ok: false, error: "Admin role required" }, { status: 403 });
+  const { data } = await supabaseAdmin
+    .from("roster_settings")
+    .select("per_patient_salary, currency")
+    .eq("id", 1)
+    .maybeSingle();
+  return NextResponse.json({ ok: true, settings: data ?? { per_patient_salary: 0, currency: "kr." } });
+}
+
 export async function PATCH(req: Request) {
   const caller = await getCallerStaff(req);
   if (!isAdmin(caller)) {

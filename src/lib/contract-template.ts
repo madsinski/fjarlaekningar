@@ -1,3 +1,5 @@
+import { billingParty, formatKennitala, type StaffBilling } from "./billing";
+
 // Default contract text pre-filled in the "Rafræn undirritun" composer. Draft —
 // review with a lawyer before sending. Fill the [...] placeholders per person.
 
@@ -6,7 +8,7 @@ export const DEFAULT_CONTRACT_TITLE = "Verktakasamningur um fjarlæknaþjónustu
 export const DEFAULT_CONTRACT_BODY = `VERKTAKASAMNINGUR UM FJARLÆKNAÞJÓNUSTU
 
 1. Samningsaðilar
-Annars vegar Fjarlækningar ehf., kt. [kennitala], Langholtsvegi 111, 104 Reykjavík ("Fjarlækningar"), og hins vegar [Nafn læknis], kt. [kennitala] ("Verktaki").
+Annars vegar Fjarlækningar ehf., kt. [kennitala Fjarlækninga], Langholtsvegi 111, 104 Reykjavík ("Fjarlækningar"), og hins vegar [Nafn verktaka], kt. [kennitala verktaka] ("Verktaki").
 
 2. Umfang þjónustu
 Verktaki sinnir mati og meðferð á einföldum og afmörkuðum erindum í gegnum örugga sjúklingagátt Fjarlækninga, á opnunartíma alla daga milli kl. 10 og 22 samkvæmt vaktaskipulagi. Alvarlegri erindum skal vísað í réttan farveg innan heilbrigðiskerfisins.
@@ -31,3 +33,54 @@ Samningurinn er ótímabundinn með eins mánaðar gagnkvæmum uppsagnarfresti. 
 
 9. Lög og varnarþing
 Um samninginn gilda íslensk lög og ágreiningur rekst fyrir Héraðsdómi Reykjavíkur.`;
+
+
+// ── Fylling úr greiðsluupplýsingum ──────────────────────────────────────────
+
+
+/**
+ * Fills the draft from what the contractor entered about themselves.
+ *
+ * Two versions of clause 1, because the slf decides who the counterparty is:
+ * when payment goes to a company, that company is the Verktaki and carries the
+ * kennitala. Clause 3 then gains a sentence keeping professional responsibility
+ * with the doctor personally — the company can take the payment, it cannot take
+ * the medical responsibility, and the contract must not blur the two.
+ */
+export function fillContract(opts: {
+  personName: string;
+  billing: Pick<StaffBilling, "invoice_as" | "slf_name" | "slf_kennitala" | "kennitala">;
+  rate?: number | null;
+  companyKennitala?: string | null;
+}): string {
+  const { personName, billing, rate, companyKennitala } = opts;
+  const party = billingParty(billing, personName);
+  const isSlf = billing.invoice_as === "slf" && !!(billing.slf_name || billing.slf_kennitala);
+
+  let body = DEFAULT_CONTRACT_BODY;
+
+  body = body.replace("[Nafn verktaka]", party.name || "[Nafn verktaka]");
+  body = body.replace(
+    "[kennitala verktaka]",
+    party.kennitala ? formatKennitala(party.kennitala) : "[kennitala verktaka]",
+  );
+  if (companyKennitala) {
+    body = body.replace("[kennitala Fjarlækninga]", formatKennitala(companyKennitala));
+  }
+  if (rate && rate > 0) {
+    body = body.replace("[þóknun]", new Intl.NumberFormat("is-IS").format(rate));
+  }
+
+  if (isSlf) {
+    body = body.replace(
+      "Verktaki starfar sem sjálfstæður verktaki og ber ábyrgð á eigin sköttum og skyldum.",
+      `Verktaki starfar sem sjálfstæður verktaki og ber ábyrgð á eigin sköttum og skyldum. ` +
+      `Þjónustan er innt af hendi af ${personName}${
+        billing.kennitala ? `, kt. ${formatKennitala(billing.kennitala)}` : ""
+      }, sem ber persónulega faglega ábyrgð á eigin ákvörðunum um greiningu og meðferð óháð því ` +
+      `hver tekur við greiðslu samkvæmt samningi þessum.`,
+    );
+  }
+
+  return body;
+}

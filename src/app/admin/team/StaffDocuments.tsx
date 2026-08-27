@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Upload, Download, Trash2, FileText } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { DEFAULT_CONTRACT_TITLE, DEFAULT_CONTRACT_BODY } from "@/lib/contract-template";
+import { DEFAULT_CONTRACT_TITLE, DEFAULT_CONTRACT_BODY, fillContract } from "@/lib/contract-template";
+import { EMPTY_BILLING, missingBillingFields, formatKennitala, formatBankAccount, type StaffBilling } from "@/lib/billing";
 
 interface Doc {
   id: string;
@@ -38,7 +39,7 @@ interface Contract {
   created_at: string;
 }
 
-export default function StaffDocuments({ staffId }: { staffId: string }) {
+export default function StaffDocuments({ staffId, staffName }: { staffId: string; staffName?: string }) {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +47,8 @@ export default function StaffDocuments({ staffId }: { staffId: string }) {
   const [err, setErr] = useState<string | null>(null);
   const [cTitle, setCTitle] = useState(DEFAULT_CONTRACT_TITLE);
   const [cBody, setCBody] = useState(DEFAULT_CONTRACT_BODY);
+  const [billing, setBilling] = useState<StaffBilling | null>(null);
+  const [billingMissing, setBillingMissing] = useState<string[]>([]);
   const [cBusy, setCBusy] = useState(false);
   const [kind, setKind] = useState("employment_contract");
   const [title, setTitle] = useState("");
@@ -89,7 +92,7 @@ export default function StaffDocuments({ staffId }: { staffId: string }) {
     }
     setContracts((p) => [j.contract, ...p]);
     setCTitle(DEFAULT_CONTRACT_TITLE);
-    setCBody(DEFAULT_CONTRACT_BODY);
+    setCBody(billing ? fillContract({ personName: staffName ?? "", billing }) : DEFAULT_CONTRACT_BODY);
   };
 
   const contractAction = async (contractId: string, action: "void" | "resend") => {
@@ -106,6 +109,31 @@ export default function StaffDocuments({ staffId }: { staffId: string }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load]);
+
+  // The contract draft is seeded from what the contractor entered about
+  // themselves, so nobody retypes a kennitala that is already on file — and so
+  // an slf gets the version of clause 1 that names the company.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const [bRes, sRes] = await Promise.all([
+        fetch(`/api/admin/staff/${staffId}/billing`, { headers: await authHeaders() }),
+        fetch(`/api/admin/roster/settings`, { headers: await authHeaders() }).catch(() => null),
+      ]);
+      const bJson = await bRes.json().catch(() => ({}));
+      if (cancelled || !bJson.ok) return;
+      const b: StaffBilling = bJson.billing ?? { staff_id: staffId, ...EMPTY_BILLING };
+      let rate: number | null = null;
+      if (sRes && sRes.ok) {
+        const sJson = await sRes.json().catch(() => ({}));
+        rate = sJson?.settings?.per_patient_salary ?? null;
+      }
+      setBilling(b);
+      setBillingMissing(missingBillingFields(b));
+      setCBody(fillContract({ personName: staffName ?? "", billing: b, rate }));
+    })();
+    return () => { cancelled = true; };
+  }, [staffId, staffName]);
 
   const upload = async () => {
     const file = fileRef.current?.files?.[0];
@@ -144,10 +172,90 @@ export default function StaffDocuments({ staffId }: { staffId: string }) {
     await fetch(`/api/admin/staff/${staffId}/documents/${id}`, { method: "DELETE", headers: await authHeaders() });
   };
 
+  const saveBilling = async () => {
+    if (!billing) return;
+    setBusy(true);
+    setErr(null);
+    const res = await fetch(`/api/admin/staff/${staffId}/billing`, {
+      method: "PUT",
+      headers: { ...(await authHeaders()), "Content-Type": "application/json" },
+      body: JSON.stringify(billing),
+    });
+    const j = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (!j.ok) { setErr(j.error || "Mistókst"); return; }
+    setBilling(j.billing);
+    setBillingMissing(missingBillingFields(j.billing));
+    // Re-seed the draft so the contract follows the details just corrected.
+    setCBody(fillContract({ personName: staffName ?? "", billing: j.billing }));
+  };
+
   const inputCls = "px-2 py-1.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-cyan-200";
 
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
+      {/* Greiðsluupplýsingar. The contractor normally fills these in on their
+          own /vaktir link; this is the same record, for corrections. */}
+      {billing && (
+        <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-2">
+          <div className="flex items-baseline justify-between gap-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Greiðsluupplýsingar</h4>
+            {billingMissing.length === 0
+              ? <span className="text-[11px] text-emerald-600">Fullnægjandi</span>
+              : <span className="text-[11px] text-amber-700">Vantar: {billingMissing.join(", ")}</span>}
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="block">
+              <span className="text-[11px] text-slate-500">Kennitala</span>
+              <input value={formatKennitala(billing.kennitala)} placeholder="000000-0000"
+                onChange={(e) => setBilling({ ...billing, kennitala: e.target.value })}
+                className={`${inputCls} w-full`} />
+            </label>
+            <label className="block">
+              <span className="text-[11px] text-slate-500">Reikningsnúmer</span>
+              <input value={formatBankAccount(billing.bank_account)} placeholder="0000-00-000000"
+                onChange={(e) => setBilling({ ...billing, bank_account: e.target.value })}
+                className={`${inputCls} w-full`} />
+            </label>
+            <label className="block">
+              <span className="text-[11px] text-slate-500">Greitt til</span>
+              <select value={billing.invoice_as}
+                onChange={(e) => setBilling({ ...billing, invoice_as: e.target.value as "person" | "slf" })}
+                className={`${inputCls} w-full`}>
+                <option value="person">Einstaklings</option>
+                <option value="slf">Slf-félags</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-[11px] text-slate-500">Sími</span>
+              <input value={billing.phone ?? ""}
+                onChange={(e) => setBilling({ ...billing, phone: e.target.value })}
+                className={`${inputCls} w-full`} />
+            </label>
+            {billing.invoice_as === "slf" && (
+              <>
+                <label className="block">
+                  <span className="text-[11px] text-slate-500">Nafn félags</span>
+                  <input value={billing.slf_name ?? ""}
+                    onChange={(e) => setBilling({ ...billing, slf_name: e.target.value })}
+                    className={`${inputCls} w-full`} />
+                </label>
+                <label className="block">
+                  <span className="text-[11px] text-slate-500">Kennitala félags</span>
+                  <input value={formatKennitala(billing.slf_kennitala)} placeholder="000000-0000"
+                    onChange={(e) => setBilling({ ...billing, slf_kennitala: e.target.value })}
+                    className={`${inputCls} w-full`} />
+                </label>
+              </>
+            )}
+          </div>
+          <button onClick={saveBilling} disabled={busy}
+            className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-40">
+            Vista greiðsluupplýsingar
+          </button>
+        </div>
+      )}
+
       {loading ? (
         <p className="text-sm text-slate-400">Hleð…</p>
       ) : docs.length === 0 ? (
@@ -202,6 +310,12 @@ export default function StaffDocuments({ staffId }: { staffId: string }) {
           </ul>
         )}
         <input value={cTitle} onChange={(e) => setCTitle(e.target.value)} placeholder="Heiti samnings" className={`${inputCls} w-full`} />
+        {billingMissing.length > 0 && (
+          <p className="mb-2 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            Verktakinn á eftir að fylla út: {billingMissing.join(", ")}. Samningsdrögin halda
+            hornklofum þar til það er komið.
+          </p>
+        )}
         <textarea value={cBody} onChange={(e) => setCBody(e.target.value)} rows={5} placeholder="Samningstexti — birtist starfsmanni á Mín síðu til rafrænnar undirritunar." className={`${inputCls} w-full`} />
         <button onClick={createContract} disabled={cBusy || cBody.trim().length < 20} className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-600 px-3 py-1.5 text-sm font-medium text-cyan-700 hover:bg-cyan-50 disabled:opacity-50">
           {cBusy ? "Sendi…" : "Senda til undirritunar"}

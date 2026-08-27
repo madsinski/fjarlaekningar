@@ -25,6 +25,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: "/admin/clinical", label: "Klínísk reiknirit" },
   { href: "/admin/surveys", label: "Kannanir" },
   { href: "/admin/roster", label: "Vaktakerfi" },
+  { href: "/admin/invoices", label: "Reikningar", adminOnly: true },
   { href: "/admin/communication", label: "Samskipti" },
   { href: "/admin/outreach", label: "Fréttabréf" },
   { href: "/admin/data-requests", label: "Persónuverndarbeiðnir" },
