@@ -122,9 +122,16 @@ export function normalizeKennitala(v: string): string {
   return v.replace(/\D/g, "").slice(0, 10);
 }
 
+/**
+ * Kennitala as 000000-0000, formatted AS IT IS TYPED.
+ *
+ * The earlier version only added the hyphen at exactly ten digits, so the field
+ * showed a bare run of numbers the whole time you were entering it and then
+ * snapped — and a value that was never quite ten digits never formatted at all.
+ */
 export function formatKennitala(v?: string | null): string {
-  const d = (v ?? "").replace(/\D/g, "");
-  return d.length === 10 ? `${d.slice(0, 6)}-${d.slice(6)}` : (v ?? "");
+  const d = (v ?? "").replace(/\D/g, "").slice(0, 10);
+  return d.length > 6 ? `${d.slice(0, 6)}-${d.slice(6)}` : d;
 }
 
 /**
@@ -142,10 +149,20 @@ export function isPlausibleKennitala(v?: string | null): boolean {
   return check < 10 && check === Number(d[8]);
 }
 
-/** Icelandic bank account: 4-2-6 (banki-höfuðbók-reikningsnúmer). */
+/**
+ * Icelandic bank account as 0000-00-000000 (banki-höfuðbók-reikningsnúmer),
+ * formatted as it is typed.
+ *
+ * The account part is written with or without its leading zeros depending on
+ * who is writing it, so this groups whatever digits are there rather than
+ * waiting for a full twelve — otherwise a perfectly normal 0133-26-1234 would
+ * never get a hyphen at all.
+ */
 export function formatBankAccount(v?: string | null): string {
-  const d = (v ?? "").replace(/\D/g, "");
-  return d.length === 12 ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}` : (v ?? "");
+  const d = (v ?? "").replace(/\D/g, "").slice(0, 12);
+  if (d.length <= 4) return d;
+  if (d.length <= 6) return `${d.slice(0, 4)}-${d.slice(4)}`;
+  return `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}`;
 }
 
 /** Sum the patients the doctor recorded on their own shifts in one month. */
