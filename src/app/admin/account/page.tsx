@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Copy, Check, Download, FileText } from "lucide-react";
+import { Copy, Check, Download, FileText, LayoutGrid, ExternalLink } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import DoctorShifts from "@/app/vaktir/[token]/DoctorShifts";
 import DoctorBilling from "@/app/vaktir/[token]/DoctorBilling";
@@ -126,10 +126,25 @@ export default function AccountPage() {
 
   return (
     <div className="p-6 lg:p-8 max-w-6xl">
-      <div className="mb-8">
-        <div className="text-[11px] font-semibold uppercase tracking-widest text-cyan-700 mb-1">Stjórnborð</div>
-        <h1 className="text-2xl font-bold text-slate-900">Mín síða</h1>
-        <p className="text-sm text-slate-600 mt-1">{me?.name} · {me?.email}</p>
+      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-widest text-cyan-700 mb-1">Stjórnborð</div>
+          <h1 className="text-2xl font-bold text-slate-900">Mín síða</h1>
+          <p className="text-sm text-slate-600 mt-1">{me?.name} · {me?.email}</p>
+        </div>
+        {/* Scoped to the work domain (/a/<lén>) rather than plain mail.google.com:
+            several of us are signed into a personal Google account at the same
+            time, and an unscoped link opens whichever one Google saw last. */}
+        <a
+          href={`https://mail.google.com/a/${(me?.email?.split("@")[1] || "fjarlaekningar.is")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        >
+          <LayoutGrid className="h-4 w-4 text-cyan-600" />
+          Google Workspace
+          <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+        </a>
       </div>
 
       {/* Contracts awaiting signature */}
