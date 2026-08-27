@@ -148,7 +148,12 @@ const DESIGN_BUILDERS: Record<DesignKey, (s: SignatureFields) => string> = {
   card: buildCard,
 };
 
-export default function SignaturesPage() {
+/**
+ * `embedded` is set when this renders inside the Starfsfólk tabs: the page then
+ * drops its own back link, eyebrow and outer padding, which the tab already
+ * provides. Visiting /admin/signatures directly still gets the full page.
+ */
+export default function SignaturesPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [sigs, setSigs] = useState<SignatureFields[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -261,10 +266,12 @@ export default function SignaturesPage() {
   }
   if (loadError) {
     return (
-      <div className="p-8 max-w-2xl">
-        <Link href="/admin/team" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-4">
-          <ArrowLeft className="w-4 h-4" /> Starfsfólk
-        </Link>
+      <div className={embedded ? "max-w-2xl" : "p-8 max-w-2xl"}>
+        {!embedded && (
+          <Link href="/admin/team" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-4">
+            <ArrowLeft className="w-4 h-4" /> Starfsfólk
+          </Link>
+        )}
         <h1 className="text-2xl font-bold text-slate-900 mb-2">Netfangsundirskriftir</h1>
         <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-3">
           Gat ekki hlaðið undirskriftum: {loadError}. Migration <code className="bg-white px-1.5 py-0.5 rounded border border-amber-200">signatures-schema.sql</code> hefur mögulega ekki verið keyrt enn.
@@ -274,14 +281,16 @@ export default function SignaturesPage() {
   }
 
   return (
-    <div className="p-8 max-w-5xl">
-      <Link href="/admin/team" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-4">
-        <ArrowLeft className="w-4 h-4" /> Starfsfólk
-      </Link>
+    <div className={embedded ? "max-w-5xl" : "p-8 max-w-5xl"}>
+      {!embedded && (
+        <Link href="/admin/team" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-4">
+          <ArrowLeft className="w-4 h-4" /> Starfsfólk
+        </Link>
+      )}
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-widest text-cyan-700 mb-1">Stjórnborð</div>
-          <h1 className="text-2xl font-bold text-slate-900 mb-1">Netfangsundirskriftir</h1>
+          {!embedded && <div className="text-[11px] font-semibold uppercase tracking-widest text-cyan-700 mb-1">Stjórnborð</div>}
+          {!embedded && <h1 className="text-2xl font-bold text-slate-900 mb-1">Netfangsundirskriftir</h1>}
           <p className="text-sm text-slate-600">
             Breyttu upplýsingunum — þær vistast sjálfkrafa í sameiginlega töflu svo allir sjái sömu gildi.
             Notaðu „Afrita sniðið (fyrir Gmail)“ og límdu í Gmail → Stillingar → Undirskrift.

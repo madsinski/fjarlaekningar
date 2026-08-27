@@ -3,8 +3,8 @@
 import { Fragment, useCallback, useEffect, useState } from "react";
 import RosterPage from "@/app/admin/roster/page";
 import InvoicesPage from "@/app/admin/invoices/page";
-import Link from "next/link";
-import { Mail, Paperclip } from "lucide-react";
+import SignaturesPage from "@/app/admin/signatures/page";
+import { Paperclip } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import StaffDocuments from "./StaffDocuments";
 
@@ -33,12 +33,13 @@ const ROLE_LABELS: Record<string, string> = {
   psychologist: "Sálfræðingur",
 };
 
-type TeamTab = "starfsfolk" | "vaktir" | "reikningar";
+type TeamTab = "starfsfolk" | "vaktir" | "reikningar" | "undirskriftir";
 
 const TEAM_TABS: { key: TeamTab; label: string }[] = [
   { key: "starfsfolk", label: "Starfsfólk" },
   { key: "vaktir", label: "Vaktakerfi" },
   { key: "reikningar", label: "Reikningar" },
+  { key: "undirskriftir", label: "Netfangsundirskriftir" },
 ];
 
 export default function TeamPage() {
@@ -173,12 +174,6 @@ export default function TeamPage() {
           <h1 className="text-2xl font-bold text-slate-900">Starfsfólk</h1>
           <p className="text-sm text-slate-600 mt-1">Fólk, vaktir og reikningar á einum stað.</p>
         </div>
-        <Link
-          href="/admin/signatures"
-          className="shrink-0 inline-flex items-center gap-2 py-2 px-3 rounded-lg border border-cyan-600 text-cyan-700 hover:bg-cyan-50 text-sm font-semibold"
-        >
-          <Mail className="w-4 h-4" /> Netfangsundirskriftir
-        </Link>
       </div>
 
       <div className="mt-5 mb-6 flex flex-wrap gap-1 border-b border-slate-200">
@@ -200,6 +195,7 @@ export default function TeamPage() {
           than doubled. Both keep working as direct URLs too. */}
       {tab === "vaktir" && <div className="-mx-8 -mt-2"><RosterPage /></div>}
       {tab === "reikningar" && <div className="-mx-8 -mt-2"><InvoicesPage /></div>}
+      {tab === "undirskriftir" && <SignaturesPage embedded />}
 
       {tab === "starfsfolk" && (
       <div className="max-w-4xl">
