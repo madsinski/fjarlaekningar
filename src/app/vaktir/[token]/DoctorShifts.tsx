@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { CalendarPlus, Copy, Check, ArrowLeftRight } from "lucide-react";
+import GoogleCalendarCard from "./GoogleCalendarCard";
 import {
   monthKey,
   monthLabel,
@@ -151,6 +152,8 @@ export default function DoctorShifts({
     </div>
   );
 
+  const googleCard = <GoogleCalendarCard token={token} />;
+
   const calendarBox = (
     <div className="rounded-2xl border border-slate-200 bg-white p-5">
       <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
@@ -160,8 +163,9 @@ export default function DoctorShifts({
         Gerðu áskrift í Google eða Apple dagatali — vaktirnar uppfærast sjálfkrafa.
       </p>
       <p className="mt-1 text-[11px] text-slate-400">
-        Dagatalið sækir breytingar sjálft: Apple á klukkustundar fresti (stillanlegt niður í 5 mín),
-        Google á nokkurra klukkustunda fresti. Nýjustu vaktirnar sérðu alltaf hér að neðan.
+        Áskrift sækir breytingar þegar dagatalinu hentar: Apple á klukkustundarfresti (stillanlegt
+        niður í 5 mín), Google á nokkurra klukkustunda fresti. Viltu fá breytingar samstundis skaltu
+        nota beinu Google-tenginguna hér fyrir ofan. Nýjustu vaktirnar sérðu alltaf hér að neðan.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         <a href={googleUrl} target="_blank" rel="noopener noreferrer"
@@ -309,6 +313,7 @@ export default function DoctorShifts({
         <div className="space-y-6 lg:col-span-2">
           {header}
           {stats}
+          {googleCard}
           {calendarBox}
           {monthsBlock}
           {footNote}
@@ -325,6 +330,7 @@ export default function DoctorShifts({
     <div className="space-y-6">
       {header}
       {stats}
+      {googleCard}
       {calendarBox}
       {monthsBlock}
       {swapsBlock}

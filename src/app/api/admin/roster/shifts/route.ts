@@ -1,7 +1,8 @@
 // Create a shift, or generate a full month of daily 10–22 shifts. Admin only.
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { syncDoctors } from "@/lib/roster-google-sync";
 import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
 import { datesInMonth, shiftMonth } from "@/lib/roster";
 
@@ -56,5 +57,8 @@ export async function POST(req: Request) {
     .select("*")
     .single();
   if (error || !data) return NextResponse.json({ ok: false, error: error?.message || "Villa" }, { status: 500 });
+
+  after(async () => { await syncDoctors([data.doctor_id]); });
+
   return NextResponse.json({ ok: true, shift: data }, { status: 201 });
 }

@@ -1,8 +1,9 @@
 // Doctor offers one of THEIR shifts — either on the market (to_doctor null) or
 // to a specific doctor. Token-gated.
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { syncDoctors } from "@/lib/roster-google-sync";
 
 export const runtime = "nodejs";
 
@@ -42,5 +43,10 @@ export async function POST(req: Request, ctx: { params: Promise<{ token: string 
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
 
   await supabaseAdmin.from("roster_shifts").update({ status: toDoctor ? "swap" : "open" }).eq("id", shiftId);
+
+  // On the market the shift is no longer theirs to plan around, so it comes out
+  // of the calendar. A targeted offer stays until the other doctor accepts.
+  after(async () => { await syncDoctors([doctor.id]); });
+
   return NextResponse.json({ ok: true });
 }

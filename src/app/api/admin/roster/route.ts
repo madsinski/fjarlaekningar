@@ -60,7 +60,7 @@ export async function GET(req: Request) {
 
   const doctors = await syncDoctors();
 
-  const [settings, shifts, swaps] = await Promise.all([
+  const [settings, shifts, swaps, google] = await Promise.all([
     supabaseAdmin.from("roster_settings").select("per_patient_salary, currency").eq("id", 1).maybeSingle(),
     supabaseAdmin
       .from("roster_shifts")
@@ -73,12 +73,23 @@ export async function GET(req: Request) {
       .from("roster_swaps")
       .select("id, shift_id, from_doctor, to_doctor, status, shift:roster_shifts(shift_date, starts, ends)")
       .eq("status", "pending"),
+    // Who has a live Google connection. Shown in the roster so an admin can see
+    // at a glance which doctors get shift changes pushed to them straight away
+    // and which are relying on a calendar subscription catching up later.
+    supabaseAdmin
+      .from("roster_google_sync")
+      .select("doctor_id, enabled, last_sync_at, last_error")
+      .not("refresh_token", "is", null),
   ]);
+
+  const googleByDoctor = Object.fromEntries(
+    (google.data ?? []).map((g: { doctor_id: string }) => [g.doctor_id, g]),
+  );
 
   return NextResponse.json({
     ok: true,
     month,
-    doctors,
+    doctors: (doctors ?? []).map((d: { id: string }) => ({ ...d, google: googleByDoctor[d.id] ?? null })),
     settings: settings.data ?? { per_patient_salary: 3000, currency: "kr." },
     shifts: shifts.data ?? [],
     swaps: swaps.data ?? [],

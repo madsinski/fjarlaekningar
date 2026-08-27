@@ -1,8 +1,9 @@
 // Update / delete a shift. Admin only.
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
+import { syncDoctors } from "@/lib/roster-google-sync";
 
 export const runtime = "nodejs";
 
@@ -31,8 +32,17 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   }
   if (Object.keys(update).length === 0) return NextResponse.json({ ok: true });
 
+  // Who held it before, so a reassignment can be taken out of the previous
+  // doctor's calendar as well as put into the new one's.
+  const { data: before } = await supabaseAdmin
+    .from("roster_shifts").select("doctor_id").eq("id", id).maybeSingle();
+
   const { data, error } = await supabaseAdmin.from("roster_shifts").update(update).eq("id", id).select("*").maybeSingle();
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+
+  // After the response: talking to Google must not slow down the admin's click.
+  after(async () => { await syncDoctors([before?.doctor_id, data?.doctor_id]); });
+
   return NextResponse.json({ ok: true, shift: data });
 }
 
@@ -42,7 +52,13 @@ export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }
     return NextResponse.json({ ok: false, error: "Admin role required" }, { status: 403 });
   }
   const { id } = await ctx.params;
+  const { data: before } = await supabaseAdmin
+    .from("roster_shifts").select("doctor_id").eq("id", id).maybeSingle();
+
   const { error } = await supabaseAdmin.from("roster_shifts").delete().eq("id", id);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+
+  after(async () => { await syncDoctors([before?.doctor_id]); });
+
   return NextResponse.json({ ok: true });
 }

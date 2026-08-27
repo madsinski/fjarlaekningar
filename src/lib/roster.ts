@@ -9,6 +9,8 @@ export interface RosterDoctor {
   staff_id: string | null;
   access_token?: string | null;
   created_at?: string;
+  /** Staða Google-tengingar, sett saman í /api/admin/roster. Null = ótengt. */
+  google?: { enabled: boolean; last_sync_at: string | null; last_error: string | null } | null;
   /** Vaktaóskir — sjá roster-preferences-schema.sql. */
   max_shifts_per_month?: number | null;
   /** 0=sun … 6=lau. Tómt = allir dagar. */

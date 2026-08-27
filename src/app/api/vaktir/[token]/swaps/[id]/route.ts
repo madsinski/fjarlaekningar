@@ -1,8 +1,9 @@
 // Resolve a swap offer: accept (take the shift), decline (targeted recipient),
 // or cancel (the offering doctor). Token-gated.
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { syncDoctors } from "@/lib/roster-google-sync";
 
 export const runtime = "nodejs";
 
@@ -37,6 +38,10 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ token: string
     await supabaseAdmin.from("roster_swaps").update({ status: "accepted", resolved_at: now }).eq("id", swap.id);
     // Retire any other live offers on the same shift.
     await supabaseAdmin.from("roster_swaps").update({ status: "cancelled", resolved_at: now }).eq("shift_id", swap.shift_id).eq("status", "pending");
+
+    // Both calendars change hands: out of the giver's, into the taker's.
+    after(async () => { await syncDoctors([swap.from_doctor, doctor.id]); });
+
     return NextResponse.json({ ok: true });
   }
 
@@ -44,6 +49,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ token: string
     if (swap.to_doctor !== doctor.id) return NextResponse.json({ ok: false, error: "Ekki heimilt" }, { status: 403 });
     await supabaseAdmin.from("roster_swaps").update({ status: "declined", resolved_at: now }).eq("id", swap.id);
     await supabaseAdmin.from("roster_shifts").update({ status: "assigned" }).eq("id", swap.shift_id);
+    after(async () => { await syncDoctors([swap.from_doctor]); });
     return NextResponse.json({ ok: true });
   }
 
@@ -51,6 +57,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ token: string
     if (swap.from_doctor !== doctor.id) return NextResponse.json({ ok: false, error: "Ekki heimilt" }, { status: 403 });
     await supabaseAdmin.from("roster_swaps").update({ status: "cancelled", resolved_at: now }).eq("id", swap.id);
     await supabaseAdmin.from("roster_shifts").update({ status: "assigned" }).eq("id", swap.shift_id);
+    after(async () => { await syncDoctors([swap.from_doctor]); });
     return NextResponse.json({ ok: true });
   }
 

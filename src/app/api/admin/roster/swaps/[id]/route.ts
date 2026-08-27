@@ -1,7 +1,8 @@
 // Admin cancels a pending swap/market offer (e.g. to override the schedule).
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { syncDoctors } from "@/lib/roster-google-sync";
 import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
@@ -20,5 +21,11 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (swap.status === "pending") {
     await supabaseAdmin.from("roster_shifts").update({ status: "assigned" }).eq("id", swap.shift_id);
   }
+
+  // Back off the market means back into its holder's calendar.
+  const { data: shift } = await supabaseAdmin
+    .from("roster_shifts").select("doctor_id").eq("id", swap.shift_id).maybeSingle();
+  after(async () => { await syncDoctors([shift?.doctor_id]); });
+
   return NextResponse.json({ ok: true });
 }

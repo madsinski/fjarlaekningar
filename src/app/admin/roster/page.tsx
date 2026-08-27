@@ -239,6 +239,28 @@ export default function RosterPage() {
                         <input type="color" value={d.color} onChange={(e) => patchDoctor(d.id, { color: e.target.value })} title="Litur" className="h-4 w-4 rounded-full border-0 bg-transparent p-0 cursor-pointer" />
                         <button onClick={() => copyDoctorLink(d)} title="Afrita persónulegan hlekk læknis" className="text-slate-300 hover:text-cyan-600">{copiedDoc === d.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Link2 className="w-3.5 h-3.5" />}</button>
                         <span className="text-[11px] text-slate-400">{d.active ? "virkur" : "óvirkur"}</span>
+                        {/* Whether shift changes reach this doctor at once or
+                            only when their calendar next decides to look. */}
+                        {d.google && (
+                          <span
+                            title={
+                              d.google.last_error
+                                ? `Google: ${d.google.last_error}`
+                                : d.google.enabled
+                                  ? "Vaktabreytingar berast samstundis í Google-dagatal"
+                                  : "Google tengt en samstilling er slökkt"
+                            }
+                            className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                              d.google.last_error
+                                ? "bg-amber-100 text-amber-800"
+                                : d.google.enabled
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : "bg-slate-100 text-slate-500"
+                            }`}
+                          >
+                            {d.google.last_error ? "Google ⚠" : "Google"}
+                          </span>
+                        )}
                       </div>
                       <DoctorPrefs
                         doctor={d}

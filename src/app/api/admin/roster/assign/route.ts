@@ -3,8 +3,9 @@
 // Preview and apply run the SAME function over the SAME data, so what is
 // approved on screen is what lands in the table.
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { syncDoctors, syncAllConnected } from "@/lib/roster-google-sync";
 import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
 import { planAssignments, type AssignDoctor, type AssignShift } from "@/lib/roster-assign";
 
@@ -24,11 +25,19 @@ export async function POST(req: Request) {
   if (Array.isArray(body.shiftIds) && body.shiftIds.length) {
     const ids = (body.shiftIds as unknown[]).map(String).filter(Boolean);
     const doctorId = body.doctorId ? String(body.doctorId) : null;
+    // Who is losing these shifts, so they leave those calendars too.
+    const { data: prev } = await supabaseAdmin
+      .from("roster_shifts").select("doctor_id").in("id", ids);
+
     const { error } = await supabaseAdmin
       .from("roster_shifts")
       .update({ doctor_id: doctorId, updated_at: new Date().toISOString() })
       .in("id", ids);
     if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+
+    const touched = [doctorId, ...(prev ?? []).map((r: { doctor_id: string | null }) => r.doctor_id)];
+    after(async () => { await syncDoctors(touched); });
+
     return NextResponse.json({ ok: true, applied: ids.length, bulk: true });
   }
 
@@ -73,6 +82,11 @@ export async function POST(req: Request) {
       .eq("id", shiftId);
     if (error) failed.push(shiftId); else applied += 1;
   }
+
+  // A whole month redistributed touches almost everyone, and "all" mode can move
+  // shifts off doctors who appear nowhere in the new plan. Reconciling everyone
+  // connected is both simpler and more correct than tracking who was affected.
+  after(async () => { await syncAllConnected(); });
 
   return NextResponse.json({ ok: true, plan, applied, failed, preview: false });
 }
