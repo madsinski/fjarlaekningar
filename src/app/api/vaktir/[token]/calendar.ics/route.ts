@@ -36,6 +36,11 @@ export async function GET(req: Request, ctx: { params: Promise<{ token: string }
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     `X-WR-CALNAME:Fjarlækningar — vaktir (${esc(doctor.name)})`,
+    // How often a subscribed calendar should come back for changes. Without
+    // these, Google decides on its own and can sit on a stale copy for a day —
+    // long enough for a swapped shift to be missed.
+    "REFRESH-INTERVAL;VALUE=DURATION:PT2H",
+    "X-PUBLISHED-TTL:PT2H",
     "X-WR-TIMEZONE:Atlantic/Reykjavik",
   ];
   for (const s of shifts ?? []) {

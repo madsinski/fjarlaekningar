@@ -42,6 +42,10 @@ export default function DoctorShifts({
 
   const thisMonth = monthKey(new Date());
   const webcal = calendarUrl.replace(/^https?:/, "webcal:");
+  // Google's own add-by-URL screen. The webcal: button below depends on the
+  // machine having a calendar app registered for that scheme — on Windows
+  // without Outlook nothing happens at all, which reads as a broken button.
+  const googleUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}`;
   const docName = (id: string | null) => doctors.find((d) => d.id === id)?.name ?? "óþekktur";
   const fmtSwap = (s?: RosterSwap["shift"]) => (s ? `${weekdayShort(s.shift_date)} ${Number(s.shift_date.slice(-2))}. — ${hhmm(s.starts)}–${hhmm(s.ends)}` : "");
 
@@ -142,14 +146,23 @@ export default function DoctorShifts({
         </div>
         <p className="mt-1 text-sm text-slate-600">Gerðu áskrift í Google eða Apple dagatali — vaktirnar uppfærast sjálfkrafa.</p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <a href={webcal} className="inline-flex items-center gap-2 rounded-lg bg-[var(--primary-dark)] px-4 py-2 text-sm font-semibold text-white hover:brightness-110">Gerast áskrifandi</a>
+          <a href={googleUrl} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-lg bg-[var(--primary-dark)] px-4 py-2 text-sm font-semibold text-white hover:brightness-110">
+            Google dagatal
+          </a>
+          <a href={webcal}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            Apple dagatal
+          </a>
           <button onClick={copyUrl} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
             {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
             {copied ? "Afritað!" : "Afrita hlekk"}
           </button>
         </div>
         <p className="mt-2 text-[11px] text-slate-400">
-          Apple/iPhone: smelltu á „Gerast áskrifandi“. Google dagatal: afritaðu hlekkinn og bættu við undir „Önnur dagatöl → Frá vefslóð“.
+          „Apple dagatal“ opnar dagatalsforrit tölvunnar. Gerist ekkert þegar smellt er á hann er ekkert
+          slíkt forrit uppsett — notaðu þá „Google dagatal“, eða afritaðu hlekkinn og límdu hann inn í
+          dagatalið þitt (Outlook: „Bæta við dagatali → Gerast áskrifandi af vefnum“).
         </p>
       </div>
 
