@@ -9,7 +9,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import {
-  deriveInvoice, invoiceNumber, missingBillingFields, billingParty,
+  deriveInvoice, invoiceNumber, missingBillingFields, billingParty, payoutAccount,
   EMPTY_BILLING, type StaffBilling, type IssuerSnapshot,
 } from "@/lib/billing";
 
@@ -136,7 +136,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ token: string 
   const snapshot: IssuerSnapshot = {
     name: party.name,
     kennitala: party.kennitala,
-    bank_account: c.billing.bank_account,
+    bank_account: payoutAccount(c.billing),
     invoice_as: c.billing.invoice_as,
     vat_status: c.billing.vat_status,
   };

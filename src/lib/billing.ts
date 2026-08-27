@@ -19,6 +19,7 @@ export interface StaffBilling {
   invoice_as: InvoiceAs;
   slf_name: string | null;
   slf_kennitala: string | null;
+  slf_bank_account: string | null;
   vat_status: VatStatus;
   invoice_seq: number;
   updated_at?: string;
@@ -65,6 +66,7 @@ export const EMPTY_BILLING: Omit<StaffBilling, "staff_id"> = {
   invoice_as: "person",
   slf_name: null,
   slf_kennitala: null,
+  slf_bank_account: null,
   vat_status: "exempt_healthcare",
   invoice_seq: 0,
 };
@@ -87,14 +89,30 @@ export function billingParty(
   return { name: personName, kennitala: billing.kennitala ?? null };
 }
 
+/**
+ * The account the money actually goes to.
+ *
+ * Paying an slf means paying the company's account, not the person's — the two
+ * are separate fields rather than one that quietly changes meaning depending on
+ * another setting.
+ */
+export function payoutAccount(
+  b: Pick<StaffBilling, "invoice_as" | "bank_account" | "slf_bank_account">,
+): string | null {
+  return b.invoice_as === "slf" ? (b.slf_bank_account ?? null) : (b.bank_account ?? null);
+}
+
 /** Fields still missing before an invoice can legally be issued. */
 export function missingBillingFields(b: Partial<StaffBilling>): string[] {
   const missing: string[] = [];
   if (!b.kennitala?.trim()) missing.push("kennitala");
-  if (!b.bank_account?.trim()) missing.push("reikningsnúmer");
   if (b.invoice_as === "slf") {
     if (!b.slf_name?.trim()) missing.push("nafn slf-félags");
     if (!b.slf_kennitala?.trim()) missing.push("kennitala slf-félags");
+    // The company is being paid, so it is the company's account that matters.
+    if (!b.slf_bank_account?.trim()) missing.push("reikningsnúmer félags");
+  } else if (!b.bank_account?.trim()) {
+    missing.push("reikningsnúmer");
   }
   return missing;
 }

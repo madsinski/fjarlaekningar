@@ -246,6 +246,12 @@ export default function StaffDocuments({ staffId, staffName }: { staffId: string
                     onChange={(e) => setBilling({ ...billing, slf_kennitala: e.target.value })}
                     className={`${inputCls} w-full`} />
                 </label>
+                <label className="block sm:col-span-2">
+                  <span className="text-[11px] text-slate-500">Reikningsnúmer félags</span>
+                  <input value={formatBankAccount(billing.slf_bank_account)} placeholder="0000-00-000000"
+                    onChange={(e) => setBilling({ ...billing, slf_bank_account: e.target.value })}
+                    className={`${inputCls} w-full`} />
+                </label>
               </>
             )}
           </div>

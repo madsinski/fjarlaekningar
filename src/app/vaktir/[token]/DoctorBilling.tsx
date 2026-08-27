@@ -139,7 +139,9 @@ export default function DoctorBilling({ token, doctorName }: { token: string; do
             )}
           </div>
           <div>
-            <label className={label} htmlFor="b-bank">Reikningsnúmer</label>
+            <label className={label} htmlFor="b-bank">
+              Reikningsnúmer{isSlf ? " (persónulegt)" : ""}
+            </label>
             <input id="b-bank" inputMode="numeric" value={formatBankAccount(billing.bank_account)}
               onChange={(e) => set({ bank_account: e.target.value })} className={input} placeholder="0000-00-000000" />
           </div>
@@ -186,6 +188,14 @@ export default function DoctorBilling({ token, doctorName }: { token: string; do
                   <TriangleAlert className="h-3.5 w-3.5" /> Athugaðu kennitöluna.
                 </p>
               )}
+            </div>
+            <div className="sm:col-span-2">
+              <label className={label} htmlFor="b-slfbank">Reikningsnúmer félags</label>
+              <input id="b-slfbank" inputMode="numeric" value={formatBankAccount(billing.slf_bank_account)}
+                onChange={(e) => set({ slf_bank_account: e.target.value })} className={input} placeholder="0000-00-000000" />
+              <p className="mt-1 text-xs text-slate-500">
+                Greiðslan fer á reikning félagsins, ekki þinn eigin.
+              </p>
             </div>
           </div>
         )}

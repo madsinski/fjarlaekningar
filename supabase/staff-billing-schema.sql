@@ -22,6 +22,10 @@ create table if not exists public.staff_billing (
                    check (invoice_as in ('person', 'slf')),
   slf_name       text,
   slf_kennitala  text,
+  -- Sé greitt til félagsins fer greiðslan á reikning FÉLAGSINS, ekki
+  -- einstaklingsins. Tvö aðskilin reikningsnúmer, ekki eitt sem skiptir um
+  -- merkingu eftir stöðu annars reits.
+  slf_bank_account text,
   -- Heilbrigðisþjónusta er undanþegin VSK. Geymt frekar en harðkóðað því
   -- verktakar geta verið í ólíkri stöðu.
   vat_status     text not null default 'exempt_healthcare'
@@ -76,3 +80,6 @@ alter table public.contractor_invoices enable row level security;
 drop policy if exists contractor_invoices_block_client on public.contractor_invoices;
 create policy contractor_invoices_block_client on public.contractor_invoices
   for all using (false) with check (false);
+
+-- Bætt við eftir á fyrir gagnagrunna sem voru búnir til áður en reiturinn kom.
+alter table public.staff_billing add column if not exists slf_bank_account text;

@@ -70,6 +70,10 @@ export async function PUT(req: Request, ctx: { params: Promise<{ token: string }
       invoiceAs === "slf" && body.slf_kennitala
         ? normalizeKennitala(String(body.slf_kennitala)) || null
         : null,
+    slf_bank_account:
+      invoiceAs === "slf" && body.slf_bank_account
+        ? String(body.slf_bank_account).replace(/\D/g, "") || null
+        : null,
     updated_at: new Date().toISOString(),
     updated_by: "self",
   };
