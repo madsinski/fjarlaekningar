@@ -21,6 +21,16 @@ const input =
   "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100";
 const label = "block text-xs font-semibold text-slate-600 mb-1";
 
+interface HistoryRow {
+  id: string;
+  invoice_number: string | null;
+  period_year: number;
+  period_month: number;
+  patients_total: number;
+  amount: number;
+  status: string;
+}
+
 export default function DoctorBilling({ token, doctorName }: { token: string; doctorName: string }) {
   const [billing, setBilling] = useState<StaffBilling | null>(null);
   const [email, setEmail] = useState("");
@@ -36,6 +46,8 @@ export default function DoctorBilling({ token, doctorName }: { token: string; do
   const [currency, setCurrency] = useState("kr.");
   const [party, setParty] = useState<{ name: string; kennitala: string | null } | null>(null);
   const [issuing, setIssuing] = useState(false);
+  const [periods, setPeriods] = useState<{ year: number; month: number; patients: number; invoiced: boolean }[]>([]);
+  const [history, setHistory] = useState<HistoryRow[]>([]);
 
   const loadInvoice = useCallback(async (y?: number, m?: number) => {
     const qs = y && m ? `?year=${y}&month=${m}` : "";
@@ -50,6 +62,8 @@ export default function DoctorBilling({ token, doctorName }: { token: string; do
     setCurrency(j.currency ?? "kr.");
     setParty(j.party ?? null);
     setBilling((b) => b ?? j.billing);
+    setPeriods(j.periods ?? []);
+    setHistory(j.history ?? []);
   }, [token]);
 
   useEffect(() => {
@@ -96,6 +110,9 @@ export default function DoctorBilling({ token, doctorName }: { token: string; do
     setIssuing(false);
     if (!j.ok) { setErr(j.error || "Ekki tókst að gefa út"); return; }
     setInvoice(j.invoice);
+    // Re-read so the period list and the history below pick the new invoice up.
+    // Without this it exists but shows nowhere until the page is reloaded.
+    await loadInvoice(period.year, period.month);
   }
 
   if (!billing) {
@@ -214,9 +231,27 @@ export default function DoctorBilling({ token, doctorName }: { token: string; do
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-lg font-bold text-slate-900">Reikningur</h2>
-          {period && (
+          {/* Every month with work in it, reachable. The panel used to show one
+              fixed period and nothing else, so a month with no shifts in it read
+              as a broken page rather than an empty one. */}
+          {periods.length > 1 && period ? (
+            <select
+              value={`${period.year}-${period.month}`}
+              onChange={(e) => {
+                const [y, m] = e.target.value.split("-").map(Number);
+                void loadInvoice(y, m);
+              }}
+              className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm font-medium text-slate-700"
+            >
+              {periods.map((p) => (
+                <option key={`${p.year}-${p.month}`} value={`${p.year}-${p.month}`}>
+                  {monthLabelIs(p.year, p.month)}{p.invoiced ? " · gefinn út" : ""}
+                </option>
+              ))}
+            </select>
+          ) : period ? (
             <span className="text-sm font-medium text-slate-500">{monthLabelIs(period.year, period.month)}</span>
-          )}
+          ) : null}
         </div>
         <p className="mt-1 text-sm text-slate-500">
           Talan kemur úr vöktunum þínum hér að ofan. Sé hún ekki rétt, leiðréttu fjölda sjúklinga á
@@ -224,9 +259,14 @@ export default function DoctorBilling({ token, doctorName }: { token: string; do
         </p>
 
         {derived && derived.lines.length === 0 && (
-          <p className="mt-4 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-500">
-            Engir skráðir sjúklingar í þessum mánuði.
-          </p>
+          <div className="mt-4 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-500">
+            <p>Engir skráðir sjúklingar í þessum mánuði.</p>
+            <p className="mt-1 text-xs">
+              {periods.length > 0
+                ? "Veldu annan mánuð hér að ofan, eða skráðu fjölda sjúklinga á vaktirnar í „Vaktir“."
+                : "Skráðu fjölda sjúklinga á vaktirnar þínar í „Vaktir“ — reikningurinn reiknast af þeim."}
+            </p>
+          </div>
         )}
 
         {derived && derived.lines.length > 0 && (
@@ -301,6 +341,31 @@ export default function DoctorBilling({ token, doctorName }: { token: string; do
           </>
         )}
         {err && <p className="mt-3 text-sm text-red-600">{err}</p>}
+
+        {history.length > 0 && (
+          <div className="mt-6 border-t border-slate-100 pt-4">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Fyrri reikningar</h3>
+            <ul className="mt-2 space-y-1">
+              {history.map((h) => (
+                <li key={h.id} className="flex items-center justify-between gap-3 text-sm">
+                  <button
+                    onClick={() => void loadInvoice(h.period_year, h.period_month)}
+                    className="truncate text-left text-slate-700 hover:text-cyan-700"
+                  >
+                    <span className="font-mono text-xs text-slate-400">{h.invoice_number ?? "—"}</span>{" "}
+                    {monthLabelIs(h.period_year, h.period_month)}
+                  </button>
+                  <span className="shrink-0 tabular-nums text-slate-600">{formatIsk(h.amount, currency)}</span>
+                  <span className="w-20 shrink-0 text-right text-[11px] uppercase tracking-wide text-slate-400">
+                    {h.status === "issued" ? "Útgefinn"
+                      : h.status === "approved" ? "Samþykktur"
+                      : h.status === "paid" ? "Greiddur" : h.status}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
       <p className="sr-only">{doctorName}</p>
     </>

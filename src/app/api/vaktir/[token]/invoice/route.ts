@@ -54,7 +54,51 @@ export async function GET(req: Request, ctx: { params: Promise<{ token: string }
   const { token } = await ctx.params;
   const c = await ctxFor(token);
   if (!c) return NextResponse.json({ ok: false, error: "Ógildur hlekkur" }, { status: 404 });
-  const { year, month } = period(new URL(req.url));
+  const url = new URL(req.url);
+  const asked = url.searchParams.get("year") && url.searchParams.get("month");
+
+  // Every month this doctor has something to invoice for, plus every month they
+  // have already invoiced. Without this the panel could only ever show one
+  // period, and if that period happened to be empty it looked broken.
+  const [{ data: recorded }, { data: allInvoices }] = await Promise.all([
+    supabaseAdmin
+      .from("roster_shifts")
+      .select("shift_date, patients_seen")
+      .eq("doctor_id", c.doctor.id)
+      .gt("patients_seen", 0)
+      .order("shift_date", { ascending: false }),
+    supabaseAdmin
+      .from("contractor_invoices")
+      .select("id, invoice_number, period_year, period_month, patients_total, amount, status, issued_at")
+      .eq("staff_id", c.doctor.staff_id)
+      .order("period_year", { ascending: false })
+      .order("period_month", { ascending: false }),
+  ]);
+
+  const byPeriod = new Map<string, { year: number; month: number; patients: number; invoiced: boolean }>();
+  for (const r of recorded ?? []) {
+    const key = (r.shift_date as string).slice(0, 7);
+    const [y, m] = key.split("-").map(Number);
+    const e = byPeriod.get(key) ?? { year: y, month: m, patients: 0, invoiced: false };
+    e.patients += (r.patients_seen as number) || 0;
+    byPeriod.set(key, e);
+  }
+  for (const inv of allInvoices ?? []) {
+    const key = `${inv.period_year}-${String(inv.period_month).padStart(2, "0")}`;
+    const e = byPeriod.get(key) ?? { year: inv.period_year, month: inv.period_month, patients: inv.patients_total, invoiced: false };
+    e.invoiced = inv.status !== "void";
+    byPeriod.set(key, e);
+  }
+  const periods = [...byPeriod.entries()].sort(([a], [b]) => b.localeCompare(a)).map(([, v]) => v);
+
+  // Asked for a month: show that one. Otherwise the most recent month with
+  // work in it — last month is the usual answer, but late in a month whose
+  // predecessor was empty it is the one thing guaranteed to look broken.
+  let { year, month } = period(url);
+  if (!asked && periods.length) {
+    year = periods[0].year;
+    month = periods[0].month;
+  }
 
   const { first, next } = monthRange(`${year}-${String(month).padStart(2, "0")}`);
   const { data: shifts, error: shiftErr } = await supabaseAdmin
@@ -89,6 +133,8 @@ export async function GET(req: Request, ctx: { params: Promise<{ token: string }
     billing: c.billing,
     missing: missingBillingFields(c.billing),
     party: billingParty(c.billing, c.staffName),
+    periods,
+    history: (allInvoices ?? []).filter((i) => i.status !== "void"),
   });
 }
 
