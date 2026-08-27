@@ -1,15 +1,25 @@
 // Per-doctor calendar feed. Subscribe to this URL in Google/Apple Calendar and
-// the doctor's shifts stay in sync. Token-gated. Iceland is UTC year-round, so
-// shift times are emitted as UTC (…Z) — unambiguous, no DST.
+// the doctor's shifts stay in sync. Token-gated.
+//
+// Shifts are emitted as ALL-DAY events titled "FL: 10-22". Dates carry no
+// timezone at all, which sidesteps the question entirely — and a shift is a
+// day you are working, not a twelve-hour appointment.
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { shiftEventTitle, hhmm } from "@/lib/roster";
 
 export const runtime = "nodejs";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const stamp = (d: Date) =>
   `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
-const dt = (date: string, time: string) => `${date.replace(/-/g, "")}T${(time || "00:00:00").replace(/:/g, "").padEnd(6, "0")}Z`;
+const day = (date: string) => date.replace(/-/g, "");
+/** All-day DTEND is exclusive, so a one-day event ends on the following date. */
+const nextDay = (date: string) => {
+  const [y, m, d] = date.split("-").map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d + 1));
+  return `${t.getUTCFullYear()}${pad(t.getUTCMonth() + 1)}${pad(t.getUTCDate())}`;
+};
 const esc = (s: string) => s.replace(/([,;\\])/g, "\\$1").replace(/\n/g, "\\n");
 
 export async function GET(req: Request, ctx: { params: Promise<{ token: string }> }) {
@@ -51,10 +61,15 @@ export async function GET(req: Request, ctx: { params: Promise<{ token: string }
       "BEGIN:VEVENT",
       `UID:${s.id}@fjarlaekningar.is`,
       `DTSTAMP:${now}`,
-      `DTSTART:${dt(s.shift_date, s.starts)}`,
-      `DTEND:${dt(s.shift_date, s.ends)}`,
-      "SUMMARY:Vakt — Fjarlækningar",
-      ...(s.note ? [`DESCRIPTION:${esc(s.note)}`] : []),
+      // All-day rather than a timed 10–22 block: a twelve-hour busy block fills
+      // the entire day column and hides everything else. TRANSP:TRANSPARENT
+      // keeps the doctor showing as free, since being on shift is not the same
+      // as being unavailable to whoever else reads their calendar.
+      `DTSTART;VALUE=DATE:${day(s.shift_date)}`,
+      `DTEND;VALUE=DATE:${nextDay(s.shift_date)}`,
+      `SUMMARY:${esc(shiftEventTitle(s.starts, s.ends))}`,
+      "TRANSP:TRANSPARENT",
+      `DESCRIPTION:${esc(`Vakt hjá Fjarlækningum ${hhmm(s.starts)}–${hhmm(s.ends)}.${s.note ? `\n\n${s.note}` : ""}`)}`,
       "END:VEVENT",
     );
   }

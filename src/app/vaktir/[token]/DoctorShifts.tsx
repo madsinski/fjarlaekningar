@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { CalendarPlus, Copy, Check, ArrowLeftRight } from "lucide-react";
 import {
   monthKey,
@@ -23,6 +23,8 @@ export default function DoctorShifts({
   initialSwaps,
   settings,
   calendarUrl,
+  layout = "stack",
+  sidebar,
 }: {
   token: string;
   doctorId: string;
@@ -32,6 +34,14 @@ export default function DoctorShifts({
   initialSwaps: RosterSwap[];
   settings: RosterSettings;
   calendarUrl: string;
+  /**
+   * "stack" — one column, top to bottom (the standalone /vaktir page).
+   * "split" — shifts on the left, swaps and whatever `sidebar` holds on the
+   *           right. Used inside Mín síða, where there is room for two columns.
+   */
+  layout?: "stack" | "split";
+  /** Extra right-column content in split layout. Ignored when stacked. */
+  sidebar?: ReactNode;
 }) {
   const [shifts, setShifts] = useState<RosterShift[]>(initialShifts);
   const [copied, setCopied] = useState(false);
@@ -118,61 +128,67 @@ export default function DoctorShifts({
   const btnPrimary = "inline-flex items-center gap-1.5 rounded-lg bg-[var(--primary-dark)] px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50";
   const btnGhost = "inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50";
 
-  return (
+  const header = (
+    <div>
+      <div className="text-[11px] font-semibold uppercase tracking-widest text-[var(--primary-dark)]">Fjarlækningar</div>
+      <h1 className="text-2xl font-bold text-slate-900">Mínar vaktir</h1>
+      <p className="text-sm text-slate-600">{doctorName}</p>
+    </div>
+  );
+
+  const stats = (
+    <div className="grid grid-cols-3 gap-3">
+      {[
+        ["Vaktir í mánuðinum", String(summary.days)],
+        ["Sjúklingar", String(summary.patients)],
+        ["Laun", formatIsk(summary.pay, settings.currency)],
+      ].map(([label, value]) => (
+        <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4 text-center">
+          <div className="text-lg font-extrabold text-slate-900 tabular-nums">{value}</div>
+          <div className="text-[11px] text-slate-500">{label}</div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const calendarBox = (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5">
+      <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+        <CalendarPlus className="w-4 h-4 text-[var(--primary-dark)]" /> Bæta vöktum í dagatal
+      </div>
+      <p className="mt-1 text-sm text-slate-600">
+        Gerðu áskrift í Google eða Apple dagatali — vaktirnar uppfærast sjálfkrafa.
+      </p>
+      <p className="mt-1 text-[11px] text-slate-400">
+        Dagatalið sækir breytingar sjálft: Apple á klukkustundar fresti (stillanlegt niður í 5 mín),
+        Google á nokkurra klukkustunda fresti. Nýjustu vaktirnar sérðu alltaf hér að neðan.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <a href={googleUrl} target="_blank" rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 rounded-lg bg-[var(--primary-dark)] px-4 py-2 text-sm font-semibold text-white hover:brightness-110">
+          Google dagatal
+        </a>
+        <a href={webcal}
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          Apple dagatal
+        </a>
+        <button onClick={copyUrl} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+          {copied ? "Afritað!" : "Afrita hlekk"}
+        </button>
+      </div>
+      <p className="mt-2 text-[11px] text-slate-400">
+        „Apple dagatal“ opnar dagatalsforrit tölvunnar. Gerist ekkert þegar smellt er á hann er ekkert
+        slíkt forrit uppsett — notaðu þá „Google dagatal“, eða afritaðu hlekkinn og límdu hann inn í
+        dagatalið þitt (Outlook: „Bæta við dagatali → Gerast áskrifandi af vefnum“).
+      </p>
+    </div>
+  );
+
+  // Wrapped so the months keep their own spacing wherever the block is placed.
+  // Wrapped so the months keep their own spacing wherever the block is placed.
+  const monthsBlock = (
     <div className="space-y-6">
-      <div>
-        <div className="text-[11px] font-semibold uppercase tracking-widest text-[var(--primary-dark)]">Fjarlækningar</div>
-        <h1 className="text-2xl font-bold text-slate-900">Mínar vaktir</h1>
-        <p className="text-sm text-slate-600">{doctorName}</p>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          ["Vaktir í mánuðinum", String(summary.days)],
-          ["Sjúklingar", String(summary.patients)],
-          ["Laun", formatIsk(summary.pay, settings.currency)],
-        ].map(([label, value]) => (
-          <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4 text-center">
-            <div className="text-lg font-extrabold text-slate-900 tabular-nums">{value}</div>
-            <div className="text-[11px] text-slate-500">{label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Calendar subscribe */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-          <CalendarPlus className="w-4 h-4 text-[var(--primary-dark)]" /> Bæta vöktum í dagatal
-        </div>
-        <p className="mt-1 text-sm text-slate-600">
-          Gerðu áskrift í Google eða Apple dagatali — vaktirnar uppfærast sjálfkrafa.
-        </p>
-        <p className="mt-1 text-[11px] text-slate-400">
-          Dagatalið sækir breytingar sjálft: Apple á klukkustundar fresti (stillanlegt niður í 5 mín),
-          Google á nokkurra klukkustunda fresti. Nýjustu vaktirnar sérðu alltaf hér að neðan.
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <a href={googleUrl} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-lg bg-[var(--primary-dark)] px-4 py-2 text-sm font-semibold text-white hover:brightness-110">
-            Google dagatal
-          </a>
-          <a href={webcal}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-            Apple dagatal
-          </a>
-          <button onClick={copyUrl} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-            {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-            {copied ? "Afritað!" : "Afrita hlekk"}
-          </button>
-        </div>
-        <p className="mt-2 text-[11px] text-slate-400">
-          „Apple dagatal“ opnar dagatalsforrit tölvunnar. Gerist ekkert þegar smellt er á hann er ekkert
-          slíkt forrit uppsett — notaðu þá „Google dagatal“, eða afritaðu hlekkinn og límdu hann inn í
-          dagatalið þitt (Outlook: „Bæta við dagatali → Gerast áskrifandi af vefnum“).
-        </p>
-      </div>
-
-      {/* Shifts */}
       {byMonth.length === 0 ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">Engar vaktir framundan.</div>
       ) : (
@@ -211,73 +227,108 @@ export default function DoctorShifts({
           </div>
         ))
       )}
+    </div>
+  );
 
-      {/* Swaps + market */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-5">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-          <ArrowLeftRight className="w-4 h-4 text-[var(--primary-dark)]" /> Vaktaskipti og markaður
-        </div>
-
-        {/* Offer one of my shifts */}
-        <div className="flex flex-wrap items-end gap-2">
-          <label className="text-xs text-slate-500">Bjóða vakt
-            <select value={offerShift} onChange={(e) => setOfferShift(e.target.value)} className="mt-1 block w-56 px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white">
-              <option value="">— veldu vakt —</option>
-              {offerableShifts.map((s) => <option key={s.id} value={s.id}>{weekdayShort(s.shift_date)} {Number(s.shift_date.slice(-2))}. {monthLabel(s.shift_date.slice(0, 7))}</option>)}
-            </select>
-          </label>
-          <label className="text-xs text-slate-500">Til
-            <select value={offerTarget} onChange={(e) => setOfferTarget(e.target.value)} className="mt-1 block w-44 px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white">
-              <option value="">Á markað (allir)</option>
-              {doctors.filter((d) => d.id !== doctorId).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
-          </label>
-          <button onClick={createOffer} disabled={!offerShift || busy} className={btnPrimary}>Bjóða</button>
-        </div>
-
-        {/* My outgoing offers */}
-        {outgoing.length > 0 && (
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">Mín boð</div>
-            <ul className="space-y-1.5">
-              {outgoing.map((sw) => (
-                <li key={sw.id} className="flex items-center justify-between gap-3 text-sm">
-                  <span className="text-slate-700">{fmtSwap(sw.shift)} · {sw.to_doctor ? `til ${docName(sw.to_doctor)}` : "á markaði"}</span>
-                  <button onClick={() => swapAction(sw.id, "cancel")} disabled={busy} className={btnGhost}>Afturkalla</button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Requests to me + market */}
-        {(incoming.length > 0 || market.length > 0) ? (
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">Í boði fyrir þig</div>
-            <ul className="space-y-1.5">
-              {incoming.map((sw) => (
-                <li key={sw.id} className="flex items-center justify-between gap-3 text-sm">
-                  <span className="text-slate-700">{fmtSwap(sw.shift)} · frá {docName(sw.from_doctor)}</span>
-                  <span className="flex gap-2">
-                    <button onClick={() => swapAction(sw.id, "accept")} disabled={busy} className={btnPrimary}>Taka</button>
-                    <button onClick={() => swapAction(sw.id, "decline")} disabled={busy} className={btnGhost}>Hafna</button>
-                  </span>
-                </li>
-              ))}
-              {market.map((sw) => (
-                <li key={sw.id} className="flex items-center justify-between gap-3 text-sm">
-                  <span className="text-slate-700">{fmtSwap(sw.shift)} · á markaði (frá {docName(sw.from_doctor)})</span>
-                  <button onClick={() => swapAction(sw.id, "accept")} disabled={busy} className={btnPrimary}>Taka vakt</button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : (
-          <p className="text-sm text-slate-400">Engar vaktir í boði fyrir þig núna.</p>
-        )}
+  const swapsBlock = (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-5">
+      <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+        <ArrowLeftRight className="w-4 h-4 text-[var(--primary-dark)]" /> Vaktaskipti og markaður
       </div>
 
-      <p className="text-center text-xs text-slate-400">Skráðu fjölda sjúklinga eftir hverja vakt. Stjórnandi sér yfirlitið.</p>
+      {/* Offer one of my shifts */}
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="text-xs text-slate-500">Bjóða vakt
+          <select value={offerShift} onChange={(e) => setOfferShift(e.target.value)} className="mt-1 block w-56 px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white">
+            <option value="">— veldu vakt —</option>
+            {offerableShifts.map((s) => <option key={s.id} value={s.id}>{weekdayShort(s.shift_date)} {Number(s.shift_date.slice(-2))}. {monthLabel(s.shift_date.slice(0, 7))}</option>)}
+          </select>
+        </label>
+        <label className="text-xs text-slate-500">Til
+          <select value={offerTarget} onChange={(e) => setOfferTarget(e.target.value)} className="mt-1 block w-44 px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white">
+            <option value="">Á markað (allir)</option>
+            {doctors.filter((d) => d.id !== doctorId).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+          </select>
+        </label>
+        <button onClick={createOffer} disabled={!offerShift || busy} className={btnPrimary}>Bjóða</button>
+      </div>
+
+      {/* My outgoing offers */}
+      {outgoing.length > 0 && (
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">Mín boð</div>
+          <ul className="space-y-1.5">
+            {outgoing.map((sw) => (
+              <li key={sw.id} className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-slate-700">{fmtSwap(sw.shift)} · {sw.to_doctor ? `til ${docName(sw.to_doctor)}` : "á markaði"}</span>
+                <button onClick={() => swapAction(sw.id, "cancel")} disabled={busy} className={btnGhost}>Afturkalla</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Requests to me + market */}
+      {(incoming.length > 0 || market.length > 0) ? (
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">Í boði fyrir þig</div>
+          <ul className="space-y-1.5">
+            {incoming.map((sw) => (
+              <li key={sw.id} className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-slate-700">{fmtSwap(sw.shift)} · frá {docName(sw.from_doctor)}</span>
+                <span className="flex gap-2">
+                  <button onClick={() => swapAction(sw.id, "accept")} disabled={busy} className={btnPrimary}>Taka</button>
+                  <button onClick={() => swapAction(sw.id, "decline")} disabled={busy} className={btnGhost}>Hafna</button>
+                </span>
+              </li>
+            ))}
+            {market.map((sw) => (
+              <li key={sw.id} className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-slate-700">{fmtSwap(sw.shift)} · á markaði (frá {docName(sw.from_doctor)})</span>
+                <button onClick={() => swapAction(sw.id, "accept")} disabled={busy} className={btnPrimary}>Taka vakt</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p className="text-sm text-slate-400">Engar vaktir í boði fyrir þig núna.</p>
+      )}
+    </div>
+  );
+
+  const footNote = (
+    <p className="text-center text-xs text-slate-400">Skráðu fjölda sjúklinga eftir hverja vakt. Stjórnandi sér yfirlitið.</p>
+  );
+
+  // Two columns only where there is room for them. Swaps sit top-right, since
+  // that is the part with something to act on; the month list is a reference
+  // you scan, so it keeps the wider left column.
+  if (layout === "split") {
+    return (
+      <div className="grid gap-8 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          {header}
+          {stats}
+          {calendarBox}
+          {monthsBlock}
+          {footNote}
+        </div>
+        <aside className="space-y-6">
+          {swapsBlock}
+          {sidebar}
+        </aside>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {header}
+      {stats}
+      {calendarBox}
+      {monthsBlock}
+      {swapsBlock}
+      {footNote}
     </div>
   );
 }

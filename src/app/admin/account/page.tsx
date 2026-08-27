@@ -157,24 +157,26 @@ export default function AccountPage() {
       </div>
 
       {active === "vaktir" && (roster ? (
-        <div className="grid gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <DoctorShifts
-              token={roster.token}
-              doctorId={roster.doctorId}
-              doctorName={roster.doctorName}
-              initialShifts={roster.shifts}
-              doctors={roster.doctors}
-              initialSwaps={roster.swaps}
-              settings={roster.settings}
-              calendarUrl={roster.calendarUrl}
-            />
-          </div>
-          <aside className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Vaktaplan</h2>
-            <MonthSchedule myDoctorId={roster.doctorId} />
-          </aside>
-        </div>
+        // DoctorShifts owns the two-column split so the swap panel can sit
+        // top-right, beside the header, with the whole-team Vaktaplan below it
+        // — level with the month list it is there to be compared against.
+        <DoctorShifts
+          layout="split"
+          token={roster.token}
+          doctorId={roster.doctorId}
+          doctorName={roster.doctorName}
+          initialShifts={roster.shifts}
+          doctors={roster.doctors}
+          initialSwaps={roster.swaps}
+          settings={roster.settings}
+          calendarUrl={roster.calendarUrl}
+          sidebar={
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Vaktaplan</h2>
+              <MonthSchedule myDoctorId={roster.doctorId} />
+            </div>
+          }
+        />
       ) : (
         <section className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
           Þú ert ekki með vaktir. Vaktir birtast hér ef þú hefur hlutverkið „Læknir“.

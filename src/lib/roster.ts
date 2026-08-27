@@ -84,6 +84,25 @@ export function hhmm(t: string): string {
   return (t || "").slice(0, 5);
 }
 
+/** "10:00" → "10", but "10:30" stays "10:30". Whole hours are the normal case. */
+function shortHour(t: string): string {
+  const [h, m] = (t || "").split(":");
+  return m && m !== "00" ? `${Number(h)}:${m}` : String(Number(h));
+}
+
+/**
+ * Title of a shift as it appears in a calendar: "FL: 10-22".
+ *
+ * Shifts are written as ALL-DAY entries rather than a timed 10–22 block. A
+ * twelve-hour busy block swallows the whole day column and makes the rest of
+ * the calendar unreadable — and it is not true either: the doctor is on call
+ * for that window, not in a meeting for it. The hours live in the title, where
+ * they can be read at a glance without opening anything.
+ */
+export function shiftEventTitle(starts: string, ends: string): string {
+  return `FL: ${shortHour(starts)}-${shortHour(ends)}`;
+}
+
 /** Icelandic króna formatting: 3000 → "3.000 kr." */
 export function formatIsk(n: number, currency = "kr."): string {
   return `${Math.round(n).toLocaleString("de-DE")} ${currency}`;
