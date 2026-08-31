@@ -79,6 +79,10 @@ export default async function ErindiPage({ params, locale }: Params & { locale: 
   // Every other erindi, not the first six. They render as wrapping pills, so
   // the full list costs a row or two and saves a visitor guessing whether the
   // problem they came for is handled at all.
+  // Every visible erindi, current one included — the rail marks where you are.
+  const nav = localizeErindi(locale)
+    .filter((e) => erindiShown(thj, e.slug))
+    .map((e) => ({ slug: e.slug, title: erindiTitle(d.c, e.slug, e.title) }));
   const others = localizeErindi(locale)
     .filter((e) => e.slug !== slug && erindiShown(thj, e.slug))
     // Same resolver as the h1: a link that reads differently from the page it
@@ -119,6 +123,7 @@ export default async function ErindiPage({ params, locale }: Params & { locale: 
         suitable={d.suitable}
         refer={d.refer}
         others={others}
+        nav={nav}
         meds={medsCategories}
         // CMS line if one is set, otherwise the built-in translation — the
         // English content has no meds defaults, so the fallback has to stay.

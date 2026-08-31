@@ -3,6 +3,7 @@
 // while the text is being edited.
 
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { localeHref } from "@/lib/locale";
 import { ui } from "@/lib/site-content/ui-strings";
 import MedsList, { type MedCategory } from "../../thjonusta/MedsList";
@@ -19,6 +20,9 @@ export type ErindiViewProps = {
   suitable: string[];
   refer: string[];
   others: { slug: string; title: string }[];
+  /** Every visible erindi INCLUDING this one, for the side rail — the current
+   *  page has to be in the list to be marked as where you are. */
+  nav?: { slug: string; title: string }[];
   /** Medications that cannot be renewed — only the lyfjaendurnýjun page passes
    *  these. Same CMS fields the /thjonusta FAQ reads, so the list is written
    *  once and cannot drift between the two pages. */
@@ -204,6 +208,7 @@ export default function ErindiView({
   suitable,
   refer,
   others,
+  nav = [],
   meds = [],
   medsIntro = "",
   medsNote = "",
@@ -211,33 +216,101 @@ export default function ErindiView({
   linked = true,
 }: ErindiViewProps) {
   const t = ui(locale);
+
+  // A button, not a thin arrow: a bordered card with the arrow in a tinted chip
+  // and a hover state on the whole thing. It is the only way out of a long page,
+  // so it should look like something you press.
+  const backLabel = (
+    <>
+      <span
+        aria-hidden
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition-colors group-hover:bg-brand-cyan group-hover:text-white"
+      >
+        <ArrowLeft className="h-4 w-4" />
+      </span>
+      <span className="leading-tight">
+        <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-400">
+          {t.services}
+        </span>
+        <span className="block text-sm font-semibold text-slate-800">{t.backToServices}</span>
+      </span>
+    </>
+  );
+  const backShell =
+    "group flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left shadow-sm transition-colors hover:border-brand-cyan";
+  const backLink = linked ? (
+    <Link href={localeHref("/thjonusta#erindi", locale)} className={backShell}>
+      {backLabel}
+    </Link>
+  ) : (
+    // The CMS preview is not routed, so the control is shown but inert.
+    <span className={backShell}>{backLabel}</span>
+  );
+
   return (
     // Same container as <Band>, the navbar and the footer: max-w-7xl with the
     // same gutters, so this page's edges line up with /thjonusta instead of
     // sitting in a narrower column of its own. Reading measure is kept by
     // capping the text blocks inside, which is what /thjonusta does too.
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
-      {/* A back control, not a breadcrumb trail. The trail's only link was the
-          single word "Þjónusta", which reads as a label rather than a way out;
-          the second half just repeated the h1 directly beneath it. The page
-          still emits BreadcrumbList structured data either way. */}
-      <nav aria-label={t.breadcrumb} className="mb-6">
-        {linked ? (
-          <Link
-            // Back to the list of problems, not the top of the page. Landing on
-            // the hero means scrolling past it to find where you came from.
-            // Band carries scroll-mt-20, so the heading clears the sticky navbar.
-            href={localeHref("/thjonusta#erindi", locale)}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-600 transition-colors hover:border-brand-cyan hover:text-brand-cyan-dark"
-          >
-            <span aria-hidden>&larr;</span> {t.backToServices}
-          </Link>
-        ) : (
-          <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-500">
-            <span aria-hidden>&larr;</span> {t.backToServices}
-          </span>
-        )}
-      </nav>
+      {/* Rail beside the content rather than above it. The reading column is
+          capped for measure, which left the right third of a wide screen empty;
+          the list of problems belongs in that space, where it stays in view for
+          the whole page instead of being something you scroll back up to. */}
+      <div className="lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-12 xl:gap-16">
+        <aside className="hidden lg:block">
+          <div className="sticky top-24 space-y-6">
+            {backLink}
+            <nav aria-label={t.services}>
+              <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                {t.services}
+              </p>
+              <ul className="space-y-0.5">
+                {nav.map((n) => {
+                  const here = n.slug === slug;
+                  const inner = (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={`/erindi-icons/${n.slug}.png`} alt="" width={20} height={20}
+                        className={`h-5 w-5 shrink-0 object-contain ${here ? "" : "opacity-60 group-hover:opacity-100"}`} />
+                      <span className="leading-snug">{n.title}</span>
+                    </>
+                  );
+                  const shared = "flex items-start gap-2.5 rounded-lg px-3 py-2 text-sm";
+                  if (here) {
+                    return (
+                      <li key={n.slug}>
+                        {/* aria-current, not just a colour: the marker has to be
+                            available to a screen reader too. */}
+                        <span aria-current="page"
+                          className={`${shared} bg-cyan-50 font-semibold text-brand-cyan-dark`}>
+                          {inner}
+                        </span>
+                      </li>
+                    );
+                  }
+                  return (
+                    <li key={n.slug}>
+                      {linked ? (
+                        <Link href={localeHref(`/thjonusta/${n.slug}`, locale)}
+                          className={`${shared} group text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900`}>
+                          {inner}
+                        </Link>
+                      ) : (
+                        <span className={`${shared} group text-slate-600`}>{inner}</span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          </div>
+        </aside>
+
+        <div>
+          {/* The rail carries the back control on wide screens; on narrow ones
+              it is hidden, so the button rides above the heading instead. */}
+          <div className="mb-6 lg:hidden">{backLink}</div>
 
       <div className="flex max-w-3xl items-start gap-5">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -407,8 +480,10 @@ export default function ErindiView({
         )}
       </div>
 
+      {/* Hidden where the rail is showing: the same list twice on one screen is
+          noise. Below lg the rail is gone and this is the only way across. */}
       {others.length > 0 && (
-        <div className="mt-14">
+        <div className="mt-14 lg:hidden">
           <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500">{c.related_heading}</h2>
           <div className="mt-4 flex flex-wrap gap-2">
             {others.map((o) =>
@@ -432,6 +507,8 @@ export default function ErindiView({
           </div>
         </div>
       )}
+        </div>
+      </div>
     </section>
   );
 }

@@ -187,6 +187,10 @@ function ErindiPreview({
           slug: e.slug,
           title: erindiTitle(c, e.slug, locale === "en" ? e.titleEn : e.title),
         }))}
+        nav={ERINDI_LIST.filter((e) => erindiShown(thjonusta, e.slug)).map((e) => ({
+          slug: e.slug,
+          title: erindiTitle(c, e.slug, locale === "en" ? e.titleEn : e.title),
+        }))}
         locale={locale}
         meds={medsFor(slug, thjonusta)}
         medsIntro={medsFor(slug, thjonusta).length ? (thjonusta?.meds_intro?.trim() || ui(locale).medsIntro) : ""}
