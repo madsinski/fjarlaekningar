@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { erindi, localizeErindi } from "@/erindi";
 import { getPage, getPageContent } from "@/lib/site-content/server";
-import { ERINDI_WITH_MEDS, erindiKey, erindiPagesLive, erindiTitle } from "@/lib/site-content/erindi-pages";
+import { ERINDI_WITH_MEDS, erindiKey, erindiPagesLive, erindiTitle, erindiSeoTitleKey } from "@/lib/site-content/erindi-pages";
 import { erindiShown } from "@/lib/site-content/thjonusta";
 import { ui } from "@/lib/site-content/ui-strings";
 import type { Locale } from "@/lib/site-content/types";
@@ -49,12 +49,26 @@ export async function erindiMetadata({ params }: Params, locale: Locale): Promis
   const d = await load(slug, locale);
   // Switched off: tell crawlers to stay away even if someone has the URL.
   if (!d) return { title: "Erindi", robots: { index: false, follow: false } };
+  // The search title is written for the result page, so it already carries the
+  // brand and must not be run through the "%s — Fjarlækningar" template a
+  // second time. Falling back to the heading keeps older erindi working.
+  const seoTitle = d.c[erindiSeoTitleKey(slug)]?.trim();
+  const shareTitle = seoTitle || `${d.title} — Fjarlækningar`;
+
   return {
-    title: d.title,
+    title: seoTitle ? { absolute: `${seoTitle} | Fjarlækningar` } : d.title,
     description: d.lead.slice(0, 160),
     alternates: alternatesFor(`/thjonusta/${slug}`, locale, d.enReady),
     ...(locale === "en" && !d.enReady ? { robots: { index: false, follow: true } } : {}),
-    openGraph: { title: `${d.title} — Fjarlækningar`, description: d.lead.slice(0, 200) },
+    openGraph: {
+      title: shareTitle,
+      description: d.lead.slice(0, 200),
+      url: `${SITE_URL}${localeHref(`/thjonusta/${slug}`, locale)}`,
+      type: "article",
+      // Setting openGraph at all replaces the parent's, images included — which
+      // is why every erindi page was sharing with no picture at all.
+      images: [{ url: `${SITE_URL}/og-fjarlaekningar.png`, width: 1200, height: 630 }],
+    },
   };
 }
 

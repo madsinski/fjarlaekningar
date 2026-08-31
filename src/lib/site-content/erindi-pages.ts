@@ -24,6 +24,17 @@ export const erindiKey = (slug: string) => slug.replace(/-/g, "_");
 export const erindiTitleKey = (slug: string) => `${erindiKey(slug)}_title`;
 
 /**
+ * CMS key for the page's SEO title — the line Google prints, which is not the
+ * same job as the heading on the page.
+ *
+ * The heading names the problem and nothing else, because a reader already
+ * knows why they are there. The search result has to win a click from someone
+ * scanning ten of them, and has to contain the words they typed. "Frunsa" is
+ * the right heading and a wasted title.
+ */
+export const erindiSeoTitleKey = (slug: string) => `${erindiKey(slug)}_seotitle`;
+
+/**
  * An erindi's heading: the CMS value if one is set, otherwise the code string.
  *
  * Every surface that prints an erindi title goes through here — the page's own
@@ -278,6 +289,13 @@ export const ERINDI_FIELDS: SiteField[] = [
       help: "Fyrirsögn síðunnar. Sama heiti birtist á kortunum á /thjonusta og forsíðunni, svo þau haldist í takt.",
     },
     {
+      key: erindiSeoTitleKey(e.slug),
+      label: `${e.title} — titill í Google`,
+      group: e.title,
+      type: "text",
+      help: "Birtist EKKI á síðunni — þetta er línan sem Google sýnir efst í leitarniðurstöðunni. Hafðu orðið sem fólk slær inn fremst og haltu þér undir 60 stöfum, annars styttir Google hana.",
+    },
+    {
       key: `${erindiKey(e.slug)}_lead`,
       label: `${e.title} — inngangur`,
       group: e.title,
@@ -356,6 +374,35 @@ export const ERINDI_DEFAULTS_IS: LocaleContent = {
       [`${erindiKey(e.slug)}_refer`, DRAFT_REFER[e.slug] ?? ""],
     ]),
   ),
+
+  // Search titles and meta descriptions. Neither appears on the page: the
+  // heading names the problem, these have to win the click.
+  [erindiSeoTitleKey("kvef-hosti-halsbolga")]: "Hálsbólga, kvef og hósti — mat og meðferð",
+  [`${erindiKey("kvef-hosti-halsbolga")}_lead`]: "Hálsbólga, kvef eða hósti? Læknir metur einkennin og svarar innan tveggja klukkustunda. Strep- eða CRP-heimapróf notað ef þarf. Opið alla daga 10–22.",
+  [erindiSeoTitleKey("thvagfaera-leggangasykingar")]: "Þvagfærasýking, blöðrubólga og sveppasýking",
+  [`${erindiKey("thvagfaera-leggangasykingar")}_lead`]: "Þvagfærasýking, blöðrubólga eða sveppasýking í leggöngum. Læknir metur einkennin og sendir lyfseðil rafrænt ef við á. Svar innan tveggja klukkustunda.",
+  [erindiSeoTitleKey("getnadarvorn")]: "Getnaðarvörn og pillan — lyfseðill á netinu",
+  [`${erindiKey("getnadarvorn")}_lead`]: "Fáðu getnaðarvörn á netinu — fyrsta ávísun, endurnýjun eða breyting. Læknir metur málið og sendir lyfseðil í lyfjagátt. Svar innan tveggja klukkustunda.",
+  [erindiSeoTitleKey("frjokornaofnaemi")]: "Frjókornaofnæmi — einkenni og ofnæmislyf",
+  [`${erindiKey("frjokornaofnaemi")}_lead`]: "Frjókornaofnæmi: hnerri, nefrennsli og kláði í augum. Læknir metur einkennin og leggur til ofnæmislyf. Svar innan tveggja klukkustunda, alla daga 10–22.",
+  [erindiSeoTitleKey("frunsa")]: "Frunsa og áblástur — meðferð við frunsu",
+  [`${erindiKey("frunsa")}_lead`]: "Frunsa eða áblástur á vör? Veiruhamlandi meðferð virkar best strax við fyrstu einkenni. Læknir metur málið og svarar innan tveggja klukkustunda.",
+  [erindiSeoTitleKey("ristill")]: "Ristill — einkenni og meðferð",
+  [`${erindiKey("ristill")}_lead`]: "Ristill veldur sársaukafullum blöðruútbrotum. Meðferð skilar mestum árangri snemma. Læknir metur einkennin og svarar innan tveggja klukkustunda.",
+  [erindiSeoTitleKey("hudvandamal-utbrot")]: "Húðvandamál og útbrot — exem og psoriasis",
+  [`${erindiKey("hudvandamal-utbrot")}_lead`]: "Exem, psoriasis, unglingabólur, sveppasýkingar og útbrot. Þú sendir mynd með erindinu og læknir metur húðina. Svar innan tveggja klukkustunda.",
+  [erindiSeoTitleKey("augnsykingar-augnlokavandamal")]: "Tárubólga, vogrís og augnsýking — meðferð",
+  [`${erindiKey("augnsykingar-augnlokavandamal")}_lead`]: "Tárubólga, vogrís, hvarmabólga og önnur væg augnvandamál. Þú sendir mynd og læknir metur augað. Svar innan tveggja klukkustunda, alla daga 10–22.",
+  [erindiSeoTitleKey("risvandamal")]: "Risvandamál og stinningarvandi — meðferð",
+  [`${erindiKey("risvandamal")}_lead`]: "Risvandamál eru algeng og oftast meðhöndlanleg. Læknir metur orsakir og möguleika á meðferð, í trúnaði. Svar innan tveggja klukkustunda.",
+  [erindiSeoTitleKey("njalgur")]: "Njálgur — einkenni og meðferð",
+  [`${erindiKey("njalgur")}_lead`]: "Njálgur veldur kláða við endaþarm sem versnar á nóttunni. Læknir metur málið og leggur til meðferð fyrir alla á heimilinu. Svar innan tveggja klukkustunda.",
+  [erindiSeoTitleKey("lyfjuendurnyjun")]: "Endurnýjun lyfseðils á netinu",
+  [`${erindiKey("lyfjuendurnyjun")}_lead`]: "Endurnýjaðu fastan lyfseðil á netinu. Læknir fer yfir beiðnina og sendir lyfseðil rafrænt í lyfjagátt. Svar innan tveggja klukkustunda, alla daga 10–22.",
+  [erindiSeoTitleKey("laeknisvottord")]: "Læknisvottorð og veikindavottorð á netinu",
+  [`${erindiKey("laeknisvottord")}_lead`]: "Veikindavottorð fyrir vinnu eða skóla vegna erindis sem hefur verið afgreitt hjá Fjarlækningum. Læknir gefur vottorðið út rafrænt.",
+  [erindiSeoTitleKey("almenn-laeknisthjonusta")]: "Almenn læknisþjónusta — spurðu lækni á netinu",
+  [`${erindiKey("almenn-laeknisthjonusta")}_lead`]: "Ertu með erindi sem fellur ekki undir neinn flokk? Lýstu því með þínum orðum og læknir metur málið. Svar innan tveggja klukkustunda, alla daga 10–22.",
 };
 
 export const ERINDI_DEFAULTS_EN: LocaleContent = {
@@ -682,6 +729,34 @@ export const ERINDI_DEFAULTS_EN: LocaleContent = {
     [erindiTitleKey(e.slug), e.titleEn],
     [`${erindiKey(e.slug)}_lead`, e.descriptionEn],
   ])),
+
+  // Search titles and meta descriptions, English side.
+  [erindiSeoTitleKey("kvef-hosti-halsbolga")]: "Sore throat, cold and cough — treatment",
+  [`${erindiKey("kvef-hosti-halsbolga")}_lead`]: "Sore throat, cold or cough? A doctor assesses your symptoms and answers within two hours. Strep or CRP home test used if needed. Open daily 10–22.",
+  [erindiSeoTitleKey("thvagfaera-leggangasykingar")]: "Urinary tract infection, cystitis and thrush",
+  [`${erindiKey("thvagfaera-leggangasykingar")}_lead`]: "Urinary tract infection, cystitis or vaginal thrush. A doctor assesses your symptoms and sends a prescription electronically if appropriate.",
+  [erindiSeoTitleKey("getnadarvorn")]: "Contraception and the pill online",
+  [`${erindiKey("getnadarvorn")}_lead`]: "Contraception online — first prescription, renewal or a change. A doctor reviews your case and sends the prescription electronically.",
+  [erindiSeoTitleKey("frjokornaofnaemi")]: "Hay fever — symptoms and allergy medication",
+  [`${erindiKey("frjokornaofnaemi")}_lead`]: "Hay fever: sneezing, a runny nose and itchy eyes. A doctor assesses your symptoms and suggests allergy medication. Answer within two hours.",
+  [erindiSeoTitleKey("frunsa")]: "Cold sores — treatment and advice",
+  [`${erindiKey("frunsa")}_lead`]: "A cold sore on the lip? Antiviral treatment works best at the very first symptoms. A doctor reviews your case and answers within two hours.",
+  [erindiSeoTitleKey("ristill")]: "Shingles — symptoms and treatment",
+  [`${erindiKey("ristill")}_lead`]: "Shingles causes a painful, blistering rash. Treatment works best when started early. A doctor assesses your symptoms and answers within two hours.",
+  [erindiSeoTitleKey("hudvandamal-utbrot")]: "Skin problems — eczema, psoriasis and rashes",
+  [`${erindiKey("hudvandamal-utbrot")}_lead`]: "Eczema, psoriasis, acne, fungal infections and rashes. You send a photograph with your request and a doctor assesses the skin. Answer within two hours.",
+  [erindiSeoTitleKey("augnsykingar-augnlokavandamal")]: "Conjunctivitis, styes and eye infections",
+  [`${erindiKey("augnsykingar-augnlokavandamal")}_lead`]: "Conjunctivitis, styes, blepharitis and other mild eye problems. You send a photograph and a doctor assesses the eye. Answer within two hours.",
+  [erindiSeoTitleKey("risvandamal")]: "Erectile problems — assessment and treatment",
+  [`${erindiKey("risvandamal")}_lead`]: "Erectile problems are common and usually treatable. A doctor assesses the causes and the treatment options, in confidence. Answer within two hours.",
+  [erindiSeoTitleKey("njalgur")]: "Threadworm — symptoms and treatment",
+  [`${erindiKey("njalgur")}_lead`]: "Threadworm causes itching around the anus that is worse at night. A doctor reviews your case and suggests treatment for the whole household.",
+  [erindiSeoTitleKey("lyfjuendurnyjun")]: "Prescription renewal online",
+  [`${erindiKey("lyfjuendurnyjun")}_lead`]: "Renew a regular prescription online. A doctor reviews the request and sends the prescription electronically. Answer within two hours, daily 10–22.",
+  [erindiSeoTitleKey("laeknisvottord")]: "Medical and sick notes online",
+  [`${erindiKey("laeknisvottord")}_lead`]: "A sick note for work or school, for a case that has been handled by Fjarlaekningar. The doctor issues the certificate electronically.",
+  [erindiSeoTitleKey("almenn-laeknisthjonusta")]: "General medical advice — ask a doctor online",
+  [`${erindiKey("almenn-laeknisthjonusta")}_lead`]: "Have something that fits no category? Describe it in your own words and a doctor will assess it. Answer within two hours, open daily 10–22.",
 };
 
 /** Are the pages switched on? Anything but "on" keeps them dark. */
