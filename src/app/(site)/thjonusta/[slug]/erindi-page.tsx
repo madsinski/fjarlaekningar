@@ -76,9 +76,11 @@ export default async function ErindiPage({ params, locale }: Params & { locale: 
       ].filter((m) => m.title)
     : [];
   const thj = await getPageContent("thjonusta", locale);
+  // Every other erindi, not the first six. They render as wrapping pills, so
+  // the full list costs a row or two and saves a visitor guessing whether the
+  // problem they came for is handled at all.
   const others = localizeErindi(locale)
     .filter((e) => e.slug !== slug && erindiShown(thj, e.slug))
-    .slice(0, 6)
     // Same resolver as the h1: a link that reads differently from the page it
     // opens is the drift this was all meant to prevent.
     .map((e) => ({ slug: e.slug, title: erindiTitle(d.c, e.slug, e.title) }));

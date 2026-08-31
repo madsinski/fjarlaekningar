@@ -46,7 +46,10 @@ const erindiToggleDefaults = (): LocaleContent =>
   Object.fromEntries(erindi.map((e) => [erindiOnKey(e.slug), "on"]));
 
 /** Is this erindi shown? Absent counts as shown. */
-export const erindiShown = (c: LocaleContent, slug: string): boolean => c[erindiOnKey(slug)] !== "off";
+// Absent content means shown, the same rule as an absent switch — a caller
+// without the Þjónusta blob to hand should not silently hide every erindi.
+export const erindiShown = (c: LocaleContent | null | undefined, slug: string): boolean =>
+  c?.[erindiOnKey(slug)] !== "off";
 
 /** The erindi slugs hidden in the Þjónusta CMS, for the surfaces that list them. */
 export const hiddenErindiSlugs = (c: LocaleContent): string[] =>

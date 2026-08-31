@@ -18,6 +18,7 @@ import IconPicker from "../IconPicker";
 import ErindiView, { erindiLines } from "@/app/(site)/thjonusta/[slug]/ErindiView";
 import { erindi as ERINDI_LIST } from "@/erindi";
 import { ERINDI_WITH_MEDS, erindiKey, erindiTitle } from "@/lib/site-content/erindi-pages";
+import { erindiShown } from "@/lib/site-content/thjonusta";
 import { ui } from "@/lib/site-content/ui-strings";
 import { pressItems } from "@/lib/site-content/fjolmidlar";
 import { SEO_LIMITS } from "@/lib/site-content/seo";
@@ -179,7 +180,10 @@ function ErindiPreview({
         advice={c[`${k}_advice`] ?? ""}
         suitable={erindiLines(c[`${k}_suitable`])}
         refer={erindiLines(c[`${k}_refer`])}
-        others={ERINDI_LIST.filter((e) => e.slug !== slug).slice(0, 6).map((e) => ({
+        // Mirrors the live page: every other erindi, minus any switched off in
+        // the Þjónusta CMS. The chip row above deliberately still lists the
+        // hidden ones — you have to be able to open one to edit it.
+        others={ERINDI_LIST.filter((e) => e.slug !== slug && erindiShown(thjonusta, e.slug)).map((e) => ({
           slug: e.slug,
           title: erindiTitle(c, e.slug, locale === "en" ? e.titleEn : e.title),
         }))}
