@@ -1253,6 +1253,16 @@ export default function SiteContentEditor() {
                         disabled={!isAdmin}
                         fallback={page.defaultsIs[f.key] ?? ""}
                       />
+                    ) : f.type === "value" ? (
+                      // A URL, an e-mail, coordinates, a person's name: one
+                      // value for both locales, and never asked for in English.
+                      <input
+                        value={draft.is?.[f.key] ?? ""}
+                        placeholder={page.defaultsIs[f.key] ?? ""}
+                        disabled={!isAdmin}
+                        onChange={(e) => setField("is", f.key, e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-cyan-200 outline-none disabled:bg-slate-50"
+                      />
                     ) : f.type === "image" ? (
                       // Photos are a single, locale-independent value, like icons.
                       <ImageField

@@ -43,10 +43,10 @@ export const CHROME_FIELDS: SiteField[] = [
   { key: "footer_legal_heading", label: "Fyrirsögn — Lögfræði", group: "Fótur", type: "text" },
 
   // Footer — contact lines
-  { key: "footer_company", label: "Fyrirtæki", group: "Fótur", type: "text" },
-  { key: "footer_address", label: "Heimilisfang", group: "Fótur", type: "textarea" },
+  { key: "footer_company", label: "Fyrirtæki", group: "Fótur", type: "value" },
+  { key: "footer_address", label: "Heimilisfang", group: "Fótur", type: "value" },
   { key: "footer_country", label: "Land", group: "Fótur", type: "text" },
-  { key: "footer_email", label: "Netfang", group: "Fótur", type: "text" },
+  { key: "footer_email", label: "Netfang", group: "Fótur", type: "value" },
 
   // Footer — bottom bar
   { key: "footer_rights", label: "Réttindi (á eftir ártali)", group: "Fótur — neðst", type: "text" },

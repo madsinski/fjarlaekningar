@@ -200,9 +200,10 @@ export const HOME_DEFAULTS_IS: LocaleContent = {
 };
 
 // English starts empty — Mads translates (or uses the Þýða button).
-export const HOME_DEFAULTS_EN: LocaleContent = Object.fromEntries(
-  HOME_FIELDS.map((f) => [f.key, ""]),
-);
+export const HOME_DEFAULTS_EN: LocaleContent = {
+  ...Object.fromEntries(HOME_FIELDS.map((f) => [f.key, ""])),
+  team_cta: "Meet the team",
+};
 
 /**
  * Flatten a stored { is, en } blob for one locale (locale → Icelandic → default).

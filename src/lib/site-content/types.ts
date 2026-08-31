@@ -11,6 +11,9 @@ export type FieldType =
   | "icon"      // value is a key from ICON_KEYS (see icons.ts)
   | "image"     // value is an image URL/path; one locale-independent value
   | "choice"    // value is one of `options`; one locale-independent value
+  | "value"     // same in every language — a URL, an e-mail, coordinates, a
+                // person's name. Editable once, and never counted as an
+                // untranslated string.
   | "internal"; // bookkeeping owned by a custom editor: never auto-rendered,
                 // never translated, one locale-independent value
 

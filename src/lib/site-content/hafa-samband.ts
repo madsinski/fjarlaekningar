@@ -25,7 +25,7 @@ export const HAFA_SAMBAND_FIELDS: SiteField[] = [
   // Card 2 — general enquiries
   { key: "card2_heading", label: "Titill", group: "Almennar fyrirspurnir", type: "text" },
   { key: "card2_body", label: "Texti", group: "Almennar fyrirspurnir", type: "textarea" },
-  { key: "card2_email", label: "Netfang", group: "Almennar fyrirspurnir", type: "text" },
+  { key: "card2_email", label: "Netfang", group: "Almennar fyrirspurnir", type: "value" },
   { key: "card2_faq_label", label: "Hlekkur á algengar spurningar", group: "Almennar fyrirspurnir", type: "text", help: "Birtist sem hlekkur á /thjonusta#faq. Tómur reitur felur hlekkinn." },
   { key: "card2_icon", label: "Tákn", group: "Almennar fyrirspurnir", type: "icon" },
 

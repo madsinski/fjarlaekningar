@@ -172,7 +172,13 @@ export function englishCoverage(key: string, blob: SiteContentBlob | null | unde
     .filter((f) => TRANSLATABLE.includes(f.type))
     .filter((f) => has(blob?.is?.[f.key]) || has(page.defaultsIs[f.key]));
   if (!written.length) return 1;
-  const translated = written.filter((f) => has(blob?.en?.[f.key]) || has(page.defaultsEn[f.key]));
+  // Mirrors resolveFields exactly: a stored Icelandic value is consulted BEFORE
+  // the English default, so a field with both renders Icelandic. Counting the
+  // unreachable default as a translation over-reported coverage and could send
+  // a page over the indexing threshold while parts of it were still Icelandic.
+  const translated = written.filter(
+    (f) => has(blob?.en?.[f.key]) || (!has(blob?.is?.[f.key]) && has(page.defaultsEn[f.key])),
+  );
   return translated.length / written.length;
 }
 

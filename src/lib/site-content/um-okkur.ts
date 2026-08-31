@@ -132,7 +132,8 @@ const teamMemberFields: SiteField[] = Array.from({ length: TEAM_MEMBER_SLOTS }, 
   const i = k + 1;
   const group = `Teymi — meðlimur ${i}`;
   return [
-    { key: `t${i}_name`, label: "Nafn", group, type: "text", editor: "team-members" },
+    // A person's name is not translated.
+    { key: `t${i}_name`, label: "Nafn", group, type: "value", editor: "team-members" },
     { key: `t${i}_role`, label: "Titill", group, type: "text", editor: "team-members" },
     { key: `t${i}_flag`, label: "Merki (t.d. Stofnandi)", group, type: "text", editor: "team-members" },
     { key: `t${i}_photo`, label: "Mynd", group, type: "image", editor: "team-members" },
