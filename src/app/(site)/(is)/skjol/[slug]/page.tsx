@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { renderMarkdown } from "@/lib/markdown";
+import { SITE_URL } from "@/lib/seo";
 
 // Public renderer for PUBLISHED legal documents. Fetches straight from
 // Supabase PostgREST with the anon key (RLS allows anon to read only
@@ -34,7 +35,25 @@ async function getDoc(slug: string): Promise<PublicDoc | null> {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const doc = await getDoc(slug);
-  return { title: doc ? `${doc.title} — Fjarlækningar ehf.` : "Skjal fannst ekki" };
+  if (!doc) return { title: "Skjal fannst ekki", robots: { index: false, follow: true } };
+
+  // First real sentences of the document, as its own description. It used to
+  // have none, so it inherited the site default and described itself in exactly
+  // the words the front page uses.
+  const plain = doc.body
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/[#>*_`|-]/g, " ")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return {
+    // Absolute: the title already reads as a full document name, and the
+    // site-wide " — Fjarlækningar" template made it eighty-one characters.
+    title: { absolute: `${doc.title} — Fjarlækningar` },
+    description: plain.slice(0, 155) || `${doc.title} hjá Fjarlækningum.`,
+    alternates: { canonical: `${SITE_URL}/skjol/${slug}` },
+  };
 }
 
 export default async function PublicLegalDoc({ params }: { params: Promise<{ slug: string }> }) {

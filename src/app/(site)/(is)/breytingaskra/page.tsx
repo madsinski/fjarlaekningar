@@ -1,12 +1,24 @@
 import type { Metadata } from "next";
 import { renderMarkdown } from "@/lib/markdown";
+import { SITE_URL } from "@/lib/seo";
 
 // Public changelog / version history. Anon-key fetch (RLS allows anyone to
 // read every release row).
 
 
+// The root template already appends " — Fjarlækningar", so naming the company
+// here produced "Útgáfusaga — Fjarlækningar ehf. — Fjarlækningar": eighty-one
+// characters, the brand twice, and cut off in the result.
+//
+// The description matters more than it looks. Without one the page inherited the
+// site-wide default, so this page and the front page described themselves with
+// the same sentence — and a page whose description is a copy of another page's,
+// with no canonical of its own, is one Google is entitled to leave out.
 export const metadata: Metadata = {
-  title: "Útgáfusaga — Fjarlækningar ehf.",
+  title: "Útgáfusaga",
+  description:
+    "Breytingaskrá Fjarlækninga: nýjungar, lagfæringar og uppfærslur á þjónustunni, í tímaröð.",
+  alternates: { canonical: `${SITE_URL}/breytingaskra` },
 };
 
 interface Release {
