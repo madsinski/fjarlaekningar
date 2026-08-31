@@ -212,18 +212,31 @@ export default function ErindiView({
 }: ErindiViewProps) {
   const t = ui(locale);
   return (
-    <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
-      <nav aria-label={t.breadcrumb} className="text-sm text-slate-500 mb-6">
+    // Same container as <Band>, the navbar and the footer: max-w-7xl with the
+    // same gutters, so this page's edges line up with /thjonusta instead of
+    // sitting in a narrower column of its own. Reading measure is kept by
+    // capping the text blocks inside, which is what /thjonusta does too.
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
+      {/* A back control, not a breadcrumb trail. The trail's only link was the
+          single word "Þjónusta", which reads as a label rather than a way out;
+          the second half just repeated the h1 directly beneath it. The page
+          still emits BreadcrumbList structured data either way. */}
+      <nav aria-label={t.breadcrumb} className="mb-6">
         {linked ? (
-          <Link href={localeHref("/thjonusta", locale)} className="hover:text-slate-700">{t.services}</Link>
+          <Link
+            href={localeHref("/thjonusta", locale)}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-600 transition-colors hover:border-brand-cyan hover:text-brand-cyan-dark"
+          >
+            <span aria-hidden>&larr;</span> {t.backToServices}
+          </Link>
         ) : (
-          <span>{t.services}</span>
+          <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-500">
+            <span aria-hidden>&larr;</span> {t.backToServices}
+          </span>
         )}
-        <span className="mx-2 text-slate-300">/</span>
-        <span className="text-slate-700">{title}</span>
       </nav>
 
-      <div className="flex items-start gap-5">
+      <div className="flex max-w-3xl items-start gap-5">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={`/erindi-icons/${slug}.png`} alt="" width={72} height={72} className="w-18 h-18 shrink-0 object-contain" />
         <div>
@@ -237,17 +250,17 @@ export default function ErindiView({
           no separate one-line summary above it. `lead` still exists, but only
           as the search-result snippet. */}
       {erindiParagraphs(about).length > 0 ? (
-        <div className="mt-5 space-y-4">
+        <div className="mt-5 max-w-3xl space-y-4">
           {erindiParagraphs(about).map((para) => (
             <p key={para.slice(0, 40)} className="text-lg text-slate-600 leading-relaxed">{para}</p>
           ))}
         </div>
       ) : (
-        <p className="mt-5 text-lg text-slate-600 leading-relaxed">{lead}</p>
+        <p className="mt-5 max-w-3xl text-lg text-slate-600 leading-relaxed">{lead}</p>
       )}
 
       {suitable.length > 0 && (
-        <div className="mt-12 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
+        <div className="mt-12 max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
           <h2 className="text-xl font-bold text-slate-900">{c.suitable_heading}</h2>
           <ul className="mt-4 space-y-2.5">
             {suitable.map((line) => (
@@ -264,7 +277,7 @@ export default function ErindiView({
         <div className="mt-12">
           <h2 className="text-xl font-bold text-slate-900">{c.selftest_heading}</h2>
           {c.selftest_body && <p className="mt-3 text-slate-600 leading-relaxed">{c.selftest_body}</p>}
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {selfTests(selftest).map((t) => (
               <div
                 key={t.title}
@@ -287,7 +300,7 @@ export default function ErindiView({
       )}
 
       {refer.length > 0 && (
-        <div className="mt-12 rounded-2xl border border-amber-200 bg-amber-50/60 p-6 sm:p-8">
+        <div className="mt-12 max-w-3xl rounded-2xl border border-amber-200 bg-amber-50/60 p-6 sm:p-8">
           <div className="flex items-center gap-2.5">
             <span aria-hidden className="text-lg leading-none text-amber-600">⚠</span>
             <h2 className="text-xl font-bold text-slate-900">{c.refer_heading}</h2>
@@ -310,7 +323,7 @@ export default function ErindiView({
       )}
 
       {adviceBlocks(advice).length > 0 && (
-        <div className="mt-12">
+        <div className="mt-12 max-w-3xl">
           <h2 className="text-xl font-bold text-slate-900">{c.advice_heading}</h2>
           <div className="mt-4 space-y-3">
             {adviceBlocks(advice).map((b, i) =>
@@ -365,7 +378,7 @@ export default function ErindiView({
           reading a page of it. The standing note stays at the bottom, directly
           above the ask. */}
       {c.note_body && (
-        <div className="mt-14 rounded-2xl border border-amber-200 bg-amber-50/40 p-5 sm:p-6">
+        <div className="mt-14 max-w-3xl rounded-2xl border border-amber-200 bg-amber-50/40 p-5 sm:p-6">
           <div className="flex items-center gap-2">
             <span aria-hidden className="text-base leading-none text-amber-600">⚠</span>
             <h2 className="text-base font-bold text-slate-900">{c.note_heading}</h2>
