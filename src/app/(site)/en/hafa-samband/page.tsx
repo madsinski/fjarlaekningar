@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import HafaSambandPage, { hafaSambandMetadata } from "../../hafa-samband/hafa-samband-page";
+import HafaSambandPage, { hafaSambandMetadata } from "../../(is)/hafa-samband/hafa-samband-page";
 
-export const dynamic = "force-dynamic";
 
 export function generateMetadata(): Promise<Metadata> {
   return hafaSambandMetadata("en");

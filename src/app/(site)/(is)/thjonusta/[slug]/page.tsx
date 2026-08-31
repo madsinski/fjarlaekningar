@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import ErindiPage, { erindiMetadata, type Params } from "../../../(is)/thjonusta/[slug]/erindi-page";
+import ErindiPage, { erindiMetadata, type Params } from "./erindi-page";
 import { erindi } from "@/erindi";
 
 // Prerender every erindi at build time. Without this the route stays dynamic and
@@ -10,9 +10,9 @@ export function generateStaticParams() {
 }
 
 export function generateMetadata(props: Params): Promise<Metadata> {
-  return erindiMetadata(props, "en");
+  return erindiMetadata(props, "is");
 }
 
 export default function Page(props: Params) {
-  return <ErindiPage {...props} locale="en" />;
+  return <ErindiPage {...props} locale="is" />;
 }

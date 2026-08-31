@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import ThjonustaPage, { thjonustaMetadata } from "../../thjonusta/thjonusta-page";
+import ThjonustaPage, { thjonustaMetadata } from "../../(is)/thjonusta/thjonusta-page";
 
-export const dynamic = "force-dynamic";
 
 export function generateMetadata(): Promise<Metadata> {
   return thjonustaMetadata("en");

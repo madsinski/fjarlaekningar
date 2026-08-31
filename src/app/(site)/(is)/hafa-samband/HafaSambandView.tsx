@@ -1,9 +1,9 @@
 import Link from "next/link";
-import PortalButton from "../../components/PortalButton";
-import NewsletterInline from "../../components/NewsletterInline";
+import PortalButton from "../../../components/PortalButton";
+import NewsletterInline from "../../../components/NewsletterInline";
 import SiteIcon from "@/lib/site-content/SiteIcon";
-import PageHero from "../PageHero";
-import Band from "../Band";
+import PageHero from "../../PageHero";
+import Band from "../../Band";
 import { HAFA_SAMBAND_SECTIONS } from "@/lib/site-content/hafa-samband";
 import { resolveOrder, type Locale, type LocaleContent } from "@/lib/site-content/types";
 import { localeHref } from "@/lib/locale";

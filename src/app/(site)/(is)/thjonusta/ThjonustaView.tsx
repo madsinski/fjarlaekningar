@@ -1,10 +1,10 @@
-import PortalButton from "../../components/PortalButton";
+import PortalButton from "../../../components/PortalButton";
 import FaqSection, { type FaqItem, type MedCategory } from "./FaqSection";
-import PageHero from "../PageHero";
-import Band from "../Band";
-import Screenshot from "../Screenshot";
+import PageHero from "../../PageHero";
+import Band from "../../Band";
+import Screenshot from "../../Screenshot";
 import Link from "next/link";
-import { erindiDescKey, localizeErindi } from "../../../erindi";
+import { erindiDescKey, localizeErindi } from "../../../../erindi";
 import { erindiTitle } from "@/lib/site-content/erindi-pages";
 import SiteIcon from "@/lib/site-content/SiteIcon";
 import { renderHighlighted } from "@/lib/site-content/highlight";

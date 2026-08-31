@@ -6,23 +6,23 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, Eye, EyeOff, Globe2, Languages, Send, Check, ExternalLink, ArrowUp, ArrowDown, GripVertical, RotateCcw, Copy, Trash2, Plus, ChevronDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import HomeView from "@/app/(site)/HomeView";
-import ThjonustaView from "@/app/(site)/thjonusta/ThjonustaView";
-import UmOkkurView from "@/app/(site)/um-okkur/UmOkkurView";
-import HafaSambandView from "@/app/(site)/hafa-samband/HafaSambandView";
+import ThjonustaView from "@/app/(site)/(is)/thjonusta/ThjonustaView";
+import UmOkkurView from "@/app/(site)/(is)/um-okkur/UmOkkurView";
+import HafaSambandView from "@/app/(site)/(is)/hafa-samband/HafaSambandView";
 import Navbar from "@/app/components/Navbar";
 import { getSitePage, resolveContent, resolveSections, sectionsOf } from "@/lib/site-content/registry";
 import type { Locale, LocaleContent, SiteContentBlob, SiteFieldOption } from "@/lib/site-content/types";
 import { TEAM_MEMBER_SLOTS, TEAM_ROSTER_GROUP, teamSize } from "@/lib/site-content/um-okkur";
 import IconPicker from "../IconPicker";
 
-import ErindiView, { erindiLines } from "@/app/(site)/thjonusta/[slug]/ErindiView";
+import ErindiView, { erindiLines } from "@/app/(site)/(is)/thjonusta/[slug]/ErindiView";
 import { erindi as ERINDI_LIST } from "@/erindi";
 import { ERINDI_WITH_MEDS, erindiKey, erindiTitle } from "@/lib/site-content/erindi-pages";
 import { erindiShown } from "@/lib/site-content/thjonusta";
 import { ui } from "@/lib/site-content/ui-strings";
 import { pressItems } from "@/lib/site-content/fjolmidlar";
 import { SEO_LIMITS } from "@/lib/site-content/seo";
-import PressList from "@/app/(site)/fjolmidlar/PressList";
+import PressList from "@/app/(site)/(is)/fjolmidlar/PressList";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 

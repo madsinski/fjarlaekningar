@@ -4,7 +4,6 @@ import { renderMarkdown } from "@/lib/markdown";
 // Public changelog / version history. Anon-key fetch (RLS allows anyone to
 // read every release row).
 
-export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Útgáfusaga — Fjarlækningar ehf.",

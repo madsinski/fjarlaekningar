@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { localeHref } from "@/lib/locale";
 import { ui } from "@/lib/site-content/ui-strings";
-import MedsList, { type MedCategory } from "../../thjonusta/MedsList";
+import MedsList, { type MedCategory } from "../MedsList";
 import type { Locale, LocaleContent } from "@/lib/site-content/types";
 
 export type ErindiViewProps = {

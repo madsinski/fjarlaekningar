@@ -6,7 +6,6 @@ import { renderMarkdown } from "@/lib/markdown";
 // Supabase PostgREST with the anon key (RLS allows anon to read only
 // status='published' rows), so no service-role key is exposed to the site.
 
-export const dynamic = "force-dynamic";
 
 interface PublicDoc {
   title: string;

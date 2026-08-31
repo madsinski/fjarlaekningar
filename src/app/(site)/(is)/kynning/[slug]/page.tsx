@@ -6,7 +6,6 @@ import PrintButton from "./PrintButton";
 // Public renderer for PUBLISHED presentations / printables. Anon-key fetch
 // (RLS restricts to status='published'). Print-friendly.
 
-export const dynamic = "force-dynamic";
 
 interface PublicItem {
   title: string;

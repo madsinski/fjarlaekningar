@@ -2,6 +2,7 @@
 // public site keeps rendering the previously-published content.
 
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
 import { pingIndexNow, urlsForPage } from "@/lib/indexnow";
@@ -26,6 +27,18 @@ export async function POST(req: Request, ctx: { params: Promise<{ page: string }
     .single();
 
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+
+  // The public pages are prerendered and revalidate on a timer, so without this
+  // an edit would sit invisible for up to a minute after you pressed Birta.
+  // Clearing the whole layout is deliberate: chrome (the header and footer) is
+  // itself a CMS page, and a nav label changing has to reach every route, not
+  // just the one being published.
+  try {
+    revalidatePath("/", "layout");
+  } catch {
+    // Revalidation failing must not make a successful publish report failure —
+    // the content is already saved either way, and the timer still catches it.
+  }
 
   // Tell IndexNow the page changed. Best-effort: a failure here must not make
   // a successful publish look like it failed.

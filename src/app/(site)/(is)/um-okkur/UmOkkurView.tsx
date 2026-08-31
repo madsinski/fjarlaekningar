@@ -1,7 +1,7 @@
-import PortalButton from "../../components/PortalButton";
-import TeamGrid from "../../components/TeamGrid";
-import PageHero from "../PageHero";
-import Band from "../Band";
+import PortalButton from "../../../components/PortalButton";
+import TeamGrid from "../../../components/TeamGrid";
+import PageHero from "../../PageHero";
+import Band from "../../Band";
 import SiteIcon from "@/lib/site-content/SiteIcon";
 import { renderHighlighted, stripHighlight } from "@/lib/site-content/highlight";
 import {

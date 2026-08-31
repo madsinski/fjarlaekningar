@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { erindi } from "@/erindi";
-import { getPageContent, getLocale } from "@/lib/site-content/server";
+import { getPageContent } from "@/lib/site-content/server";
 import type { Locale } from "@/lib/site-content/types";
 import {
   organizationJsonLd,
@@ -10,7 +10,6 @@ import {
   SITE_DESCRIPTION,
   SITE_DESCRIPTION_EN,
   SITE_KEYWORDS,
-  SITE_KEYWORDS_EN,
   SITE_NAME,
   SITE_TITLE,
   SITE_TITLE_EN,
@@ -51,15 +50,24 @@ async function seoFacts(locale: Locale): Promise<SeoFacts> {
   };
 }
 
+/**
+ * Site-level defaults, in Icelandic.
+ *
+ * This used to call getLocale(), which reads headers() — and a root layout that
+ * reads the request makes every route in the application dynamic, including the
+ * marketing pages, which is why nothing was ever cached. Every /en page defines
+ * its own title, description and canonical, so nothing is lost by defaulting
+ * here; the entity described below (the company, its address) is Icelandic
+ * whichever page you are reading.
+ */
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocale();
-  const f = await seoFacts(locale);
-  const c = await getPageContent("seo", locale).catch(() => ({}) as Record<string, string>);
+  const f = await seoFacts("is");
+  const c = await getPageContent("seo", "is").catch(() => ({}) as Record<string, string>);
   const keywords = (c.seo_keywords ?? "")
     .split(",")
     .map((k) => k.trim())
     .filter(Boolean);
-  const fallbackKeywords = locale === "en" ? SITE_KEYWORDS_EN : SITE_KEYWORDS;
+  const fallbackKeywords = SITE_KEYWORDS;
 
   return {
     metadataBase: new URL(SITE_URL),
@@ -73,9 +81,9 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       type: "website",
       siteName: f.company,
-      locale: locale === "en" ? "en_GB" : "is_IS",
+      locale: "is_IS",
       // Per-page canonicals override this; it is only the site-level default.
-      url: locale === "en" ? `${SITE_URL}/en` : SITE_URL,
+      url: SITE_URL,
       title: f.title,
       description: f.description,
       images: [{ url: f.ogImage, width: 1200, height: 630, alt: f.title }],
@@ -99,10 +107,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getLocale();
-  const facts = await seoFacts(locale);
+  const facts = await seoFacts("is");
   return (
-    <html lang={locale} className={`${inter.variable} h-full antialiased`}>
+    // lang is the document default; /en sets lang on its own wrapper, since
+    // only this layout renders <html> and making it request-aware is the very
+    // thing that stopped the site being cacheable.
+    <html lang="is" className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
         {/* Organization + WebSite structured data: what lets Google show the
             logo next to the result. The company name, e-mail and address come
@@ -111,7 +121,7 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(
-              organizationJsonLd(erindi.map((e) => ({ title: e.title })), facts, locale),
+              organizationJsonLd(erindi.map((e) => ({ title: e.title })), facts, "is"),
             ),
           }}
         />

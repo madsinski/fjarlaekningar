@@ -9,7 +9,7 @@ import { HOME_SECTIONS } from "@/lib/site-content/home";
 import { resolveOrder, type LocaleContent } from "@/lib/site-content/types";
 import { ui } from "@/lib/site-content/ui-strings";
 import { localeHref } from "@/lib/locale";
-import { PressMeta } from "./fjolmidlar/PressList";
+import { PressMeta } from "./(is)/fjolmidlar/PressList";
 import type { PressItem } from "@/lib/site-content/fjolmidlar";
 
 // Presentational Home page. Renders from a resolved content map `c` so the same
