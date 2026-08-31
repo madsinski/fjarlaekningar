@@ -224,7 +224,10 @@ export default function ErindiView({
       <nav aria-label={t.breadcrumb} className="mb-6">
         {linked ? (
           <Link
-            href={localeHref("/thjonusta", locale)}
+            // Back to the list of problems, not the top of the page. Landing on
+            // the hero means scrolling past it to find where you came from.
+            // Band carries scroll-mt-20, so the heading clears the sticky navbar.
+            href={localeHref("/thjonusta#erindi", locale)}
             className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-600 transition-colors hover:border-brand-cyan hover:text-brand-cyan-dark"
           >
             <span aria-hidden>&larr;</span> {t.backToServices}
