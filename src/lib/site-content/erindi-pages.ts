@@ -34,6 +34,41 @@ export const erindiTitleKey = (slug: string) => `${erindiKey(slug)}_title`;
  */
 export const erindiSeoTitleKey = (slug: string) => `${erindiKey(slug)}_seotitle`;
 
+/** Who reviewed this page's medical content, and when. */
+export const erindiReviewerKey = (slug: string) => `${erindiKey(slug)}_reviewer`;
+export const erindiReviewedKey = (slug: string) => `${erindiKey(slug)}_reviewed`;
+
+export interface ErindiReview {
+  name: string;
+  credentials: string;
+  /** ISO date, as stored. */
+  date: string;
+}
+
+/**
+ * The clinical review shown on a page, or null.
+ *
+ * Both a name and a DATE are required, and the date is never shared: a review
+ * is of a particular text at a particular time, so one date covering every
+ * erindi would be false the moment one of them is edited. The name may fall
+ * back to the site-wide reviewer, since in practice the same doctor signs off
+ * most of them; the date may not.
+ *
+ * Returning null when either is missing is the point. An unreviewed page says
+ * nothing rather than implying a review that did not happen — this is the one
+ * field on the site where guessing would be a clinical claim.
+ */
+export function erindiReview(
+  c: Record<string, string> | null | undefined,
+  slug: string,
+): ErindiReview | null {
+  const date = c?.[erindiReviewedKey(slug)]?.trim();
+  if (!date) return null;
+  const name = c?.[erindiReviewerKey(slug)]?.trim() || c?.reviewer_name?.trim();
+  if (!name) return null;
+  return { name, credentials: c?.reviewer_credentials?.trim() ?? "", date };
+}
+
 /**
  * An erindi's heading: the CMS value if one is set, otherwise the code string.
  *
@@ -278,6 +313,20 @@ export const ERINDI_FIELDS: SiteField[] = [
   { key: "cta_body", label: "Ákall — texti", group: "Sameiginlegt", type: "textarea" },
   { key: "cta_label", label: "Ákall — hnappur", group: "Sameiginlegt", type: "text" },
   { key: "related_heading", label: "Fyrirsögn — önnur erindi", group: "Sameiginlegt", type: "text" },
+  {
+    key: "reviewer_name",
+    label: "Yfirferð — nafn læknis (sjálfgefið)",
+    group: "Sameiginlegt",
+    type: "value",
+    help: "Notað á öllum erindum sem hafa ekki sinn eigin lækni skráðan. Nafn birtist ekki fyrr en dagsetning yfirferðar hefur verið sett á erindið sjálft.",
+  },
+  {
+    key: "reviewer_credentials",
+    label: "Yfirferð — starfsheiti",
+    group: "Sameiginlegt",
+    type: "text",
+    help: "T.d. „sérfræðingur í heimilislækningum“. Birtist á eftir nafninu.",
+  },
 
   // Per erindi.
   ...erindi.flatMap((e): SiteField[] => [
@@ -287,6 +336,20 @@ export const ERINDI_FIELDS: SiteField[] = [
       group: e.title,
       type: "text",
       help: "Fyrirsögn síðunnar. Sama heiti birtist á kortunum á /thjonusta og forsíðunni, svo þau haldist í takt.",
+    },
+    {
+      key: erindiReviewedKey(e.slug),
+      label: `${e.title} — dagsetning yfirferðar`,
+      group: e.title,
+      type: "value",
+      help: "ÁÁÁÁ-MM-DD. Þetta er rofinn: sé reiturinn tómur birtist engin yfirferð, hvorki á síðunni né í leitarvélum. Settu dagsetninguna aðeins þegar læknir hefur raunverulega farið yfir textann.",
+    },
+    {
+      key: erindiReviewerKey(e.slug),
+      label: `${e.title} — læknir sem fór yfir`,
+      group: e.title,
+      type: "value",
+      help: "Aðeins ef annar en sjálfgefni læknirinn.",
     },
     {
       key: erindiSeoTitleKey(e.slug),

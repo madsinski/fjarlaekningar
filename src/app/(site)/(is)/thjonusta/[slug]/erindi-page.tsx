@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { erindi, localizeErindi } from "@/erindi";
 import { getPage, getPageContent } from "@/lib/site-content/server";
-import { ERINDI_WITH_MEDS, erindiKey, erindiPagesLive, erindiTitle, erindiSeoTitleKey } from "@/lib/site-content/erindi-pages";
+import { ERINDI_WITH_MEDS, erindiKey, erindiPagesLive, erindiTitle, erindiSeoTitleKey, erindiReview } from "@/lib/site-content/erindi-pages";
 import { erindiShown } from "@/lib/site-content/thjonusta";
 import { ui } from "@/lib/site-content/ui-strings";
 import type { Locale } from "@/lib/site-content/types";
@@ -103,6 +103,7 @@ export default async function ErindiPage({ params, locale }: Params & { locale: 
     // opens is the drift this was all meant to prevent.
     .map((e) => ({ slug: e.slug, title: erindiTitle(d.c, e.slug, e.title) }));
 
+  const review = erindiReview(d.c, slug);
   const url = (path: string) => `${SITE_URL}${localeHref(path, locale)}`;
   const jsonLd = {
     "@context": "https://schema.org",
@@ -112,6 +113,22 @@ export default async function ErindiPage({ params, locale }: Params & { locale: 
     url: url(`/thjonusta/${slug}`),
     inLanguage: locale,
     about: { "@type": "MedicalCondition", name: d.title },
+    // Who checked this, and when. The single strongest signal a medical page can
+    // carry: assistants and search engines both weigh clinical authorship, and
+    // an anonymous health page is indistinguishable from content marketing.
+    // Emitted only when both are recorded — claiming a review that did not
+    // happen would be worse than carrying none.
+    ...(review
+      ? {
+          reviewedBy: {
+            "@type": "Person",
+            name: review.name,
+            ...(review.credentials ? { jobTitle: review.credentials } : {}),
+          },
+          lastReviewed: review.date,
+          dateModified: review.date,
+        }
+      : {}),
     publisher: { "@id": `${SITE_URL}/#organization` },
     breadcrumb: {
       "@type": "BreadcrumbList",

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { localeHref } from "@/lib/locale";
 import { ui } from "@/lib/site-content/ui-strings";
+import { erindiReview } from "@/lib/site-content/erindi-pages";
 import MedsList, { type MedCategory } from "../MedsList";
 import type { Locale, LocaleContent } from "@/lib/site-content/types";
 
@@ -34,6 +35,22 @@ export type ErindiViewProps = {
   /** The CMS preview is not a routed page, so its links stay inert. */
   linked?: boolean;
 };
+
+const IS_MONTHS = [
+  "janúar", "febrúar", "mars", "apríl", "maí", "júní",
+  "júlí", "ágúst", "september", "október", "nóvember", "desember",
+];
+
+/** "2026-08-31" → "31. ágúst 2026" / "31 August 2026". */
+function formatReviewDate(iso: string, locale: Locale): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return iso;
+  if (locale === "en") {
+    const month = new Date(Date.UTC(y, m - 1, d)).toLocaleString("en-GB", { month: "long", timeZone: "UTC" });
+    return `${d} ${month} ${y}`;
+  }
+  return `${d}. ${IS_MONTHS[m - 1]} ${y}`;
+}
 
 /** Blank-line-separated prose → paragraphs. */
 export function erindiParagraphs(v?: string): string[] {
@@ -216,6 +233,7 @@ export default function ErindiView({
   linked = true,
 }: ErindiViewProps) {
   const t = ui(locale);
+  const review = erindiReview(c, slug);
 
   // A button, not a thin arrow: a bordered card with the arrow in a tinted chip
   // and a hover state on the whole thing. It is the only way out of a long page,
@@ -461,6 +479,20 @@ export default function ErindiView({
           </div>
           <p className="mt-2 text-sm leading-relaxed text-slate-700">{c.note_body}</p>
         </div>
+      )}
+
+      {/* Clinical review, when there is one. Under the text rather than badged at
+          the top: it is a statement about what you have just read, so it belongs
+          where you finish reading. Absent unless a doctor and a date are both
+          recorded — an unreviewed page says nothing rather than implying a
+          review that did not happen. */}
+      {review && (
+        <p className="mt-12 max-w-3xl border-t border-slate-200 pt-5 text-sm text-slate-500">
+          {t.reviewedBy} <span className="font-medium text-slate-700">{review.name}</span>
+          {review.credentials ? `, ${review.credentials}` : ""}
+          {" · "}
+          <time dateTime={review.date}>{formatReviewDate(review.date, locale)}</time>
+        </p>
       )}
 
       <div className="mt-14 rounded-3xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] p-8 sm:p-10 text-white">
