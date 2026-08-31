@@ -271,6 +271,7 @@ export const THJONUSTA_FIELDS: SiteField[] = [
   // Lyfjalisti — birtist þar sem {{lyfjalisti}} kemur fyrir í svari. Hver
   // flokkur verður að undirflokka-fellilista. Í lyfjareitunum táknar lína sem
   // byrjar á "# " undirfyrirsögn; aðrar línur eru lyf ("Virkt efni: sérlyf").
+  { key: "meds_intro", label: "Lyfjalisti — inngangslína (á erindissíðunni)", group: "Algengar spurningar", type: "text", help: "Línan fyrir ofan lyfjalistann á /thjonusta/lyfjuendurnyjun. Var áður fastur texti í kóða." },
   { key: "meds_note", label: "Lyfjalisti — athugasemd (t.d. „listinn er ekki tæmandi“)", group: "Algengar spurningar", type: "text" },
   { key: "meds_a_title", label: "Lyfjaflokkur A — titill", group: "Algengar spurningar", type: "text" },
   { key: "meds_a_items", label: "Lyfjaflokkur A — lyf (# = undirflokkur, ein lína hvert)", group: "Algengar spurningar", type: "textarea" },
@@ -596,6 +597,7 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
   // Lyfjalisti — birtist í svari 11 í gegnum {{lyfjalisti}}. "# " byrjar
   // undirflokk; aðrar línur eru lyf ("Virkt efni: sérlyf"). Listinn er ekki
   // tæmandi og er ætlaður til skýringar.
+  meds_intro: "Hér er listi yfir öll helstu lyf sem Fjarlækningar geta ekki endurnýjað:",
   meds_note: "Athugið að þessi listi er ekki tæmandi.",
   meds_a_title: "A. Eftirritunarskyld lyf",
   meds_a_items: [

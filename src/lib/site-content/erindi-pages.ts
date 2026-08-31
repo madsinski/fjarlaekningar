@@ -20,6 +20,26 @@ import { ERINDI_ADVICE } from "./erindi-advice";
 
 export const erindiKey = (slug: string) => slug.replace(/-/g, "_");
 
+/** CMS key holding an erindi's heading. */
+export const erindiTitleKey = (slug: string) => `${erindiKey(slug)}_title`;
+
+/**
+ * An erindi's heading: the CMS value if one is set, otherwise the code string.
+ *
+ * Every surface that prints an erindi title goes through here — the page's own
+ * h1, the cards on /thjonusta and the front page, the related links, the admin
+ * preview. That is the point: the titles lived only in erindi.ts precisely so
+ * those four could not drift apart, so making them editable in one place means
+ * every one of them has to read that place.
+ */
+export function erindiTitle(
+  c: Record<string, string> | null | undefined,
+  slug: string,
+  fallback: string,
+): string {
+  return c?.[erindiTitleKey(slug)]?.trim() || fallback;
+}
+
 export const ERINDI_SECTIONS: SiteSection[] = [];
 
 /** Extra detail already published in the /thjonusta FAQ, reused verbatim. */
@@ -234,7 +254,6 @@ export const ERINDI_FIELDS: SiteField[] = [
   { key: "selftest_body", label: "Inngangur — sjálfspróf", group: "Sameiginlegt", type: "textarea" },
   { key: "advice_heading", label: "Fyrirsögn — almennar ráðleggingar", group: "Sameiginlegt", type: "text" },
   { key: "advice_note", label: "Fyrirvari undir ráðleggingum", group: "Sameiginlegt", type: "textarea" },
-  { key: "process_heading", label: "Fyrirsögn — ferlið", group: "Sameiginlegt", type: "text" },
   { key: "refer_heading", label: "Fyrirsögn — hvenær á ekki við", group: "Sameiginlegt", type: "text" },
   {
     key: "note_heading",
@@ -251,6 +270,13 @@ export const ERINDI_FIELDS: SiteField[] = [
 
   // Per erindi.
   ...erindi.flatMap((e): SiteField[] => [
+    {
+      key: erindiTitleKey(e.slug),
+      label: `${e.title} — fyrirsögn`,
+      group: e.title,
+      type: "text",
+      help: "Fyrirsögn síðunnar. Sama heiti birtist á kortunum á /thjonusta og forsíðunni, svo þau haldist í takt.",
+    },
     {
       key: `${erindiKey(e.slug)}_lead`,
       label: `${e.title} — inngangur`,
@@ -309,7 +335,6 @@ export const ERINDI_DEFAULTS_IS: LocaleContent = {
   advice_heading: "Almennar ráðleggingar",
   advice_note:
     "Ráðleggingarnar hér að ofan eru almennar og koma ekki í stað læknisráðgjafar. Leitaðu til læknis ef einkenni versna eða ganga ekki yfir.",
-  process_heading: "Svona virkar það",
   refer_heading: "Hvenær á þjónustan ekki við?",
   note_heading: "Athugaðu",
   // Verbatim from the published /thjonusta "Hvenær hentar ekki" band.
@@ -322,6 +347,7 @@ export const ERINDI_DEFAULTS_IS: LocaleContent = {
   related_heading: "Önnur erindi",
   ...Object.fromEntries(
     erindi.flatMap((e) => [
+      [erindiTitleKey(e.slug), e.title],
       [`${erindiKey(e.slug)}_lead`, e.description],
       [`${erindiKey(e.slug)}_about`, DRAFT_ABOUT[e.slug] ?? ""],
       [`${erindiKey(e.slug)}_selftest`, DRAFT_SELFTEST[e.slug] ?? ""],
@@ -334,7 +360,10 @@ export const ERINDI_DEFAULTS_IS: LocaleContent = {
 
 export const ERINDI_DEFAULTS_EN: LocaleContent = {
   ...emptyDefaults(ERINDI_FIELDS),
-  ...Object.fromEntries(erindi.map((e) => [`${erindiKey(e.slug)}_lead`, e.descriptionEn])),
+  ...Object.fromEntries(erindi.flatMap((e) => [
+    [erindiTitleKey(e.slug), e.titleEn],
+    [`${erindiKey(e.slug)}_lead`, e.descriptionEn],
+  ])),
 };
 
 /** Are the pages switched on? Anything but "on" keeps them dark. */

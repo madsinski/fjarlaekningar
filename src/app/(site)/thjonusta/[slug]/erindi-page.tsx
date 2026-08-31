@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { erindi, localizeErindi } from "@/erindi";
 import { getPage, getPageContent } from "@/lib/site-content/server";
-import { ERINDI_WITH_MEDS, erindiKey, erindiPagesLive } from "@/lib/site-content/erindi-pages";
+import { ERINDI_WITH_MEDS, erindiKey, erindiPagesLive, erindiTitle } from "@/lib/site-content/erindi-pages";
 import { erindiShown } from "@/lib/site-content/thjonusta";
 import { ui } from "@/lib/site-content/ui-strings";
 import type { Locale } from "@/lib/site-content/types";
@@ -34,7 +34,7 @@ async function load(slug: string, locale: Locale) {
     locale,
     enReady,
     slug,
-    title: localized.title,
+    title: erindiTitle(c, slug, localized.title),
     lead: c[`${k}_lead`]?.trim() || localized.description,
     about: c[`${k}_about`] ?? "",
     selftest: c[`${k}_selftest`] ?? "",
@@ -79,7 +79,9 @@ export default async function ErindiPage({ params, locale }: Params & { locale: 
   const others = localizeErindi(locale)
     .filter((e) => e.slug !== slug && erindiShown(thj, e.slug))
     .slice(0, 6)
-    .map((e) => ({ slug: e.slug, title: e.title }));
+    // Same resolver as the h1: a link that reads differently from the page it
+    // opens is the drift this was all meant to prevent.
+    .map((e) => ({ slug: e.slug, title: erindiTitle(d.c, e.slug, e.title) }));
 
   const url = (path: string) => `${SITE_URL}${localeHref(path, locale)}`;
   const jsonLd = {
@@ -116,7 +118,9 @@ export default async function ErindiPage({ params, locale }: Params & { locale: 
         refer={d.refer}
         others={others}
         meds={medsCategories}
-        medsIntro={medsCategories.length ? t.medsIntro : ""}
+        // CMS line if one is set, otherwise the built-in translation — the
+        // English content has no meds defaults, so the fallback has to stay.
+        medsIntro={medsCategories.length ? (meds?.meds_intro?.trim() || t.medsIntro) : ""}
         medsNote={meds?.meds_note ?? ""}
         locale={locale}
       />

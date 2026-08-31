@@ -17,7 +17,7 @@ import IconPicker from "../IconPicker";
 
 import ErindiView, { erindiLines } from "@/app/(site)/thjonusta/[slug]/ErindiView";
 import { erindi as ERINDI_LIST } from "@/erindi";
-import { ERINDI_WITH_MEDS, erindiKey } from "@/lib/site-content/erindi-pages";
+import { ERINDI_WITH_MEDS, erindiKey, erindiTitle } from "@/lib/site-content/erindi-pages";
 import { ui } from "@/lib/site-content/ui-strings";
 import { pressItems } from "@/lib/site-content/fjolmidlar";
 import { SEO_LIMITS } from "@/lib/site-content/seo";
@@ -132,7 +132,7 @@ function ErindiPreview({
 }) {
   const [slug, setSlug] = useState(ERINDI_LIST[0].slug);
   const item = ERINDI_LIST.find((e) => e.slug === slug)!;
-  const title = locale === "en" ? item.titleEn : item.title;
+  const title = erindiTitle(c, slug, locale === "en" ? item.titleEn : item.title);
   const k = erindiKey(slug);
   return (
     <div>
@@ -163,7 +163,7 @@ function ErindiPreview({
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={`/erindi-icons/${e.slug}.png`} alt="" className="h-4 w-4 shrink-0 object-contain" />
-                {locale === "en" ? e.titleEn : e.title}
+                {erindiTitle(c, e.slug, locale === "en" ? e.titleEn : e.title)}
               </button>
             );
           })}
@@ -181,11 +181,11 @@ function ErindiPreview({
         refer={erindiLines(c[`${k}_refer`])}
         others={ERINDI_LIST.filter((e) => e.slug !== slug).slice(0, 6).map((e) => ({
           slug: e.slug,
-          title: locale === "en" ? e.titleEn : e.title,
+          title: erindiTitle(c, e.slug, locale === "en" ? e.titleEn : e.title),
         }))}
         locale={locale}
         meds={medsFor(slug, thjonusta)}
-        medsIntro={medsFor(slug, thjonusta).length ? ui(locale).medsIntro : ""}
+        medsIntro={medsFor(slug, thjonusta).length ? (thjonusta?.meds_intro?.trim() || ui(locale).medsIntro) : ""}
         medsNote={thjonusta?.meds_note ?? ""}
         linked={false}
       />

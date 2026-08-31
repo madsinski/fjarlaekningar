@@ -32,12 +32,16 @@ export default async function HomePage({ locale }: { locale: Locale }) {
   // The erindi switches live on the Þjónusta page, next to the list itself —
   // one switch, every surface.
   const thjonusta = await getPageContent("thjonusta", locale);
+  // Headings for the erindi cards live on the Erindi page, beside the pages
+  // that print them.
+  const erindiContent = await getPageContent("erindi", locale);
   return (
     <HomeView
       c={c}
       order={order}
       locale={locale}
       hiddenErindi={hiddenErindiSlugs(thjonusta)}
+      erindiContent={erindiContent}
       press={press}
       pressHeading={pressContent.front_heading}
       pressLink={pressContent.front_link}

@@ -3,6 +3,7 @@ import PortalButton from "../components/PortalButton";
 import NewsletterSignup from "../components/NewsletterSignup";
 import Band from "./Band";
 import { localizeErindi } from "../../erindi";
+import { erindiTitle } from "@/lib/site-content/erindi-pages";
 import { renderHighlighted } from "@/lib/site-content/highlight";
 import { HOME_SECTIONS } from "@/lib/site-content/home";
 import { resolveOrder, type LocaleContent } from "@/lib/site-content/types";
@@ -24,6 +25,7 @@ export default function HomeView({
   order,
   locale = "is",
   hiddenErindi = [],
+  erindiContent = null,
   press = [],
   pressHeading = "",
   pressLink = "",
@@ -36,13 +38,17 @@ export default function HomeView({
   /** Erindi hidden in the Þjónusta CMS. One switch governs every surface, so
    *  the front page has to be told too — its own blob does not carry them. */
   hiddenErindi?: string[];
+  /** The Erindi page's content, so a card here matches the page it links to. */
+  erindiContent?: LocaleContent | null;
   /** Newest press coverage first; empty means the band does not render at all. */
   press?: PressItem[];
   /** Labels live on the Fjölmiðlar CMS page, next to the list itself. */
   pressHeading?: string;
   pressLink?: string;
 }) {
-  const erindi = localizeErindi(locale).filter((e) => !hiddenErindi.includes(e.slug));
+  const erindi = localizeErindi(locale)
+    .filter((e) => !hiddenErindi.includes(e.slug))
+    .map((e) => ({ ...e, title: erindiTitle(erindiContent, e.slug, e.title) }));
   const t = ui(locale);
   // Keeps the visitor inside their language: on /en every link below is /en/…
   const href = (path: string) => localeHref(path, locale);

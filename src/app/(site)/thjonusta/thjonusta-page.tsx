@@ -35,7 +35,8 @@ export async function thjonustaMetadata(locale: Locale): Promise<Metadata> {
 export default async function ThjonustaPage({ locale }: { locale: Locale }) {
   const { c, order } = await getPage("thjonusta", locale);
   // Cards become links only once the erindi pages are published.
-  const erindiLive = erindiPagesLive(await getPageContent("erindi", locale));
+  const erindiContent = await getPageContent("erindi", locale);
+  const erindiLive = erindiPagesLive(erindiContent);
   // FAQ structured data, from the same content the page renders below — pointed
   // at whichever of the two URLs is being rendered.
   const path = locale === "en" ? "/en/thjonusta" : "/thjonusta";
@@ -45,7 +46,7 @@ export default async function ThjonustaPage({ locale }: { locale: Locale }) {
       {faq && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }} />
       )}
-      <ThjonustaView c={c} order={order} locale={locale} erindiLive={erindiLive} />
+      <ThjonustaView c={c} order={order} locale={locale} erindiLive={erindiLive} erindiContent={erindiContent} />
     </>
   );
 }

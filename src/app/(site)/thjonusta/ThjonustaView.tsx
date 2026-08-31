@@ -5,6 +5,7 @@ import Band from "../Band";
 import Screenshot from "../Screenshot";
 import Link from "next/link";
 import { erindiDescKey, localizeErindi } from "../../../erindi";
+import { erindiTitle } from "@/lib/site-content/erindi-pages";
 import SiteIcon from "@/lib/site-content/SiteIcon";
 import { renderHighlighted } from "@/lib/site-content/highlight";
 import { erindiShown, THJONUSTA_SECTIONS } from "@/lib/site-content/thjonusta";
@@ -24,6 +25,7 @@ export default function ThjonustaView({
   order,
   locale = "is",
   erindiLive = false,
+  erindiContent = null,
 }: {
   c: LocaleContent;
   order?: string[];
@@ -32,13 +34,17 @@ export default function ThjonustaView({
   locale?: "is" | "en";
   /** Erindi landing pages published? Cards link through only when true. */
   erindiLive?: boolean;
+  /** The Erindi page's own content, for the headings the cards print. */
+  erindiContent?: LocaleContent | null;
 }) {
-  // Titles come from code; each card's subtext is CMS-editable and falls back
-  // to the code default when the field is blank.
+  // Title and subtext are both CMS-editable and both fall back to the code
+  // default when blank. The title comes from the Erindi page, where the heading
+  // it prints is edited, so a card and the page it opens cannot disagree.
   const erindi = localizeErindi(locale)
     .filter((e) => erindiShown(c, e.slug))
     .map((e) => ({
       ...e,
+      title: erindiTitle(erindiContent, e.slug, e.title),
       description: c[erindiDescKey(e.slug)]?.trim() || e.description,
     }));
   const tr = ui(locale);
