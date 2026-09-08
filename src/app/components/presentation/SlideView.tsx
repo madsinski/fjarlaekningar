@@ -295,7 +295,7 @@ function FullbleedView({ s, zoomable }: { s: Slide; zoomable?: boolean }) {
         </button>
       ))}
       {(s.kicker || s.heading) && (
-        <div className="fb-cap">
+        <div className={`fb-cap${(s.capPos ?? "bottom") === "top" ? " fb-top" : ""}`}>
           {s.kicker && <span className="kicker">{s.kicker}</span>}
           {s.heading && <h2>{rich(s.heading)}</h2>}
         </div>
@@ -837,8 +837,9 @@ function SlideBody({ s, zoomable }: { s: Slide; zoomable?: boolean }) {
 export function SlideView({ slide, zoomable }: { slide: Slide; zoomable?: boolean }) {
   const hasBg = (slide.type === "title" || slide.type === "closing") && !!slide.bg;
   // Full-bleed illustrations carry their own baked-in title, so the corner
-  // logo is suppressed there to avoid collisions.
-  const noHead = slide.type === "fullbleed";
+  // logo is suppressed there to avoid collisions — unless the caption has been
+  // moved to the top, which means the artwork leaves room for slide chrome.
+  const noHead = slide.type === "fullbleed" && (slide.capPos ?? "bottom") !== "top";
   return (
     <>
       {hasBg && <div className="slide-bg" style={{ backgroundImage: `url(${slide.bg})` }} />}
