@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Schibsted_Grotesk, Newsreader, Public_Sans } from "next/font/google";
 import "./globals.css";
 import { erindi } from "@/erindi";
 import { getPageContent } from "@/lib/site-content/server";
@@ -19,6 +19,27 @@ import {
 
 const inter = Inter({
   variable: "--font-inter",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+// Deck typography options (see DESIGNS in src/lib/presentations/types.ts).
+// The "latin" subset covers Icelandic — ð, þ, æ and the accented vowels all
+// live in Latin-1, so no latin-ext is needed.
+const schibsted = Schibsted_Grotesk({
+  variable: "--font-schibsted",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const newsreader = Newsreader({
+  variable: "--font-newsreader",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const publicSans = Public_Sans({
+  variable: "--font-public-sans",
   subsets: ["latin"],
   display: "swap",
 });
@@ -112,7 +133,7 @@ export default async function RootLayout({
     // lang is the document default; /en sets lang on its own wrapper, since
     // only this layout renders <html> and making it request-aware is the very
     // thing that stopped the site being cacheable.
-    <html lang="is" className={`${inter.variable} h-full antialiased`}>
+    <html lang="is" className={`${inter.variable} ${schibsted.variable} ${newsreader.variable} ${publicSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
         {/* Organization + WebSite structured data: what lets Google show the
             logo next to the result. The company name, e-mail and address come
