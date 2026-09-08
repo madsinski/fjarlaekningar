@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Schibsted_Grotesk, Newsreader, Public_Sans } from "next/font/google";
+import { Inter, Schibsted_Grotesk, Newsreader, Public_Sans, Archivo, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { erindi } from "@/erindi";
 import { getPageContent } from "@/lib/site-content/server";
@@ -40,6 +40,26 @@ const newsreader = Newsreader({
 
 const publicSans = Public_Sans({
   variable: "--font-public-sans",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const archivo = Archivo({
+  variable: "--font-archivo",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const plexSans = IBM_Plex_Sans({
+  variable: "--font-plex-sans",
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
+  weight: ["400", "500", "600"],
   subsets: ["latin"],
   display: "swap",
 });
@@ -133,7 +153,7 @@ export default async function RootLayout({
     // lang is the document default; /en sets lang on its own wrapper, since
     // only this layout renders <html> and making it request-aware is the very
     // thing that stopped the site being cacheable.
-    <html lang="is" className={`${inter.variable} ${schibsted.variable} ${newsreader.variable} ${publicSans.variable} h-full antialiased`}>
+    <html lang="is" className={`${inter.variable} ${schibsted.variable} ${newsreader.variable} ${publicSans.variable} ${archivo.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
         {/* Organization + WebSite structured data: what lets Google show the
             logo next to the result. The company name, e-mail and address come
