@@ -312,6 +312,9 @@ function FullbleedView({ s, zoomable }: { s: Slide; zoomable?: boolean }) {
 /** Renders the inner content of a single slide (without the <section> shell). */
 function SlideBody({ s, zoomable }: { s: Slide; zoomable?: boolean }) {
   const [zoom, setZoom] = React.useState(false);
+  // Natural ratio of the report screenshot, measured on load so the laptop
+  // frame can take its shape instead of forcing it into 16:10.
+  const [shotRatio, setShotRatio] = React.useState<number | null>(null);
   switch (s.type) {
     case "title":
     case "closing":
@@ -614,7 +617,8 @@ function SlideBody({ s, zoomable }: { s: Slide; zoomable?: boolean }) {
         <div className="body">
           {s.kicker && <span className="kicker">{s.kicker}</span>}
           {s.heading && <h2>{rich(s.heading)}</h2>}
-          <div className="frows" style={{ marginTop: "2.1rem" }}>
+          {s.lead && <p className="lead" style={{ marginTop: ".9rem", maxWidth: "62ch" }}>{s.lead}</p>}
+          <div className="frows" style={{ marginTop: s.lead ? "1.6rem" : "2.1rem" }}>
             {(s.rows || []).map((r, i) => (
               <div key={i} className="frow">
                 <div className="icon"><Icon name={r.icon} /></div>
@@ -623,6 +627,7 @@ function SlideBody({ s, zoomable }: { s: Slide; zoomable?: boolean }) {
               </div>
             ))}
           </div>
+          {s.footnote && <p className="footnote" style={{ position: "static", marginTop: "1.6rem" }}>{s.footnote}</p>}
         </div>
       );
 
@@ -735,6 +740,33 @@ function SlideBody({ s, zoomable }: { s: Slide; zoomable?: boolean }) {
     case "report": {
       const img = s.image;
       const hls = parseHighlights(s.highlight);
+      // The frame is 16:10 (1.6) by default, and a screenshot of any other shape
+      // then either leaves an empty band under the image or gets cut off by the
+      // frame's overflow.
+      //
+      // Most product screenshots land near a laptop's own proportions, just not
+      // exactly on 16:10 — the ones on this deck run 1.79 to 1.95. For those the
+      // right answer is neither band nor crop: give the screen the shot's shape.
+      // It still reads as a laptop anywhere in this range (16:9 is 1.78).
+      //
+      // This applies with highlights too. Their rects are percentages of the
+      // IMAGE, and when the frame matches the image's own ratio the shrink-
+      // wrapped image fills it exactly — so the percentages still land where
+      // they should, and the band is gone from those slides as well.
+      //
+      // Outside the range, keep the laptop honest and place the image within it:
+      // a tall phone screenshot is shown whole rather than losing two thirds to
+      // a crop, and an ultrawide one fills and crops rather than floating.
+      const FRAME_MIN = 1.3, FRAME_MAX = 2.2, TOO_TALL = 1.2;
+      const frameRatio =
+        shotRatio !== null && !s.fit && shotRatio >= FRAME_MIN && shotRatio <= FRAME_MAX
+          ? shotRatio
+          : null;
+      // Highlights only line up while all of the image is visible, so they force
+      // "contain" whenever the frame could not take the shot's shape. `fit`
+      // overrides everything.
+      const shotFit =
+        s.fit ?? (hls.length || (shotRatio !== null && shotRatio < TOO_TALL) ? "contain" : "cover");
       return (
         <div className="body two" style={{ gridTemplateColumns: ".82fr 1.18fr" }}>
           <div>
@@ -756,20 +788,36 @@ function SlideBody({ s, zoomable }: { s: Slide; zoomable?: boolean }) {
           <div>
             {zoomable && img && <ZoomHint onClick={() => setZoom(true)} />}
             <div className="laptop">
-              <div className="screen">
+              <div className="screen" style={frameRatio ? { aspectRatio: String(frameRatio) } : undefined}>
                 {img ? (
-                  // Shrink-wrap wrapper so highlight percentages align with the
-                  // image box (the .screen frame letterboxes to 16:10).
-                  <div style={{ position: "relative", width: "100%" }}>
+                  frameRatio || hls.length > 0 ? (
+                    // Shrink-wrapped, so highlight percentages land on the image
+                    // rather than on the frame around it.
+                    <div style={{ position: "relative", width: "100%" }}>
+                      <img
+                        src={img}
+                        alt={s.heading || "Report"}
+                        title="Click to enlarge"
+                        style={{ width: "100%", height: "auto", cursor: "zoom-in" }}
+                        onClick={() => setZoom(true)}
+                        onLoad={(e) => setShotRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)}
+                      />
+                      {hls.length > 0 && <HighlightBoxes rects={hls} />}
+                    </div>
+                  ) : (
                     <img
                       src={img}
                       alt={s.heading || "Report"}
                       title="Click to enlarge"
-                      style={{ width: "100%", height: "auto", cursor: "zoom-in" }}
+                      style={{
+                        width: "100%", height: "100%",
+                        objectFit: shotFit, objectPosition: "top center",
+                        cursor: "zoom-in",
+                      }}
                       onClick={() => setZoom(true)}
+                      onLoad={(e) => setShotRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)}
                     />
-                    {hls.length > 0 && <HighlightBoxes rects={hls} />}
-                  </div>
+                  )
                 ) : <div className="phone-ph">No screenshot yet</div>}
               </div>
               <div className="laptop-base" />

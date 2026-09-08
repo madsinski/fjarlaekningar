@@ -265,15 +265,16 @@ export const DECK_CSS = `
    cyan (#00d6ff) and Lifeline emerald (#10B981), so neither brand leads.
    Per-slide only (.brand-neutral); there is no deck-wide neutral design. */
 .lldeck .brand-neutral{
-  /* Steel, not teal. A teal accent still reads as somebody's brand colour —
-     on a shared slide the accent has to belong to neither company, so it
-     drops to a silver that simply means "emphasis". */
-  --emerald:#7c8b9c; --emerald-dark:#546375; --cyan:#b6c2ce;
-  --ink:#0f172a; --foreground:#1e293b; --muted:#64748b;
-  --bg:#f6f7f8; --card:#ffffff; --line:#e3e6ea;
-  --on-dark:#f1f5f9; --on-dark-muted:#c3ccd6; --on-dark-accent:#dbe3ec;
+  /* Neutral does not have to mean grey — grey just reads as dead on a closing
+     slide. The accent instead runs Lifeline emerald into Fjarlækningar cyan,
+     so it belongs to both companies equally rather than to neither, and stays
+     bright. The ground is a clean near-white, not a slate. */
+  --emerald:#0E9F76; --emerald-dark:#0b7d5d; --cyan:#00A0C4;
+  --ink:#101720; --foreground:#1e2530; --muted:#5f6b7a;
+  --bg:#f7f9fb; --card:#ffffff; --line:#e4e9ee;
+  --on-dark:#f2f6f9; --on-dark-muted:#c6d0da; --on-dark-accent:#5FE3C0;
   --dark1:#12151a; --dark2:#1e242c; --dark3:#141920;
-  --glow1:rgba(255,255,255,.05); --glow2:rgba(255,255,255,.028);
+  --glow1:rgba(14,159,118,.12); --glow2:rgba(0,160,196,.09);
   --shadow:0 10px 40px -12px rgba(15,23,42,.22);
 }
 /* Both wordmarks, sized to match their single-brand counterparts. */
