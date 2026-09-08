@@ -315,6 +315,14 @@ function SlideBody({ s, zoomable }: { s: Slide; zoomable?: boolean }) {
   // Natural ratio of the report screenshot, measured on load so the laptop
   // frame can take its shape instead of forcing it into 16:10.
   const [shotRatio, setShotRatio] = React.useState<number | null>(null);
+  // onLoad alone is not enough: the deck mounts every slide at once, so a
+  // cached or already-decoded screenshot can be complete before React attaches
+  // the handler, and the event never fires — leaving the frame at its default
+  // 16:10 and cropping the shot. A ref callback measures whatever is already
+  // there; onLoad still covers the images that arrive later.
+  const measureShot = React.useCallback((el: HTMLImageElement | null) => {
+    if (el?.naturalWidth && el.naturalHeight) setShotRatio(el.naturalWidth / el.naturalHeight);
+  }, []);
   switch (s.type) {
     case "title":
     case "closing":
@@ -800,6 +808,7 @@ function SlideBody({ s, zoomable }: { s: Slide; zoomable?: boolean }) {
                         title="Click to enlarge"
                         style={{ width: "100%", height: "auto", cursor: "zoom-in" }}
                         onClick={() => setZoom(true)}
+                        ref={measureShot}
                         onLoad={(e) => setShotRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)}
                       />
                       {hls.length > 0 && <HighlightBoxes rects={hls} />}
@@ -815,7 +824,8 @@ function SlideBody({ s, zoomable }: { s: Slide; zoomable?: boolean }) {
                         cursor: "zoom-in",
                       }}
                       onClick={() => setZoom(true)}
-                      onLoad={(e) => setShotRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)}
+                      ref={measureShot}
+                        onLoad={(e) => setShotRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)}
                     />
                   )
                 ) : <div className="phone-ph">No screenshot yet</div>}
