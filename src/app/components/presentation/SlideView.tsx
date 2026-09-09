@@ -8,6 +8,13 @@ import { DeckDefs, Logo, Icon } from "./DeckAssets";
 
 export { DeckDefs };
 
+/** Extra slide class for a title/closing photo treatment (see deck-css). */
+export function bgStyleClass(s: { bg?: string; bgStyle?: string }): string {
+  if (!s.bg) return "";
+  const v = s.bgStyle ?? "full";
+  return v === "full" ? "" : ` bg-${v}`;
+}
+
 /** Extra slide class for a non-default brand (drives palette + logo colour). */
 export function brandClass(brand?: string): string {
   return brand === "fjarlaekningar" ? " brand-fjar"
