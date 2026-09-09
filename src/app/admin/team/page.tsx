@@ -49,6 +49,9 @@ export default function TeamPage() {
   const [rows, setRows] = useState<StaffRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  // The caller's own row never offers deactivate or delete — the API refuses
+  // both anyway, so offering them would only be a dead end.
+  const [meId, setMeId] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -60,6 +63,10 @@ export default function TeamPage() {
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  // Deleting cascades a member's contracts and documents away, so it asks for
+  // the name to be typed rather than relying on a one-click confirm.
+  const [confirmDel, setConfirmDel] = useState<StaffRow | null>(null);
+  const [delText, setDelText] = useState("");
 
   const authHeaders = async (): Promise<Record<string, string>> => {
     const {
@@ -99,6 +106,7 @@ export default function TeamPage() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    setMeId(user?.id ?? null);
     if (user) {
       const { data: me } = await supabase.from("staff").select("role").eq("id", user.id).maybeSingle();
       setIsAdmin(me?.role === "admin");
@@ -113,7 +121,6 @@ export default function TeamPage() {
 
   useEffect(() => {
     // Intentional on-mount fetch; load() sets a loading flag then hydrates rows.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load]);
 
@@ -163,6 +170,36 @@ export default function TeamPage() {
     const has = (r.roles || []).includes(role);
     saveRoles(r.id, has ? r.roles.filter((x) => x !== role) : [...(r.roles || []), role]);
   };
+  const setActive = async (r: StaffRow, active: boolean) => {
+    setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, active } : x)));
+    const res = await fetch(`/api/admin/staff/${r.id}`, { method: "PATCH", headers: await authHeaders(), body: JSON.stringify({ active }) });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || !j.ok) {
+      setMsg({ type: "err", text: j.error || "Ekki tókst að breyta stöðu." });
+      load();
+    } else {
+      setMsg({ type: "ok", text: active ? `${r.name} er virkur á ný.` : `${r.name} er nú óvirkur og kemst ekki inn.` });
+    }
+  };
+
+  const removeMember = async (r: StaffRow) => {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/staff/${r.id}`, { method: "DELETE", headers: await authHeaders() });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j.ok) {
+        setMsg({ type: "err", text: j.error || "Ekki tókst að eyða starfsmanni." });
+        return;
+      }
+      setRows((prev) => prev.filter((x) => x.id !== r.id));
+      setMsg({ type: "ok", text: `${r.name} var eytt.` });
+      setConfirmDel(null);
+      setDelText("");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const savePhone = async (id: string, phone: string) => {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, phone } : r)));
     await fetch(`/api/admin/staff/${id}`, { method: "PATCH", headers: await authHeaders(), body: JSON.stringify({ phone }) });
@@ -366,6 +403,24 @@ export default function TeamPage() {
                           <Paperclip className="w-3.5 h-3.5" /> Skjöl
                         </button>
                       )}
+                      {isAdmin && r.id !== meId && (
+                        <button
+                          type="button"
+                          onClick={() => setActive(r, !r.active)}
+                          className="text-xs text-slate-500 hover:text-slate-800 underline"
+                        >
+                          {r.active ? "Gera óvirkan" : "Virkja"}
+                        </button>
+                      )}
+                      {isAdmin && r.id !== meId && (
+                        <button
+                          type="button"
+                          onClick={() => { setConfirmDel(r); setDelText(""); }}
+                          className="text-xs text-red-600 hover:text-red-800 underline"
+                        >
+                          Eyða
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -383,6 +438,57 @@ export default function TeamPage() {
         )}
       </div>
       </div>
+      )}
+
+      {confirmDel && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/50 p-4" role="dialog" aria-modal="true">
+          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
+            <h2 className="text-lg font-bold text-slate-900">Eyða {confirmDel.name}?</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Þetta er endanlegt. Aðgangi verður eytt og með honum fylgja gögn sem tilheyra
+              viðkomandi:
+            </p>
+            <ul className="mt-2 list-disc pl-5 text-sm text-slate-600 space-y-1">
+              <li>Undirritaðir ráðningarsamningar</li>
+              <li>Skjöl sem hlaðið hefur verið upp á viðkomandi</li>
+              <li>Reikningsupplýsingar og númeraröð reikninga</li>
+            </ul>
+            <p className="mt-2 text-sm text-slate-600">
+              Efni sem viðkomandi bjó til annars staðar — kynningar, lögfræðisíður, verkferlar —
+              helst óbreytt, en án höfundar.
+            </p>
+            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              Ef manneskjan er einfaldlega hætt er réttara að gera hana <strong>óvirka</strong>.
+              Þá lokast aðgangurinn en samningar og skjöl varðveitast.
+            </div>
+            <label className="mt-4 block text-xs font-medium text-slate-600">
+              Skrifaðu <span className="font-mono text-slate-900">{confirmDel.name}</span> til að staðfesta
+            </label>
+            <input
+              value={delText}
+              onChange={(e) => setDelText(e.target.value)}
+              className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-200"
+              autoFocus
+            />
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => { setConfirmDel(null); setDelText(""); }}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+              >
+                Hætta við
+              </button>
+              <button
+                type="button"
+                disabled={busy || delText.trim() !== confirmDel.name}
+                onClick={() => removeMember(confirmDel)}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-40"
+              >
+                {busy ? "Eyði…" : "Eyða endanlega"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
