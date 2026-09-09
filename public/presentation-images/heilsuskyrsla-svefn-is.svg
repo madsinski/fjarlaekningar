@@ -1,5 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 800" width="1600" height="800" role="img"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 858" width="1600" height="858" role="img"
      aria-label="Heilsuskýrsla Lifeline: svefnhluti með einkunn, þróun, ábendingum og ráðleggingum.">
+  <rect width="1600" height="858" fill="#ffffff"/>
+  <g transform="translate(0,29)">
   <rect width="1600" height="800" fill="#ffffff"/>
   <text x="28" y="56" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="29" font-weight="700" fill="#101720">Lifeline Health — Heilsuskýrsla</text>
   <rect x="1206" y="30" width="130" height="40" rx="4" fill="none" stroke="#e4e9ee" stroke-width="1.4"/>
@@ -145,4 +147,5 @@
   <circle cx="1223" cy="758" r="4" fill="#D97706"/>
   <text x="1238" y="764" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="400" fill="#31404f">3 klukkustundir eða meira fyrir svefn.</text>
   <line x1="0" y1="800" x2="1600" y2="800" stroke="#e4e9ee" stroke-width="1.2"/>
+  </g>
 </svg>
