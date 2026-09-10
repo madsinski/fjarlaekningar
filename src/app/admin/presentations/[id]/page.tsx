@@ -46,6 +46,8 @@ export default function PresentationEditor() {
   const [save, setSave] = useState<SaveState>("idle");
   const [present, setPresent] = useState(false);
   const [printOpen, setPrintOpen] = useState(false);
+  // Set when the export is opened from "PPTX", so it builds straight away.
+  const [autoPptx, setAutoPptx] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addBrand, setAddBrand] = useState<BrandKey>("lifeline");
   const [previewType, setPreviewType] = useState<SlideType>("title");
@@ -207,7 +209,8 @@ export default function PresentationEditor() {
           </select>
         </label>
         <button onClick={() => setPresent(true)} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">▶ Present</button>
-        <button onClick={() => setPrintOpen(true)} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50" title="Export to PDF">⤓ PDF</button>
+        <button onClick={() => { setAutoPptx(false); setPrintOpen(true); }} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50" title="Export to PDF">⤓ PDF</button>
+        <button onClick={() => { setAutoPptx(true); setPrintOpen(true); }} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50" title="Export to PowerPoint">⤓ PPTX</button>
         <button onClick={togglePublish} className={`rounded-md px-3 py-1.5 text-sm font-medium ${published ? "bg-emerald-600 text-white hover:bg-emerald-700" : "border border-gray-300 text-gray-700 hover:bg-gray-50"}`}>
           {published ? "Published" : "Publish"}
         </button>
@@ -340,6 +343,8 @@ export default function PresentationEditor() {
 
       {printOpen && (
         <DeckPrint
+          title={title}
+          autoPptx={autoPptx}
           slides={editLang === "is" && hasIcelandic({ slides, tIs }) ? resolveSlides({ slides, tIs }, "is") : slides}
           design={design}
           onClose={() => setPrintOpen(false)}
