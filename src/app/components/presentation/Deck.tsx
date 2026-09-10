@@ -57,11 +57,13 @@ export function SlideStage({ slide, design }: { slide: Slide | null; design?: st
  * navigation, progress bar and presenter notes (N). Pass `onClose` to show a
  * close button (used by the editor preview); omit it for the public route.
  */
-export function Deck({ slides, slidesIs, design, initialIndex = 0, onClose }: { slides: Slide[]; slidesIs?: Slide[]; design?: string; initialIndex?: number; onClose?: () => void }) {
+export function Deck({ slides, slidesIs, design, title, initialIndex = 0, onClose }: { slides: Slide[]; slidesIs?: Slide[]; design?: string; title?: string; initialIndex?: number; onClose?: () => void }) {
   const hasIs = !!slidesIs && slidesIs.length === slides.length;
   const [i, setI] = useState(initialIndex);
   const [notesOpen, setNotesOpen] = useState(false);
   const [printOpen, setPrintOpen] = useState(false);
+  // Set when the export overlay is opened from "PPTX", so it builds straight away.
+  const [autoPptx, setAutoPptx] = useState(false);
   const [loc, setLoc] = useState<"en" | "is">(hasIs ? "is" : "en"); // Icelandic audience by default
   const rootRef = useRef<HTMLDivElement>(null);
   const touchX = useRef(0);
@@ -140,7 +142,8 @@ export function Deck({ slides, slidesIs, design, initialIndex = 0, onClose }: { 
         <button aria-label="Previous slide" onClick={() => go(i - 1)}>‹</button>
         <span className="count">{i + 1} / {total}</span>
         <button aria-label="Next slide" onClick={() => go(i + 1)}>›</button>
-        <button aria-label="Export PDF" title="Export PDF" onClick={() => setPrintOpen(true)} style={{ width: "auto", padding: "0 .7rem", fontSize: ".8rem", fontWeight: 700 }}>PDF</button>
+        <button aria-label="Export PDF" title="Export PDF" onClick={() => { setAutoPptx(false); setPrintOpen(true); }} style={{ width: "auto", padding: "0 .7rem", fontSize: ".8rem", fontWeight: 700 }}>PDF</button>
+        <button aria-label="Export PowerPoint" title="Export PowerPoint" onClick={() => { setAutoPptx(true); setPrintOpen(true); }} style={{ width: "auto", padding: "0 .7rem", fontSize: ".8rem", fontWeight: 700 }}>PPTX</button>
         <button aria-label="Fullscreen" onClick={toggleFullscreen}>⛶</button>
         {onClose && <button aria-label="Close" onClick={onClose}>✕</button>}
       </div>
@@ -150,7 +153,7 @@ export function Deck({ slides, slidesIs, design, initialIndex = 0, onClose }: { 
         <p>{cur.notes || "—"}</p>
       </div>
       </div>
-      {printOpen && <DeckPrint slides={view} design={design} onClose={() => setPrintOpen(false)} />}
+      {printOpen && <DeckPrint slides={view} design={design} title={title} autoPptx={autoPptx} onClose={() => setPrintOpen(false)} />}
     </div>
   );
 }

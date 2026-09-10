@@ -57,5 +57,5 @@ export default async function PresentPage({ params }: { params: Promise<{ slug: 
   if (!found) return <Unavailable />;
   const data = found.data;
   const slidesIs = hasIcelandic(data) ? resolveSlides(data, "is") : undefined;
-  return <Deck slides={data.slides} slidesIs={slidesIs} design={data.design} />;
+  return <Deck slides={data.slides} slidesIs={slidesIs} design={data.design} title={found.title} />;
 }

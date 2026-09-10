@@ -329,6 +329,7 @@ export default function PresentationEditor() {
 
       {present && (
         <Deck
+          title={title}
           slides={slides}
           slidesIs={hasIcelandic({ slides, tIs }) ? resolveSlides({ slides, tIs }, "is") : undefined}
           design={design}

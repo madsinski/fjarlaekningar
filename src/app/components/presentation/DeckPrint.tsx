@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Slide } from "@/lib/presentations/types";
 import { DECK_CSS } from "./deck-css";
@@ -30,6 +30,7 @@ const PRINT_CSS = `
 .ll-pdf-bar .primary:hover{background:#0ea372;}
 .ll-pdf-bar .ghost{background:rgba(255,255,255,.1);color:#e7eef0;}
 .ll-pdf-bar .ghost:hover{background:rgba(255,255,255,.18);}
+.ll-pdf-bar button:disabled{opacity:.5;cursor:default;}
 
 @media print{
   /* Render the print stage at the full 1920x1080 16:9 page so the PDF matches
@@ -62,12 +63,116 @@ function PrintStyle() {
   return <style dangerouslySetInnerHTML={{ __html: DECK_CSS + PRINT_CSS }} />;
 }
 
+/** Filename-safe deck title; keeps Icelandic letters, drops path-hostile ones. */
+function fileSafe(title?: string): string {
+  const t = (title || "").replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim();
+  return t || "kynning";
+}
+
+/** Wait until every image in the overlay has loaded and the deck has
+ *  re-rendered around it. The laptop mock-up sizes its frame from the
+ *  screenshot's own ratio once that image is decoded, so capturing earlier
+ *  would freeze a slide in its pre-measurement 16:10 shape. */
+async function settle(root: HTMLElement) {
+  const imgs = Array.from(root.querySelectorAll("img"));
+  await Promise.all(
+    imgs.map((img) =>
+      img.complete
+        ? img.decode().catch(() => undefined)
+        : new Promise<void>((resolve) => {
+            img.addEventListener("load", () => resolve(), { once: true });
+            img.addEventListener("error", () => resolve(), { once: true });
+          }),
+    ),
+  );
+  await document.fonts.ready;
+  await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+}
+
+type PptxState =
+  | { phase: "idle" }
+  | { phase: "working"; cur: number; total: number }
+  | { phase: "error"; msg: string };
+
 /**
- * Full-screen print/PDF view. Renders every slide as a page and exposes a
- * "Save as PDF" button that opens the browser print dialog. Pass the slides
- * already resolved for the desired language.
+ * Full-screen print/PDF view. Renders every slide as a page and exposes
+ * "Save as PDF" (browser print dialog) and "Save as PowerPoint". Pass the
+ * slides already resolved for the desired language.
+ *
+ * The PowerPoint is built in the browser from these same 1920×1080 pages: each
+ * slide becomes one full-bleed image, with its presenter note in the speaker
+ * notes. Images rather than native text boxes on purpose — the deck's type,
+ * gradients, SVG diagrams and mock-ups have no faithful PowerPoint equivalent,
+ * and a venue PC without Archivo or IBM Plex installed would substitute fonts
+ * and reflow every slide. This way the file looks exactly like the deck on any
+ * machine, offline. The trade-off is that slide text is not editable.
  */
-export function DeckPrint({ slides, design, onClose }: { slides: Slide[]; design?: string; onClose: () => void }) {
+export function DeckPrint({ slides, design, title, autoPptx, onClose }: {
+  slides: Slide[]; design?: string; title?: string; autoPptx?: boolean; onClose: () => void;
+}) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const running = useRef(false);
+  const [pptx, setPptx] = useState<PptxState>({ phase: "idle" });
+  const busy = pptx.phase === "working";
+
+  const exportPptx = useCallback(async () => {
+    const root = rootRef.current;
+    if (!root || running.current) return;
+    running.current = true;
+    try {
+      const pages = Array.from(root.querySelectorAll<HTMLElement>(".ll-pdf-page"));
+      // Loaded on demand, so neither library weighs on the deck for viewers
+      // who never export.
+      const [{ domToJpeg }, { default: PptxGenJS }] = await Promise.all([
+        import("modern-screenshot"),
+        import("pptxgenjs"),
+      ]);
+      setPptx({ phase: "working", cur: 0, total: pages.length });
+      await settle(root);
+
+      // Every wordmark is a <use href="#…"> into one hidden <svg> of symbols at
+      // the top of this overlay. A capture is a standalone image, so those
+      // references would resolve to nothing and the logos would vanish — each
+      // cloned page therefore carries its own copy of the symbol sheet.
+      const symbols = root.querySelector("symbol#ll-wordmark")?.closest("svg") ?? null;
+
+      const deck = new PptxGenJS();
+      deck.layout = "LAYOUT_WIDE"; // 13.333 × 7.5 in, i.e. 16:9
+      deck.title = title || "Kynning";
+
+      for (let n = 0; n < pages.length; n++) {
+        setPptx({ phase: "working", cur: n + 1, total: pages.length });
+        const jpeg = await domToJpeg(pages[n], {
+          width: 1920,
+          height: 1080,
+          scale: 1,
+          quality: 0.95,
+          backgroundColor: "#000000",
+          onCloneNode: (cloned) => {
+            if (symbols && cloned instanceof Element) cloned.prepend(symbols.cloneNode(true));
+          },
+        });
+        const slide = deck.addSlide();
+        // pptxgenjs takes base64 image data without the "data:" scheme.
+        slide.addImage({ data: jpeg.replace(/^data:/, ""), x: 0, y: 0, w: 13.333, h: 7.5 });
+        const notes = slides[n]?.notes;
+        if (notes) slide.addNotes(notes);
+      }
+
+      await deck.writeFile({ fileName: `${fileSafe(title)}.pptx`, compression: true });
+      setPptx({ phase: "idle" });
+    } catch (err) {
+      setPptx({ phase: "error", msg: err instanceof Error ? err.message : String(err) });
+    } finally {
+      running.current = false;
+    }
+  }, [slides, title]);
+
+  // Opened from the deck's "PPTX" button: start straight away.
+  useEffect(() => {
+    if (autoPptx) void exportPptx();
+  }, [autoPptx, exportPptx]);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -79,15 +184,25 @@ export function DeckPrint({ slides, design, onClose }: { slides: Slide[]; design
 
   if (typeof document === "undefined") return null;
 
+  const status =
+    pptx.phase === "working"
+      ? `Building PowerPoint… slide ${pptx.cur} of ${pptx.total}. Keep this window open.`
+      : pptx.phase === "error"
+        ? `PowerPoint export failed: ${pptx.msg}`
+        : `PDF: in the print dialog set Margins → None and enable Background graphics. PowerPoint: one image per slide, presenter notes included. ${slides.length} slides.`;
+
   return createPortal(
-    <div className="ll-pdf">
+    <div className="ll-pdf" ref={rootRef}>
       <PrintStyle />
       {/* One shared symbol sheet for every page (ids are global). */}
       <DeckDefs />
       <div className="ll-pdf-bar">
-        <strong style={{ fontSize: ".9rem" }}>Export PDF</strong>
-        <span className="grow">Click “Save as PDF”, then in the print dialog set Margins → None and enable Background graphics. {slides.length} slides.</span>
-        <button className="primary" onClick={() => window.print()}>Save as PDF</button>
+        <strong style={{ fontSize: ".9rem" }}>Export</strong>
+        <span className="grow" role="status" aria-live="polite">{status}</span>
+        <button className="primary" disabled={busy} onClick={() => window.print()}>Save as PDF</button>
+        <button className="primary" disabled={busy} onClick={() => void exportPptx()}>
+          {busy ? "Building…" : "Save as PowerPoint"}
+        </button>
         <button className="ghost" onClick={onClose}>Close</button>
       </div>
       <div className="ll-pdf-scroll">
