@@ -16,6 +16,8 @@ export interface SendEmailOptions {
   html: string;
   text?: string;
   replyTo?: string;
+  /** Sendandi, ef annar en sjálfgefinn (t.d. vaktakerfi HSU). */
+  from?: string;
 }
 
 export interface SendEmailResult {
@@ -38,7 +40,7 @@ export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult
   }
   try {
     const payload: Record<string, unknown> = {
-      from: FROM_ADDRESS,
+      from: opts.from || FROM_ADDRESS,
       to: [opts.to],
       subject: opts.subject,
       html: opts.html,

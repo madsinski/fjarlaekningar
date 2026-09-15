@@ -23,6 +23,7 @@ modules also need a **Storage bucket** — noted inline.
 | 15 | `supabase/site-settings-schema.sql` | Coming-soon gate toggle (site_settings) | ✅ done |
 | 16 | `supabase/outreach-schema.sql` | Fréttabréf — subscribers + campaigns | ⬜ run this |
 | 17 | `supabase/admin-read-lockdown.sql` | Admin-module reads restricted to `admin` via RLS (legal stays admin + lawyer). Doctor data is unaffected — it goes through service-role APIs. | ✅ done |
+| 18 | `supabase/hsu-schema.sql` | HSU vaktakerfi (Vestmannaeyjar) — eigin innskráning, óskir, vaktaplan, vaktamarkaður. Allar `hsu_*` töflur lokaðar vöfrum. Sjá `docs/hsu-vaktakerfi.md`. | ✅ done (2026-09-15) |
 
 > After running a migration, the matching admin module works immediately (no
 > redeploy needed — the tables just start returning data).

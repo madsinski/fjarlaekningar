@@ -44,7 +44,11 @@ export function googleConfigured(): boolean {
 // would then sit in Google's logs and in browser history.
 
 function stateSecret(): string {
-  return process.env.GOOGLE_OAUTH_STATE_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  const secret = process.env.GOOGLE_OAUTH_STATE_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  // HMAC með tómum lykli er fölsunarhæft: hver sem er gæti skráð Google-lykla á
+  // lækni að eigin vali. Betra að tengingin bili en að hún virki svona.
+  if (secret.length < 16) throw new Error("GOOGLE_OAUTH_STATE_SECRET vantar");
+  return secret;
 }
 const b64u = (b: Buffer) => b.toString("base64url");
 
@@ -58,30 +62,38 @@ export function safeReturnPath(p?: string | null): string {
   return typeof p === "string" && p.startsWith("/") && !p.startsWith("//") ? p : "";
 }
 
-export function signState(doctorId: string, returnTo = "", ttlSeconds = 900): string {
-  const payload = { d: doctorId, r: safeReturnPath(returnTo), exp: Date.now() + ttlSeconds * 1000 };
+/**
+ * Which roster the doctor id belongs to. Both systems share one OAuth client and
+ * one redirect URI, so the state has to say where to file the tokens. It is
+ * inside the signature: a Fjarlækningar id cannot be replayed as an HSU one.
+ */
+export type CalendarSystem = "fj" | "hsu";
+
+export function signState(doctorId: string, returnTo = "", ttlSeconds = 900, system: CalendarSystem = "fj"): string {
+  const payload = { d: doctorId, r: safeReturnPath(returnTo), k: system, exp: Date.now() + ttlSeconds * 1000 };
   const body = b64u(Buffer.from(JSON.stringify(payload)));
   const sig = b64u(createHmac("sha256", stateSecret()).update(body).digest());
   return `${body}.${sig}`;
 }
 
 /** Doctor id + return path, or null if the state was forged, altered or stale. */
-export function verifyState(state: string): { doctorId: string; returnTo: string } | null {
+export function verifyState(state: string): { doctorId: string; returnTo: string; system: CalendarSystem } | null {
   const [body, sig] = (state || "").split(".");
   if (!body || !sig) return null;
   const expect = b64u(createHmac("sha256", stateSecret()).update(body).digest());
   const a = Buffer.from(sig), b = Buffer.from(expect);
   if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
   try {
-    const { d, r, exp } = JSON.parse(Buffer.from(body, "base64url").toString());
+    const { d, r, k, exp } = JSON.parse(Buffer.from(body, "base64url").toString());
     if (typeof d !== "string" || typeof exp !== "number" || Date.now() >= exp) return null;
-    return { doctorId: d, returnTo: safeReturnPath(r) };
+    // States signed before HSU existed carry no k; they were all Fjarlækningar.
+    return { doctorId: d, returnTo: safeReturnPath(r), system: k === "hsu" ? "hsu" : "fj" };
   } catch {
     return null;
   }
 }
 
-export function consentUrl(doctorId: string, returnTo = ""): string {
+export function consentUrl(doctorId: string, returnTo = "", system: CalendarSystem = "fj"): string {
   const p = new URLSearchParams({
     client_id: googleClientId(),
     redirect_uri: googleRedirectUri(),
@@ -93,7 +105,7 @@ export function consentUrl(doctorId: string, returnTo = ""): string {
     access_type: "offline",
     prompt: "consent",
     include_granted_scopes: "true",
-    state: signState(doctorId, returnTo),
+    state: signState(doctorId, returnTo, 900, system),
   });
   return `${OAUTH_AUTH}?${p}`;
 }
@@ -200,10 +212,10 @@ export interface GoogleEvent {
   status?: string;
 }
 
-export async function createCalendar(token: string): Promise<string> {
+export async function createCalendar(token: string, name: string = CALENDAR_NAME): Promise<string> {
   const r = await api(token, "/calendars", {
     method: "POST",
-    body: JSON.stringify({ summary: CALENDAR_NAME, timeZone: CALENDAR_TZ }),
+    body: JSON.stringify({ summary: name, timeZone: CALENDAR_TZ }),
   });
   const cal = await json<{ id: string }>(r, "Gat ekki búið til dagatal");
   return cal.id;

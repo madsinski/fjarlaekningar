@@ -32,6 +32,9 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: "/admin/releases", label: "Útgáfusaga" },
   { href: "/admin/errors", label: "Villuskráning" },
   { href: "/admin/team", label: "Starfsfólk", adminOnly: true },
+  // Utan /admin: vaktakerfi HSU hefur eigið útlit og innskráningu, en
+  // stjórnandi Fjarlækninga kemst beint inn með sinni lotu.
+  { href: "/hsu/stjorn", label: "HSU vaktakerfi", adminOnly: true },
   { href: "/admin/settings", label: "Stillingar" },
 ];
 

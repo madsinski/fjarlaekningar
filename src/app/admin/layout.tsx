@@ -20,6 +20,7 @@ import {
   Settings,
   ShieldAlert,
   ShieldCheck,
+  Stethoscope,
   UserRound,
   Users,
 } from "lucide-react";
@@ -59,6 +60,7 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
   "/admin/releases": <Rocket className="w-5 h-5" />,
   "/admin/errors": <AlertTriangle className="w-5 h-5" />,
   "/admin/team": <Users className="w-5 h-5" />,
+  "/hsu/stjorn": <Stethoscope className="w-5 h-5" />,
   "/admin/settings": <Settings className="w-5 h-5" />,
 };
 

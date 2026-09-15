@@ -64,7 +64,8 @@ export async function proxy(request: NextRequest) {
   // reachable regardless of the marketing-site launch state.
   // "/afskra" must stay reachable even while gated — an unsubscribe link in a
   // marketing email has to work unconditionally.
-  const alwaysPublic = ["/admin", "/skjol", "/kynning", "/breytingaskra", "/fyrirspurn", "/personuverndarbeidni", "/kannanir", "/present", "/afskra", "/vaktir", "/samstarf"];
+  // "/hsu" is the HSU doctors' roster (own login), unrelated to the launch state.
+  const alwaysPublic = ["/admin", "/skjol", "/kynning", "/breytingaskra", "/fyrirspurn", "/personuverndarbeidni", "/kannanir", "/present", "/afskra", "/vaktir", "/samstarf", "/hsu"];
   if (alwaysPublic.some((p) => request.nextUrl.pathname.startsWith(p))) {
     return NextResponse.next(withPathname(request));
   }

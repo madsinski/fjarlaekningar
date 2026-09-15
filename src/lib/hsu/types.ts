@@ -1,0 +1,245 @@
+// HSU vaktakerfi — sameiginlegar tegundir og hjálparföll.
+//
+// Hreinn kóði án netkalla: notaður bæði í vafra og á þjóni. Mánaðar- og
+// dagsetningaföllin koma úr vaktakerfi Fjarlækninga svo tvö kerfi reikni ekki
+// sama mánuðinn á tvo vegu.
+
+export { monthKey, datesInMonth, shiftMonth, monthRange, monthLabel, weekdayShort, hhmm } from "@/lib/roster";
+
+export type HsuRole = "doctor" | "head";
+
+export interface HsuDoctor {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  title: string;
+  role: HsuRole;
+  color: string;
+  fte: number;
+  active: boolean;
+  /** Hefur sett lykilorð (virkjað aðgang). */
+  activated: boolean;
+  has_pin: boolean;
+  invited_at: string | null;
+  invite_pending: boolean;
+  last_login_at: string | null;
+  must_change_password: boolean;
+}
+
+export interface HsuShiftType {
+  id: string;
+  name: string;
+  short: string;
+  starts: string;
+  ends: string;
+  /** 0=sun … 6=lau */
+  weekdays: number[];
+  on_holidays: boolean;
+  rest_days_after: number;
+  color: string;
+  sort: number;
+  active: boolean;
+}
+
+export type MonthStatus = "collecting" | "review" | "planning" | "published";
+
+export interface HsuMonth {
+  month: string;
+  status: MonthStatus;
+  prefs_deadline: string | null;
+  note: string;
+  published_at: string | null;
+}
+
+/** off = get ekki (hörð regla), want = vil gjarnan (ósk). */
+export type Mark = "off" | "want";
+/** Á ákveðnum degi má líka merkja "ok": laus þrátt fyrir vikudagsreglu. */
+export type DayMark = Mark | "ok";
+export type PrefStatus = "draft" | "submitted" | "approved" | "changes_requested";
+
+export interface HsuPreference {
+  id?: string;
+  doctor_id: string;
+  month: string;
+  day_marks: Record<string, DayMark>;
+  weekday_marks: Record<string, Mark>;
+  min_shifts: number | null;
+  max_shifts: number | null;
+  note: string;
+  status: PrefStatus;
+  submitted_at: string | null;
+  review_note: string;
+  reviewed_at: string | null;
+  reviewed_by: string;
+  entered_by: string;
+}
+
+export type HsuShiftStatus = "assigned" | "open" | "offered";
+
+export interface HsuShift {
+  id: string;
+  shift_date: string;
+  shift_type_id: string | null;
+  label: string;
+  starts: string;
+  ends: string;
+  doctor_id: string | null;
+  status: HsuShiftStatus;
+  note: string;
+}
+
+export type HsuSwapStatus = "pending" | "awaiting_approval" | "accepted" | "declined" | "cancelled";
+
+export interface HsuSwap {
+  id: string;
+  shift_id: string;
+  from_doctor: string | null;
+  to_doctor: string | null;
+  taken_by: string | null;
+  note: string;
+  status: HsuSwapStatus;
+  created_at: string;
+  shift?: { shift_date: string; starts: string; ends: string; label: string } | null;
+}
+
+export const MONTH_STATUS_ORDER: MonthStatus[] = ["collecting", "review", "planning", "published"];
+
+export const MONTH_STATUS_IS: Record<MonthStatus, string> = {
+  collecting: "Óskir opnar",
+  review: "Yfirferð óska",
+  planning: "Vaktaplan í smíðum",
+  published: "Birt",
+};
+
+export const PREF_STATUS_IS: Record<PrefStatus | "none", string> = {
+  none: "Ekki hafið",
+  draft: "Í vinnslu",
+  submitted: "Sent inn",
+  approved: "Samþykkt",
+  changes_requested: "Breytinga óskað",
+};
+
+export const ROLE_IS: Record<HsuRole, string> = { doctor: "Læknir", head: "Yfirlæknir" };
+
+/** Mánudagur fyrst, eins og íslenskt vaktaplan er lesið. */
+export const WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+export const WEEKDAY_SHORT_IS = ["Sun", "Mán", "Þri", "Mið", "Fim", "Fös", "Lau"];
+export const WEEKDAY_LONG_IS = ["sunnudagur", "mánudagur", "þriðjudagur", "miðvikudagur", "fimmtudagur", "föstudagur", "laugardagur"];
+
+export const DOCTOR_COLORS = ["#1d4f91", "#c62828", "#e0a100", "#2e7d32", "#6a1b9a", "#00838f", "#d84315", "#5d4037", "#ad1457", "#455a64"];
+
+/** 0 = sunnudagur … 6 = laugardagur, án tímabeltaleikja. */
+export function weekdayOf(date: string): number {
+  const [y, m, d] = date.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+}
+
+export function addDays(date: string, n: number): string {
+  const [y, m, d] = date.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+}
+
+/** "2026-10-03" → "3. okt." */
+const IS_MONTH_SHORT = ["jan.", "feb.", "mar.", "apr.", "maí", "jún.", "júl.", "ágú.", "sep.", "okt.", "nóv.", "des."];
+export function dayLabel(date: string): string {
+  return `${Number(date.slice(8, 10))}. ${IS_MONTH_SHORT[Number(date.slice(5, 7)) - 1]}`;
+}
+
+/** Vakt yfir miðnætti (t.d. 08–08 eða 16–08) endar næsta dag. */
+export function isOvernight(starts: string, ends: string): boolean {
+  return (ends || "").slice(0, 5) <= (starts || "").slice(0, 5);
+}
+
+// ── Almennir frídagar á Íslandi ─────────────────────────────────────────────
+// Skipta máli fyrir sanngjarna skiptingu: vakt á páskadag vegur eins og
+// helgarvakt, hvaða vikudagur sem það er.
+
+/** Páskadagur (gregoríska reglan, "anonymous Gregorian algorithm"). */
+function easter(year: number): string {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+const holidayCache = new Map<number, Record<string, string>>();
+
+/** Dagsetning → heiti frídags, fyrir heilt ár. */
+export function icelandicHolidays(year: number): Record<string, string> {
+  const hit = holidayCache.get(year);
+  if (hit) return hit;
+  const e = easter(year);
+  const y = String(year);
+  // Sumardagurinn fyrsti: fyrsti fimmtudagur eftir 18. apríl.
+  let summer = `${y}-04-19`;
+  while (weekdayOf(summer) !== 4) summer = addDays(summer, 1);
+  // Frídagur verslunarmanna: fyrsti mánudagur í ágúst.
+  let merchants = `${y}-08-01`;
+  while (weekdayOf(merchants) !== 1) merchants = addDays(merchants, 1);
+
+  const out: Record<string, string> = {
+    [`${y}-01-01`]: "Nýársdagur",
+    [addDays(e, -3)]: "Skírdagur",
+    [addDays(e, -2)]: "Föstudagurinn langi",
+    [e]: "Páskadagur",
+    [addDays(e, 1)]: "Annar í páskum",
+    [summer]: "Sumardagurinn fyrsti",
+    [`${y}-05-01`]: "1. maí",
+    [addDays(e, 39)]: "Uppstigningardagur",
+    [addDays(e, 49)]: "Hvítasunnudagur",
+    [addDays(e, 50)]: "Annar í hvítasunnu",
+    [`${y}-06-17`]: "Þjóðhátíðardagurinn",
+    [merchants]: "Frídagur verslunarmanna",
+    [`${y}-12-24`]: "Aðfangadagur",
+    [`${y}-12-25`]: "Jóladagur",
+    [`${y}-12-26`]: "Annar í jólum",
+    [`${y}-12-31`]: "Gamlársdagur",
+  };
+  holidayCache.set(year, out);
+  return out;
+}
+
+export function holidayName(date: string): string | null {
+  return icelandicHolidays(Number(date.slice(0, 4)))[date] ?? null;
+}
+
+/** Laugardagur, sunnudagur eða frídagur — vegur þyngra í skiptingunni. */
+export function isWeekendish(date: string): boolean {
+  const w = weekdayOf(date);
+  return w === 0 || w === 6 || holidayName(date) !== null;
+}
+
+/** Á vaktategund við þennan dag? */
+export function typeAppliesOn(t: Pick<HsuShiftType, "weekdays" | "on_holidays">, date: string): boolean {
+  if (t.on_holidays && holidayName(date)) return true;
+  return (t.weekdays ?? []).includes(weekdayOf(date));
+}
+
+/** Er dagurinn merktur "off"/"want" — sérstakur dagur trompar vikudag. */
+export function markFor(pref: Pick<HsuPreference, "day_marks" | "weekday_marks"> | null | undefined, date: string): Mark | null {
+  if (!pref) return null;
+  const day = pref.day_marks?.[date];
+  if (day === "ok") return null;
+  if (day) return day;
+  return pref.weekday_marks?.[String(weekdayOf(date))] ?? null;
+}
+
+export function normalizeEmail(input: string): string {
+  const v = (input || "").trim().toLowerCase();
+  // Notandanafn án léns: "jon.jonsson" → "jon.jonsson@hsu.is".
+  return v && !v.includes("@") ? `${v}@${HSU_EMAIL_DOMAIN}` : v;
+}
+
+export const HSU_EMAIL_DOMAIN = "hsu.is";

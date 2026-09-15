@@ -1,0 +1,97 @@
+# HSU vaktakerfi — Heilsugæslan í Vestmannaeyjum
+
+Vaktakerfi lækna HSU, hýst á fjarlaekningar.is en án vörumerkis Fjarlækninga.
+
+| Slóð | Fyrir hvern |
+|---|---|
+| **`fjarlaekningar.is/hsu`** | Innskráning (lykilorð eða 4 stafa kóði) |
+| `/hsu/min-sida` | Mín síða læknis: vaktir, óskir, vaktamarkaður, vaktaplan, dagatal, aðgangur |
+| `/hsu/stjorn` | Vaktaskipulag: yfirlæknir HSU, eða stjórnandi Fjarlækninga (hnappur „HSU vaktakerfi“ í stjórnborðinu) |
+| `/hsu/virkja/<hlekkur>` | Virkjun aðgangs / nýtt lykilorð |
+
+Gagnagrunnur: `supabase/hsu-schema.sql` (keyrt 2026-09-15). Allar `hsu_*` töflur eru
+lokaðar vöfrum; allt fer um `/api/hsu/*`.
+
+## Aðgangur
+
+- **Notandanafn = @hsu.is netfang.** Nóg að skrifa fyrri hlutann („jon.jonsson“).
+  Önnur lén aðeins ef `HSU_EXTRA_EMAIL_DOMAINS` leyfir (t.d. til prófana).
+- **Lykilorð** (minnst 10 stafir, bókstafir + tölustafir), scrypt.
+  8 rangar tilraunir → 15 mín lás.
+- **Aðgangskóði (4 stafir)** virkar aðeins á tæki þar sem læknirinn hefur áður skráð
+  sig inn með lykilorði (httpOnly-kaka, 90 dagar). 5 röng gisk → tækið missir traust.
+- **Engin tvíþátta auðkenning** fyrir lækna HSU. Stjórnandi Fjarlækninga kemst inn
+  með sinni starfsmannalotu og aðeins ef hún hefur staðist MFA (aal2).
+- Lota: 12 klst. Læknar HSU eru **ekki** í `staff`/`auth.users` og fá ekkert úr
+  RLS-reglum Fjarlækninga.
+
+### Nýr læknir
+
+Yfirlæknir eða stjórnandi → Vaktaskipulag → **Læknar → Bæta við lækni**:
+
+1. **Senda boð** — læknir fær tölvupóst, velur lykilorð og kóða. Hlekkur gildir 14 daga.
+2. **Fylla út sjálf(ur)** — velur upphafslykilorð; læknir skiptir um það við fyrstu innskráningu.
+
+Póstur fer frá `HSU vaktakerfi <vaktir@fjarlaekningar.is>` (Resend; breytanlegt með
+`HSU_FROM_EMAIL`). Yfirlæknir er læknir með hlutverkið *Yfirlæknir*.
+
+## Mánaðarplan í fjórum skrefum
+
+1. **Óskir lækna** — opna mánuð (skilafrestur, skilaboð, tölvupóstur). Læknar mála
+   dagatal: *Get ekki* (hörð regla) / *Vil gjarnan* (ósk), vikudagareglur, lágmark/hámark,
+   athugasemd, og „nota líka fyrir næsta mánuð“. Yfirlæknir getur skráð fyrir hönd læknis.
+2. **Samþykkja óskir** — samþykkja, biðja um breytingar (læknir fær póst), breyta.
+3. **Vaktaplan** — sjálfvirk skipting (`src/lib/hsu/plan.ts`): í hlutfalli við
+   starfshlutfall innan lágmarks/hámarks, *get ekki* og hvíld eftir vakt aldrei brotin,
+   helgar og almennir frídagar jafnt dreifðir, óskadagar virtir þegar hægt er.
+   Síðan lagfært með því að **draga lækna á vaktir / vaktir hver ofan á aðra**
+   (skipti), smella á lækni og svo vaktir (snertiskjár), eða smella á vakt og velja.
+   Árekstrar merktir; afturkalla.
+4. **Birta** — planið birtist á síðum lækna og í dagatölum. Eftir birtingu fara
+   breytingar strax út og læknarnir sem þær snerta fá tölvupóst.
+
+Vaktategundir (sjálfgefið: *Bakvakt 08–08 alla daga*) og hvort yfirlæknir samþykki
+vaktaskipti eru undir **Stillingar**.
+
+## Vaktamarkaður
+
+Læknir setur vakt **á vaktamarkað** (allir fá póst) eða býður ákveðnum lækni. Vaktin
+er hans þar til annar tekur hana. Læknir getur ekki tekið vakt á degi sem hann er
+þegar á vakt.
+
+## Dagatöl — staða
+
+| Leið | Stefna | Hraði | Staða |
+|---|---|---|---|
+| **.ics-áskrift** (iPhone/Mac, Outlook, Google) | kerfi → dagatal | Apple 5–60 mín, Outlook/Google klst. | ✅ virkar núna |
+| **Google Calendar API** (push) | kerfi → dagatal | samstundis | ⏳ kóði tilbúinn, uppsetning eftir |
+| **Microsoft 365 / Outlook (Graph)** | kerfi ↔ dagatal | samstundis | ✗ ekki smíðað |
+
+**hsu.is er á Microsoft 365** (MX → outlook.com). Vinnudagatal læknanna er því Outlook,
+ekki Google.
+
+### Til að Google-push virki fyrir HSU
+Sami OAuth-biðlari og Fjarlækningar nota (sjá `docs/google-dagatal.md`), en:
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` eru enn ekki í Vercel.
+- Samþykktarskjárinn var ákveðinn **Internal** (aðeins @fjarlaekningar.is). Læknar HSU
+  eru utan þess léns og komast ekki inn. Þarf **External + staðfestingu hjá Google**
+  (`calendar.app.created` er *sensitive*: dagar–vikur, engin öryggisúttekt), eða sér
+  OAuth-biðlara fyrir HSU. `External + Testing` virkar fyrir ≤100 notendur en lyklar
+  deyja á 7 daga fresti.
+
+### Hvað „tvíátta“ myndi þýða
+Vaktaplanið á að vera eina uppsprettan: breyting í dagatali á ekki að færa vakt. Það
+sem skilar raunverulegu gagni í hina áttina er **að lesa upptekna daga** úr dagatali
+læknis og merkja þá sjálfkrafa sem *get ekki* þegar hann skráir óskir:
+- Outlook: Microsoft Graph `Calendars.Read` / `getSchedule` — krefst app-skráningar í
+  Entra ID HSU og samþykkis kerfisstjóra HSU. Sama tenging gæti skrifað vaktirnar
+  beint í Outlook-dagatalið (samstundis, í stað .ics).
+- Google: heimildin `calendar.freebusy`.
+- Apple/iCloud hefur ekkert opinbert API; aðeins .ics (eða CalDAV með app-lykilorði).
+
+## Skrár
+
+- `src/lib/hsu/` — auth, plan, prefs, market, shift-edit, calendar, portal, server
+- `src/lib/calendar-sync.ts` — sameiginleg Google-samstilling (Fjarlækningar + HSU)
+- `src/app/api/hsu/` — auth, me, admin, calendar
+- `src/app/hsu/` — viðmót
