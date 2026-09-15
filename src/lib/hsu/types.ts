@@ -62,6 +62,10 @@ export interface HsuShiftType {
   skip_holidays: boolean;
   kind: ShiftKind;
   period: ShiftPeriod;
+  /** Hve margir læknar eru samtímis á vaktinni (t.d. tveir á flýtimóttöku). */
+  slots_per_day: number;
+  /** Skipting um hádegi: vaktinni er skipt í fyrri og síðari hluta á þessum tíma. */
+  split_at: string | null;
   rest_days_after: number;
   color: string;
   sort: number;
@@ -115,6 +119,8 @@ export interface HsuShift {
   note: string;
   /** "requested" = yfirlæknir setti lækni á vakt umfram hámark hans; bíður samþykkis læknisins. */
   confirm_status?: "requested" | null;
+  /** Númer vaktar innan dagsins þegar fleiri en ein vakt er af sömu tegund. */
+  slot_index?: number;
   /** Hvenær læknirinn merkti að útköll vaktarinnar væru skráð í Vinnustund. */
   vinnustund_logged_at?: string | null;
   /** Hver bað um vaktina. Situr eftir þegar læknir samþykkir: þá er vaktin umfram hámark með samþykki hans. */
@@ -176,6 +182,48 @@ export function addDays(date: string, n: number): string {
 const IS_MONTH_SHORT = ["jan.", "feb.", "mar.", "apr.", "maí", "jún.", "júl.", "ágú.", "sep.", "okt.", "nóv.", "des."];
 export function dayLabel(date: string): string {
   return `${Number(date.slice(8, 10))}. ${IS_MONTH_SHORT[Number(date.slice(5, 7)) - 1]}`;
+}
+
+/** Mínútur frá miðnætti. */
+export function minutesOf(t: string): number {
+  const [h, m] = (t || "00:00").slice(0, 5).split(":").map(Number);
+  return h * 60 + (m || 0);
+}
+
+/**
+ * Skarast vaktirnar tvær í tíma? Vakt yfir miðnætti nær inn í næsta sólarhring,
+ * svo endatíminn er framlengdur. Notað til að leyfa lækni bæði fyrir og eftir
+ * hádegi sama dag en aldrei tvær vaktir á sama tíma.
+ */
+export function timesOverlap(a: { starts: string; ends: string }, b: { starts: string; ends: string }): boolean {
+  const range = (x: { starts: string; ends: string }) => {
+    const s = minutesOf(x.starts);
+    const e = minutesOf(x.ends);
+    return [s, e > s ? e : e + 24 * 60] as const;
+  };
+  const [as, ae] = range(a);
+  const [bs, be] = range(b);
+  return as < be && bs < ae;
+}
+
+/**
+ * Vaktir dagsins af einni tegund: skipting um hádegi gefur tvo hluta, og
+ * slots_per_day gefur samhliða vaktir af hverjum hluta.
+ */
+export function slotsOfType(t: Pick<HsuShiftType, "starts" | "ends" | "short" | "name" | "slots_per_day" | "split_at">): { index: number; starts: string; ends: string; label: string }[] {
+  const base = t.short || t.name;
+  const split = t.split_at?.slice(0, 5);
+  const parts = split && minutesOf(t.starts) < minutesOf(split) && minutesOf(split) < minutesOf(t.ends)
+    ? [{ starts: t.starts, ends: split, suffix: " f.h." }, { starts: split, ends: t.ends, suffix: " e.h." }]
+    : [{ starts: t.starts, ends: t.ends, suffix: "" }];
+  const per = Math.max(1, Math.min(6, t.slots_per_day ?? 1));
+  const out: { index: number; starts: string; ends: string; label: string }[] = [];
+  parts.forEach((p, pi) => {
+    for (let i = 0; i < per; i++) {
+      out.push({ index: pi * 10 + i, starts: p.starts, ends: p.ends, label: `${base}${p.suffix}${per > 1 ? ` ${i + 1}` : ""}`.slice(0, 30) });
+    }
+  });
+  return out;
 }
 
 /** Vakt yfir miðnætti (t.d. 08–08 eða 16–08) endar næsta dag. */

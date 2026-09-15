@@ -35,7 +35,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     if (!mayTake) return fail("Ekki heimilt", 403);
     if (shift.doctor_id !== swap.from_doctor) return fail("Vaktin hefur þegar skipt um hendur", 409);
     if (shift.shift_date < now.slice(0, 10)) return fail("Vaktin er liðin.");
-    if (await hasShiftThatDay(me.id, shift.shift_date, swap.shift_id)) return fail("Þú ert þegar á vakt á sama tíma dags þennan dag.", 409);
+    if (await hasShiftThatDay(me.id, shift.shift_date, swap.shift_id)) return fail("Þú ert þegar á vakt á sama tíma.", 409);
     if ((await isBakvaktShift(swap.shift_id)) && !(await canDoBakvakt(me.id))) return fail("Þú hefur ekki bakvaktarréttindi.", 403);
 
     const { data: settings } = await supabaseAdmin.from("hsu_settings").select("market_requires_approval").eq("id", 1).maybeSingle();

@@ -67,7 +67,7 @@ function nextHolidays(): [string, string][] {
 }
 
 function ShiftTypeCard({ ctx, type }: { ctx: PlannerCtx; type?: HsuShiftType }) {
-  const blank: Omit<HsuShiftType, "id"> = { name: "", short: "", starts: "08:00", ends: "16:00", weekdays: [1, 2, 3, 4, 5], on_holidays: false, skip_holidays: true, kind: "other", period: "day", rest_days_after: 0, color: "#1d4f91", sort: 10, active: true };
+  const blank: Omit<HsuShiftType, "id"> = { name: "", short: "", starts: "08:00", ends: "16:00", weekdays: [1, 2, 3, 4, 5], on_holidays: false, skip_holidays: true, kind: "other", period: "day", slots_per_day: 1, split_at: null, rest_days_after: 0, color: "#1d4f91", sort: 10, active: true };
   const [v, setV] = useState<Omit<HsuShiftType, "id">>(type ?? blank);
   const [open, setOpen] = useState(Boolean(type));
   const [busy, setBusy] = useState<string | null>(null);
@@ -119,6 +119,19 @@ function ShiftTypeCard({ ctx, type }: { ctx: PlannerCtx; type?: HsuShiftType }) 
         <Field label="Frá"><input type="time" className={inputCls} value={v.starts} onChange={(e) => set({ starts: e.target.value })} /></Field>
         <Field label="Til" hint={isOvernight(v.starts, v.ends) ? "Næsta dag" : undefined}><input type="time" className={inputCls} value={v.ends} onChange={(e) => set({ ends: e.target.value })} /></Field>
         <Field label="Hvíld eftir (dagar)"><input type="number" min={0} max={7} className={inputCls} value={v.rest_days_after} onChange={(e) => set({ rest_days_after: Number(e.target.value) })} /></Field>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Læknar á vakt" hint={v.slots_per_day > 1 ? `${v.slots_per_day} vaktir á dag af þessari tegund` : "Ein vakt á dag"}>
+          <input type="number" min={1} max={6} className={inputCls} value={v.slots_per_day}
+            onChange={(e) => set({ slots_per_day: Math.min(6, Math.max(1, Number(e.target.value) || 1)) })} />
+        </Field>
+        <Field label="Skipta um hádegi" hint={v.split_at ? `${v.starts}–${v.split_at} og ${v.split_at}–${v.ends}` : "Ein heil vakt"}>
+          <div className="flex items-center gap-2">
+            <input type="checkbox" className="h-4 w-4" checked={Boolean(v.split_at)}
+              onChange={(e) => set({ split_at: e.target.checked ? "12:00" : null })} />
+            {v.split_at && <input type="time" className={inputCls} value={v.split_at.slice(0, 5)} onChange={(e) => set({ split_at: e.target.value })} />}
+          </div>
+        </Field>
       </div>
       <div>
         <div className="text-xs font-semibold text-slate-600">Dagar</div>

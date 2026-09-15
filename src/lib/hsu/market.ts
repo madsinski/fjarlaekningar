@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { hsuSync } from "./calendar";
 import { audit } from "./auth";
 import { hsuEmailHtml, sendHsuEmail } from "./server";
-import { dayLabel, hhmm, weekdayOf, WEEKDAY_LONG_IS } from "./types";
+import { dayLabel, hhmm, timesOverlap, weekdayOf, WEEKDAY_LONG_IS } from "./types";
 
 export function shiftPhrase(s: { shift_date: string; starts: string; ends: string; label?: string }): string {
   return `${s.label ? `${s.label} ` : ""}${WEEKDAY_LONG_IS[weekdayOf(s.shift_date)]} ${dayLabel(s.shift_date)} kl. ${hhmm(s.starts)}–${hhmm(s.ends)}`;
@@ -70,21 +70,17 @@ export async function canDoBakvakt(doctorId: string): Promise<boolean> {
   return Boolean(data?.can_bakvakt);
 }
 
-type PeriodRow = { id: string; starts: string; ends: string; type: { period?: string } | null };
-const periodOfRow = (r: PeriodRow) =>
-  r.type?.period ?? (r.starts.slice(0, 5) < "15:00" && r.ends.slice(0, 5) > r.starts.slice(0, 5) ? "day" : "evening");
-
 /**
- * Er læknirinn þegar á vakt í SAMA HÓLFI þennan dag? Dagvakt og kvöldvakt sama
- * dag er leyfð (og oft forsenda mönnunar); tvær dagvaktir eða tvær kvöldvaktir ekki.
+ * Er læknirinn þegar á vakt SEM SKARAST í tíma þennan dag? Dagvakt og kvöldvakt
+ * sama dag er leyfð (og oft forsenda mönnunar), sömuleiðis fyrir og eftir hádegi;
+ * tvær vaktir á sama tíma eru það ekki.
  */
 export async function hasShiftThatDay(doctorId: string, date: string, exceptShiftId: string): Promise<boolean> {
-  const cols = "id, starts, ends, type:hsu_shift_types(period)";
+  const cols = "id, starts, ends";
   const [{ data: target }, { data }] = await Promise.all([
     supabaseAdmin.from("hsu_shifts").select(cols).eq("id", exceptShiftId).maybeSingle(),
     supabaseAdmin.from("hsu_shifts").select(cols).eq("doctor_id", doctorId).eq("shift_date", date).neq("id", exceptShiftId),
   ]);
   if (!target) return Boolean(data?.length);
-  const want = periodOfRow(target as unknown as PeriodRow);
-  return ((data ?? []) as unknown as PeriodRow[]).some((r) => periodOfRow(r) === want);
+  return ((data ?? []) as { starts: string; ends: string }[]).some((r) => timesOverlap(r, target as { starts: string; ends: string }));
 }

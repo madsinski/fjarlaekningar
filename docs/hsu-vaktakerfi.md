@@ -73,6 +73,20 @@ undir **Stillingar**. Á hverjum lækni undir **Læknar**:
 
 Tóm bakvakt sem enginn þarf er ekki gat í planinu og sést ekki á síðu lækna.
 
+### Fleiri en einn á vakt og skipting um hádegi
+
+Á hverri vaktategund undir **Stillingar**:
+
+- **Læknar á vakt (1–6)** — hve margir eru samtímis á vaktinni. Tveir á
+  flýtimóttöku gefa tvær FM-vaktir hvern dag.
+- **Skipta um hádegi** — vaktinni er skipt í tvennt á völdum tíma (sjálfgefið
+  12:00). Þá verða til *FM f.h.* (08–12) og *FM e.h.* (12–16) og einn læknir
+  getur tekið fyrri hlutann og annar þann síðari — eða sami læknir báða.
+
+Reglan um vaktir sama dag miðast við **tíma, ekki hólf**: læknir má taka fyrir
+og eftir hádegi, og dagvakt og svo kvöldvakt, en aldrei tvær vaktir sem skarast.
+Forvakt og bakvakt sama dag eru því áfram tveir ólíkir læknar.
+
 ### Dagvinnudagar læknis
 
 Sumir læknar vinna dagvinnu aðeins hluta vikunnar (t.d. mánudaga og þriðjudaga).
@@ -81,7 +95,9 @@ sjálfum undir **Óskir → Dagvinnudagar**. Skiptingin setur hann þá aðeins 
 dagvaktir þá vikudaga; kvöld- og næturvaktir eru óháðar þessu.
 
 Þurfi yfirlæknir hann á dagvakt annan vikudag verður vaktin **beiðni** sem
-læknirinn samþykkir eða hafnar — sama leið og vakt umfram hámark. Breyti læknir
+læknirinn samþykkir eða hafnar. Sama gildir um vakt á degi sem hann merkti
+„get ekki“, og um vakt umfram hámarkið sem hann skráði: sjálfvirka skiptingin
+snertir þá daga aldrei, en yfirlæknir má biðja um þá. Breyti læknir
 dagvinnudögum sínum fá yfirlæknar tölvupóst.
 
 ### Ein dagvakt og ein kvöldvakt á dag

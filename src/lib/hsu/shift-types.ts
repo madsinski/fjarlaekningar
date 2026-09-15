@@ -17,6 +17,13 @@ export function cleanShiftType(body: Record<string, unknown>, partial: boolean):
   if (p.on_holidays && p.skip_holidays) return "Vakt getur ekki bæði gilt alltaf á frídögum og aldrei.";
   if (body.kind === "forvakt" || body.kind === "bakvakt" || body.kind === "other") p.kind = body.kind;
   if (body.period === "day" || body.period === "evening") p.period = body.period;
+  if (body.slots_per_day !== undefined) p.slots_per_day = Math.min(6, Math.max(1, Math.floor(Number(body.slots_per_day)) || 1));
+  if ("split_at" in body) {
+    const v = body.split_at;
+    if (v === null || v === "") p.split_at = null;
+    else if (typeof v === "string" && TIME_RE.test(v)) p.split_at = v;
+    else return "Ógildur tími fyrir skiptingu.";
+  }
   if (body.rest_days_after !== undefined) p.rest_days_after = Math.min(7, Math.max(0, Math.floor(Number(body.rest_days_after)) || 0));
   if (typeof body.color === "string" && /^#[0-9a-f]{6}$/i.test(body.color)) p.color = body.color;
   if (body.sort !== undefined) p.sort = Math.floor(Number(body.sort)) || 0;

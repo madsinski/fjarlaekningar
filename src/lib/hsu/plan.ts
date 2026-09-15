@@ -12,9 +12,9 @@
 //
 // HARÐAR reglur (brjótast aldrei í sjálfvirku skiptingunni):
 //   * "Get ekki" — dagur eða vikudagur merktur off
-//   * Mest ein dagvakt og ein kvöld-/næturvakt á dag á hvern lækni. Sami læknir
-//     má taka flýtimóttöku og forvakt sama dag, en forvakt og bakvakt sama dag
-//     eru alltaf tveir ólíkir læknar (báðar kvöldvaktir).
+//   * Engar tvær vaktir á sama tíma. Sami læknir má taka flýtimóttöku og svo
+//     forvakt sama dag, og fyrri og síðari hluta flýtimóttöku, en forvakt og
+//     bakvakt sama dag eru alltaf tveir ólíkir læknar (sami tími).
 //   * Hvíld eftir vakt (rest_days_after á vaktategund)
 //   * Hámarksfjöldi vakta læknis í mánuðinum
 //   * Bakvakt aðeins á lækni með bakvaktarréttindi
@@ -27,7 +27,7 @@
 //   * Læknir sem þarf bakvakt fær helst forvakt þá daga sem reyndur læknir er laus
 //   * Vaktir dreifast um mánuðinn frekar en að hrannast upp
 
-import { addDays, isOvernight, isWeekendish, markFor, weekdayOf, type HsuPreference, type ShiftKind, type ShiftPeriod } from "./types";
+import { addDays, isOvernight, isWeekendish, markFor, timesOverlap, weekdayOf, type HsuPreference, type ShiftKind, type ShiftPeriod } from "./types";
 
 export interface PlanSlot {
   /** Auðkenni vaktar (eða "dagsetning|tegund" fyrir óvistaðar). */
@@ -39,6 +39,8 @@ export interface PlanSlot {
   kind: ShiftKind;
   /** Dagvakt eða kvöld-/næturvakt. Sami læknir má hafa eina af hvoru sama dag. */
   period: ShiftPeriod;
+  starts: string;
+  ends: string;
   /** Haldið óbreyttri líka í "all": t.d. vakt sem bíður samþykkis læknis. */
   locked?: boolean;
   /** Læknirinn samþykkti vaktina umfram hámark sitt — telst ekki árekstur. */
@@ -102,15 +104,16 @@ export interface PlanResult {
   stats: Record<string, DoctorStat>;
 }
 
-interface Held { key: string; date: string; rest: number; period: ShiftPeriod }
+interface Held { key: string; date: string; rest: number; period: ShiftPeriod; starts: string; ends: string }
 
 /** Hvenær má læknir EKKI taka vakt vegna annarrar vaktar sem hann heldur. */
-function restBlocks(held: Held[], slot: Pick<PlanSlot, "key" | "date" | "restAfter" | "period">): "busy" | "rest" | null {
+function restBlocks(held: Held[], slot: Pick<PlanSlot, "key" | "date" | "restAfter" | "period" | "starts" | "ends">): "busy" | "rest" | null {
   for (const h of held) {
     if (h.key === slot.key) continue;
-    // Sama dag: dagvakt og kvöldvakt fara saman, tvær í sama hólfi ekki.
+    // Sama dag: aðeins vaktir sem skarast í tíma útiloka hvor aðra. Þannig má
+    // sami læknir taka fyrir og eftir hádegi, og dagvakt og svo kvöldvakt.
     if (h.date === slot.date) {
-      if (h.period === slot.period) return "busy";
+      if (timesOverlap(h, slot)) return "busy";
       continue;
     }
     // Fyrri vakt krefst hvíldar sem nær yfir þennan dag.
@@ -211,7 +214,7 @@ export function planMonth(
   for (const s of slots) {
     if ((mode === "empty" && s.doctorId) || (s.locked && s.doctorId)) {
       assignments[s.key] = s.doctorId;
-      held[s.doctorId]?.push({ key: s.key, date: s.date, rest: s.restAfter, period: s.period });
+      held[s.doctorId]?.push({ key: s.key, date: s.date, rest: s.restAfter, period: s.period, starts: s.starts, ends: s.ends });
     } else {
       assignments[s.key] = null;
       toPlace.push(s);
@@ -298,7 +301,7 @@ export function planMonth(
       }
       ok.sort((a, b) => pickCost(a.id, s) - pickCost(b.id, s) || a.name.localeCompare(b.name, "is"));
       assignments[s.key] = ok[0].id;
-      held[ok[0].id].push({ key: s.key, date: s.date, rest: s.restAfter, period: s.period });
+      held[ok[0].id].push({ key: s.key, date: s.date, rest: s.restAfter, period: s.period, starts: s.starts, ends: s.ends });
     }
   };
 
@@ -344,7 +347,7 @@ export function planMonth(
   const move = (key: string, from: string | null, to: string | null) => {
     const s = slotByKey.get(key)!;
     if (from) held[from] = held[from].filter((h) => h.key !== key);
-    if (to) held[to].push({ key, date: s.date, rest: s.restAfter, period: s.period });
+    if (to) held[to].push({ key, date: s.date, rest: s.restAfter, period: s.period, starts: s.starts, ends: s.ends });
     assignments[key] = to;
   };
 
@@ -423,7 +426,7 @@ export function capFromTarget(target: number): number {
 
 /** Vaktir úr gagnagrunni → vaktir fyrir skiptinguna. */
 export function toPlanSlots(
-  shifts: { id: string; shift_date: string; shift_type_id: string | null; doctor_id: string | null; starts?: string; ends?: string; confirm_status?: string | null; requested_by?: string | null }[],
+  shifts: { id: string; shift_date: string; shift_type_id: string | null; doctor_id: string | null; starts: string; ends: string; confirm_status?: string | null; requested_by?: string | null }[],
   types: { id: string; rest_days_after: number; kind: ShiftKind; period?: ShiftPeriod }[],
 ): PlanSlot[] {
   const byId = new Map(types.map((t) => [t.id, t]));
@@ -431,9 +434,10 @@ export function toPlanSlots(
     const t = s.shift_type_id ? byId.get(s.shift_type_id) : undefined;
     return {
       key: s.id, date: s.shift_date, typeId: s.shift_type_id, restAfter: t?.rest_days_after ?? 0,
+      starts: s.starts.slice(0, 5), ends: s.ends.slice(0, 5),
       doctorId: s.doctor_id, kind: t?.kind ?? "other",
       // Aukavakt án tegundar: dagvakt ef hún hefst fyrir kl. 15 og nær ekki yfir miðnætti.
-      period: t?.period ?? (s.starts && s.ends && s.starts.slice(0, 5) < "15:00" && !isOvernight(s.starts, s.ends) ? "day" : "evening"),
+      period: t?.period ?? (s.starts.slice(0, 5) < "15:00" && !isOvernight(s.starts, s.ends) ? "day" : "evening"),
       // Beiðni sem bíður er læst; samþykkt beiðni er bæði læst og samþykkt umfram hámark.
       locked: s.confirm_status === "requested" || Boolean(s.requested_by),
       agreed: !s.confirm_status && Boolean(s.requested_by),
@@ -483,7 +487,7 @@ export type ConflictKind = "off" | "double" | "rest" | "max" | "skill" | "no_bak
 
 export const CONFLICT_IS: Record<ConflictKind, string> = {
   off: "Læknirinn merkti „get ekki“ þennan dag",
-  double: "Læknirinn er á tveimur dagvöktum eða tveimur kvöldvöktum sama dag",
+  double: "Læknirinn er á tveimur vöktum á sama tíma",
   rest: "Of stutt hvíld frá annarri vakt",
   max: "Fleiri vaktir en hámark læknisins",
   skill: "Læknirinn hefur ekki bakvaktarréttindi",
@@ -503,7 +507,7 @@ export function findConflicts(
   const byDoc: Record<string, PlanSlot[]> = {};
   for (const s of slots) if (s.doctorId) (byDoc[s.doctorId] ||= []).push(s);
   for (const [doc, mine] of Object.entries(byDoc)) {
-    const held: Held[] = mine.map((s) => ({ key: s.key, date: s.date, rest: s.restAfter, period: s.period }));
+    const held: Held[] = mine.map((s) => ({ key: s.key, date: s.date, rest: s.restAfter, period: s.period, starts: s.starts, ends: s.ends }));
     const max = prefs[doc]?.max_shifts;
     const info = docs.get(doc);
     const sorted = mine.slice().sort((a, b) => a.date.localeCompare(b.date));

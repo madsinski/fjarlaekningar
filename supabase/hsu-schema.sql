@@ -321,3 +321,18 @@ comment on column public.hsu_doctors.day_weekdays is '0=sun … 6=lau. Tómt = a
 -- Kerfið geymir aðeins hvort hann hafi merkt við það — engin gögn um útköllin
 -- sjálf fara hér um.
 alter table public.hsu_shifts add column if not exists vinnustund_logged_at timestamptz;
+
+-- ── Fleiri en einn á vakt, og skipting um hádegi (2026-09-16) ──────────────
+-- slots_per_day: hve margir læknar eru samtímis á vaktinni (t.d. tveir á
+-- flýtimóttöku). split_at: klukkan sem vaktinni er skipt í tvennt — fyrir og
+-- eftir hádegi — svo einn geti tekið fyrri hlutann og annar þann síðari.
+alter table public.hsu_shift_types add column if not exists slots_per_day integer not null default 1;
+alter table public.hsu_shift_types drop constraint if exists hsu_shift_types_slots_check;
+alter table public.hsu_shift_types add constraint hsu_shift_types_slots_check check (slots_per_day between 1 and 6);
+alter table public.hsu_shift_types add column if not exists split_at time;
+
+-- Vaktir sama dags af sömu tegund eru nú fleiri en ein; einkvæmið tekur mið af því.
+alter table public.hsu_shifts add column if not exists slot_index integer not null default 0;
+drop index if exists hsu_shifts_slot_uidx;
+create unique index if not exists hsu_shifts_slot_uidx
+  on public.hsu_shifts (shift_date, shift_type_id, slot_index) where shift_type_id is not null;

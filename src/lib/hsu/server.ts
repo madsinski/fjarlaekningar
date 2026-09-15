@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendEmail, escapeHtml } from "@/lib/email";
 import { getHsuActor, sameOrigin, type HsuActor } from "./auth";
 import {
-  datesInMonth, monthLabel, monthRange, typeAppliesOn, holidayName,
+  datesInMonth, monthLabel, monthRange, slotsOfType, typeAppliesOn, holidayName,
   type HsuDoctor, type HsuMonth, type HsuPreference, type HsuShift, type HsuShiftType, type HsuSwap,
 } from "./types";
 
@@ -88,7 +88,7 @@ export async function loadShiftTypes(activeOnly = false): Promise<HsuShiftType[]
     .sort((a, b) => (a.period === "day" ? 0 : 1) - (b.period === "day" ? 0 : 1) || (a.sort ?? 0) - (b.sort ?? 0) || (rank[a.kind] ?? 1) - (rank[b.kind] ?? 1) || String(a.short).localeCompare(String(b.short))) as HsuShiftType[];
 }
 
-export const SHIFT_COLUMNS = "id, shift_date, shift_type_id, label, starts, ends, doctor_id, status, note, published, confirm_status, requested_by, vinnustund_logged_at";
+export const SHIFT_COLUMNS = "id, shift_date, shift_type_id, slot_index, label, starts, ends, doctor_id, status, note, published, confirm_status, requested_by, vinnustund_logged_at";
 
 export async function loadMonthShifts(month: string, publishedOnly = false): Promise<HsuShift[]> {
   const { first, next } = monthRange(month);
@@ -133,15 +133,25 @@ export async function ensureSlots(month: string): Promise<number> {
   let existing = await loadMonthShifts(month);
   const status = (await loadMonth(month))?.status;
 
+  /** Vaktir sem EIGA að vera til: dagur → tegund → vaktanúmer. */
+  const wanted = new Map<string, { typeId: string; starts: string; ends: string; label: string; index: number }>();
+  for (const date of datesInMonth(month)) {
+    for (const t of types) {
+      if (!typeAppliesOn(t, date)) continue;
+      for (const slot of slotsOfType(t)) {
+        wanted.set(`${date}|${t.id}|${slot.index}`, { typeId: t.id, starts: slot.starts, ends: slot.ends, label: slot.label, index: slot.index });
+      }
+    }
+  }
+
   // Tómar, óbirtar vaktir sem passa ekki lengur við vaktategundirnar (tegund
-  // gerð óvirk, dögum breytt, frídagaregla) eru fjarlægðar. Vakt með lækni eða
-  // sem hefur verið birt er aldrei snert.
+  // gerð óvirk, dögum breytt, frídagaregla, skipting um hádegi) eru fjarlægðar.
+  // Vakt með lækni eða sem hefur verið birt er aldrei snert.
   if (status !== "published") {
-    const typeById = new Map(types.map((t) => [t.id, t]));
     const stale = existing.filter((s) => {
       if (s.doctor_id || !s.shift_type_id || (s as { published?: boolean }).published) return false;
-      const t = typeById.get(s.shift_type_id);
-      return !t || !typeAppliesOn(t, s.shift_date);
+      const want = wanted.get(`${s.shift_date}|${s.shift_type_id}|${s.slot_index ?? 0}`);
+      return !want || want.starts !== s.starts.slice(0, 5) || want.ends !== s.ends.slice(0, 5);
     });
     if (stale.length) {
       const { error } = await supabaseAdmin.from("hsu_shifts").delete().in("id", stale.map((s) => s.id));
@@ -151,21 +161,18 @@ export async function ensureSlots(month: string): Promise<number> {
     }
   }
 
-  const have = new Set(existing.map((s) => `${s.shift_date}|${s.shift_type_id}`));
+  const have = new Set(existing.map((s) => `${s.shift_date}|${s.shift_type_id}|${s.slot_index ?? 0}`));
   const rows: Record<string, unknown>[] = [];
-  for (const date of datesInMonth(month)) {
-    for (const t of types) {
-      if (!typeAppliesOn(t, date) || have.has(`${date}|${t.id}`)) continue;
-      rows.push({
-        shift_date: date, shift_type_id: t.id, label: t.short || t.name,
-        starts: t.starts, ends: t.ends, status: "assigned", published: status === "published",
-      });
-    }
+  for (const [key, want] of wanted) {
+    if (have.has(key)) continue;
+    rows.push({
+      shift_date: key.split("|")[0], shift_type_id: want.typeId, slot_index: want.index, label: want.label,
+      starts: want.starts, ends: want.ends, status: "assigned", published: status === "published",
+    });
   }
   if (rows.length) {
-    // insert, ekki upsert: einkvæmi (dagur, tegund) er hlutvísir, og ON CONFLICT
-    // getur ekki vísað á hlutvísi gegnum PostgREST. Tvöfaldur smellur rekst því
-    // á vísinn (23505) og er hunsaður — vaktirnar eru þá þegar til.
+    // insert, ekki upsert: einkvæmi (dagur, tegund, númer) er hlutvísir, og
+    // ON CONFLICT getur ekki vísað á hlutvísi gegnum PostgREST.
     const { error } = await supabaseAdmin.from("hsu_shifts").insert(rows);
     if (error && error.code !== "23505") throw new Error(error.message);
   }
