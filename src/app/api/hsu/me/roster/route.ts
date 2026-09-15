@@ -20,5 +20,6 @@ export async function GET(req: Request) {
   // Tóm bakvakt er ekki gat í planinu (hún er aðeins mönnuð þegar þörf er á).
   const bakvakt = new Set(types.filter((t) => t.kind === "bakvakt").map((t) => t.id));
   const shifts = allShifts.filter((s) => s.doctor_id || !s.shift_type_id || !bakvakt.has(s.shift_type_id));
-  return json({ ok: true, published: true, shifts, doctors });
+  const periods = Object.fromEntries(types.map((t) => [t.id, t.period]));
+  return json({ ok: true, published: true, shifts, doctors, periods });
 }

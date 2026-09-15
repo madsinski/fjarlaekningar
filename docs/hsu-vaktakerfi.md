@@ -53,16 +53,18 @@ Póstur fer frá `HSU vaktakerfi <vaktir@fjarlaekningar.is>` (Resend; breytanleg
 Vaktategundir (sjálfgefið: *Bakvakt 08–08 alla daga*) og hvort yfirlæknir samþykki
 vaktaskipti eru undir **Stillingar**.
 
-## Forvakt og bakvakt
+## Dagvakt, forvakt og bakvakt
 
-| Tegund | Dagar | Mönnun |
-|---|---|---|
-| **FV1** forvakt | virkir dagar, aldrei á frídögum | alltaf |
-| **FV2** forvakt | helgar og almennir frídagar | alltaf |
-| **BV1** bakvakt | virkir dagar, aldrei á frídögum | aðeins þegar forvaktarlæknir þarf bakvakt |
-| **BV2** bakvakt | helgar og almennir frídagar | aðeins þegar forvaktarlæknir þarf bakvakt |
+| Tegund | Hólf | Dagar | Mönnun |
+|---|---|---|---|
+| **FM** flýtimóttaka (08–16) | Dagvakt | alla daga, líka frídaga | alltaf |
+| **FV1** forvakt | Kvöld/nótt | virkir dagar, aldrei á frídögum | alltaf |
+| **FV2** forvakt | Kvöld/nótt | helgar og almennir frídagar | alltaf |
+| **BV1** bakvakt | Kvöld/nótt | virkir dagar, aldrei á frídögum | aðeins þegar forvaktarlæknir þarf bakvakt |
+| **BV2** bakvakt | Kvöld/nótt | helgar og almennir frídagar | aðeins þegar forvaktarlæknir þarf bakvakt |
 
-Tegund (*Forvakt / Bakvakt / Önnur*) og frídagaregla eru stilltar á hverri vaktategund
+Hver dagur á vaktaplani skiptist í hólfin **Dagur** og **Kvöld/nótt**. Tegund
+(*Forvakt / Bakvakt / Almenn vakt*), hólf og frídagaregla eru stilltar á hverri vaktategund
 undir **Stillingar**. Á hverjum lækni undir **Læknar**:
 
 - **Bakvaktarréttindi** — reyndur læknir; aðeins þeir fá bakvakt (geta líka tekið forvakt).

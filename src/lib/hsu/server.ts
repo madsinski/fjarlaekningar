@@ -83,7 +83,8 @@ export async function loadShiftTypes(activeOnly = false): Promise<HsuShiftType[]
   const rank: Record<string, number> = { forvakt: 0, other: 1, bakvakt: 2 };
   return (data ?? [])
     .map((t) => ({ ...t, starts: t.starts.slice(0, 5), ends: t.ends.slice(0, 5) }))
-    .sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0) || (rank[a.kind] ?? 1) - (rank[b.kind] ?? 1) || String(a.short).localeCompare(String(b.short))) as HsuShiftType[];
+    // Dagvaktir fyrst, svo forvakt, almennar vaktir og bakvakt.
+    .sort((a, b) => (a.period === "day" ? 0 : 1) - (b.period === "day" ? 0 : 1) || (a.sort ?? 0) - (b.sort ?? 0) || (rank[a.kind] ?? 1) - (rank[b.kind] ?? 1) || String(a.short).localeCompare(String(b.short))) as HsuShiftType[];
 }
 
 export const SHIFT_COLUMNS = "id, shift_date, shift_type_id, label, starts, ends, doctor_id, status, note, published, confirm_status, requested_by";

@@ -4,24 +4,26 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { monthWeeks } from "../_components/PrefsEditor";
 import { Card, cx, hsuApi, shortName, capFirst } from "../_components/ui";
-import { WEEKDAY_ORDER, WEEKDAY_SHORT_IS, holidayName, monthKey, monthLabel, shiftMonth, type HsuShift } from "@/lib/hsu/types";
+import { WEEKDAY_ORDER, WEEKDAY_SHORT_IS, holidayName, monthKey, monthLabel, periodOf, shiftMonth, type HsuShift, type ShiftPeriod } from "@/lib/hsu/types";
 
 export default function RosterTab({ meId }: { meId: string }) {
   const [month, setMonth] = useState(() => monthKey(new Date()));
-  const [state, setState] = useState<{ loading: boolean; published: boolean; shifts: HsuShift[]; doctors: { id: string; name: string; color: string }[] }>({ loading: true, published: false, shifts: [], doctors: [] });
+  const [state, setState] = useState<{ loading: boolean; published: boolean; shifts: HsuShift[]; doctors: { id: string; name: string; color: string }[]; periods: Record<string, ShiftPeriod> }>({ loading: true, published: false, shifts: [], doctors: [], periods: {} });
   const [onlyMine, setOnlyMine] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setState((s) => ({ ...s, loading: true }));
-      const r = await hsuApi<{ published: boolean; shifts: HsuShift[]; doctors: { id: string; name: string; color: string }[] }>(`/api/hsu/me/roster?month=${month}`);
-      if (!cancelled) setState({ loading: false, published: Boolean(r.published), shifts: r.shifts ?? [], doctors: r.doctors ?? [] });
+      const r = await hsuApi<{ published: boolean; shifts: HsuShift[]; doctors: { id: string; name: string; color: string }[]; periods: Record<string, ShiftPeriod> }>(`/api/hsu/me/roster?month=${month}`);
+      if (!cancelled) setState({ loading: false, published: Boolean(r.published), shifts: r.shifts ?? [], doctors: r.doctors ?? [], periods: r.periods ?? {} });
     })();
     return () => { cancelled = true; };
   }, [month]);
 
   const doc = (id: string | null) => state.doctors.find((d) => d.id === id);
+  const typeList = Object.entries(state.periods).map(([id, period]) => ({ id, period }));
+  const showGroups = new Set(Object.values(state.periods)).size > 1;
   const today = new Date().toISOString().slice(0, 10);
 
   return (
@@ -61,7 +63,12 @@ export default function RosterTab({ meId }: { meId: string }) {
                       {h && <span className="truncate pl-1 text-[9px] font-semibold text-amber-600" title={h}>{h}</span>}
                     </div>
                     <div className="mt-1 space-y-1">
-                      {shifts.map((s) => {
+                      {(["day", "evening"] as const).map((period) => {
+                        const group = shifts.filter((s) => periodOf(s, typeList) === period);
+                        if (!group.length) return null;
+                        return (
+                          <div key={period} className={cx("space-y-1", showGroups && "rounded-md p-0.5", showGroups && (period === "day" ? "bg-amber-50" : "bg-slate-100"))}>
+                      {group.map((s) => {
                         const d = doc(s.doctor_id);
                         const mine = s.doctor_id === meId;
                         const pending = s.confirm_status === "requested";
@@ -71,6 +78,9 @@ export default function RosterTab({ meId }: { meId: string }) {
                               pending ? "border border-dashed border-amber-400 bg-amber-50 text-amber-900" : mine ? "text-white" : "bg-white text-slate-700 ring-1 ring-slate-200")}
                             style={pending ? undefined : mine ? { background: d?.color ?? "var(--hsu)" } : { borderLeft: `3px solid ${d?.color ?? "#cbd5e1"}` }}>
                             {s.label && <span className="opacity-70">{s.label} </span>}{d ? shortName(d.name) : "—"}
+                          </div>
+                        );
+                      })}
                           </div>
                         );
                       })}

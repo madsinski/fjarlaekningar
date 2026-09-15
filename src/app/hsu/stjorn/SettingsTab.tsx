@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Plus, Save, Trash2 } from "lucide-react";
 import { Button, Card, Field, Notice, cx, hsuApi, inputCls } from "../_components/ui";
-import { SHIFT_KIND_IS, WEEKDAY_ORDER, WEEKDAY_SHORT_IS, isOvernight, type HsuShiftType, type ShiftKind } from "@/lib/hsu/types";
+import { SHIFT_KIND_IS, SHIFT_PERIOD_IS, WEEKDAY_ORDER, WEEKDAY_SHORT_IS, isOvernight, type HsuShiftType, type ShiftKind, type ShiftPeriod } from "@/lib/hsu/types";
 import type { PlannerCtx } from "./types";
 
 export default function SettingsTab({ ctx }: { ctx: PlannerCtx }) {
@@ -54,7 +54,7 @@ export default function SettingsTab({ ctx }: { ctx: PlannerCtx }) {
 }
 
 function ShiftTypeCard({ ctx, type }: { ctx: PlannerCtx; type?: HsuShiftType }) {
-  const blank: Omit<HsuShiftType, "id"> = { name: "", short: "", starts: "08:00", ends: "16:00", weekdays: [1, 2, 3, 4, 5], on_holidays: false, skip_holidays: true, kind: "other", rest_days_after: 0, color: "#1d4f91", sort: 10, active: true };
+  const blank: Omit<HsuShiftType, "id"> = { name: "", short: "", starts: "08:00", ends: "16:00", weekdays: [1, 2, 3, 4, 5], on_holidays: false, skip_holidays: true, kind: "other", period: "day", rest_days_after: 0, color: "#1d4f91", sort: 10, active: true };
   const [v, setV] = useState<Omit<HsuShiftType, "id">>(type ?? blank);
   const [open, setOpen] = useState(Boolean(type));
   const [busy, setBusy] = useState<string | null>(null);
@@ -87,6 +87,16 @@ function ShiftTypeCard({ ctx, type }: { ctx: PlannerCtx; type?: HsuShiftType }) 
         <Field label="Heiti"><input className={inputCls} value={v.name} onChange={(e) => set({ name: e.target.value })} placeholder="t.d. Bakvakt" /></Field>
         <Field label="Skammstöfun"><input className={inputCls} value={v.short} onChange={(e) => set({ short: e.target.value })} placeholder="BV" maxLength={8} /></Field>
       </div>
+      <Field label="Hólf á vaktaplani" hint="Dagvaktir og kvöld-/næturvaktir birtast í sitt hvoru hólfi hvers dags.">
+        <div className="grid grid-cols-2 gap-2">
+          {(Object.keys(SHIFT_PERIOD_IS) as ShiftPeriod[]).map((p) => (
+            <button key={p} type="button" onClick={() => set({ period: p })}
+              className={cx("rounded-lg border px-3 py-2 text-sm font-medium", v.period === p ? "border-[var(--hsu)] bg-[var(--hsu-soft)] text-[var(--hsu-dark)]" : "border-slate-200 text-slate-600")}>
+              {SHIFT_PERIOD_IS[p]}
+            </button>
+          ))}
+        </div>
+      </Field>
       <Field label="Tegund" hint={v.kind === "forvakt" ? "Mönnuð alla daga sem hún á við." : v.kind === "bakvakt" ? "Aðeins læknar með bakvaktarréttindi; mönnuð þegar forvaktarlæknir þarf bakvakt." : "Mönnuð alla daga sem hún á við; hver læknir sem er."}>
         <select className={inputCls} value={v.kind} onChange={(e) => set({ kind: e.target.value as ShiftKind })}>
           {(Object.keys(SHIFT_KIND_IS) as ShiftKind[]).map((k) => <option key={k} value={k}>{SHIFT_KIND_IS[k]}</option>)}

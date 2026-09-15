@@ -34,7 +34,18 @@ export interface HsuDoctor {
 /** forvakt = mönnuð alla daga; bakvakt = aðeins reyndir, og aðeins þegar þörf er á; other = mönnuð, hver sem er. */
 export type ShiftKind = "forvakt" | "bakvakt" | "other";
 
-export const SHIFT_KIND_IS: Record<ShiftKind, string> = { forvakt: "Forvakt", bakvakt: "Bakvakt", other: "Önnur vakt" };
+export const SHIFT_KIND_IS: Record<ShiftKind, string> = { forvakt: "Forvakt", bakvakt: "Bakvakt", other: "Almenn vakt (alltaf mönnuð)" };
+
+/** Hólf á vaktaplani: dagvaktir (t.d. flýtimóttaka) og kvöld-/næturvaktir (forvakt, bakvakt). */
+export type ShiftPeriod = "day" | "evening";
+export const SHIFT_PERIOD_IS: Record<ShiftPeriod, string> = { day: "Dagvakt", evening: "Kvöld- og næturvakt" };
+
+/** Hólf vaktar. Aukavakt án tegundar: dagvakt ef hún hefst fyrir kl. 15 og nær ekki yfir miðnætti. */
+export function periodOf(shift: { shift_type_id: string | null; starts: string; ends: string }, types: { id: string; period?: ShiftPeriod }[]): ShiftPeriod {
+  const t = shift.shift_type_id ? types.find((x) => x.id === shift.shift_type_id) : undefined;
+  if (t?.period) return t.period;
+  return shift.starts.slice(0, 5) < "15:00" && !isOvernight(shift.starts, shift.ends) ? "day" : "evening";
+}
 
 export interface HsuShiftType {
   id: string;
@@ -48,6 +59,7 @@ export interface HsuShiftType {
   /** Aldrei á almennum frídögum (t.d. FV1 — frídagur á virkum degi fær FV2). */
   skip_holidays: boolean;
   kind: ShiftKind;
+  period: ShiftPeriod;
   rest_days_after: number;
   color: string;
   sort: number;

@@ -295,3 +295,15 @@ alter table public.hsu_shifts drop constraint if exists hsu_shifts_confirm_statu
 alter table public.hsu_shifts add constraint hsu_shifts_confirm_status_check check (confirm_status is null or confirm_status in ('requested'));
 alter table public.hsu_shifts add column if not exists requested_by text not null default '';
 alter table public.hsu_shifts add column if not exists requested_at timestamptz;
+
+-- ── Dagvakt og kvöld-/næturvakt (2026-09-16) ────────────────────────────────
+-- Hópur á vaktaplani: dagvaktir (t.d. flýtimóttaka) og kvöld-/næturvaktir
+-- (forvakt, bakvakt) birtast í sitt hvoru hólfi hvers dags.
+alter table public.hsu_shift_types add column if not exists period text not null default 'evening';
+alter table public.hsu_shift_types drop constraint if exists hsu_shift_types_period_check;
+alter table public.hsu_shift_types add constraint hsu_shift_types_period_check check (period in ('day','evening'));
+
+-- Flýtimóttaka: dagvakt sem er mönnuð alla daga, líka á frídögum.
+insert into public.hsu_shift_types (name, short, starts, ends, weekdays, on_holidays, skip_holidays, kind, period, rest_days_after, color, sort)
+select 'Flýtimóttaka', 'FM', '08:00', '16:00', '{0,1,2,3,4,5,6}', true, false, 'other', 'day', 0, '#e0a100', 0
+where not exists (select 1 from public.hsu_shift_types where short = 'FM' or name ilike 'Flýtimóttaka');

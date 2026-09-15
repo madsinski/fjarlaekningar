@@ -22,7 +22,7 @@ import {
   type PlanPrefs, type PlanSlot, type UnfilledReason,
 } from "@/lib/hsu/plan";
 import {
-  WEEKDAY_ORDER, WEEKDAY_SHORT_IS, dayLabel, hhmm, holidayName, isWeekendish, markFor, monthLabel, type HsuDoctor, type HsuShift,
+  SHIFT_PERIOD_IS, WEEKDAY_ORDER, WEEKDAY_SHORT_IS, dayLabel, hhmm, holidayName, isWeekendish, markFor, monthLabel, periodOf, type HsuDoctor, type HsuShift,
 } from "@/lib/hsu/types";
 import type { PlannerCtx } from "./types";
 
@@ -162,6 +162,8 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
   const endDrag = () => { dragRef.current = null; setDrag(null); setOverKey(null); };
 
   const noTypes = data.shiftTypes.filter((t) => t.active).length === 0;
+  // Hólfin eru aðeins sýnd þegar báðar tegundir eru til; annars eru þau hávaði.
+  const showGroups = new Set(data.shiftTypes.filter((t) => t.active).map((t) => t.period)).size > 1;
 
   if (shifts.length === 0) {
     return (
@@ -252,7 +254,14 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
                     </button>
                   </div>
                   <div className="space-y-1">
-                    {list.map((s) => {
+                    {(["day", "evening"] as const).map((period) => {
+                      const group = list.filter((s) => periodOf(s, data.shiftTypes) === period);
+                      if (!group.length) return null;
+                      return (
+                        <div key={period} className={cx(showGroups && "rounded-lg", showGroups && period === "day" ? "bg-amber-50/60 p-1" : showGroups ? "bg-slate-100/70 p-1" : "")}>
+                          {showGroups && <div className="mb-0.5 px-0.5 text-[8px] font-bold uppercase tracking-wider text-slate-400">{period === "day" ? "Dagur" : "Kvöld/nótt"}</div>}
+                          <div className="space-y-1">
+                    {group.map((s) => {
                       const doc = s.doctor_id ? docById.get(s.doctor_id) : null;
                       const c = conflicts[s.id];
                       const over = overKey === s.id;
@@ -300,6 +309,10 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
                         </div>
                       );
                     })}
+                          </div>
+                        </div>
+                      );
+                    })}
                     {focusBusy && <div className="text-[9px] font-semibold text-slate-500">á annarri vakt</div>}
                   </div>
                 </div>
@@ -308,6 +321,7 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
           </div>
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 px-1 text-[11px] text-slate-500">
             <span>Dragðu lækni á vakt · dragðu vakt ofan á aðra til að skipta · smelltu á vakt til að velja</span>
+            {showGroups && <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-amber-100" /> {SHIFT_PERIOD_IS.day} <span className="ml-2 h-2.5 w-2.5 rounded bg-slate-200" /> {SHIFT_PERIOD_IS.evening}</span>}
             <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded ring-2 ring-amber-400" /> Árekstur</span>
             <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded border-2 border-dashed border-amber-500 bg-amber-50" /> Beiðni — bíður samþykkis læknis</span>
             <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded border border-dashed border-slate-300" /> Bakvakt án þarfar</span>
