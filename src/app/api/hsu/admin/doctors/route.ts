@@ -3,7 +3,7 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit, hashSecret, issueAccessLink, passwordProblem, pinProblem } from "@/lib/hsu/auth";
 import { DOCTOR_COLUMNS, fail, json, listDoctors, originOf, readJson, requireManager, toPublicDoctor } from "@/lib/hsu/server";
-import { emailAllowed, sendInviteEmail } from "@/lib/hsu/doctors";
+import { cleanWeekdays, emailAllowed, sendInviteEmail } from "@/lib/hsu/doctors";
 import { DOCTOR_COLORS, HSU_EMAIL_DOMAIN, normalizeEmail } from "@/lib/hsu/types";
 
 export const runtime = "nodejs";
@@ -33,6 +33,7 @@ export async function POST(req: Request) {
     phone: String(body.phone ?? "").slice(0, 40),
     title: String(body.title ?? "").slice(0, 80),
     can_bakvakt: body.can_bakvakt === true,
+    day_weekdays: cleanWeekdays(body.day_weekdays) ?? [],
     needs_bakvakt: body.needs_bakvakt === true,
     color: typeof body.color === "string" && /^#[0-9a-f]{6}$/i.test(body.color) ? body.color : DOCTOR_COLORS[(count ?? 0) % DOCTOR_COLORS.length],
   };

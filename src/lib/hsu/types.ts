@@ -29,6 +29,8 @@ export interface HsuDoctor {
   can_bakvakt: boolean;
   /** Þarf bakvakt á bak við sig þegar hann er á forvakt (FV). */
   needs_bakvakt: boolean;
+  /** Dagvaktir aðeins þessa vikudaga (0=sun … 6=lau). Tómt = allir dagar. */
+  day_weekdays: number[];
 }
 
 /** forvakt = mönnuð alla daga; bakvakt = aðeins reyndir, og aðeins þegar þörf er á; other = mönnuð, hver sem er. */

@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from "react";
 import PrefsEditor, { draftFrom, type PrefDraft } from "../_components/PrefsEditor";
-import { Card, cx, hsuApi, capFirst } from "../_components/ui";
+import { useState as useReactState } from "react";
+import { CalendarClock, Check, Loader2 } from "lucide-react";
+import { Button, Card, Notice, cx, hsuApi, capFirst } from "../_components/ui";
 import type { PortalData } from "@/lib/hsu/portal";
-import { MONTH_STATUS_IS, dayLabel, monthKey, monthLabel, shiftMonth, type HsuPreference, type MonthStatus } from "@/lib/hsu/types";
+import { MONTH_STATUS_IS, WEEKDAY_ORDER, WEEKDAY_SHORT_IS, dayLabel, monthKey, monthLabel, shiftMonth, type HsuPreference, type MonthStatus } from "@/lib/hsu/types";
 
 export default function PrefsTab({ data, initialMonth, refresh }: { data: PortalData; initialMonth: string; refresh: () => void }) {
   // Mánuðir sem má skrá óskir fyrir: allir opnir mánuðir, auk næstu tveggja
@@ -66,6 +68,8 @@ export default function PrefsTab({ data, initialMonth, refresh }: { data: Portal
         </p>
       </div>
 
+      <DayWeekdaysCard initial={data.me.dayWeekdays} refresh={refresh} />
+
       <div className="flex gap-2 overflow-x-auto pb-1">
         {options.map((m) => {
           const row = data.months.find((x) => x.month === m);
@@ -100,5 +104,55 @@ export default function PrefsTab({ data, initialMonth, refresh }: { data: Portal
         />
       </Card>
     </div>
+  );
+}
+
+/**
+ * Fastir dagvinnudagar læknisins — ekki bundnir mánuði. Sjálfvirka skiptingin
+ * setur hann aðeins á dagvaktir (flýtimóttöku) þessa daga; þurfi yfirlæknir hann
+ * annan dag kemur það sem beiðni.
+ */
+function DayWeekdaysCard({ initial, refresh }: { initial: number[]; refresh: () => void }) {
+  const [days, setDays] = useReactState<number[]>(initial);
+  const [busy, setBusy] = useReactState(false);
+  const [saved, setSaved] = useReactState(false);
+  const [err, setErr] = useReactState<string | null>(null);
+  const dirty = JSON.stringify(days) !== JSON.stringify(initial);
+
+  const save = async () => {
+    setBusy(true); setErr(null);
+    const r = await hsuApi("/api/hsu/me/day-weekdays", { method: "PUT", body: { day_weekdays: days } });
+    setBusy(false);
+    if (!r.ok) { setErr(r.error ?? "Vistun mistókst"); return; }
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+    refresh();
+  };
+
+  return (
+    <Card className="p-4 sm:p-5">
+      <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
+        <CalendarClock className="h-4 w-4 text-[var(--hsu)]" /> Dagvinnudagar (flýtimóttaka)
+      </div>
+      <p className="mt-1 text-xs text-slate-500">
+        Hvaða vikudaga vinnur þú dagvinnu? Þú færð aðeins dagvaktir þá daga. Enginn valinn = allir dagar.
+        Þetta gildir þar til þú breytir því — ekki bara þennan mánuð. Kvöld- og næturvaktir ráðast af óskunum hér fyrir neðan.
+      </p>
+      <div className="mt-3 flex flex-wrap items-center gap-1">
+        {WEEKDAY_ORDER.map((d) => (
+          <button key={d} type="button"
+            onClick={() => setDays((x) => (x.includes(d) ? x.filter((y) => y !== d) : [...x, d].sort()))}
+            className={cx("rounded-lg px-3 py-2 text-xs font-semibold transition",
+              days.length === 0 || days.includes(d) ? "bg-[var(--hsu)] text-white" : "bg-slate-100 text-slate-500")}>
+            {WEEKDAY_SHORT_IS[d]}
+          </button>
+        ))}
+        {days.length > 0 && <button type="button" onClick={() => setDays([])} className="px-2 text-xs font-medium text-slate-500 underline">Alla daga</button>}
+        {dirty && <Button size="sm" className="ml-auto" onClick={save} busy={busy}>Vista</Button>}
+        {saved && <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-emerald-600"><Check className="h-3.5 w-3.5" /> Vistað</span>}
+        {busy && !dirty && <Loader2 className="h-4 w-4 animate-spin text-slate-400" />}
+      </div>
+      {err && <div className="mt-2"><Notice tone="err">{err}</Notice></div>}
+    </Card>
   );
 }

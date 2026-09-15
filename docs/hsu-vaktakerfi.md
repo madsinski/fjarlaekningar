@@ -73,6 +73,17 @@ undir **Stillingar**. Á hverjum lækni undir **Læknar**:
 
 Tóm bakvakt sem enginn þarf er ekki gat í planinu og sést ekki á síðu lækna.
 
+### Dagvinnudagar læknis
+
+Sumir læknar vinna dagvinnu aðeins hluta vikunnar (t.d. mánudaga og þriðjudaga).
+Það er skráð á lækninn: **Læknar → Dagvaktir (flýtimóttaka)**, eða af lækninum
+sjálfum undir **Óskir → Dagvinnudagar**. Skiptingin setur hann þá aðeins á
+dagvaktir þá vikudaga; kvöld- og næturvaktir eru óháðar þessu.
+
+Þurfi yfirlæknir hann á dagvakt annan vikudag verður vaktin **beiðni** sem
+læknirinn samþykkir eða hafnar — sama leið og vakt umfram hámark. Breyti læknir
+dagvinnudögum sínum fá yfirlæknar tölvupóst.
+
 ### Ein dagvakt og ein kvöldvakt á dag
 
 Sami læknir má taka **dagvakt og kvöld-/næturvakt sama dag** (flýtimóttaka og svo
@@ -115,6 +126,13 @@ birt). Hálfnað skref fær appelsínugula útlínu og stutta stöðu (t.d. „3
 | Beiðni um aukavakt | læknirinn (líka fyrir birtingu); svar fer til yfirlækna |
 | Vaktamarkaður: boð, tekin vakt, höfnun, afturkallað boð, samþykkt/hafnað af yfirlækni, boð fellt niður | þeir sem málið varðar |
 | Lykilorði breytt (af lækni eða stjórnanda) | læknirinn (öryggistilkynning) |
+
+## Litakóðun
+
+Hver vaktategund hefur lit (stillanlegur undir Stillingar). Sami litur er
+notaður á vaktaplani yfirlæknis og á *Mínar vaktir* hjá lækninum, þar sem
+litaskýring efst segir hvaða skammstöfun er hvað. Sjálfgefið: flýtimóttaka
+gul, forvaktir bláar, bakvaktir grænblár.
 
 ## Vaktamarkaður
 

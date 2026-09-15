@@ -9,8 +9,8 @@ import HsuHeader from "../_components/HsuHeader";
 import { Badge, Button, Card, Field, Modal, Notice, cx, firstName, hsuApi, inputCls, shortName, capFirst } from "../_components/ui";
 import type { PortalData } from "@/lib/hsu/portal";
 import {
-  WEEKDAY_LONG_IS, dayLabel, hhmm, holidayName, monthKey, monthLabel, shiftMonth, weekdayOf, weekdayShort,
-  type HsuShift, type HsuSwap,
+  SHIFT_PERIOD_IS, WEEKDAY_LONG_IS, dayLabel, hhmm, holidayName, monthKey, monthLabel, shiftMonth, weekdayOf, weekdayShort,
+  type HsuShift, type HsuShiftType, type HsuSwap,
 } from "@/lib/hsu/types";
 import PrefsTab from "./PrefsTab";
 import RosterTab from "./RosterTab";
@@ -192,7 +192,7 @@ function Overview({ data, incoming, market, prefActions, go }: {
           <button onClick={() => go("vaktir")} className="text-sm font-semibold text-[var(--hsu)] hover:underline">Allar vaktir</button>
         </div>
         <Card className="divide-y divide-slate-100">
-          {upcoming.slice(0, 5).map((s) => <ShiftRow key={s.id} s={s} />)}
+          {upcoming.slice(0, 5).map((s) => <ShiftRow key={s.id} s={s} types={data.shiftTypes} />)}
           {upcoming.length === 0 && <div className="p-5 text-sm text-slate-500">Engar birtar vaktir framundan.</div>}
         </Card>
       </div>
@@ -216,18 +216,25 @@ function ActionCard({ title, text, tone, onClick }: { title: string; text: strin
   );
 }
 
-function ShiftRow({ s, right }: { s: HsuShift; right?: React.ReactNode }) {
+/** Litur vaktategundar — sama litakóðun og yfirlæknir sér á vaktaplani. */
+function ShiftRow({ s, types, right }: { s: HsuShift; types: HsuShiftType[]; right?: React.ReactNode }) {
   const h = holidayName(s.shift_date);
+  const t = types.find((x) => x.id === s.shift_type_id);
+  const color = t?.color ?? "#64748b";
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-[var(--hsu-soft)] text-[var(--hsu-dark)]">
-        <span className="text-[10px] font-bold uppercase leading-none">{weekdayShort(s.shift_date)}</span>
+    <div className="flex items-center gap-3 border-l-4 px-4 py-3" style={{ borderColor: color }}>
+      <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl text-white" style={{ background: color }}>
+        <span className="text-[10px] font-bold uppercase leading-none opacity-80">{weekdayShort(s.shift_date)}</span>
         <span className="text-lg font-bold leading-tight">{Number(s.shift_date.slice(8))}</span>
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-sm font-semibold text-slate-900">{s.label || "Vakt"} · {hhmm(s.starts)}–{hhmm(s.ends)}</div>
+        <div className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-slate-900">
+          <span className="rounded px-1.5 py-0.5 text-[11px] font-bold text-white" style={{ background: color }}>{s.label || "Vakt"}</span>
+          <span>{t?.name ?? "Vakt"}</span>
+          <span className="font-medium text-slate-500">{hhmm(s.starts)}–{hhmm(s.ends)}</span>
+        </div>
         <div className="truncate text-xs text-slate-500">
-          {dayLabel(s.shift_date)}{h ? ` · ${h}` : ""}{s.note ? ` · ${s.note}` : ""}
+          {dayLabel(s.shift_date)}{h ? ` · ${h}` : ""}{t ? ` · ${SHIFT_PERIOD_IS[t.period]}` : ""}{s.note ? ` · ${s.note}` : ""}
         </div>
       </div>
       {s.status === "open" && <Badge tone="amber">Á vaktamarkaði</Badge>}
@@ -265,6 +272,15 @@ function ShiftsTab({ data, swaps, refresh }: { data: PortalData; swaps: HsuSwap[
         </div>
       </div>
       <RequestsBlock data={data} refresh={refresh} />
+      {/* Litaskýring: sömu litir og á vaktaplaninu. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-white px-4 py-3 text-[11px] text-slate-500 ring-1 ring-slate-200">
+        {data.shiftTypes.filter((t) => t.active).map((t) => (
+          <span key={t.id} className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded" style={{ background: t.color }} />
+            <b className="text-slate-700">{t.short || t.name}</b> {t.name} · {hhmm(t.starts)}–{hhmm(t.ends)}
+          </span>
+        ))}
+      </div>
       {byMonth.length === 0 && <Card className="p-8 text-center text-sm text-slate-500">Engar birtar vaktir.</Card>}
       {byMonth.map(([m, rows]) => (
         <section key={m}>
@@ -275,7 +291,7 @@ function ShiftsTab({ data, swaps, refresh }: { data: PortalData; swaps: HsuSwap[
               const p = pendingFor(s.id);
               return (
                 <div key={s.id} className={cx(past && "opacity-50")}>
-                  <ShiftRow s={s} right={past ? null : p ? (
+                  <ShiftRow s={s} types={data.shiftTypes} right={past ? null : p ? (
                     <Button variant="ghost" size="sm" busy={busy} onClick={() => cancel(p.id)}>Afturkalla</Button>
                   ) : (
                     <Button variant="soft" size="sm" onClick={() => setOffer(s)}><ArrowLeftRight className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Setja á vaktamarkað</span><span className="sm:hidden">Markaður</span></Button>
@@ -361,9 +377,12 @@ function RequestsBlock({ data, refresh }: { data: PortalData; refresh: () => voi
         {data.requests.map((s) => (
           <div key={s.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div>
-              <div className="text-sm font-semibold">{shiftWhen(s)}</div>
+              <div className="flex items-center gap-1.5 text-sm font-semibold">
+                <span className="rounded px-1.5 py-0.5 text-[11px] font-bold text-white" style={{ background: data.shiftTypes.find((t) => t.id === s.shift_type_id)?.color ?? "#64748b" }}>{s.label || "Vakt"}</span>
+                {shiftWhen(s)}
+              </div>
               <div className="text-xs text-slate-600">
-                {s.requested_by || "Yfirlæknir"} biður þig um þessa vakt, umfram það hámark sem þú skráðir. Hún er frátekin fyrir þig þar til þú svarar.
+                {s.requested_by || "Yfirlæknir"} biður þig um þessa vakt. Hún er frátekin fyrir þig þar til þú svarar — samþykktu hana eða hafnaðu.
               </div>
             </div>
             <div className="flex gap-2">

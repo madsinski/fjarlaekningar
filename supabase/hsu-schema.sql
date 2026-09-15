@@ -307,3 +307,11 @@ alter table public.hsu_shift_types add constraint hsu_shift_types_period_check c
 insert into public.hsu_shift_types (name, short, starts, ends, weekdays, on_holidays, skip_holidays, kind, period, rest_days_after, color, sort)
 select 'Flýtimóttaka', 'FM', '08:00', '16:00', '{0,1,2,3,4,5,6}', true, false, 'other', 'day', 0, '#e0a100', 0
 where not exists (select 1 from public.hsu_shift_types where short = 'FM' or name ilike 'Flýtimóttaka');
+
+-- ── Dagvaktir aðeins tiltekna vikudaga (2026-09-16) ─────────────────────────
+-- Sumir læknar vinna dagvinnu aðeins hluta vikunnar (t.d. mánudaga og
+-- þriðjudaga). Þá fá þeir aðeins dagvaktir (flýtimóttöku) þá daga. Tómt fylki
+-- = allir dagar. 0 = sunnudagur … 6 = laugardagur. Kvöld- og næturvaktir eru
+-- óháðar þessu; þær stýrast af vaktaóskum mánaðarins.
+alter table public.hsu_doctors add column if not exists day_weekdays smallint[] not null default '{}';
+comment on column public.hsu_doctors.day_weekdays is '0=sun … 6=lau. Tómt = allir dagar. Gildir um dagvaktir (period=day).';

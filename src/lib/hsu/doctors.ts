@@ -3,6 +3,12 @@
 import { hsuEmailHtml, sendHsuEmail } from "./server";
 import { HSU_EMAIL_DOMAIN } from "./types";
 
+/** 0=sun … 6=lau, án endurtekninga. Tómt fylki = allir dagar. */
+export function cleanWeekdays(v: unknown): number[] | null {
+  if (!Array.isArray(v)) return null;
+  return [...new Set(v.map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))].sort();
+}
+
 /** @hsu.is er reglan. Önnur lén aðeins ef HSU_EXTRA_EMAIL_DOMAINS leyfir (t.d. til prófana). */
 export function emailAllowed(email: string): boolean {
   const extra = (process.env.HSU_EXTRA_EMAIL_DOMAINS ?? "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);

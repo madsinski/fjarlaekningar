@@ -1,12 +1,14 @@
 // Gögn fyrir "Mín síða" læknis. Server-only.
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { monthKey, type HsuMonth, type HsuPreference, type HsuShift, type HsuSwap } from "./types";
+import { loadShiftTypes } from "./server";
+import { monthKey, type HsuMonth, type HsuPreference, type HsuShift, type HsuShiftType, type HsuSwap } from "./types";
 
 export interface Colleague { id: string; name: string; color: string; role: string; phone: string; email: string }
 
 export interface PortalData {
-  me: { id: string; name: string; email: string; role: string; hasPin: boolean; mustChangePassword: boolean; hasCalendarToken: boolean };
+  me: { id: string; name: string; email: string; role: string; hasPin: boolean; mustChangePassword: boolean; hasCalendarToken: boolean; dayWeekdays: number[] };
+  shiftTypes: HsuShiftType[];
   unitName: string;
   colleagues: Colleague[];
   myShifts: HsuShift[];
@@ -20,11 +22,12 @@ export interface PortalData {
 }
 
 export async function loadPortal(doctorId: string): Promise<PortalData> {
+  const types = await loadShiftTypes();
   const today = new Date().toISOString().slice(0, 10);
   const first = `${monthKey(new Date())}-01`;
 
   const [me, colleagues, myShifts, months, prefs, swaps, settings, requests] = await Promise.all([
-    supabaseAdmin.from("hsu_doctors").select("id, name, email, role, pin_hash, must_change_password, calendar_token").eq("id", doctorId).single(),
+    supabaseAdmin.from("hsu_doctors").select("id, name, email, role, pin_hash, must_change_password, calendar_token, day_weekdays").eq("id", doctorId).single(),
     supabaseAdmin.from("hsu_doctors").select("id, name, color, role, phone, email").eq("active", true).order("name"),
     supabaseAdmin.from("hsu_shifts").select("id, shift_date, shift_type_id, label, starts, ends, doctor_id, status, note")
       .eq("doctor_id", doctorId).eq("published", true).is("confirm_status", null).gte("shift_date", first).order("shift_date").order("starts"),
@@ -50,7 +53,9 @@ export async function loadPortal(doctorId: string): Promise<PortalData> {
       id: me.data!.id, name: me.data!.name, email: me.data!.email, role: me.data!.role,
       hasPin: Boolean(me.data!.pin_hash), mustChangePassword: me.data!.must_change_password,
       hasCalendarToken: Boolean(me.data!.calendar_token),
+      dayWeekdays: Array.isArray(me.data!.day_weekdays) ? me.data!.day_weekdays.map(Number) : [],
     },
+    shiftTypes: types,
     unitName: settings.data?.unit_name ?? "Heilsugæslan í Vestmannaeyjum",
     colleagues: (colleagues.data ?? []) as Colleague[],
     myShifts: (myShifts.data ?? []) as HsuShift[],

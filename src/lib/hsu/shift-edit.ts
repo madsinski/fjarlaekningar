@@ -2,7 +2,8 @@
 //
 // Tvær reglur gilda umfram sjálfvirku skiptinguna:
 //   * Bakvakt fer aðeins á lækni með bakvaktarréttindi. Brot er hafnað.
-//   * Fari læknir yfir hámarkið sem hann skráði í óskum verður vaktin BEIÐNI:
+//   * Dagvakt á vikudegi sem læknirinn vinnur ekki dagvinnu, eða vakt umfram
+//     hámarkið sem hann skráði í óskum, verður BEIÐNI:
 //     hún er frátekin fyrir hann, merkt á vaktaplani, og hann fær póst og
 //     samþykkir eða hafnar á sinni síðu. Hún fer ekki í dagatal fyrr.
 
@@ -11,7 +12,8 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { hsuSync } from "./calendar";
 import { shiftPhrase } from "./market";
 import { notifyDoctors, type DoctorNotice } from "./notify";
-import { monthRange } from "./types";
+import { monthRange, type ShiftPeriod } from "./types";
+import { worksDayShift } from "./plan";
 
 export interface ShiftChange {
   id: string;
@@ -40,10 +42,14 @@ export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: s
   const typeIds = [...new Set((before ?? []).map((s) => s.shift_type_id).filter(Boolean))] as string[];
   const newDocIds = [...new Set(real.map((c) => c.doctor_id).filter(Boolean))] as string[];
   const [{ data: types }, { data: docs }] = await Promise.all([
-    typeIds.length ? supabaseAdmin.from("hsu_shift_types").select("id, kind").in("id", typeIds) : Promise.resolve({ data: [] as { id: string; kind: string }[] }),
-    newDocIds.length ? supabaseAdmin.from("hsu_doctors").select("id, name, can_bakvakt").in("id", newDocIds) : Promise.resolve({ data: [] as { id: string; name: string; can_bakvakt: boolean }[] }),
+    typeIds.length ? supabaseAdmin.from("hsu_shift_types").select("id, kind, period").in("id", typeIds) : Promise.resolve({ data: [] as { id: string; kind: string; period: ShiftPeriod }[] }),
+    newDocIds.length ? supabaseAdmin.from("hsu_doctors").select("id, name, can_bakvakt, day_weekdays").in("id", newDocIds) : Promise.resolve({ data: [] as { id: string; name: string; can_bakvakt: boolean; day_weekdays: number[] }[] }),
   ]);
   const kindOf = new Map((types ?? []).map((t) => [t.id, t.kind]));
+  const periodOfType = new Map((types ?? []).map((t) => [t.id, t.period]));
+  const periodOfShift = (s: { shift_type_id: string | null; starts: string; ends: string }): ShiftPeriod =>
+    (s.shift_type_id ? periodOfType.get(s.shift_type_id) : undefined)
+    ?? (s.starts.slice(0, 5) < "15:00" && s.ends.slice(0, 5) > s.starts.slice(0, 5) ? "day" : "evening");
   const docById = new Map((docs ?? []).map((d) => [d.id, d]));
   for (const c of real) {
     const s = byId.get(c.id)!;
@@ -52,8 +58,18 @@ export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: s
     }
   }
 
-  // ── Hámark úr óskum: hvaða nýju vaktir fara umfram? ─────────────────────
-  const requestIds = new Set<string>();
+  // ── Hvaða nýju vaktir þarf að biðja lækninn um? ─────────────────────────
+  // Tvennt kallar á beiðni: dagvakt á vikudegi sem hann vinnur ekki dagvinnu,
+  // og vakt umfram hámarkið sem hann skráði.
+  const requestIds = new Map<string, "weekday" | "max">();
+  for (const c of real) {
+    const s = byId.get(c.id)!;
+    if (!c.doctor_id) continue;
+    const doc = docById.get(c.doctor_id);
+    if (periodOfShift(s) === "day" && !worksDayShift({ dayWeekdays: doc?.day_weekdays ?? [] }, s.shift_date)) {
+      requestIds.set(c.id, "weekday");
+    }
+  }
   const months = [...new Set(real.filter((c) => c.doctor_id).map((c) => byId.get(c.id)!.shift_date.slice(0, 7)))];
   for (const month of months) {
     const inMonth = real.filter((c) => c.doctor_id && byId.get(c.id)!.shift_date.startsWith(month));
@@ -71,7 +87,7 @@ export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: s
       // Vaktir læknisins eftir breytinguna: þær sem hann heldur og breytast ekki, auk nýrra.
       const kept = (held ?? []).filter((h) => h.doctor_id === docId && !changedIds.has(h.id)).length;
       const added = inMonth.filter((c) => c.doctor_id === docId);
-      added.forEach((c, i) => { if (kept + i + 1 > max) requestIds.add(c.id); });
+      added.forEach((c, i) => { if (kept + i + 1 > max && !requestIds.has(c.id)) requestIds.set(c.id, "max"); });
     }
   }
 
@@ -82,7 +98,8 @@ export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: s
   const requests: DoctorNotice[] = [];
   for (const c of real) {
     const s = byId.get(c.id)!;
-    const isRequest = requestIds.has(c.id);
+    const reason = requestIds.get(c.id);
+    const isRequest = Boolean(reason);
     const { error: upErr } = await supabaseAdmin
       .from("hsu_shifts")
       .update({
@@ -110,7 +127,10 @@ export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: s
     }
     if (c.doctor_id) {
       if (isRequest) {
-        requests.push({ doctorId: c.doctor_id, line: `${shiftPhrase(s)}` });
+        requests.push({
+          doctorId: c.doctor_id,
+          line: `${shiftPhrase(s)} — ${reason === "weekday" ? "dagvakt utan þeirra vikudaga sem þú vinnur dagvinnu" : "umfram hámarkið sem þú skráðir"}.`,
+        });
       } else if (s.published) {
         touched.add(c.doctor_id);
         notices.push({ doctorId: c.doctor_id, line: `Þú hefur verið sett(ur) á vaktina ${shiftPhrase(s)}.` });
@@ -127,7 +147,7 @@ export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: s
     origin: opts.origin,
     subject: "Beiðni um aukavakt",
     heading: "Beiðni um aukavakt",
-    intro: `${opts.actor} biður þig um að taka eftirfarandi vakt${requests.length > 1 ? "ir" : ""}, umfram það hámark sem þú skráðir. Vaktin er frátekin fyrir þig þar til þú svarar.`,
+    intro: `${opts.actor} biður þig um að taka eftirfarandi vakt${requests.length > 1 ? "ir" : ""}. Þær eru fráteknar fyrir þig þar til þú svarar.`,
     notices: requests,
     cta: { label: "Svara beiðni", path: "/hsu/min-sida?t=vaktir" },
   });

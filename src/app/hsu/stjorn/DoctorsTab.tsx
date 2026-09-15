@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Check, Copy, KeyRound, Mail, Pencil, Plus, RefreshCw, Trash2, UserPlus } from "lucide-react";
 import { Badge, Button, Card, Field, Modal, Notice, cx, hsuApi, inputCls, timeAgoIs } from "../_components/ui";
-import { DOCTOR_COLORS, ROLE_IS, type HsuDoctor, type HsuRole } from "@/lib/hsu/types";
+import { DOCTOR_COLORS, ROLE_IS, WEEKDAY_ORDER, WEEKDAY_SHORT_IS, type HsuDoctor, type HsuRole } from "@/lib/hsu/types";
 import type { PlannerCtx } from "./types";
 
 function statusOf(d: HsuDoctor): { label: string; tone: "green" | "amber" | "slate" | "red" } {
@@ -72,6 +72,7 @@ export default function DoctorsTab({ ctx }: { ctx: PlannerCtx }) {
                       {d.has_pin && <Badge tone="slate"><KeyRound className="h-3 w-3" /> Kóði</Badge>}
                       {d.can_bakvakt && <Badge tone="blue">Bakvakt</Badge>}
                       {d.needs_bakvakt && <Badge tone="amber">Þarf bakvakt</Badge>}
+                      {d.day_weekdays?.length > 0 && <Badge tone="slate">Dagvakt: {d.day_weekdays.map((x) => WEEKDAY_SHORT_IS[x]).join(", ")}</Badge>}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-xs text-slate-500">{d.last_login_at ? timeAgoIs(d.last_login_at) : "–"}</td>
@@ -126,6 +127,21 @@ function DoctorFields({ v, set }: { v: DoctorForm; set: (p: Partial<DoctorForm>)
           ))}
         </div>
       </Field>
+      <div className="rounded-xl border border-slate-200 p-3">
+        <div className="text-sm font-semibold">Dagvaktir (flýtimóttaka)</div>
+        <p className="text-xs text-slate-500">Vinnur dagvinnu þessa vikudaga. Enginn valinn = alla daga. Þarf læknirinn að taka dagvakt á öðrum degi fer það til hans sem beiðni.</p>
+        <div className="mt-2 flex flex-wrap gap-1">
+          {WEEKDAY_ORDER.map((d) => (
+            <button key={d} type="button" onClick={() => set({ day_weekdays: v.day_weekdays.includes(d) ? v.day_weekdays.filter((x) => x !== d) : [...v.day_weekdays, d].sort() })}
+              className={cx("rounded-lg px-2.5 py-1.5 text-xs font-semibold", v.day_weekdays.length === 0 || v.day_weekdays.includes(d) ? "bg-[var(--hsu)] text-white" : "bg-slate-100 text-slate-500")}>
+              {WEEKDAY_SHORT_IS[d]}
+            </button>
+          ))}
+          {v.day_weekdays.length > 0 && (
+            <button type="button" onClick={() => set({ day_weekdays: [] })} className="rounded-lg px-2 py-1.5 text-xs font-medium text-slate-500 underline">Alla daga</button>
+          )}
+        </div>
+      </div>
       <div className="space-y-2 rounded-xl border border-slate-200 p-3">
         <label className="flex items-start gap-2.5">
           <input type="checkbox" className="mt-1 h-4 w-4" checked={v.can_bakvakt} onChange={(e) => set({ can_bakvakt: e.target.checked, needs_bakvakt: e.target.checked ? false : v.needs_bakvakt })} />
@@ -141,11 +157,11 @@ function DoctorFields({ v, set }: { v: DoctorForm; set: (p: Partial<DoctorForm>)
   );
 }
 
-interface DoctorForm { name: string; email: string; phone: string; title: string; role: HsuRole; fte: number; color: string; can_bakvakt: boolean; needs_bakvakt: boolean }
+interface DoctorForm { name: string; email: string; phone: string; title: string; role: HsuRole; fte: number; color: string; can_bakvakt: boolean; needs_bakvakt: boolean; day_weekdays: number[] }
 
 function AddDoctor({ ctx, onClose }: { ctx: PlannerCtx; onClose: () => void }) {
   const [mode, setMode] = useState<"invite" | "manual">("invite");
-  const [v, setV] = useState<DoctorForm>({ name: "", email: "", phone: "", title: "", role: "doctor", fte: 100, color: DOCTOR_COLORS[ctx.data.doctors.length % DOCTOR_COLORS.length], can_bakvakt: false, needs_bakvakt: false });
+  const [v, setV] = useState<DoctorForm>({ name: "", email: "", phone: "", title: "", role: "doctor", fte: 100, color: DOCTOR_COLORS[ctx.data.doctors.length % DOCTOR_COLORS.length], can_bakvakt: false, needs_bakvakt: false, day_weekdays: [] });
   const [password, setPassword] = useState(generatePassword);
   const [mustChange, setMustChange] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -233,7 +249,7 @@ function AddDoctor({ ctx, onClose }: { ctx: PlannerCtx; onClose: () => void }) {
 }
 
 function EditDoctor({ ctx, doctor, onClose }: { ctx: PlannerCtx; doctor: HsuDoctor; onClose: () => void }) {
-  const [v, setV] = useState<DoctorForm>({ name: doctor.name, email: doctor.email, phone: doctor.phone, title: doctor.title, role: doctor.role, fte: doctor.fte, color: doctor.color, can_bakvakt: doctor.can_bakvakt, needs_bakvakt: doctor.needs_bakvakt });
+  const [v, setV] = useState<DoctorForm>({ name: doctor.name, email: doctor.email, phone: doctor.phone, title: doctor.title, role: doctor.role, fte: doctor.fte, color: doctor.color, can_bakvakt: doctor.can_bakvakt, needs_bakvakt: doctor.needs_bakvakt, day_weekdays: doctor.day_weekdays ?? [] });
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
   const [link, setLink] = useState<string | null>(null);

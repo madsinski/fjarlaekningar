@@ -424,6 +424,7 @@ function SlotModal({ shift, ctx, shifts, doctors, prefs, toSlots, stats, onClose
     return doctors.map((d) => {
       const hypothetical = toSlots(shifts.map((s) => (s.id === shift.id ? { ...s, doctor_id: d.id } : s)));
       const issues = (findConflicts(hypothetical, prefs, planDocs)[shift.id] ?? []).filter((k) => k !== "no_bakvakt");
+      // "max" og "day_weekday" eru ekki hindrun heldur beiðni til læknisins.
       const mark = markFor(prefs[d.id], shift.shift_date);
       const rank = issues.includes("skill") ? 5 : issues.includes("off") ? 4 : issues.length ? 3 : mark === "want" ? 0 : 1;
       return { d, issues, mark, rank, st: stats[d.id] };
@@ -453,8 +454,8 @@ function SlotModal({ shift, ctx, shifts, doctors, prefs, toSlots, stats, onClose
                 <span className="block text-[11px] text-slate-500">{st?.count ?? 0} / {st?.target.toLocaleString("is-IS") ?? 0} vaktir · {st?.weekend ?? 0} helgar</span>
               </span>
               {issues.length ? (
-                <span className={cx("text-right text-[11px] font-semibold", issues.every((k) => k === "max") ? "text-amber-700" : "text-red-600")}>
-                  {issues.map((k) => ({ off: "Getur ekki", double: "Á vakt á sama tíma dags", rest: "Hvíld", max: "Umfram hámark → beiðni", skill: "Ekki bakvaktarréttindi", no_bakvakt: "" })[k]).filter(Boolean).join(" · ")}
+                <span className={cx("text-right text-[11px] font-semibold", issues.every((k) => k === "max" || k === "day_weekday") ? "text-amber-700" : "text-red-600")}>
+                  {issues.map((k) => ({ off: "Getur ekki", double: "Á vakt á sama tíma dags", rest: "Hvíld", max: "Umfram hámark → beiðni", skill: "Ekki bakvaktarréttindi", day_weekday: "Utan dagvinnudaga → beiðni", no_bakvakt: "" })[k]).filter(Boolean).join(" · ")}
                 </span>
               ) : mark === "want" ? (
                 <Badge tone="green"><Heart className="h-3 w-3" /> Vill</Badge>

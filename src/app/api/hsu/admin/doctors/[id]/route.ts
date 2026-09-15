@@ -5,7 +5,7 @@ import { audit, hashSecret, issueAccessLink, passwordProblem } from "@/lib/hsu/a
 import { hsuSync } from "@/lib/hsu/calendar";
 import { DOCTOR_COLUMNS, UUID_RE, fail, json, originOf, readJson, requireManager, toPublicDoctor } from "@/lib/hsu/server";
 import { HSU_EMAIL_DOMAIN, normalizeEmail } from "@/lib/hsu/types";
-import { emailAllowed, sendInviteEmail } from "@/lib/hsu/doctors";
+import { cleanWeekdays, emailAllowed, sendInviteEmail } from "@/lib/hsu/doctors";
 import { notifyDoctors } from "@/lib/hsu/notify";
 
 export const runtime = "nodejs";
@@ -32,6 +32,8 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (typeof body.title === "string") patch.title = body.title.slice(0, 80);
   if (typeof body.color === "string" && /^#[0-9a-f]{6}$/i.test(body.color)) patch.color = body.color;
   if (typeof body.can_bakvakt === "boolean") patch.can_bakvakt = body.can_bakvakt;
+  const days = cleanWeekdays(body.day_weekdays);
+  if (days) patch.day_weekdays = days;
   if (typeof body.needs_bakvakt === "boolean") patch.needs_bakvakt = body.needs_bakvakt;
   if (body.fte !== undefined) patch.fte = Math.min(100, Math.max(0, Math.round(Number(body.fte)) || 0));
   if (body.role === "head" || body.role === "doctor") {

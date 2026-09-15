@@ -18,6 +18,7 @@
 //   * Hvíld eftir vakt (rest_days_after á vaktategund)
 //   * Hámarksfjöldi vakta læknis í mánuðinum
 //   * Bakvakt aðeins á lækni með bakvaktarréttindi
+//   * Dagvakt aðeins á lækni sem vinnur dagvinnu þann vikudag
 //
 // MJÚKAR reglur (vegnar saman):
 //   * Jöfn skipting (forvakt + bakvakt saman) í hlutfalli við starfshlutfall
@@ -26,7 +27,7 @@
 //   * Læknir sem þarf bakvakt fær helst forvakt þá daga sem reyndur læknir er laus
 //   * Vaktir dreifast um mánuðinn frekar en að hrannast upp
 
-import { addDays, isOvernight, isWeekendish, markFor, type HsuPreference, type ShiftKind, type ShiftPeriod } from "./types";
+import { addDays, isOvernight, isWeekendish, markFor, weekdayOf, type HsuPreference, type ShiftKind, type ShiftPeriod } from "./types";
 
 export interface PlanSlot {
   /** Auðkenni vaktar (eða "dagsetning|tegund" fyrir óvistaðar). */
@@ -55,6 +56,14 @@ export interface PlanDoctor {
   canBakvakt?: boolean;
   /** Þarf bakvakt þegar hann er á forvakt. */
   needsBakvakt?: boolean;
+  /** Dagvaktir aðeins þessa vikudaga. Tómt/ósett = allir dagar. */
+  dayWeekdays?: number[];
+}
+
+/** Má læknirinn taka dagvakt á þessum degi? */
+export function worksDayShift(doctor: Pick<PlanDoctor, "dayWeekdays"> | undefined, date: string): boolean {
+  const days = doctor?.dayWeekdays ?? [];
+  return days.length === 0 || days.includes(weekdayOf(date));
 }
 
 export type PlanPrefs = Pick<HsuPreference, "day_marks" | "weekday_marks" | "min_shifts" | "max_shifts">;
@@ -64,7 +73,7 @@ export interface PlanOptions {
   mode?: "empty" | "all";
 }
 
-export type UnfilledReason = "all-off" | "all-busy" | "all-rest" | "all-at-max" | "no-doctors" | "no-bakvakt-doctor";
+export type UnfilledReason = "all-off" | "all-busy" | "all-rest" | "all-at-max" | "no-doctors" | "no-bakvakt-doctor" | "no-day-doctor";
 
 export const UNFILLED_REASON_IS: Record<UnfilledReason, string> = {
   "all-off": "Allir læknar hafa merkt „get ekki“ þennan dag",
@@ -73,6 +82,7 @@ export const UNFILLED_REASON_IS: Record<UnfilledReason, string> = {
   "all-at-max": "Allir sem geta eru komnir í hámarksfjölda vakta",
   "no-doctors": "Engir virkir læknar",
   "no-bakvakt-doctor": "Forvaktarlæknir þarf bakvakt en enginn með bakvaktarréttindi er laus",
+  "no-day-doctor": "Enginn laus læknir vinnur dagvinnu á þessum vikudegi",
 };
 
 export interface DoctorStat {
@@ -217,8 +227,9 @@ export function planMonth(
   const wants = (id: string, date: string) => markFor(prefs[id], date) === "want";
 
   /** Hörð athugun. Skilar ástæðu ef læknirinn getur ekki tekið vaktina. */
-  const blocker = (id: string, slot: PlanSlot): "skill" | "off" | "busy" | "rest" | "max" | null => {
+  const blocker = (id: string, slot: PlanSlot): "skill" | "dayweek" | "off" | "busy" | "rest" | "max" | null => {
     if (slot.kind === "bakvakt" && !byId.get(id)?.canBakvakt) return "skill";
+    if (slot.period === "day" && !worksDayShift(byId.get(id), slot.date)) return "dayweek";
     if (isOff(id, slot.date)) return "off";
     const r = restBlocks(held[id], slot);
     if (r) return r;
@@ -265,7 +276,8 @@ export function planMonth(
   };
 
   const place = (list: PlanSlot[]) => {
-    const baseCandidates = (s: PlanSlot) => pool.filter((d) => !isOff(d.id, s.date) && (s.kind !== "bakvakt" || d.canBakvakt)).length;
+    const baseCandidates = (s: PlanSlot) =>
+      pool.filter((d) => !isOff(d.id, s.date) && (s.kind !== "bakvakt" || d.canBakvakt) && (s.period !== "day" || worksDayShift(d, s.date))).length;
     const ordered = list.slice().sort((a, b) => baseCandidates(a) - baseCandidates(b) || a.date.localeCompare(b.date));
     for (const s of ordered) {
       if (assignments[s.key]) continue;
@@ -279,7 +291,8 @@ export function planMonth(
       if (ok.length === 0) {
         const reason: UnfilledReason = s.kind === "bakvakt" && !skilled.length ? "no-bakvakt-doctor"
           : reasons.has("max") ? "all-at-max" : reasons.has("rest") ? "all-rest" : reasons.has("busy") ? "all-busy"
-          : s.kind === "bakvakt" ? "no-bakvakt-doctor" : "all-off";
+          : s.kind === "bakvakt" ? "no-bakvakt-doctor"
+          : s.period === "day" && reasons.has("dayweek") ? "no-day-doctor" : "all-off";
         unfilled.push({ key: s.key, date: s.date, reason });
         continue;
       }
@@ -429,8 +442,11 @@ export function toPlanSlots(
   });
 }
 
-export function toPlanDoctors(doctors: { id: string; name: string; fte: number; active: boolean; can_bakvakt?: boolean; needs_bakvakt?: boolean }[]): PlanDoctor[] {
-  return doctors.map((d) => ({ id: d.id, name: d.name, fte: d.fte, active: d.active, canBakvakt: Boolean(d.can_bakvakt), needsBakvakt: Boolean(d.needs_bakvakt) }));
+export function toPlanDoctors(doctors: { id: string; name: string; fte: number; active: boolean; can_bakvakt?: boolean; needs_bakvakt?: boolean; day_weekdays?: number[] }[]): PlanDoctor[] {
+  return doctors.map((d) => ({
+    id: d.id, name: d.name, fte: d.fte, active: d.active,
+    canBakvakt: Boolean(d.can_bakvakt), needsBakvakt: Boolean(d.needs_bakvakt), dayWeekdays: d.day_weekdays ?? [],
+  }));
 }
 
 function daysBetween(a: string, b: string): number {
@@ -463,7 +479,7 @@ export function statsFor(slots: PlanSlot[], doctors: PlanDoctor[], prefs: Record
 
 // ── Árekstrar í núverandi plani (fyrir handvirkar breytingar) ──────────────
 
-export type ConflictKind = "off" | "double" | "rest" | "max" | "skill" | "no_bakvakt";
+export type ConflictKind = "off" | "double" | "rest" | "max" | "skill" | "no_bakvakt" | "day_weekday";
 
 export const CONFLICT_IS: Record<ConflictKind, string> = {
   off: "Læknirinn merkti „get ekki“ þennan dag",
@@ -472,13 +488,14 @@ export const CONFLICT_IS: Record<ConflictKind, string> = {
   max: "Fleiri vaktir en hámark læknisins",
   skill: "Læknirinn hefur ekki bakvaktarréttindi",
   no_bakvakt: "Læknirinn þarf bakvakt en enginn er á bakvakt þennan dag",
+  day_weekday: "Læknirinn vinnur ekki dagvinnu á þessum vikudegi",
 };
 
 /** Vakt → listi árekstra. Tómt = allt í lagi. */
 export function findConflicts(
   slots: PlanSlot[],
   prefs: Record<string, PlanPrefs | undefined>,
-  doctors: Pick<PlanDoctor, "id" | "canBakvakt" | "needsBakvakt">[] = [],
+  doctors: Pick<PlanDoctor, "id" | "canBakvakt" | "needsBakvakt" | "dayWeekdays">[] = [],
 ): Record<string, ConflictKind[]> {
   const out: Record<string, ConflictKind[]> = {};
   const docs = new Map(doctors.map((d) => [d.id, d]));
@@ -503,6 +520,8 @@ export function findConflicts(
       else if (r === "rest") list.push("rest");
       if (max != null && !viaRequest && counted > max) list.push("max");
       if (info && s.kind === "bakvakt" && !info.canBakvakt) list.push("skill");
+      // Dagvakt á röngum vikudegi telst ekki árekstur hafi læknirinn samþykkt hana.
+      if (info && s.period === "day" && !viaRequest && !worksDayShift(info, s.date)) list.push("day_weekday");
       if (info && s.kind === "forvakt" && info.needsBakvakt && !staffedBv.has(s.date)) list.push("no_bakvakt");
       if (list.length) out[s.key] = list;
     });
