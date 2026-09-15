@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { Plus, Save, Trash2 } from "lucide-react";
 import { Button, Card, Field, Notice, cx, hsuApi, inputCls } from "../_components/ui";
-import { SHIFT_KIND_IS, SHIFT_PERIOD_IS, WEEKDAY_ORDER, WEEKDAY_SHORT_IS, isOvernight, type HsuShiftType, type ShiftKind, type ShiftPeriod } from "@/lib/hsu/types";
+import {
+  SHIFT_KIND_IS, SHIFT_PERIOD_IS, WEEKDAY_ORDER, WEEKDAY_SHORT_IS, dayLabel, icelandicHolidays, isOvernight, typeAppliesOn, weekdayOf,
+  type HsuShiftType, type ShiftKind, type ShiftPeriod,
+} from "@/lib/hsu/types";
 import type { PlannerCtx } from "./types";
 
 export default function SettingsTab({ ctx }: { ctx: PlannerCtx }) {
@@ -51,6 +54,16 @@ export default function SettingsTab({ ctx }: { ctx: PlannerCtx }) {
       </div>
     </div>
   );
+}
+
+/** Þrír næstu almennu frídagar, til að sýna regluna í verki. */
+function nextHolidays(): [string, string][] {
+  const today = new Date().toISOString().slice(0, 10);
+  const year = Number(today.slice(0, 4));
+  return [...Object.entries(icelandicHolidays(year)), ...Object.entries(icelandicHolidays(year + 1))]
+    .filter(([d]) => d >= today)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(0, 3);
 }
 
 function ShiftTypeCard({ ctx, type }: { ctx: PlannerCtx; type?: HsuShiftType }) {
@@ -117,21 +130,33 @@ function ShiftTypeCard({ ctx, type }: { ctx: PlannerCtx; type?: HsuShiftType }) 
             </button>
           ))}
         </div>
-        <div className="mt-3 text-xs font-semibold text-slate-600">Almennir frídagar</div>
-        <div className="mt-1 grid gap-1 sm:grid-cols-3">
+        <div className="mt-3 text-xs font-semibold text-slate-600">
+          Þegar almennur frídagur lendir á vikudegi (jóladagur, 17. júní, páskar …)
+        </div>
+        <div className="mt-1 grid gap-1">
           {([
-            ["always", "Alltaf á frídögum", "t.d. FV2/BV2"],
-            ["never", "Aldrei á frídögum", "t.d. FV1/BV1"],
-            ["weekday", "Eftir vikudegi", ""],
+            ["always", "Vaktin gildir líka þá", "Hún er búin til á öllum frídögum, líka þótt vikudagurinn sé ekki valinn hér fyrir ofan. Þannig er helgarvakt líka mönnuð á jóladag."],
+            ["never", "Vaktin fellur niður þá", "Hún er ekki búin til á frídegi þótt vikudagurinn sé valinn — virkradagavakt víkur fyrir helgar-/frídagavaktinni."],
+            ["weekday", "Frídagar breyta engu", "Aðeins vikudagarnir hér fyrir ofan ráða."],
           ] as const).map(([key, label, hint]) => {
             const cur = v.on_holidays ? "always" : v.skip_holidays ? "never" : "weekday";
             return (
               <label key={key} className={cx("flex cursor-pointer items-start gap-2 rounded-lg border px-2.5 py-2 text-sm", cur === key ? "border-[var(--hsu)] bg-[var(--hsu-soft)]" : "border-slate-200")}>
                 <input type="radio" className="mt-1" checked={cur === key} onChange={() => set({ on_holidays: key === "always", skip_holidays: key === "never" })} />
-                <span><span className="block font-medium">{label}</span>{hint && <span className="block text-[11px] text-slate-500">{hint}</span>}</span>
+                <span><span className="block font-medium">{label}</span><span className="block text-[11px] text-slate-500">{hint}</span></span>
               </label>
             );
           })}
+        </div>
+        {/* Dæmi með næstu frídögum: fljótlegra að sjá útkomuna en að lesa regluna. */}
+        <div className="mt-2 rounded-lg bg-slate-50 px-2.5 py-2 text-[11px] text-slate-600">
+          <span className="font-semibold text-slate-700">Næstu frídagar:</span>{" "}
+          {nextHolidays().map(([date, name]) => (
+            <span key={date} className="mr-2 inline-flex items-center gap-1">
+              {name} {dayLabel(date)} ({WEEKDAY_SHORT_IS[weekdayOf(date)].toLowerCase()}):{" "}
+              <b className={typeAppliesOn(v, date) ? "text-emerald-700" : "text-slate-400"}>{typeAppliesOn(v, date) ? "vakt" : "engin vakt"}</b>
+            </span>
+          ))}
         </div>
       </div>
       {err && <Notice tone="err">{err}</Notice>}
