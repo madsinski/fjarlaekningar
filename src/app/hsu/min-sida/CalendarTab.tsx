@@ -53,7 +53,7 @@ export default function CalendarTab({ hasToken }: { hasToken: boolean }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold">Dagatal</h1>
+        <h2 className="text-lg font-bold">Dagatal</h2>
         <p className="text-sm text-slate-500">Fáðu vaktirnar þínar sjálfkrafa inn í dagatalið í símanum og tölvunni. Breytingar — t.d. vakt sem þú tekur á vaktamarkaði — skila sér sjálfkrafa.</p>
       </div>
 

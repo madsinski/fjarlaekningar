@@ -72,6 +72,6 @@ export async function POST(req: Request) {
     role: d.role,
     mustChangePassword: d.must_change_password,
     hasPin: Boolean(d.pin_hash),
-    next: d.must_change_password ? "/hsu/min-sida?t=adgangur" : d.role === "head" ? "/hsu/stjorn" : "/hsu/min-sida",
+    next: d.must_change_password ? "/hsu/min-sida?t=stillingar" : d.role === "head" ? "/hsu/stjorn" : "/hsu/min-sida",
   });
 }

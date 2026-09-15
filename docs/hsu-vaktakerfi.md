@@ -5,7 +5,7 @@ Vaktakerfi lækna HSU, hýst á fjarlaekningar.is en án vörumerkis Fjarlæknin
 | Slóð | Fyrir hvern |
 |---|---|
 | **`fjarlaekningar.is/hsu`** | Innskráning (lykilorð eða 4 stafa kóði) |
-| `/hsu/min-sida` | Mín síða læknis: vaktir, óskir, vaktamarkaður, vaktaplan, dagatal, aðgangur |
+| `/hsu/min-sida` | Mín síða læknis: yfirlit, mínar vaktir, óskir, vaktamarkaður, vaktaplan og stillingar (dagatal + aðgangur) |
 | `/hsu/stjorn` | Vaktaskipulag: yfirlæknir HSU, eða stjórnandi Fjarlækninga (hnappur „HSU vaktakerfi“ í stjórnborðinu) |
 | `/hsu/virkja/<hlekkur>` | Virkjun aðgangs / nýtt lykilorð |
 

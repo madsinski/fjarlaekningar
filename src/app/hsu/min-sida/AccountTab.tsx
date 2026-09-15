@@ -10,7 +10,7 @@ export default function AccountTab({ me, refresh }: { me: PortalData["me"]; refr
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="lg:col-span-2">
-        <h1 className="text-xl font-bold">Aðgangur</h1>
+        <h2 className="text-lg font-bold">Aðgangur</h2>
         <p className="text-sm text-slate-500">Notandanafn: <span className="font-semibold text-slate-800">{me.email}</span></p>
       </div>
       <PasswordCard must={me.mustChangePassword} refresh={refresh} />

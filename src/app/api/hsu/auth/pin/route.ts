@@ -54,5 +54,5 @@ export async function POST(req: Request) {
 
   await supabaseAdmin.from("hsu_devices").update({ pin_failures: 0, last_used_at: new Date().toISOString() }).eq("id", dev.id);
   await startSession(jar, d.id, "pin", req.headers.get("user-agent") ?? "");
-  return json({ ok: true, next: d.must_change_password ? "/hsu/min-sida?t=adgangur" : d.role === "head" ? "/hsu/stjorn" : "/hsu/min-sida" });
+  return json({ ok: true, next: d.must_change_password ? "/hsu/min-sida?t=stillingar" : d.role === "head" ? "/hsu/stjorn" : "/hsu/min-sida" });
 }

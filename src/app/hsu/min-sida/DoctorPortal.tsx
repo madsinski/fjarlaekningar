@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  AlertTriangle, ArrowLeftRight, CalendarCheck, CalendarDays, CalendarRange, CheckCircle2, ChevronRight, ClipboardList, ExternalLink, Home, KeyRound, Store,
+  AlertTriangle, ArrowLeftRight, CalendarCheck, CalendarRange, CheckCircle2, ChevronRight, ClipboardList, ExternalLink, Home, Settings, Store,
 } from "lucide-react";
 import HsuHeader from "../_components/HsuHeader";
 import { Badge, Button, Card, Field, Modal, Notice, cx, firstName, hsuApi, inputCls, shortName, capFirst } from "../_components/ui";
@@ -17,7 +17,10 @@ import RosterTab from "./RosterTab";
 import CalendarTab from "./CalendarTab";
 import AccountTab from "./AccountTab";
 
-type Tab = "yfirlit" | "vaktir" | "oskir" | "markadur" | "plan" | "dagatal" | "adgangur";
+type Tab = "yfirlit" | "vaktir" | "oskir" | "markadur" | "plan" | "stillingar";
+
+/** Dagatal og aðgangur voru sitt hvor flipinn; hlekkir á þá eiga áfram að virka. */
+const TAB_ALIASES: Record<string, Tab> = { dagatal: "stillingar", adgangur: "stillingar" };
 
 const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: "yfirlit", label: "Yfirlit", icon: <Home className="h-4 w-4" /> },
@@ -25,8 +28,7 @@ const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: "oskir", label: "Óskir", icon: <ClipboardList className="h-4 w-4" /> },
   { key: "markadur", label: "Vaktamarkaður", icon: <Store className="h-4 w-4" /> },
   { key: "plan", label: "Vaktaplan", icon: <CalendarRange className="h-4 w-4" /> },
-  { key: "dagatal", label: "Dagatal", icon: <CalendarDays className="h-4 w-4" /> },
-  { key: "adgangur", label: "Aðgangur", icon: <KeyRound className="h-4 w-4" /> },
+  { key: "stillingar", label: "Stillingar", icon: <Settings className="h-4 w-4" /> },
 ];
 
 export const shiftWhen = (s: { shift_date: string; starts: string; ends: string; label?: string }) =>
@@ -34,7 +36,8 @@ export const shiftWhen = (s: { shift_date: string; starts: string; ends: string;
 
 export default function DoctorPortal({ data, initialTab, initialMonth }: { data: PortalData; initialTab: string; initialMonth: string }) {
   const router = useRouter();
-  const [tab, setTabState] = useState<Tab>(TABS.some((t) => t.key === initialTab) ? (initialTab as Tab) : data.me.mustChangePassword ? "adgangur" : "yfirlit");
+  const wanted = TAB_ALIASES[initialTab] ?? (initialTab as Tab);
+  const [tab, setTabState] = useState<Tab>(TABS.some((t) => t.key === wanted) ? wanted : data.me.mustChangePassword ? "stillingar" : "yfirlit");
   const setTab = (t: Tab) => {
     setTabState(t);
     const url = new URL(window.location.href);
@@ -101,8 +104,13 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
           <MarketTab data={data} incoming={incoming} market={market} mine={mine} myRequests={myRequests} name={name} refresh={refresh} />
         )}
         {tab === "plan" && <RosterTab meId={me.id} />}
-        {tab === "dagatal" && <CalendarTab hasToken={me.hasCalendarToken} />}
-        {tab === "adgangur" && <AccountTab me={me} refresh={refresh} />}
+        {tab === "stillingar" && (
+          <div className="space-y-8">
+            <h1 className="text-xl font-bold">Stillingar</h1>
+            <CalendarTab hasToken={me.hasCalendarToken} />
+            <AccountTab me={me} refresh={refresh} />
+          </div>
+        )}
       </main>
     </div>
   );
@@ -136,7 +144,7 @@ function Overview({ data, incoming, market, prefActions, go, onLog }: {
       {data.me.mustChangePassword && (
         <Notice tone="warn">
           <span className="font-semibold">Veldu þitt eigið lykilorð.</span> Lykilorðið þitt var sett af öðrum.{" "}
-          <button className="font-semibold underline" onClick={() => go("adgangur")}>Breyta núna</button>
+          <button className="font-semibold underline" onClick={() => go("stillingar")}>Breyta núna</button>
         </Notice>
       )}
 
