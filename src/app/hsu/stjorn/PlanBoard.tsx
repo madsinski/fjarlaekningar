@@ -454,7 +454,7 @@ function SlotModal({ shift, ctx, shifts, doctors, prefs, toSlots, stats, onClose
               </span>
               {issues.length ? (
                 <span className={cx("text-right text-[11px] font-semibold", issues.every((k) => k === "max") ? "text-amber-700" : "text-red-600")}>
-                  {issues.map((k) => ({ off: "Getur ekki", double: "Á vakt þennan dag", rest: "Hvíld", max: "Umfram hámark → beiðni", skill: "Ekki bakvaktarréttindi", no_bakvakt: "" })[k]).filter(Boolean).join(" · ")}
+                  {issues.map((k) => ({ off: "Getur ekki", double: "Á vakt á sama tíma dags", rest: "Hvíld", max: "Umfram hámark → beiðni", skill: "Ekki bakvaktarréttindi", no_bakvakt: "" })[k]).filter(Boolean).join(" · ")}
                 </span>
               ) : mark === "want" ? (
                 <Badge tone="green"><Heart className="h-3 w-3" /> Vill</Badge>

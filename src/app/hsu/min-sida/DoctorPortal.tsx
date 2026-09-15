@@ -424,7 +424,7 @@ function MarketTab({ data, incoming, market, mine, myRequests, name, refresh }: 
             <div>
               <div className="text-sm font-semibold">{when(s)}</div>
               <div className="text-xs text-slate-500">Frá {name(s.from_doctor)}{s.note ? ` · „${s.note}“` : ""}</div>
-              {s.shift && myDates.has(s.shift.shift_date) && <div className="mt-1 flex items-center gap-1 text-xs text-amber-700"><AlertTriangle className="h-3 w-3" /> Þú ert þegar á vakt þennan dag</div>}
+              {s.shift && myDates.has(s.shift.shift_date) && <div className="mt-1 flex items-center gap-1 text-xs text-amber-700"><AlertTriangle className="h-3 w-3" /> Þú ert líka á vakt þennan dag</div>}
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={() => act(s.id, "accept")} busy={busy === s.id + "accept"}>Taka vakt</Button>
@@ -440,7 +440,7 @@ function MarketTab({ data, incoming, market, mine, myRequests, name, refresh }: 
             <div>
               <div className="text-sm font-semibold">{when(s)}</div>
               <div className="text-xs text-slate-500">{name(s.from_doctor)}{s.note ? ` · „${s.note}“` : ""}</div>
-              {s.shift && myDates.has(s.shift.shift_date) && <div className="mt-1 flex items-center gap-1 text-xs text-amber-700"><AlertTriangle className="h-3 w-3" /> Þú ert þegar á vakt þennan dag</div>}
+              {s.shift && myDates.has(s.shift.shift_date) && <div className="mt-1 flex items-center gap-1 text-xs text-amber-700"><AlertTriangle className="h-3 w-3" /> Þú ert líka á vakt þennan dag</div>}
             </div>
             <Button size="sm" onClick={() => act(s.id, "accept")} busy={busy === s.id + "accept"}>Taka vakt</Button>
           </div>

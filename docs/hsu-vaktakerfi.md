@@ -73,6 +73,17 @@ undir **Stillingar**. Á hverjum lækni undir **Læknar**:
 
 Tóm bakvakt sem enginn þarf er ekki gat í planinu og sést ekki á síðu lækna.
 
+### Ein dagvakt og ein kvöldvakt á dag
+
+Sami læknir má taka **dagvakt og kvöld-/næturvakt sama dag** (flýtimóttaka og svo
+forvakt) — það er forsenda mönnunar. Tvær vaktir í sama hólfi sama dag eru hins vegar
+útilokaðar, svo forvakt og bakvakt sama dag eru alltaf tveir ólíkir læknar. Reglan
+gildir alls staðar: í sjálfvirku skiptingunni, í árekstramerkingum og á vaktamarkaði.
+
+Athugið að um helgar og frídaga skarast FM (08–16) og FV2 (08–08) í tíma. Kerfið
+leyfir sama lækni báðar, enda er það val yfirlæknis; sé það ekki ætlunin má fella
+FM niður á þeim dögum (taka helgar af vikudögum tegundarinnar) eða breyta tímunum.
+
 ## Hámark og beiðnir um aukavakt
 
 - „Fylla í tómar“ og sjálfvirk skipting setja engan lækni á fleiri vaktir en **hámarkið

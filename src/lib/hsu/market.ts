@@ -70,14 +70,21 @@ export async function canDoBakvakt(doctorId: string): Promise<boolean> {
   return Boolean(data?.can_bakvakt);
 }
 
-/** Læknar sem eru þegar á vakt þennan dag (fyrir utan þessa vakt). */
+type PeriodRow = { id: string; starts: string; ends: string; type: { period?: string } | null };
+const periodOfRow = (r: PeriodRow) =>
+  r.type?.period ?? (r.starts.slice(0, 5) < "15:00" && r.ends.slice(0, 5) > r.starts.slice(0, 5) ? "day" : "evening");
+
+/**
+ * Er læknirinn þegar á vakt í SAMA HÓLFI þennan dag? Dagvakt og kvöldvakt sama
+ * dag er leyfð (og oft forsenda mönnunar); tvær dagvaktir eða tvær kvöldvaktir ekki.
+ */
 export async function hasShiftThatDay(doctorId: string, date: string, exceptShiftId: string): Promise<boolean> {
-  const { data } = await supabaseAdmin
-    .from("hsu_shifts")
-    .select("id")
-    .eq("doctor_id", doctorId)
-    .eq("shift_date", date)
-    .neq("id", exceptShiftId)
-    .limit(1);
-  return Boolean(data?.length);
+  const cols = "id, starts, ends, type:hsu_shift_types(period)";
+  const [{ data: target }, { data }] = await Promise.all([
+    supabaseAdmin.from("hsu_shifts").select(cols).eq("id", exceptShiftId).maybeSingle(),
+    supabaseAdmin.from("hsu_shifts").select(cols).eq("doctor_id", doctorId).eq("shift_date", date).neq("id", exceptShiftId),
+  ]);
+  if (!target) return Boolean(data?.length);
+  const want = periodOfRow(target as unknown as PeriodRow);
+  return ((data ?? []) as unknown as PeriodRow[]).some((r) => periodOfRow(r) === want);
 }
