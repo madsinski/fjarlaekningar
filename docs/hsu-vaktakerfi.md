@@ -53,6 +53,56 @@ Póstur fer frá `HSU vaktakerfi <vaktir@fjarlaekningar.is>` (Resend; breytanleg
 Vaktategundir (sjálfgefið: *Bakvakt 08–08 alla daga*) og hvort yfirlæknir samþykki
 vaktaskipti eru undir **Stillingar**.
 
+## Forvakt og bakvakt
+
+| Tegund | Dagar | Mönnun |
+|---|---|---|
+| **FV1** forvakt | virkir dagar, aldrei á frídögum | alltaf |
+| **FV2** forvakt | helgar og almennir frídagar | alltaf |
+| **BV1** bakvakt | virkir dagar, aldrei á frídögum | aðeins þegar forvaktarlæknir þarf bakvakt |
+| **BV2** bakvakt | helgar og almennir frídagar | aðeins þegar forvaktarlæknir þarf bakvakt |
+
+Tegund (*Forvakt / Bakvakt / Önnur*) og frídagaregla eru stilltar á hverri vaktategund
+undir **Stillingar**. Á hverjum lækni undir **Læknar**:
+
+- **Bakvaktarréttindi** — reyndur læknir; aðeins þeir fá bakvakt (geta líka tekið forvakt).
+  Óreyndur læknir er stöðvaður bæði í viðmóti og á þjóni, líka á vaktamarkaði.
+- **Þarf bakvakt á forvakt** — þá daga sem hann er á forvakt verður reyndur læknir á bakvakt.
+
+Tóm bakvakt sem enginn þarf er ekki gat í planinu og sést ekki á síðu lækna.
+
+## Hámark og beiðnir um aukavakt
+
+- „Fylla í tómar“ og sjálfvirk skipting setja engan lækni á fleiri vaktir en **hámarkið
+  sem hann skráði** í óskum. Hafi hann ekki skráð hámark gildir **sanngjarn hlutur hans
+  eftir starfshlutfalli** (rúnnað upp). Frekar stendur vakt tóm en að læknir sé ofhlaðinn.
+- Setji yfirlæknir lækni handvirkt á vakt umfram skráð hámark verður vaktin **beiðni**:
+  merkt með brotinni appelsínugulri útlínu og klukku á vaktaplani, læknirinn fær póst
+  og samþykkir eða hafnar undir *Mínar vaktir*. Hún fer ekki í dagatal fyrr en hann
+  samþykkir; höfnun losar vaktina og yfirlæknir fær póst.
+- Samþykkt beiðni telst ekki árekstur þótt læknirinn sé þá yfir hámarki.
+
+## Staða skrefa
+
+Hringurinn á hverju skrefi er **fylltur grænn aðeins þegar allt í skrefinu er búið**
+(allir sent / allar óskir samþykktar / plan fullmannað án árekstra og án beiðna í bið /
+birt). Hálfnað skref fær appelsínugula útlínu og stutta stöðu (t.d. „3 af 5 sent“).
+
+## Tölvupóstar til lækna
+
+| Atburður | Hver fær póst |
+|---|---|
+| Opnað fyrir óskir / áminning | læknar (val yfirlæknis) |
+| Óskir samþykktar / beðið um breytingar | læknirinn |
+| Vaktaplan birt | allir læknar, með fjölda vakta |
+| Eftir birtingu: læknir færður á eða af vakt (draga, velja, hreinsa, endurraða) | hver læknir sem missti eða fékk vakt |
+| Eftir birtingu: tími, heiti eða athugasemd vaktar breytist | læknirinn á vaktinni |
+| Eftir birtingu: vakt eytt / aukavakt bætt við | læknirinn |
+| Vaktaplan tekið úr birtingu | læknar með vaktir í mánuðinum |
+| Beiðni um aukavakt | læknirinn (líka fyrir birtingu); svar fer til yfirlækna |
+| Vaktamarkaður: boð, tekin vakt, höfnun, afturkallað boð, samþykkt/hafnað af yfirlækni, boð fellt niður | þeir sem málið varðar |
+| Lykilorði breytt (af lækni eða stjórnanda) | læknirinn (öryggistilkynning) |
+
 ## Vaktamarkaður
 
 Læknir setur vakt **á vaktamarkað** (allir fá póst) eða býður ákveðnum lækni. Vaktin

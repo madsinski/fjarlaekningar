@@ -54,6 +54,8 @@ export interface CalendarSyncConfig {
   excludeStatuses: string[];
   /** Aukaskilyrði (dálkur = gildi), t.d. aðeins birtar vaktir. */
   requireEquals?: Record<string, string | boolean>;
+  /** Dálkar sem verða að vera tómir (null), t.d. vakt sem bíður samþykkis. */
+  requireNull?: string[];
   /** Heiti dagatalsins sem búið er til í reikningi læknisins. */
   calendarName: string;
   eventBody: (s: SyncShiftRow) => { summary: string; description: string };
@@ -210,6 +212,7 @@ export function createCalendarSync(cfg: CalendarSyncConfig) {
         .gte("shift_date", from);
       for (const st of cfg.excludeStatuses) shiftQuery = shiftQuery.neq("status", st);
       for (const [col, val] of Object.entries(cfg.requireEquals ?? {})) shiftQuery = shiftQuery.eq(col, val);
+      for (const col of cfg.requireNull ?? []) shiftQuery = shiftQuery.is(col, null);
 
       const [{ data: shiftData, error: shiftErr }, { data: mapData, error: mapErr }] = await Promise.all([
         shiftQuery,

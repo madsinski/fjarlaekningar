@@ -2,7 +2,7 @@
 // draga einn ofan á annan (tvær vaktir breytast saman).
 
 import { audit } from "@/lib/hsu/auth";
-import { applyShiftChanges, type ShiftChange } from "@/lib/hsu/shift-edit";
+import { ShiftRuleError, applyShiftChanges, type ShiftChange } from "@/lib/hsu/shift-edit";
 import { UUID_RE, fail, json, originOf, readJson, requireManager } from "@/lib/hsu/server";
 
 export const runtime = "nodejs";
@@ -24,6 +24,6 @@ export async function POST(req: Request) {
     if (r.changed) await audit(auth.actor.label, "shift.assign", typeof body.month === "string" ? body.month : null, { changes: changes.slice(0, 20) });
     return json({ ok: true, ...r });
   } catch (e) {
-    return fail(e instanceof Error ? e.message : String(e), 500);
+    return fail(e instanceof Error ? e.message : String(e), e instanceof ShiftRuleError ? 400 : 500);
   }
 }

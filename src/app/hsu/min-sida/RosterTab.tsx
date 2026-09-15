@@ -64,10 +64,12 @@ export default function RosterTab({ meId }: { meId: string }) {
                       {shifts.map((s) => {
                         const d = doc(s.doctor_id);
                         const mine = s.doctor_id === meId;
+                        const pending = s.confirm_status === "requested";
                         return (
-                          <div key={s.id} title={`${s.label} ${s.starts.slice(0, 5)}–${s.ends.slice(0, 5)}`}
-                            className={cx("truncate rounded-md px-1.5 py-1 text-[11px] font-semibold", mine ? "text-white" : "bg-white text-slate-700 ring-1 ring-slate-200")}
-                            style={mine ? { background: d?.color ?? "var(--hsu)" } : { borderLeft: `3px solid ${d?.color ?? "#cbd5e1"}` }}>
+                          <div key={s.id} title={`${s.label} ${s.starts.slice(0, 5)}–${s.ends.slice(0, 5)}${pending ? " · bíður samþykkis" : ""}`}
+                            className={cx("truncate rounded-md px-1.5 py-1 text-[11px] font-semibold",
+                              pending ? "border border-dashed border-amber-400 bg-amber-50 text-amber-900" : mine ? "text-white" : "bg-white text-slate-700 ring-1 ring-slate-200")}
+                            style={pending ? undefined : mine ? { background: d?.color ?? "var(--hsu)" } : { borderLeft: `3px solid ${d?.color ?? "#cbd5e1"}` }}>
                             {s.label && <span className="opacity-70">{s.label} </span>}{d ? shortName(d.name) : "—"}
                           </div>
                         );

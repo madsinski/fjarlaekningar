@@ -3,7 +3,8 @@
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { DEVICE_COOKIE, SESSION_COOKIE, hashSecret, passwordProblem, sha256, verifySecret } from "@/lib/hsu/auth";
-import { fail, json, readJson, requireDoctor } from "@/lib/hsu/server";
+import { fail, json, originOf, readJson, requireDoctor } from "@/lib/hsu/server";
+import { notifyDoctors } from "@/lib/hsu/notify";
 
 export const runtime = "nodejs";
 
@@ -32,5 +33,10 @@ export async function PUT(req: Request) {
   const device = jar.get(DEVICE_COOKIE)?.value ?? "";
   await supabaseAdmin.from("hsu_sessions").delete().eq("doctor_id", auth.doctor.id).neq("token_hash", sha256(token));
   await supabaseAdmin.from("hsu_devices").delete().eq("doctor_id", auth.doctor.id).neq("token_hash", sha256(device));
+  notifyDoctors({
+    origin: originOf(req), subject: "Lykilorði þínu var breytt", heading: "Lykilorði breytt",
+    notices: [{ doctorId: auth.doctor.id, line: "Lykilorðinu að vaktakerfinu var breytt og önnur tæki skráð út. Ef þetta varst ekki þú skaltu strax velja nýtt lykilorð með „Gleymt lykilorð“ og láta yfirlækni vita." }],
+    cta: { label: "Skrá inn", path: "/hsu" },
+  });
   return json({ ok: true });
 }

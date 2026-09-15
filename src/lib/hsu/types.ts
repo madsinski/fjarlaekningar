@@ -25,7 +25,16 @@ export interface HsuDoctor {
   invite_pending: boolean;
   last_login_at: string | null;
   must_change_password: boolean;
+  /** Hefur reynslu til að taka bakvakt (BV). */
+  can_bakvakt: boolean;
+  /** Þarf bakvakt á bak við sig þegar hann er á forvakt (FV). */
+  needs_bakvakt: boolean;
 }
+
+/** forvakt = mönnuð alla daga; bakvakt = aðeins reyndir, og aðeins þegar þörf er á; other = mönnuð, hver sem er. */
+export type ShiftKind = "forvakt" | "bakvakt" | "other";
+
+export const SHIFT_KIND_IS: Record<ShiftKind, string> = { forvakt: "Forvakt", bakvakt: "Bakvakt", other: "Önnur vakt" };
 
 export interface HsuShiftType {
   id: string;
@@ -36,6 +45,9 @@ export interface HsuShiftType {
   /** 0=sun … 6=lau */
   weekdays: number[];
   on_holidays: boolean;
+  /** Aldrei á almennum frídögum (t.d. FV1 — frídagur á virkum degi fær FV2). */
+  skip_holidays: boolean;
+  kind: ShiftKind;
   rest_days_after: number;
   color: string;
   sort: number;
@@ -87,6 +99,10 @@ export interface HsuShift {
   doctor_id: string | null;
   status: HsuShiftStatus;
   note: string;
+  /** "requested" = yfirlæknir setti lækni á vakt umfram hámark hans; bíður samþykkis læknisins. */
+  confirm_status?: "requested" | null;
+  /** Hver bað um vaktina. Situr eftir þegar læknir samþykkir: þá er vaktin umfram hámark með samþykki hans. */
+  requested_by?: string;
 }
 
 export type HsuSwapStatus = "pending" | "awaiting_approval" | "accepted" | "declined" | "cancelled";
@@ -222,8 +238,10 @@ export function isWeekendish(date: string): boolean {
 }
 
 /** Á vaktategund við þennan dag? */
-export function typeAppliesOn(t: Pick<HsuShiftType, "weekdays" | "on_holidays">, date: string): boolean {
-  if (t.on_holidays && holidayName(date)) return true;
+export function typeAppliesOn(t: Pick<HsuShiftType, "weekdays" | "on_holidays" | "skip_holidays">, date: string): boolean {
+  const holiday = holidayName(date) !== null;
+  if (holiday && t.skip_holidays) return false;
+  if (holiday && t.on_holidays) return true;
   return (t.weekdays ?? []).includes(weekdayOf(date));
 }
 

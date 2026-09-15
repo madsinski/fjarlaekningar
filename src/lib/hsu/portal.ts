@@ -13,6 +13,8 @@ export interface PortalData {
   months: HsuMonth[];
   prefs: HsuPreference[];
   swaps: HsuSwap[];
+  /** Vaktir sem yfirlæknir biður lækninn að taka umfram hámark. */
+  requests: (HsuShift & { requested_by: string })[];
   marketRequiresApproval: boolean;
   today: string;
 }
@@ -21,11 +23,11 @@ export async function loadPortal(doctorId: string): Promise<PortalData> {
   const today = new Date().toISOString().slice(0, 10);
   const first = `${monthKey(new Date())}-01`;
 
-  const [me, colleagues, myShifts, months, prefs, swaps, settings] = await Promise.all([
+  const [me, colleagues, myShifts, months, prefs, swaps, settings, requests] = await Promise.all([
     supabaseAdmin.from("hsu_doctors").select("id, name, email, role, pin_hash, must_change_password, calendar_token").eq("id", doctorId).single(),
     supabaseAdmin.from("hsu_doctors").select("id, name, color, role, phone, email").eq("active", true).order("name"),
     supabaseAdmin.from("hsu_shifts").select("id, shift_date, shift_type_id, label, starts, ends, doctor_id, status, note")
-      .eq("doctor_id", doctorId).eq("published", true).gte("shift_date", first).order("shift_date").order("starts"),
+      .eq("doctor_id", doctorId).eq("published", true).is("confirm_status", null).gte("shift_date", first).order("shift_date").order("starts"),
     supabaseAdmin.from("hsu_months").select("month, status, prefs_deadline, note, published_at").gte("month", monthKey(new Date())).order("month"),
     supabaseAdmin.from("hsu_preferences").select("*").eq("doctor_id", doctorId).gte("month", monthKey(new Date())),
     supabaseAdmin.from("hsu_swaps")
@@ -35,9 +37,11 @@ export async function loadPortal(doctorId: string): Promise<PortalData> {
       .eq("shift.published", true)
       .order("created_at"),
     supabaseAdmin.from("hsu_settings").select("unit_name, market_requires_approval").eq("id", 1).maybeSingle(),
+    supabaseAdmin.from("hsu_shifts").select("id, shift_date, shift_type_id, label, starts, ends, doctor_id, status, note, confirm_status, requested_by")
+      .eq("doctor_id", doctorId).eq("confirm_status", "requested").gte("shift_date", today).order("shift_date"),
   ]);
 
-  for (const r of [me, colleagues, myShifts, months, prefs, swaps]) {
+  for (const r of [me, colleagues, myShifts, months, prefs, swaps, requests]) {
     if (r.error) throw new Error(r.error.message);
   }
 
@@ -53,6 +57,7 @@ export async function loadPortal(doctorId: string): Promise<PortalData> {
     months: (months.data ?? []) as HsuMonth[],
     prefs: (prefs.data ?? []) as HsuPreference[],
     swaps: (swaps.data ?? []) as unknown as HsuSwap[],
+    requests: (requests.data ?? []) as PortalData["requests"],
     marketRequiresApproval: Boolean(settings.data?.market_requires_approval),
     today,
   };

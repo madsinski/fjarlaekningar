@@ -275,3 +275,23 @@ create index if not exists hsu_auth_throttle_key_idx on public.hsu_auth_throttle
 alter table public.hsu_auth_throttle enable row level security;
 drop policy if exists hsu_auth_throttle_block_client on public.hsu_auth_throttle;
 create policy hsu_auth_throttle_block_client on public.hsu_auth_throttle for all using (false) with check (false);
+
+-- ── Forvakt / bakvakt og beiðnir umfram hámark (2026-09-15) ────────────────
+-- kind: forvakt er mönnuð alla daga; bakvakt aðeins af reyndum læknum og
+-- aðeins þá daga sem forvaktarlæknirinn þarf bakvakt; other = alltaf mönnuð.
+alter table public.hsu_shift_types add column if not exists kind text not null default 'other';
+alter table public.hsu_shift_types drop constraint if exists hsu_shift_types_kind_check;
+alter table public.hsu_shift_types add constraint hsu_shift_types_kind_check check (kind in ('forvakt','bakvakt','other'));
+-- Aldrei á almennum frídögum: FV1/BV1 víkja fyrir FV2/BV2 á frídegi á virkum degi.
+alter table public.hsu_shift_types add column if not exists skip_holidays boolean not null default false;
+
+alter table public.hsu_doctors add column if not exists can_bakvakt boolean not null default false;
+alter table public.hsu_doctors add column if not exists needs_bakvakt boolean not null default false;
+
+-- Yfirlæknir setti lækni á vakt umfram hámark hans: vaktin er frátekin en
+-- ekki staðfest fyrr en læknirinn samþykkir. Fer ekki í dagatal fyrr.
+alter table public.hsu_shifts add column if not exists confirm_status text;
+alter table public.hsu_shifts drop constraint if exists hsu_shifts_confirm_status_check;
+alter table public.hsu_shifts add constraint hsu_shifts_confirm_status_check check (confirm_status is null or confirm_status in ('requested'));
+alter table public.hsu_shifts add column if not exists requested_by text not null default '';
+alter table public.hsu_shifts add column if not exists requested_at timestamptz;

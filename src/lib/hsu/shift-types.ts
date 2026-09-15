@@ -13,6 +13,9 @@ export function cleanShiftType(body: Record<string, unknown>, partial: boolean):
     p.weekdays = [...new Set(body.weekdays.map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))].sort();
   }
   if (typeof body.on_holidays === "boolean") p.on_holidays = body.on_holidays;
+  if (typeof body.skip_holidays === "boolean") p.skip_holidays = body.skip_holidays;
+  if (p.on_holidays && p.skip_holidays) return "Vakt getur ekki bæði gilt alltaf á frídögum og aldrei.";
+  if (body.kind === "forvakt" || body.kind === "bakvakt" || body.kind === "other") p.kind = body.kind;
   if (body.rest_days_after !== undefined) p.rest_days_after = Math.min(7, Math.max(0, Math.floor(Number(body.rest_days_after)) || 0));
   if (typeof body.color === "string" && /^#[0-9a-f]{6}$/i.test(body.color)) p.color = body.color;
   if (body.sort !== undefined) p.sort = Math.floor(Number(body.sort)) || 0;

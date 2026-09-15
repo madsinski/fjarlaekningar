@@ -3,7 +3,7 @@
 import { after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit } from "@/lib/hsu/auth";
-import { shiftPhrase } from "@/lib/hsu/market";
+import { canDoBakvakt, isBakvaktShift, shiftPhrase } from "@/lib/hsu/market";
 import { UUID_RE, fail, hsuEmailHtml, json, originOf, readJson, requireDoctor, sendHsuEmail } from "@/lib/hsu/server";
 
 export const runtime = "nodejs";
@@ -21,11 +21,14 @@ export async function POST(req: Request) {
 
   const { data: shift } = await supabaseAdmin
     .from("hsu_shifts")
-    .select("id, doctor_id, shift_date, starts, ends, label, published")
+    .select("id, doctor_id, shift_date, starts, ends, label, published, confirm_status")
     .eq("id", shiftId)
     .maybeSingle();
   if (!shift || shift.doctor_id !== me.id || !shift.published) return fail("Vaktin tilheyrir þér ekki", 403);
   if (shift.shift_date < new Date().toISOString().slice(0, 10)) return fail("Vaktin er liðin.");
+  if (shift.confirm_status === "requested") return fail("Svaraðu fyrst beiðninni um þessa vakt.");
+  const bakvakt = await isBakvaktShift(shiftId);
+  if (bakvakt && toDoctor && !(await canDoBakvakt(toDoctor))) return fail("Þessi læknir hefur ekki bakvaktarréttindi.");
 
   let target: { id: string; name: string; email: string } | null = null;
   if (toDoctor) {
@@ -48,9 +51,10 @@ export async function POST(req: Request) {
   const origin = originOf(req);
   after(async () => {
     const phrase = shiftPhrase(shift);
-    const recipients = target
-      ? [target]
-      : ((await supabaseAdmin.from("hsu_doctors").select("id, name, email").eq("active", true).neq("id", me.id)).data ?? []);
+    // Bakvakt á markaði: aðeins þeir sem mega taka hana fá póst.
+    let others = supabaseAdmin.from("hsu_doctors").select("id, name, email").eq("active", true).neq("id", me.id);
+    if (bakvakt) others = others.eq("can_bakvakt", true);
+    const recipients = target ? [target] : ((await others).data ?? []);
     for (const r of recipients) {
       await sendHsuEmail(
         r.email,

@@ -3,8 +3,9 @@
 import { after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit } from "@/lib/hsu/auth";
-import { hasShiftThatDay, shiftPhrase, transferShift } from "@/lib/hsu/market";
+import { canDoBakvakt, hasShiftThatDay, isBakvaktShift, shiftPhrase, transferShift } from "@/lib/hsu/market";
 import { hsuSync } from "@/lib/hsu/calendar";
+import { notifyDoctors } from "@/lib/hsu/notify";
 import { UUID_RE, fail, hsuEmailHtml, json, originOf, readJson, requireDoctor, sendHsuEmail } from "@/lib/hsu/server";
 
 export const runtime = "nodejs";
@@ -35,6 +36,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     if (shift.doctor_id !== swap.from_doctor) return fail("Vaktin hefur þegar skipt um hendur", 409);
     if (shift.shift_date < now.slice(0, 10)) return fail("Vaktin er liðin.");
     if (await hasShiftThatDay(me.id, shift.shift_date, swap.shift_id)) return fail("Þú ert þegar á vakt þennan dag.", 409);
+    if ((await isBakvaktShift(swap.shift_id)) && !(await canDoBakvakt(me.id))) return fail("Þú hefur ekki bakvaktarréttindi.", 403);
 
     const { data: settings } = await supabaseAdmin.from("hsu_settings").select("market_requires_approval").eq("id", 1).maybeSingle();
     if (settings?.market_requires_approval) {
@@ -87,6 +89,13 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     await supabaseAdmin.from("hsu_shifts").update({ status: "assigned" }).eq("id", swap.shift_id);
     await audit(me.name, "market.cancel", shift.shift_date.slice(0, 7), { swapId: swap.id });
     after(async () => { await hsuSync.syncDoctors([me.id]); });
+    // Sá sem fékk beint boð, eða bað um að taka vaktina, á að vita að boðið er fallið.
+    const told = [swap.to_doctor, swap.taken_by].filter((x, i, a): x is string => Boolean(x) && a.indexOf(x) === i);
+    notifyDoctors({
+      origin, subject: "Boð um vakt dregið til baka", heading: "Boð dregið til baka",
+      notices: told.map((doctorId) => ({ doctorId, line: `${me.name} dró til baka boð um vaktina ${shiftPhrase(shift)}.` })),
+      cta: { label: "Opna vaktamarkað", path: "/hsu/min-sida?t=markadur" },
+    });
     return json({ ok: true });
   }
 

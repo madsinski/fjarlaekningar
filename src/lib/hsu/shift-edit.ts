@@ -1,65 +1,136 @@
 // Handvirkar breytingar á vöktum (draga og sleppa, velja lækni). Server-only.
+//
+// Tvær reglur gilda umfram sjálfvirku skiptinguna:
+//   * Bakvakt fer aðeins á lækni með bakvaktarréttindi. Brot er hafnað.
+//   * Fari læknir yfir hámarkið sem hann skráði í óskum verður vaktin BEIÐNI:
+//     hún er frátekin fyrir hann, merkt á vaktaplani, og hann fær póst og
+//     samþykkir eða hafnar á sinni síðu. Hún fer ekki í dagatal fyrr.
 
 import { after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { hsuSync } from "./calendar";
 import { shiftPhrase } from "./market";
-import { hsuEmailHtml, sendHsuEmail } from "./server";
+import { notifyDoctors, type DoctorNotice } from "./notify";
+import { monthRange } from "./types";
 
 export interface ShiftChange {
   id: string;
   doctor_id: string | null;
 }
 
-/**
- * Setja lækna á vaktir. Opin boð á vöktum sem skipta um hendur falla niður.
- * Í birtum mánuði samstillast dagatöl og læknarnir fá póst (ef notify).
- */
+export class ShiftRuleError extends Error {}
+
 export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: string; origin: string; notify: boolean }) {
-  if (!changes.length) return { changed: 0 };
+  if (!changes.length) return { changed: 0, requested: 0 };
   const ids = changes.map((c) => c.id);
   const { data: before, error } = await supabaseAdmin
     .from("hsu_shifts")
-    .select("id, doctor_id, shift_date, starts, ends, label, published")
+    .select("id, doctor_id, shift_date, starts, ends, label, published, shift_type_id, confirm_status")
     .in("id", ids);
   if (error) throw new Error(error.message);
   const byId = new Map((before ?? []).map((s) => [s.id, s]));
 
-  const touched = new Set<string>();
-  const mail: { to: string; text: string }[] = [];
-  let changed = 0;
-  for (const c of changes) {
+  const real = changes.filter((c) => {
     const s = byId.get(c.id);
-    if (!s || (s.doctor_id ?? null) === (c.doctor_id ?? null)) continue;
-    const { error: upErr } = await supabaseAdmin.from("hsu_shifts").update({ doctor_id: c.doctor_id, status: "assigned" }).eq("id", c.id);
-    if (upErr) throw new Error(upErr.message);
-    await supabaseAdmin
-      .from("hsu_swaps")
-      .update({ status: "cancelled", resolved_at: new Date().toISOString() })
-      .eq("shift_id", c.id)
-      .in("status", ["pending", "awaiting_approval"]);
-    changed++;
-    if (s.published) {
-      if (s.doctor_id) { touched.add(s.doctor_id); mail.push({ to: s.doctor_id, text: `Þú ert ekki lengur á vaktinni ${shiftPhrase(s)}.` }); }
-      if (c.doctor_id) { touched.add(c.doctor_id); mail.push({ to: c.doctor_id, text: `Þú hefur verið sett(ur) á vaktina ${shiftPhrase(s)}.` }); }
+    return s && (s.doctor_id ?? null) !== (c.doctor_id ?? null);
+  });
+  if (!real.length) return { changed: 0, requested: 0 };
+
+  // ── Bakvaktarréttindi ────────────────────────────────────────────────────
+  const typeIds = [...new Set((before ?? []).map((s) => s.shift_type_id).filter(Boolean))] as string[];
+  const newDocIds = [...new Set(real.map((c) => c.doctor_id).filter(Boolean))] as string[];
+  const [{ data: types }, { data: docs }] = await Promise.all([
+    typeIds.length ? supabaseAdmin.from("hsu_shift_types").select("id, kind").in("id", typeIds) : Promise.resolve({ data: [] as { id: string; kind: string }[] }),
+    newDocIds.length ? supabaseAdmin.from("hsu_doctors").select("id, name, can_bakvakt").in("id", newDocIds) : Promise.resolve({ data: [] as { id: string; name: string; can_bakvakt: boolean }[] }),
+  ]);
+  const kindOf = new Map((types ?? []).map((t) => [t.id, t.kind]));
+  const docById = new Map((docs ?? []).map((d) => [d.id, d]));
+  for (const c of real) {
+    const s = byId.get(c.id)!;
+    if (c.doctor_id && s.shift_type_id && kindOf.get(s.shift_type_id) === "bakvakt" && !docById.get(c.doctor_id)?.can_bakvakt) {
+      throw new ShiftRuleError(`${docById.get(c.doctor_id)?.name ?? "Læknirinn"} hefur ekki bakvaktarréttindi.`);
     }
   }
 
-  if (touched.size) {
-    after(async () => {
-      await hsuSync.syncDoctors([...touched]);
-      if (!opts.notify) return;
-      const { data: docs } = await supabaseAdmin.from("hsu_doctors").select("id, name, email").in("id", [...touched]);
-      for (const d of docs ?? []) {
-        const lines = mail.filter((m) => m.to === d.id).map((m) => m.text);
-        if (!lines.length) continue;
-        await sendHsuEmail(d.email, "Breyting á vaktaplani", hsuEmailHtml({
-          origin: opts.origin, heading: "Breyting á vaktaplani",
-          paragraphs: [`Sæl/l ${d.name}.`, `${opts.actor} breytti vaktaplaninu:`, ...lines],
-          cta: { label: "Sjá vaktirnar mínar", url: `${opts.origin}/hsu/min-sida` },
-        }), lines.join("\n"));
-      }
-    });
+  // ── Hámark úr óskum: hvaða nýju vaktir fara umfram? ─────────────────────
+  const requestIds = new Set<string>();
+  const months = [...new Set(real.filter((c) => c.doctor_id).map((c) => byId.get(c.id)!.shift_date.slice(0, 7)))];
+  for (const month of months) {
+    const inMonth = real.filter((c) => c.doctor_id && byId.get(c.id)!.shift_date.startsWith(month));
+    const docsHere = [...new Set(inMonth.map((c) => c.doctor_id!))];
+    const { first, next } = monthRange(month);
+    const [{ data: prefRows }, { data: held }] = await Promise.all([
+      supabaseAdmin.from("hsu_preferences").select("doctor_id, max_shifts").eq("month", month).in("doctor_id", docsHere),
+      supabaseAdmin.from("hsu_shifts").select("id, doctor_id").in("doctor_id", docsHere).gte("shift_date", first).lt("shift_date", next),
+    ]);
+    const maxOf = new Map((prefRows ?? []).map((p) => [p.doctor_id, p.max_shifts as number | null]));
+    for (const docId of docsHere) {
+      const max = maxOf.get(docId);
+      if (max == null) continue;
+      const changedIds = new Set(real.map((c) => c.id));
+      // Vaktir læknisins eftir breytinguna: þær sem hann heldur og breytast ekki, auk nýrra.
+      const kept = (held ?? []).filter((h) => h.doctor_id === docId && !changedIds.has(h.id)).length;
+      const added = inMonth.filter((c) => c.doctor_id === docId);
+      added.forEach((c, i) => { if (kept + i + 1 > max) requestIds.add(c.id); });
+    }
   }
-  return { changed };
+
+  // ── Skrifa ───────────────────────────────────────────────────────────────
+  const now = new Date().toISOString();
+  const touched = new Set<string>();
+  const notices: DoctorNotice[] = [];
+  const requests: DoctorNotice[] = [];
+  for (const c of real) {
+    const s = byId.get(c.id)!;
+    const isRequest = requestIds.has(c.id);
+    const { error: upErr } = await supabaseAdmin
+      .from("hsu_shifts")
+      .update({
+        doctor_id: c.doctor_id,
+        status: "assigned",
+        confirm_status: isRequest ? "requested" : null,
+        requested_by: isRequest ? opts.actor : "",
+        requested_at: isRequest ? now : null,
+      })
+      .eq("id", c.id);
+    if (upErr) throw new Error(upErr.message);
+    await supabaseAdmin
+      .from("hsu_swaps")
+      .update({ status: "cancelled", resolved_at: now })
+      .eq("shift_id", c.id)
+      .in("status", ["pending", "awaiting_approval"]);
+
+    // Fyrri læknir: vissi hann af vaktinni? Aðeins ef hún var birt og staðfest.
+    if (s.doctor_id && s.published && s.confirm_status !== "requested") {
+      touched.add(s.doctor_id);
+      notices.push({ doctorId: s.doctor_id, line: `Þú ert ekki lengur á vaktinni ${shiftPhrase(s)}.` });
+    }
+    if (s.doctor_id && s.confirm_status === "requested") {
+      notices.push({ doctorId: s.doctor_id, line: `Beiðni um vaktina ${shiftPhrase(s)} hefur verið dregin til baka.` });
+    }
+    if (c.doctor_id) {
+      if (isRequest) {
+        requests.push({ doctorId: c.doctor_id, line: `${shiftPhrase(s)}` });
+      } else if (s.published) {
+        touched.add(c.doctor_id);
+        notices.push({ doctorId: c.doctor_id, line: `Þú hefur verið sett(ur) á vaktina ${shiftPhrase(s)}.` });
+      }
+    }
+  }
+
+  if (touched.size) after(async () => { await hsuSync.syncDoctors([...touched]); });
+  if (opts.notify) {
+    notifyDoctors({ origin: opts.origin, subject: "Breyting á vaktaplani", heading: "Breyting á vaktaplani", intro: `${opts.actor} breytti vaktaplaninu:`, notices });
+  }
+  // Beiðnir fara alltaf út, birt eða ekki: læknirinn þarf að svara þeim.
+  notifyDoctors({
+    origin: opts.origin,
+    subject: "Beiðni um aukavakt",
+    heading: "Beiðni um aukavakt",
+    intro: `${opts.actor} biður þig um að taka eftirfarandi vakt${requests.length > 1 ? "ir" : ""}, umfram það hámark sem þú skráðir. Vaktin er frátekin fyrir þig þar til þú svarar.`,
+    notices: requests,
+    cta: { label: "Svara beiðni", path: "/hsu/min-sida?t=vaktir" },
+  });
+
+  return { changed: real.length, requested: requestIds.size };
 }

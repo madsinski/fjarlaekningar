@@ -6,6 +6,7 @@ import { hsuSync } from "@/lib/hsu/calendar";
 import { DOCTOR_COLUMNS, UUID_RE, fail, json, originOf, readJson, requireManager, toPublicDoctor } from "@/lib/hsu/server";
 import { HSU_EMAIL_DOMAIN, normalizeEmail } from "@/lib/hsu/types";
 import { emailAllowed, sendInviteEmail } from "@/lib/hsu/doctors";
+import { notifyDoctors } from "@/lib/hsu/notify";
 
 export const runtime = "nodejs";
 
@@ -30,6 +31,8 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (typeof body.phone === "string") patch.phone = body.phone.slice(0, 40);
   if (typeof body.title === "string") patch.title = body.title.slice(0, 80);
   if (typeof body.color === "string" && /^#[0-9a-f]{6}$/i.test(body.color)) patch.color = body.color;
+  if (typeof body.can_bakvakt === "boolean") patch.can_bakvakt = body.can_bakvakt;
+  if (typeof body.needs_bakvakt === "boolean") patch.needs_bakvakt = body.needs_bakvakt;
   if (body.fte !== undefined) patch.fte = Math.min(100, Math.max(0, Math.round(Number(body.fte)) || 0));
   if (body.role === "head" || body.role === "doctor") {
     // Yfirlæknir getur ekki lækkað sjálfan sig — þá gæti enginn stjórnað.
@@ -70,6 +73,16 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (body.set_password || body.active === false || body.logout_all) {
     await supabaseAdmin.from("hsu_sessions").delete().eq("doctor_id", id);
     if (body.active === false) await supabaseAdmin.from("hsu_devices").delete().eq("doctor_id", id);
+  }
+
+  // Öryggistilkynning: lykilorði breytt af öðrum. Læknir sem þekkir ekki
+  // breytinguna á að sjá hana strax, ekki næst þegar hann reynir að skrá sig inn.
+  if (body.set_password && current.password_hash) {
+    notifyDoctors({
+      origin, subject: "Lykilorði þínu var breytt", heading: "Lykilorði breytt",
+      notices: [{ doctorId: id, line: `${auth.actor.label} setti nýtt lykilorð á aðganginn þinn að vaktakerfinu. Þú hefur verið skráð(ur) út af öllum tækjum. Hafðu samband við yfirlækni ef þú kannast ekki við þetta.` }],
+      cta: { label: "Skrá inn", path: "/hsu" },
+    });
   }
 
   if (body.resend_invite || body.invite_link) {

@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit } from "@/lib/hsu/auth";
 import { MONTH_RE, UUID_RE, fail, hsuEmailHtml, json, originOf, readJson, requireManager, sendHsuEmail } from "@/lib/hsu/server";
 import { monthLabel } from "@/lib/hsu/types";
+import { notifyDoctors } from "@/lib/hsu/notify";
 
 export const runtime = "nodejs";
 
@@ -24,8 +25,13 @@ export async function POST(req: Request) {
       .update({ status: "approved", reviewed_at: now, reviewed_by: reviewer, review_note: "" })
       .eq("month", month)
       .eq("status", "submitted")
-      .select("id");
+      .select("id, doctor_id");
     if (error) return fail(error.message, 500);
+    notifyDoctors({
+      origin: originOf(req), subject: `Vaktaóskir fyrir ${monthLabel(month)} samþykktar`, heading: "Óskir samþykktar",
+      notices: (data ?? []).map((r) => ({ doctorId: r.doctor_id, line: `${reviewer} samþykkti vaktaóskir þínar fyrir ${monthLabel(month)}.` })),
+      cta: { label: "Sjá óskirnar", path: `/hsu/min-sida?t=oskir&m=${month}` },
+    });
     await audit(reviewer, "prefs.approve_all", month, { count: data?.length ?? 0 });
     return json({ ok: true, count: data?.length ?? 0 });
   }
@@ -56,6 +62,13 @@ export async function POST(req: Request) {
     : await supabaseAdmin.from("hsu_preferences").insert({ doctor_id: doctorId, month, entered_by: reviewer, ...patch });
   if (error) return fail(error.message, 500);
   await audit(reviewer, `prefs.${action}`, month, { doctorId });
+  if (action === "approve") {
+    notifyDoctors({
+      origin: originOf(req), subject: `Vaktaóskir fyrir ${monthLabel(month)} samþykktar`, heading: "Óskir samþykktar",
+      notices: [{ doctorId, line: `${reviewer} samþykkti vaktaóskir þínar fyrir ${monthLabel(month)}.${note ? ` Athugasemd: „${note}“` : ""}` }],
+      cta: { label: "Sjá óskirnar", path: `/hsu/min-sida?t=oskir&m=${month}` },
+    });
+  }
 
   if (action === "request_changes") {
     const origin = originOf(req);

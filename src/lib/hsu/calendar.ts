@@ -29,6 +29,8 @@ export const hsuSync = createCalendarSync({
   // hún situr áfram í dagatalinu. Hún hverfur þegar hún skiptir um hendur.
   excludeStatuses: [],
   requireEquals: { published: true },
+  // Beiðni umfram hámark er ekki vakt fyrr en læknirinn hefur samþykkt hana.
+  requireNull: ["confirm_status"],
   calendarName: HSU_CALENDAR_NAME,
   eventBody: (s) => ({
     summary: hsuEventTitle(s.label ?? "", s.starts, s.ends),

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Plus, Save, Trash2 } from "lucide-react";
 import { Button, Card, Field, Notice, cx, hsuApi, inputCls } from "../_components/ui";
-import { WEEKDAY_ORDER, WEEKDAY_SHORT_IS, isOvernight, type HsuShiftType } from "@/lib/hsu/types";
+import { SHIFT_KIND_IS, WEEKDAY_ORDER, WEEKDAY_SHORT_IS, isOvernight, type HsuShiftType, type ShiftKind } from "@/lib/hsu/types";
 import type { PlannerCtx } from "./types";
 
 export default function SettingsTab({ ctx }: { ctx: PlannerCtx }) {
@@ -40,7 +40,10 @@ export default function SettingsTab({ ctx }: { ctx: PlannerCtx }) {
 
       <div>
         <h2 className="text-lg font-bold">Vaktategundir</h2>
-        <p className="text-sm text-slate-500">Hver tegund býr til eina vakt á hverjum þeim degi sem hún á við. Hvíld eftir vakt er hörð regla í sjálfvirku skiptingunni.</p>
+        <p className="text-sm text-slate-500">
+          Hver tegund býr til eina vakt á hverjum þeim degi sem hún á við. <b>Forvakt</b> er mönnuð alla daga. <b>Bakvakt</b> fá aðeins læknar með
+          bakvaktarréttindi, og hún er aðeins mönnuð þá daga sem forvaktarlæknirinn þarf bakvakt (merkt undir Læknar). Hvíld eftir vakt er hörð regla.
+        </p>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         {data.shiftTypes.map((t) => <ShiftTypeCard key={t.id} ctx={ctx} type={t} />)}
@@ -51,7 +54,7 @@ export default function SettingsTab({ ctx }: { ctx: PlannerCtx }) {
 }
 
 function ShiftTypeCard({ ctx, type }: { ctx: PlannerCtx; type?: HsuShiftType }) {
-  const blank: Omit<HsuShiftType, "id"> = { name: "", short: "", starts: "08:00", ends: "16:00", weekdays: [1, 2, 3, 4, 5], on_holidays: false, rest_days_after: 0, color: "#1d4f91", sort: 10, active: true };
+  const blank: Omit<HsuShiftType, "id"> = { name: "", short: "", starts: "08:00", ends: "16:00", weekdays: [1, 2, 3, 4, 5], on_holidays: false, skip_holidays: true, kind: "other", rest_days_after: 0, color: "#1d4f91", sort: 10, active: true };
   const [v, setV] = useState<Omit<HsuShiftType, "id">>(type ?? blank);
   const [open, setOpen] = useState(Boolean(type));
   const [busy, setBusy] = useState<string | null>(null);
@@ -84,6 +87,11 @@ function ShiftTypeCard({ ctx, type }: { ctx: PlannerCtx; type?: HsuShiftType }) 
         <Field label="Heiti"><input className={inputCls} value={v.name} onChange={(e) => set({ name: e.target.value })} placeholder="t.d. Bakvakt" /></Field>
         <Field label="Skammstöfun"><input className={inputCls} value={v.short} onChange={(e) => set({ short: e.target.value })} placeholder="BV" maxLength={8} /></Field>
       </div>
+      <Field label="Tegund" hint={v.kind === "forvakt" ? "Mönnuð alla daga sem hún á við." : v.kind === "bakvakt" ? "Aðeins læknar með bakvaktarréttindi; mönnuð þegar forvaktarlæknir þarf bakvakt." : "Mönnuð alla daga sem hún á við; hver læknir sem er."}>
+        <select className={inputCls} value={v.kind} onChange={(e) => set({ kind: e.target.value as ShiftKind })}>
+          {(Object.keys(SHIFT_KIND_IS) as ShiftKind[]).map((k) => <option key={k} value={k}>{SHIFT_KIND_IS[k]}</option>)}
+        </select>
+      </Field>
       <div className="grid grid-cols-3 gap-3">
         <Field label="Frá"><input type="time" className={inputCls} value={v.starts} onChange={(e) => set({ starts: e.target.value })} /></Field>
         <Field label="Til" hint={isOvernight(v.starts, v.ends) ? "Næsta dag" : undefined}><input type="time" className={inputCls} value={v.ends} onChange={(e) => set({ ends: e.target.value })} /></Field>
@@ -99,10 +107,22 @@ function ShiftTypeCard({ ctx, type }: { ctx: PlannerCtx; type?: HsuShiftType }) 
             </button>
           ))}
         </div>
-        <label className="mt-2 flex items-center gap-2 text-sm text-slate-700">
-          <input type="checkbox" checked={v.on_holidays} onChange={(e) => set({ on_holidays: e.target.checked })} className="h-4 w-4" />
-          Líka á almennum frídögum
-        </label>
+        <div className="mt-3 text-xs font-semibold text-slate-600">Almennir frídagar</div>
+        <div className="mt-1 grid gap-1 sm:grid-cols-3">
+          {([
+            ["always", "Alltaf á frídögum", "t.d. FV2/BV2"],
+            ["never", "Aldrei á frídögum", "t.d. FV1/BV1"],
+            ["weekday", "Eftir vikudegi", ""],
+          ] as const).map(([key, label, hint]) => {
+            const cur = v.on_holidays ? "always" : v.skip_holidays ? "never" : "weekday";
+            return (
+              <label key={key} className={cx("flex cursor-pointer items-start gap-2 rounded-lg border px-2.5 py-2 text-sm", cur === key ? "border-[var(--hsu)] bg-[var(--hsu-soft)]" : "border-slate-200")}>
+                <input type="radio" className="mt-1" checked={cur === key} onChange={() => set({ on_holidays: key === "always", skip_holidays: key === "never" })} />
+                <span><span className="block font-medium">{label}</span>{hint && <span className="block text-[11px] text-slate-500">{hint}</span>}</span>
+              </label>
+            );
+          })}
+        </div>
       </div>
       {err && <Notice tone="err">{err}</Notice>}
       <div className="flex flex-wrap items-center gap-2">

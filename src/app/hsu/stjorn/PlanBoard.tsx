@@ -13,12 +13,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  AlertTriangle, ArrowRight, Ban, Eraser, Hand, Heart, Loader2, Plus, Shuffle, Sparkles, Trash2, Undo2, Wand2, X,
+  AlertTriangle, ArrowRight, Ban, Clock, Eraser, Hand, Heart, Loader2, Plus, Shield, Shuffle, Sparkles, Trash2, Undo2, Wand2, X,
 } from "lucide-react";
 import { monthWeeks } from "../_components/PrefsEditor";
 import { Badge, Button, Card, Field, Modal, Notice, cx, hsuApi, inputCls, shortName } from "../_components/ui";
 import {
-  CONFLICT_IS, UNFILLED_REASON_IS, findConflicts, statsFor, type PlanPrefs, type PlanSlot, type UnfilledReason,
+  CONFLICT_IS, UNFILLED_REASON_IS, bakvaktNeededDates, findConflicts, requiredSlots, statsFor, toPlanDoctors, toPlanSlots,
+  type PlanPrefs, type PlanSlot, type UnfilledReason,
 } from "@/lib/hsu/plan";
 import {
   WEEKDAY_ORDER, WEEKDAY_SHORT_IS, dayLabel, hhmm, holidayName, isWeekendish, markFor, monthLabel, type HsuDoctor, type HsuShift,
@@ -52,23 +53,25 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
   const doctors = useMemo(() => data.doctors.filter((d) => d.active), [data.doctors]);
   const docById = useMemo(() => new Map(data.doctors.map((d) => [d.id, d])), [data.doctors]);
   const prefs = useMemo<Record<string, PlanPrefs>>(() => Object.fromEntries(data.preferences.map((p) => [p.doctor_id, p])), [data.preferences]);
-  const typeRest = useMemo(() => new Map(data.shiftTypes.map((t) => [t.id, t.rest_days_after])), [data.shiftTypes]);
 
-  const toSlots = useCallback((list: HsuShift[]): PlanSlot[] => list.map((s) => ({
-    key: s.id, date: s.shift_date, typeId: s.shift_type_id,
-    restAfter: s.shift_type_id ? typeRest.get(s.shift_type_id) ?? 0 : 0, doctorId: s.doctor_id,
-  })), [typeRest]);
+  const toSlots = useCallback((list: HsuShift[]): PlanSlot[] => toPlanSlots(list, data.shiftTypes), [data.shiftTypes]);
+  const planDoctors = useMemo(() => toPlanDoctors(doctors), [doctors]);
+  const kindOf = useCallback((s: HsuShift) => data.shiftTypes.find((t) => t.id === s.shift_type_id)?.kind ?? "other", [data.shiftTypes]);
 
   const slots = useMemo(() => toSlots(shifts), [shifts, toSlots]);
-  const conflicts = useMemo(() => findConflicts(slots, prefs), [slots, prefs]);
-  const stats = useMemo(() => statsFor(slots, doctors.map((d) => ({ id: d.id, name: d.name, fte: d.fte, active: true })), prefs), [slots, doctors, prefs]);
+  const conflicts = useMemo(() => findConflicts(slots, prefs, planDoctors), [slots, prefs, planDoctors]);
+  const stats = useMemo(() => statsFor(slots, planDoctors, prefs), [slots, planDoctors, prefs]);
+  const bvNeeded = useMemo(() => bakvaktNeededDates(slots, planDoctors), [slots, planDoctors]);
+  const pendingCount = shifts.filter((s) => s.confirm_status === "requested").length;
   const byDate = useMemo(() => {
     const m = new Map<string, HsuShift[]>();
     for (const s of shifts) (m.get(s.shift_date) ?? m.set(s.shift_date, []).get(s.shift_date)!).push(s);
-    for (const list of m.values()) list.sort((a, b) => a.starts.localeCompare(b.starts) || a.label.localeCompare(b.label));
+    const rank = (s: HsuShift) => ({ forvakt: 0, other: 1, bakvakt: 2 })[kindOf(s)];
+    for (const list of m.values()) list.sort((a, b) => rank(a) - rank(b) || a.starts.localeCompare(b.starts) || a.label.localeCompare(b.label));
     return m;
-  }, [shifts]);
-  const emptyCount = shifts.filter((s) => !s.doctor_id).length;
+  }, [shifts, kindOf]);
+  // Aðeins vaktir sem á að manna: bakvakt sem enginn þarf er ekki gat.
+  const emptyCount = requiredSlots(slots, planDoctors).filter((s) => !s.doctorId).length;
   const conflictCount = Object.keys(conflicts).length;
 
   // ── Breytingar ───────────────────────────────────────────────────────────
@@ -76,6 +79,15 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
     const current = new Map(shifts.map((s) => [s.id, s.doctor_id]));
     const real = changes.filter((c) => current.has(c.id) && (current.get(c.id) ?? null) !== (c.doctor_id ?? null));
     if (!real.length) return;
+    // Bakvakt aðeins á lækni með réttindi — stöðvað strax, ekki eftir ferð á þjóninn.
+    for (const c of real) {
+      const s = shifts.find((x) => x.id === c.id)!;
+      const d = c.doctor_id ? docById.get(c.doctor_id) : null;
+      if (d && kindOf(s) === "bakvakt" && !d.can_bakvakt) {
+        setMsg({ tone: "err", text: `${d.name} hefur ekki bakvaktarréttindi. Merktu reynda lækna undir Læknar.` });
+        return;
+      }
+    }
     const reverse = real.map((c) => ({ id: c.id, doctor_id: current.get(c.id) ?? null }));
     const next = (list: HsuShift[], ch: Change[]) => {
       const map = new Map(ch.map((c) => [c.id, c.doctor_id]));
@@ -84,7 +96,7 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
     setShifts((l) => next(l, real));
     if (record) setUndo((u) => [...u.slice(-49), reverse]);
     setMsg(null);
-    const r = await hsuApi("/api/hsu/admin/shifts/batch", { body: { changes: real, month, notify: published }, staff: true });
+    const r = await hsuApi<{ requested: number }>("/api/hsu/admin/shifts/batch", { body: { changes: real, month, notify: published }, staff: true });
     if (!r.ok) {
       setShifts((l) => next(l, reverse));
       if (record) setUndo((u) => u.slice(0, -1));
@@ -92,6 +104,12 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
       return;
     }
     ctx.patch((d) => ({ ...d, shifts: next(d.shifts, real) }));
+    if (r.requested) {
+      setMsg({ tone: "warn", text: `Umfram hámark læknis: beiðni send til samþykkis. Vaktin er merkt „bíður“ þar til læknirinn svarar.` });
+      await ctx.reload();
+    } else if (real.some((c) => shifts.find((x) => x.id === c.id)?.confirm_status === "requested")) {
+      await ctx.reload();
+    }
   };
 
   const undoLast = async () => {
@@ -188,6 +206,7 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <Badge tone={emptyCount ? "red" : "green"}>{emptyCount} án læknis</Badge>
           <Badge tone={conflictCount ? "amber" : "green"}>{conflictCount} árekstrar</Badge>
+          {pendingCount > 0 && <Badge tone="amber"><Clock className="h-3 w-3" /> {pendingCount} bíða samþykkis</Badge>}
           {published && <Badge tone="blue">Birt — breytingar fara strax til lækna</Badge>}
           <Button size="sm" variant="soft" onClick={goNext}>Birta <ArrowRight className="h-3.5 w-3.5" /></Button>
         </div>
@@ -215,6 +234,7 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
               const list = byDate.get(date) ?? [];
               const h = holidayName(date);
               const mark = focusDoctor ? markFor(prefs[focusDoctor], date) ?? (prefs[focusDoctor]?.day_marks?.[date] === "ok" ? "ok" : null) : null;
+              const focusSkilled = focusDoctor ? Boolean(docById.get(focusDoctor)?.can_bakvakt) : true;
               const focusBusy = focusDoctor && list.every((s) => s.doctor_id !== focusDoctor) && shifts.some((s) => s.shift_date === date && s.doctor_id === focusDoctor);
               return (
                 <div key={date} className={cx(
@@ -237,34 +257,44 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
                       const c = conflicts[s.id];
                       const over = overKey === s.id;
                       const showLabel = data.shiftTypes.filter((t) => t.active).length > 1 || !s.shift_type_id;
+                      const kind = kindOf(s);
+                      const requested = s.confirm_status === "requested";
+                      const optionalBv = kind === "bakvakt" && !s.doctor_id && !bvNeeded.has(date);
+                      const blockedForFocus = kind === "bakvakt" && focusDoctor && !focusSkilled;
                       return (
                         <div key={s.id}
                           onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (overKey !== s.id) setOverKey(s.id); }}
                           onDragLeave={() => setOverKey((k) => (k === s.id ? null : k))}
                           onDrop={(e) => { e.preventDefault(); dropOn(s, dragRef.current); endDrag(); }}
-                          className={cx("rounded-lg transition", over && "ring-2 ring-[var(--hsu)] ring-offset-1")}>
+                          className={cx("rounded-lg transition", over && "ring-2 ring-[var(--hsu)] ring-offset-1", blockedForFocus && "opacity-30")}>
                           {doc ? (
                             <button
                               draggable
                               onDragStart={(e) => startDrag(e, { kind: "shift", id: s.id })}
                               onDragEnd={endDrag}
                               onClick={() => (pick ? void apply([{ id: s.id, doctor_id: pick }]) : setSlotOpen(s.id))}
-                              title={`${s.label} ${hhmm(s.starts)}–${hhmm(s.ends)} · ${doc.name}${c ? `\n⚠ ${c.map((k) => CONFLICT_IS[k]).join("\n⚠ ")}` : ""}${s.note ? `\n${s.note}` : ""}`}
+                              title={`${s.label} ${hhmm(s.starts)}–${hhmm(s.ends)} · ${doc.name}${requested ? `\n⏳ Beiðni: bíður samþykkis læknis (umfram hámark)` : ""}${c ? `\n⚠ ${c.map((k) => CONFLICT_IS[k]).join("\n⚠ ")}` : ""}${s.note ? `\n${s.note}` : ""}`}
                               className={cx(
-                                "flex w-full cursor-grab items-center gap-1 rounded-lg px-1.5 py-1 text-left text-[11px] font-semibold text-white shadow-sm active:cursor-grabbing",
+                                "flex w-full cursor-grab items-center gap-1 rounded-lg px-1.5 py-1 text-left text-[11px] font-semibold shadow-sm active:cursor-grabbing",
+                                requested ? "border-2 border-dashed bg-amber-50 text-amber-900" : "text-white",
                                 c && "ring-2 ring-amber-400 ring-offset-1",
                                 focusDoctor && focusDoctor !== doc.id && "opacity-60",
                               )}
-                              style={{ background: doc.color }}>
+                              style={requested ? { borderColor: doc.color } : { background: doc.color }}>
                               {showLabel && <span className="shrink-0 opacity-75">{s.label}</span>}
                               <span className="truncate">{shortName(doc.name)}</span>
-                              {c && <AlertTriangle className="ml-auto h-3 w-3 shrink-0 text-amber-200" />}
+                              {requested && <Clock className="ml-auto h-3 w-3 shrink-0 text-amber-600" />}
+                              {c && <AlertTriangle className={cx("h-3 w-3 shrink-0", requested ? "text-amber-600" : "ml-auto text-amber-200")} />}
                             </button>
                           ) : (
                             <button onClick={() => (pick ? void apply([{ id: s.id, doctor_id: pick }]) : setSlotOpen(s.id))}
-                              className="flex w-full items-center gap-1 rounded-lg border border-dashed border-red-300 bg-white/70 px-1.5 py-1 text-left text-[11px] font-semibold text-red-600 hover:bg-red-50">
+                              title={optionalBv ? "Bakvakt — ekki þörf nema forvaktarlæknir þurfi bakvakt" : undefined}
+                              className={cx(
+                                "flex w-full items-center gap-1 rounded-lg border border-dashed px-1.5 py-1 text-left text-[11px] font-semibold",
+                                optionalBv ? "border-slate-200 bg-transparent text-slate-400 hover:bg-slate-50" : "border-red-300 bg-white/70 text-red-600 hover:bg-red-50",
+                              )}>
                               {showLabel && <span className="shrink-0 opacity-75">{s.label}</span>}
-                              <span className="truncate">{pick ? "+ setja hér" : "Enginn"}</span>
+                              <span className="truncate">{pick ? "+ setja hér" : optionalBv ? "—" : kind === "bakvakt" ? "Bakvakt vantar" : "Enginn"}</span>
                             </button>
                           )}
                         </div>
@@ -279,6 +309,8 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 px-1 text-[11px] text-slate-500">
             <span>Dragðu lækni á vakt · dragðu vakt ofan á aðra til að skipta · smelltu á vakt til að velja</span>
             <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded ring-2 ring-amber-400" /> Árekstur</span>
+            <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded border-2 border-dashed border-amber-500 bg-amber-50" /> Beiðni — bíður samþykkis læknis</span>
+            <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded border border-dashed border-slate-300" /> Bakvakt án þarfar</span>
           </div>
         </Card>
 
@@ -306,6 +338,8 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
                           {d.name.split(" ").map((x) => x[0]).slice(0, 2).join("")}
                         </span>
                         <span className="min-w-0 flex-1 truncate text-sm font-semibold">{d.name}</span>
+                        {d.can_bakvakt && <span title="Bakvaktarréttindi" className="rounded bg-[var(--hsu-soft)] px-1 text-[9px] font-bold text-[var(--hsu-dark)]">BV</span>}
+                        {d.needs_bakvakt && <span title="Þarf bakvakt á forvakt" className="rounded bg-amber-100 px-1 text-[9px] font-bold text-amber-800">+BV</span>}
                         <span className={cx("text-sm font-bold tabular-nums", over ? "text-amber-600" : "text-slate-800")}>{st?.count ?? 0}</span>
                         <span className="text-xs tabular-nums text-slate-400">/ {st ? st.target.toLocaleString("is-IS") : 0}</span>
                       </div>
@@ -314,8 +348,9 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
                       </div>
                       <div className="mt-1 flex flex-wrap gap-x-3 text-[10px] text-slate-500">
                         <span>Helgar {st?.weekend ?? 0}</span>
+                        {d.can_bakvakt && <span>Bakvaktir {st?.bakvakt ?? 0}</span>}
                         {st?.wantTotal ? <span>Óskir {st.wantHit}/{st.wantTotal}</span> : null}
-                        {pref?.max_shifts != null && <span>Mest {pref.max_shifts}</span>}
+                        <span className={cx(pref?.max_shifts == null && "text-slate-400")}>Mest {pref?.max_shifts ?? Math.max(1, Math.ceil((st?.target ?? 0) - 1e-6))}{pref?.max_shifts == null ? " (hlutfall)" : ""}</span>
                         {pref && pref.status !== "approved" && <span className="text-amber-600">Óskir ósamþykktar</span>}
                       </div>
                     </button>
@@ -369,12 +404,14 @@ function SlotModal({ shift, ctx, shifts, doctors, prefs, toSlots, stats, onClose
   const [note, setNote] = useState(shift.note);
   const [busy, setBusy] = useState<string | null>(null);
 
+  const isBv = ctx.data.shiftTypes.find((t) => t.id === shift.shift_type_id)?.kind === "bakvakt";
   const options = useMemo(() => {
+    const planDocs = toPlanDoctors(doctors);
     return doctors.map((d) => {
       const hypothetical = toSlots(shifts.map((s) => (s.id === shift.id ? { ...s, doctor_id: d.id } : s)));
-      const issues = findConflicts(hypothetical, prefs)[shift.id] ?? [];
+      const issues = (findConflicts(hypothetical, prefs, planDocs)[shift.id] ?? []).filter((k) => k !== "no_bakvakt");
       const mark = markFor(prefs[d.id], shift.shift_date);
-      const rank = issues.includes("off") ? 4 : issues.length ? 3 : mark === "want" ? 0 : 1;
+      const rank = issues.includes("skill") ? 5 : issues.includes("off") ? 4 : issues.length ? 3 : mark === "want" ? 0 : 1;
       return { d, issues, mark, rank, st: stats[d.id] };
     }).sort((a, b) => a.rank - b.rank || (a.st?.count ?? 0) - (a.st?.target ?? 0) - ((b.st?.count ?? 0) - (b.st?.target ?? 0)) || a.d.name.localeCompare(b.d.name, "is"));
   }, [doctors, shifts, shift, prefs, toSlots, stats]);
@@ -383,20 +420,28 @@ function SlotModal({ shift, ctx, shifts, doctors, prefs, toSlots, stats, onClose
 
   return (
     <Modal open onClose={onClose} title={`${shift.label || "Vakt"} · ${dayLabel(shift.shift_date)}`}>
-      <p className="-mt-2 mb-4 text-sm text-slate-500">{hhmm(shift.starts)}–{hhmm(shift.ends)}{h ? ` · ${h}` : ""}</p>
+      <p className="-mt-2 mb-4 text-sm text-slate-500">
+        {hhmm(shift.starts)}–{hhmm(shift.ends)}{h ? ` · ${h}` : ""}
+        {isBv && <span className="ml-2 inline-flex items-center gap-1 text-[var(--hsu-dark)]"><Shield className="h-3.5 w-3.5" /> Aðeins læknar með bakvaktarréttindi</span>}
+      </p>
+      {shift.confirm_status === "requested" && (
+        <div className="mb-3"><Notice tone="warn">Beiðni send til læknisins — bíður svars. Veldu annan lækni til að draga hana til baka.</Notice></div>
+      )}
       <ul className="space-y-1.5">
         {options.map(({ d, issues, mark, st }) => (
           <li key={d.id}>
-            <button onClick={() => onAssign(d.id)}
+            <button onClick={() => onAssign(d.id)} disabled={issues.includes("skill")}
               className={cx("flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition hover:shadow-sm",
-                shift.doctor_id === d.id ? "border-[var(--hsu)] bg-[var(--hsu-soft)]" : issues.includes("off") ? "border-red-200 bg-red-50/40" : "border-slate-200 bg-white")}>
+                shift.doctor_id === d.id ? "border-[var(--hsu)] bg-[var(--hsu-soft)]" : issues.includes("skill") ? "cursor-not-allowed border-slate-100 bg-slate-50 opacity-50" : issues.includes("off") ? "border-red-200 bg-red-50/40" : "border-slate-200 bg-white")}>
               <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: d.color }} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-semibold">{d.name}</span>
                 <span className="block text-[11px] text-slate-500">{st?.count ?? 0} / {st?.target.toLocaleString("is-IS") ?? 0} vaktir · {st?.weekend ?? 0} helgar</span>
               </span>
               {issues.length ? (
-                <span className="text-right text-[11px] font-semibold text-red-600">{issues.map((k) => ({ off: "Getur ekki", double: "Á vakt þennan dag", rest: "Hvíld", max: "Yfir hámarki" })[k]).join(" · ")}</span>
+                <span className={cx("text-right text-[11px] font-semibold", issues.every((k) => k === "max") ? "text-amber-700" : "text-red-600")}>
+                  {issues.map((k) => ({ off: "Getur ekki", double: "Á vakt þennan dag", rest: "Hvíld", max: "Umfram hámark → beiðni", skill: "Ekki bakvaktarréttindi", no_bakvakt: "" })[k]).filter(Boolean).join(" · ")}
+                </span>
               ) : mark === "want" ? (
                 <Badge tone="green"><Heart className="h-3 w-3" /> Vill</Badge>
               ) : (

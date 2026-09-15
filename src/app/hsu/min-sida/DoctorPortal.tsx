@@ -71,7 +71,7 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
       <nav className="sticky top-16 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-3 py-2 sm:px-5 [scrollbar-width:none]">
           {TABS.map((t) => {
-            const badge = t.key === "markadur" ? marketCount : t.key === "oskir" ? prefActions.length : 0;
+            const badge = t.key === "markadur" ? marketCount : t.key === "oskir" ? prefActions.length : t.key === "vaktir" ? data.requests.length : 0;
             return (
               <button key={t.key} onClick={() => setTab(t.key)} aria-current={tab === t.key ? "page" : undefined}
                 className={cx(
@@ -171,13 +171,16 @@ function Overview({ data, incoming, market, prefActions, go }: {
                 text={month?.prefs_deadline ? `Skilafrestur ${dayLabel(month.prefs_deadline)}` : "Merktu daga sem þú getur ekki unnið"} />
             );
           })}
+          {data.requests.length > 0 && (
+            <ActionCard tone="red" onClick={() => go("vaktir")} title={`${data.requests.length} beiðni${data.requests.length === 1 ? "" : "r"} um aukavakt`} text="Yfirlæknir bíður eftir svari þínu" />
+          )}
           {incoming.length > 0 && (
             <ActionCard tone="purple" onClick={() => go("markadur")} title={`${incoming.length} vakt${incoming.length === 1 ? "" : "ir"} boðin þér`} text="Taktu afstöðu á vaktamarkaði" />
           )}
           {market.length > 0 && (
             <ActionCard tone="amber" onClick={() => go("markadur")} title={`${market.length} á vaktamarkaði`} text="Vaktir sem aðrir læknar vilja láta frá sér" />
           )}
-          {prefActions.length === 0 && incoming.length === 0 && market.length === 0 && (
+          {prefActions.length === 0 && incoming.length === 0 && market.length === 0 && data.requests.length === 0 && (
             <Card className="p-5 text-sm text-slate-500">Ekkert sem bíður þín.</Card>
           )}
         </div>
@@ -261,6 +264,7 @@ function ShiftsTab({ data, swaps, refresh }: { data: PortalData; swaps: HsuSwap[
           <p className="text-sm text-slate-500">Birtar vaktir frá byrjun þessa mánaðar. Viltu losna við vakt? Settu hana á vaktamarkað.</p>
         </div>
       </div>
+      <RequestsBlock data={data} refresh={refresh} />
       {byMonth.length === 0 && <Card className="p-8 text-center text-sm text-slate-500">Engar birtar vaktir.</Card>}
       {byMonth.map(([m, rows]) => (
         <section key={m}>
@@ -333,6 +337,44 @@ function OfferModal({ shift, data, onClose, onDone }: { shift: HsuShift; data: P
         <Button className="w-full" size="lg" onClick={submit} busy={busy}>{target ? "Bjóða vaktina" : "Setja á vaktamarkað"}</Button>
       </div>
     </Modal>
+  );
+}
+
+// ── Beiðnir um aukavakt ────────────────────────────────────────────────────
+
+function RequestsBlock({ data, refresh }: { data: PortalData; refresh: () => void }) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  if (!data.requests.length) return null;
+  const answer = async (id: string, action: "accept" | "decline") => {
+    if (action === "decline" && !confirm("Hafna vaktinni? Yfirlæknir fær tilkynningu.")) return;
+    setBusy(id + action); setErr(null);
+    const r = await hsuApi(`/api/hsu/me/requests/${id}`, { body: { action } });
+    setBusy(null);
+    if (!r.ok) { setErr(r.error ?? "Mistókst"); return; }
+    refresh();
+  };
+  return (
+    <section>
+      <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-amber-700">Beiðnir um aukavakt</h2>
+      <Card className="divide-y divide-amber-100 border-amber-300 bg-amber-50/40">
+        {data.requests.map((s) => (
+          <div key={s.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
+            <div>
+              <div className="text-sm font-semibold">{shiftWhen(s)}</div>
+              <div className="text-xs text-slate-600">
+                {s.requested_by || "Yfirlæknir"} biður þig um þessa vakt, umfram það hámark sem þú skráðir. Hún er frátekin fyrir þig þar til þú svarar.
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" variant="success" busy={busy === s.id + "accept"} onClick={() => answer(s.id, "accept")}>Samþykkja</Button>
+              <Button size="sm" variant="ghost" busy={busy === s.id + "decline"} onClick={() => answer(s.id, "decline")}>Hafna</Button>
+            </div>
+          </div>
+        ))}
+      </Card>
+      {err && <div className="mt-2"><Notice tone="err">{err}</Notice></div>}
+    </section>
   );
 }
 

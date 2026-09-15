@@ -6,8 +6,10 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit } from "@/lib/hsu/auth";
 import { hsuSync } from "@/lib/hsu/calendar";
 import {
-  DATE_RE, MONTH_RE, fail, hsuEmailHtml, json, loadMonth, loadMonthShifts, loadPreferences, originOf, readJson, requireManager, sendHsuEmail,
+  DATE_RE, MONTH_RE, fail, hsuEmailHtml, json, listDoctors, loadMonth, loadMonthShifts, loadPreferences, loadShiftTypes, originOf, readJson, requireManager, sendHsuEmail,
 } from "@/lib/hsu/server";
+import { requiredSlots, toPlanDoctors, toPlanSlots } from "@/lib/hsu/plan";
+import { notifyDoctors } from "@/lib/hsu/notify";
 import { MONTH_STATUS_ORDER, dayLabel, monthLabel, type MonthStatus } from "@/lib/hsu/types";
 
 export const runtime = "nodejs";
@@ -40,7 +42,9 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
   if (status === "published" && before?.status !== "published") {
     const shifts = await loadMonthShifts(month);
     if (shifts.length === 0) return fail("Ekkert vaktaplan er til fyrir mánuðinn.");
-    const empty = shifts.filter((s) => !s.doctor_id).length;
+    const [types, doctors] = await Promise.all([loadShiftTypes(), listDoctors(false)]);
+    // Aðeins vaktir sem á að manna: bakvakt sem enginn þarf er ekki gat.
+    const empty = requiredSlots(toPlanSlots(shifts, types), toPlanDoctors(doctors)).filter((s) => !s.doctorId).length;
     if (empty > 0 && !body.allow_gaps) {
       return json({ ok: false, error: `${empty} vakt${empty === 1 ? "" : "ir"} án læknis.`, needsConfirm: "gaps", empty }, 409);
     }
@@ -66,6 +70,18 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
   }
 
   // Tilkynningar.
+  if (unpublishing) {
+    const shifts = await loadMonthShifts(month);
+    const withShifts = [...new Set(shifts.map((s) => s.doctor_id).filter(Boolean))] as string[];
+    notifyDoctors({
+      origin, subject: `Vaktaplan ${monthLabel(month)} tekið úr birtingu`, heading: "Vaktaplan tekið úr birtingu",
+      notices: withShifts.map((doctorId) => ({
+        doctorId,
+        line: `${auth.actor.label} tók vaktaplanið fyrir ${monthLabel(month)} úr birtingu til endurskoðunar. Vaktirnar eru ekki lengur í dagatalinu þínu; þú færð póst þegar það er birt aftur.`,
+      })),
+      cta: { label: "Opna mína síðu", path: "/hsu/min-sida" },
+    });
+  }
   const notify = Boolean(body.notify);
   const label = monthLabel(month);
   if (notify && status === "collecting") {

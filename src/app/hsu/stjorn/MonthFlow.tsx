@@ -13,7 +13,7 @@ import { Badge, Button, Card, Field, Modal, Notice, cx, hsuApi, inputCls } from 
 import {
   PREF_STATUS_IS, datesInMonth, dayLabel, markFor, monthLabel, type HsuDoctor, type HsuPreference, type MonthStatus,
 } from "@/lib/hsu/types";
-import { findConflicts, statsFor, type PlanPrefs } from "@/lib/hsu/plan";
+import { findConflicts, requiredSlots, statsFor, toPlanDoctors, toPlanSlots, type PlanPrefs } from "@/lib/hsu/plan";
 import type { PlannerCtx } from "./types";
 import PlanBoard from "./PlanBoard";
 
@@ -44,9 +44,11 @@ export default function MonthFlow({ ctx }: { ctx: PlannerCtx }) {
     return r;
   };
 
+  const progress = useMemo(() => stepProgress(ctx), [ctx]);
+
   return (
     <div className="space-y-6">
-      <Stepper step={step} reached={reached} onPick={setStep} />
+      <Stepper step={step} progress={progress} onPick={setStep} />
       {step === 0 && <StepCollect ctx={ctx} setStatus={setStatus} goNext={() => setStep(1)} />}
       {step === 1 && <StepReview ctx={ctx} setStatus={setStatus} goNext={() => setStep(2)} />}
       {step === 2 && <StepPlan ctx={ctx} goNext={() => setStep(3)} />}
@@ -56,11 +58,48 @@ export default function MonthFlow({ ctx }: { ctx: PlannerCtx }) {
   );
 }
 
-function Stepper({ step, reached, onPick }: { step: number; reached: number; onPick: (n: number) => void }) {
+type StepState = { state: "done" | "partial" | "todo"; detail: string };
+
+/**
+ * Hversu langt hvert skref er komið. Grænt og fyllt aðeins þegar ALLT í skrefinu
+ * er búið — ekki bara af því að mánuðurinn hefur verið færður áfram.
+ */
+function stepProgress(ctx: PlannerCtx): StepState[] {
+  const { data } = ctx;
+  const doctors = data.doctors.filter((d) => d.active);
+  const byDoc = prefsByDoctor(data.preferences);
+  const n = doctors.length;
+  const sent = doctors.filter((d) => ["submitted", "approved"].includes(byDoc[d.id]?.status ?? "")).length;
+  const approved = doctors.filter((d) => byDoc[d.id]?.status === "approved").length;
+
+  const slots = toPlanSlots(data.shifts, data.shiftTypes);
+  const planDocs = toPlanDoctors(doctors);
+  const prefs: Record<string, PlanPrefs> = Object.fromEntries(data.preferences.map((p) => [p.doctor_id, p]));
+  const empty = requiredSlots(slots, planDocs).filter((s) => !s.doctorId).length;
+  const conflicts = Object.keys(findConflicts(slots, prefs, planDocs)).length;
+  const pending = data.shifts.filter((s) => s.confirm_status === "requested").length;
+  const published = data.month?.status === "published";
+
+  const of = (x: number, label: string) => `${x} af ${n} ${label}`;
+  return [
+    !data.month ? { state: "todo", detail: "Ekki opnað" }
+      : n > 0 && sent === n ? { state: "done", detail: "Allir hafa sent" } : { state: "partial", detail: of(sent, "sent") },
+    n > 0 && approved === n ? { state: "done", detail: "Allar samþykktar" }
+      : approved > 0 ? { state: "partial", detail: of(approved, "samþykktar") } : { state: "todo", detail: of(0, "samþykktar") },
+    slots.length === 0 ? { state: "todo", detail: "Ekki búið til" }
+      : empty === 0 && conflicts === 0 && pending === 0 ? { state: "done", detail: "Fullmannað" }
+      : { state: "partial", detail: [empty && `${empty} tómar`, conflicts && `${conflicts} árekstrar`, pending && `${pending} bíða`].filter(Boolean).join(" · ") },
+    published ? { state: "done", detail: "Birt" } : { state: "todo", detail: "Óbirt" },
+  ];
+}
+
+function Stepper({ step, progress, onPick }: { step: number; progress: StepState[]; onPick: (n: number) => void }) {
   return (
     <ol className="grid grid-cols-4 gap-2">
       {STEPS.map((s, i) => {
-        const done = i < reached || (i === 3 && reached === 3);
+        const { state, detail } = progress[i];
+        const done = state === "done";
+        const partial = state === "partial";
         const active = i === step;
         return (
           <li key={s.title}>
@@ -69,15 +108,20 @@ function Stepper({ step, reached, onPick }: { step: number; reached: number; onP
                 "group flex w-full flex-col items-start gap-2 rounded-2xl border p-3 text-left transition sm:flex-row sm:items-center",
                 active ? "border-[var(--hsu)] bg-white shadow-md ring-2 ring-[var(--hsu)]/15" : "border-slate-200 bg-white/60 hover:bg-white",
               )}>
-              <span className={cx(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold",
-                done ? "bg-emerald-500 text-white" : active ? "bg-[var(--hsu)] text-white" : "bg-slate-100 text-slate-500",
-              )}>
+              {/* Fyllt grænt = allt búið. Útlína = hálfnað. Grátt = ekki hafið. */}
+              <span
+                title={done ? "Allt búið" : partial ? "Hálfnað" : "Ekki hafið"}
+                className={cx(
+                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold",
+                  done ? "bg-emerald-500 text-white"
+                    : partial ? "bg-white text-amber-600 ring-[3px] ring-inset ring-amber-400"
+                    : active ? "bg-white text-[var(--hsu)] ring-2 ring-inset ring-[var(--hsu)]" : "bg-slate-100 text-slate-500",
+                )}>
                 {done ? <Check className="h-4 w-4" /> : i + 1}
               </span>
               <span className="min-w-0">
                 <span className={cx("block truncate text-sm font-bold", active ? "text-slate-900" : "text-slate-600")}>{s.title}</span>
-                <span className="hidden truncate text-[11px] text-slate-500 sm:block">{s.hint}</span>
+                <span className={cx("hidden truncate text-[11px] sm:block", done ? "text-emerald-700" : partial ? "text-amber-700" : "text-slate-500")}>{detail}</span>
               </span>
             </button>
           </li>
@@ -397,12 +441,13 @@ function StepPublish({ ctx, setStatus, goPlan }: { ctx: PlannerCtx; setStatus: S
   const [err, setErr] = useState<string | null>(null);
   const published = data.month?.status === "published";
 
-  const typeRest = new Map(data.shiftTypes.map((t) => [t.id, t.rest_days_after]));
-  const slots = data.shifts.map((s) => ({ key: s.id, date: s.shift_date, typeId: s.shift_type_id, restAfter: s.shift_type_id ? typeRest.get(s.shift_type_id) ?? 0 : 0, doctorId: s.doctor_id }));
+  const slots = toPlanSlots(data.shifts, data.shiftTypes);
+  const planDocs = toPlanDoctors(data.doctors.filter((d) => d.active));
   const prefs: Record<string, PlanPrefs> = Object.fromEntries(data.preferences.map((p) => [p.doctor_id, p]));
-  const conflicts = Object.keys(findConflicts(slots, prefs)).length;
-  const empty = data.shifts.filter((s) => !s.doctor_id).length;
-  const stats = statsFor(slots, data.doctors.map((d) => ({ id: d.id, name: d.name, fte: d.fte, active: d.active })), prefs);
+  const conflicts = Object.keys(findConflicts(slots, prefs, planDocs)).length;
+  const empty = requiredSlots(slots, planDocs).filter((s) => !s.doctorId).length;
+  const pending = data.shifts.filter((s) => s.confirm_status === "requested").length;
+  const stats = statsFor(slots, planDocs, prefs);
 
   const publish = async (allowGaps = false) => {
     setBusy("pub"); setErr(null);
@@ -454,7 +499,8 @@ function StepPublish({ ctx, setStatus, goPlan }: { ctx: PlannerCtx; setStatus: S
             ))}
           </div>
           {data.shifts.length === 0 && <div className="mt-4"><Notice tone="warn">Ekkert vaktaplan er til. <button className="font-semibold underline" onClick={goPlan}>Búa það til</button></Notice></div>}
-          {conflicts > 0 && <div className="mt-4"><Notice tone="warn">Það eru {conflicts} árekstrar við óskir eða hvíldarreglur. <button className="font-semibold underline" onClick={goPlan}>Skoða</button></Notice></div>}
+          {conflicts > 0 && <div className="mt-4"><Notice tone="warn">Það eru {conflicts} árekstrar við óskir, hvíld eða bakvaktarreglur. <button className="font-semibold underline" onClick={goPlan}>Skoða</button></Notice></div>}
+          {pending > 0 && <div className="mt-4"><Notice tone="warn">{pending} vakt{pending === 1 ? " bíður" : "ir bíða"} samþykkis læknis (umfram hámark). Þær fara ekki í dagatal fyrr en læknirinn samþykkir.</Notice></div>}
           <label className="mt-5 flex items-center gap-2 text-sm text-slate-700">
             <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} className="h-4 w-4" />
             Senda læknum tölvupóst með fjölda vakta sinna
@@ -475,6 +521,7 @@ function StepPublish({ ctx, setStatus, goPlan }: { ctx: PlannerCtx; setStatus: S
               <th className="px-4 py-2.5 text-right">Vaktir</th>
               <th className="px-4 py-2.5 text-right">Markmið</th>
               <th className="px-4 py-2.5 text-right">Helgar/frídagar</th>
+              <th className="px-4 py-2.5 text-right">Bakvaktir</th>
               <th className="px-4 py-2.5 text-right">Óskadagar uppfylltir</th>
             </tr>
           </thead>
@@ -488,6 +535,7 @@ function StepPublish({ ctx, setStatus, goPlan }: { ctx: PlannerCtx; setStatus: S
                   <td className="px-4 py-2.5 text-right font-semibold tabular-nums">{s.count}</td>
                   <td className="px-4 py-2.5 text-right tabular-nums text-slate-500">{s.target.toLocaleString("is-IS")}</td>
                   <td className="px-4 py-2.5 text-right tabular-nums">{s.weekend}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums">{d.can_bakvakt ? s.bakvakt : "–"}</td>
                   <td className="px-4 py-2.5 text-right tabular-nums">{s.wantTotal ? `${s.wantHit} / ${s.wantTotal}` : "–"}</td>
                 </tr>
               );
@@ -519,6 +567,8 @@ const ACTION_IS: Record<string, string> = {
   "shift.edit": "breytti vakt",
   "shift.create": "bætti við vakt",
   "shift.delete": "eyddi vakt",
+  "request.accept": "samþykkti aukavakt",
+  "request.decline": "hafnaði aukavakt",
   "market.open": "setti vakt á vaktamarkað",
   "market.offer": "bauð lækni vakt",
   "market.transfer": "vakt skipti um hendur",

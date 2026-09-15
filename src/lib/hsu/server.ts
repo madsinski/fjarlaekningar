@@ -47,7 +47,7 @@ export async function requireDoctor(req: Request) {
 // ── Læknar ──────────────────────────────────────────────────────────────────
 
 export const DOCTOR_COLUMNS =
-  "id, name, email, phone, title, role, color, fte, active, password_hash, pin_hash, invited_at, invite_token_hash, invite_expires_at, last_login_at, must_change_password";
+  "id, name, email, phone, title, role, color, fte, active, password_hash, pin_hash, invited_at, invite_token_hash, invite_expires_at, last_login_at, must_change_password, can_bakvakt, needs_bakvakt";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function toPublicDoctor(r: any): HsuDoctor {
@@ -60,6 +60,8 @@ export function toPublicDoctor(r: any): HsuDoctor {
     invite_pending: Boolean(r.invite_token_hash && r.invite_expires_at && new Date(r.invite_expires_at).getTime() > Date.now()),
     last_login_at: r.last_login_at ?? null,
     must_change_password: Boolean(r.must_change_password),
+    can_bakvakt: Boolean(r.can_bakvakt),
+    needs_bakvakt: Boolean(r.needs_bakvakt),
   };
 }
 
@@ -78,10 +80,13 @@ export async function loadShiftTypes(activeOnly = false): Promise<HsuShiftType[]
   if (activeOnly) q = q.eq("active", true);
   const { data, error } = await q;
   if (error) throw new Error(error.message);
-  return (data ?? []).map((t) => ({ ...t, starts: t.starts.slice(0, 5), ends: t.ends.slice(0, 5) })) as HsuShiftType[];
+  const rank: Record<string, number> = { forvakt: 0, other: 1, bakvakt: 2 };
+  return (data ?? [])
+    .map((t) => ({ ...t, starts: t.starts.slice(0, 5), ends: t.ends.slice(0, 5) }))
+    .sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0) || (rank[a.kind] ?? 1) - (rank[b.kind] ?? 1) || String(a.short).localeCompare(String(b.short))) as HsuShiftType[];
 }
 
-export const SHIFT_COLUMNS = "id, shift_date, shift_type_id, label, starts, ends, doctor_id, status, note, published";
+export const SHIFT_COLUMNS = "id, shift_date, shift_type_id, label, starts, ends, doctor_id, status, note, published, confirm_status, requested_by";
 
 export async function loadMonthShifts(month: string, publishedOnly = false): Promise<HsuShift[]> {
   const { first, next } = monthRange(month);
@@ -123,9 +128,28 @@ export async function loadPendingSwaps(): Promise<HsuSwap[]> {
  */
 export async function ensureSlots(month: string): Promise<number> {
   const types = await loadShiftTypes(true);
-  const existing = await loadMonthShifts(month);
-  const have = new Set(existing.map((s) => `${s.shift_date}|${s.shift_type_id}`));
+  let existing = await loadMonthShifts(month);
   const status = (await loadMonth(month))?.status;
+
+  // Tómar, óbirtar vaktir sem passa ekki lengur við vaktategundirnar (tegund
+  // gerð óvirk, dögum breytt, frídagaregla) eru fjarlægðar. Vakt með lækni eða
+  // sem hefur verið birt er aldrei snert.
+  if (status !== "published") {
+    const typeById = new Map(types.map((t) => [t.id, t]));
+    const stale = existing.filter((s) => {
+      if (s.doctor_id || !s.shift_type_id || (s as { published?: boolean }).published) return false;
+      const t = typeById.get(s.shift_type_id);
+      return !t || !typeAppliesOn(t, s.shift_date);
+    });
+    if (stale.length) {
+      const { error } = await supabaseAdmin.from("hsu_shifts").delete().in("id", stale.map((s) => s.id));
+      if (error) throw new Error(error.message);
+      const gone = new Set(stale.map((s) => s.id));
+      existing = existing.filter((s) => !gone.has(s.id));
+    }
+  }
+
+  const have = new Set(existing.map((s) => `${s.shift_date}|${s.shift_type_id}`));
   const rows: Record<string, unknown>[] = [];
   for (const date of datesInMonth(month)) {
     for (const t of types) {

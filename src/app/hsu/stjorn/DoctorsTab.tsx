@@ -70,6 +70,8 @@ export default function DoctorsTab({ ctx }: { ctx: PlannerCtx }) {
                     <div className="flex flex-wrap gap-1">
                       <Badge tone={st.tone}>{st.label}</Badge>
                       {d.has_pin && <Badge tone="slate"><KeyRound className="h-3 w-3" /> Kóði</Badge>}
+                      {d.can_bakvakt && <Badge tone="blue">Bakvakt</Badge>}
+                      {d.needs_bakvakt && <Badge tone="amber">Þarf bakvakt</Badge>}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-xs text-slate-500">{d.last_login_at ? timeAgoIs(d.last_login_at) : "–"}</td>
@@ -124,16 +126,26 @@ function DoctorFields({ v, set }: { v: DoctorForm; set: (p: Partial<DoctorForm>)
           ))}
         </div>
       </Field>
+      <div className="space-y-2 rounded-xl border border-slate-200 p-3">
+        <label className="flex items-start gap-2.5">
+          <input type="checkbox" className="mt-1 h-4 w-4" checked={v.can_bakvakt} onChange={(e) => set({ can_bakvakt: e.target.checked, needs_bakvakt: e.target.checked ? false : v.needs_bakvakt })} />
+          <span><span className="block text-sm font-semibold">Bakvaktarréttindi</span><span className="block text-xs text-slate-500">Hefur reynslu til að taka bakvakt (BV1/BV2). Getur líka tekið forvakt.</span></span>
+        </label>
+        <label className="flex items-start gap-2.5">
+          <input type="checkbox" className="mt-1 h-4 w-4" checked={v.needs_bakvakt} onChange={(e) => set({ needs_bakvakt: e.target.checked, can_bakvakt: e.target.checked ? false : v.can_bakvakt })} />
+          <span><span className="block text-sm font-semibold">Þarf bakvakt á forvakt</span><span className="block text-xs text-slate-500">Þegar læknirinn er á forvakt verður reyndur læknir að vera á bakvakt sama dag.</span></span>
+        </label>
+      </div>
       {v.role === "head" && <p className="text-xs text-slate-500">Yfirlæknir hefur aðgang að vaktaskipulaginu auk sinnar eigin síðu.</p>}
     </div>
   );
 }
 
-interface DoctorForm { name: string; email: string; phone: string; title: string; role: HsuRole; fte: number; color: string }
+interface DoctorForm { name: string; email: string; phone: string; title: string; role: HsuRole; fte: number; color: string; can_bakvakt: boolean; needs_bakvakt: boolean }
 
 function AddDoctor({ ctx, onClose }: { ctx: PlannerCtx; onClose: () => void }) {
   const [mode, setMode] = useState<"invite" | "manual">("invite");
-  const [v, setV] = useState<DoctorForm>({ name: "", email: "", phone: "", title: "", role: "doctor", fte: 100, color: DOCTOR_COLORS[ctx.data.doctors.length % DOCTOR_COLORS.length] });
+  const [v, setV] = useState<DoctorForm>({ name: "", email: "", phone: "", title: "", role: "doctor", fte: 100, color: DOCTOR_COLORS[ctx.data.doctors.length % DOCTOR_COLORS.length], can_bakvakt: false, needs_bakvakt: false });
   const [password, setPassword] = useState(generatePassword);
   const [mustChange, setMustChange] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -221,7 +233,7 @@ function AddDoctor({ ctx, onClose }: { ctx: PlannerCtx; onClose: () => void }) {
 }
 
 function EditDoctor({ ctx, doctor, onClose }: { ctx: PlannerCtx; doctor: HsuDoctor; onClose: () => void }) {
-  const [v, setV] = useState<DoctorForm>({ name: doctor.name, email: doctor.email, phone: doctor.phone, title: doctor.title, role: doctor.role, fte: doctor.fte, color: doctor.color });
+  const [v, setV] = useState<DoctorForm>({ name: doctor.name, email: doctor.email, phone: doctor.phone, title: doctor.title, role: doctor.role, fte: doctor.fte, color: doctor.color, can_bakvakt: doctor.can_bakvakt, needs_bakvakt: doctor.needs_bakvakt });
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
   const [link, setLink] = useState<string | null>(null);

@@ -59,6 +59,17 @@ export async function transferShift(opts: {
   });
 }
 
+/** Er vaktin bakvakt? */
+export async function isBakvaktShift(shiftId: string): Promise<boolean> {
+  const { data } = await supabaseAdmin.from("hsu_shifts").select("type:hsu_shift_types(kind)").eq("id", shiftId).maybeSingle();
+  return (data?.type as unknown as { kind?: string } | null)?.kind === "bakvakt";
+}
+
+export async function canDoBakvakt(doctorId: string): Promise<boolean> {
+  const { data } = await supabaseAdmin.from("hsu_doctors").select("can_bakvakt").eq("id", doctorId).maybeSingle();
+  return Boolean(data?.can_bakvakt);
+}
+
 /** Læknar sem eru þegar á vakt þennan dag (fyrir utan þessa vakt). */
 export async function hasShiftThatDay(doctorId: string, date: string, exceptShiftId: string): Promise<boolean> {
   const { data } = await supabaseAdmin

@@ -32,6 +32,8 @@ export async function POST(req: Request) {
     name, email, role, fte,
     phone: String(body.phone ?? "").slice(0, 40),
     title: String(body.title ?? "").slice(0, 80),
+    can_bakvakt: body.can_bakvakt === true,
+    needs_bakvakt: body.needs_bakvakt === true,
     color: typeof body.color === "string" && /^#[0-9a-f]{6}$/i.test(body.color) ? body.color : DOCTOR_COLORS[(count ?? 0) % DOCTOR_COLORS.length],
   };
 

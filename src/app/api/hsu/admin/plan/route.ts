@@ -9,9 +9,11 @@ import { after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit } from "@/lib/hsu/auth";
 import { hsuSync } from "@/lib/hsu/calendar";
-import { planMonth, type PlanPrefs } from "@/lib/hsu/plan";
+import { planMonth, toPlanDoctors, toPlanSlots, type PlanPrefs } from "@/lib/hsu/plan";
+import { shiftPhrase } from "@/lib/hsu/market";
+import { notifyDoctors, type DoctorNotice } from "@/lib/hsu/notify";
 import {
-  MONTH_RE, ensureSlots, fail, json, listDoctors, loadMonth, loadMonthShifts, loadPreferences, loadShiftTypes, readJson, requireManager,
+  MONTH_RE, ensureSlots, fail, json, listDoctors, loadMonth, loadMonthShifts, loadPreferences, loadShiftTypes, originOf, readJson, requireManager,
 } from "@/lib/hsu/server";
 
 export const runtime = "nodejs";
@@ -40,14 +42,13 @@ export async function POST(req: Request) {
     const [shifts, types, doctors, prefRows] = await Promise.all([
       loadMonthShifts(month), loadShiftTypes(), listDoctors(false), loadPreferences(month),
     ]);
-    const rest = new Map(types.map((t) => [t.id, t.rest_days_after]));
     const prefs: Record<string, PlanPrefs> = {};
     for (const p of prefRows) prefs[p.doctor_id] = p;
 
     const before = new Map(shifts.map((s) => [s.id, s.doctor_id]));
     const result = planMonth(
-      shifts.map((s) => ({ key: s.id, date: s.shift_date, typeId: s.shift_type_id, restAfter: s.shift_type_id ? rest.get(s.shift_type_id) ?? 0 : 0, doctorId: s.doctor_id })),
-      doctors.map((d) => ({ id: d.id, name: d.name, fte: d.fte, active: d.active })),
+      toPlanSlots(shifts, types),
+      toPlanDoctors(doctors),
       prefs,
       { mode },
     );
@@ -63,7 +64,7 @@ export async function POST(req: Request) {
     }
     let changed = 0;
     for (const [doc, ids] of byDoctor) {
-      const { error } = await supabaseAdmin.from("hsu_shifts").update({ doctor_id: doc, status: "assigned" }).in("id", ids);
+      const { error } = await supabaseAdmin.from("hsu_shifts").update({ doctor_id: doc, status: "assigned", confirm_status: null, requested_by: "", requested_at: null }).in("id", ids);
       if (error) throw new Error(error.message);
       changed += ids.length;
     }
@@ -77,7 +78,20 @@ export async function POST(req: Request) {
       const { data } = await supabaseAdmin.from("hsu_months").upsert({ month, status: "planning" }, { onConflict: "month" }).select("*").single();
       m = data;
     }
-    if (m?.status === "published" && changed) after(async () => { await hsuSync.syncAllConnected(); });
+    if (m?.status === "published" && changed) {
+      after(async () => { await hsuSync.syncAllConnected(); });
+      // Birt plan: hver læknir sem missti eða fékk vakt fær að vita það.
+      const shiftById = new Map(shifts.map((s) => [s.id, s]));
+      const notices: DoctorNotice[] = [];
+      for (const [doc, ids] of byDoctor) {
+        for (const id of ids) {
+          const s = shiftById.get(id)!;
+          if (s.doctor_id) notices.push({ doctorId: s.doctor_id, line: `Þú ert ekki lengur á vaktinni ${shiftPhrase(s)}.` });
+          if (doc) notices.push({ doctorId: doc, line: `Þú hefur verið sett(ur) á vaktina ${shiftPhrase(s)}.` });
+        }
+      }
+      notifyDoctors({ origin: originOf(req), subject: "Breyting á vaktaplani", heading: "Breyting á vaktaplani", intro: `${auth.actor.label} endurraðaði vaktaplaninu:`, notices });
+    }
 
     await audit(auth.actor.label, "plan.generate", month, { mode, created, changed, unfilled: result.unfilled.length });
     return json({ ok: true, created, changed, unfilled: result.unfilled, stats: result.stats, month: m });

@@ -50,6 +50,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ token: string 
     .select("id, shift_date, starts, ends, note, status, label")
     .eq("doctor_id", doctor.id)
     .eq("published", true)
+    .is("confirm_status", null)
     .gte("shift_date", since)
     .order("shift_date");
 

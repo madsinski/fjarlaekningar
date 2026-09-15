@@ -4,6 +4,7 @@ import { after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit } from "@/lib/hsu/auth";
 import { shiftPhrase, transferShift } from "@/lib/hsu/market";
+import { notifyDoctors } from "@/lib/hsu/notify";
 import { UUID_RE, fail, hsuEmailHtml, json, originOf, readJson, requireManager, sendHsuEmail } from "@/lib/hsu/server";
 
 export const runtime = "nodejs";
@@ -28,6 +29,10 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (action === "approve") {
     if (swap.status !== "awaiting_approval" || !swap.taken_by) return fail("Ekkert bíður samþykkis", 409);
     await transferShift({ swapId: swap.id, shiftId: swap.shift_id, fromDoctor: swap.from_doctor, toDoctor: swap.taken_by, actor: auth.actor.label, origin });
+    notifyDoctors({
+      origin, subject: "Vaktaskipti samþykkt", heading: "Vaktaskipti samþykkt",
+      notices: [{ doctorId: swap.taken_by, line: `${auth.actor.label} samþykkti að þú takir vaktina ${shiftPhrase(shift)}. Hún er komin í vaktalistann þinn.` }],
+    });
     return json({ ok: true });
   }
 
@@ -52,6 +57,15 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     await supabaseAdmin.from("hsu_swaps").update({ status: "cancelled", resolved_at: now }).eq("id", swap.id);
     await supabaseAdmin.from("hsu_shifts").update({ status: "assigned" }).eq("id", swap.shift_id);
     await audit(auth.actor.label, "market.cancel", shift.shift_date.slice(0, 7), { swapId: swap.id });
+    const line = `${auth.actor.label} felldi niður boð um vaktina ${shiftPhrase(shift)}.`;
+    notifyDoctors({
+      origin, subject: "Boð um vakt fellt niður", heading: "Boð um vakt fellt niður",
+      notices: [
+        ...(swap.from_doctor ? [{ doctorId: swap.from_doctor, line: `${line} Vaktin er áfram þín.` }] : []),
+        ...(swap.to_doctor ? [{ doctorId: swap.to_doctor, line }] : []),
+        ...(swap.taken_by && swap.taken_by !== swap.to_doctor ? [{ doctorId: swap.taken_by, line }] : []),
+      ],
+    });
     return json({ ok: true });
   }
 
