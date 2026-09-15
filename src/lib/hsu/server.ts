@@ -88,7 +88,7 @@ export async function loadShiftTypes(activeOnly = false): Promise<HsuShiftType[]
     .sort((a, b) => (a.period === "day" ? 0 : 1) - (b.period === "day" ? 0 : 1) || (a.sort ?? 0) - (b.sort ?? 0) || (rank[a.kind] ?? 1) - (rank[b.kind] ?? 1) || String(a.short).localeCompare(String(b.short))) as HsuShiftType[];
 }
 
-export const SHIFT_COLUMNS = "id, shift_date, shift_type_id, label, starts, ends, doctor_id, status, note, published, confirm_status, requested_by";
+export const SHIFT_COLUMNS = "id, shift_date, shift_type_id, label, starts, ends, doctor_id, status, note, published, confirm_status, requested_by, vinnustund_logged_at";
 
 export async function loadMonthShifts(month: string, publishedOnly = false): Promise<HsuShift[]> {
   const { first, next } = monthRange(month);

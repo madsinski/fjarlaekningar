@@ -315,3 +315,9 @@ where not exists (select 1 from public.hsu_shift_types where short = 'FM' or nam
 -- óháðar þessu; þær stýrast af vaktaóskum mánaðarins.
 alter table public.hsu_doctors add column if not exists day_weekdays smallint[] not null default '{}';
 comment on column public.hsu_doctors.day_weekdays is '0=sun … 6=lau. Tómt = allir dagar. Gildir um dagvaktir (period=day).';
+
+-- ── Útköll skráð í Vinnustund (2026-09-16) ─────────────────────────────────
+-- Læknir á forvakt/bakvakt þarf að skrá útköll sín í Vinnustund (heima.orri.is).
+-- Kerfið geymir aðeins hvort hann hafi merkt við það — engin gögn um útköllin
+-- sjálf fara hér um.
+alter table public.hsu_shifts add column if not exists vinnustund_logged_at timestamptz;

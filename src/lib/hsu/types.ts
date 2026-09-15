@@ -115,6 +115,8 @@ export interface HsuShift {
   note: string;
   /** "requested" = yfirlæknir setti lækni á vakt umfram hámark hans; bíður samþykkis læknisins. */
   confirm_status?: "requested" | null;
+  /** Hvenær læknirinn merkti að útköll vaktarinnar væru skráð í Vinnustund. */
+  vinnustund_logged_at?: string | null;
   /** Hver bað um vaktina. Situr eftir þegar læknir samþykkir: þá er vaktin umfram hámark með samþykki hans. */
   requested_by?: string;
 }

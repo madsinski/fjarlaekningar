@@ -29,7 +29,7 @@ export async function loadPortal(doctorId: string): Promise<PortalData> {
   const [me, colleagues, myShifts, months, prefs, swaps, settings, requests] = await Promise.all([
     supabaseAdmin.from("hsu_doctors").select("id, name, email, role, pin_hash, must_change_password, calendar_token, day_weekdays").eq("id", doctorId).single(),
     supabaseAdmin.from("hsu_doctors").select("id, name, color, role, phone, email").eq("active", true).order("name"),
-    supabaseAdmin.from("hsu_shifts").select("id, shift_date, shift_type_id, label, starts, ends, doctor_id, status, note")
+    supabaseAdmin.from("hsu_shifts").select("id, shift_date, shift_type_id, label, starts, ends, doctor_id, status, note, vinnustund_logged_at")
       .eq("doctor_id", doctorId).eq("published", true).is("confirm_status", null).gte("shift_date", first).order("shift_date").order("starts"),
     supabaseAdmin.from("hsu_months").select("month, status, prefs_deadline, note, published_at").gte("month", monthKey(new Date())).order("month"),
     supabaseAdmin.from("hsu_preferences").select("*").eq("doctor_id", doctorId).gte("month", monthKey(new Date())),

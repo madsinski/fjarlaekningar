@@ -127,6 +127,20 @@ birt). Hálfnað skref fær appelsínugula útlínu og stutta stöðu (t.d. „3
 | Vaktamarkaður: boð, tekin vakt, höfnun, afturkallað boð, samþykkt/hafnað af yfirlækni, boð fellt niður | þeir sem málið varðar |
 | Lykilorði breytt (af lækni eða stjórnanda) | læknirinn (öryggistilkynning) |
 
+## Útköll í Vinnustund
+
+Útköll af forvakt og bakvakt eru skráð í **Vinnustund** (<https://heima.orri.is/>).
+Kerfið geymir engin gögn um útköllin — aðeins hvort læknirinn hafi merkt við að
+þau séu komin inn:
+
+- Hver forvakt og bakvakt í *Mínar vaktir* og *Næstu vaktir* fær línu með hnappi
+  **Opna** (Vinnustund í nýjum flipa) og **Skráð**. Eftir merkingu stendur þar
+  „Útköll skráð í Vinnustund“ og smellur afmerkir aftur.
+- Liðin vakt sem á eftir að merkja við er í appelsínugulu og daufnar ekki eins og
+  aðrar liðnar vaktir; framundan vaktir fá aðeins hljóðláta áminningu.
+- *Yfirlit* sýnir „N vaktir án útkallaskráningar“ þegar eitthvað stendur út af.
+- Hnappur á Vinnustund er líka í haus *Mínar vaktir* og við *Næstu vaktir*.
+
 ## Litakóðun
 
 Hver vaktategund hefur lit (stillanlegur undir Stillingar). Sami litur er
