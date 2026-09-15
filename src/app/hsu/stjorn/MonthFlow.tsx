@@ -322,6 +322,7 @@ function StepReview({ ctx, setStatus, goNext }: { ctx: PlannerCtx; setStatus: Se
           const st = p?.status ?? "none";
           const off = dates.filter((dt) => markFor(p, dt) === "off").length;
           const want = dates.filter((dt) => markFor(p, dt) === "want").length;
+          const ok = dates.filter((dt) => !markFor(p, dt) && p?.day_marks?.[dt] === "ok").length;
           const offShare = off / dates.length;
           return (
             <Card key={d.id} className={cx("flex flex-col p-4", st === "approved" && "border-emerald-200")}>
@@ -341,6 +342,7 @@ function StepReview({ ctx, setStatus, goNext }: { ctx: PlannerCtx; setStatus: Se
                 <div className="space-y-1.5 text-xs text-slate-600">
                   <div className="flex items-center gap-1.5"><Ban className="h-3.5 w-3.5 text-red-500" /> {off} dagar get ekki</div>
                   <div className="flex items-center gap-1.5"><Heart className="h-3.5 w-3.5 text-emerald-500" /> {want} óskadagar</div>
+                  {ok > 0 && <div className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-[var(--hsu)]" /> {ok} dagar laus</div>}
                   <div>Vaktir: {p?.min_shifts ?? "–"} til {p?.max_shifts ?? "–"}</div>
                   {offShare > 0.5 && <div className="flex items-center gap-1 font-semibold text-amber-700"><AlertTriangle className="h-3.5 w-3.5" /> Óvenju margir lokaðir dagar</div>}
                 </div>

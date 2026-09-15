@@ -16,10 +16,17 @@ export default function PrefsTab({ data, initialMonth, refresh }: { data: Portal
     return [...set].sort();
   }, [data.months]);
 
+  // Opnast á fyrsta mánuði sem hægt er að breyta: mánuður í vaktaplani er
+  // læstur, og læknir sem kemur hingað vill skrá óskir, ekki lesa lás.
   const [month, setMonth] = useState(() => {
     if (options.includes(initialMonth)) return initialMonth;
-    const open = data.months.find((m) => m.status === "collecting");
-    return open?.month ?? options[0];
+    const collecting = data.months.find((m) => m.status === "collecting");
+    if (collecting) return collecting.month;
+    const open = options.find((m) => {
+      const st = data.months.find((x) => x.month === m)?.status;
+      return !st || st === "review";
+    });
+    return open ?? options[0];
   });
 
   const monthRow = data.months.find((m) => m.month === month) ?? null;
@@ -53,8 +60,9 @@ export default function PrefsTab({ data, initialMonth, refresh }: { data: Portal
       <div>
         <h1 className="text-xl font-bold">Vaktaóskir</h1>
         <p className="text-sm text-slate-500">
-          Merktu daga sem þú <span className="font-semibold text-red-600">getur ekki</span> unnið og daga sem þú <span className="font-semibold text-emerald-600">vilt gjarnan</span> vinna.
-          „Get ekki“ er virt skilyrðislaust; „vil gjarnan“ er ósk sem reynt er að verða við.
+          Merktu daga sem þú <span className="font-semibold text-red-600">getur ekki</span> unnið, daga sem þú <span className="font-semibold text-emerald-600">vilt gjarnan</span> vinna
+          og daga sem þú ert <span className="font-semibold text-[var(--hsu)]">laus</span>. „Get ekki“ er virt skilyrðislaust; „vil gjarnan“ er ósk sem reynt er að verða við.
+          Ómerktir dagar teljast lausir.
         </p>
       </div>
 

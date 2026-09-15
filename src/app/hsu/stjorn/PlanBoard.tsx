@@ -214,12 +214,12 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
               if (!date) return <div key={`x${i}`} />;
               const list = byDate.get(date) ?? [];
               const h = holidayName(date);
-              const mark = focusDoctor ? markFor(prefs[focusDoctor], date) : null;
+              const mark = focusDoctor ? markFor(prefs[focusDoctor], date) ?? (prefs[focusDoctor]?.day_marks?.[date] === "ok" ? "ok" : null) : null;
               const focusBusy = focusDoctor && list.every((s) => s.doctor_id !== focusDoctor) && shifts.some((s) => s.shift_date === date && s.doctor_id === focusDoctor);
               return (
                 <div key={date} className={cx(
                   "group relative min-h-28 rounded-xl border p-1.5 transition-colors",
-                  mark === "off" ? "border-red-300 bg-red-50" : mark === "want" ? "border-emerald-300 bg-emerald-50" : isWeekendish(date) ? "border-slate-200 bg-slate-50" : "border-slate-200 bg-white",
+                  mark === "off" ? "border-red-300 bg-red-50" : mark === "want" ? "border-emerald-300 bg-emerald-50" : mark === "ok" ? "border-[var(--hsu)]/40 bg-[var(--hsu-soft)]" : isWeekendish(date) ? "border-slate-200 bg-slate-50" : "border-slate-200 bg-white",
                 )}>
                   <div className="mb-1 flex items-center justify-between gap-1">
                     <span className={cx("text-xs font-bold", isWeekendish(date) ? "text-[var(--hsu)]" : "text-slate-600")}>{Number(date.slice(8))}</span>
