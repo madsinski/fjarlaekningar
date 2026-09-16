@@ -39,7 +39,7 @@ export default function VinnustodAdminPage() {
     window.history.replaceState(null, "", u);
   };
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: "spurningar", label: "Spurningar", icon: <MessageCircle className="h-4 w-4" /> },
+    { key: "spurningar", label: "Samtöl", icon: <MessageCircle className="h-4 w-4" /> },
     { key: "notendur", label: "Notendur", icon: <Users className="h-4 w-4" /> },
     { key: "tilkynningar", label: "Tilkynningar", icon: <Megaphone className="h-4 w-4" /> },
     { key: "stillingar", label: "Stillingar", icon: <Settings className="h-4 w-4" /> },

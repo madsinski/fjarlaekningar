@@ -334,7 +334,7 @@ export const GUIDE_ACCESS = {
 export const GUIDE_MEDS: GuideMedGroup[] = [
   {
     name: "A · Ópíóíðar og sterk verkjalyf",
-    keywords: ["ópíóíðar", "ópíöt", "verkjalyf", "sterk verkjalyf", "oxý", "oxycodone", "morphine", "fentanyl"],
+    keywords: ["ópíóíðar", "ópíöt", "sterk verkjalyf", "oxý", "oxycodone", "morphine", "fentanyl", "petidín", "tramadol"],
     items: [
       "Morfín: Contalgin, Morfin",
       "Oxýkódon: OxyContin, OxyNorm, Targin",
@@ -345,7 +345,7 @@ export const GUIDE_MEDS: GuideMedGroup[] = [
       "Tramadól: Tradolan, Nobligan, Tramadol",
     ],
   },
-  { name: "A · Kódeín-samsett lyf", keywords: ["kódeín", "parkódín", "parkodin", "verkjalyf", "codeine"], items: ["Parkódín og Parkódín forte (parasetamól + kódeín)", "Kódímagnýl (asetýlsalisýlsýra + kódeín)"] },
+  { name: "A · Kódeín-samsett lyf", keywords: ["kódeín", "parkódín", "parkodin", "codeine"], items: ["Parkódín og Parkódín forte (parasetamól + kódeín)", "Kódímagnýl (asetýlsalisýlsýra + kódeín)"] },
   {
     name: "A · Benzódíazepín",
     keywords: ["benzó", "bensó", "benso", "benzo", "benzodiazepines", "róandi", "róandi lyf", "kvíðalyf", "kvíðastillandi", "valíum", "valium"],
@@ -365,7 +365,7 @@ export const GUIDE_MEDS: GuideMedGroup[] = [
   {
     name: "B · Lyf við fíkn og viðhaldsmeðferð",
     keywords: ["fíkn", "fíknilyf", "viðhaldsmeðferð", "ópíóíðafíkn", "áfengi", "áfengisfíkn", "metadón"],
-    items: ["Búprenorfín: Norspan (plástur), Subutex", "Búprenorfín + naloxón: Suboxone", "Metadon", "Naltrexón og dísúlfíram (Antabus)"],
+    items: ["Búprenorfín: Norspan (plástur), Subutex", "Búprenorfín + naloxón: Suboxone", "Metadon", "Naltrexón", "Dísúlfíram: Antabus"],
   },
   {
     name: "C · Lyf sem þurfa eftirlit með blóðprufum",
@@ -374,7 +374,7 @@ export const GUIDE_MEDS: GuideMedGroup[] = [
   },
   {
     name: "D · Lyf sem einungis sérfræðingar ávísa",
-    keywords: ["sérfræðingur", "geðlyf", "krabbamein", "ónæmisbæling", "líftæknilyf", "hormón"],
+    keywords: ["sérfræðingur", "geðlyf", "krabbamein", "ónæmisbæling", "líftæknilyf", "hormón", "abilify", "aripíprazól", "seroquel", "quetiapin", "kvetíapín", "zyprexa", "olanzapín", "risperdal", "risperidón", "nebido", "testogel", "tostran", "humira", "enbrel", "remicade"],
     items: ["Geðrofslyf", "Testósterón", "Krabbameinslyf, ónæmisbælandi lyf og líftæknilyf"],
   },
 ];

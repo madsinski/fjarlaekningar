@@ -1,11 +1,12 @@
 "use client";
 
-// Innhólf Fjarlækninga: spurningar starfsfólks úr vinnustöðinni. Notað bæði í
+// Innhólf Fjarlækninga: samtöl við alla sem nota vinnustöðina — spurningar
+// sem berast og skilaboð sem stjórnandi sendir sjálfur („Ný skilaboð“). Notað bæði í
 // stjórnborðinu (/admin/vinnustod) og inni í vinnustöðinni sjálfri, þegar
 // stjórnandi Fjarlækninga er skráður þar inn.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, Check, Send } from "lucide-react";
+import { ArrowLeft, Check, PenSquare, Search, Send } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 async function api<T = Record<string, unknown>>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T & { ok: boolean; error?: string }> {
@@ -33,12 +34,15 @@ interface InboxThread {
   id: string; subject: string; status: "open" | "closed"; last_message_at: string; last_author: "user" | "staff"; unread: boolean;
   user: { kind: "vs" | "staff" | "hsu"; name: string; email: string; workplace: string; title: string; active: boolean } | null;
 }
+interface Recipient { kind: "vs" | "staff" | "hsu"; id: string; name: string; email: string; workplace: string; title: string }
+const KIND_IS: Record<Recipient["kind"], string> = { vs: "Vinnustöð", staff: "Starfsfólk", hsu: "Læknar HSU" };
 interface Msg { id: string; author_kind: "user" | "staff"; author_name: string; body: string; created_at: string }
 
 export default function Inbox({ onAwaitingChange }: { onAwaitingChange?: (n: number) => void } = {}) {
   const [filter, setFilter] = useState<"open" | "closed" | "all">("open");
   const [threads, setThreads] = useState<InboxThread[] | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  const [composing, setComposing] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -57,9 +61,13 @@ export default function Inbox({ onAwaitingChange }: { onAwaitingChange?: (n: num
   }, [load]);
 
   if (open) return <InboxThreadView id={open} onBack={() => { setOpen(null); void load(); }} />;
+  if (composing) {
+    return <Compose onCancel={() => setComposing(false)} onSent={(id) => { setComposing(false); setOpen(id); void load(); }} />;
+  }
   return (
     <div className="space-y-3">
-      <div className="flex gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <button className={`${btnPrimary} mr-auto`} onClick={() => setComposing(true)}><PenSquare className="h-4 w-4" /> Ný skilaboð</button>
         {(["open", "closed", "all"] as const).map((f) => (
           <button key={f} onClick={() => setFilter(f)}
             className={`rounded-full px-3 py-1 text-sm font-medium ${filter === f ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"}`}>
@@ -70,7 +78,7 @@ export default function Inbox({ onAwaitingChange }: { onAwaitingChange?: (n: num
       {err && <p className="text-sm text-red-600">{err}</p>}
       <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
         {threads === null ? <div className="m-4 h-16 animate-pulse rounded-lg bg-slate-100" />
-          : threads.length === 0 ? <p className="p-6 text-center text-sm text-slate-500">Engar spurningar.</p>
+          : threads.length === 0 ? <p className="p-6 text-center text-sm text-slate-500">Engin samtöl.</p>
           : threads.map((t) => (
             <button key={t.id} onClick={() => setOpen(t.id)} className={`flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 ${t.unread ? "bg-cyan-50/60" : ""}`}>
               {t.unread && <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-cyan-600" />}
@@ -79,7 +87,7 @@ export default function Inbox({ onAwaitingChange }: { onAwaitingChange?: (n: num
                 <span className="block truncate text-xs text-slate-500">{t.user?.name ?? "?"}{t.user?.workplace ? ` · ${t.user.workplace}` : ""} · {fmt(t.last_message_at)}</span>
               </span>
               <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${t.status === "closed" ? "bg-slate-100 text-slate-500" : t.last_author === "user" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>
-                {t.status === "closed" ? "Lokið" : t.last_author === "user" ? "Bíður svars" : "Svarað"}
+                {t.status === "closed" ? "Lokið" : t.last_author === "user" ? "Bíður svars" : "Sent"}
               </span>
             </button>
           ))}
@@ -119,7 +127,7 @@ function InboxThreadView({ id, onBack }: { id: string; onBack: () => void }) {
 
   return (
     <div className="space-y-3">
-      <button onClick={onBack} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-600 hover:underline"><ArrowLeft className="h-4 w-4" /> Allar spurningar</button>
+      <button onClick={onBack} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-600 hover:underline"><ArrowLeft className="h-4 w-4" /> Öll samtöl</button>
       {!data ? <div className="h-40 animate-pulse rounded-2xl bg-slate-100" /> : (
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -147,12 +155,103 @@ function InboxThreadView({ id, onBack }: { id: string; onBack: () => void }) {
             <div ref={bottom} />
           </div>
           <div className="mt-5 space-y-2 border-t border-slate-100 pt-4">
-            <textarea className={`${inputCls} min-h-24`} value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Svar — birtist starfsmanninum í vinnustöðinni og fer í tölvupósti" />
+            <textarea className={`${inputCls} min-h-24`} value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Skilaboð — birtast viðtakandanum í vinnustöðinni og fara í tölvupósti" />
             {err && <p className="text-sm text-red-600">{err}</p>}
-            <div className="flex justify-end"><button className={btnPrimary} disabled={busy || !reply.trim()} onClick={send}><Send className="h-4 w-4" /> Senda svar</button></div>
+            <div className="flex justify-end"><button className={btnPrimary} disabled={busy || !reply.trim()} onClick={send}><Send className="h-4 w-4" /> Senda</button></div>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Stjórnandi hefur samtal: velur viðtakanda, skrifar fyrirsögn og skilaboð. */
+function Compose({ onCancel, onSent }: { onCancel: () => void; onSent: (id: string) => void }) {
+  const [people, setPeople] = useState<Recipient[] | null>(null);
+  const [q, setQ] = useState("");
+  const [to, setTo] = useState<Recipient | null>(null);
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    void api<{ recipients: Recipient[] }>("/api/admin/vinnustod/recipients").then((r) => {
+      if (r.ok) setPeople(r.recipients); else setErr(r.error ?? "Mistókst");
+    });
+  }, []);
+
+  const fold = (x: string) => x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/þ/g, "th").replace(/ð/g, "d").replace(/æ/g, "ae");
+  const shown = (people ?? []).filter((p) => !q.trim() || fold(`${p.name} ${p.email} ${p.workplace} ${p.title}`).includes(fold(q.trim())));
+
+  const send = async () => {
+    if (!to) return;
+    setBusy(true); setErr(null);
+    const r = await api<{ id: string }>("/api/admin/vinnustod/threads", { body: { kind: to.kind, id: to.id, subject, body } });
+    setBusy(false);
+    if (!r.ok) { setErr(r.error ?? "Mistókst"); return; }
+    onSent(r.id);
+  };
+
+  return (
+    <div className="space-y-3">
+      <button onClick={onCancel} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-600 hover:underline"><ArrowLeft className="h-4 w-4" /> Öll samtöl</button>
+      <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 className="text-lg font-bold">Ný skilaboð</h2>
+        <div>
+          <div className="mb-1 text-sm font-semibold text-slate-700">Til</div>
+          {to ? (
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-cyan-300 bg-cyan-50 px-3 py-2">
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold">{to.name}</span>
+                <span className="block truncate text-xs text-slate-500">{[to.title, to.workplace, to.email].filter(Boolean).join(" · ")}</span>
+              </span>
+              <button className="text-xs font-semibold text-cyan-800 hover:underline" onClick={() => setTo(null)}>Breyta</button>
+            </div>
+          ) : (
+            <>
+              <label className="relative block">
+                <span className="sr-only">Leita að viðtakanda</span>
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input autoFocus className={`${inputCls} pl-9`} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nafn, netfang eða vinnustaður" />
+              </label>
+              <div className="mt-2 max-h-72 overflow-y-auto rounded-lg border border-slate-200">
+                {people === null ? <div className="m-3 h-10 animate-pulse rounded bg-slate-100" />
+                  : shown.length === 0 ? <p className="p-3 text-sm text-slate-500">Enginn fannst.</p>
+                  : (["vs", "staff", "hsu"] as const).map((k) => {
+                    const group = shown.filter((p) => p.kind === k);
+                    if (!group.length) return null;
+                    return (
+                      <div key={k}>
+                        <div className="sticky top-0 bg-slate-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-slate-500">{KIND_IS[k]}</div>
+                        {group.map((p) => (
+                          <button key={`${p.kind}:${p.id}`} onClick={() => setTo(p)} className="flex w-full flex-col px-3 py-2 text-left hover:bg-cyan-50">
+                            <span className="text-sm font-semibold">{p.name}</span>
+                            <span className="text-xs text-slate-500">{[p.workplace, p.email].filter(Boolean).join(" · ")}</span>
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })}
+              </div>
+            </>
+          )}
+        </div>
+        <label className="block">
+          <span className="mb-1 block text-sm font-semibold text-slate-700">Fyrirsögn</span>
+          <input className={inputCls} value={subject} maxLength={140} onChange={(e) => setSubject(e.target.value)} />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-sm font-semibold text-slate-700">Skilaboð</span>
+          <textarea className={`${inputCls} min-h-32`} value={body} onChange={(e) => setBody(e.target.value)} />
+        </label>
+        <p className="text-xs text-slate-500">Viðtakandinn sér skilaboðin í vinnustöðinni (fjarlaekningar.is/vinnustod), fær tölvupóst og getur svarað þar.</p>
+        {err && <p className="text-sm text-red-600">{err}</p>}
+        <div className="flex justify-end gap-2">
+          <button className={btnGhost} onClick={onCancel}>Hætta við</button>
+          <button className={btnPrimary} disabled={busy || !to || !subject.trim() || !body.trim()} onClick={send}><Send className="h-4 w-4" /> Senda</button>
+        </div>
+      </div>
     </div>
   );
 }

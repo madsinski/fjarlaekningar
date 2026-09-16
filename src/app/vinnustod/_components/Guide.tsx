@@ -21,7 +21,7 @@ import {
   SELFTEST_STAFF_NOTE, SITE, problemPageUrl,
   type GuideAnswer, type GuideFact, type GuideMedGroup, type GuideProblem, type GuideSelftest, type Lang,
 } from "@/lib/nurse-guide";
-import { searchGuide } from "@/lib/nurse-guide-search";
+import { checkMedication, searchGuide } from "@/lib/nurse-guide-search";
 
 const icon = (slug: string) => `/fjarlaekningar-icons/portal/${slug}.png`;
 
@@ -178,7 +178,7 @@ function ProblemDetail({ p, lang, setLang, onBack, onSms }: { p: GuideProblem; l
         )}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={icon(p.slug)} alt="" className="h-14 w-14" />
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 basis-52">
           <h2 className="text-xl font-bold text-slate-900">{p.title}</h2>
           <p className="text-sm text-slate-600">{p.summary}</p>
           {p.photo && (
@@ -208,7 +208,11 @@ function ProblemDetail({ p, lang, setLang, onBack, onSms }: { p: GuideProblem; l
           </div>
         </div>
 
+        {p.slug === "lyfjuendurnyjun" && <MedCheckBox />}
+
         <PatientTextBox title="Texti til sjúklings" id={`problem:${p.slug}:${lang}`} lang={lang} setLang={setLang} onSms={onSms} />
+
+        {p.slug === "lyfjuendurnyjun" && <MedsSection groups={GUIDE_MEDS} searching />}
 
         {tests.length > 0 && (
           <div className="space-y-2">
@@ -285,7 +289,56 @@ function AnswersSection({ answers, title = "Algengar spurningar — svör af vef
   );
 }
 
-function MedsSection({ groups, searching }: { groups: GuideMedGroup[]; searching: boolean }) {
+/** Lyfjaleit í lyfjaendurnýjun: rautt ef lyfið er á listanum, annars grænt. */
+function MedCheckBox() {
+  const [q, setQ] = useState("");
+  const res = useMemo(() => checkMedication(q), [q]);
+  return (
+    <section aria-labelledby="medcheck-h" className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <h3 id="medcheck-h" className="flex items-center gap-2 font-bold text-slate-900"><Pill className="h-5 w-5 text-[var(--hsu)]" /> Má endurnýja lyfið?</h3>
+      <label className="relative mt-3 block">
+        <span className="sr-only">Heiti lyfs</span>
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Escape") setQ(""); }}
+          placeholder="Heiti lyfs eða virkt efni, t.d. Stesolid, zópíklón, Elvanse"
+          className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-11 pr-3 text-base outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100" />
+      </label>
+      <div aria-live="polite">
+        {res.status === "red" && (
+          <div className="mt-3 flex gap-3 rounded-xl border border-red-300 bg-red-50 p-3">
+            <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-red-500 shadow-[0_0_0_4px_rgba(239,68,68,0.2)]" aria-hidden />
+            <div className="min-w-0">
+              <p className="font-bold text-red-900">Ekki endurnýjað hjá Fjarlækningum</p>
+              <p className="text-sm text-red-900/80">Vísaðu sjúklingi til heimilislæknis eða þess læknis sem ávísar lyfinu.</p>
+              <ul className="mt-2 space-y-1.5">
+                {res.groups.map((g) => (
+                  <li key={g.name} className="text-sm">
+                    <span className="font-semibold text-red-900">{g.name}</span>
+                    <span className="block text-red-900/80">{g.items.join(" · ")}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+        {res.status === "green" && (
+          <div className="mt-3 flex gap-3 rounded-xl border border-emerald-300 bg-emerald-50 p-3">
+            <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.2)]" aria-hidden />
+            <div className="min-w-0">
+              <p className="font-bold text-emerald-900">Ekki á listanum — getur hentað lyfjaendurnýjun</p>
+              <p className="text-sm text-emerald-900/80">
+                Á við lyf sem sjúklingur tekur að staðaldri, og aðeins einfaldur lyfseðill. Listinn er ekki tæmandi —
+                læknir metur alltaf hvort lyfið er endurnýjað. Athugaðu stafsetningu ef þú ert í vafa.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function MedsSection({ groups, searching }: { groups: GuideMedGroup[]; /** Opið strax — í leit og í lyfjaendurnýjun. */ searching: boolean }) {
   const [open, setOpen] = useState(false);
   if (!groups.length) return null;
   const shown = open || searching;

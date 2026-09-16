@@ -102,3 +102,34 @@ export function searchGuide(q: string, answers: GuideAnswer[]): GuideHits {
   const empty = !problems.length && !tests.length && !hitAnswers.length && !facts.length && !meds.length && !access;
   return { problems, tests, answers: hitAnswers, facts, meds, access, empty };
 }
+
+// ── Má endurnýja lyfið? ─────────────────────────────────────────────────────
+
+export interface MedCheck {
+  status: "idle" | "red" | "green";
+  /** Flokkar sem passa, með lyfjunum sem passa (eða öllum ef heitið passaði). */
+  groups: GuideMedGroup[];
+}
+
+/**
+ * Rautt ljós ef lyfið (eða flokkurinn) er á listanum yfir lyf sem eru ekki
+ * endurnýjuð. Grænt þýðir aðeins að það fannst ekki á listanum — mat læknis
+ * ræður alltaf, og listinn er ekki tæmandi.
+ */
+export function checkMedication(q: string): MedCheck {
+  const words = fold(q).split(/[^a-z0-9]+/).filter((w) => w.length > 1);
+  if (words.join("").length < 3) return { status: "idle", groups: [] };
+  // Hvert orð leitarinnar verður að vera upphaf orðs í heitinu — „magnýl“ á
+  // ekki að finna „Kódímagnýl“. Innihald í sviga (t.d. „parasetamól + kódeín“)
+  // er ekki heiti lyfsins og telst ekki með.
+  const hits = (text: string) => {
+    const names = fold(text.replace(/\([^)]*\)/g, " ")).split(/[^a-z0-9]+/).filter(Boolean);
+    return words.every((w) => stems(w).some(([stem]) => names.some((n) => n.startsWith(stem))));
+  };
+  const groups = GUIDE_MEDS.flatMap((g) => {
+    const items = g.items.filter(hits);
+    if (items.length) return [{ ...g, items }];
+    return hits([g.name.replace(/^[A-D] · /, ""), ...(g.keywords ?? [])].join(" | ")) ? [g] : [];
+  });
+  return { status: groups.length ? "red" : "green", groups };
+}

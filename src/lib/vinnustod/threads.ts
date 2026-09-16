@@ -1,4 +1,4 @@
-// Spurningar starfsfólks til Fjarlækninga — tvíhliða samtöl. Server-only.
+// Samtöl stjórnanda Fjarlækninga við alla sem nota vinnustöðina — tvíhliða. Server-only.
 //
 // Hver spurning er þráður; svör beggja vegna fara í sama þráð. Hvor hlið sér
 // hvað er ólesið út frá því hvenær hún las síðast og hver skrifaði síðast.
@@ -119,14 +119,14 @@ export function notifyStaff(opts: { origin: string; userName: string; workplace:
   });
 }
 
-/** Spyrjandinn fær póst þegar Fjarlækningar svara. */
-export function notifyUser(opts: { origin: string; to: string; name: string; subject: string; body: string; staffName: string }) {
+/** Viðtakandinn fær póst þegar Fjarlækningar svara — eða hefja samtal. */
+export function notifyUser(opts: { origin: string; to: string; name: string; subject: string; body: string; staffName: string; isNew?: boolean }) {
   after(async () => {
     await sendVsEmail({
       to: opts.to,
-      subject: `Svar frá Fjarlækningum: ${opts.subject}`,
-      heading: "Fjarlækningar svöruðu spurningunni þinni",
-      paragraphs: [`Sæl/l ${opts.name}.`, `${opts.staffName} svaraði:`, opts.body],
+      subject: `${opts.isNew ? "Skilaboð" : "Svar"} frá Fjarlækningum: ${opts.subject}`,
+      heading: opts.isNew ? "Þú fékkst skilaboð frá Fjarlækningum" : "Fjarlækningar svöruðu þér",
+      paragraphs: [`Sæl/l ${opts.name}.`, `${opts.staffName} ${opts.isNew ? "skrifaði" : "svaraði"}:`, opts.body],
       cta: { label: "Opna vinnustöðina", url: `${opts.origin}/vinnustod?t=spurningar` },
       foot: "Svaraðu helst í vinnustöðinni, svo svarið fylgi samtalinu.",
     });
@@ -178,4 +178,26 @@ export async function askersFor(threads: ThreadRow[]): Promise<Map<string, Asker
     }
   }
   return out;
+}
+
+export interface Recipient { kind: SmsActor["kind"]; id: string; name: string; email: string; workplace: string; title: string }
+
+/** Allir virkir sem stjórnandi getur skrifað — sjá /api/admin/vinnustod/recipients. */
+export async function listRecipients(): Promise<Recipient[]> {
+  const [{ data: users }, { data: staff }, { data: docs }] = await Promise.all([
+    supabaseAdmin.from("gatt_users").select("id, name, email, workplace, title").eq("active", true),
+    supabaseAdmin.from("staff").select("id, name, email, role, roles").eq("active", true),
+    supabaseAdmin.from("hsu_doctors").select("id, name, email").eq("active", true),
+  ]);
+  const staffRows = (staff ?? []).filter((s) => {
+    const roles: string[] = Array.isArray(s.roles) && s.roles.length ? s.roles : [s.role];
+    // Stjórnendur sjá innhólfið; lögfræðingar komast ekki í vinnustöðina.
+    return !roles.includes("admin") && !roles.every((r) => r === "lawyer");
+  });
+  const out: Recipient[] = [
+    ...(users ?? []).map((u) => ({ kind: "vs" as const, id: u.id, name: u.name, email: u.email, workplace: u.workplace ?? "", title: u.title ?? "" })),
+    ...staffRows.map((s) => ({ kind: "staff" as const, id: s.id, name: s.name || s.email, email: s.email, workplace: "Fjarlækningar", title: KIND_LABEL.staff })),
+    ...(docs ?? []).map((d) => ({ kind: "hsu" as const, id: d.id, name: d.name, email: d.email, workplace: "HSU Vestmannaeyjum", title: KIND_LABEL.hsu })),
+  ];
+  return out.sort((a, b) => a.name.localeCompare(b.name, "is"));
 }

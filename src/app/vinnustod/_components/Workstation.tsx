@@ -181,9 +181,9 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
                     <MessageCircle className="h-5 w-5" />
                   </span>
                   <span>
-                    <span className="block font-bold text-slate-900">Spurningar starfsfólks</span>
+                    <span className="block font-bold text-slate-900">Samtöl við starfsfólk</span>
                     <span className="block text-xs text-slate-600">
-                      {unread === 0 ? "Engin spurning bíður svars" : unread === 1 ? "Ein spurning bíður svars" : `${unread} spurningar bíða svars`}
+                      {unread === 0 ? "Ekkert bíður svars · skrifa nýtt" : unread === 1 ? "Ein spurning bíður svars" : `${unread} spurningar bíða svars`}
                     </span>
                   </span>
                 </span>
@@ -226,7 +226,7 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
           </Drawer>
         )}
         {drawer?.kind === "inbox" && (
-          <Drawer title="Spurningar starfsfólks" onClose={closeDrawer} wide><Inbox onAwaitingChange={setUnread} /></Drawer>
+          <Drawer title="Samtöl við starfsfólk" onClose={closeDrawer} wide><Inbox onAwaitingChange={setUnread} /></Drawer>
         )}
         {drawer?.kind === "settings" && me.kind === "vs" && (
           <Drawer title="Stillingar" onClose={closeDrawer}><SettingsPanel me={me} refresh={refresh} /></Drawer>

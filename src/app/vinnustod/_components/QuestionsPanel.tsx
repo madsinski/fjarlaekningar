@@ -159,21 +159,21 @@ export function QuestionsCard({ onOpen, onNew, onUnreadChange }: {
       <div className="flex items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 font-bold text-slate-900">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--hsu-soft)] text-[var(--hsu)]"><MessageCircle className="h-4 w-4" /></span>
-          Spurningar til Fjarlækninga
+          Skilaboð við Fjarlækningar
         </h2>
       </div>
-      <p className="mt-1 text-xs text-slate-500">Spurning um þjónustuna? Skrifaðu stjórnanda Fjarlækninga — svarið kemur hér og í pósti.</p>
+      <p className="mt-1 text-xs text-slate-500">Spurning um þjónustuna? Skrifaðu stjórnanda Fjarlækninga. Svör og skilaboð frá okkur birtast hér og koma í pósti.</p>
       <Button className="mt-3 w-full" onClick={onNew}><Plus className="h-4 w-4" /> Ný spurning</Button>
       <div className="mt-3 divide-y divide-slate-100">
         {threads === null ? <div className="h-12 animate-pulse rounded-lg bg-slate-100" />
-          : threads.length === 0 ? <p className="py-2 text-xs text-slate-500">Engar spurningar enn.</p>
+          : threads.length === 0 ? <p className="py-2 text-xs text-slate-500">Engin skilaboð enn.</p>
           : shown.map((t) => (
             <button key={t.id} type="button" onClick={() => onOpen(t.id)}
               className={cx("flex w-full items-center gap-2 rounded-lg px-1 py-2 text-left hover:bg-slate-50", t.unread && "font-bold")}>
               {t.unread ? <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--hsu)]" aria-label="Ólesið" /> : <span className="h-2 w-2 shrink-0" />}
               <span className="min-w-0 flex-1 truncate text-sm">{t.subject}</span>
               <span className={cx("shrink-0 text-[10px] font-semibold", t.last_author === "staff" ? "text-emerald-700" : "text-amber-700")}>
-                {t.status === "closed" ? "Lokið" : t.last_author === "staff" ? "Svarað" : "Bíður"}
+                {t.status === "closed" ? "Lokið" : t.last_author === "staff" ? "Frá okkur" : "Bíður"}
               </span>
             </button>
           ))}

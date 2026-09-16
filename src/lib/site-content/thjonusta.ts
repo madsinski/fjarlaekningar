@@ -492,7 +492,7 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
 
   faq1_q: "Hvernig virkar læknisþjónustan?",
   faq1_a:
-    "Læknisþjónusta frá læknum Fjarlækninga er aðgengileg í gegnum heimasíðu Fjarlækninga, þar sem þér hentar. Þar færð þú meðferðarúrræði við skilgreindum, algengum vandamálum. Með Fjarlækningum færð þú þægilegri leið til læknis þar sem þú færð niðurstöðu læknis, og lyfseðil ef við á, innan 2 klukkustunda alla daga milli 10:00–22:00.\n\nÞú ferð í gegnum ferli þar sem þú svarar stöðluðum spurningum læknis um þig og þína heilsu. Þegar þú hefur lokið við að svara spurningum greiðir þú sama og komugjald á heilsugæslu og erindi þitt fer áfram til læknis. Læknir Fjarlækninga veitir þér sérsniðið meðferðarúrræði og niðurstaðan þín birtist í sjúklingagáttinni þar sem þú getur nálgast meðferðarúrræði og skilaboð frá lækni. Ef greining gefur til kynna að þörf sé á uppáskrifuðu lyfi færð þú einnig sendan lyfseðil í lyfjagáttina sem hægt er að leysa út í næsta apóteki.",
+    "Læknisþjónusta frá læknum Fjarlækninga er aðgengileg í gegnum heimasíðu Fjarlækninga, þar sem þér hentar. Þar færð þú meðferðarúrræði við skilgreindum, algengum vandamálum. Með Fjarlækningum færð þú þægilegri leið til læknis þar sem þú færð niðurstöðu læknis, og lyfseðil ef við á, innan 2 klukkustunda alla daga milli 10:00–22:00.\n\nÞú ferð í gegnum ferli þar sem þú svarar stöðluðum spurningum læknis um þig og þína heilsu. Þegar þú hefur lokið við að svara spurningum fer erindi þitt áfram til læknis. Læknir Fjarlækninga veitir þér sérsniðið meðferðarúrræði og niðurstaðan þín birtist í sjúklingagáttinni þar sem þú getur nálgast meðferðarúrræði og skilaboð frá lækni. Ef greining gefur til kynna að þörf sé á uppáskrifuðu lyfi færð þú einnig sendan lyfseðil í lyfjagáttina sem hægt er að leysa út í næsta apóteki.",
 
   faq2_q: "Hvaða læknisfræðilegu vandamál leysir þjónusta Fjarlækninga?",
   faq2_a: [
@@ -509,9 +509,9 @@ export const THJONUSTA_DEFAULTS_IS: LocaleContent = {
     "· Læknisvottorð | Veikindavottorð til vinnuveitanda og skóla. Þessi þjónusta er einungis í boði fyrir þá sem þurfa fjarvistarvottorð tengt vandamáli sem hefur verið afgreitt í gegnum fjarlækningaþjónustuna.",
   ].join("\n"),
 
-  faq3_q: "Hvað kostar læknisþjónusta Fjarlækninga?",
-  faq3_a:
-    "Læknisþjónusta Fjarlækninga er sambærileg og koma á heilsugæslu, en þú greiðir einungis komugjald 1.000 kr. fyrir erindi líkt og á heilsugæslu. Gjald fyrir veikindavottorð er samkvæmt gjaldskrá heilsugæslunnar.",
+  // Rauf 3 (verð) er auð: verð er ekki nefnt á vefnum. Auð spurning birtist ekki.
+  faq3_q: "",
+  faq3_a: "",
 
   faq4_q: "Fyrir hvern er þjónustan?",
   faq4_a:

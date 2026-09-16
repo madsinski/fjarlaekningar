@@ -80,6 +80,16 @@ Svörin eru lesin úr „Algengum spurningum“ á `/thjonusta` í vefumsjóninn
 **Verð er ekki nefnt í vinnustöðinni:** spurningunni um kostnað er sleppt og
 setningar um komugjald teknar út. Breyting á spurningu á vefnum birtist hér strax.
 
+## Má endurnýja lyfið?
+
+Í erindinu *Lyfjaendurnýjun* er lyfjaleit (`checkMedication`): **rautt** ef heiti
+lyfs, virkt efni eða flokkur er á listanum yfir lyf sem eru ekki endurnýjuð,
+annars **grænt** — sem þýðir aðeins „ekki á listanum“; læknir metur alltaf.
+Hvert leitarorð verður að vera upphaf orðs í heitinu (svo „Magnýl“ finni ekki
+„Kódímagnýl“) og innihald í sviga telst ekki með. Algeng sérlyfjaheiti í flokkum
+sem eru aðeins lýst almennt (geðrofslyf, testósterón, líftæknilyf) eru í `keywords`.
+Listinn sjálfur birtist líka opinn í erindinu.
+
 ## Leit
 
 `searchGuide` í `src/lib/nurse-guide-search.ts` leitar í erindum, sjálfsprófum,
@@ -101,7 +111,13 @@ breyta því hér líka.**
 læknisþjónusta (sem voru falin á vefnum 16.9.2026). Hlekkurinn „Á vefnum“ vísar á
 síðu erindisins aðeins þegar hún er opin, annars á `/thjonusta`.
 
-## Spurningar og svör
+## Samtöl — spurningar og skilaboð
+
+Starfsfólk spyr stjórnanda, og **stjórnandi getur hafið samtal við hvern sem er**
+sem kemst inn í vinnustöðina (notendur hennar, starfsfólk Fjarlækninga sem er ekki
+stjórnandi, læknar vaktakerfisins): *Samtöl → Ný skilaboð* í stjórnborðinu eða
+innhólfinu í vinnustöðinni. Viðtakandinn sér skilaboðin í vinnustöðinni, fær
+tölvupóst og svarar þar. Viðtakendalisti: `/api/admin/vinnustod/recipients`.
 
 Þráður á einn eiganda (`gatt_threads.owner_kind`: `vs`, `staff` eða `hsu`, með
 `user_id` / `owner_staff` / `owner_hsu`); nafn, netfang og vinnustaður eru afrituð
