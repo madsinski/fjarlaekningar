@@ -5,7 +5,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Copy, Megaphone, MessageCircle, RefreshCw, Settings, UserPlus, Users, Volume2, VolumeX } from "lucide-react";
-import { UnreadDot, playChime, useSoundPref, useUnlockAudio } from "@/app/vinnustod/_components/shared";
+import { PushToggle, UnreadDot, chimeOnce, useLiveSignal, useSoundPref, useUnlockAudio } from "@/app/vinnustod/_components/shared";
 import { supabase } from "@/lib/supabase";
 import Inbox from "./Inbox";
 
@@ -43,20 +43,32 @@ export default function VinnustodAdminPage() {
   // Samtöl sem bíða svars: rauður punktur á flipanum, fjöldi í flipaheiti og
   // hljóð þegar nýtt bætist við — óháð því hvaða flipi er opinn.
   const [awaiting, setAwaiting] = useState(0);
+  const [live, setLive] = useState<{ topic: string | null; vapidKey: string | null }>({ topic: null, vapidKey: null });
+  const [pulse, setPulse] = useState(0);
   const [soundOn, setSoundOn] = useSoundPref();
   useUnlockAudio();
-  const last = useRef<number | null>(null);
+  const poll = useCallback(async () => {
+    const r = await api<{ unread: number; live?: { topic: string | null; vapidKey: string | null } }>("/api/vinnustod/me");
+    if (r.ok) {
+      setAwaiting(r.unread);
+      if (r.live) setLive((prev) => (prev.topic === r.live!.topic ? prev : r.live!));
+    }
+  }, []);
   useEffect(() => {
-    const poll = async () => {
-      const r = await api<{ unread: number }>("/api/vinnustod/me");
-      if (r.ok) setAwaiting(r.unread);
-    };
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void poll();
     const t = setInterval(() => { void poll(); }, 20_000);
     return () => clearInterval(t);
-  }, []);
+  }, [poll]);
+  // Tafarlaust merki þegar starfsmaður skrifar: sækja strax og spila hljóð.
+  useLiveSignal(live.topic, (kind) => {
+    setPulse((n) => n + 1);
+    void poll();
+    if (kind === "message" && soundOn) chimeOnce();
+  });
+  const last = useRef<number | null>(null);
   useEffect(() => {
-    if (last.current !== null && awaiting > last.current && soundOn) playChime();
+    if (last.current !== null && awaiting > last.current && soundOn) chimeOnce();
     last.current = awaiting;
     const base = document.title.replace(/^\(\d+\) /, "");
     document.title = awaiting ? `(${awaiting}) ${base}` : base;
@@ -75,7 +87,8 @@ export default function VinnustodAdminPage() {
           <h1 className="text-2xl font-bold text-slate-900">Vinnustöð</h1>
           <p className="text-sm text-slate-500">Hjúkrunarfræðingar og annað starfsfólk heilsugæslunnar sem vísar á Fjarlækningar.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <PushToggle vapidKey={live.vapidKey} variant="light" />
           <button type="button" onClick={() => setSoundOn(!soundOn)} aria-pressed={soundOn}
             title={soundOn ? "Hljóð við ný skilaboð: á" : "Hljóð við ný skilaboð: af"} className={btnGhost}>
             {soundOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />} Hljóð {soundOn ? "á" : "af"}
@@ -93,7 +106,7 @@ export default function VinnustodAdminPage() {
         ))}
       </div>
       <div className="mt-6">
-        {tab === "spurningar" && <Inbox onAwaitingChange={setAwaiting} />}
+        {tab === "spurningar" && <Inbox onAwaitingChange={setAwaiting} refresh={pulse} />}
         {tab === "notendur" && <UsersTab />}
         {tab === "tilkynningar" && <AnnouncementsTab />}
         {tab === "stillingar" && <SettingsTab />}

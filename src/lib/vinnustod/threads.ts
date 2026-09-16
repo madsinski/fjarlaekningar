@@ -9,6 +9,7 @@ import { after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { SmsActor } from "@/lib/sms-actor";
 import { notifyEmails } from "./auth";
+import { signalNewMessage } from "./live";
 import { sendVsEmail } from "./server";
 
 export const MAX_BODY = 4000;
@@ -89,6 +90,8 @@ export async function addMessage(opts: {
     created_at: now,
   });
   if (error) throw new Error(error.message);
+  // Hin hliðin fær að vita strax (opnar síður og tilkynning í tæki).
+  after(() => signalNewMessage(opts.threadId, opts.kind, opts.authorName).catch(() => {}));
   // Sá sem skrifar hefur um leið lesið allt í þræðinum.
   await supabaseAdmin.from("gatt_threads").update({
     last_message_at: now,

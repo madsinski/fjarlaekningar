@@ -13,6 +13,7 @@ import { hashSecret, passwordProblem, pinProblem, sameOrigin, sha256, verifySecr
 import { fail, json, readJson } from "@/lib/vinnustod/server";
 import { canAsk, ownerColumn } from "@/lib/vinnustod/threads";
 import { getGuideContent } from "@/lib/vinnustod/guide-content";
+import { liveTopic, vapidPublicKey } from "@/lib/vinnustod/live";
 
 export const runtime = "nodejs";
 
@@ -58,6 +59,12 @@ export async function GET(req: Request) {
     announcements: news ?? [],
     texts,
     guide: await getGuideContent(),
+    // Leynilegt rásarheiti fyrir tafarlaus merki um ný skilaboð, og lykill
+    // fyrir tilkynningar í tæki.
+    live: {
+      topic: actor.kind === "staff" && actor.isAdmin ? liveTopic({ admins: true }) : liveTopic({ kind: actor.kind, id: actor.id }),
+      vapidKey: vapidPublicKey(),
+    },
   });
 }
 

@@ -159,3 +159,24 @@ create index if not exists gatt_threads_hsu_idx on public.gatt_threads (owner_hs
 update public.gatt_threads t set owner_name = u.name, owner_email = u.email, owner_workplace = u.workplace
   from public.gatt_users u where t.user_id = u.id and t.owner_email = '';
 alter table public.gatt_messages add column if not exists author_hsu uuid references public.hsu_doctors (id) on delete set null;
+
+-- ── Tilkynningar í tæki (Web Push) ─────────────────────────────────────────
+-- Ein röð á hvert tæki/vafra sem hefur leyft tilkynningar. Stjórnendur fá
+-- tilkynningu um ný skilaboð frá starfsfólki; aðrir um skilaboð til sín.
+create table if not exists public.gatt_push_subscriptions (
+  id           uuid primary key default gen_random_uuid(),
+  owner_kind   text not null check (owner_kind in ('vs', 'staff', 'hsu')),
+  owner_id     uuid not null,
+  is_admin     boolean not null default false,
+  endpoint     text not null unique,
+  p256dh       text not null,
+  auth         text not null,
+  user_agent   text not null default '',
+  created_at   timestamptz not null default now(),
+  last_used_at timestamptz
+);
+create index if not exists gatt_push_owner_idx on public.gatt_push_subscriptions (owner_kind, owner_id);
+create index if not exists gatt_push_admin_idx on public.gatt_push_subscriptions (is_admin) where is_admin;
+alter table public.gatt_push_subscriptions enable row level security;
+drop policy if exists gatt_push_subscriptions_none on public.gatt_push_subscriptions;
+create policy gatt_push_subscriptions_none on public.gatt_push_subscriptions for all using (false) with check (false);

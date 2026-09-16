@@ -22,7 +22,7 @@ import SettingsPanel from "./SettingsPanel";
 import SmsPanel from "./SmsPanel";
 import TriageCard from "./TriageCard";
 import { TextsProvider, type GuideContent, type SharedText } from "./Texts";
-import { Drawer, FjLogo, PORTAL_URL, Qr, UnreadDot, playChime, useServiceStatus, useSoundPref, useUnlockAudio, vsApi } from "./shared";
+import { Drawer, FjLogo, PORTAL_URL, PushToggle, Qr, UnreadDot, chimeOnce, useLiveSignal, useServiceStatus, useSoundPref, useUnlockAudio, vsApi } from "./shared";
 
 export interface VsMe {
   id: string;
@@ -37,6 +37,8 @@ export interface VsMe {
   /** Stjórnandi Fjarlækninga: svarar spurningum og breytir textum fyrir alla. */
   canAnswer: boolean;
 }
+/** Leynileg rás fyrir tafarlaus merki og lykill fyrir tilkynningar í tæki. */
+export interface LiveInfo { topic: string | null; vapidKey: string | null }
 export interface Announcement { id: string; created_at: string; title: string; body: string; level: "info" | "warning" }
 
 type DrawerState =
@@ -56,8 +58,8 @@ function initialDrawer(me: VsMe): DrawerState {
   return null;
 }
 
-export default function Workstation({ me, announcements, unread: initialUnread, texts, guide, refresh }: {
-  me: VsMe; announcements: Announcement[]; unread: number; texts: Record<string, SharedText>; guide: GuideContent; refresh: () => void;
+export default function Workstation({ me, announcements, unread: initialUnread, texts, guide, live, refresh }: {
+  me: VsMe; announcements: Announcement[]; unread: number; texts: Record<string, SharedText>; guide: GuideContent; live: LiveInfo; refresh: () => void;
 }) {
   const [q, setQ] = useState("");
   const [openSlug, setOpenSlug] = useState<string | null>(null);
@@ -87,29 +89,40 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
     if (new URLSearchParams(window.location.search).get("t") === "sms") setTimeout(focusSms, 250);
   }, [focusSms]);
 
-  // Stjórnandi: fjöldi samtala sem bíða svars uppfærist reglulega. Aðrir fá
-  // fjöldann úr QuestionsCard, sem sækir samtölin sjálft.
+  // Fjöldi sem bíður. Stjórnandi fær hann úr /me; aðrir úr QuestionsCard,
+  // sem sækir samtölin sjálft.
+  const refreshUnread = useCallback(async () => {
+    if (!me.canAnswer) return;
+    const r = await vsApi<{ unread: number }>("/api/vinnustod/me", { staff: true });
+    if (r.ok) setUnread(r.unread);
+  }, [me.canAnswer]);
   useEffect(() => {
     if (!me.canAnswer) return;
-    const t = setInterval(async () => {
-      const r = await vsApi<{ unread: number }>("/api/vinnustod/me", { staff: true });
-      if (r.ok) setUnread(r.unread);
-    }, 20_000);
+    const t = setInterval(() => { void refreshUnread(); }, 20_000);
     return () => clearInterval(t);
-  }, [me.canAnswer]);
+  }, [me.canAnswer, refreshUnread]);
 
-  // Ný skilaboð: hljóð (ef kveikt) og fjöldinn í flipaheitinu.
+  // Ný skilaboð: tafarlaust merki → sækja strax, hljóð (ef kveikt).
+  // `pulse` segir listum og opnu samtali að sækja aftur.
   const [soundOn, setSoundOn] = useSoundPref();
   useUnlockAudio();
+  const [pulse, setPulse] = useState(0);
+  useLiveSignal(live.topic, (kind) => {
+    setPulse((n) => n + 1);
+    void refreshUnread();
+    if (kind === "message" && soundOn) chimeOnce();
+  });
+  // Könnunin (varaleið) getur líka fundið nýtt — þá hljóð ef fjöldinn hækkar.
   const lastUnread = useRef(initialUnread);
   useEffect(() => {
-    if (unread > lastUnread.current && soundOn) playChime();
+    if (unread > lastUnread.current && soundOn) chimeOnce();
     lastUnread.current = unread;
     document.title = unread ? `(${unread}) Vinnustöð Fjarlækninga` : "Vinnustöð Fjarlækninga";
   }, [unread, soundOn]);
 
   const pick = (slug: string) => { setQ(""); setOpenSlug(slug); };
   const setQuery = (v: string) => { setQ(v); if (v) setOpenSlug(null); };
+  const threadRead = useCallback(() => setThreadsKey((k) => k + 1), []);
   const closeDrawer = useCallback(() => {
     setDrawer(null);
     setThreadsKey((k) => k + 1); // nýlesið eða nýtt samtal birtist strax í listanum
@@ -142,6 +155,7 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
                 <UnreadDot count={unread} className="absolute -right-1 -top-1" />
               </button>
             )}
+            <PushToggle vapidKey={live.vapidKey} />
             <button type="button" onClick={() => setSoundOn(!soundOn)} title={soundOn ? "Hljóð við ný skilaboð: á" : "Hljóð við ný skilaboð: af"}
               aria-label={soundOn ? "Slökkva á hljóði" : "Kveikja á hljóði"} aria-pressed={soundOn}
               className="rounded-xl p-2 hover:bg-white/10">
@@ -191,7 +205,7 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
           <aside className={cx("min-w-0 space-y-4 lg:order-none lg:col-start-2 lg:row-span-2 lg:row-start-1", focused ? "order-3" : "order-2", "lg:sticky lg:top-[4.25rem] lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:pb-2 [scrollbar-width:thin]")}>
             {me.canMessage && (
               <div id="spurningar" className="scroll-mt-20">
-                <QuestionsCard key={threadsKey} onUnreadChange={setUnread}
+                <QuestionsCard key={threadsKey} onUnreadChange={setUnread} refresh={pulse}
                   onOpen={(id) => setDrawer({ kind: "thread", id })} onNew={() => setDrawer({ kind: "new", draft: "" })} />
               </div>
             )}
@@ -245,7 +259,7 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
         </nav>
 
         {drawer?.kind === "thread" && (
-          <Drawer title="Samtal" onClose={closeDrawer}><ThreadView id={drawer.id} onBack={closeDrawer} onRead={() => setThreadsKey((k) => k + 1)} /></Drawer>
+          <Drawer title="Samtal" onClose={closeDrawer}><ThreadView id={drawer.id} onBack={closeDrawer} onRead={threadRead} refresh={pulse} /></Drawer>
         )}
         {drawer?.kind === "new" && (
           <Drawer title="Ný spurning til Fjarlækninga" onClose={closeDrawer}>
@@ -253,7 +267,7 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
           </Drawer>
         )}
         {drawer?.kind === "inbox" && (
-          <Drawer title="Samtöl við starfsfólk" onClose={closeDrawer} wide><Inbox onAwaitingChange={setUnread} /></Drawer>
+          <Drawer title="Samtöl við starfsfólk" onClose={closeDrawer} wide><Inbox onAwaitingChange={setUnread} refresh={pulse} /></Drawer>
         )}
         {drawer?.kind === "settings" && me.kind === "vs" && (
           <Drawer title="Stillingar" onClose={closeDrawer}><SettingsPanel me={me} refresh={refresh} /></Drawer>

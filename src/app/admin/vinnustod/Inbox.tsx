@@ -38,7 +38,7 @@ interface Recipient { kind: "vs" | "staff" | "hsu"; id: string; name: string; em
 const KIND_IS: Record<Recipient["kind"], string> = { vs: "Vinnustöð", staff: "Starfsfólk", hsu: "Læknar HSU" };
 interface Msg { id: string; author_kind: "user" | "staff"; author_name: string; body: string; created_at: string }
 
-export default function Inbox({ onAwaitingChange }: { onAwaitingChange?: (n: number) => void } = {}) {
+export default function Inbox({ onAwaitingChange, refresh = 0 }: { onAwaitingChange?: (n: number) => void; refresh?: number } = {}) {
   const [filter, setFilter] = useState<"open" | "closed" | "all">("open");
   const [threads, setThreads] = useState<InboxThread[] | null>(null);
   const [open, setOpen] = useState<string | null>(null);
@@ -60,7 +60,13 @@ export default function Inbox({ onAwaitingChange }: { onAwaitingChange?: (n: num
     return () => clearInterval(t);
   }, [load]);
 
-  if (open) return <InboxThreadView id={open} onBack={() => { setOpen(null); void load(); }} />;
+  // Ný skilaboð bárust (tafarlaust merki): sækja listann strax.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (refresh) void load();
+  }, [refresh, load]);
+
+  if (open) return <InboxThreadView id={open} refresh={refresh} onBack={() => { setOpen(null); void load(); }} />;
   if (composing) {
     return <Compose onCancel={() => setComposing(false)} onSent={(id) => { setComposing(false); setOpen(id); void load(); }} />;
   }
@@ -101,7 +107,7 @@ export default function Inbox({ onAwaitingChange }: { onAwaitingChange?: (n: num
   );
 }
 
-function InboxThreadView({ id, onBack }: { id: string; onBack: () => void }) {
+function InboxThreadView({ id, onBack, refresh = 0 }: { id: string; onBack: () => void; refresh?: number }) {
   const [data, setData] = useState<{ thread: InboxThread; user: InboxThread["user"]; messages: Msg[] } | null>(null);
   const [reply, setReply] = useState("");
   const [busy, setBusy] = useState(false);
@@ -115,6 +121,10 @@ function InboxThreadView({ id, onBack }: { id: string; onBack: () => void }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (refresh) void load();
+  }, [refresh, load]);
   useEffect(() => { bottom.current?.scrollIntoView({ block: "end" }); }, [data?.messages.length]);
 
   const send = async () => {

@@ -80,6 +80,28 @@ Svörin eru lesin úr „Algengum spurningum“ á `/thjonusta` í vefumsjóninn
 **Verð er ekki nefnt í vinnustöðinni:** spurningunni um kostnað er sleppt og
 setningar um komugjald teknar út. Breyting á spurningu á vefnum birtist hér strax.
 
+## Tilkynningar um ný skilaboð — í báðar áttir
+
+`src/lib/vinnustod/live.ts`, kallað úr `addMessage` (inni í `after()`):
+
+- **Tafarlaust merki** (Supabase Realtime broadcast): opnar síður — líka í
+  bakgrunnsflipa — fá merki innan ~1 sek. og sækja stöðuna; rauði punkturinn og
+  hljóðið koma strax. Rásin er leynileg (HMAC af viðtakanda, `liveTopic`) og
+  merkið ber ekkert efni. Skilaboð frá starfsmanni → rás stjórnenda; frá
+  stjórnanda → rás eiganda samtalsins. Könnun á 20 sek. fresti og við fókus er
+  varaleið.
+- **Tilkynningar í tæki** (Web Push): hnappurinn „Kveikja á tilkynningum“ í
+  Vinnustöðinni og á /admin/vinnustod skráir `public/vinnustod-sw.js` (scope `/`,
+  engin fetch-meðhöndlun) og vistar áskriftina í `gatt_push_subscriptions`
+  (`/api/vinnustod/push`). Stjórnendur (aal2) fá tilkynningu um öll ný skilaboð
+  frá starfsfólki; aðrir um skilaboð til sín. Tilkynningin sýnir fyrirsögn
+  samtalsins og opnar rétta síðu. Útrunnar áskriftir (404/410) eyðast.
+  Lyklar: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (Vercel,
+  Production + Development).
+- Hljóð spilast aðeins á opinni síðu (vafrar leyfa það eftir fyrsta smell);
+  lokuð síða fær hljóð tækisins með tilkynningunni. iPhone: aðeins ef síðunni
+  hefur verið bætt á heimaskjá.
+
 ## Gervigreindarmat — „Hentar erindið Fjarlækningum?“
 
 Efst í vinstri dálki (fyrst í síma). Hjúkrunarfræðingur límir inn skilaboð frá

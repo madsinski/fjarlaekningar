@@ -62,7 +62,7 @@ export function NewQuestion({ initial, onCancel, onCreated }: { initial: string;
   );
 }
 
-export function ThreadView({ id, onBack, onRead }: { id: string; onBack: () => void; onRead: () => void }) {
+export function ThreadView({ id, onBack, onRead, refresh = 0 }: { id: string; onBack: () => void; onRead: () => void; refresh?: number }) {
   const [data, setData] = useState<{ thread: Thread; messages: Message[] } | null>(null);
   const [reply, setReply] = useState("");
   const [busy, setBusy] = useState(false);
@@ -81,6 +81,11 @@ export function ThreadView({ id, onBack, onRead }: { id: string; onBack: () => v
     const t = setInterval(() => { void load(); }, 20_000);
     return () => clearInterval(t);
   }, [load]);
+  // Ný skilaboð bárust (tafarlaust merki): sækja strax.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (refresh) void load();
+  }, [refresh, load]);
   useEffect(() => { bottom.current?.scrollIntoView({ block: "end" }); }, [data?.messages.length]);
 
   const send = async (e: React.FormEvent) => {
@@ -138,8 +143,8 @@ export function ThreadView({ id, onBack, onRead }: { id: string; onBack: () => v
  * Spurningar í hliðardálki: nýjustu samtölin og „Ný spurning“. Samtal opnast í
  * skúffu (onOpen) svo leitin og SMS-ið hverfi ekki á meðan.
  */
-export function QuestionsCard({ onOpen, onNew, onUnreadChange }: {
-  onOpen: (id: string) => void; onNew: () => void; onUnreadChange?: (n: number) => void;
+export function QuestionsCard({ onOpen, onNew, onUnreadChange, refresh = 0 }: {
+  onOpen: (id: string) => void; onNew: () => void; onUnreadChange?: (n: number) => void; refresh?: number;
 }) {
   const [threads, setThreads] = useState<Thread[] | null>(null);
   const [all, setAll] = useState(false);
@@ -153,6 +158,10 @@ export function QuestionsCard({ onOpen, onNew, onUnreadChange }: {
     const t = setInterval(() => { void load(); }, 20_000);
     return () => clearInterval(t);
   }, [load]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (refresh) void load();
+  }, [refresh, load]);
   // Ólesin samtöl efst, svo þau sjáist þótt listinn sé styttur.
   const sorted = [...(threads ?? [])].sort((a, b) => Number(b.unread) - Number(a.unread));
   const unread = sorted.filter((t) => t.unread).length;

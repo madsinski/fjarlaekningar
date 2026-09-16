@@ -3,10 +3,12 @@
 // Smáhlutir vinnustöðvarinnar.
 
 import { useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { BellOff, BellRing, X } from "lucide-react";
 import qrcode from "qrcode-generator";
 
-export { hsuApi as vsApi } from "@/app/hsu/_components/ui";
+import { hsuApi as vsApi } from "@/app/hsu/_components/ui";
+
+export { vsApi };
 
 /** Merki Fjarlækninga (án orðmerkis). */
 export function FjLogo({ size = 36 }: { size?: number }) {
@@ -160,5 +162,137 @@ export function UnreadDot({ count, className = "" }: { count: number; className?
         {count}
       </span>
     </span>
+  );
+}
+
+// ── Tafarlaus merki um ný skilaboð ──────────────────────────────────────────
+// Rásin (topic) kemur frá /api/vinnustod/me og er leynileg fyrir hvern
+// viðtakanda. Merkið ber ekkert efni — síðan sækir stöðuna sjálf. Að auki:
+// merki frá þjónustuforritinu (tilkynning barst) og þegar glugginn fær fókus.
+
+export function useLiveSignal(topic: string | null | undefined, onSignal: (kind: "message" | "focus") => void) {
+  const cb = useRef(onSignal);
+  useEffect(() => { cb.current = onSignal; });
+
+  useEffect(() => {
+    if (!topic) return;
+    let cancelled = false;
+    let cleanup: (() => void) | undefined;
+    void import("@/lib/supabase").then(({ supabase }) => {
+      if (cancelled) return;
+      const ch = supabase.channel(topic).on("broadcast", { event: "msg" }, () => cb.current("message")).subscribe();
+      cleanup = () => { void supabase.removeChannel(ch); };
+    });
+    return () => { cancelled = true; cleanup?.(); };
+  }, [topic]);
+
+  useEffect(() => {
+    const onSw = (e: MessageEvent) => { if (e.data?.type === "vs-new-message") cb.current("message"); };
+    const onVisible = () => { if (document.visibilityState === "visible") cb.current("focus"); };
+    navigator.serviceWorker?.addEventListener("message", onSw);
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      navigator.serviceWorker?.removeEventListener("message", onSw);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+  }, []);
+}
+
+/** Hljómur, en aldrei tvisvar með stuttu millibili (merki + könnun í senn). */
+let lastChime = 0;
+export function chimeOnce() {
+  const now = Date.now();
+  if (now - lastChime < 4000) return;
+  lastChime = now;
+  playChime();
+}
+
+// ── Tilkynningar í tæki (Web Push) ──────────────────────────────────────────
+
+const SW_URL = "/vinnustod-sw.js";
+
+function b64ToBytes(b64: string): Uint8Array<ArrayBuffer> {
+  const pad = "=".repeat((4 - (b64.length % 4)) % 4);
+  const raw = atob((b64 + pad).replace(/-/g, "+").replace(/_/g, "/"));
+  const out = new Uint8Array(new ArrayBuffer(raw.length));
+  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  return out;
+}
+
+type PushState = "unsupported" | "denied" | "off" | "on" | "busy";
+
+/**
+ * Hnappur: tilkynningar í þessu tæki á/af. Skráir þjónustuforritið, biður um
+ * leyfi og vistar áskriftina. `staff` sendir innskráningu starfsmanns með.
+ */
+export function PushToggle({ vapidKey, variant = "dark" }: { vapidKey: string | null | undefined; variant?: "dark" | "light" }) {
+  const [state, setState] = useState<PushState>("busy");
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (!vapidKey || !("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+        if (alive) setState("unsupported");
+        return;
+      }
+      if (Notification.permission === "denied") { if (alive) setState("denied"); return; }
+      const reg = await navigator.serviceWorker.getRegistration("/");
+      const sub = await reg?.pushManager.getSubscription();
+      if (!alive) return;
+      setState(sub ? "on" : "off");
+      // Endurnýja skráninguna hjá okkur (t.d. ef annar notandi var á sömu tölvu).
+      if (sub) void vsApi("/api/vinnustod/push", { body: sub.toJSON(), staff: true });
+    })().catch(() => { if (alive) setState("off"); });
+    return () => { alive = false; };
+  }, [vapidKey]);
+
+  const turnOn = async () => {
+    if (!vapidKey) return;
+    setState("busy"); setErr(null);
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") { setState(perm === "denied" ? "denied" : "off"); return; }
+      const reg = await navigator.serviceWorker.register(SW_URL, { scope: "/" });
+      await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(vapidKey) });
+      const r = await vsApi("/api/vinnustod/push", { body: sub.toJSON(), staff: true });
+      if (!r.ok) throw new Error(r.error ?? "Mistókst");
+      setState("on");
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Mistókst");
+      setState("off");
+    }
+  };
+  const turnOff = async () => {
+    setState("busy");
+    const reg = await navigator.serviceWorker.getRegistration("/");
+    const sub = await reg?.pushManager.getSubscription();
+    if (sub) {
+      await vsApi("/api/vinnustod/push", { method: "DELETE", body: { endpoint: sub.endpoint }, staff: true });
+      await sub.unsubscribe();
+    }
+    setState("off");
+  };
+
+  if (state === "unsupported") return null;
+  const dark = variant === "dark";
+  const cls = dark
+    ? "inline-flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-sm font-semibold hover:bg-white/10"
+    : "inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50";
+  const title = state === "on" ? "Tilkynningar í þessu tæki eru á — smelltu til að slökkva"
+    : state === "denied" ? "Vafrinn hefur lokað á tilkynningar. Leyfðu þær í stillingum vafrans (lásinn við slóðina)."
+    : "Fá tilkynningu um ný skilaboð þótt síðan sé lokuð";
+  return (
+    <button type="button" className={cls} title={err ?? title} aria-pressed={state === "on"}
+      disabled={state === "busy" || state === "denied"}
+      onClick={() => (state === "on" ? turnOff() : turnOn())}>
+      {state === "on" ? <BellRing className="h-4 w-4" /> : <BellOff className={`h-4 w-4 ${dark ? "opacity-70" : ""}`} />}
+      <span className={dark ? "hidden md:inline" : ""}>
+        {state === "on" ? "Tilkynningar á" : state === "denied" ? "Tilkynningar bannaðar" : state === "busy" ? "…" : "Kveikja á tilkynningum"}
+      </span>
+    </button>
   );
 }

@@ -27,7 +27,7 @@ modules also need a **Storage bucket** — noted inline.
 
 | 19 | `supabase/sms-schema.sql` | SMS til sjúklinga — `sms_messages` skráir hverja sendingu (hver sendi, á hvaða númer, staða frá Twilio). Lokuð vöfrum. | ✅ done (2026-09-16) |
 
-| 20 | `supabase/vinnustod-schema.sql` | Vinnustöð — notendur (eigin innskráning eins og vaktakerfið), lotur, traust tæki, spurningar/svör, tilkynningar, stillingar; `sms_messages.sent_by_gatt`. Allar `gatt_*` töflur lokaðar vöfrum. Viðbót sama dag: `gatt_threads.owner_*` (spurningar frá starfsfólki og læknum) og `gatt_messages.author_hsu`. Sjá `docs/vinnustod.md`. | ✅ done (2026-09-16, viðbót líka) |
+| 20 | `supabase/vinnustod-schema.sql` | Vinnustöð — notendur (eigin innskráning eins og vaktakerfið), lotur, traust tæki, spurningar/svör, tilkynningar, stillingar; `sms_messages.sent_by_gatt`. Allar `gatt_*` töflur lokaðar vöfrum. Viðbót sama dag: `gatt_threads.owner_*` (spurningar frá starfsfólki og læknum) og `gatt_messages.author_hsu`; `gatt_push_subscriptions` (tilkynningar í tæki). Sjá `docs/vinnustod.md`. | ✅ done (2026-09-16, viðbót líka) |
 
 > After running a migration, the matching admin module works immediately (no
 > redeploy needed — the tables just start returning data).
