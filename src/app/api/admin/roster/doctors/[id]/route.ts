@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
+import { disconnect as disconnectGoogle } from "@/lib/roster-google-sync";
 
 export const runtime = "nodejs";
 
@@ -76,6 +77,9 @@ export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }
     return NextResponse.json({ ok: false, error: "Admin role required" }, { status: 403 });
   }
   const { id } = await ctx.params;
+  // Google first: once the row is gone nobody could remove the shifts from the
+  // doctor's calendar or revoke our token (same as the HSU roster).
+  await disconnectGoogle(id).catch(() => {});
   // Shifts keep their history: doctor_id is set null on delete (FK on delete set null).
   const { error } = await supabaseAdmin.from("roster_doctors").delete().eq("id", id);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });

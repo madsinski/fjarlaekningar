@@ -78,7 +78,7 @@ export default function CalendarTab({ hasToken }: { hasToken: boolean }) {
             <a href="/api/hsu/me/google/start" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[var(--hsu)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--hsu-dark)]">
               <Link2 className="h-4 w-4" /> Tengja Google-dagatal
             </a>
-            <p className="mt-3 text-[11px] text-slate-500">Við búum til sérstakt dagatal, „{g.calendarName}“, og skrifum eingöngu í það. Við sjáum hvorki né breytum öðrum dagatölum þínum.</p>
+            <p className="mt-3 text-[11px] text-slate-500">Við búum til sérstakt dagatal, „{g.calendarName}“, og skrifum eingöngu í það. Við sjáum hvorki né breytum öðrum dagatölum þínum. <a href="/personuvernd-starfsfolks" target="_blank" rel="noopener noreferrer" className="underline">Persónuvernd</a></p>
           </>
         ) : (
           <>

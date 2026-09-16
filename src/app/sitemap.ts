@@ -71,6 +71,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // The changelog has one URL and no English twin.
   base.push({ url: `${SITE_URL}/breytingaskra`, lastModified: now, changeFrequency: "monthly", priority: 0.3 });
+  // Persónuvernd starfsfólks: ein slóð, enski textinn er á sömu síðu.
+  base.push({ url: `${SITE_URL}/personuvernd-starfsfolks`, lastModified: now, changeFrequency: "yearly", priority: 0.2 });
 
   try {
     const { c, enReady } = await getPage("fjolmidlar", "is");

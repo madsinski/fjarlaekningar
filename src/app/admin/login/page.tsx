@@ -244,6 +244,9 @@ export default function AdminLoginPage() {
             {error}
           </div>
         )}
+        <p className="mt-6 text-center text-[11px]">
+          <a href="/personuvernd-starfsfolks" className="text-slate-400 underline hover:text-slate-600">Persónuvernd starfsfólks</a>
+        </p>
       </div>
     </div>
   );

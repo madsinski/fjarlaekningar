@@ -97,7 +97,8 @@ export default function GoogleCalendarCard({ token }: { token: string }) {
         </button>
         <p className="mt-2 text-[11px] text-slate-400">
           Við búum til nýtt dagatal, „{st.calendarName}“, og skrifum eingöngu í það. Heimildin sem beðið
-          er um nær ekki til eigin dagatala þinna — hvorki til að lesa þau né breyta þeim.
+          er um nær ekki til eigin dagatala þinna — hvorki til að lesa þau né breyta þeim.{" "}
+          <a href="/personuvernd-starfsfolks" target="_blank" rel="noopener noreferrer" className="underline">Persónuvernd</a>
         </p>
       </div>
     );

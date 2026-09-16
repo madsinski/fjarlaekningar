@@ -28,6 +28,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ token: string }
     .from("roster_doctors")
     .select("id, name")
     .eq("access_token", token)
+    .eq("active", true) // óvirkur læknir: dagatalsslóðin hættir að virka
     .maybeSingle();
   if (!doctor) return new Response("Not found", { status: 404 });
 

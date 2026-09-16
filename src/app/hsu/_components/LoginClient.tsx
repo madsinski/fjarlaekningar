@@ -182,6 +182,9 @@ export default function LoginClient({ next }: { next: string }) {
         <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[11px] text-slate-400">
           <ShieldCheck className="h-3.5 w-3.5" /> Aðgangskóði virkar aðeins á tæki þar sem þú hefur skráð þig inn með lykilorði.
         </p>
+        <p className="mt-2 text-center text-[11px]">
+          <a href="/personuvernd-starfsfolks" className="text-slate-400 underline hover:text-slate-600">Persónuvernd</a>
+        </p>
       </div>
     </main>
   );

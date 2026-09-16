@@ -143,6 +143,11 @@ export default async function Footer({
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link href="/personuvernd-starfsfolks" className="hover:text-white">
+                  Persónuvernd starfsfólks
+                </Link>
+              </li>
             </ul>
           </div>
         )}
