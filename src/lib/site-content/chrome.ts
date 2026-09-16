@@ -44,6 +44,7 @@ export const CHROME_FIELDS: SiteField[] = [
 
   // Footer — contact lines
   { key: "footer_company", label: "Fyrirtæki", group: "Fótur", type: "value" },
+  { key: "footer_kennitala", label: "Kennitala", group: "Fótur", type: "value", help: "Birtist undir heiti fyrirtækisins. Tengir vefinn við skráninguna í fyrirtækjaskrá." },
   { key: "footer_address", label: "Heimilisfang", group: "Fótur", type: "value" },
   { key: "footer_country", label: "Land", group: "Fótur", type: "text" },
   { key: "footer_email", label: "Netfang", group: "Fótur", type: "value" },
@@ -70,7 +71,8 @@ export const CHROME_DEFAULTS_IS: LocaleContent = {
   footer_legal_heading: "Lögfræði",
 
   footer_company: "Fjarlækningar ehf.",
-  footer_address: "Langholtsvegi 111\n104 Reykjavík",
+  footer_kennitala: "480922-0340",
+  footer_address: "Hofsvallagötu 57\n107 Reykjavík",
   footer_country: "Ísland",
   footer_email: "fjarlaekningar@fjarlaekningar.is",
 

@@ -96,7 +96,7 @@ export type SeoFacts = {
   ogImage: string;
   company: string;
   email: string;
-  /** Footer address, "Langholtsvegi 111\n104 Reykjavík" — street on line 1. */
+  /** Footer address, "Hofsvallagötu 57\n107 Reykjavík" — street on line 1. */
   address: string;
   country: string;
   /** Official profile URLs, blank entries dropped. */

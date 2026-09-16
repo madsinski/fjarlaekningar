@@ -37,6 +37,7 @@ export interface FooterContent {
   footer_contact_heading?: string;
   footer_legal_heading?: string;
   footer_company?: string;
+  footer_kennitala?: string;
   footer_address?: string;
   footer_country?: string;
   footer_email?: string;
@@ -55,7 +56,8 @@ const FOOTER_DEFAULTS: Required<FooterContent> = {
   footer_contact_heading: "Samband",
   footer_legal_heading: "Lögfræði",
   footer_company: "Fjarlækningar ehf.",
-  footer_address: "Langholtsvegi 111\n104 Reykjavík",
+  footer_kennitala: "480922-0340",
+  footer_address: "Hofsvallagötu 57\n107 Reykjavík",
   footer_country: "Ísland",
   footer_email: "fjarlaekningar@fjarlaekningar.is",
   footer_rights: "Fjarlækningar ehf. Allur réttur áskilinn.",
@@ -113,7 +115,12 @@ export default async function Footer({
           <div>
             <h3 className="text-sm font-semibold text-white mb-3">{t.footer_contact_heading}</h3>
             <ul className="space-y-2 text-sm text-slate-400">
-              <li>{t.footer_company}</li>
+              <li>
+                {t.footer_company}
+                {t.footer_kennitala && (
+                  <span className="block text-slate-500">{locale === "en" ? "Reg. no." : "kt."} {t.footer_kennitala}</span>
+                )}
+              </li>
               {t.footer_address && <li className="whitespace-pre-line">{t.footer_address}</li>}
               <li>{t.footer_country}</li>
               <li>

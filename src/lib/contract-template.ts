@@ -8,7 +8,7 @@ export const DEFAULT_CONTRACT_TITLE = "Verktakasamningur um fjarlæknaþjónustu
 export const DEFAULT_CONTRACT_BODY = `VERKTAKASAMNINGUR UM FJARLÆKNAÞJÓNUSTU
 
 1. Samningsaðilar
-Annars vegar Fjarlækningar ehf., kt. [kennitala Fjarlækninga], Langholtsvegi 111, 104 Reykjavík ("Fjarlækningar"), og hins vegar [Nafn verktaka], kt. [kennitala verktaka] ("Verktaki").
+Annars vegar Fjarlækningar ehf., kt. 480922-0340, Hofsvallagötu 57, 107 Reykjavík ("Fjarlækningar"), og hins vegar [Nafn verktaka], kt. [kennitala verktaka] ("Verktaki").
 
 2. Umfang þjónustu
 Verktaki sinnir mati og meðferð á einföldum og afmörkuðum erindum í gegnum örugga sjúklingagátt Fjarlækninga, á opnunartíma alla daga milli kl. 10 og 22 samkvæmt vaktaskipulagi. Alvarlegri erindum skal vísað í réttan farveg innan heilbrigðiskerfisins.
