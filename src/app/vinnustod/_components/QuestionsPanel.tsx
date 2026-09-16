@@ -4,11 +4,12 @@
 //
 // Starfsmaður spyr um þjónustuna („Má sjúklingur á brjóstagjöf nota þetta?“),
 // Fjarlækningar svara í stjórnborðinu og svarið birtist hér — og í tölvupósti.
-// Listinn endurnýjast sjálfur svo svar sjáist án þess að endurhlaða.
+// Listinn (QuestionsCard) endurnýjast sjálfur svo svar sjáist án þess að
+// endurhlaða; samtal og ný spurning opnast í skúffu.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Loader2, MessageCircle, Plus, Send } from "lucide-react";
-import { Badge, Button, Card, Field, Notice, cx, inputCls, timeAgoIs } from "@/app/hsu/_components/ui";
+import { Button, Card, Field, Notice, cx, inputCls } from "@/app/hsu/_components/ui";
 import { vsApi, whenIs } from "./shared";
 
 interface Thread {
@@ -27,71 +28,7 @@ interface Message {
   created_at: string;
 }
 
-export default function QuestionsPanel({ onUnreadChange, initialCompose }: { onUnreadChange?: (n: number) => void; initialCompose?: string }) {
-  const [threads, setThreads] = useState<Thread[] | null>(null);
-  const [open, setOpen] = useState<string | null>(null);
-  const [composing, setComposing] = useState(Boolean(initialCompose));
-
-  const load = useCallback(async () => {
-    const r = await vsApi<{ threads: Thread[] }>("/api/vinnustod/threads");
-    if (r.ok) {
-      setThreads(r.threads);
-      onUnreadChange?.(r.threads.filter((t) => t.unread).length);
-    }
-  }, [onUnreadChange]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void load();
-    const t = setInterval(() => { void load(); }, 30_000);
-    return () => clearInterval(t);
-  }, [load]);
-
-  if (open) return <ThreadView id={open} onRead={load} onBack={() => { setOpen(null); void load(); }} />;
-  if (composing) {
-    return <NewQuestion initial={initialCompose ?? ""} onCancel={() => setComposing(false)}
-      onCreated={(id) => { setComposing(false); setOpen(id); void load(); }} />;
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">Spurningar til Fjarlækninga</h1>
-          <p className="text-sm text-slate-500">Spyrðu okkur um þjónustuna. Við svörum hér og þú færð tölvupóst.</p>
-        </div>
-        <Button onClick={() => setComposing(true)}><Plus className="h-4 w-4" /> Ný spurning</Button>
-      </div>
-
-      <Card className="divide-y divide-slate-100">
-        {threads === null ? (
-          <div className="m-4 h-20 animate-pulse rounded-xl bg-slate-100" />
-        ) : threads.length === 0 ? (
-          <div className="p-8 text-center">
-            <MessageCircle className="mx-auto h-8 w-8 text-slate-300" />
-            <p className="mt-2 text-sm text-slate-600">Engar spurningar enn. Sé eitthvað óljóst um þjónustuna máttu spyrja okkur hvenær sem er.</p>
-          </div>
-        ) : (
-          threads.map((t) => (
-            <button key={t.id} onClick={() => setOpen(t.id)}
-              className={cx("flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50", t.unread && "bg-[var(--hsu-soft)]")}>
-              {t.unread && <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--hsu)]" aria-label="Ólesið svar" />}
-              <span className="min-w-0 flex-1">
-                <span className={cx("block truncate text-sm", t.unread ? "font-bold" : "font-semibold")}>{t.subject}</span>
-                <span className="block text-xs text-slate-500">
-                  {t.last_author === "staff" ? "Fjarlækningar svöruðu" : "Bíður svars"} · {timeAgoIs(t.last_message_at)}
-                </span>
-              </span>
-              {t.status === "closed" ? <Badge>Lokið</Badge> : t.last_author === "staff" ? <Badge tone="green">Svarað</Badge> : <Badge tone="amber">Bíður</Badge>}
-            </button>
-          ))
-        )}
-      </Card>
-    </div>
-  );
-}
-
-function NewQuestion({ initial, onCancel, onCreated }: { initial: string; onCancel: () => void; onCreated: (id: string) => void }) {
+export function NewQuestion({ initial, onCancel, onCreated }: { initial: string; onCancel: () => void; onCreated: (id: string) => void }) {
   const [subject, setSubject] = useState(initial);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
@@ -125,7 +62,7 @@ function NewQuestion({ initial, onCancel, onCreated }: { initial: string; onCanc
   );
 }
 
-function ThreadView({ id, onBack, onRead }: { id: string; onBack: () => void; onRead: () => void }) {
+export function ThreadView({ id, onBack, onRead }: { id: string; onBack: () => void; onRead: () => void }) {
   const [data, setData] = useState<{ thread: Thread; messages: Message[] } | null>(null);
   const [reply, setReply] = useState("");
   const [busy, setBusy] = useState(false);
@@ -194,5 +131,58 @@ function ThreadView({ id, onBack, onRead }: { id: string; onBack: () => void; on
         </Card>
       )}
     </div>
+  );
+}
+
+/**
+ * Spurningar í hliðardálki: nýjustu samtölin og „Ný spurning“. Samtal opnast í
+ * skúffu (onOpen) svo leitin og SMS-ið hverfi ekki á meðan.
+ */
+export function QuestionsCard({ onOpen, onNew, onUnreadChange }: {
+  onOpen: (id: string) => void; onNew: () => void; onUnreadChange?: (n: number) => void;
+}) {
+  const [threads, setThreads] = useState<Thread[] | null>(null);
+  const [all, setAll] = useState(false);
+  const load = useCallback(async () => {
+    const r = await vsApi<{ threads: Thread[] }>("/api/vinnustod/threads");
+    if (r.ok) { setThreads(r.threads); onUnreadChange?.(r.threads.filter((t) => t.unread).length); }
+  }, [onUnreadChange]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load();
+    const t = setInterval(() => { void load(); }, 30_000);
+    return () => clearInterval(t);
+  }, [load]);
+  const shown = all ? threads ?? [] : (threads ?? []).slice(0, 4);
+  return (
+    <Card className="p-4">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="flex items-center gap-2 font-bold text-slate-900">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--hsu-soft)] text-[var(--hsu)]"><MessageCircle className="h-4 w-4" /></span>
+          Spurningar til Fjarlækninga
+        </h2>
+      </div>
+      <p className="mt-1 text-xs text-slate-500">Óviss um erindi? Spyrðu okkur — svarið kemur hér og í pósti.</p>
+      <Button className="mt-3 w-full" onClick={onNew}><Plus className="h-4 w-4" /> Ný spurning</Button>
+      <div className="mt-3 divide-y divide-slate-100">
+        {threads === null ? <div className="h-12 animate-pulse rounded-lg bg-slate-100" />
+          : threads.length === 0 ? <p className="py-2 text-xs text-slate-500">Engar spurningar enn.</p>
+          : shown.map((t) => (
+            <button key={t.id} type="button" onClick={() => onOpen(t.id)}
+              className={cx("flex w-full items-center gap-2 rounded-lg px-1 py-2 text-left hover:bg-slate-50", t.unread && "font-bold")}>
+              {t.unread ? <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--hsu)]" aria-label="Ólesið" /> : <span className="h-2 w-2 shrink-0" />}
+              <span className="min-w-0 flex-1 truncate text-sm">{t.subject}</span>
+              <span className={cx("shrink-0 text-[10px] font-semibold", t.last_author === "staff" ? "text-emerald-700" : "text-amber-700")}>
+                {t.status === "closed" ? "Lokið" : t.last_author === "staff" ? "Svarað" : "Bíður"}
+              </span>
+            </button>
+          ))}
+      </div>
+      {(threads?.length ?? 0) > 4 && (
+        <button type="button" onClick={() => setAll((v) => !v)} className="mt-1 text-xs font-semibold text-[var(--hsu-dark)] hover:underline">
+          {all ? "Sýna færri" : `Allar spurningar (${threads!.length})`}
+        </button>
+      )}
+    </Card>
   );
 }

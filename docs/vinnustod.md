@@ -24,7 +24,8 @@ vinnudaginn.
 3. **Læknar í HSU-vaktakerfinu** — með sinni innskráningu; hlekkur í valmynd
    læknisins á *Mín síða*.
 
-Aðeins notendur vinnustöðvar (1) sjá flipana *Spurningar* og *Stillingar*.
+Aðeins notendur vinnustöðvar (1) spyrja spurninga og hafa *Stillingar*. Stjórnandi
+Fjarlækninga (með `aal2`) sér í staðinn innhólfið og getur breytt textum fyrir alla.
 
 ### Nýir notendur
 
@@ -38,18 +39,38 @@ Aðeins notendur vinnustöðvar (1) sjá flipana *Spurningar* og *Stillingar*.
   leyfð þar, því þá gæti hver sem er skráð sig.
 - *Óvirkja* lokar aðganginum strax: allar lotur og traust tæki hverfa.
 
-## Flipar
+## Skjárinn
 
-- **Yfirlit** — opið/lokað núna (kl. 10–22 alla daga), tilkynningar frá Fjarlækningum,
-  ólesin svör, flýtileiðir og það helsta um þjónustuna.
-- **Upplýsingar** — hvert erindi með *hentar / hentar ekki* og tilbúnu svari til að
-  afrita, algengar spurningar með svörum, hvernig sjúklingur kemst inn og lyf sem
-  eru ekki endurnýjuð. Leitin skilur texta án íslenskra stafa („thvag“,
-  „blodprufa“). Flýtilykill: `/`.
-- **SMS** — senda sjúklingi hlekkinn og sjá hvort hann komst til skila (Twilio; sjá
-  `src/lib/sms.ts`). QR-kóði fyrir sjúkling sem stendur við borðið.
-- **Spurningar** — starfsmaður spyr Fjarlækningar; svarið birtist hér og í pósti.
-- **Stillingar** — lykilorð og aðgangskóði.
+Einn skjár, engir flipar — hjúkrunarfræðingurinn er í símanum og þarf allt strax:
+
+- **Efst:** stór leit (flýtilykill `/`, skilur texta án íslenskra stafa), staða
+  þjónustunnar (opið/lokað, kl. 10–22) og erindin sem flýtihnappar.
+- **Vinstra megin:** niðurstöður leitar eða valið erindi — *hentar* (grænt) /
+  *hentar ekki* (rautt) og texti til sjúklings **með hlekk á gáttina**, á íslensku
+  eða ensku. Þar fyrir neðan: meginreglurnar (græn / rauð spjöld), almennur texti
+  með hlekk, sjálfspróf með leiðbeiningum og hlekk á `/thjonusta#tests`, tilbúin
+  svör og lyf sem eru ekki endurnýjuð. Tilkynningar birtast efst.
+- **Hægra megin (fast):** SMS, spurningar til Fjarlækninga (stjórnandi: innhólf) og
+  QR-kóði. Í síma kemur þetta fyrst og stika neðst (Leita / SMS / Spurningar).
+- Samtal, ný spurning, innhólf, stillingar og stór QR-kóði opnast í skúffu.
+- `?t=sms` (og gamla `/sms`) fer beint í símanúmerið.
+
+## Textar sem má breyta
+
+Allir afritanlegir textar (erindi, almenni textinn, sjálfspróf, tilbúin svör) hafa
+**Breyta**. Textinn leysist upp í þessari röð:
+
+1. **Eigin útgáfa** — „Vista hjá mér“; geymd í vafranum (t.d. með nafni stöðvar).
+   „Nota sameiginlega textann“ afturkallar.
+2. **Útgáfa Fjarlækninga** — „Vista fyrir alla“ (aðeins stjórnandi, `aal2`);
+   `gatt_settings`, lykill `text:<auðkenni>`, ein röð á texta. „Upprunalegur texti“
+   eyðir henni.
+3. **Sjálfgefinn texti** í `src/lib/nurse-guide.ts` (`defaultText`).
+
+„Afrita“ í breytiham notar breytinguna aðeins í þetta sinn. Texti til sjúklings
+verður að innihalda slóð — viðmótið varar við og þjónninn neitar að vista án hennar.
+Auðkenni: `problem:<slug>:<is|en>`, `access:<is|en>`, `selftest:<key>:<is|en>`,
+`answer:<key>`.
 
 ## Efnið í *Upplýsingar*
 
@@ -73,7 +94,7 @@ læknisþjónusta) eru ekki í leiðarvísinum.
 ## Tilkynningar
 
 Undir *Tilkynningar* í stjórnborði: fyrirsögn, texti, tegund (upplýsingar eða gul
-viðvörun) og valkvæð gildistími. Birtast efst á *Yfirliti* hjá öllum.
+viðvörun) og valkvæð gildistími. Birtast efst í vinnustöðinni hjá öllum.
 
 ## Öryggi
 
@@ -92,6 +113,6 @@ Allar `gatt_*` töflur eru lokaðar vöfrum (RLS `using (false)`); aðgangur ein
 - `supabase/vinnustod-schema.sql` — töflur (#20 í `MIGRATIONS.md`)
 - `src/lib/vinnustod/` — innskráning, þjónn, stjórnun, samtöl
 - `src/lib/nurse-guide.ts`, `nurse-guide-search.ts` — efni og leit
-- `src/app/vinnustod/` — viðmót
+- `src/app/vinnustod/` — viðmót (`_components/Workstation.tsx` skjárinn, `Guide.tsx` efnið, `Texts.tsx` breytanlegir textar)
 - `src/app/api/vinnustod/`, `src/app/api/admin/vinnustod/` — API
 - `src/app/admin/vinnustod/page.tsx` — stjórnun

@@ -7,20 +7,21 @@
 import { useCallback, useEffect, useState } from "react";
 import VsLogin from "./_components/VsLogin";
 import Workstation, { type Announcement, type VsMe } from "./_components/Workstation";
+import type { SharedText } from "./_components/Texts";
 import { vsApi } from "./_components/shared";
 
 type State =
   | { kind: "loading" }
   | { kind: "login" }
-  | { kind: "ready"; me: VsMe; announcements: Announcement[]; unread: number }
+  | { kind: "ready"; me: VsMe; announcements: Announcement[]; unread: number; texts: Record<string, SharedText> }
   | { kind: "error"; text: string };
 
 export default function VinnustodPage() {
   const [state, setState] = useState<State>({ kind: "loading" });
 
   const load = useCallback(async () => {
-    const r = await vsApi<{ me: VsMe; announcements: Announcement[]; unread: number; status?: number }>("/api/vinnustod/me", { staff: true });
-    if (r.ok) setState({ kind: "ready", me: r.me, announcements: r.announcements, unread: r.unread });
+    const r = await vsApi<{ me: VsMe; announcements: Announcement[]; unread: number; texts?: Record<string, SharedText>; status?: number }>("/api/vinnustod/me", { staff: true });
+    if (r.ok) setState({ kind: "ready", me: r.me, announcements: r.announcements, unread: r.unread, texts: r.texts ?? {} });
     else if (r.status === 401 || r.status === 403) setState({ kind: "login" });
     else setState({ kind: "error", text: r.error ?? "Ekki tókst að hlaða vinnustöðinni" });
   }, []);
@@ -42,5 +43,5 @@ export default function VinnustodPage() {
       </div>
     );
   }
-  return <Workstation me={state.me} announcements={state.announcements} unread={state.unread} refresh={load} />;
+  return <Workstation me={state.me} announcements={state.announcements} unread={state.unread} texts={state.texts} refresh={load} />;
 }

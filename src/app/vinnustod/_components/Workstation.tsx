@@ -3,25 +3,25 @@
 // Vinnustöð Fjarlækninga — opin allan vinnudaginn hjá hjúkrunarfræðingi sem
 // svarar símanum og skilaboðum sjúklinga.
 //
-//   Yfirlit      staða þjónustunnar (opið/lokað), tilkynningar, flýtileiðir,
-//                QR-kóði á skjá fyrir sjúkling sem stendur við borðið
-//   Upplýsingar  hvað hentar og hvað ekki, tilbúin svör, lyfjalisti, leit
-//   SMS          senda hlekkinn og sjá hvort hann komst til skila
-//   Spurningar   hjúkrunarfræðingur spyr Fjarlækningar; stjórnandi svarar hér líka
-//   Stillingar   lykilorð og aðgangskóði (aðeins notendur vinnustöðvar)
+// Einn skjár, ekkert falið á bak við flipa:
+//   * Efst: stór leit, staða þjónustunnar og erindin sem flýtihnappar.
+//   * Vinstra megin: niðurstöður, erindið sjálft (hentar / hentar ekki og texti
+//     til sjúklings með hlekk), meginreglurnar, sjálfspróf, tilbúin svör.
+//   * Hægra megin (fast á stórum skjá): SMS og spurningar til Fjarlækninga.
+// Samtöl, innhólf, stillingar og stór QR-kóði opnast í skúffu svo leitin og
+// SMS-ið hverfi ekki. Í síma raðast þetta í einn dálk með stiku neðst.
 
-import { useEffect, useRef, useState } from "react";
-import {
-  BookOpen, ChevronRight, Clock, Home, KeyRound, Lock, LogOut, Megaphone, MessageCircle, QrCode, Search, Send, Settings, X,
-} from "lucide-react";
-import PinPad from "@/app/hsu/_components/PinPad";
-import { Badge, Button, Card, Field, Notice, cx, firstName, inputCls } from "@/app/hsu/_components/ui";
-import { GUIDE_FACTS } from "@/lib/nurse-guide";
-import NurseGuide from "./NurseGuide";
-import QuestionsPanel from "./QuestionsPanel";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ChevronRight, LogOut, Megaphone, MessageCircle, QrCode, Search, Send, Settings } from "lucide-react";
+import { Card, Notice, cx } from "@/app/hsu/_components/ui";
 import Inbox from "@/app/admin/vinnustod/Inbox";
+import type { Lang } from "@/lib/nurse-guide";
+import { GuideBody, SearchHero } from "./Guide";
+import { NewQuestion, QuestionsCard, ThreadView } from "./QuestionsPanel";
+import SettingsPanel from "./SettingsPanel";
 import SmsPanel from "./SmsPanel";
-import { FjLogo, PORTAL_URL, Qr, useServiceStatus, vsApi } from "./shared";
+import { TextsProvider, type SharedText } from "./Texts";
+import { Drawer, FjLogo, PORTAL_URL, Qr, useServiceStatus, vsApi } from "./shared";
 
 export interface VsMe {
   id: string;
@@ -33,363 +33,228 @@ export interface VsMe {
   hasPin: boolean;
   mustChangePassword: boolean;
   canMessage: boolean;
-  /** Stjórnandi Fjarlækninga: svarar spurningunum hér líka. */
+  /** Stjórnandi Fjarlækninga: svarar spurningum og breytir textum fyrir alla. */
   canAnswer: boolean;
 }
 export interface Announcement { id: string; created_at: string; title: string; body: string; level: "info" | "warning" }
 
-type Tab = "yfirlit" | "upplysingar" | "sms" | "spurningar" | "stillingar";
+type DrawerState =
+  | null
+  | { kind: "thread"; id: string }
+  | { kind: "new"; draft: string }
+  | { kind: "inbox" }
+  | { kind: "settings" }
+  | { kind: "qr" };
 
-export default function Workstation({ me, announcements, unread: initialUnread, refresh }: {
-  me: VsMe; announcements: Announcement[]; unread: number; refresh: () => void;
+function initialDrawer(me: VsMe): DrawerState {
+  if (me.kind === "vs" && me.mustChangePassword) return { kind: "settings" };
+  if (typeof window === "undefined") return null;
+  const t = new URLSearchParams(window.location.search).get("t");
+  if (t === "spurningar" && me.canAnswer) return { kind: "inbox" };
+  if (t === "stillingar" && me.kind === "vs") return { kind: "settings" };
+  return null;
+}
+
+export default function Workstation({ me, announcements, unread: initialUnread, texts, refresh }: {
+  me: VsMe; announcements: Announcement[]; unread: number; texts: Record<string, SharedText>; refresh: () => void;
 }) {
-  const [tab, setTabState] = useState<Tab>(() => {
-    if (typeof window === "undefined") return "yfirlit";
-    const t = new URLSearchParams(window.location.search).get("t") as Tab | null;
-    return t && ["yfirlit", "upplysingar", "sms", "spurningar", "stillingar"].includes(t) ? t : me.mustChangePassword ? "stillingar" : "yfirlit";
-  });
+  const [q, setQ] = useState("");
+  const [openSlug, setOpenSlug] = useState<string | null>(null);
+  const [lang, setLang] = useState<Lang>("is");
   const [unread, setUnread] = useState(initialUnread);
-  const [qrOpen, setQrOpen] = useState(false);
-  const [askDraft, setAskDraft] = useState<string | undefined>(undefined);
-  const [searchPing, setSearchPing] = useState(0);
+  const [drawer, setDrawer] = useState<DrawerState>(() => initialDrawer(me));
+  const [threadsKey, setThreadsKey] = useState(0);
   const phoneRef = useRef<HTMLInputElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const status = useServiceStatus();
 
-  const setTab = (t: Tab) => {
-    setTabState(t);
-    const url = new URL(window.location.href);
-    url.searchParams.set("t", t);
-    window.history.replaceState(null, "", url);
-    window.scrollTo({ top: 0 });
+  const focusSms = useCallback(() => {
+    const el = phoneRef.current;
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.focus({ preventScroll: true });
+  }, []);
+  const focusSearch = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    searchRef.current?.focus({ preventScroll: true });
   };
 
-  // Ólesin svör uppfærast þó spurningaflipinn sé ekki opinn.
+  // Gamla slóðin /sms (→ ?t=sms) fer beint í símanúmerið.
   useEffect(() => {
-    if (!me.canMessage && !me.canAnswer) return;
+    if (new URLSearchParams(window.location.search).get("t") === "sms") setTimeout(focusSms, 250);
+  }, [focusSms]);
+
+  // Stjórnandi: fjöldi spurninga sem bíða svars uppfærist reglulega.
+  useEffect(() => {
+    if (!me.canAnswer) return;
     const t = setInterval(async () => {
       const r = await vsApi<{ unread: number }>("/api/vinnustod/me", { staff: true });
       if (r.ok) setUnread(r.unread);
     }, 60_000);
     return () => clearInterval(t);
-  }, [me.canMessage, me.canAnswer]);
+  }, [me.canAnswer]);
 
-  const goSms = () => { setTab("sms"); setTimeout(() => phoneRef.current?.focus(), 80); };
-  const goSearch = () => { setTab("upplysingar"); setSearchPing((n) => n + 1); };
-  const goAsk = (q?: string) => { setAskDraft(q ? `Spurning: ${q}` : undefined); setTab("spurningar"); };
-
-  const tabs: { key: Tab; label: string; icon: React.ReactNode; badge?: number; show: boolean }[] = [
-    { key: "yfirlit", label: "Yfirlit", icon: <Home className="h-4 w-4" />, show: true },
-    { key: "upplysingar", label: "Upplýsingar", icon: <BookOpen className="h-4 w-4" />, show: true },
-    { key: "sms", label: "SMS", icon: <Send className="h-4 w-4" />, show: true },
-    { key: "spurningar", label: "Spurningar", icon: <MessageCircle className="h-4 w-4" />, badge: unread, show: me.canMessage || me.canAnswer },
-    { key: "stillingar", label: "Stillingar", icon: <Settings className="h-4 w-4" />, show: me.kind === "vs" },
-  ];
+  const pick = (slug: string) => { setQ(""); setOpenSlug(slug); };
+  const setQuery = (v: string) => { setQ(v); if (v) setOpenSlug(null); };
+  const closeDrawer = useCallback(() => {
+    setDrawer(null);
+    setThreadsKey((k) => k + 1); // nýlesið eða nýtt samtal birtist strax í listanum
+  }, []);
 
   const logout = async () => {
     if (me.kind === "vs") await vsApi("/api/vinnustod/auth/logout", { body: {} });
     window.location.href = me.kind === "staff" ? "/admin" : me.kind === "hsu" ? "/hsu/min-sida" : "/vinnustod";
   };
 
+  const openQuestions = () => {
+    if (me.canAnswer) setDrawer({ kind: "inbox" });
+    else document.getElementById("spurningar")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
   return (
-    <div>
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
-          <FjLogo size={34} />
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-bold text-slate-900">Vinnustöð Fjarlækninga</div>
-            <div className="truncate text-xs text-slate-500">{me.name}{me.workplace ? ` · ${me.workplace}` : ""}</div>
-          </div>
-          <ServiceChip />
-          <button onClick={logout} className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100" title="Skrá út">
-            <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">{me.kind === "vs" ? "Skrá út" : "Til baka"}</span>
-          </button>
-        </div>
-        <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-3 pb-2 sm:px-5 [scrollbar-width:none]">
-          {tabs.filter((t) => t.show).map((t) => (
-            <button key={t.key} onClick={() => setTab(t.key)} aria-current={tab === t.key ? "page" : undefined}
-              className={cx("inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition",
-                tab === t.key ? "bg-[var(--hsu)] text-white" : "text-slate-600 hover:bg-slate-100")}>
-              {t.icon} {t.label}
-              {Boolean(t.badge) && <span className={cx("ml-0.5 rounded-full px-1.5 text-[11px]", tab === t.key ? "bg-white/25" : "bg-red-500 text-white")}>{t.badge}</span>}
+    <TextsProvider userKey={`${me.kind}:${me.id}`} canShare={me.canAnswer} initial={texts}>
+      <div className="min-h-screen bg-slate-50 pb-24 lg:pb-10">
+        <header className="sticky top-0 z-40 bg-[#062a38] text-white shadow-sm">
+          <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-2.5 sm:px-6">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white"><FjLogo size={26} /></span>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-bold">Vinnustöð Fjarlækninga</div>
+              <div className="truncate text-xs text-cyan-100/70">{me.name}{me.workplace ? ` · ${me.workplace}` : ""}</div>
+            </div>
+            {me.canAnswer && (
+              <button type="button" onClick={() => setDrawer({ kind: "inbox" })}
+                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold hover:bg-white/10">
+                <MessageCircle className="h-4 w-4" /> <span className="hidden sm:inline">Innhólf</span>
+                {unread > 0 && <span className="rounded-full bg-amber-400 px-1.5 text-[11px] font-bold text-slate-900">{unread}</span>}
+              </button>
+            )}
+            {me.kind === "vs" && (
+              <button type="button" onClick={() => setDrawer({ kind: "settings" })} aria-label="Stillingar" title="Stillingar"
+                className="rounded-xl p-2 hover:bg-white/10"><Settings className="h-5 w-5" /></button>
+            )}
+            <button type="button" onClick={logout} className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium hover:bg-white/10">
+              <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">{me.kind === "vs" ? "Skrá út" : "Til baka"}</span>
             </button>
-          ))}
+          </div>
+        </header>
+
+        <SearchHero q={q} setQ={setQuery} inputRef={searchRef} onPick={pick}
+          status={status && (
+            <span title={status.detail}
+              className={cx("inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1",
+                status.open ? "bg-emerald-400/15 text-emerald-50 ring-emerald-300/40" : "bg-white/10 text-white/85 ring-white/20")}>
+              <span className={cx("h-2.5 w-2.5 rounded-full", status.open ? "bg-emerald-400 shadow-[0_0_0_4px_rgba(52,211,153,0.25)]" : "bg-slate-400")} />
+              {status.text}
+              <span className="font-normal tabular-nums text-white/60">{status.clock}</span>
+            </span>
+          )} />
+
+        <main className="mx-auto mt-6 grid max-w-7xl items-start gap-6 px-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_370px]">
+          <div className="min-w-0 space-y-6">
+            {announcements.map((a) => (
+              <Notice key={a.id} tone={a.level === "warning" ? "warn" : "info"}>
+                <span className="flex items-start gap-2">
+                  <Megaphone className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span><b>{a.title}</b>{a.body ? <span className="block whitespace-pre-wrap">{a.body}</span> : null}</span>
+                </span>
+              </Notice>
+            ))}
+            <GuideBody q={q} setQ={setQuery} openSlug={openSlug} setOpenSlug={setOpenSlug} lang={lang} setLang={setLang}
+              onSms={focusSms} onAsk={me.canMessage ? (text) => setDrawer({ kind: "new", draft: `Spurning: ${text}` }) : undefined} />
+          </div>
+
+          <aside className="order-first min-w-0 space-y-4 lg:order-none lg:sticky lg:top-[4.25rem] lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:pb-2 [scrollbar-width:thin]">
+            <div id="sms" className="scroll-mt-20"><SmsPanel ref={phoneRef} compact /></div>
+
+            {me.canMessage && (
+              <div id="spurningar" className="scroll-mt-20">
+                <QuestionsCard key={threadsKey} onUnreadChange={setUnread}
+                  onOpen={(id) => setDrawer({ kind: "thread", id })} onNew={() => setDrawer({ kind: "new", draft: "" })} />
+              </div>
+            )}
+            {me.canAnswer && (
+              <button id="spurningar" type="button" onClick={() => setDrawer({ kind: "inbox" })}
+                className={cx("flex w-full scroll-mt-20 items-center justify-between gap-3 rounded-2xl border p-4 text-left shadow-sm transition hover:shadow-md",
+                  unread ? "border-amber-300 bg-amber-50" : "border-slate-200 bg-white")}>
+                <span className="flex items-center gap-3">
+                  <span className={cx("flex h-9 w-9 items-center justify-center rounded-xl", unread ? "bg-amber-400 text-slate-900" : "bg-[var(--hsu-soft)] text-[var(--hsu)]")}>
+                    <MessageCircle className="h-5 w-5" />
+                  </span>
+                  <span>
+                    <span className="block font-bold text-slate-900">Spurningar starfsfólks</span>
+                    <span className="block text-xs text-slate-600">
+                      {unread === 0 ? "Engin spurning bíður svars" : unread === 1 ? "Ein spurning bíður svars" : `${unread} spurningar bíða svars`}
+                    </span>
+                  </span>
+                </span>
+                <ChevronRight className="h-4 w-4 text-slate-400" />
+              </button>
+            )}
+
+            <Card className="flex items-center gap-4 p-4">
+              <button type="button" onClick={() => setDrawer({ kind: "qr" })} aria-label="Sýna QR-kóða stórt"
+                className="shrink-0 overflow-hidden rounded-lg ring-1 ring-slate-200 transition hover:ring-cyan-400">
+                <Qr value={PORTAL_URL} size={76} />
+              </button>
+              <div className="min-w-0">
+                <div className="font-bold text-slate-900">Sjúklingur við borðið?</div>
+                <p className="text-xs text-slate-500">Hann skannar kóðann með símanum í stað þess að fá SMS.</p>
+                <button type="button" onClick={() => setDrawer({ kind: "qr" })}
+                  className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[var(--hsu-dark)] hover:underline">
+                  <QrCode className="h-3.5 w-3.5" /> Sýna stórt
+                </button>
+              </div>
+            </Card>
+          </aside>
+        </main>
+
+        <nav aria-label="Flýtileiðir"
+          className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
+          <MobileBtn icon={<Search className="h-5 w-5" />} label="Leita" onClick={focusSearch} />
+          <MobileBtn icon={<Send className="h-5 w-5" />} label="SMS" onClick={focusSms} />
+          {(me.canMessage || me.canAnswer)
+            ? <MobileBtn icon={<MessageCircle className="h-5 w-5" />} label="Spurningar" badge={unread} onClick={openQuestions} />
+            : <MobileBtn icon={<QrCode className="h-5 w-5" />} label="QR-kóði" onClick={() => setDrawer({ kind: "qr" })} />}
         </nav>
-      </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-        {tab === "yfirlit" && (
-          <Overview me={me} announcements={announcements} unread={unread}
-            onSms={goSms} onSearch={goSearch} onAsk={() => goAsk()} onQr={() => setQrOpen(true)} onOpenQuestions={() => setTab("spurningar")} />
+        {drawer?.kind === "thread" && (
+          <Drawer title="Samtal" onClose={closeDrawer}><ThreadView id={drawer.id} onBack={closeDrawer} onRead={() => setThreadsKey((k) => k + 1)} /></Drawer>
         )}
-        {tab === "upplysingar" && <NurseGuide onSendLink={goSms} onAsk={me.canMessage ? goAsk : undefined} focusSearch={searchPing} />}
-        {tab === "sms" && (
-          <div className="grid items-start gap-6 lg:grid-cols-[1fr_320px]">
-            <SmsPanel ref={phoneRef} />
-            <QrCard onOpen={() => setQrOpen(true)} />
-          </div>
+        {drawer?.kind === "new" && (
+          <Drawer title="Ný spurning til Fjarlækninga" onClose={closeDrawer}>
+            <NewQuestion initial={drawer.draft} onCancel={closeDrawer} onCreated={(id) => setDrawer({ kind: "thread", id })} />
+          </Drawer>
         )}
-        {tab === "spurningar" && me.canMessage && <QuestionsPanel onUnreadChange={setUnread} initialCompose={askDraft} key={askDraft ?? "list"} />}
-        {tab === "spurningar" && me.canAnswer && (
-          <div className="space-y-4">
-            <div>
-              <h1 className="text-xl font-bold">Spurningar starfsfólks</h1>
-              <p className="text-sm text-slate-500">Svaraðu hér — svarið birtist starfsmanninum í vinnustöðinni og fer í tölvupósti.</p>
+        {drawer?.kind === "inbox" && (
+          <Drawer title="Spurningar starfsfólks" onClose={closeDrawer} wide><Inbox onAwaitingChange={setUnread} /></Drawer>
+        )}
+        {drawer?.kind === "settings" && me.kind === "vs" && (
+          <Drawer title="Stillingar" onClose={closeDrawer}><SettingsPanel me={me} refresh={refresh} /></Drawer>
+        )}
+        {drawer?.kind === "qr" && (
+          <Drawer title="QR-kóði" onClose={closeDrawer}>
+            <div className="flex flex-col items-center py-4 text-center">
+              <FjLogo size={48} />
+              <p className="mt-3 text-2xl font-bold text-slate-900">Skannaðu til að byrja</p>
+              <p className="mt-1 text-sm text-slate-600">Opnaðu myndavélina í símanum og beindu henni að kóðanum.</p>
+              <div className="mt-6 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><Qr value={PORTAL_URL} size={300} /></div>
+              <p className="mt-5 text-xl font-bold text-[var(--hsu-dark)]">fjarlaekningar.is</p>
+              <p className="text-sm text-slate-500">Innskráning með rafrænum skilríkjum</p>
             </div>
-            <Inbox onAwaitingChange={setUnread} />
-          </div>
+          </Drawer>
         )}
-        {tab === "stillingar" && me.kind === "vs" && <SettingsPanel me={me} refresh={refresh} />}
-      </main>
-
-      {qrOpen && <QrModal onClose={() => setQrOpen(false)} />}
-    </div>
-  );
-}
-
-// ── Staða þjónustunnar ──────────────────────────────────────────────────────
-
-function ServiceChip() {
-  const s = useServiceStatus();
-  if (!s) return null;
-  return (
-    <span title={s.detail} className={cx("hidden items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold sm:inline-flex",
-      s.open ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600")}>
-      <span className={cx("h-2 w-2 rounded-full", s.open ? "bg-emerald-500" : "bg-slate-400")} /> {s.text}
-    </span>
-  );
-}
-
-function Overview({ me, announcements, unread, onSms, onSearch, onAsk, onQr, onOpenQuestions }: {
-  me: VsMe; announcements: Announcement[]; unread: number;
-  onSms: () => void; onSearch: () => void; onAsk: () => void; onQr: () => void; onOpenQuestions: () => void;
-}) {
-  const s = useServiceStatus();
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Góðan dag, {firstName(me.name)}</h1>
-        <p className="text-sm text-slate-500">Allt sem þú þarft til að vísa sjúklingum á Fjarlækningar.</p>
       </div>
-
-      {s && (
-        <div className={cx("flex items-center gap-4 rounded-2xl border p-5", s.open ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-white")}>
-          <span className={cx("flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl", s.open ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-600")}>
-            <Clock className="h-6 w-6" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="text-lg font-bold text-slate-900">{s.text}</div>
-            <div className="text-sm text-slate-600">{s.detail} Opið alla daga kl. 10–22.</div>
-          </div>
-          <div className="text-2xl font-bold tabular-nums text-slate-400">{s.clock}</div>
-        </div>
-      )}
-
-      {announcements.map((a) => (
-        <Notice key={a.id} tone={a.level === "warning" ? "warn" : "info"}>
-          <span className="flex items-start gap-2">
-            <Megaphone className="mt-0.5 h-4 w-4 shrink-0" />
-            <span><b>{a.title}</b>{a.body ? <span className="block whitespace-pre-wrap">{a.body}</span> : null}</span>
-          </span>
-        </Notice>
-      ))}
-
-      {unread > 0 && me.canAnswer && (
-        <button onClick={onOpenQuestions} className="flex w-full items-center justify-between gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-left">
-          <span className="flex items-center gap-2 font-semibold text-amber-900">
-            <MessageCircle className="h-5 w-5" /> {unread === 1 ? "Ein spurning bíður svars" : `${unread} spurningar bíða svars`}
-          </span>
-          <ChevronRight className="h-4 w-4 text-amber-700" />
-        </button>
-      )}
-
-      {unread > 0 && me.canMessage && (
-        <button onClick={onOpenQuestions} className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[var(--hsu)]/30 bg-[var(--hsu-soft)] p-4 text-left">
-          <span className="flex items-center gap-2 font-semibold text-[var(--hsu-dark)]">
-            <MessageCircle className="h-5 w-5" /> Fjarlækningar svöruðu {unread === 1 ? "spurningunni þinni" : `${unread} spurningum`}
-          </span>
-          <ChevronRight className="h-4 w-4 text-[var(--hsu)]" />
-        </button>
-      )}
-
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <QuickAction icon={<Send className="h-5 w-5" />} title="Senda hlekk í SMS" text="Sjúklingur fær hlekkinn í símann" onClick={onSms} />
-        <QuickAction icon={<Search className="h-5 w-5" />} title="Leita í upplýsingum" text="Hentar erindið? Tilbúin svör" onClick={onSearch} />
-        <QuickAction icon={<QrCode className="h-5 w-5" />} title="Sýna QR-kóða" text="Sjúklingur við borðið skannar" onClick={onQr} />
-        {me.canMessage
-          ? <QuickAction icon={<MessageCircle className="h-5 w-5" />} title="Spyrja Fjarlækningar" text="Við svörum hér og í pósti" onClick={onAsk} />
-          : me.canAnswer
-          ? <QuickAction icon={<MessageCircle className="h-5 w-5" />} title="Svara spurningum" text="Spurningar hjúkrunarfræðinga" onClick={onOpenQuestions} />
-          : <QuickAction icon={<BookOpen className="h-5 w-5" />} title="Opna vefinn" text="fjarlaekningar.is/thjonusta" onClick={() => window.open("/thjonusta", "_blank", "noopener")} />}
-      </div>
-
-      <section>
-        <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-500">Það helsta</h2>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {GUIDE_FACTS.slice(0, 9).map((f) => (
-            <div key={f.label} className={cx("rounded-xl border px-3 py-2.5",
-              f.tone === "no" ? "border-red-200 bg-red-50/50" : f.tone === "ok" ? "border-emerald-200 bg-emerald-50/50" : "border-slate-200 bg-white")}>
-              <div className="text-sm font-bold text-slate-900">{f.label}</div>
-              <div className="text-xs text-slate-600">{f.detail}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-    </div>
+    </TextsProvider>
   );
 }
 
-function QuickAction({ icon, title, text, onClick }: { icon: React.ReactNode; title: string; text: string; onClick: () => void }) {
+function MobileBtn({ icon, label, onClick, badge }: { icon: React.ReactNode; label: string; onClick: () => void; badge?: number }) {
   return (
-    <button onClick={onClick} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:border-[var(--hsu)]/40 hover:shadow-md">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--hsu-soft)] text-[var(--hsu)]">{icon}</span>
-      <span>
-        <span className="block font-bold text-slate-900">{title}</span>
-        <span className="block text-xs text-slate-500">{text}</span>
-      </span>
+    <button type="button" onClick={onClick}
+      className="relative flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-semibold text-slate-600 active:bg-slate-100">
+      {icon}
+      {label}
+      {Boolean(badge) && <span className="absolute left-1/2 top-1 ml-2 rounded-full bg-red-500 px-1.5 text-[10px] text-white">{badge}</span>}
     </button>
-  );
-}
-
-// ── QR-kóði ─────────────────────────────────────────────────────────────────
-
-function QrCard({ onOpen }: { onOpen: () => void }) {
-  return (
-    <Card className="p-5 text-center">
-      <h2 className="font-bold text-slate-900">Sjúklingur við borðið?</h2>
-      <p className="mt-1 text-xs text-slate-500">Hann skannar kóðann með símanum í stað þess að fá SMS.</p>
-      <div className="mt-3 flex justify-center"><Qr value={PORTAL_URL} size={180} /></div>
-      <Button variant="ghost" size="sm" className="mt-3" onClick={onOpen}><QrCode className="h-4 w-4" /> Stækka</Button>
-    </Card>
-  );
-}
-
-function QrModal({ onClose }: { onClose: () => void }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 p-4" onClick={onClose} role="dialog" aria-modal="true" aria-label="QR-kóði">
-      <div className="w-full max-w-md rounded-3xl bg-white p-8 text-center" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-end"><button onClick={onClose} aria-label="Loka" className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button></div>
-        <FjLogo size={44} />
-        <h2 className="mt-3 text-2xl font-bold text-slate-900">Skannaðu til að byrja</h2>
-        <p className="mt-1 text-sm text-slate-600">Opnaðu myndavélina í símanum og beindu henni að kóðanum.</p>
-        <div className="mt-5 flex justify-center"><Qr value={PORTAL_URL} size={300} /></div>
-        <p className="mt-4 text-lg font-bold text-[var(--hsu)]">fjarlaekningar.is</p>
-        <p className="text-xs text-slate-500">Innskráning með rafrænum skilríkjum</p>
-      </div>
-    </div>
-  );
-}
-
-// ── Stillingar ──────────────────────────────────────────────────────────────
-
-function SettingsPanel({ me, refresh }: { me: VsMe; refresh: () => void }) {
-  return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <div className="lg:col-span-2">
-        <h1 className="text-xl font-bold">Stillingar</h1>
-        <p className="text-sm text-slate-500">Innskráð(ur) sem <b className="text-slate-800">{me.email}</b></p>
-      </div>
-      <PasswordCard must={me.mustChangePassword} refresh={refresh} />
-      <PinCard hasPin={me.hasPin} refresh={refresh} />
-      <Card className="p-5 lg:col-span-2">
-        <div className="flex items-center gap-2 font-bold"><LogOut className="h-5 w-5 text-[var(--hsu)]" /> Útskráning</div>
-        <p className="mt-1 text-sm text-slate-600">Á sameiginlegri tölvu skaltu líka gleyma tækinu, svo aðgangskóðinn virki ekki þar.</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button variant="ghost" onClick={async () => { await vsApi("/api/vinnustod/auth/logout", { body: {} }); window.location.href = "/vinnustod"; }}>Skrá út</Button>
-          <Button variant="danger" onClick={async () => { await vsApi("/api/vinnustod/auth/logout", { body: { forget: true } }); window.location.href = "/vinnustod"; }}>Skrá út og gleyma tækinu</Button>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-function PasswordCard({ must, refresh }: { must: boolean; refresh: () => void }) {
-  const [current, setCurrent] = useState("");
-  const [next, setNext] = useState("");
-  const [again, setAgain] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (next !== again) { setMsg({ tone: "err", text: "Nýju lykilorðin stemma ekki." }); return; }
-    setBusy(true); setMsg(null);
-    const r = await vsApi("/api/vinnustod/me", { method: "PUT", body: { kind: "password", current, next } });
-    setBusy(false);
-    if (!r.ok) { setMsg({ tone: "err", text: r.error ?? "Mistókst" }); return; }
-    setCurrent(""); setNext(""); setAgain("");
-    setMsg({ tone: "ok", text: "Lykilorði breytt. Önnur tæki hafa verið skráð út." });
-    refresh();
-  };
-  return (
-    <Card className="p-5">
-      <div className="flex items-center gap-2 font-bold"><Lock className="h-5 w-5 text-[var(--hsu)]" /> Lykilorð</div>
-      {must && <div className="mt-3"><Notice tone="warn">Lykilorðið þitt var sett af öðrum. Veldu þitt eigið.</Notice></div>}
-      <form onSubmit={submit} className="mt-4 space-y-3">
-        <Field label="Núverandi lykilorð"><input type="password" autoComplete="current-password" className={inputCls} value={current} onChange={(e) => setCurrent(e.target.value)} required /></Field>
-        <Field label="Nýtt lykilorð" hint="Minnst 10 stafir, bókstafir og tölustafir."><input type="password" autoComplete="new-password" className={inputCls} value={next} onChange={(e) => setNext(e.target.value)} required /></Field>
-        <Field label="Nýtt lykilorð aftur"><input type="password" autoComplete="new-password" className={inputCls} value={again} onChange={(e) => setAgain(e.target.value)} required /></Field>
-        {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
-        <Button type="submit" busy={busy}>Breyta lykilorði</Button>
-      </form>
-    </Card>
-  );
-}
-
-function PinCard({ hasPin, refresh }: { hasPin: boolean; refresh: () => void }) {
-  const [editing, setEditing] = useState(false);
-  const [password, setPassword] = useState("");
-  const [pin, setPin] = useState("");
-  const [pin2, setPin2] = useState("");
-  const [step, setStep] = useState<1 | 2>(1);
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
-  const reset = () => { setPin(""); setPin2(""); setStep(1); };
-  const complete = async (v: string) => {
-    if (step === 1) { setPin(v); setStep(2); return; }
-    if (v !== pin) { setMsg({ tone: "err", text: "Kóðarnir stemma ekki." }); reset(); return; }
-    setBusy(true); setMsg(null);
-    const r = await vsApi("/api/vinnustod/me", { method: "PUT", body: { kind: "pin", pin: v, password } });
-    setBusy(false); reset();
-    if (!r.ok) { setMsg({ tone: "err", text: r.error ?? "Mistókst" }); return; }
-    setEditing(false); setPassword("");
-    setMsg({ tone: "ok", text: "Aðgangskóði vistaður." });
-    refresh();
-  };
-  return (
-    <Card className="p-5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 font-bold"><KeyRound className="h-5 w-5 text-[var(--hsu)]" /> Aðgangskóði</div>
-        {hasPin ? <Badge tone="green">Virkur</Badge> : <Badge>Ekki settur</Badge>}
-      </div>
-      <p className="mt-1 text-sm text-slate-600">4 tölustafir til að skrá sig hratt inn á tölvu þar sem þú hefur áður skráð þig inn með lykilorði.</p>
-      {msg && <div className="mt-3"><Notice tone={msg.tone}>{msg.text}</Notice></div>}
-      {!editing ? (
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button onClick={() => { setEditing(true); setMsg(null); }}>{hasPin ? "Breyta kóða" : "Velja kóða"}</Button>
-          {hasPin && (
-            <Button variant="ghost" busy={busy} onClick={async () => {
-              if (!confirm("Fjarlægja aðgangskóða? Þú þarft þá lykilorð til að skrá þig inn.")) return;
-              setBusy(true); await vsApi("/api/vinnustod/me", { method: "DELETE" }); setBusy(false); refresh();
-            }}>Fjarlægja</Button>
-          )}
-        </div>
-      ) : (
-        <div className="mt-4 space-y-4">
-          <Field label="Lykilorðið þitt (til staðfestingar)">
-            <input type="password" autoComplete="current-password" className={inputCls} value={password} onChange={(e) => setPassword(e.target.value)} />
-          </Field>
-          {password.length > 0 && (
-            <>
-              <p className="text-center text-sm font-semibold text-slate-700">{step === 1 ? "Veldu 4 stafa kóða" : "Sláðu kóðann aftur inn"}</p>
-              <PinPad value={step === 1 ? pin : pin2} onChange={step === 1 ? setPin : setPin2} onComplete={complete} disabled={busy} />
-            </>
-          )}
-          <button className="w-full text-center text-sm text-slate-500 hover:underline" onClick={() => { setEditing(false); reset(); }}>Hætta við</button>
-        </div>
-      )}
-    </Card>
   );
 }

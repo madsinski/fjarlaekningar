@@ -35,6 +35,13 @@ export async function GET(req: Request) {
     .select("id, created_at, title, body, level").eq("active", true)
     .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
     .order("created_at", { ascending: false }).limit(10);
+  // Textar sem stjórnandi hefur breytt fyrir alla.
+  const { data: custom } = await supabaseAdmin.from("gatt_settings").select("key, value").like("key", "text:%");
+  const texts: Record<string, { text: string; by: string; at: string }> = {};
+  for (const r of custom ?? []) {
+    const v = r.value as { text?: unknown; by?: unknown; at?: unknown } | null;
+    if (typeof v?.text === "string") texts[r.key.slice(5)] = { text: v.text, by: String(v.by ?? ""), at: String(v.at ?? "") };
+  }
 
   return json({
     ok: true,
@@ -47,6 +54,7 @@ export async function GET(req: Request) {
     },
     unread,
     announcements: news ?? [],
+    texts,
   });
 }
 

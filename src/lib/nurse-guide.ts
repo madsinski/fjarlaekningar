@@ -21,6 +21,10 @@ export interface GuideFact {
 export interface GuideProblem {
   slug: string;
   title: string;
+  /** Heiti á ensku — úr src/erindi.ts. */
+  titleEn: string;
+  /** Sjálfspróf sem geta fylgt erindinu (lykill í GUIDE_SELFTESTS). */
+  selftests?: string[];
   /** Orð sem sjúklingar og hjúkrunarfræðingar nota — fyrir leitina. */
   keywords: string[];
   summary: string;
@@ -66,6 +70,8 @@ export const GUIDE_FACTS: GuideFact[] = [
 export const GUIDE_PROBLEMS: GuideProblem[] = [
   {
     slug: "kvef-hosti-halsbolga",
+    titleEn: "Cold, cough and sore throat",
+    selftests: ["crp", "strep"],
     title: "Kvef, hósti og hálsbólga",
     keywords: ["kvef", "hósti", "hálsbólga", "hálssærindi", "streptókokkar", "strep", "kinnholur", "ennisholur", "berkjubólga", "flensa", "crp"],
     summary: "CRP heimapróf notað í upplýsingasöfnun ef þarf. Alvarlegum einkennum vísað í annan farveg.",
@@ -84,6 +90,8 @@ export const GUIDE_PROBLEMS: GuideProblem[] = [
   },
   {
     slug: "thvagfaera-leggangasykingar",
+    titleEn: "Urinary tract and vaginal infections",
+    selftests: ["stix"],
     title: "Þvagfæra- og leggangasýkingar",
     keywords: ["þvagfærasýking", "blöðrubólga", "sviði", "pissa", "þvaglát", "sveppasýking", "leggangasýking", "útferð", "kláði", "stix", "þvagpróf"],
     summary: "Þvag-stix heimapróf notað í upplýsingasöfnun. Sveppa- og bakteríusýkingar í leggöngum greindar og meðhöndlaðar. Alvarlegum einkennum vísað í annan farveg.",
@@ -102,6 +110,7 @@ export const GUIDE_PROBLEMS: GuideProblem[] = [
   },
   {
     slug: "getnadarvorn",
+    titleEn: "Contraception",
     title: "Getnaðarvörn",
     keywords: ["getnaðarvörn", "pilla", "p-pilla", "pillan", "hormón", "endurnýja pillu", "skipta um pillu"],
     summary: "Fyrsta ávísun, endurnýjun eða breyting á getnaðarvörn.",
@@ -120,6 +129,7 @@ export const GUIDE_PROBLEMS: GuideProblem[] = [
   },
   {
     slug: "frjokornaofnaemi",
+    titleEn: "Pollen allergy",
     title: "Frjókornaofnæmi",
     keywords: ["ofnæmi", "frjókorn", "frjókornaofnæmi", "hnerri", "nefrennsli", "kláði í augum", "gras", "vorofnæmi", "sumarofnæmi"],
     summary: "Meðferð við árstíðabundnu ofnæmi.",
@@ -134,6 +144,7 @@ export const GUIDE_PROBLEMS: GuideProblem[] = [
   },
   {
     slug: "frunsa",
+    titleEn: "Cold sore",
     title: "Frunsa",
     keywords: ["frunsa", "herpes", "sár á vör", "blöðrur á vör", "munnangur"],
     summary: "Meðferð við endurtekna frunsu. Frumgreiningu vísað í annan farveg.",
@@ -147,6 +158,7 @@ export const GUIDE_PROBLEMS: GuideProblem[] = [
   },
   {
     slug: "ristill",
+    titleEn: "Shingles",
     title: "Ristill á húð",
     keywords: ["ristill", "belti", "útbrot", "blöðrur", "taugaverkur", "herpes zoster"],
     summary: "Meðferð við endurteknum ristli. Frumgreiningu vísað í annan farveg.",
@@ -160,6 +172,7 @@ export const GUIDE_PROBLEMS: GuideProblem[] = [
   },
   {
     slug: "risvandamal",
+    titleEn: "Erectile problems",
     title: "Risvandamál",
     keywords: ["risvandamál", "ristruflun", "stinning", "getuleysi", "kynlíf"],
     summary: "Mat og meðferð.",
@@ -173,6 +186,7 @@ export const GUIDE_PROBLEMS: GuideProblem[] = [
   },
   {
     slug: "njalgur",
+    titleEn: "Pinworm",
     title: "Njálgur",
     keywords: ["njálgur", "ormar", "kláði í endaþarmi", "orma", "börn með njálg"],
     summary: "Greining og meðferð.",
@@ -186,6 +200,7 @@ export const GUIDE_PROBLEMS: GuideProblem[] = [
   },
   {
     slug: "lyfjuendurnyjun",
+    titleEn: "Prescription renewal",
     title: "Lyfjaendurnýjun",
     keywords: ["lyf", "lyfseðill", "endurnýja", "endurnýjun", "föst lyf", "lyfjaendurnýjun", "vantar lyf"],
     summary: "Skjót endurnýjun á föstum lyfjum sem þolir ekki bið.",
@@ -203,6 +218,7 @@ export const GUIDE_PROBLEMS: GuideProblem[] = [
   },
   {
     slug: "laeknisvottord",
+    titleEn: "Medical certificate",
     title: "Læknisvottorð",
     keywords: ["vottorð", "veikindavottorð", "fjarvistarvottorð", "vinna", "skóli", "læknisvottorð"],
     summary: "Veikindavottorð fyrir vinnu eða skóla, tengt vandamálum sem hafa verið sinnt í gegnum Fjarlækningar.",
@@ -365,3 +381,120 @@ export const GUIDE_MEDS: GuideMedGroup[] = [
     items: ["Geðrofslyf", "Testósterón", "Krabbameinslyf, ónæmisbælandi lyf og líftæknilyf"],
   },
 ];
+
+// ── Tenglar og texti til sjúklings ──────────────────────────────────────────
+
+export const PORTAL_URL = "https://app.medalia.is/fjarlaekningar-hsu";
+export const SITE = "https://www.fjarlaekningar.is";
+/** Síða erindisins á vefnum (þar sem erindið er sýnt). */
+export const problemPageUrl = (slug: string) => `${SITE}/thjonusta/${slug}`;
+/** Kaflinn um heimapróf á vefnum. */
+export const SELFTEST_INFO_URL = `${SITE}/thjonusta#tests`;
+
+export type Lang = "is" | "en";
+
+/**
+ * Textinn sem hjúkrunarfræðingurinn afritar og sendir sjúklingi — alltaf með
+ * hlekk á gáttina. Enska útgáfan segir hvaða erindi á að velja með íslenska
+ * heitinu, því gáttin er á íslensku.
+ */
+export function patientText(p: GuideProblem, lang: Lang): string {
+  if (lang === "en") {
+    const test = p.selftests?.length ? " You may be asked to take a simple home test, available at the health centre." : "";
+    return `Fjarlaekningar (telemedicine) can help with: ${p.titleEn.toLowerCase()}. Log in with your electronic ID using the link below, choose "${p.title}" and answer a short questionnaire.${test} A doctor replies within two hours during opening hours, 10:00–22:00 every day. If your symptoms are severe, call 112.\n\nStart here: ${PORTAL_URL}`;
+  }
+  return `${p.reply}\n\nByrjaðu hér: ${PORTAL_URL}`;
+}
+
+// ── Sjálfspróf (heimapróf) ──────────────────────────────────────────────────
+// Sama efni og kaflinn „Heimapróf“ á /thjonusta og síður erindanna. Verð og
+// afhending í móttöku koma úr innleiðingarpakka Fjarlækninga fyrir HSU og eru
+// aðeins fyrir starfsfólk — ekki í textanum til sjúklings.
+
+export interface GuideSelftest {
+  key: string;
+  title: string;
+  what: string;
+  when: string;
+  where: string;
+  reply: string;
+  replyEn: string;
+}
+
+const TEST_OUTRO = "Þú skráir niðurstöðuna í sjúklingagáttina. Leiðbeiningar um hvernig prófið er tekið fylgja með í pakkanum og í gáttinni. Læknirinn getur ekki lokið erindinu fyrr en niðurstaðan liggur fyrir.";
+const TEST_OUTRO_EN = "Enter the result in the patient portal. Instructions for taking the test come in the package and in the portal. The doctor cannot complete your case until the result is in.";
+
+export const GUIDE_SELFTESTS: GuideSelftest[] = [
+  {
+    key: "crp",
+    title: "CRP-próf",
+    what: "Mælir bólgusvörun í blóði með einum dropa úr fingurgómi. Hjálpar lækninum að meta hvort einkennin séu líklega af völdum veiru eða bakteríu.",
+    when: "Kvef, hósti og hálsbólga",
+    where: "Heilsugæslan í Vestmannaeyjum",
+    reply: `Læknirinn biður þig um að taka CRP-próf. Það mælir bólgusvörun í blóði með einum dropa úr fingurgómi. Þú færð prófið í móttöku Heilsugæslunnar í Vestmannaeyjum — biddu um „CRP sjálfspróf“. ${TEST_OUTRO}\n\nNánar um sjálfsprófin: ${SELFTEST_INFO_URL}`,
+    replyEn: `The doctor asks you to take a CRP test. It measures inflammation in the blood from a single drop from your fingertip. Get the test at the reception of the health centre in Vestmannaeyjar — ask for a "CRP sjálfspróf". ${TEST_OUTRO_EN}\n\nMore about the home tests: ${SELFTEST_INFO_URL}`,
+  },
+  {
+    key: "strep",
+    title: "Strep-próf (streptókokkapróf)",
+    what: "Strok úr hálsi sem leitar að streptókokkum. Svar fæst á nokkrum mínútum heima.",
+    when: "Kvef, hósti og hálsbólga — hálsbólga, til að aðstoða greiningu",
+    where: "Heilsugæslan í Vestmannaeyjum eða apótek",
+    reply: `Læknirinn biður þig um að taka streptókokkapróf. Það er strok úr hálsi og svar fæst á nokkrum mínútum heima. Prófið fæst í móttöku Heilsugæslunnar í Vestmannaeyjum — biddu um „strep sjálfspróf“ — eða í apóteki. ${TEST_OUTRO}\n\nNánar um sjálfsprófin: ${SELFTEST_INFO_URL}`,
+    replyEn: `The doctor asks you to take a strep test. It is a throat swab and you get the answer within a few minutes at home. Get the test at the reception of the health centre in Vestmannaeyjar — ask for a "strep sjálfspróf" — or at a pharmacy. ${TEST_OUTRO_EN}\n\nMore about the home tests: ${SELFTEST_INFO_URL}`,
+  },
+  {
+    key: "stix",
+    title: "Þvagpróf (þvagstix)",
+    what: "Skimar fyrir merkjum um þvagfærasýkingu.",
+    when: "Þvagfæra- og leggangasýkingar — þvagfærasýking í fyrsta skipti",
+    where: "Heilsugæslan í Vestmannaeyjum eða apótek",
+    reply: `Læknirinn biður þig um að taka þvagpróf (þvagstix). Það skimar fyrir merkjum um þvagfærasýkingu. Prófið fæst í móttöku Heilsugæslunnar í Vestmannaeyjum — biddu um „þvagstix sjálfspróf“ — eða í apóteki. ${TEST_OUTRO}\n\nNánar um sjálfsprófin: ${SELFTEST_INFO_URL}`,
+    replyEn: `The doctor asks you to take a urine test (dipstick). It screens for signs of a urinary tract infection. Get the test at the reception of the health centre in Vestmannaeyjar — ask for a "þvagstix sjálfspróf" — or at a pharmacy. ${TEST_OUTRO_EN}\n\nMore about the home tests: ${SELFTEST_INFO_URL}`,
+  },
+];
+
+/** Fyrir starfsfólk í móttöku — ekki í texta til sjúklings. */
+export const SELFTEST_STAFF_NOTE = "Móttökuritari afhendir prófið og innheimtir 1.400 kr. Sé prófið ekki til á staðnum er sjúklingi vísað á vakthafandi hjúkrunarfræðing sem tekur prófið — sama gjald.";
+
+/** Almenni textinn: hvernig sjúklingur kemst inn — með hlekk. */
+export function accessText(lang: Lang): string {
+  if (lang === "en") {
+    return `Fjarlaekningar (telemedicine) can help with simple, common health problems. Log in with your electronic ID using the link below, choose your problem from the list and answer a short questionnaire. A doctor replies within two hours during opening hours, 10:00–22:00 every day. If your symptoms are severe, call 112.\n\nStart here: ${PORTAL_URL}`;
+  }
+  return `${GUIDE_ACCESS.reply}\n\nByrjaðu hér: ${PORTAL_URL}`;
+}
+
+// ── Textar sem má breyta ────────────────────────────────────────────────────
+// Hver afritanlegur texti á sér auðkenni. Stjórnandi getur vistað eigin útgáfu
+// fyrir alla (gatt_settings, lykill `text:<auðkenni>`); annars gildir sjálfgefni
+// textinn hér að ofan.
+//
+//   problem:<slug>:<is|en>   texti til sjúklings um erindi
+//   access:<is|en>           almenni textinn
+//   selftest:<key>:<is|en>   leiðbeiningar um sjálfspróf
+//   answer:<key>             tilbúið svar við algengri spurningu
+
+export function defaultText(id: string): string | null {
+  const [kind, key, l] = id.split(":");
+  const lang: Lang | null = l === "is" || l === "en" ? l : null;
+  if (kind === "problem" && lang) {
+    const p = GUIDE_PROBLEMS.find((x) => x.slug === key);
+    return p ? patientText(p, lang) : null;
+  }
+  if (kind === "access" && (key === "is" || key === "en") && l === undefined) return accessText(key);
+  if (kind === "selftest" && lang) {
+    const t = GUIDE_SELFTESTS.find((x) => x.key === key);
+    return t ? (lang === "en" ? t.replyEn : t.reply) : null;
+  }
+  if (kind === "answer" && l === undefined) return GUIDE_ANSWERS.find((a) => a.key === key)?.a ?? null;
+  return null;
+}
+
+/** Á textinn að innihalda hlekk? Allir nema svörin við algengum spurningum. */
+export const textNeedsLink = (id: string) => !id.startsWith("answer:");
+
+/** Hlekkur sem má standa í texta til sjúklings. */
+export function hasPortalLink(text: string): boolean {
+  return /https?:\/\/\S+/.test(text) || /fjarlaekningar\.is/i.test(text);
+}

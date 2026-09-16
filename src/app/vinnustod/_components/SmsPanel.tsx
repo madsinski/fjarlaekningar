@@ -42,7 +42,7 @@ function StatusPill({ row }: { row: SmsRow }) {
   );
 }
 
-const SmsPanel = forwardRef<HTMLInputElement, { compactHistory?: boolean }>(function SmsPanel({ compactHistory }, phoneRef) {
+const SmsPanel = forwardRef<HTMLInputElement, { compact?: boolean }>(function SmsPanel({ compact }, phoneRef) {
   const [rows, setRows] = useState<SmsRow[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [sender, setSender] = useState("");
@@ -52,6 +52,7 @@ const SmsPanel = forwardRef<HTMLInputElement, { compactHistory?: boolean }>(func
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState<{ tone: "ok" | "err" | "warn"; text: string } | null>(null);
+  const [allHistory, setAllHistory] = useState(false);
 
   const load = useCallback(async () => {
     const r = await vsApi<{ messages: SmsRow[]; templates: Template[]; sender: string }>("/api/sms/send", { staff: true });
@@ -102,7 +103,8 @@ const SmsPanel = forwardRef<HTMLInputElement, { compactHistory?: boolean }>(func
   };
 
   const filtered = rows.filter((r) => r.error_code === 30007).length;
-  const shown = compactHistory ? rows.slice(0, 6) : rows;
+  const limit = compact ? 3 : 8;
+  const shown = allHistory ? rows : rows.slice(0, limit);
 
   return (
     <div className="space-y-4">
@@ -115,8 +117,11 @@ const SmsPanel = forwardRef<HTMLInputElement, { compactHistory?: boolean }>(func
         </Notice>
       )}
 
-      <Card className="p-5">
-        <h2 className="font-bold text-slate-900">Senda hlekk í SMS</h2>
+      <Card className={cx("border-cyan-200 shadow-sm", compact ? "p-4" : "p-5")}>
+        <h2 className="flex items-center gap-2 font-bold text-slate-900">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--hsu)] text-white"><Send className="h-4 w-4" /></span>
+          Senda hlekk í SMS
+        </h2>
         <p className="mt-0.5 text-xs text-slate-500">
           Sendandi: <b>{sender || "Fjarlaeknir"}</b> — sjúklingur getur ekki svarað skeytinu.
         </p>
@@ -140,13 +145,13 @@ const SmsPanel = forwardRef<HTMLInputElement, { compactHistory?: boolean }>(func
           </div>
         </div>
 
-        <div className="mt-4 rounded-xl bg-slate-50 p-3">
-          <div className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Skeytið eins og það berst</div>
+        <details className="mt-3 rounded-xl bg-slate-50 p-3" open={!compact}>
+          <summary className="cursor-pointer text-[11px] font-bold uppercase tracking-wide text-slate-500">Skeytið eins og það berst</summary>
           <p className="mt-1 whitespace-pre-wrap text-sm text-slate-800">{preview}</p>
           <div className="mt-1.5 text-[11px] text-slate-500">
             {size.chars} stafir · {size.segments} hluti{size.segments === 1 ? "" : "r"}
           </div>
-        </div>
+        </details>
 
         {msg && <div className="mt-3"><Notice tone={msg.tone}>{msg.text}</Notice></div>}
 
@@ -156,8 +161,8 @@ const SmsPanel = forwardRef<HTMLInputElement, { compactHistory?: boolean }>(func
         </button>
       </Card>
 
-      <Card className="p-5">
-        <h2 className="font-bold text-slate-900">Síðustu sendingar</h2>
+      <Card className={compact ? "p-4" : "p-5"}>
+        <h2 className="text-sm font-bold text-slate-900">Síðustu sendingar</h2>
         {loading ? (
           <div className="mt-3 h-20 animate-pulse rounded-xl bg-slate-100" />
         ) : shown.length === 0 ? (
@@ -177,6 +182,11 @@ const SmsPanel = forwardRef<HTMLInputElement, { compactHistory?: boolean }>(func
               </li>
             ))}
           </ul>
+        )}
+        {rows.length > limit && (
+          <button type="button" onClick={() => setAllHistory((v) => !v)} className="mt-2 text-xs font-semibold text-[var(--hsu-dark)] hover:underline">
+            {allHistory ? "Sýna færri" : `Sýna allar (${rows.length})`}
+          </button>
         )}
       </Card>
     </div>
