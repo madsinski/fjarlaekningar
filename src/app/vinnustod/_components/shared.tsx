@@ -296,3 +296,54 @@ export function PushToggle({ vapidKey, variant = "dark" }: { vapidKey: string | 
     </button>
   );
 }
+
+// ── Rauður punktur á flipatákninu ───────────────────────────────────────────
+// Teiknar merki síðunnar með rauðum punkti (og fjölda) á meðan eitthvað er
+// ólesið, og setur upprunalega táknið aftur þegar allt er lesið.
+
+let baseIcon: HTMLImageElement | null = null;
+
+function iconLinks(): HTMLLinkElement[] {
+  return [...document.querySelectorAll<HTMLLinkElement>('link[rel~="icon"]')];
+}
+
+export function useFaviconBadge(count: number) {
+  useEffect(() => {
+    const links = iconLinks();
+    for (const l of links) if (!l.dataset.orig) { l.dataset.orig = l.href; l.dataset.origType = l.type; }
+    if (!count) {
+      for (const l of links) { if (l.dataset.orig) l.href = l.dataset.orig; l.type = l.dataset.origType ?? ""; }
+      return;
+    }
+    let cancelled = false;
+    const draw = () => {
+      if (cancelled || !baseIcon) return;
+      const c = document.createElement("canvas");
+      c.width = c.height = 64;
+      const g = c.getContext("2d");
+      if (!g) return;
+      g.drawImage(baseIcon, 0, 0, 64, 64);
+      g.beginPath();
+      g.arc(44, 20, 19, 0, Math.PI * 2);
+      g.fillStyle = "#dc2626";
+      g.fill();
+      g.lineWidth = 4;
+      g.strokeStyle = "#ffffff";
+      g.stroke();
+      g.fillStyle = "#ffffff";
+      g.font = "bold 26px system-ui, sans-serif";
+      g.textAlign = "center";
+      g.textBaseline = "middle";
+      g.fillText(count > 9 ? "9+" : String(count), 44, 21);
+      const url = c.toDataURL("image/png");
+      for (const l of iconLinks()) { l.href = url; l.type = "image/png"; }
+    };
+    if (baseIcon?.complete) draw();
+    else {
+      baseIcon = new Image();
+      baseIcon.onload = draw;
+      baseIcon.src = "/icon.png";
+    }
+    return () => { cancelled = true; };
+  }, [count]);
+}

@@ -5,7 +5,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Copy, Megaphone, MessageCircle, RefreshCw, Settings, UserPlus, Users, Volume2, VolumeX } from "lucide-react";
-import { PushToggle, UnreadDot, chimeOnce, useLiveSignal, useSoundPref, useUnlockAudio } from "@/app/vinnustod/_components/shared";
+import { PushToggle, UnreadDot, chimeOnce, useFaviconBadge, useLiveSignal, useSoundPref, useUnlockAudio } from "@/app/vinnustod/_components/shared";
 import { supabase } from "@/lib/supabase";
 import Inbox from "./Inbox";
 
@@ -66,6 +66,7 @@ export default function VinnustodAdminPage() {
     void poll();
     if (kind === "message" && soundOn) chimeOnce();
   });
+  useFaviconBadge(awaiting);
   const last = useRef<number | null>(null);
   useEffect(() => {
     if (last.current !== null && awaiting > last.current && soundOn) chimeOnce();

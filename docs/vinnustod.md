@@ -98,6 +98,7 @@ setningar um komugjald teknar út. Breyting á spurningu á vefnum birtist hér 
   samtalsins og opnar rétta síðu. Útrunnar áskriftir (404/410) eyðast.
   Lyklar: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (Vercel,
   Production + Development).
+- Rauður punktur með fjölda er líka teiknaður á flipatáknið (`useFaviconBadge`), og fjöldinn stendur í flipaheitinu.
 - Hljóð spilast aðeins á opinni síðu (vafrar leyfa það eftir fyrsta smell);
   lokuð síða fær hljóð tækisins með tilkynningunni. iPhone: aðeins ef síðunni
   hefur verið bætt á heimaskjá.

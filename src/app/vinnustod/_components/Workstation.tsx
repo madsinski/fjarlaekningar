@@ -12,7 +12,7 @@
 // SMS-ið hverfi ekki. Í síma raðast þetta í einn dálk með stiku neðst.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronRight, LogOut, Megaphone, MessageCircle, QrCode, Search, Send, Settings, Volume2, VolumeX } from "lucide-react";
+import { ChevronDown, LogOut, Megaphone, MessageCircle, QrCode, Search, Send, Settings, Volume2, VolumeX } from "lucide-react";
 import { Card, Notice, cx } from "@/app/hsu/_components/ui";
 import Inbox from "@/app/admin/vinnustod/Inbox";
 import type { Lang } from "@/lib/nurse-guide";
@@ -22,7 +22,7 @@ import SettingsPanel from "./SettingsPanel";
 import SmsPanel from "./SmsPanel";
 import TriageCard from "./TriageCard";
 import { TextsProvider, type GuideContent, type SharedText } from "./Texts";
-import { Drawer, FjLogo, PORTAL_URL, PushToggle, Qr, UnreadDot, chimeOnce, useLiveSignal, useServiceStatus, useSoundPref, useUnlockAudio, vsApi } from "./shared";
+import { Drawer, FjLogo, PORTAL_URL, PushToggle, Qr, UnreadDot, chimeOnce, useLiveSignal, useServiceStatus, useFaviconBadge, useSoundPref, useUnlockAudio, vsApi } from "./shared";
 
 export interface VsMe {
   id: string;
@@ -45,7 +45,6 @@ type DrawerState =
   | null
   | { kind: "thread"; id: string }
   | { kind: "new"; draft: string }
-  | { kind: "inbox" }
   | { kind: "settings" }
   | { kind: "qr" };
 
@@ -53,7 +52,6 @@ function initialDrawer(me: VsMe): DrawerState {
   if (me.kind === "vs" && me.mustChangePassword) return { kind: "settings" };
   if (typeof window === "undefined") return null;
   const t = new URLSearchParams(window.location.search).get("t");
-  if (t === "spurningar" && me.canAnswer) return { kind: "inbox" };
   if (t === "stillingar" && me.kind === "vs") return { kind: "settings" };
   return null;
 }
@@ -67,6 +65,9 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
   const [unread, setUnread] = useState(initialUnread);
   const [drawer, setDrawer] = useState<DrawerState>(() => initialDrawer(me));
   const [threadsKey, setThreadsKey] = useState(0);
+  // Samtöl stjórnanda opnast sem fellilisti í hliðardálkinum (?t=spurningar opnar hann).
+  const [inboxOpen, setInboxOpen] = useState(() =>
+    me.canAnswer && typeof window !== "undefined" && new URLSearchParams(window.location.search).get("t") === "spurningar");
   const phoneRef = useRef<HTMLInputElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const status = useServiceStatus();
@@ -112,6 +113,7 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
     void refreshUnread();
     if (kind === "message" && soundOn) chimeOnce();
   });
+  useFaviconBadge(unread);
   // Könnunin (varaleið) getur líka fundið nýtt — þá hljóð ef fjöldinn hækkar.
   const lastUnread = useRef(initialUnread);
   useEffect(() => {
@@ -134,8 +136,8 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
   };
 
   const openQuestions = () => {
-    if (me.canAnswer) setDrawer({ kind: "inbox" });
-    else document.getElementById("spurningar")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (me.canAnswer) setInboxOpen(true);
+    setTimeout(() => document.getElementById("spurningar")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   };
 
   return (
@@ -210,23 +212,30 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
               </div>
             )}
             {me.canAnswer && (
-              <button id="spurningar" type="button" onClick={() => setDrawer({ kind: "inbox" })}
-                className={cx("flex w-full scroll-mt-20 items-center justify-between gap-3 rounded-2xl border p-4 text-left shadow-sm transition hover:shadow-md",
-                  unread ? "border-red-300 bg-red-50 ring-2 ring-red-200" : "border-slate-200 bg-white")}>
-                <span className="flex items-center gap-3">
-                  <span className={cx("relative flex h-9 w-9 items-center justify-center rounded-xl", unread ? "bg-red-600 text-white" : "bg-[var(--hsu-soft)] text-[var(--hsu)]")}>
-                    <MessageCircle className="h-5 w-5" />
-                    <UnreadDot count={unread} className="absolute -right-2 -top-2" />
-                  </span>
-                  <span>
-                    <span className="block font-bold text-slate-900">Samtöl við starfsfólk</span>
-                    <span className="block text-xs text-slate-600">
-                      {unread === 0 ? "Ekkert bíður svars · skrifa nýtt" : unread === 1 ? "Ný skilaboð bíða svars" : `${unread} samtöl bíða svars`}
+              <div id="spurningar" className={cx("scroll-mt-20 overflow-hidden rounded-2xl border shadow-sm",
+                unread ? "border-red-300 bg-red-50 ring-2 ring-red-200" : "border-slate-200 bg-white")}>
+                <button type="button" onClick={() => setInboxOpen((o) => !o)} aria-expanded={inboxOpen} aria-controls="samtol-panel"
+                  className="flex w-full items-center justify-between gap-3 p-4 text-left">
+                  <span className="flex items-center gap-3">
+                    <span className={cx("relative flex h-9 w-9 items-center justify-center rounded-xl", unread ? "bg-red-600 text-white" : "bg-[var(--hsu-soft)] text-[var(--hsu)]")}>
+                      <MessageCircle className="h-5 w-5" />
+                      <UnreadDot count={unread} className="absolute -right-2 -top-2" />
+                    </span>
+                    <span>
+                      <span className="block font-bold text-slate-900">Samtöl við starfsfólk</span>
+                      <span className="block text-xs text-slate-600">
+                        {unread === 0 ? "Ekkert bíður svars · skrifa nýtt" : unread === 1 ? "Ný skilaboð bíða svars" : `${unread} samtöl bíða svars`}
+                      </span>
                     </span>
                   </span>
-                </span>
-                <ChevronRight className="h-4 w-4 text-slate-400" />
-              </button>
+                  <ChevronDown className={cx("h-5 w-5 text-slate-500 transition", inboxOpen && "rotate-180")} />
+                </button>
+                {inboxOpen && (
+                  <div id="samtol-panel" className="border-t border-slate-200 bg-white p-3">
+                    <Inbox onAwaitingChange={setUnread} refresh={pulse} compact />
+                  </div>
+                )}
+              </div>
             )}
 
             <div id="sms" className="scroll-mt-20"><SmsPanel ref={phoneRef} compact /></div>
@@ -265,9 +274,6 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
           <Drawer title="Ný spurning til Fjarlækninga" onClose={closeDrawer}>
             <NewQuestion initial={drawer.draft} onCancel={closeDrawer} onCreated={(id) => setDrawer({ kind: "thread", id })} />
           </Drawer>
-        )}
-        {drawer?.kind === "inbox" && (
-          <Drawer title="Samtöl við starfsfólk" onClose={closeDrawer} wide><Inbox onAwaitingChange={setUnread} refresh={pulse} /></Drawer>
         )}
         {drawer?.kind === "settings" && me.kind === "vs" && (
           <Drawer title="Stillingar" onClose={closeDrawer}><SettingsPanel me={me} refresh={refresh} /></Drawer>

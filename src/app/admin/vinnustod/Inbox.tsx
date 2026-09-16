@@ -38,7 +38,11 @@ interface Recipient { kind: "vs" | "staff" | "hsu"; id: string; name: string; em
 const KIND_IS: Record<Recipient["kind"], string> = { vs: "Vinnustöð", staff: "Starfsfólk", hsu: "Læknar HSU" };
 interface Msg { id: string; author_kind: "user" | "staff"; author_name: string; body: string; created_at: string }
 
-export default function Inbox({ onAwaitingChange, refresh = 0 }: { onAwaitingChange?: (n: number) => void; refresh?: number } = {}) {
+export default function Inbox({ onAwaitingChange, refresh = 0, compact = false }: {
+  onAwaitingChange?: (n: number) => void; refresh?: number;
+  /** Í þröngum hliðardálki (vinnustöðin): minna bil, allt í einum dálki. */
+  compact?: boolean;
+} = {}) {
   const [filter, setFilter] = useState<"open" | "closed" | "all">("open");
   const [threads, setThreads] = useState<InboxThread[] | null>(null);
   const [open, setOpen] = useState<string | null>(null);
@@ -66,9 +70,9 @@ export default function Inbox({ onAwaitingChange, refresh = 0 }: { onAwaitingCha
     if (refresh) void load();
   }, [refresh, load]);
 
-  if (open) return <InboxThreadView id={open} refresh={refresh} onBack={() => { setOpen(null); void load(); }} />;
+  if (open) return <InboxThreadView id={open} refresh={refresh} compact={compact} onBack={() => { setOpen(null); void load(); }} />;
   if (composing) {
-    return <Compose onCancel={() => setComposing(false)} onSent={(id) => { setComposing(false); setOpen(id); void load(); }} />;
+    return <Compose compact={compact} onCancel={() => setComposing(false)} onSent={(id) => { setComposing(false); setOpen(id); void load(); }} />;
   }
   return (
     <div className="space-y-3">
@@ -107,7 +111,7 @@ export default function Inbox({ onAwaitingChange, refresh = 0 }: { onAwaitingCha
   );
 }
 
-function InboxThreadView({ id, onBack, refresh = 0 }: { id: string; onBack: () => void; refresh?: number }) {
+function InboxThreadView({ id, onBack, refresh = 0, compact = false }: { id: string; onBack: () => void; refresh?: number; compact?: boolean }) {
   const [data, setData] = useState<{ thread: InboxThread; user: InboxThread["user"]; messages: Msg[] } | null>(null);
   const [reply, setReply] = useState("");
   const [busy, setBusy] = useState(false);
@@ -144,7 +148,7 @@ function InboxThreadView({ id, onBack, refresh = 0 }: { id: string; onBack: () =
     <div className="space-y-3">
       <button onClick={onBack} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-600 hover:underline"><ArrowLeft className="h-4 w-4" /> Öll samtöl</button>
       {!data ? <div className="h-40 animate-pulse rounded-2xl bg-slate-100" /> : (
-        <div className="rounded-2xl border border-slate-200 bg-white p-5">
+        <div className={compact ? "" : "rounded-2xl border border-slate-200 bg-white p-5"}>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-lg font-bold">{data.thread.subject}</h2>
@@ -161,7 +165,7 @@ function InboxThreadView({ id, onBack, refresh = 0 }: { id: string; onBack: () =
           <div className="mt-4 space-y-3">
             {data.messages.map((m) => (
               <div key={m.id} className={`flex ${m.author_kind === "staff" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${m.author_kind === "staff" ? "bg-cyan-700 text-white" : "border border-slate-200 bg-slate-50"}`}>
+                <div className={`${compact ? "max-w-[90%] px-3 py-2" : "max-w-[80%] px-4 py-2.5"} rounded-2xl [overflow-wrap:anywhere] ${m.author_kind === "staff" ? "bg-cyan-700 text-white" : "border border-slate-200 bg-slate-50"}`}>
                   <div className={`text-[11px] font-semibold ${m.author_kind === "staff" ? "text-white/80" : "text-slate-500"}`}>{m.author_name} · {fmt(m.created_at)}</div>
                   <p className="mt-0.5 whitespace-pre-wrap text-sm">{m.body}</p>
                 </div>
@@ -181,7 +185,7 @@ function InboxThreadView({ id, onBack, refresh = 0 }: { id: string; onBack: () =
 }
 
 /** Stjórnandi hefur samtal: velur viðtakanda, skrifar fyrirsögn og skilaboð. */
-function Compose({ onCancel, onSent }: { onCancel: () => void; onSent: (id: string) => void }) {
+function Compose({ onCancel, onSent, compact = false }: { onCancel: () => void; onSent: (id: string) => void; compact?: boolean }) {
   const [people, setPeople] = useState<Recipient[] | null>(null);
   const [q, setQ] = useState("");
   const [to, setTo] = useState<Recipient | null>(null);
@@ -211,7 +215,7 @@ function Compose({ onCancel, onSent }: { onCancel: () => void; onSent: (id: stri
   return (
     <div className="space-y-3">
       <button onClick={onCancel} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-600 hover:underline"><ArrowLeft className="h-4 w-4" /> Öll samtöl</button>
-      <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
+      <div className={compact ? "space-y-4" : "space-y-4 rounded-2xl border border-slate-200 bg-white p-5"}>
         <h2 className="text-lg font-bold">Ný skilaboð</h2>
         <div>
           <div className="mb-1 text-sm font-semibold text-slate-700">Til</div>
