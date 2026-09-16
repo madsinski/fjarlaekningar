@@ -93,7 +93,7 @@ export async function POST(req: Request) {
           if (doc) notices.push({ doctorId: doc, line: `Þú hefur verið sett(ur) á vaktina ${shiftPhrase(s)}.` });
         }
       }
-      notifyDoctors({ origin: originOf(req), subject: "Breyting á vaktaplani", heading: "Breyting á vaktaplani", intro: `${auth.actor.label} endurraðaði vaktaplaninu:`, notices });
+      notifyDoctors({ origin: originOf(req), subject: "Breyting á vaktaplani", heading: "Breyting á vaktaplani", intro: `${auth.actor.label} endurraðaði vaktaplaninu:`, notices, email: false });
     }
 
     await audit(auth.actor.label, "plan.generate", month, { mode, created, changed, unfilled: result.unfilled.length });

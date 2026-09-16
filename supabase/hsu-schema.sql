@@ -351,3 +351,20 @@ alter table public.hsu_preferences
   add column if not exists day_part_marks jsonb not null default '{}'::jsonb;
 alter table public.hsu_preferences drop constraint if exists hsu_preferences_day_part_check;
 alter table public.hsu_preferences add constraint hsu_preferences_day_part_check check (day_part in ('all','am','pm'));
+
+-- ── Tilkynningar á „Mínar vaktir“ (2026-09-16) ─────────────────────────────
+-- Breytingar yfirlæknis á vaktaplani birtast lækninum í kerfinu sjálfu, án
+-- tölvupósts. Ein lína á hverja aðgerð sem snertir lækninn.
+create table if not exists public.hsu_notifications (
+  id         uuid primary key default gen_random_uuid(),
+  doctor_id  uuid not null references public.hsu_doctors (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  title      text not null,
+  lines      text[] not null default '{}',
+  link       text not null default '',
+  read_at    timestamptz
+);
+create index if not exists hsu_notifications_doctor_idx on public.hsu_notifications (doctor_id, created_at desc);
+alter table public.hsu_notifications enable row level security;
+drop policy if exists hsu_notifications_none on public.hsu_notifications;
+create policy hsu_notifications_none on public.hsu_notifications for all using (false) with check (false);

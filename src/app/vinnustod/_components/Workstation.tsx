@@ -7,7 +7,7 @@
 //                QR-kóði á skjá fyrir sjúkling sem stendur við borðið
 //   Upplýsingar  hvað hentar og hvað ekki, tilbúin svör, lyfjalisti, leit
 //   SMS          senda hlekkinn og sjá hvort hann komst til skila
-//   Spurningar   spyrja Fjarlækningar (aðeins notendur vinnustöðvar)
+//   Spurningar   hjúkrunarfræðingur spyr Fjarlækningar; stjórnandi svarar hér líka
 //   Stillingar   lykilorð og aðgangskóði (aðeins notendur vinnustöðvar)
 
 import { useEffect, useRef, useState } from "react";
@@ -19,6 +19,7 @@ import { Badge, Button, Card, Field, Notice, cx, firstName, inputCls } from "@/a
 import { GUIDE_FACTS } from "@/lib/nurse-guide";
 import NurseGuide from "./NurseGuide";
 import QuestionsPanel from "./QuestionsPanel";
+import Inbox from "@/app/admin/vinnustod/Inbox";
 import SmsPanel from "./SmsPanel";
 import { FjLogo, PORTAL_URL, Qr, useServiceStatus, vsApi } from "./shared";
 
@@ -32,6 +33,8 @@ export interface VsMe {
   hasPin: boolean;
   mustChangePassword: boolean;
   canMessage: boolean;
+  /** Stjórnandi Fjarlækninga: svarar spurningunum hér líka. */
+  canAnswer: boolean;
 }
 export interface Announcement { id: string; created_at: string; title: string; body: string; level: "info" | "warning" }
 
@@ -61,13 +64,13 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
 
   // Ólesin svör uppfærast þó spurningaflipinn sé ekki opinn.
   useEffect(() => {
-    if (!me.canMessage) return;
+    if (!me.canMessage && !me.canAnswer) return;
     const t = setInterval(async () => {
       const r = await vsApi<{ unread: number }>("/api/vinnustod/me", { staff: true });
       if (r.ok) setUnread(r.unread);
     }, 60_000);
     return () => clearInterval(t);
-  }, [me.canMessage]);
+  }, [me.canMessage, me.canAnswer]);
 
   const goSms = () => { setTab("sms"); setTimeout(() => phoneRef.current?.focus(), 80); };
   const goSearch = () => { setTab("upplysingar"); setSearchPing((n) => n + 1); };
@@ -77,7 +80,7 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
     { key: "yfirlit", label: "Yfirlit", icon: <Home className="h-4 w-4" />, show: true },
     { key: "upplysingar", label: "Upplýsingar", icon: <BookOpen className="h-4 w-4" />, show: true },
     { key: "sms", label: "SMS", icon: <Send className="h-4 w-4" />, show: true },
-    { key: "spurningar", label: "Spurningar", icon: <MessageCircle className="h-4 w-4" />, badge: unread, show: me.canMessage },
+    { key: "spurningar", label: "Spurningar", icon: <MessageCircle className="h-4 w-4" />, badge: unread, show: me.canMessage || me.canAnswer },
     { key: "stillingar", label: "Stillingar", icon: <Settings className="h-4 w-4" />, show: me.kind === "vs" },
   ];
 
@@ -125,6 +128,15 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
           </div>
         )}
         {tab === "spurningar" && me.canMessage && <QuestionsPanel onUnreadChange={setUnread} initialCompose={askDraft} key={askDraft ?? "list"} />}
+        {tab === "spurningar" && me.canAnswer && (
+          <div className="space-y-4">
+            <div>
+              <h1 className="text-xl font-bold">Spurningar starfsfólks</h1>
+              <p className="text-sm text-slate-500">Svaraðu hér — svarið birtist starfsmanninum í vinnustöðinni og fer í tölvupósti.</p>
+            </div>
+            <Inbox onAwaitingChange={setUnread} />
+          </div>
+        )}
         {tab === "stillingar" && me.kind === "vs" && <SettingsPanel me={me} refresh={refresh} />}
       </main>
 
@@ -180,7 +192,16 @@ function Overview({ me, announcements, unread, onSms, onSearch, onAsk, onQr, onO
         </Notice>
       ))}
 
-      {unread > 0 && (
+      {unread > 0 && me.canAnswer && (
+        <button onClick={onOpenQuestions} className="flex w-full items-center justify-between gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-left">
+          <span className="flex items-center gap-2 font-semibold text-amber-900">
+            <MessageCircle className="h-5 w-5" /> {unread === 1 ? "Ein spurning bíður svars" : `${unread} spurningar bíða svars`}
+          </span>
+          <ChevronRight className="h-4 w-4 text-amber-700" />
+        </button>
+      )}
+
+      {unread > 0 && me.canMessage && (
         <button onClick={onOpenQuestions} className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[var(--hsu)]/30 bg-[var(--hsu-soft)] p-4 text-left">
           <span className="flex items-center gap-2 font-semibold text-[var(--hsu-dark)]">
             <MessageCircle className="h-5 w-5" /> Fjarlækningar svöruðu {unread === 1 ? "spurningunni þinni" : `${unread} spurningum`}
@@ -195,6 +216,8 @@ function Overview({ me, announcements, unread, onSms, onSearch, onAsk, onQr, onO
         <QuickAction icon={<QrCode className="h-5 w-5" />} title="Sýna QR-kóða" text="Sjúklingur við borðið skannar" onClick={onQr} />
         {me.canMessage
           ? <QuickAction icon={<MessageCircle className="h-5 w-5" />} title="Spyrja Fjarlækningar" text="Við svörum hér og í pósti" onClick={onAsk} />
+          : me.canAnswer
+          ? <QuickAction icon={<MessageCircle className="h-5 w-5" />} title="Svara spurningum" text="Spurningar hjúkrunarfræðinga" onClick={onOpenQuestions} />
           : <QuickAction icon={<BookOpen className="h-5 w-5" />} title="Opna vefinn" text="fjarlaekningar.is/thjonusta" onClick={() => window.open("/thjonusta", "_blank", "noopener")} />}
       </div>
 

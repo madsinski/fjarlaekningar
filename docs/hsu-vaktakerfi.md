@@ -194,20 +194,27 @@ Hringurinn á hverju skrefi er **fylltur grænn aðeins þegar allt í skrefinu 
 (allir sent / allar óskir samþykktar / plan fullmannað án árekstra og án beiðna í bið /
 birt). Hálfnað skref fær appelsínugula útlínu og stutta stöðu (t.d. „3 af 5 sent“).
 
-## Tölvupóstar til lækna
+## Tilkynningar og tölvupóstar til lækna
 
-| Atburður | Hver fær póst |
-|---|---|
-| Opnað fyrir óskir / áminning | læknar (val yfirlæknis) |
-| Óskir samþykktar / beðið um breytingar | læknirinn |
-| Vaktaplan birt | allir læknar, með fjölda vakta |
-| Eftir birtingu: læknir færður á eða af vakt (draga, velja, hreinsa, endurraða) | hver læknir sem missti eða fékk vakt |
-| Eftir birtingu: tími, heiti eða athugasemd vaktar breytist | læknirinn á vaktinni |
-| Eftir birtingu: vakt eytt / aukavakt bætt við | læknirinn |
-| Vaktaplan tekið úr birtingu | læknar með vaktir í mánuðinum |
-| Beiðni um aukavakt | læknirinn (líka fyrir birtingu); svar fer til yfirlækna |
-| Vaktamarkaður: boð, tekin vakt, höfnun, afturkallað boð, samþykkt/hafnað af yfirlækni, boð fellt niður | þeir sem málið varðar |
-| Lykilorði breytt (af lækni eða stjórnanda) | læknirinn (öryggistilkynning) |
+Allar tilkynningar birtast á **Mínar vaktir**: ólesnar efst með „Merkja lesið“, og
+tala á flipanum. Lesnar tilkynningar síðustu 30 daga má opna undir „Eldri breytingar“.
+
+**Breytingar yfirlæknis á vaktaplani fara aðeins í kerfið — enginn tölvupóstur.**
+Póstur fer aðeins þegar læknirinn þarf að bregðast við eða málið varðar öryggi.
+
+| Atburður | Í kerfinu | Tölvupóstur |
+|---|---|---|
+| Eftir birtingu: læknir færður á eða af vakt (draga, velja, hreinsa, endurraða) | ✓ | — |
+| Eftir birtingu: tími, heiti eða athugasemd vaktar breytist; vakt skipt eða sameinuð | ✓ | — |
+| Eftir birtingu: vakt felld niður | ✓ | — |
+| Vaktaplan tekið úr birtingu | ✓ | — |
+| Beiðni um aukavakt (líka fyrir birtingu); svar fer til yfirlækna | ✓ | ✓ |
+| Óskir samþykktar / beðið um breytingar | ✓ | ✓ |
+| Vaktamarkaður: boð, tekin vakt, höfnun, afturkallað boð, samþykkt/hafnað af yfirlækni | ✓ | ✓ |
+| Lykilorði breytt (af lækni eða stjórnanda) — öryggistilkynning | ✓ | ✓ |
+| Opnað fyrir óskir / áminning; vaktaplan birt | — | ✓ |
+
+Í kóðanum: `notifyDoctors(..., email: false)` skrifar aðeins í `hsu_notifications`.
 
 ## Útköll í Vinnustund
 

@@ -43,7 +43,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
   const tellDoctor = (line: string, doctorId: string | null) => {
     if (!doctorId || !shift.published) return;
-    notifyDoctors({ origin, subject: "Breyting á vakt", heading: "Breyting á vakt", notices: [{ doctorId, line }] });
+    notifyDoctors({ origin, subject: "Breyting á vakt", heading: "Breyting á vakt", notices: [{ doctorId, line }], email: false });
     after(async () => { await hsuSync.syncDoctors([doctorId]); });
   };
 

@@ -19,6 +19,13 @@ export async function GET(req: Request) {
   if (!actor) return fail("Ekki innskráð(ur)", 401);
 
   let unread = 0;
+  // Stjórnandi Fjarlækninga svarar spurningunum: hjá honum telur „ólesið“
+  // opnar spurningar sem bíða svars.
+  if (actor.kind === "staff" && actor.isAdmin) {
+    const { count } = await supabaseAdmin.from("gatt_threads")
+      .select("id", { count: "exact", head: true }).eq("status", "open").eq("last_author", "user");
+    unread = count ?? 0;
+  }
   if (actor.kind === "vs") {
     const { data: threads } = await supabaseAdmin.from("gatt_threads")
       .select("last_message_at, last_author, user_read_at").eq("user_id", actor.id);
@@ -36,6 +43,7 @@ export async function GET(req: Request) {
       workplace: actor.workplace ?? "", title: actor.title ?? "",
       hasPin: actor.hasPin ?? false, mustChangePassword: actor.mustChangePassword ?? false,
       canMessage: actor.kind === "vs",
+      canAnswer: actor.kind === "staff" && actor.isAdmin,
     },
     unread,
     announcements: news ?? [],

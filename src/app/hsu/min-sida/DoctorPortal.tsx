@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  AlertTriangle, ArrowLeftRight, CalendarCheck, CalendarRange, CheckCircle2, ChevronRight, ClipboardList, ExternalLink, Home, Settings, Store,
+  AlertTriangle, ArrowLeftRight, Bell, CalendarCheck, CalendarRange, Check, CheckCircle2, ChevronRight, ClipboardList, ExternalLink, Home, Settings, Store,
 } from "lucide-react";
 import HsuHeader from "../_components/HsuHeader";
 import { Badge, Button, Card, Field, Modal, Notice, cx, firstName, hsuApi, inputCls, shortName, capFirst } from "../_components/ui";
@@ -84,7 +84,7 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
       <nav className="sticky top-16 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-3 py-2 sm:px-5 [scrollbar-width:none]">
           {TABS.map((t) => {
-            const badge = t.key === "markadur" ? marketCount : t.key === "oskir" ? prefActions.length : t.key === "vaktir" ? data.requests.length : 0;
+            const badge = t.key === "markadur" ? marketCount : t.key === "oskir" ? prefActions.length : t.key === "vaktir" ? data.requests.length + data.notifications.filter((n) => !n.read_at).length : 0;
             return (
               <button key={t.key} onClick={() => setTab(t.key)} aria-current={tab === t.key ? "page" : undefined}
                 className={cx(
@@ -323,6 +323,79 @@ function ShiftRow({ s, types, today, onLog, right, extra }: {
 
 // ── Mínar vaktir ───────────────────────────────────────────────────────────
 
+/**
+ * Breytingar sem yfirlæknir gerði á vöktum læknisins eftir birtingu. Ólesnar
+ * efst og áberandi; lesnar síðustu daga fyrir neðan, samanbrotnar.
+ */
+function NotificationsBlock({ data, refresh }: { data: PortalData; refresh: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [showOld, setShowOld] = useState(false);
+  const unread = data.notifications.filter((n) => !n.read_at);
+  const read = data.notifications.filter((n) => n.read_at);
+  if (!data.notifications.length) return null;
+
+  const markRead = async (ids?: string[]) => {
+    setBusy(true);
+    await hsuApi("/api/hsu/me/notifications", { body: ids ? { ids } : {} });
+    setBusy(false);
+    refresh();
+  };
+  const when = (iso: string) => {
+    const d = new Date(iso);
+    return `${d.getDate()}.${d.getMonth() + 1}. kl. ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  };
+
+  return (
+    <section className="space-y-2">
+      {unread.length > 0 && (
+        <Card className="overflow-hidden border-[var(--hsu)]/40">
+          <div className="flex flex-wrap items-center justify-between gap-2 bg-[var(--hsu-soft)] px-4 py-3">
+            <h2 className="flex items-center gap-2 text-sm font-bold text-[var(--hsu-dark)]">
+              <Bell className="h-4 w-4" /> {unread.length === 1 ? "Ný breyting á vöktunum þínum" : `${unread.length} nýjar breytingar á vöktunum þínum`}
+            </h2>
+            <Button size="sm" variant="soft" busy={busy} onClick={() => markRead()}>
+              <Check className="h-3.5 w-3.5" /> Merkja lesið
+            </Button>
+          </div>
+          <ul className="divide-y divide-slate-100">
+            {unread.map((n) => (
+              <li key={n.id} className="px-4 py-3">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-sm font-semibold text-slate-900">{n.title}</span>
+                  <span className="shrink-0 text-[11px] text-slate-500">{when(n.created_at)}</span>
+                </div>
+                <ul className="mt-1 space-y-0.5 text-sm text-slate-700">
+                  {n.lines.map((l, i) => <li key={i}>{l}</li>)}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+      {read.length > 0 && (
+        <div>
+          <button onClick={() => setShowOld((v) => !v)} className="text-xs font-semibold text-slate-500 hover:underline">
+            {showOld ? "Fela eldri breytingar" : `Eldri breytingar (${read.length})`}
+          </button>
+          {showOld && (
+            <Card className="mt-2 divide-y divide-slate-100">
+              {read.map((n) => (
+                <div key={n.id} className="px-4 py-2.5 text-slate-600">
+                  <div className="flex items-baseline justify-between gap-3 text-xs">
+                    <span className="font-semibold">{n.title}</span>
+                    <span className="shrink-0">{when(n.created_at)}</span>
+                  </div>
+                  <ul className="mt-0.5 space-y-0.5 text-xs">{n.lines.map((l, i) => <li key={i}>{l}</li>)}</ul>
+                </div>
+              ))}
+            </Card>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function ShiftsTab({ data, swaps, refresh, onLog }: { data: PortalData; swaps: HsuSwap[]; refresh: () => void; onLog: (s: HsuShift, done: boolean) => void }) {
   const [offer, setOffer] = useState<HsuShift | null>(null);
   const [busy, setBusy] = useState(false);
@@ -355,6 +428,7 @@ function ShiftsTab({ data, swaps, refresh, onLog }: { data: PortalData; swaps: H
         </div>
         <VinnustundLink />
       </div>
+      <NotificationsBlock data={data} refresh={refresh} />
       <RequestsBlock data={data} refresh={refresh} />
       {/* Litaskýring: sömu litir og á vaktaplaninu. */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-white px-4 py-3 text-[11px] text-slate-500 ring-1 ring-slate-200">

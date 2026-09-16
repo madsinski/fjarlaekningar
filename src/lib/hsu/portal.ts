@@ -6,6 +6,15 @@ import { monthKey, type HsuMonth, type HsuPreference, type HsuShift, type HsuShi
 
 export interface Colleague { id: string; name: string; color: string; role: string; phone: string; email: string }
 
+export interface PortalNotification {
+  id: string;
+  created_at: string;
+  title: string;
+  lines: string[];
+  link: string;
+  read_at: string | null;
+}
+
 export interface PortalData {
   me: { id: string; name: string; email: string; role: string; hasPin: boolean; mustChangePassword: boolean; hasCalendarToken: boolean; dayWeekdays: number[] };
   shiftTypes: HsuShiftType[];
@@ -19,6 +28,8 @@ export interface PortalData {
   requests: (HsuShift & { requested_by: string })[];
   marketRequiresApproval: boolean;
   today: string;
+  /** Tilkynningar um breytingar á vöktum læknisins — nýjustu fyrst. */
+  notifications: PortalNotification[];
 }
 
 export async function loadPortal(doctorId: string): Promise<PortalData> {
@@ -26,7 +37,7 @@ export async function loadPortal(doctorId: string): Promise<PortalData> {
   const today = new Date().toISOString().slice(0, 10);
   const first = `${monthKey(new Date())}-01`;
 
-  const [me, colleagues, myShifts, months, prefs, swaps, settings, requests] = await Promise.all([
+  const [me, colleagues, myShifts, months, prefs, swaps, settings, requests, notifications] = await Promise.all([
     supabaseAdmin.from("hsu_doctors").select("id, name, email, role, pin_hash, must_change_password, calendar_token, day_weekdays").eq("id", doctorId).single(),
     supabaseAdmin.from("hsu_doctors").select("id, name, color, role, phone, email").eq("active", true).order("name"),
     supabaseAdmin.from("hsu_shifts").select("id, shift_date, shift_type_id, label, starts, ends, doctor_id, status, note, vinnustund_logged_at")
@@ -42,9 +53,14 @@ export async function loadPortal(doctorId: string): Promise<PortalData> {
     supabaseAdmin.from("hsu_settings").select("unit_name, market_requires_approval").eq("id", 1).maybeSingle(),
     supabaseAdmin.from("hsu_shifts").select("id, shift_date, shift_type_id, label, starts, ends, doctor_id, status, note, confirm_status, requested_by")
       .eq("doctor_id", doctorId).eq("confirm_status", "requested").gte("shift_date", today).order("shift_date"),
+    // Ólesnar allar, og lesnar síðustu 30 daga.
+    supabaseAdmin.from("hsu_notifications").select("id, created_at, title, lines, link, read_at")
+      .eq("doctor_id", doctorId)
+      .or(`read_at.is.null,created_at.gte.${new Date(Date.now() - 30 * 86400_000).toISOString()}`)
+      .order("created_at", { ascending: false }).limit(40),
   ]);
 
-  for (const r of [me, colleagues, myShifts, months, prefs, swaps, requests]) {
+  for (const r of [me, colleagues, myShifts, months, prefs, swaps, requests, notifications]) {
     if (r.error) throw new Error(r.error.message);
   }
 
@@ -65,5 +81,6 @@ export async function loadPortal(doctorId: string): Promise<PortalData> {
     requests: (requests.data ?? []) as PortalData["requests"],
     marketRequiresApproval: Boolean(settings.data?.market_requires_approval),
     today,
+    notifications: (notifications.data ?? []) as PortalNotification[],
   };
 }

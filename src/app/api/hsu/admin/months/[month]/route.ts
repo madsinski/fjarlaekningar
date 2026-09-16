@@ -77,9 +77,10 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
       origin, subject: `Vaktaplan ${monthLabel(month)} tekið úr birtingu`, heading: "Vaktaplan tekið úr birtingu",
       notices: withShifts.map((doctorId) => ({
         doctorId,
-        line: `${auth.actor.label} tók vaktaplanið fyrir ${monthLabel(month)} úr birtingu til endurskoðunar. Vaktirnar eru ekki lengur í dagatalinu þínu; þú færð póst þegar það er birt aftur.`,
+        line: `${auth.actor.label} tók vaktaplanið fyrir ${monthLabel(month)} úr birtingu til endurskoðunar. Vaktirnar eru ekki lengur í dagatalinu þínu; þú færð að vita þegar það er birt aftur.`,
       })),
       cta: { label: "Opna mína síðu", path: "/hsu/min-sida" },
+      email: false,
     });
   }
   const notify = Boolean(body.notify);

@@ -40,7 +40,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
       if (error) return fail(error.message, 500);
       if (shift.published && shift.doctor_id) after(async () => { await hsuSync.syncDoctors([shift.doctor_id]); });
       // Læknirinn á birtri vakt á að vita af breyttum tíma eða athugasemd —
-      // en aðeins ef læknirinn breyttist ekki í sömu aðgerð (þá fékk hann þegar póst).
+      // en aðeins ef læknirinn breyttist ekki í sömu aðgerð (þá fékk hann þegar tilkynningu).
       if (shift.published && shift.doctor_id && !("doctor_id" in body) && body.notify !== false) {
         const what: string[] = [];
         if (patch.starts || patch.ends) what.push(`nýr tími ${hhmm(String(patch.starts ?? shift.starts))}–${hhmm(String(patch.ends ?? shift.ends))}`);
@@ -50,6 +50,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
           notifyDoctors({
             origin: originOf(req), subject: "Breyting á vakt", heading: "Breyting á vakt",
             notices: [{ doctorId: shift.doctor_id, line: `${auth.actor.label} breytti vaktinni ${shiftPhrase(shift)}: ${what.join(", ")}.` }],
+            email: false,
           });
         }
       }
@@ -75,6 +76,7 @@ export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }
     notifyDoctors({
       origin: originOf(req), subject: "Vakt felld niður", heading: "Vakt felld niður",
       notices: [{ doctorId: shift.doctor_id, line: `${auth.actor.label} felldi niður vaktina ${shiftPhrase(shift)}. Hún er farin úr vaktalistanum þínum.` }],
+      email: false,
     });
   }
   // Atburðurinn í dagatali læknisins hverfur við næstu samstillingu, því

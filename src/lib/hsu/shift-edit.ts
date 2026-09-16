@@ -166,7 +166,7 @@ export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: s
 
   if (touched.size) after(async () => { await hsuSync.syncDoctors([...touched]); });
   if (opts.notify) {
-    notifyDoctors({ origin: opts.origin, subject: "Breyting á vaktaplani", heading: "Breyting á vaktaplani", intro: `${opts.actor} breytti vaktaplaninu:`, notices });
+    notifyDoctors({ origin: opts.origin, subject: "Breyting á vaktaplani", heading: "Breyting á vaktaplani", intro: `${opts.actor} breytti vaktaplaninu:`, notices, email: false });
   }
   // Beiðnir fara alltaf út, birt eða ekki: læknirinn þarf að svara þeim.
   notifyDoctors({
