@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Logo from "./Logo";
 import PortalButton from "./PortalButton";
-import { isLocalizedPath, localeHref, stripLocale } from "@/lib/locale";
+import { isLocalizedPath, localeHref, normalizePath, stripLocale } from "@/lib/locale";
 import type { Locale } from "@/lib/site-content/types";
 
 /**
@@ -18,7 +18,7 @@ import type { Locale } from "@/lib/site-content/types";
  * go on. Pages that live at two URLs ignore it entirely.
  */
 function LangToggle({ locale }: { locale: Locale }) {
-  const pathname = usePathname() || "/";
+  const pathname = normalizePath(usePathname());
   const router = useRouter();
   const isPath = stripLocale(pathname);
   // Marketing pages exist at two URLs, so there the toggle NAVIGATES — that is
@@ -119,7 +119,9 @@ export default function Navbar({
   ];
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const pathname = usePathname();
+  // Normalized, so the prerendered front page ("/index" on the server) marks
+  // the same link active as the browser does.
+  const pathname = normalizePath(usePathname());
 
   useEffect(() => {
     const handleScroll = () => {

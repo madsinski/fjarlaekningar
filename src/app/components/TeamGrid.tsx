@@ -166,6 +166,7 @@ export default function TeamGrid({
               <img
                 src={member.photo}
                 alt={member.name}
+                loading="lazy"
                 className="w-full h-full object-cover object-top"
               />
               <ZoomHint />

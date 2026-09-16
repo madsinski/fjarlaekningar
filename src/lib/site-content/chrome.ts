@@ -50,7 +50,6 @@ export const CHROME_FIELDS: SiteField[] = [
 
   // Footer — bottom bar
   { key: "footer_rights", label: "Réttindi (á eftir ártali)", group: "Fótur — neðst", type: "text" },
-  { key: "footer_admin_link", label: "Stjórnborð — hlekkur", group: "Fótur — neðst", type: "text" },
 ];
 
 export const CHROME_DEFAULTS_IS: LocaleContent = {
@@ -76,7 +75,6 @@ export const CHROME_DEFAULTS_IS: LocaleContent = {
   footer_email: "fjarlaekningar@fjarlaekningar.is",
 
   footer_rights: "Fjarlækningar ehf. Allur réttur áskilinn.",
-  footer_admin_link: "Stjórnborð",
 };
 
 // English is empty everywhere except the search fields: a page that falls back

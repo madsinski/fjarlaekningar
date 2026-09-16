@@ -34,21 +34,32 @@ export const LOCALIZED_ROOTS = [
   "/fjolmidlar",
 ] as const;
 
-/** Trailing slash, query and fragment removed; "" becomes "/". */
-function normalize(pathname: string): string {
-  const p = (pathname || "/").split("?")[0].split("#")[0] || "/";
-  return p.length > 1 && p.endsWith("/") ? p.slice(0, -1) : p;
+/**
+ * Trailing slash, query and fragment removed; "" becomes "/".
+ *
+ * "/index" is "/" too: when Next prerenders the front page, usePathname()
+ * reports "/index" on the server but "/" in the browser. Left alone, the header
+ * rendered a different nav (Heim not active, the language pill as buttons) in
+ * the static HTML than on the client — React hydration error #418 on the front
+ * page in production.
+ */
+export function normalizePath(pathname: string | null | undefined): string {
+  const raw = (pathname || "/").split("?")[0].split("#")[0] || "/";
+  const p = raw.length > 1 && raw.endsWith("/") ? raw.slice(0, -1) : raw;
+  if (p === "/index") return "/";
+  if (p === `${EN_PREFIX}/index`) return EN_PREFIX;
+  return p;
 }
 
 /** Does this Icelandic path have an English twin? */
 export function isLocalizedPath(pathname: string): boolean {
-  const p = normalize(pathname);
+  const p = normalizePath(pathname);
   return LOCALIZED_ROOTS.some((r) => (r === "/" ? p === "/" : p === r || p.startsWith(`${r}/`)));
 }
 
 /** The Icelandic sibling of a path: "/en/thjonusta" → "/thjonusta". */
 export function stripLocale(pathname: string): string {
-  const p = normalize(pathname);
+  const p = normalizePath(pathname);
   if (p === EN_PREFIX) return "/";
   return p.startsWith(`${EN_PREFIX}/`) ? p.slice(EN_PREFIX.length) : p;
 }
@@ -60,8 +71,8 @@ export function stripLocale(pathname: string): string {
  * the admin, which have no English URL to switch to.
  */
 export function pathLocale(pathname: string): Locale | null {
-  const p = normalize(pathname);
-  if (p === EN_PREFIX || p.startsWith(`${EN_PREFIX}/`)) {
+  const p = normalizePath(pathname);
+  if (p === EN_PREFIX ||p.startsWith(`${EN_PREFIX}/`)) {
     return isLocalizedPath(stripLocale(p)) ? "en" : null;
   }
   return isLocalizedPath(p) ? "is" : null;
@@ -78,5 +89,5 @@ export function localeHref(path: string, locale: Locale = "is"): string {
   const [, base, tail] = /^([^?#]*)(.*)$/.exec(path) as RegExpExecArray;
   if (locale !== "en" || !base.startsWith("/")) return path;
   if (!isLocalizedPath(base)) return path;
-  return `${base === "/" ? EN_PREFIX : `${EN_PREFIX}${normalize(base)}`}${tail}`;
+  return `${base === "/" ? EN_PREFIX : `${EN_PREFIX}${normalizePath(base)}`}${tail}`;
 }

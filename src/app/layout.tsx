@@ -26,28 +26,38 @@ const inter = Inter({
 // Deck typography options (see DESIGNS in src/lib/presentations/types.ts).
 // The "latin" subset covers Icelandic — ð, þ, æ and the accented vowels all
 // live in Latin-1, so no latin-ext is needed.
+//
+// preload: false — these are only used by the presentation decks, yet a root
+// layout font is preloaded on EVERY page. That was eight extra font downloads
+// on the public site and a "preloaded but not used" console warning for each.
+// The @font-face rules stay, so a deck still gets its font; the browser just
+// fetches it when a deck actually uses it.
 const schibsted = Schibsted_Grotesk({
   variable: "--font-schibsted",
   subsets: ["latin"],
   display: "swap",
+  preload: false,
 });
 
 const newsreader = Newsreader({
   variable: "--font-newsreader",
   subsets: ["latin"],
   display: "swap",
+  preload: false,
 });
 
 const publicSans = Public_Sans({
   variable: "--font-public-sans",
   subsets: ["latin"],
   display: "swap",
+  preload: false,
 });
 
 const archivo = Archivo({
   variable: "--font-archivo",
   subsets: ["latin"],
   display: "swap",
+  preload: false,
 });
 
 const plexSans = IBM_Plex_Sans({
@@ -55,6 +65,7 @@ const plexSans = IBM_Plex_Sans({
   weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
   display: "swap",
+  preload: false,
 });
 
 const plexMono = IBM_Plex_Mono({
@@ -62,6 +73,7 @@ const plexMono = IBM_Plex_Mono({
   weight: ["400", "500", "600"],
   subsets: ["latin"],
   display: "swap",
+  preload: false,
 });
 
 /**

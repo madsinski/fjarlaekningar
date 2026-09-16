@@ -41,7 +41,6 @@ export interface FooterContent {
   footer_country?: string;
   footer_email?: string;
   footer_rights?: string;
-  footer_admin_link?: string;
 }
 
 const FOOTER_DEFAULTS: Required<FooterContent> = {
@@ -60,7 +59,6 @@ const FOOTER_DEFAULTS: Required<FooterContent> = {
   footer_country: "Ísland",
   footer_email: "fjarlaekningar@fjarlaekningar.is",
   footer_rights: "Fjarlækningar ehf. Allur réttur áskilinn.",
-  footer_admin_link: "Stjórnborð",
 };
 
 export default async function Footer({
@@ -142,19 +140,12 @@ export default async function Footer({
           </div>
         )}
 
-        <div className="mt-10 pt-6 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+        {/* No link to the staff admin here: staff know the address, and a
+            public pointer to the login only invites probing. */}
+        <div className="mt-10 pt-6 border-t border-slate-800 text-xs text-slate-500">
           <p>
             © {new Date().getFullYear()} {t.footer_rights}
           </p>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/admin"
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-800/60 px-3.5 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800 hover:text-white"
-            >
-              {t.footer_admin_link}
-              <span aria-hidden className="text-slate-500">→</span>
-            </Link>
-          </div>
         </div>
       </div>
     </footer>

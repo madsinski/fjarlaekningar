@@ -91,8 +91,11 @@ export default function HomeView({
           {erindi
             .filter((s) => s.slug !== "laeknisvottord")
             .map((s) => (
+              // prefetch={false}: twelve cards would otherwise prefetch twelve
+              // pages the moment the grid scrolls into view.
               <Link
                 key={s.slug}
+                prefetch={false}
                 href={href(erindiLinked ? `/thjonusta/${s.slug}` : "/thjonusta")}
                 className="group flex items-center gap-3 bg-white rounded-xl border border-slate-200 px-4 py-3 hover:shadow-md hover:border-brand-cyan transition-all"
               >
@@ -100,6 +103,7 @@ export default function HomeView({
                 <img
                   src={`/erindi-icons/${s.slug}.png`}
                   alt=""
+                  loading="lazy"
                   width={40}
                   height={40}
                   className="w-10 h-10 shrink-0 object-contain"
@@ -192,7 +196,7 @@ export default function HomeView({
           {/* "Efst": a single logo above the copy, cards hidden. */}
           {mode === "top" && coops[0]?.logo && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={coops[0].logo} alt={coops[0].name} className={`${logoSize} object-contain mb-8`} />
+            <img src={coops[0].logo} alt={coops[0].name} loading="lazy" className={`${logoSize} object-contain mb-8`} />
           )}
           <div className="max-w-2xl">
             {c.coop_eyebrow && (
@@ -220,7 +224,7 @@ export default function HomeView({
                 >
                   {co.logo && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={co.logo} alt={co.name} className={`${logoSize} object-contain`} />
+                    <img src={co.logo} alt={co.name} loading="lazy" className={`${logoSize} object-contain`} />
                   )}
                   <div className="mt-3 text-sm font-semibold leading-tight text-slate-900 break-words">
                     {co.name}
@@ -266,6 +270,7 @@ export default function HomeView({
             <img
               src={c.team_photo}
               alt="Teymi Fjarlækninga"
+              loading="lazy"
               className="h-60 w-full rounded-2xl border border-slate-200 object-cover object-[center_25%] sm:h-72"
             />
           </div>
@@ -311,6 +316,7 @@ export default function HomeView({
               <img
                 src={press[0].image}
                 alt={press[0].title}
+                loading="lazy"
                 width={1600}
                 height={1085}
                 className="aspect-[16/9] w-full object-cover object-top"

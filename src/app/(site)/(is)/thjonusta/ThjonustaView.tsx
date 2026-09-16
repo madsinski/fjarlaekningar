@@ -182,6 +182,7 @@ export default function ThjonustaView({
               <img
                 src={`/erindi-icons/${s.slug}.png`}
                 alt=""
+                loading="lazy"
                 width={80}
                 height={80}
                 className="w-20 h-20 shrink-0 object-contain"
@@ -194,7 +195,7 @@ export default function ThjonustaView({
             );
             // Until the erindi pages are published the card is plain markup.
             return erindiLive ? (
-              <Link key={s.slug} href={localeHref(`/thjonusta/${s.slug}`, locale)} className={cardCls}>{inner}</Link>
+              <Link key={s.slug} prefetch={false} href={localeHref(`/thjonusta/${s.slug}`, locale)} className={cardCls}>{inner}</Link>
             ) : (
               <div key={s.slug} className={cardCls}>{inner}</div>
             );
@@ -265,6 +266,7 @@ export default function ThjonustaView({
                   <img
                     src={t.img}
                     alt={t.title}
+                    loading="lazy"
                     width={900}
                     height={434}
                     className="h-auto w-full max-w-[15rem] object-contain"
@@ -413,7 +415,7 @@ export default function ThjonustaView({
                 <div className="flex items-center gap-4 pb-5 mb-6 border-b border-slate-200">
                   {u.logo && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={u.logo} alt={`Merki ${u.name}`} width={56} height={56} className="w-14 h-14 shrink-0 object-contain" />
+                    <img src={u.logo} alt={`Merki ${u.name}`} loading="lazy" width={56} height={56} className="w-14 h-14 shrink-0 object-contain" />
                   )}
                   <div>
                     <h3 className="text-lg font-bold text-slate-900">{u.name}</h3>

@@ -289,7 +289,7 @@ export default function ErindiView({
                   const inner = (
                     <>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={`/erindi-icons/${n.slug}.png`} alt="" width={20} height={20}
+                      <img src={`/erindi-icons/${n.slug}.png`} alt="" loading="lazy" width={20} height={20}
                         className={`h-5 w-5 shrink-0 object-contain ${here ? "" : "opacity-60 group-hover:opacity-100"}`} />
                       <span className="leading-snug">{n.title}</span>
                     </>
@@ -310,7 +310,7 @@ export default function ErindiView({
                   return (
                     <li key={n.slug}>
                       {linked ? (
-                        <Link href={localeHref(`/thjonusta/${n.slug}`, locale)}
+                        <Link href={localeHref(`/thjonusta/${n.slug}`, locale)} prefetch={false}
                           className={`${shared} group text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900`}>
                           {inner}
                         </Link>
@@ -382,6 +382,7 @@ export default function ErindiView({
                   <img
                     src={t.img}
                     alt={t.title}
+                    loading="lazy"
                     className="mb-4 h-32 w-full rounded-xl bg-slate-50 object-contain p-3"
                   />
                 )}

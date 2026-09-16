@@ -140,7 +140,7 @@ export default function Screenshot({
         className={`group relative block w-full aspect-[16/10] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm cursor-zoom-in transition-shadow hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] ${className}`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt={alt} className="block h-full w-full object-contain object-top" />
+        <img src={src} alt={alt} loading="lazy" className="block h-full w-full object-contain object-top" />
         <Boxes boxes={boxes} />
 
         {/* Always-visible affordance. Touch devices have no hover, so a

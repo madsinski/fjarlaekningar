@@ -56,6 +56,7 @@ function LeadCard({ item, locale }: { item: PressItem; locale: "is" | "en" }) {
           <img
             src={item.image}
             alt={item.title}
+            loading="lazy"
             width={1600}
             height={1085}
             className="aspect-[16/9] w-full object-cover object-top"

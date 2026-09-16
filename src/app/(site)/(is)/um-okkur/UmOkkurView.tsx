@@ -80,6 +80,7 @@ export default function UmOkkurView({
         <img
           src={c.faces_photo}
           alt={c.faces_heading || "Teymið"}
+          loading="lazy"
           className={`w-full ${photoMaxH} rounded-3xl object-cover object-[center_22%] shadow-lg ring-1 ring-slate-200`}
         />
         {c.faces_caption && (
@@ -145,6 +146,7 @@ export default function UmOkkurView({
             <img
               src={c.faces_photo}
               alt={c.faces_heading || "Teymið"}
+              loading="lazy"
               className="w-full max-h-[560px] rounded-3xl object-cover object-[center_22%] shadow-lg ring-1 ring-slate-200"
             />
             {/* Seats the panel on the photo instead of letting it float. */}
@@ -213,6 +215,7 @@ export default function UmOkkurView({
             <img
               src={c.faces_photo}
               alt={c.faces_heading || "Teymið"}
+              loading="lazy"
               className="w-full max-h-[280px] rounded-2xl object-cover object-[center_22%] ring-1 ring-slate-200"
             />
             {c.faces_caption && (
@@ -249,6 +252,7 @@ export default function UmOkkurView({
           <img
             src={c.faces_photo}
             alt={c.faces_heading || "Teymið"}
+            loading="lazy"
             className="h-[360px] w-full object-cover object-[center_22%] sm:h-[440px] lg:h-[520px]"
           />
           <div
@@ -338,6 +342,7 @@ export default function UmOkkurView({
           <img
             src={c.faces_photo}
             alt={c.faces_heading || "Teymið"}
+            loading="lazy"
             className="w-full max-h-[420px] rounded-2xl object-cover object-[center_22%] ring-1 ring-slate-200"
           />
           {c.faces_caption && (
@@ -391,6 +396,7 @@ export default function UmOkkurView({
               <img
                 src={c.faces_photo}
                 alt={c.faces_heading || "Teymið"}
+                loading="lazy"
                 className="w-full max-h-[300px] rounded-2xl object-cover object-[center_22%] ring-1 ring-white/25"
               />
               {c.faces_caption && (
