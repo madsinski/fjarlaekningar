@@ -645,6 +645,30 @@ function Poster({ p }: { p: PosterFields }) {
   return sheet;
 }
 
+/**
+ * The erindi tiles, sized so the grid stays THREE rows tall whatever the list
+ * holds. The sheet is a fixed 297mm column with the footer pushed down by
+ * margin-top:auto, so a fourth row does not shrink the bottom white — it pushes
+ * the QR and the safety line off the page (it did: three erindi were added and
+ * the artwork ran 26mm past the sheet). The grid therefore grows sideways, and
+ * the tile shrinks with the column count so a narrow tile still reads.
+ */
+function svcGrid(count: number): React.CSSProperties {
+  const cols = Math.min(5, Math.max(3, Math.ceil(count / 3)));
+  const rows = Math.ceil(count / cols);
+  // Past five columns the labels wrap to a paragraph, so a very long list
+  // shrinks the tile instead of gaining another column.
+  const tight = cols >= 5 || rows > 3;
+  const icon = tight ? "9mm" : cols === 4 ? "11mm" : "13mm";
+  const label = tight ? "10px" : cols === 4 ? "11px" : "12px";
+  return {
+    gridTemplateColumns: `repeat(${cols},1fr)`,
+    ["--svc-icon" as string]: icon,
+    ["--svc-label" as string]: label,
+    ...(tight ? { gap: "2.2mm" } : null),
+  };
+}
+
 // The artwork itself, always laid out at A4 size.
 function PosterArt({ p }: { p: PosterFields }) {
   return (
@@ -677,7 +701,7 @@ function PosterArt({ p }: { p: PosterFields }) {
 
       <div style={{ padding: "8mm 14mm 0" }}>
         <h2 style={{ fontSize: "15px", marginBottom: "4mm" }}>{p.servicesTitle}</h2>
-        <div className="svc-grid">
+        <div className="svc-grid" style={svcGrid(p.services.length)}>
           {p.services.map((s, i) => (
             <div className="svc" key={`${s.icon}-${i}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}

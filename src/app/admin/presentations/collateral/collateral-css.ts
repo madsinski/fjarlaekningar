@@ -111,8 +111,9 @@ export const COLLATERAL_CSS = `
   gap:2mm; padding:3mm 2mm; border-radius:4mm;
   background:#fff; border:1px solid var(--line);
 }
-.llcol .svc img{width:13mm; height:13mm;}
-.llcol .svc span{font-size:12px; font-weight:700; color:var(--ink); line-height:1.15;}
+/* Tile size follows the column count the poster picks (see svcGrid). */
+.llcol .svc img{width:var(--svc-icon,13mm); height:var(--svc-icon,13mm);}
+.llcol .svc span{font-size:var(--svc-label,12px); font-weight:700; color:var(--ink); line-height:1.15;}
 
 /* compact chip list (advert + referral) */
 .llcol .svc-chips{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:3mm;}
