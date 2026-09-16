@@ -28,6 +28,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: "/admin/surveys", label: "Kannanir" },
   { href: "/admin/communication", label: "Samskipti" },
   { href: "/admin/outreach", label: "Fréttabréf" },
+  { href: "/admin/sms", label: "SMS til sjúklinga" },
   { href: "/admin/data-requests", label: "Persónuverndarbeiðnir" },
   { href: "/admin/releases", label: "Útgáfusaga" },
   { href: "/admin/errors", label: "Villuskráning" },

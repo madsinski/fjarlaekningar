@@ -25,6 +25,8 @@ modules also need a **Storage bucket** — noted inline.
 | 17 | `supabase/admin-read-lockdown.sql` | Admin-module reads restricted to `admin` via RLS (legal stays admin + lawyer). Doctor data is unaffected — it goes through service-role APIs. | ✅ done |
 | 18 | `supabase/hsu-schema.sql` | HSU vaktakerfi (Vestmannaeyjar) — eigin innskráning, óskir, vaktaplan, vaktamarkaður. Allar `hsu_*` töflur lokaðar vöfrum. Sjá `docs/hsu-vaktakerfi.md`. Síðari viðbætur í sömu skrá (forvakt/bakvakt, beiðnir, takmörkun innskráninga) keyrðar líka. | ✅ done (2026-09-15) |
 
+| 19 | `supabase/sms-schema.sql` | SMS til sjúklinga — `sms_messages` skráir hverja sendingu (hver sendi, á hvaða númer, staða frá Twilio). Lokuð vöfrum. | ✅ done (2026-09-16) |
+
 > After running a migration, the matching admin module works immediately (no
 > redeploy needed — the tables just start returning data).
 
