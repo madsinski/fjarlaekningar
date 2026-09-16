@@ -30,13 +30,16 @@ export default function MonthFlow({ ctx }: { ctx: PlannerCtx }) {
   const { data, month } = ctx;
   const status = data.month?.status ?? null;
   const reached = status ? STATUS_STEP[status] : -1;
-  const [step, setStep] = useState(Math.max(0, reached));
+  // Birtur mánuður opnast á vaktaplaninu sjálfu, ekki á birtingarskrefinu:
+  // eftir birtingu er það planið sem unnið er með, en ekki birtingin aftur.
+  const landing = Math.max(0, reached === 3 ? 2 : reached);
+  const [step, setStep] = useState(landing);
 
   // Nýr mánuður (eða staða breytist annars staðar): hoppa á skrefið sem á við.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setStep(Math.max(0, reached));
-  }, [month, reached]);
+    setStep(landing);
+  }, [month, landing]);
 
   const setStatus = async (next: MonthStatus, extra: Record<string, unknown> = {}) => {
     const r = await hsuApi<{ needsConfirm?: string; empty?: number }>(`/api/hsu/admin/months/${month}`, { method: "PUT", body: { status: next, ...extra }, staff: true });
