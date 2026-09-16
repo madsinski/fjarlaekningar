@@ -468,8 +468,8 @@ function SlotModal({ shift, ctx, shifts, doctors, prefs, toSlots, stats, onClose
                 <span className="block text-[11px] text-slate-500">{st?.count ?? 0} / {st?.target.toLocaleString("is-IS") ?? 0} vaktir · {st?.weekend ?? 0} helgar</span>
               </span>
               {issues.length ? (
-                <span className={cx("text-right text-[11px] font-semibold", issues.every((k) => k === "max" || k === "day_weekday") ? "text-amber-700" : "text-red-600")}>
-                  {issues.map((k) => ({ off: "Getur ekki", double: "Á vakt á sama tíma dags", rest: "Hvíld", max: "Umfram hámark → beiðni", skill: "Ekki bakvaktarréttindi", day_weekday: "Utan dagvinnudaga → beiðni", no_bakvakt: "" })[k]).filter(Boolean).join(" · ")}
+                <span className={cx("text-right text-[11px] font-semibold", issues.every((k) => k === "max" || k === "day_weekday" || k === "evening_weekday") ? "text-amber-700" : "text-red-600")}>
+                  {issues.map((k) => ({ off: "Getur ekki", double: "Á vakt á sama tíma dags", rest: "Hvíld", max: "Umfram hámark → beiðni", skill: "Ekki bakvaktarréttindi", day_weekday: "Utan dagvinnudaga → beiðni", evening_weekday: "Óskaði ekki eftir kvöldvöktum þennan dag → beiðni", no_bakvakt: "" })[k]).filter(Boolean).join(" · ")}
                 </span>
               ) : mark === "want" ? (
                 <Badge tone="green"><Heart className="h-3 w-3" /> Vill</Badge>

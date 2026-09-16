@@ -336,3 +336,8 @@ alter table public.hsu_shifts add column if not exists slot_index integer not nu
 drop index if exists hsu_shifts_slot_uidx;
 create unique index if not exists hsu_shifts_slot_uidx
   on public.hsu_shifts (shift_date, shift_type_id, slot_index) where shift_type_id is not null;
+
+-- ── Ósk um kvöld-/næturvaktir aðeins tiltekna vikudaga (2026-09-16) ────────
+-- Læknir sem tekur t.d. aðeins fimmtudagsvaktir. Tómt fylki = allir dagar.
+-- Ólíkt day_weekdays (fast á lækni, dagvaktir) er þetta ósk fyrir hvern mánuð.
+alter table public.hsu_preferences add column if not exists evening_weekdays smallint[] not null default '{}';

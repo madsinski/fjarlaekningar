@@ -94,6 +94,17 @@ Reglan um vaktir sama dag miðast við **tíma, ekki hólf**: læknir má taka f
 og eftir hádegi, og dagvakt og svo kvöldvakt, en aldrei tvær vaktir sem skarast.
 Forvakt og bakvakt sama dag eru því áfram tveir ólíkir læknar.
 
+### Kvöldvaktir aðeins tiltekna vikudaga
+
+Í **Óskum** hvers mánaðar getur læknir valið hvaða vikudaga hann tekur
+kvöld- og næturvaktir — t.d. eingöngu fimmtudaga. Enginn valinn = allir dagar.
+Þetta snertir ekki dagvaktir, ólíkt því að merkja daginn „get ekki“, sem lokar
+öllum vöktum þess dags. Óskin flyst með þegar „nota sömu óskir fyrir næsta
+mánuð“ er valið.
+
+Sjálfvirka skiptingin virðir þetta skilyrðislaust; þurfi yfirlæknir lækninn á
+kvöldvakt annan vikudag verður vaktin beiðni sem læknirinn samþykkir.
+
 ### Dagvinnudagar læknis
 
 Sumir læknar vinna dagvinnu aðeins hluta vikunnar (t.d. mánudaga og þriðjudaga).

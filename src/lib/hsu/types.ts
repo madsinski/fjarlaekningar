@@ -94,6 +94,8 @@ export interface HsuPreference {
   month: string;
   day_marks: Record<string, DayMark>;
   weekday_marks: Record<string, Mark>;
+  /** Ósk: kvöld- og næturvaktir aðeins þessa vikudaga (0=sun … 6=lau). Tómt = alla daga. */
+  evening_weekdays: number[];
   min_shifts: number | null;
   max_shifts: number | null;
   note: string;
@@ -309,6 +311,12 @@ export function markFor(pref: Pick<HsuPreference, "day_marks" | "weekday_marks">
   if (day === "ok") return null;
   if (day) return day;
   return pref.weekday_marks?.[String(weekdayOf(date))] ?? null;
+}
+
+/** Tekur læknirinn kvöld-/næturvaktir á þessum degi? Tómt val = alla daga. */
+export function wantsEveningOn(pref: { evening_weekdays?: number[] | null } | null | undefined, date: string): boolean {
+  const days = pref?.evening_weekdays ?? [];
+  return days.length === 0 || days.includes(weekdayOf(date));
 }
 
 export function normalizeEmail(input: string): string {

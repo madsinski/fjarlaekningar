@@ -4,6 +4,12 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { datesInMonth, shiftMonth, type DayMark, type Mark, type HsuPreference, type PrefStatus } from "./types";
 
+/** 0=sun … 6=lau. Tómt fylki = allir dagar. */
+function cleanWeekdayList(v: unknown): number[] {
+  if (!Array.isArray(v)) return [];
+  return [...new Set(v.map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))].sort();
+}
+
 function cleanMarks<T extends string>(raw: unknown, allowed: Set<string>, values: readonly T[]): Record<string, T> {
   const out: Record<string, T> = {};
   if (!raw || typeof raw !== "object") return out;
@@ -24,6 +30,7 @@ function cleanCount(v: unknown): number | null {
 export interface PrefInput {
   day_marks: Record<string, DayMark>;
   weekday_marks: Record<string, Mark>;
+  evening_weekdays: number[];
   min_shifts: number | null;
   max_shifts: number | null;
   note: string;
@@ -33,6 +40,7 @@ export function sanitizePrefs(month: string, body: Record<string, unknown>): Pre
   const p: PrefInput = {
     day_marks: cleanMarks<DayMark>(body.day_marks, new Set(datesInMonth(month)), ["off", "want", "ok"]),
     weekday_marks: cleanMarks<Mark>(body.weekday_marks, WEEKDAYS, ["off", "want"]),
+    evening_weekdays: cleanWeekdayList(body.evening_weekdays),
     min_shifts: cleanCount(body.min_shifts),
     max_shifts: cleanCount(body.max_shifts),
     note: typeof body.note === "string" ? body.note.slice(0, 1000) : "",

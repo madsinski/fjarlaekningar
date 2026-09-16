@@ -18,6 +18,8 @@ import { Badge, Button, Notice, cx, inputCls, capFirst } from "./ui";
 export interface PrefDraft {
   day_marks: Record<string, DayMark>;
   weekday_marks: Record<string, Mark>;
+  /** Kvöld- og næturvaktir aðeins þessa vikudaga. Tómt = alla daga. */
+  evening_weekdays: number[];
   min_shifts: number | null;
   max_shifts: number | null;
   note: string;
@@ -30,14 +32,15 @@ export const PREF_TONE: Record<PrefStatus | "none", "slate" | "blue" | "green" |
 };
 
 function emptyDraft(): PrefDraft {
-  return { day_marks: {}, weekday_marks: {}, min_shifts: null, max_shifts: null, note: "" };
+  return { day_marks: {}, weekday_marks: {}, evening_weekdays: [], min_shifts: null, max_shifts: null, note: "" };
 }
 
-export function draftFrom(p: Pick<HsuPreference, "day_marks" | "weekday_marks" | "min_shifts" | "max_shifts" | "note"> | null | undefined): PrefDraft {
+export function draftFrom(p: Pick<HsuPreference, "day_marks" | "weekday_marks" | "evening_weekdays" | "min_shifts" | "max_shifts" | "note"> | null | undefined): PrefDraft {
   if (!p) return emptyDraft();
   return {
     day_marks: { ...(p.day_marks ?? {}) },
     weekday_marks: { ...(p.weekday_marks ?? {}) },
+    evening_weekdays: [...(p.evening_weekdays ?? [])],
     min_shifts: p.min_shifts ?? null,
     max_shifts: p.max_shifts ?? null,
     note: p.note ?? "",
@@ -264,9 +267,32 @@ export default function PrefsEditor({
         </div>
       </div>
 
+      <div>
+        <div className="text-xs font-semibold text-slate-600">{editable ? "2. " : ""}Kvöld- og næturvaktir (forvakt og bakvakt)</div>
+        <p className="mt-0.5 text-[11px] text-slate-500">
+          Viltu aðeins kvöldvaktir á ákveðnum vikudögum — t.d. eingöngu fimmtudaga? Veldu þá hér. Enginn valinn = allir dagar.
+          Dagvaktir (flýtimóttaka) ráðast ekki af þessu.
+        </p>
+        <div className="mt-1.5 flex flex-wrap items-center gap-1">
+          {WEEKDAY_ORDER.map((d) => {
+            const on = draft.evening_weekdays.length === 0 || draft.evening_weekdays.includes(d);
+            return (
+              <button key={d} type="button" disabled={!editable}
+                onClick={() => update((x) => ({ ...x, evening_weekdays: x.evening_weekdays.includes(d) ? x.evening_weekdays.filter((y) => y !== d) : [...x.evening_weekdays, d].sort() }))}
+                className={cx("rounded-lg px-3 py-1.5 text-xs font-semibold transition", on ? "bg-[var(--hsu)] text-white" : "bg-slate-100 text-slate-500")}>
+                {WEEKDAY_SHORT_IS[d]}
+              </button>
+            );
+          })}
+          {draft.evening_weekdays.length > 0 && editable && (
+            <button type="button" onClick={() => update((x) => ({ ...x, evening_weekdays: [] }))} className="px-2 text-xs font-medium text-slate-500 underline">Allir dagar</button>
+          )}
+        </div>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <div className="text-xs font-semibold text-slate-600">{editable ? "2. " : ""}Fjöldi vakta í mánuðinum</div>
+          <div className="text-xs font-semibold text-slate-600">{editable ? "3. " : ""}Fjöldi vakta í mánuðinum</div>
           <div className="mt-1 flex items-center gap-2">
             <input type="number" min={0} max={31} placeholder="Minnst" disabled={!editable} value={draft.min_shifts ?? ""}
               onChange={(e) => update((d) => ({ ...d, min_shifts: e.target.value === "" ? null : Math.max(0, Number(e.target.value)) }))}
@@ -279,7 +305,7 @@ export default function PrefsEditor({
           <p className="mt-1 text-[11px] text-slate-500">Autt = eftir starfshlutfalli.</p>
         </div>
         <div>
-          <div className="text-xs font-semibold text-slate-600">{editable ? "3. " : ""}Athugasemd til yfirlæknis</div>
+          <div className="text-xs font-semibold text-slate-600">{editable ? "4. " : ""}Athugasemd til yfirlæknis</div>
           <textarea rows={2} disabled={!editable} value={draft.note} placeholder="t.d. „Get tekið aukavaktir um Þjóðhátíð“"
             onChange={(e) => update((d) => ({ ...d, note: e.target.value }))} className={cx(inputCls, "mt-1")} />
         </div>
