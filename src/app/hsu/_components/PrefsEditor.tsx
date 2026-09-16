@@ -30,6 +30,8 @@ export interface PrefDraft {
 }
 
 type Brush = "off" | "want" | "ok" | "am" | "pm" | "clear";
+/** Það sem pensilstroka gerir í raun — ákveðið á fyrsta degi strokunnar. */
+type Stroke = Brush | "unpart";
 
 export const PREF_TONE: Record<PrefStatus | "none", "slate" | "blue" | "green" | "amber" | "red"> = {
   none: "slate", draft: "amber", submitted: "blue", approved: "green", changes_requested: "red",
@@ -83,7 +85,7 @@ export default function PrefsEditor({
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
   const [dirty, setDirty] = useState(false);
-  const painting = useRef<null | Brush>(null);
+  const painting = useRef<null | Stroke>(null);
 
   useEffect(() => {
     // Nýr mánuður eða nýtt upphafsgildi frá þjóni: byrja upp á nýtt.
@@ -104,13 +106,13 @@ export default function PrefsEditor({
 
   const update = (fn: (d: PrefDraft) => PrefDraft) => { setDraft(fn); setDirty(true); setMsg(null); };
 
-  const applyBrush = (date: string, b: Brush) => {
+  const applyBrush = (date: string, b: Stroke) => {
     update((d) => {
       // Hálfur dagur er sjálfstæð merking: dagurinn getur bæði verið „vil
       // gjarnan" og „aðeins fyrir hádegi".
-      if (b === "am" || b === "pm") {
+      if (b === "am" || b === "pm" || b === "unpart") {
         const parts = { ...d.day_part_marks };
-        if (parts[date] === b) delete parts[date]; else parts[date] = b;
+        if (b === "unpart") delete parts[date]; else parts[date] = b;
         return { ...d, day_part_marks: parts };
       }
       const day = { ...d.day_marks };
@@ -125,7 +127,10 @@ export default function PrefsEditor({
   // hægt sé að fletta síðunni með fingri yfir dagatalinu án þess að mála.
   const mouseHandled = useRef(false);
   // Smellur á dag sem þegar ber þessa merkingu tekur hana af (toggle).
-  const brushFor = (date: string): Brush => (brush !== "clear" && brush !== "am" && brush !== "pm" && draft.day_marks[date] === brush ? "clear" : brush);
+  const brushFor = (date: string): Stroke => {
+    if (brush === "am" || brush === "pm") return draft.day_part_marks[date] === brush ? "unpart" : brush;
+    return brush !== "clear" && draft.day_marks[date] === brush ? "clear" : brush;
+  };
   const onDown = (e: React.PointerEvent, date: string) => {
     if (!editable || e.pointerType !== "mouse") return;
     e.preventDefault();
@@ -188,9 +193,14 @@ export default function PrefsEditor({
     const explicit = draft.day_marks[date];
     const m = markFor(draft, date);
     const fromWeekday = !explicit && m;
-    if (m === "off") return fromWeekday ? "bg-red-50 text-red-700 ring-1 ring-inset ring-red-200 [background-image:repeating-linear-gradient(135deg,transparent_0_6px,rgba(220,38,38,.07)_6px_12px)]" : "bg-red-500 text-white";
-    if (m === "want") return fromWeekday ? "bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200 [background-image:repeating-linear-gradient(135deg,transparent_0_6px,rgba(5,150,105,.08)_6px_12px)]" : "bg-emerald-500 text-white";
-    if (explicit === "ok") return "bg-[var(--hsu)] text-white";
+    // Hálfur dagur er sjálfstæð merking: fjólublá fylling ef dagurinn er annars
+    // ómerktur, fjólublár rammi ofan á hinar merkingarnar.
+    const part = draft.day_part_marks[date];
+    const halfRing = part ? " ring-[3px] ring-inset ring-violet-500" : "";
+    if (m === "off") return (fromWeekday ? "bg-red-50 text-red-700 ring-1 ring-inset ring-red-200 [background-image:repeating-linear-gradient(135deg,transparent_0_6px,rgba(220,38,38,.07)_6px_12px)]" : "bg-red-500 text-white") + halfRing;
+    if (m === "want") return (fromWeekday ? "bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200 [background-image:repeating-linear-gradient(135deg,transparent_0_6px,rgba(5,150,105,.08)_6px_12px)]" : "bg-emerald-500 text-white") + halfRing;
+    if (explicit === "ok") return "bg-[var(--hsu)] text-white" + halfRing;
+    if (part) return "bg-violet-500 text-white";
     return "bg-white text-slate-800 ring-1 ring-inset ring-slate-200 hover:bg-slate-50";
   };
 
@@ -270,7 +280,8 @@ export default function PrefsEditor({
                 {!m && draft.day_marks[date] === "ok" && <CircleCheck className="h-3 w-3 opacity-80" />}
                 {h && <span className="absolute left-1 top-1 h-1.5 w-1.5 rounded-full bg-amber-400" title={h} />}
                 {draft.day_part_marks[date] && (
-                  <span className={cx("absolute bottom-0.5 right-1 text-[9px] font-bold", m ? "text-white/90" : "text-violet-600")}>
+                  <span className={cx("absolute bottom-0.5 right-1 rounded px-0.5 text-[9px] font-bold",
+                    m ? "bg-violet-600 text-white" : "text-white")}>
                     {draft.day_part_marks[date] === "am" ? "f.h." : "e.h."}
                   </span>
                 )}
@@ -284,7 +295,7 @@ export default function PrefsEditor({
           <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-[var(--hsu)]" /> Laus: {counts.ok}</span>
           <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded ring-1 ring-slate-300" /> Ómerkt: {counts.unmarked}</span>
           <span className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-amber-400" /> Almennur frídagur</span>
-          <span className="inline-flex items-center gap-1"><span className="font-bold text-violet-600">f.h.</span> Aðeins hálfur dagur á flýtimóttöku</span>
+          <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-violet-500" /> Aðeins f.h. / e.h.: {Object.keys(draft.day_part_marks).length}</span>
           <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-red-50 ring-1 ring-red-200" /> Strikað = vikudagsregla</span>
         </div>
       </div>
