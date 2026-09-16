@@ -56,7 +56,7 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
   "/admin/surveys": <ClipboardList className="w-5 h-5" />,
   "/admin/communication": <MessageSquare className="w-5 h-5" />,
   "/admin/outreach": <Mail className="w-5 h-5" />,
-  "/admin/sms": <MessageCircle className="w-5 h-5" />,
+  "/sms": <MessageCircle className="w-5 h-5" />,
   "/admin/data-requests": <ShieldAlert className="w-5 h-5" />,
   "/admin/onboarding": <ClipboardList className="w-5 h-5" />,
   "/admin/releases": <Rocket className="w-5 h-5" />,
@@ -205,7 +205,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     ? ordered.filter((n) => !n.adminOnly || isAdmin)
     : isLawyer
       ? ordered.filter((n) => n.href.startsWith("/admin/legal") || n.href === "/admin/settings" || n.href === "/admin/account")
-      : ordered.filter((n) => n.href === "/admin/account" || n.href === "/admin/settings")
+      : ordered.filter((n) => n.href === "/admin/account" || n.href === "/admin/settings" || n.href === "/sms")
   ).map((n) => ({ ...n, icon: NAV_ICONS[n.href] }));
 
   return (

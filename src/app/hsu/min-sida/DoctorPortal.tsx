@@ -73,7 +73,12 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
       <HsuHeader
         unitName={data.unitName}
         userName={me.name}
-        links={me.role === "head" ? [{ href: "/hsu/stjorn", label: "Vaktaskipulag (yfirlæknir)", icon: "grid" }] : []}
+        links={[
+          // SMS-gáttin tilheyrir Fjarlækningum, ekki vaktakerfinu — en læknir
+          // hér kemst í hana með sinni innskráningu.
+          { href: "/sms", label: "Senda sjúklingi hlekk (SMS)", icon: "message" as const },
+          ...(me.role === "head" ? [{ href: "/hsu/stjorn", label: "Vaktaskipulag (yfirlæknir)", icon: "grid" as const }] : []),
+        ]}
       />
 
       <nav className="sticky top-16 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">

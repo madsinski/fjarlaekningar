@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, LayoutGrid, LogOut, UserRound } from "lucide-react";
+import { ChevronDown, LayoutGrid, LogOut, UserRound, MessageCircle } from "lucide-react";
 import { HsuLogo, hsuApi, initials } from "./ui";
 
 export default function HsuHeader({
@@ -10,7 +10,7 @@ export default function HsuHeader({
   unitName: string;
   userName: string;
   subtitle?: string;
-  links?: { href: string; label: string; icon?: "grid" | "user" }[];
+  links?: { href: string; label: string; icon?: "grid" | "user" | "message" }[];
   /** Skilar slóð til að fara á eftir útskráningu (sjálfgefið /hsu). */
   onLogout?: () => Promise<string | void> | string | void;
 }) {
@@ -42,7 +42,7 @@ export default function HsuHeader({
               <div className="absolute right-0 z-20 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white py-1 shadow-lg">
                 {links.map((l) => (
                   <a key={l.href} href={l.href} className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
-                    {l.icon === "grid" ? <LayoutGrid className="h-4 w-4" /> : <UserRound className="h-4 w-4" />} {l.label}
+                    {l.icon === "grid" ? <LayoutGrid className="h-4 w-4" /> : l.icon === "message" ? <MessageCircle className="h-4 w-4" /> : <UserRound className="h-4 w-4" />} {l.label}
                   </a>
                 ))}
                 <button onClick={logout} className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50">

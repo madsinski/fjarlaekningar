@@ -135,7 +135,14 @@ export async function sendSms(opts: { to: string; body: string; statusCallback?:
 
 /** Villur sem koma fyrir í raun, á íslensku. Annað fer óbreytt í gegn. */
 function twilioMessage(code: number | undefined, fallback: string | undefined): string {
+  // Twilio krefst samþykkts fyrirtækjasniðs (Trust Hub) áður en sent er. Villan
+  // kemur með ýmsum númerum eftir leiðum, svo textinn sjálfur er látinn ráða.
+  if (/compliance profile|trust hub|kyc/i.test(fallback ?? "")) {
+    return "Twilio hefur ekki samþykkt fyrirtækjasnið Fjarlækninga enn. Ljúktu við „Primary Customer Profile“ í Trust Hub í Twilio-stjórnborðinu; ekkert skeyti fer út fyrr en það er samþykkt.";
+  }
   switch (code) {
+    case 21608:
+      return "Twilio hefur ekki samþykkt fyrirtækjasnið Fjarlækninga (Trust Hub). Þangað til má aðeins senda á númer sem eru staðfest í Twilio — sjá Verified Caller IDs.";
     case 21408:
       return "Ísland er ekki opnað fyrir SMS á Twilio-reikningnum (Messaging → Settings → Geo permissions).";
     case 21606:

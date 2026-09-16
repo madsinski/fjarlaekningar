@@ -58,6 +58,8 @@ export default function SmsPage() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: "ok" | "err" | "warn"; text: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [me, setMe] = useState<{ name: string; kind: string; isAdmin: boolean } | null>(null);
+  const [denied, setDenied] = useState(false);
 
   const auth = async (): Promise<Record<string, string>> => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -65,13 +67,17 @@ export default function SmsPage() {
   };
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/admin/sms/send", { headers: await auth() });
+    const res = await fetch("/api/sms/send", { headers: await auth(), credentials: "include" });
     const j = await res.json().catch(() => ({}));
     if (j.ok) {
       setRows(j.messages ?? []);
       setTemplates(j.templates ?? []);
       setSender(j.sender ?? "");
+      setMe(j.me ?? null);
+      setDenied(false);
       setTpl((t) => t || j.templates?.[0]?.key || "");
+    } else if (res.status === 403) {
+      setDenied(true);
     }
     setLoading(false);
   }, []);
@@ -103,9 +109,10 @@ export default function SmsPage() {
 
   const send = async () => {
     setBusy(true); setMsg(null);
-    const res = await fetch("/api/admin/sms/send", {
+    const res = await fetch("/api/sms/send", {
       method: "POST",
       headers: { "Content-Type": "application/json", ...(await auth()) },
+      credentials: "include",
       body: JSON.stringify({ to: phone, template: tpl, name }),
     });
     const j = await res.json().catch(() => ({}));
@@ -120,6 +127,21 @@ export default function SmsPage() {
 
   const filtered = rows.filter((r) => r.error_code === 30007).length;
 
+  if (denied) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-20 text-center">
+        <h1 className="text-xl font-bold text-slate-900">Skráðu þig inn</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          SMS-gáttin er fyrir starfsfólk. Skráðu þig inn með aðgangi Fjarlækninga eða HSU-vaktakerfisins.
+        </p>
+        <div className="mt-5 flex justify-center gap-2">
+          <a href="/admin/login" className="rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-cyan-700">Fjarlækningar</a>
+          <a href="/hsu" className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">HSU-vaktakerfi</a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="flex items-center gap-3">
@@ -129,6 +151,7 @@ export default function SmsPage() {
           <p className="text-sm text-slate-500">
             Sendu sjúklingi hlekk á þjónustuna í stað þess að stafa slóðina upphátt.
             {sender && <> Sendandi: <b>{sender}</b> — ekki er hægt að svara skeytinu.</>}
+            {me && <span className="ml-1 text-slate-400">· skráð(ur) inn sem {me.name}</span>}
           </p>
         </div>
       </div>

@@ -41,3 +41,9 @@ create index if not exists sms_messages_staff_idx on public.sms_messages (sent_b
 alter table public.sms_messages enable row level security;
 drop policy if exists sms_messages_none on public.sms_messages;
 create policy sms_messages_none on public.sms_messages for all using (false) with check (false);
+
+-- ── Sendandi úr HSU-vaktakerfinu (2026-09-16) ─────────────────────────────
+-- Læknir í vaktakerfinu má nota sömu SMS-gátt og starfsfólk Fjarlækninga,
+-- með sinni eigin innskráningu. Þá er staff-dálkurinn tómur og þessi fylltur.
+alter table public.sms_messages add column if not exists sent_by_hsu uuid references public.hsu_doctors(id) on delete set null;
+create index if not exists sms_messages_hsu_idx on public.sms_messages (sent_by_hsu, created_at desc);
