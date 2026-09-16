@@ -90,10 +90,11 @@ setningar um komugjald teknar út. Breyting á spurningu á vefnum birtist hér 
   merkið ber ekkert efni. Skilaboð frá starfsmanni → rás stjórnenda; frá
   stjórnanda → rás eiganda samtalsins. Könnun á 20 sek. fresti og við fókus er
   varaleið.
+- **Samtali eytt / lokað:** merkið `sync` lætur báðar hliðar sækja listann aftur, án hljóðs.
 - **Tilkynningar í tæki** (Web Push): hnappurinn „Kveikja á tilkynningum“ í
   Vinnustöðinni og á /admin/vinnustod skráir `public/vinnustod-sw.js` (scope `/`,
   engin fetch-meðhöndlun) og vistar áskriftina í `gatt_push_subscriptions`
-  (`/api/vinnustod/push`). Stjórnendur (aal2) fá tilkynningu um öll ný skilaboð
+  (`/api/vinnustod/push`), ein röð á hverja innskráningu í vafranum (stjórnandi sem er líka læknir fær hvoru tveggja). /admin/vinnustod notar `/api/admin/vinnustod/live` og er alltaf stjórnandi. Stjórnendur (aal2) fá tilkynningu um öll ný skilaboð
   frá starfsfólki; aðrir um skilaboð til sín. Tilkynningin sýnir fyrirsögn
   samtalsins og opnar rétta síðu. Útrunnar áskriftir (404/410) eyðast.
   Lyklar: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (Vercel,
@@ -175,7 +176,9 @@ tölvupóst og svarar þar. Viðtakendalisti: `/api/admin/vinnustod/recipients`.
 ## Tilkynningar
 
 Undir *Tilkynningar* í stjórnborði: fyrirsögn, texti, tegund (upplýsingar eða gul
-viðvörun) og valkvæð gildistími. Birtast efst í vinnustöðinni hjá öllum.
+viðvörun) og valkvæð gildistími. Birtast sem borði efst í vinnustöðinni, undir
+yfirstikunni, hjá öllum — strax (merki á sameiginlegri rás `liveTopic({ everyone })`)
+og annars innan mínútu.
 
 ## Öryggi
 

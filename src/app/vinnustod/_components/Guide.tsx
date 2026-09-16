@@ -55,9 +55,9 @@ function PatientTextBox({ title, id, lang, setLang, onSms }: { title: string; id
 
 // ── Leitarhaus ──────────────────────────────────────────────────────────────
 
-export function SearchHero({ q, setQ, inputRef, onPick, status }: {
+export function SearchHero({ q, setQ, inputRef, status }: {
   q: string; setQ: (v: string) => void; inputRef: React.RefObject<HTMLInputElement | null>;
-  onPick: (slug: string) => void; status: React.ReactNode;
+  status: React.ReactNode;
 }) {
   // „/“ fer í leitina hvar sem er á síðunni.
   useEffect(() => {
@@ -71,7 +71,7 @@ export function SearchHero({ q, setQ, inputRef, onPick, status }: {
 
   return (
     <section className="bg-gradient-to-br from-[#062a38] via-[#0a4a5e] to-[#0e7490] text-white">
-      <div className="mx-auto max-w-7xl px-4 pb-12 pt-8 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 pb-10 pt-8 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Hvað er sjúklingurinn að spyrja um?</h1>
@@ -95,16 +95,6 @@ export function SearchHero({ q, setQ, inputRef, onPick, status }: {
             <kbd className="absolute right-5 top-1/2 hidden -translate-y-1/2 rounded-md border border-slate-200 px-2 py-0.5 text-xs text-slate-400 sm:block">/</kbd>
           )}
         </label>
-        <div className="mt-4 flex flex-wrap gap-2" aria-label="Erindi">
-          {GUIDE_PROBLEMS.map((p) => (
-            <button key={p.slug} type="button" onClick={() => onPick(p.slug)}
-              className="inline-flex items-center gap-1.5 rounded-full bg-white/10 py-1 pl-1 pr-3 text-xs font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/20">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={icon(p.slug)} alt="" className="h-6 w-6 rounded-full bg-white p-0.5" />
-              {p.title}
-            </button>
-          ))}
-        </div>
       </div>
     </section>
   );

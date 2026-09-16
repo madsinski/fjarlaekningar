@@ -8,9 +8,9 @@
 // endurhlaða; samtal og ný spurning opnast í skúffu.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, Loader2, MessageCircle, Plus, Send } from "lucide-react";
+import { ArrowLeft, Loader2, MessageCircle, Plus, Send, Trash2 } from "lucide-react";
 import { Button, Card, Field, Notice, cx, inputCls } from "@/app/hsu/_components/ui";
-import { UnreadDot, vsApi, whenIs } from "./shared";
+import { ENTER_HINT, UnreadDot, onEnterSend, vsApi, whenIs } from "./shared";
 
 interface Thread {
   id: string;
@@ -34,6 +34,7 @@ export function NewQuestion({ initial, onCancel, onCreated }: { initial: string;
   const [err, setErr] = useState<string | null>(null);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (busy || !body.trim()) return;
     setBusy(true); setErr(null);
     const r = await vsApi<{ id: string }>("/api/vinnustod/threads", { body: { body }, staff: true });
     setBusy(false);
@@ -48,8 +49,9 @@ export function NewQuestion({ initial, onCancel, onCreated }: { initial: string;
       <Card className="space-y-4 p-5">
         <h1 className="text-lg font-bold">Ný spurning</h1>
         <Notice tone="info">Ekki setja nöfn, kennitölur eða aðrar persónuupplýsingar sjúklinga í spurninguna.</Notice>
-        <Field label="Spurningin" hint="Fyrsta línan birtist sem fyrirsögn samtalsins.">
+        <Field label="Spurningin" hint={`Fyrsta línan birtist sem fyrirsögn samtalsins. ${ENTER_HINT}.`}>
           <textarea autoFocus className={cx(inputCls, "min-h-36")} value={body} onChange={(e) => setBody(e.target.value)} maxLength={4000} required
+            onKeyDown={(e) => onEnterSend(e, () => e.currentTarget.form?.requestSubmit())}
             placeholder="t.d. Má sjúklingur á brjóstagjöf nota þjónustuna?" />
         </Field>
         {err && <Notice tone="err">{err}</Notice>}
@@ -85,9 +87,9 @@ export function ThreadView({ id, onBack, onRead, refresh = 0 }: { id: string; on
   }, [refresh, load]);
   useEffect(() => { bottom.current?.scrollIntoView({ block: "end" }); }, [data?.messages.length]);
 
-  const send = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!reply.trim()) return;
+  const send = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (busy || !reply.trim()) return;
     setBusy(true); setErr(null);
     const r = await vsApi(`/api/vinnustod/threads/${id}`, { body: { body: reply }, staff: true });
     setBusy(false);
@@ -95,12 +97,25 @@ export function ThreadView({ id, onBack, onRead, refresh = 0 }: { id: string; on
     setReply("");
     await load();
   };
+  const remove = async () => {
+    if (!confirm("Eyða samtalinu? Það hverfur líka hjá Fjarlækningum og er ekki hægt að endurheimta.")) return;
+    const r = await vsApi(`/api/vinnustod/threads/${id}`, { method: "DELETE", staff: true });
+    if (!r.ok) { setErr(r.error ?? "Ekki tókst að eyða"); return; }
+    onBack();
+  };
 
   return (
     <div className="space-y-4">
-      <button onClick={onBack} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-600 hover:underline">
-        <ArrowLeft className="h-4 w-4" /> Allar spurningar
-      </button>
+      <div className="flex items-center justify-between gap-2">
+        <button onClick={onBack} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-600 hover:underline">
+          <ArrowLeft className="h-4 w-4" /> Öll skilaboð
+        </button>
+        {data && (
+          <button type="button" onClick={remove} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50">
+            <Trash2 className="h-3.5 w-3.5" /> Eyða samtali
+          </button>
+        )}
+      </div>
       {!data ? (
         err ? <Notice tone="err">{err}</Notice> : <div className="h-40 animate-pulse rounded-2xl bg-slate-100" />
       ) : (
@@ -121,10 +136,12 @@ export function ThreadView({ id, onBack, onRead, refresh = 0 }: { id: string; on
             <div ref={bottom} />
           </div>
           <form onSubmit={send} className="mt-5 space-y-2 border-t border-slate-100 pt-4">
-            <textarea className={cx(inputCls, "min-h-20")} value={reply} onChange={(e) => setReply(e.target.value)} maxLength={4000}
+            <textarea autoFocus className={cx(inputCls, "min-h-20")} value={reply} onChange={(e) => setReply(e.target.value)} maxLength={4000}
+              onKeyDown={(e) => onEnterSend(e, () => void send())}
               placeholder={data.thread.status === "closed" ? "Samtalinu var lokið — skrifaðu til að opna það aftur" : "Skrifa svar…"} />
             {err && <Notice tone="err">{err}</Notice>}
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] text-slate-400">{ENTER_HINT}</span>
               <Button type="submit" busy={busy} disabled={!reply.trim()}>
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Senda
               </Button>

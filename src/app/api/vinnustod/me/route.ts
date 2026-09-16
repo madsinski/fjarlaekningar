@@ -64,6 +64,7 @@ export async function GET(req: Request) {
     live: {
       topic: actor.kind === "staff" && actor.isAdmin ? liveTopic({ admins: true }) : liveTopic({ kind: actor.kind, id: actor.id }),
       vapidKey: vapidPublicKey(),
+      everyoneTopic: liveTopic({ everyone: true }),
     },
   });
 }

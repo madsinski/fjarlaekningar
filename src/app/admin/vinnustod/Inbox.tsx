@@ -6,7 +6,8 @@
 // stjórnandi Fjarlækninga er skráður þar inn.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, Check, PenSquare, Search, Send } from "lucide-react";
+import { ArrowLeft, Check, PenSquare, Search, Send, Trash2 } from "lucide-react";
+import { ENTER_HINT, onEnterSend } from "@/app/vinnustod/_components/shared";
 import { supabase } from "@/lib/supabase";
 
 async function api<T = Record<string, unknown>>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T & { ok: boolean; error?: string }> {
@@ -132,12 +133,19 @@ function InboxThreadView({ id, onBack, refresh = 0, compact = false }: { id: str
   useEffect(() => { bottom.current?.scrollIntoView({ block: "end" }); }, [data?.messages.length]);
 
   const send = async () => {
+    if (busy || !reply.trim()) return;
     setBusy(true); setErr(null);
     const r = await api(`/api/admin/vinnustod/threads/${id}`, { body: { body: reply } });
     setBusy(false);
     if (!r.ok) { setErr(r.error ?? "Mistókst"); return; }
     setReply("");
     await load();
+  };
+  const remove = async () => {
+    if (!confirm("Eyða samtalinu? Það hverfur líka hjá viðtakandanum og er ekki hægt að endurheimta.")) return;
+    const r = await api(`/api/admin/vinnustod/threads/${id}`, { method: "DELETE" });
+    if (!r.ok) { setErr(r.error ?? "Ekki tókst að eyða"); return; }
+    onBack();
   };
   const setStatus = async (status: "open" | "closed") => {
     await api(`/api/admin/vinnustod/threads/${id}`, { method: "PATCH", body: { status } });
@@ -158,9 +166,12 @@ function InboxThreadView({ id, onBack, refresh = 0, compact = false }: { id: str
                 {data.user && !data.user.active ? <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs">Óvirkur — fær ekki póst</span> : null}
               </p>
             </div>
-            {data.thread.status === "open"
-              ? <button className={btnGhost} onClick={() => setStatus("closed")}><Check className="h-4 w-4" /> Merkja lokið</button>
-              : <button className={btnGhost} onClick={() => setStatus("open")}>Opna aftur</button>}
+            <div className="flex flex-wrap gap-2">
+              {data.thread.status === "open"
+                ? <button className={btnGhost} onClick={() => setStatus("closed")}><Check className="h-4 w-4" /> Merkja lokið</button>
+                : <button className={btnGhost} onClick={() => setStatus("open")}>Opna aftur</button>}
+              <button className={`${btn} border border-red-200 bg-white text-red-700 hover:bg-red-50`} onClick={remove}><Trash2 className="h-4 w-4" /> Eyða</button>
+            </div>
           </div>
           <div className="mt-4 space-y-3">
             {data.messages.map((m) => (
@@ -174,9 +185,14 @@ function InboxThreadView({ id, onBack, refresh = 0, compact = false }: { id: str
             <div ref={bottom} />
           </div>
           <div className="mt-5 space-y-2 border-t border-slate-100 pt-4">
-            <textarea className={`${inputCls} min-h-24`} value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Skilaboð — birtast viðtakandanum í vinnustöðinni og fara í tölvupósti" />
+            <textarea autoFocus className={`${inputCls} min-h-24`} value={reply} onChange={(e) => setReply(e.target.value)}
+              onKeyDown={(e) => onEnterSend(e, () => void send())}
+              placeholder="Skilaboð — birtast viðtakandanum í vinnustöðinni og fara í tölvupósti" />
             {err && <p className="text-sm text-red-600">{err}</p>}
-            <div className="flex justify-end"><button className={btnPrimary} disabled={busy || !reply.trim()} onClick={send}><Send className="h-4 w-4" /> Senda</button></div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] text-slate-400">{ENTER_HINT}</span>
+              <button className={btnPrimary} disabled={busy || !reply.trim()} onClick={send}><Send className="h-4 w-4" /> Senda</button>
+            </div>
           </div>
         </div>
       )}
@@ -184,7 +200,7 @@ function InboxThreadView({ id, onBack, refresh = 0, compact = false }: { id: str
   );
 }
 
-/** Stjórnandi hefur samtal: velur viðtakanda, skrifar fyrirsögn og skilaboð. */
+/** Stjórnandi hefur samtal: velur viðtakanda og skrifar skilaboð. */
 function Compose({ onCancel, onSent, compact = false }: { onCancel: () => void; onSent: (id: string) => void; compact?: boolean }) {
   const [people, setPeople] = useState<Recipient[] | null>(null);
   const [q, setQ] = useState("");
@@ -203,7 +219,7 @@ function Compose({ onCancel, onSent, compact = false }: { onCancel: () => void; 
   const shown = (people ?? []).filter((p) => !q.trim() || fold(`${p.name} ${p.email} ${p.workplace} ${p.title}`).includes(fold(q.trim())));
 
   const send = async () => {
-    if (!to) return;
+    if (!to || busy || !body.trim()) return;
     setBusy(true); setErr(null);
     const r = await api<{ id: string }>("/api/admin/vinnustod/threads", { body: { kind: to.kind, id: to.id, body } });
     setBusy(false);
@@ -258,7 +274,8 @@ function Compose({ onCancel, onSent, compact = false }: { onCancel: () => void; 
         <label className="block">
           <span className="mb-1 block text-sm font-semibold text-slate-700">Skilaboð</span>
           <textarea className={`${inputCls} min-h-32`} value={body} maxLength={4000} onChange={(e) => setBody(e.target.value)}
-            placeholder="Fyrsta línan birtist sem fyrirsögn hjá viðtakandanum." />
+            onKeyDown={(e) => onEnterSend(e, () => void send())}
+            placeholder={`Fyrsta línan birtist sem fyrirsögn hjá viðtakandanum. ${ENTER_HINT}.`} />
         </label>
         <p className="text-xs text-slate-500">Viðtakandinn sér skilaboðin í vinnustöðinni (fjarlaekningar.is/vinnustod), fær tölvupóst og getur svarað þar.</p>
         {err && <p className="text-sm text-red-600">{err}</p>}

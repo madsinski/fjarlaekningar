@@ -41,47 +41,61 @@ function jwtAal(token: string): string | null {
 /** Hlutverk starfsmanna sem mega ekki nota vinnustöðina. */
 const BLOCKED_STAFF_ROLES = new Set(["lawyer"]);
 
+async function vsActor(): Promise<SmsActor | null> {
+  const vs = await getVsUser();
+  if (!vs) return null;
+  return {
+    id: vs.id, name: vs.name, kind: "vs", isAdmin: false, email: vs.email,
+    workplace: vs.workplace, title: vs.title, hasPin: vs.has_pin, mustChangePassword: vs.must_change_password,
+  };
+}
+
+/**
+ * Starfsmaður Fjarlækninga sér sendingasögu allra (símanúmer sjúklinga), svo
+ * lotan verður að hafa staðist tveggja þrepa auðkenningu — eins og stjórnborðið.
+ */
+export async function staffActor(req: Request): Promise<SmsActor | null> {
+  const auth = req.headers.get("authorization");
+  if (!auth?.startsWith("Bearer ") || jwtAal(auth.slice(7)) !== "aal2") return null;
+  const { data, error } = await supabaseAdmin.auth.getUser(auth.slice(7));
+  if (error || !data.user?.id) return null;
+  const { data: staff } = await supabaseAdmin
+    .from("staff")
+    .select("id, name, email, role, roles, active")
+    .eq("id", data.user.id)
+    .maybeSingle();
+  if (!staff?.active) return null;
+  const roles: string[] = Array.isArray(staff.roles) && staff.roles.length ? staff.roles : [staff.role];
+  if (roles.every((r) => BLOCKED_STAFF_ROLES.has(r))) return null;
+  return {
+    id: staff.id, name: staff.name || staff.email, kind: "staff",
+    isAdmin: roles.includes("admin"), email: staff.email, workplace: "Fjarlækningar",
+  };
+}
+
+async function hsuActor(): Promise<SmsActor | null> {
+  // getDoctorSession skilar aðeins virkum lækni.
+  const doctor = await getDoctorSession();
+  if (!doctor) return null;
+  return { id: doctor.id, name: doctor.name, kind: "hsu", isAdmin: doctor.role === "head", email: doctor.email, workplace: "HSU Vestmannaeyjum" };
+}
+
 /**
  * Leysir úr innskráningunni. Notandi vinnustöðvar gengur fyrir: sé hann
  * skráður inn í þessum vafra er það hann sem situr við tölvuna.
  */
 export async function getSmsActor(req: Request): Promise<SmsActor | null> {
-  const vs = await getVsUser();
-  if (vs) {
-    return {
-      id: vs.id, name: vs.name, kind: "vs", isAdmin: false, email: vs.email,
-      workplace: vs.workplace, title: vs.title, hasPin: vs.has_pin, mustChangePassword: vs.must_change_password,
-    };
-  }
+  return (await vsActor()) ?? (await staffActor(req)) ?? (await hsuActor());
+}
 
-  const auth = req.headers.get("authorization");
-  // Starfsmaður Fjarlækninga sér sendingasögu allra (símanúmer sjúklinga), svo
-  // lotan verður að hafa staðist tveggja þrepa auðkenningu — eins og stjórnborðið.
-  if (auth?.startsWith("Bearer ") && jwtAal(auth.slice(7)) === "aal2") {
-    const { data, error } = await supabaseAdmin.auth.getUser(auth.slice(7));
-    if (!error && data.user?.id) {
-      const { data: staff } = await supabaseAdmin
-        .from("staff")
-        .select("id, name, email, role, roles, active")
-        .eq("id", data.user.id)
-        .maybeSingle();
-      if (staff?.active) {
-        const roles: string[] = Array.isArray(staff.roles) && staff.roles.length ? staff.roles : [staff.role];
-        if (roles.every((r) => BLOCKED_STAFF_ROLES.has(r))) return null;
-        return {
-          id: staff.id, name: staff.name || staff.email, kind: "staff",
-          isAdmin: roles.includes("admin"), email: staff.email, workplace: "Fjarlækningar",
-        };
-      }
-    }
-  }
-
-  // getDoctorSession skilar aðeins virkum lækni.
-  const doctor = await getDoctorSession();
-  if (doctor) {
-    return { id: doctor.id, name: doctor.name, kind: "hsu", isAdmin: doctor.role === "head", email: doctor.email, workplace: "HSU Vestmannaeyjum" };
-  }
-  return null;
+/**
+ * Allar innskráningar í þessum vafra — t.d. stjórnandi sem er líka læknir í
+ * vaktakerfinu. Notað fyrir tilkynningar í tæki, svo skilaboð til hvers þeirra
+ * berist tækinu.
+ */
+export async function getSmsActors(req: Request): Promise<SmsActor[]> {
+  const all = await Promise.all([vsActor(), staffActor(req), hsuActor()]);
+  return all.filter((a): a is SmsActor => Boolean(a));
 }
 
 /** Dálkurinn í sms_messages sem heldur utan um sendandann. */

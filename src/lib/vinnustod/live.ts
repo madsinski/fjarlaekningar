@@ -17,7 +17,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { SmsActor } from "@/lib/sms-actor";
 
 type Kind = SmsActor["kind"];
-export type LiveTarget = { admins: true } | { kind: Kind; id: string };
+export type LiveTarget = { admins: true } | { everyone: true } | { kind: Kind; id: string };
 
 function secret(): string {
   return process.env.VS_LIVE_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
@@ -25,7 +25,7 @@ function secret(): string {
 
 /** Leynilegt rásarheiti fyrir viðtakanda. */
 export function liveTopic(target: LiveTarget): string {
-  const who = "admins" in target ? "admins" : `${target.kind}:${target.id}`;
+  const who = "admins" in target ? "admins" : "everyone" in target ? "everyone" : `${target.kind}:${target.id}`;
   return `vs-${createHmac("sha256", secret()).update(`vinnustod-live:${who}`).digest("hex").slice(0, 32)}`;
 }
 
@@ -44,20 +44,21 @@ function ensureVapid(): boolean {
   return true;
 }
 
-async function broadcast(topic: string): Promise<void> {
+async function broadcast(topic: string, event: "msg" | "sync" = "msg"): Promise<void> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return;
   await fetch(`${url}/realtime/v1/api/broadcast`, {
     method: "POST",
     headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ messages: [{ topic, event: "msg", payload: { at: Date.now() }, private: false }] }),
+    body: JSON.stringify({ messages: [{ topic, event, payload: { at: Date.now() }, private: false }] }),
   }).catch(() => {});
 }
 
 async function push(target: LiveTarget, note: { title: string; body: string; url: string; tag: string }): Promise<void> {
   if (!ensureVapid()) return;
   let q = supabaseAdmin.from("gatt_push_subscriptions").select("id, endpoint, p256dh, auth");
+  if ("everyone" in target) return; // tilkynningar fara aðeins á skjáinn
   q = "admins" in target ? q.eq("is_admin", true) : q.eq("owner_kind", target.kind).eq("owner_id", target.id);
   const { data } = await q;
   await Promise.all((data ?? []).map(async (s) => {
@@ -71,6 +72,7 @@ async function push(target: LiveTarget, note: { title: string; body: string; url
     } catch (e) {
       // 404/410: tækið hefur afturkallað áskriftina — henni er eytt.
       const code = (e as { statusCode?: number }).statusCode;
+      console.warn("[vinnustod] push failed", code ?? (e as Error).message?.slice(0, 80));
       if (code === 404 || code === 410) await supabaseAdmin.from("gatt_push_subscriptions").delete().eq("id", s.id);
     }
   }));
@@ -80,11 +82,13 @@ async function push(target: LiveTarget, note: { title: string; body: string; url
  * Nýtt skeyti í samtali: láta hina hliðina vita strax. Kallað úr addMessage
  * (inni í after(), svo svarið til sendandans bíður ekki).
  */
-export async function signalNewMessage(threadId: string, from: "user" | "staff", authorName: string): Promise<void> {
+export async function signalNewMessage(threadId: string, from: "user" | "staff", authorName: string, message: string): Promise<void> {
   const { data: t } = await supabaseAdmin.from("gatt_threads")
     .select("subject, owner_kind, user_id, owner_staff, owner_hsu").eq("id", threadId).maybeSingle();
   if (!t) return;
-  const subject = String(t.subject ?? "").slice(0, 120);
+  // Tilkynningin sýnir upphaf nýju skilaboðanna (ekki fyrirsögn samtalsins).
+  const preview = (message ?? "").replace(/\s+/g, " ").trim();
+  const subject = preview.length > 140 ? `${preview.slice(0, 139)}…` : preview || String(t.subject ?? "");
   if (from === "user") {
     await Promise.all([
       broadcast(liveTopic({ admins: true })),
@@ -92,7 +96,7 @@ export async function signalNewMessage(threadId: string, from: "user" | "staff",
         title: `Ný skilaboð frá ${authorName}`,
         body: subject,
         url: "/admin/vinnustod?t=spurningar",
-        tag: `vs-thread-${threadId}`,
+        tag: `vs-${threadId}-${Date.now()}`,
       }),
     ]);
     return;
@@ -106,7 +110,30 @@ export async function signalNewMessage(threadId: string, from: "user" | "staff",
       title: "Ný skilaboð frá Fjarlækningum",
       body: subject,
       url: "/vinnustod?t=spurningar",
-      tag: `vs-thread-${threadId}`,
+      tag: `vs-${threadId}-${Date.now()}`,
     }),
   ]);
+}
+
+/** Rás eiganda samtals, út frá röðinni í gatt_threads. */
+export function ownerTarget(t: { owner_kind: string; user_id: string | null; owner_staff: string | null; owner_hsu: string | null }): LiveTarget | null {
+  const kind = t.owner_kind as Kind;
+  const id = kind === "vs" ? t.user_id : kind === "staff" ? t.owner_staff : t.owner_hsu;
+  return id ? { kind, id } : null;
+}
+
+/**
+ * Samtali eytt (eða breytt án nýrra skilaboða): báðar hliðar sækja listann
+ * aftur. Ekkert hljóð og engin tilkynning í tæki.
+ */
+export async function signalSync(owner: LiveTarget | null): Promise<void> {
+  await Promise.all([
+    broadcast(liveTopic({ admins: true }), "sync"),
+    owner ? broadcast(liveTopic(owner), "sync") : Promise.resolve(),
+  ]);
+}
+
+/** Tilkynningum breytt: allar opnar vinnustöðvar sækja þær strax. */
+export async function signalAnnouncements(): Promise<void> {
+  await broadcast(liveTopic({ everyone: true }), "sync");
 }

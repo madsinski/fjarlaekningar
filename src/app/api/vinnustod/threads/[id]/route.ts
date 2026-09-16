@@ -1,8 +1,10 @@
-// Eitt samtal: lesa (og merkja lesið) eða svara.
+// Eitt samtal: lesa (og merkja lesið), svara eða eyða.
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getSmsActor } from "@/lib/sms-actor";
 import { sameOrigin, throttle } from "@/lib/vinnustod/auth";
+import { ownerTarget, signalSync } from "@/lib/vinnustod/live";
+import { after } from "next/server";
 import { UUID_RE, cleanText, fail, json, originOf, readJson } from "@/lib/vinnustod/server";
 import { MAX_BODY, THREAD_COLUMNS, addMessage, canAsk, loadMessages, notifyStaff, ownerColumn, type ThreadRow } from "@/lib/vinnustod/threads";
 
@@ -40,5 +42,18 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     origin: originOf(req), userName: own.actor.name, workplace: own.actor.workplace ?? "",
     subject: own.thread.subject, body: text, isNew: false, replyTo: own.actor.email ?? "",
   });
+  return json({ ok: true });
+}
+
+/** Eyða eigin samtali — hverfur líka hjá Fjarlækningum. */
+export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  if (!sameOrigin(req)) return fail("Ógild beiðni", 403);
+  const { id } = await ctx.params;
+  const own = await ownThread(req, id);
+  if (!own) return fail("Samtalið fannst ekki", 404);
+  const { data: t } = await supabaseAdmin.from("gatt_threads").select("owner_kind, user_id, owner_staff, owner_hsu").eq("id", id).maybeSingle();
+  const { error } = await supabaseAdmin.from("gatt_threads").delete().eq("id", id);
+  if (error) return fail("Ekki tókst að eyða", 500);
+  after(() => signalSync(t ? ownerTarget(t) : null).catch(() => {}));
   return json({ ok: true });
 }

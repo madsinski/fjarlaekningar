@@ -1,6 +1,8 @@
 // Tilkynningar sem birtast efst í vinnustöðinni.
 
+import { after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { signalAnnouncements } from "@/lib/vinnustod/live";
 import { getVsAdmin } from "@/lib/vinnustod/admin";
 import { cleanLine, cleanText, fail, json, readJson } from "@/lib/vinnustod/server";
 
@@ -31,5 +33,6 @@ export async function POST(req: Request) {
     created_by: admin.name,
   });
   if (error) return fail(error.message, 500);
+  after(() => signalAnnouncements().catch(() => {}));
   return json({ ok: true });
 }

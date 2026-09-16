@@ -48,10 +48,10 @@ export default function VinnustodAdminPage() {
   const [soundOn, setSoundOn] = useSoundPref();
   useUnlockAudio();
   const poll = useCallback(async () => {
-    const r = await api<{ unread: number; live?: { topic: string | null; vapidKey: string | null } }>("/api/vinnustod/me");
+    const r = await api<{ awaiting: number; topic: string; vapidKey: string | null }>("/api/admin/vinnustod/live");
     if (r.ok) {
-      setAwaiting(r.unread);
-      if (r.live) setLive((prev) => (prev.topic === r.live!.topic ? prev : r.live!));
+      setAwaiting(r.awaiting);
+      setLive((prev) => (prev.topic === r.topic ? prev : { topic: r.topic, vapidKey: r.vapidKey }));
     }
   }, []);
   useEffect(() => {

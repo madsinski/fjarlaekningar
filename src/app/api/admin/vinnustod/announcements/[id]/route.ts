@@ -1,6 +1,8 @@
 // Ein tilkynning: fela, sýna aftur eða eyða.
 
+import { after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { signalAnnouncements } from "@/lib/vinnustod/live";
 import { getVsAdmin } from "@/lib/vinnustod/admin";
 import { UUID_RE, fail, json, readJson } from "@/lib/vinnustod/server";
 
@@ -15,6 +17,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   const body = await readJson(req);
   if (typeof body.active !== "boolean") return fail("Engu breytt");
   await supabaseAdmin.from("gatt_announcements").update({ active: body.active }).eq("id", id);
+  after(() => signalAnnouncements().catch(() => {}));
   return json({ ok: true });
 }
 
@@ -23,5 +26,6 @@ export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }
   const { id } = await ctx.params;
   if (!UUID_RE.test(id)) return fail("Ógild beiðni");
   await supabaseAdmin.from("gatt_announcements").delete().eq("id", id);
+  after(() => signalAnnouncements().catch(() => {}));
   return json({ ok: true });
 }

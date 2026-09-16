@@ -12,8 +12,8 @@
 // SMS-ið hverfi ekki. Í síma raðast þetta í einn dálk með stiku neðst.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronDown, LogOut, Megaphone, MessageCircle, QrCode, Search, Send, Settings, Volume2, VolumeX } from "lucide-react";
-import { Card, Notice, cx } from "@/app/hsu/_components/ui";
+import { AlertTriangle, ChevronDown, LogOut, Megaphone, MessageCircle, QrCode, Search, Send, Settings, Volume2, VolumeX } from "lucide-react";
+import { Card, cx } from "@/app/hsu/_components/ui";
 import Inbox from "@/app/admin/vinnustod/Inbox";
 import type { Lang } from "@/lib/nurse-guide";
 import { GuideBody, SearchHero } from "./Guide";
@@ -38,7 +38,7 @@ export interface VsMe {
   canAnswer: boolean;
 }
 /** Leynileg rás fyrir tafarlaus merki og lykill fyrir tilkynningar í tæki. */
-export interface LiveInfo { topic: string | null; vapidKey: string | null }
+export interface LiveInfo { topic: string | null; vapidKey: string | null; everyoneTopic?: string | null }
 export interface Announcement { id: string; created_at: string; title: string; body: string; level: "info" | "warning" }
 
 type DrawerState =
@@ -56,13 +56,14 @@ function initialDrawer(me: VsMe): DrawerState {
   return null;
 }
 
-export default function Workstation({ me, announcements, unread: initialUnread, texts, guide, live, refresh }: {
+export default function Workstation({ me, announcements: initialAnnouncements, unread: initialUnread, texts, guide, live, refresh }: {
   me: VsMe; announcements: Announcement[]; unread: number; texts: Record<string, SharedText>; guide: GuideContent; live: LiveInfo; refresh: () => void;
 }) {
   const [q, setQ] = useState("");
   const [openSlug, setOpenSlug] = useState<string | null>(null);
   const [lang, setLang] = useState<Lang>("is");
   const [unread, setUnread] = useState(initialUnread);
+  const [announcements, setAnnouncements] = useState(initialAnnouncements);
   const [drawer, setDrawer] = useState<DrawerState>(() => initialDrawer(me));
   const [threadsKey, setThreadsKey] = useState(0);
   // Samtöl stjórnanda opnast sem fellilisti í hliðardálkinum (?t=spurningar opnar hann).
@@ -92,16 +93,18 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
 
   // Fjöldi sem bíður. Stjórnandi fær hann úr /me; aðrir úr QuestionsCard,
   // sem sækir samtölin sjálft.
+  // Tilkynningar uppfærast hjá öllum (merki + könnun á mínútu fresti).
   const refreshUnread = useCallback(async () => {
-    if (!me.canAnswer) return;
-    const r = await vsApi<{ unread: number }>("/api/vinnustod/me", { staff: true });
-    if (r.ok) setUnread(r.unread);
+    const r = await vsApi<{ unread: number; announcements: Announcement[] }>("/api/vinnustod/me", { staff: true });
+    if (!r.ok) return;
+    setAnnouncements(r.announcements);
+    if (me.canAnswer) setUnread(r.unread);
   }, [me.canAnswer]);
   useEffect(() => {
-    if (!me.canAnswer) return;
-    const t = setInterval(() => { void refreshUnread(); }, 20_000);
+    const t = setInterval(() => { void refreshUnread(); }, me.canAnswer ? 20_000 : 60_000);
     return () => clearInterval(t);
   }, [me.canAnswer, refreshUnread]);
+  useLiveSignal(live.everyoneTopic, () => { void refreshUnread(); });
 
   // Ný skilaboð: tafarlaust merki → sækja strax, hljóð (ef kveikt).
   // `pulse` segir listum og opnu samtali að sækja aftur.
@@ -122,7 +125,6 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
     document.title = unread ? `(${unread}) Vinnustöð Fjarlækninga` : "Vinnustöð Fjarlækninga";
   }, [unread, soundOn]);
 
-  const pick = (slug: string) => { setQ(""); setOpenSlug(slug); };
   const setQuery = (v: string) => { setQ(v); if (v) setOpenSlug(null); };
   const threadRead = useCallback(() => setThreadsKey((k) => k + 1), []);
   const closeDrawer = useCallback(() => {
@@ -173,7 +175,9 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
           </div>
         </header>
 
-        <SearchHero q={q} setQ={setQuery} inputRef={searchRef} onPick={pick}
+        <AnnouncementBanner items={announcements} />
+
+        <SearchHero q={q} setQ={setQuery} inputRef={searchRef}
           status={status && (
             <span title={status.detail}
               className={cx("inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1",
@@ -192,14 +196,6 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
             <TriageCard onOpenProblem={(slug) => { setQ(""); setOpenSlug(slug); }} />
           </div>
           <div className={cx("min-w-0 space-y-6 lg:order-none lg:col-start-1 lg:row-start-2", focused ? "order-1" : "order-3")}>
-            {announcements.map((a) => (
-              <Notice key={a.id} tone={a.level === "warning" ? "warn" : "info"}>
-                <span className="flex items-start gap-2">
-                  <Megaphone className="mt-0.5 h-4 w-4 shrink-0" />
-                  <span><b>{a.title}</b>{a.body ? <span className="block whitespace-pre-wrap">{a.body}</span> : null}</span>
-                </span>
-              </Notice>
-            ))}
             <GuideBody q={q} setQ={setQuery} openSlug={openSlug} setOpenSlug={setOpenSlug} lang={lang} setLang={setLang}
               onSms={focusSms} onAsk={me.canMessage ? (text) => setDrawer({ kind: "new", draft: `Sjúklingur spyr um: ${text}\n\n` }) : undefined} />
           </div>
@@ -303,5 +299,30 @@ function MobileBtn({ icon, label, onClick, badge }: { icon: React.ReactNode; lab
       {label}
       <UnreadDot count={badge ?? 0} className="absolute left-1/2 top-1 ml-2" />
     </button>
+  );
+}
+
+/** Tilkynningar frá Fjarlækningum — borði efst, undir yfirstikunni. */
+function AnnouncementBanner({ items }: { items: Announcement[] }) {
+  if (!items.length) return null;
+  return (
+    <div role="region" aria-label="Tilkynningar frá Fjarlækningum" aria-live="polite">
+      {items.map((a) => {
+        const warn = a.level === "warning";
+        return (
+          <div key={a.id} className={cx("border-b", warn ? "border-amber-500 bg-amber-400 text-slate-950" : "border-cyan-700 bg-cyan-600 text-white")}>
+            <div className="mx-auto flex max-w-7xl items-start gap-3 px-4 py-3 sm:px-6">
+              <span className={cx("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full", warn ? "bg-slate-950/10" : "bg-white/15")}>
+                {warn ? <AlertTriangle className="h-5 w-5" /> : <Megaphone className="h-5 w-5" />}
+              </span>
+              <div className="min-w-0 [overflow-wrap:anywhere]">
+                <p className="font-bold leading-snug">{a.title}</p>
+                {a.body ? <p className={cx("mt-0.5 whitespace-pre-wrap text-sm", warn ? "text-slate-900" : "text-cyan-50")}>{a.body}</p> : null}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }

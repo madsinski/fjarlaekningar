@@ -180,3 +180,8 @@ create index if not exists gatt_push_admin_idx on public.gatt_push_subscriptions
 alter table public.gatt_push_subscriptions enable row level security;
 drop policy if exists gatt_push_subscriptions_none on public.gatt_push_subscriptions;
 create policy gatt_push_subscriptions_none on public.gatt_push_subscriptions for all using (false) with check (false);
+
+-- Sama vafri getur verið skráður fyrir fleiri en einn (t.d. stjórnandi sem
+-- prófar líka sem hjúkrunarfræðingur): einkvæmt á (endpoint, eigandi).
+alter table public.gatt_push_subscriptions drop constraint if exists gatt_push_subscriptions_endpoint_key;
+create unique index if not exists gatt_push_endpoint_owner_uidx on public.gatt_push_subscriptions (endpoint, owner_kind, owner_id);

@@ -1,6 +1,8 @@
-// Eitt samtal í innhólfi Fjarlækninga: lesa, svara, loka eða opna aftur.
+// Eitt samtal í innhólfi Fjarlækninga: lesa, svara, loka, opna aftur eða eyða.
 
+import { after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { ownerTarget, signalSync } from "@/lib/vinnustod/live";
 import { getVsAdmin } from "@/lib/vinnustod/admin";
 import { UUID_RE, cleanText, fail, json, originOf, readJson } from "@/lib/vinnustod/server";
 import { MAX_BODY, THREAD_COLUMNS, addMessage, askersFor, loadMessages, notifyUser, type ThreadRow } from "@/lib/vinnustod/threads";
@@ -52,5 +54,21 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   const body = await readJson(req);
   if (body.status !== "open" && body.status !== "closed") return fail("Ógild staða");
   await supabaseAdmin.from("gatt_threads").update({ status: body.status }).eq("id", id);
+  const { data: t } = await supabaseAdmin.from("gatt_threads").select("owner_kind, user_id, owner_staff, owner_hsu").eq("id", id).maybeSingle();
+  after(() => signalSync(t ? ownerTarget(t) : null).catch(() => {}));
+  return json({ ok: true });
+}
+
+/** Eyða samtali — hverfur líka hjá viðtakandanum. */
+export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const admin = await getVsAdmin(req);
+  if (!admin) return fail(DENY, 403);
+  const { id } = await ctx.params;
+  if (!UUID_RE.test(id)) return fail("Samtalið fannst ekki", 404);
+  const { data: t } = await supabaseAdmin.from("gatt_threads").select("owner_kind, user_id, owner_staff, owner_hsu").eq("id", id).maybeSingle();
+  if (!t) return fail("Samtalið fannst ekki", 404);
+  const { error } = await supabaseAdmin.from("gatt_threads").delete().eq("id", id);
+  if (error) return fail("Ekki tókst að eyða", 500);
+  after(() => signalSync(ownerTarget(t)).catch(() => {}));
   return json({ ok: true });
 }

@@ -174,16 +174,50 @@ export function useLiveSignal(topic: string | null | undefined, onSignal: (kind:
   const cb = useRef(onSignal);
   useEffect(() => { cb.current = onSignal; });
 
+  // Vafrar hægja á tímamælum í bakgrunnsflipa og tengingin getur rofnað án
+  // þess að nokkur taki eftir. Því er rásin opnuð aftur ef hún lokast, þegar
+  // flipinn verður sýnilegur og þegar netið kemur aftur.
   useEffect(() => {
     if (!topic) return;
     let cancelled = false;
-    let cleanup: (() => void) | undefined;
-    void import("@/lib/supabase").then(({ supabase }) => {
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    let remove: (() => void) | undefined;
+    let connected = false;
+    let generation = 0;
+
+    const connect = async () => {
+      const { supabase } = await import("@/lib/supabase");
       if (cancelled) return;
-      const ch = supabase.channel(topic).on("broadcast", { event: "msg" }, () => cb.current("message")).subscribe();
-      cleanup = () => { void supabase.removeChannel(ch); };
-    });
-    return () => { cancelled = true; cleanup?.(); };
+      const mine = ++generation;
+      remove?.(); // lokun gömlu rásarinnar kallar á „CLOSED“ — hunsað hér að neðan
+      const ch = supabase.channel(topic, { config: { broadcast: { self: false } } })
+        .on("broadcast", { event: "msg" }, () => cb.current("message"))
+        .on("broadcast", { event: "sync" }, () => cb.current("focus"))
+        .subscribe((status) => {
+          if (mine !== generation) return;
+          connected = status === "SUBSCRIBED";
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            clearTimeout(retry);
+            if (!cancelled) retry = setTimeout(() => { void connect(); }, 3000);
+          }
+        });
+      remove = () => { void supabase.removeChannel(ch); };
+    };
+    const revive = () => {
+      if (document.visibilityState !== "visible") return;
+      if (!connected) void connect();
+    };
+
+    void connect();
+    document.addEventListener("visibilitychange", revive);
+    window.addEventListener("online", revive);
+    return () => {
+      cancelled = true;
+      clearTimeout(retry);
+      document.removeEventListener("visibilitychange", revive);
+      window.removeEventListener("online", revive);
+      remove?.();
+    };
   }, [topic]);
 
   useEffect(() => {
@@ -347,3 +381,12 @@ export function useFaviconBadge(count: number) {
     return () => { cancelled = true; };
   }, [count]);
 }
+
+/** Enter sendir, Shift+Enter gefur nýja línu (og ekkert gerist á meðan stafir eru samsettir). */
+export function onEnterSend(e: React.KeyboardEvent<HTMLTextAreaElement>, send: () => void) {
+  if (e.key !== "Enter" || e.shiftKey || e.nativeEvent.isComposing) return;
+  e.preventDefault();
+  send();
+}
+
+export const ENTER_HINT = "Enter sendir · Shift+Enter ný lína";

@@ -3,11 +3,13 @@
 // POST   { endpoint, keys: { p256dh, auth } }  — skrá (eða uppfæra) tækið
 // DELETE { endpoint }                          — afskrá
 //
+// Tækið er skráð fyrir ALLAR innskráningar í vafranum (t.d. stjórnandi sem er
+// líka læknir í vaktakerfinu), svo skilaboð til hverrar þeirra berist tækinu.
 // Stjórnandi Fjarlækninga (aal2) fær tilkynningar um ný skilaboð frá öllum;
 // aðrir um skilaboð til sín. Sjá src/lib/vinnustod/live.ts.
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getSmsActor } from "@/lib/sms-actor";
+import { getSmsActors } from "@/lib/sms-actor";
 import { sameOrigin, throttle } from "@/lib/vinnustod/auth";
 import { fail, json, readJson } from "@/lib/vinnustod/server";
 
@@ -28,9 +30,9 @@ function validEndpoint(v: unknown): string | null {
 
 export async function POST(req: Request) {
   if (!sameOrigin(req)) return fail("Ógild beiðni", 403);
-  const actor = await getSmsActor(req);
-  if (!actor) return fail("Ekki innskráð(ur)", 401);
-  if (!(await throttle(`push:${actor.kind}:${actor.id}`, 20, 3600))) return fail("Of margar tilraunir.", 429);
+  const actors = await getSmsActors(req);
+  if (!actors.length) return fail("Ekki innskráð(ur)", 401);
+  if (!(await throttle(`push:${actors[0].kind}:${actors[0].id}`, 60, 3600))) return fail("Of margar tilraunir.", 429);
   const body = await readJson(req);
   const endpoint = validEndpoint(body.endpoint);
   const keys = (body.keys ?? {}) as { p256dh?: unknown; auth?: unknown };
@@ -39,28 +41,28 @@ export async function POST(req: Request) {
   if (!endpoint || !B64URL.test(p256dh) || !B64URL.test(auth) || p256dh.length > 200 || auth.length > 100) {
     return fail("Ógild áskrift");
   }
-  const { error } = await supabaseAdmin.from("gatt_push_subscriptions").upsert({
+  const ua = (req.headers.get("user-agent") ?? "").slice(0, 300);
+  const { error } = await supabaseAdmin.from("gatt_push_subscriptions").upsert(actors.map((a) => ({
     endpoint,
     p256dh,
     auth,
-    owner_kind: actor.kind,
-    owner_id: actor.id,
-    is_admin: actor.kind === "staff" && actor.isAdmin,
-    user_agent: (req.headers.get("user-agent") ?? "").slice(0, 300),
-  }, { onConflict: "endpoint" });
+    owner_kind: a.kind,
+    owner_id: a.id,
+    is_admin: a.kind === "staff" && a.isAdmin,
+    user_agent: ua,
+  })), { onConflict: "endpoint,owner_kind,owner_id" });
   if (error) return fail("Ekki tókst að vista", 500);
-  return json({ ok: true });
+  return json({ ok: true, accounts: actors.map((a) => a.kind) });
 }
 
 export async function DELETE(req: Request) {
   if (!sameOrigin(req)) return fail("Ógild beiðni", 403);
-  const actor = await getSmsActor(req);
-  if (!actor) return fail("Ekki innskráð(ur)", 401);
+  const actors = await getSmsActors(req);
+  if (!actors.length) return fail("Ekki innskráð(ur)", 401);
   const body = await readJson(req);
   const endpoint = validEndpoint(body.endpoint);
   if (!endpoint) return fail("Ógild áskrift");
-  // Aðeins eigin tæki.
-  await supabaseAdmin.from("gatt_push_subscriptions").delete()
-    .eq("endpoint", endpoint).eq("owner_kind", actor.kind).eq("owner_id", actor.id);
+  // Slökkt er á tækinu í heild: slóðin er leynileg og aðeins þessi vafri þekkir hana.
+  await supabaseAdmin.from("gatt_push_subscriptions").delete().eq("endpoint", endpoint);
   return json({ ok: true });
 }
