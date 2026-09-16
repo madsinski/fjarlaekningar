@@ -3,8 +3,9 @@
 // Vinnustöð — stjórnun: spurningar starfsfólks, notendur, tilkynningar og
 // stillingar. Aðeins stjórnandi með tveggja þrepa auðkenningu.
 
-import { useCallback, useEffect, useState } from "react";
-import { Check, Copy, Megaphone, MessageCircle, RefreshCw, Settings, UserPlus, Users } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Check, Copy, Megaphone, MessageCircle, RefreshCw, Settings, UserPlus, Users, Volume2, VolumeX } from "lucide-react";
+import { UnreadDot, playChime, useSoundPref, useUnlockAudio } from "@/app/vinnustod/_components/shared";
 import { supabase } from "@/lib/supabase";
 import Inbox from "./Inbox";
 
@@ -38,8 +39,31 @@ export default function VinnustodAdminPage() {
     u.searchParams.set("t", t);
     window.history.replaceState(null, "", u);
   };
-  const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: "spurningar", label: "Samtöl", icon: <MessageCircle className="h-4 w-4" /> },
+
+  // Samtöl sem bíða svars: rauður punktur á flipanum, fjöldi í flipaheiti og
+  // hljóð þegar nýtt bætist við — óháð því hvaða flipi er opinn.
+  const [awaiting, setAwaiting] = useState(0);
+  const [soundOn, setSoundOn] = useSoundPref();
+  useUnlockAudio();
+  const last = useRef<number | null>(null);
+  useEffect(() => {
+    const poll = async () => {
+      const r = await api<{ unread: number }>("/api/vinnustod/me");
+      if (r.ok) setAwaiting(r.unread);
+    };
+    void poll();
+    const t = setInterval(() => { void poll(); }, 20_000);
+    return () => clearInterval(t);
+  }, []);
+  useEffect(() => {
+    if (last.current !== null && awaiting > last.current && soundOn) playChime();
+    last.current = awaiting;
+    const base = document.title.replace(/^\(\d+\) /, "");
+    document.title = awaiting ? `(${awaiting}) ${base}` : base;
+  }, [awaiting, soundOn]);
+
+  const tabs: { key: Tab; label: string; icon: React.ReactNode; badge?: number }[] = [
+    { key: "spurningar", label: "Samtöl", icon: <MessageCircle className="h-4 w-4" />, badge: awaiting },
     { key: "notendur", label: "Notendur", icon: <Users className="h-4 w-4" /> },
     { key: "tilkynningar", label: "Tilkynningar", icon: <Megaphone className="h-4 w-4" /> },
     { key: "stillingar", label: "Stillingar", icon: <Settings className="h-4 w-4" /> },
@@ -51,18 +75,25 @@ export default function VinnustodAdminPage() {
           <h1 className="text-2xl font-bold text-slate-900">Vinnustöð</h1>
           <p className="text-sm text-slate-500">Hjúkrunarfræðingar og annað starfsfólk heilsugæslunnar sem vísar á Fjarlækningar.</p>
         </div>
-        <a href="/vinnustod" target="_blank" rel="noopener" className={btnGhost}>Opna vinnustöðina</a>
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={() => setSoundOn(!soundOn)} aria-pressed={soundOn}
+            title={soundOn ? "Hljóð við ný skilaboð: á" : "Hljóð við ný skilaboð: af"} className={btnGhost}>
+            {soundOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />} Hljóð {soundOn ? "á" : "af"}
+          </button>
+          <a href="/vinnustod" target="_blank" rel="noopener" className={btnGhost}>Opna vinnustöðina</a>
+        </div>
       </div>
       <div className="mt-5 flex flex-wrap gap-1 border-b border-slate-200">
         {tabs.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={`-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-semibold ${tab === t.key ? "border-cyan-600 text-cyan-800" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
             {t.icon} {t.label}
+            {t.badge ? <UnreadDot count={t.badge} className="ml-1" /> : null}
           </button>
         ))}
       </div>
       <div className="mt-6">
-        {tab === "spurningar" && <Inbox />}
+        {tab === "spurningar" && <Inbox onAwaitingChange={setAwaiting} />}
         {tab === "notendur" && <UsersTab />}
         {tab === "tilkynningar" && <AnnouncementsTab />}
         {tab === "stillingar" && <SettingsTab />}

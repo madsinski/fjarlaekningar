@@ -85,3 +85,80 @@ export function Drawer({ title, onClose, children, wide }: { title: string; onCl
     </div>
   );
 }
+
+// ── Hljóð við ný skilaboð ───────────────────────────────────────────────────
+// Stuttur tvítóna hljómur búinn til í vafranum (engin hljóðskrá). Vafrar leyfa
+// hljóð aðeins eftir að notandi hefur smellt á síðuna, svo hljóðkerfið er
+// vakið við fyrsta smell.
+
+let audio: AudioContext | null = null;
+
+function ctx(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+  const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AC) return null;
+  audio ??= new AC();
+  return audio;
+}
+
+/** Vekur hljóðkerfið við fyrsta smell svo hljómurinn fái að spilast síðar. */
+export function useUnlockAudio() {
+  useEffect(() => {
+    const unlock = () => { void ctx()?.resume(); };
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("keydown", unlock, { once: true });
+    return () => { window.removeEventListener("pointerdown", unlock); window.removeEventListener("keydown", unlock); };
+  }, []);
+}
+
+export function playChime() {
+  const ac = ctx();
+  if (!ac || ac.state !== "running") return;
+  const now = ac.currentTime;
+  [[880, 0], [1318.5, 0.14]].forEach(([freq, at]) => {
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, now + at);
+    gain.gain.exponentialRampToValueAtTime(0.25, now + at + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + at + 0.5);
+    osc.connect(gain).connect(ac.destination);
+    osc.start(now + at);
+    osc.stop(now + at + 0.55);
+  });
+}
+
+const SOUND_KEY = "vs-sound";
+
+/** Hljóð af/á — geymt í vafranum. Sjálfgefið á. */
+export function useSoundPref(): [boolean, (on: boolean) => void] {
+  const [on, setOn] = useState(true);
+  useEffect(() => {
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (window.localStorage.getItem(SOUND_KEY) === "off") setOn(false);
+    } catch { /* einkagluggi — hljóð á */ }
+  }, []);
+  const set = (v: boolean) => {
+    setOn(v);
+    try { window.localStorage.setItem(SOUND_KEY, v ? "on" : "off"); } catch { /* sjá að ofan */ }
+    if (v) { void ctx()?.resume().then(playChime); }
+  };
+  return [on, set];
+}
+
+/** Rauður punktur með fjölda — sést vel. */
+export function UnreadDot({ count, className = "" }: { count: number; className?: string }) {
+  if (!count) return null;
+  return (
+    // Staðsetning kemur frá þeim sem notar punktinn (t.d. absolute í horni);
+    // annars er hann relative svo blikkið haldist utan um töluna.
+    <span className={`inline-flex ${/\babsolute\b/.test(className) ? "" : "relative"} ${className}`} aria-label={`${count} ólesið`}>
+      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+      <span className="relative inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[11px] font-bold leading-5 text-white ring-2 ring-white">
+        {count}
+      </span>
+    </span>
+  );
+}

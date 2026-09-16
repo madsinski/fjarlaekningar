@@ -56,7 +56,7 @@ export default function Inbox({ onAwaitingChange }: { onAwaitingChange?: (n: num
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
-    const t = setInterval(() => { void load(); }, 30_000);
+    const t = setInterval(() => { void load(); }, 20_000);
     return () => clearInterval(t);
   }, [load]);
 
@@ -80,13 +80,18 @@ export default function Inbox({ onAwaitingChange }: { onAwaitingChange?: (n: num
         {threads === null ? <div className="m-4 h-16 animate-pulse rounded-lg bg-slate-100" />
           : threads.length === 0 ? <p className="p-6 text-center text-sm text-slate-500">Engin samtöl.</p>
           : threads.map((t) => (
-            <button key={t.id} onClick={() => setOpen(t.id)} className={`flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 ${t.unread ? "bg-cyan-50/60" : ""}`}>
-              {t.unread && <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-cyan-600" />}
+            <button key={t.id} onClick={() => setOpen(t.id)} className={`flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 ${t.unread ? "bg-red-50/70" : ""}`}>
+              {t.unread && (
+                <span className="relative flex h-3 w-3 shrink-0" aria-label="Ólesið">
+                  <span className="absolute h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                  <span className="relative h-3 w-3 rounded-full bg-red-600" />
+                </span>
+              )}
               <span className="min-w-0 flex-1">
                 <span className={`block truncate text-sm ${t.unread ? "font-bold" : "font-semibold"}`}>{t.subject}</span>
                 <span className="block truncate text-xs text-slate-500">{t.user?.name ?? "?"}{t.user?.workplace ? ` · ${t.user.workplace}` : ""} · {fmt(t.last_message_at)}</span>
               </span>
-              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${t.status === "closed" ? "bg-slate-100 text-slate-500" : t.last_author === "user" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>
+              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${t.status === "closed" ? "bg-slate-100 text-slate-500" : t.last_author === "user" ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800"}`}>
                 {t.status === "closed" ? "Lokið" : t.last_author === "user" ? "Bíður svars" : "Sent"}
               </span>
             </button>

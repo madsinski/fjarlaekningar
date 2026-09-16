@@ -12,7 +12,7 @@
 // SMS-ið hverfi ekki. Í síma raðast þetta í einn dálk með stiku neðst.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronRight, LogOut, Megaphone, MessageCircle, QrCode, Search, Send, Settings } from "lucide-react";
+import { ChevronRight, LogOut, Megaphone, MessageCircle, QrCode, Search, Send, Settings, Volume2, VolumeX } from "lucide-react";
 import { Card, Notice, cx } from "@/app/hsu/_components/ui";
 import Inbox from "@/app/admin/vinnustod/Inbox";
 import type { Lang } from "@/lib/nurse-guide";
@@ -22,7 +22,7 @@ import SettingsPanel from "./SettingsPanel";
 import SmsPanel from "./SmsPanel";
 import TriageCard from "./TriageCard";
 import { TextsProvider, type GuideContent, type SharedText } from "./Texts";
-import { Drawer, FjLogo, PORTAL_URL, Qr, useServiceStatus, vsApi } from "./shared";
+import { Drawer, FjLogo, PORTAL_URL, Qr, UnreadDot, playChime, useServiceStatus, useSoundPref, useUnlockAudio, vsApi } from "./shared";
 
 export interface VsMe {
   id: string;
@@ -87,15 +87,26 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
     if (new URLSearchParams(window.location.search).get("t") === "sms") setTimeout(focusSms, 250);
   }, [focusSms]);
 
-  // Stjórnandi: fjöldi spurninga sem bíða svars uppfærist reglulega.
+  // Stjórnandi: fjöldi samtala sem bíða svars uppfærist reglulega. Aðrir fá
+  // fjöldann úr QuestionsCard, sem sækir samtölin sjálft.
   useEffect(() => {
     if (!me.canAnswer) return;
     const t = setInterval(async () => {
       const r = await vsApi<{ unread: number }>("/api/vinnustod/me", { staff: true });
       if (r.ok) setUnread(r.unread);
-    }, 60_000);
+    }, 20_000);
     return () => clearInterval(t);
   }, [me.canAnswer]);
+
+  // Ný skilaboð: hljóð (ef kveikt) og fjöldinn í flipaheitinu.
+  const [soundOn, setSoundOn] = useSoundPref();
+  useUnlockAudio();
+  const lastUnread = useRef(initialUnread);
+  useEffect(() => {
+    if (unread > lastUnread.current && soundOn) playChime();
+    lastUnread.current = unread;
+    document.title = unread ? `(${unread}) Vinnustöð Fjarlækninga` : "Vinnustöð Fjarlækninga";
+  }, [unread, soundOn]);
 
   const pick = (slug: string) => { setQ(""); setOpenSlug(slug); };
   const setQuery = (v: string) => { setQ(v); if (v) setOpenSlug(null); };
@@ -124,13 +135,18 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
               <div className="truncate text-sm font-bold">Vinnustöð Fjarlækninga</div>
               <div className="truncate text-xs text-cyan-100/70">{me.name}{me.workplace ? ` · ${me.workplace}` : ""}</div>
             </div>
-            {me.canAnswer && (
-              <button type="button" onClick={() => setDrawer({ kind: "inbox" })}
-                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold hover:bg-white/10">
-                <MessageCircle className="h-4 w-4" /> <span className="hidden sm:inline">Innhólf</span>
-                {unread > 0 && <span className="rounded-full bg-amber-400 px-1.5 text-[11px] font-bold text-slate-900">{unread}</span>}
+            {(me.canAnswer || me.canMessage) && (
+              <button type="button" onClick={openQuestions} aria-label="Skilaboð"
+                className="relative inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold hover:bg-white/10">
+                <MessageCircle className="h-4 w-4" /> <span className="hidden sm:inline">{me.canAnswer ? "Samtöl" : "Skilaboð"}</span>
+                <UnreadDot count={unread} className="absolute -right-1 -top-1" />
               </button>
             )}
+            <button type="button" onClick={() => setSoundOn(!soundOn)} title={soundOn ? "Hljóð við ný skilaboð: á" : "Hljóð við ný skilaboð: af"}
+              aria-label={soundOn ? "Slökkva á hljóði" : "Kveikja á hljóði"} aria-pressed={soundOn}
+              className="rounded-xl p-2 hover:bg-white/10">
+              {soundOn ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5 opacity-60" />}
+            </button>
             {me.kind === "vs" && (
               <button type="button" onClick={() => setDrawer({ kind: "settings" })} aria-label="Stillingar" title="Stillingar"
                 className="rounded-xl p-2 hover:bg-white/10"><Settings className="h-5 w-5" /></button>
@@ -173,8 +189,6 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
           </div>
 
           <aside className={cx("min-w-0 space-y-4 lg:order-none lg:col-start-2 lg:row-span-2 lg:row-start-1", focused ? "order-3" : "order-2", "lg:sticky lg:top-[4.25rem] lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:pb-2 [scrollbar-width:thin]")}>
-            <div id="sms" className="scroll-mt-20"><SmsPanel ref={phoneRef} compact /></div>
-
             {me.canMessage && (
               <div id="spurningar" className="scroll-mt-20">
                 <QuestionsCard key={threadsKey} onUnreadChange={setUnread}
@@ -184,21 +198,25 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
             {me.canAnswer && (
               <button id="spurningar" type="button" onClick={() => setDrawer({ kind: "inbox" })}
                 className={cx("flex w-full scroll-mt-20 items-center justify-between gap-3 rounded-2xl border p-4 text-left shadow-sm transition hover:shadow-md",
-                  unread ? "border-amber-300 bg-amber-50" : "border-slate-200 bg-white")}>
+                  unread ? "border-red-300 bg-red-50 ring-2 ring-red-200" : "border-slate-200 bg-white")}>
                 <span className="flex items-center gap-3">
-                  <span className={cx("flex h-9 w-9 items-center justify-center rounded-xl", unread ? "bg-amber-400 text-slate-900" : "bg-[var(--hsu-soft)] text-[var(--hsu)]")}>
+                  <span className={cx("relative flex h-9 w-9 items-center justify-center rounded-xl", unread ? "bg-red-600 text-white" : "bg-[var(--hsu-soft)] text-[var(--hsu)]")}>
                     <MessageCircle className="h-5 w-5" />
+                    <UnreadDot count={unread} className="absolute -right-2 -top-2" />
                   </span>
                   <span>
                     <span className="block font-bold text-slate-900">Samtöl við starfsfólk</span>
                     <span className="block text-xs text-slate-600">
-                      {unread === 0 ? "Ekkert bíður svars · skrifa nýtt" : unread === 1 ? "Ein spurning bíður svars" : `${unread} spurningar bíða svars`}
+                      {unread === 0 ? "Ekkert bíður svars · skrifa nýtt" : unread === 1 ? "Ný skilaboð bíða svars" : `${unread} samtöl bíða svars`}
                     </span>
                   </span>
                 </span>
                 <ChevronRight className="h-4 w-4 text-slate-400" />
               </button>
             )}
+
+            <div id="sms" className="scroll-mt-20"><SmsPanel ref={phoneRef} compact /></div>
+
 
             <Card className="flex items-center gap-4 p-4">
               <button type="button" onClick={() => setDrawer({ kind: "qr" })} aria-label="Sýna QR-kóða stórt"
@@ -263,7 +281,7 @@ function MobileBtn({ icon, label, onClick, badge }: { icon: React.ReactNode; lab
       className="relative flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-semibold text-slate-600 active:bg-slate-100">
       {icon}
       {label}
-      {Boolean(badge) && <span className="absolute left-1/2 top-1 ml-2 rounded-full bg-red-500 px-1.5 text-[10px] text-white">{badge}</span>}
+      <UnreadDot count={badge ?? 0} className="absolute left-1/2 top-1 ml-2" />
     </button>
   );
 }
