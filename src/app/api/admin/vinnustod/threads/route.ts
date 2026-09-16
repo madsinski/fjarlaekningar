@@ -1,13 +1,14 @@
 // Innhólf Fjarlækninga: spurningar úr vinnustöðinni — frá hjúkrunarfræðingum,
 // starfsfólki Fjarlækninga og læknum vaktakerfisins.
 //
-// POST { kind, id, subject, body } — stjórnandi hefur samtal við einhvern þeirra.
+// POST { kind, id, body } — stjórnandi hefur samtal við einhvern þeirra.
+// Fyrirsögnin er fyrsta lína skilaboðanna (subjectFrom).
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getVsAdmin } from "@/lib/vinnustod/admin";
 import { UUID_RE, cleanLine, cleanText, fail, json, originOf, readJson } from "@/lib/vinnustod/server";
 import {
-  MAX_BODY, MAX_SUBJECT, THREAD_COLUMNS, addMessage, askersFor, listRecipients, notifyUser, ownerColumn, unreadFor, type ThreadRow,
+  MAX_BODY, MAX_SUBJECT, subjectFrom, THREAD_COLUMNS, addMessage, askersFor, listRecipients, notifyUser, ownerColumn, unreadFor, type ThreadRow,
 } from "@/lib/vinnustod/threads";
 
 export const runtime = "nodejs";
@@ -36,9 +37,9 @@ export async function POST(req: Request) {
   if (!["vs", "staff", "hsu"].includes(kind) || !UUID_RE.test(id)) return fail("Veldu viðtakanda.");
   const to = (await listRecipients()).find((r) => r.kind === kind && r.id === id);
   if (!to) return fail("Viðtakandinn fannst ekki eða er óvirkur.", 404);
-  const subject = cleanLine(body.subject, MAX_SUBJECT);
   const text = cleanText(body.body, MAX_BODY);
-  if (!subject) return fail("Skrifaðu fyrirsögn.");
+  // Fyrirsögn er valkvæð (eldri útgáfur sendu hana); annars fyrsta lína skilaboðanna.
+  const subject = cleanLine(body.subject, MAX_SUBJECT) || subjectFrom(text);
   if (!text) return fail("Skeytið er tómt.");
 
   const { data: thread, error } = await supabaseAdmin.from("gatt_threads").insert({

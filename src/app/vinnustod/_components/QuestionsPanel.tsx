@@ -29,14 +29,13 @@ interface Message {
 }
 
 export function NewQuestion({ initial, onCancel, onCreated }: { initial: string; onCancel: () => void; onCreated: (id: string) => void }) {
-  const [subject, setSubject] = useState(initial);
-  const [body, setBody] = useState("");
+  const [body, setBody] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true); setErr(null);
-    const r = await vsApi<{ id: string }>("/api/vinnustod/threads", { body: { subject, body }, staff: true });
+    const r = await vsApi<{ id: string }>("/api/vinnustod/threads", { body: { body }, staff: true });
     setBusy(false);
     if (!r.ok) { setErr(r.error ?? "Ekki tókst að senda"); return; }
     onCreated(r.id);
@@ -49,11 +48,9 @@ export function NewQuestion({ initial, onCancel, onCreated }: { initial: string;
       <Card className="space-y-4 p-5">
         <h1 className="text-lg font-bold">Ný spurning</h1>
         <Notice tone="info">Ekki setja nöfn, kennitölur eða aðrar persónuupplýsingar sjúklinga í spurninguna.</Notice>
-        <Field label="Fyrirsögn">
-          <input className={inputCls} value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={140} placeholder="t.d. Má sjúklingur á brjóstagjöf nota þjónustuna?" required />
-        </Field>
-        <Field label="Spurningin">
-          <textarea className={cx(inputCls, "min-h-36")} value={body} onChange={(e) => setBody(e.target.value)} maxLength={4000} required />
+        <Field label="Spurningin" hint="Fyrsta línan birtist sem fyrirsögn samtalsins.">
+          <textarea autoFocus className={cx(inputCls, "min-h-36")} value={body} onChange={(e) => setBody(e.target.value)} maxLength={4000} required
+            placeholder="t.d. Má sjúklingur á brjóstagjöf nota þjónustuna?" />
         </Field>
         {err && <Notice tone="err">{err}</Notice>}
         <Button type="submit" busy={busy}><Send className="h-4 w-4" /> Senda spurningu</Button>

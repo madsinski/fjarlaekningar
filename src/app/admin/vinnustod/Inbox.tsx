@@ -189,7 +189,6 @@ function Compose({ onCancel, onSent, compact = false }: { onCancel: () => void; 
   const [people, setPeople] = useState<Recipient[] | null>(null);
   const [q, setQ] = useState("");
   const [to, setTo] = useState<Recipient | null>(null);
-  const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -206,7 +205,7 @@ function Compose({ onCancel, onSent, compact = false }: { onCancel: () => void; 
   const send = async () => {
     if (!to) return;
     setBusy(true); setErr(null);
-    const r = await api<{ id: string }>("/api/admin/vinnustod/threads", { body: { kind: to.kind, id: to.id, subject, body } });
+    const r = await api<{ id: string }>("/api/admin/vinnustod/threads", { body: { kind: to.kind, id: to.id, body } });
     setBusy(false);
     if (!r.ok) { setErr(r.error ?? "Mistókst"); return; }
     onSent(r.id);
@@ -257,18 +256,15 @@ function Compose({ onCancel, onSent, compact = false }: { onCancel: () => void; 
           )}
         </div>
         <label className="block">
-          <span className="mb-1 block text-sm font-semibold text-slate-700">Fyrirsögn</span>
-          <input className={inputCls} value={subject} maxLength={140} onChange={(e) => setSubject(e.target.value)} />
-        </label>
-        <label className="block">
           <span className="mb-1 block text-sm font-semibold text-slate-700">Skilaboð</span>
-          <textarea className={`${inputCls} min-h-32`} value={body} onChange={(e) => setBody(e.target.value)} />
+          <textarea className={`${inputCls} min-h-32`} value={body} maxLength={4000} onChange={(e) => setBody(e.target.value)}
+            placeholder="Fyrsta línan birtist sem fyrirsögn hjá viðtakandanum." />
         </label>
         <p className="text-xs text-slate-500">Viðtakandinn sér skilaboðin í vinnustöðinni (fjarlaekningar.is/vinnustod), fær tölvupóst og getur svarað þar.</p>
         {err && <p className="text-sm text-red-600">{err}</p>}
         <div className="flex justify-end gap-2">
           <button className={btnGhost} onClick={onCancel}>Hætta við</button>
-          <button className={btnPrimary} disabled={busy || !to || !subject.trim() || !body.trim()} onClick={send}><Send className="h-4 w-4" /> Senda</button>
+          <button className={btnPrimary} disabled={busy || !to || !body.trim()} onClick={send}><Send className="h-4 w-4" /> Senda</button>
         </div>
       </div>
     </div>

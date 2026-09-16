@@ -201,7 +201,7 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
               </Notice>
             ))}
             <GuideBody q={q} setQ={setQuery} openSlug={openSlug} setOpenSlug={setOpenSlug} lang={lang} setLang={setLang}
-              onSms={focusSms} onAsk={me.canMessage ? (text) => setDrawer({ kind: "new", draft: `Spurning: ${text}` }) : undefined} />
+              onSms={focusSms} onAsk={me.canMessage ? (text) => setDrawer({ kind: "new", draft: `Sjúklingur spyr um: ${text}\n\n` }) : undefined} />
           </div>
 
           <aside className={cx("min-w-0 space-y-4 lg:order-none lg:col-start-2 lg:row-span-2 lg:row-start-1", focused ? "order-3" : "order-2", "lg:sticky lg:top-[4.25rem] lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:pb-2 [scrollbar-width:thin]")}>

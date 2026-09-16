@@ -5,7 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getSmsActor } from "@/lib/sms-actor";
 import { clientIp, sameOrigin, throttle } from "@/lib/vinnustod/auth";
 import { cleanLine, cleanText, fail, json, originOf, readJson } from "@/lib/vinnustod/server";
-import { MAX_BODY, MAX_SUBJECT, THREAD_COLUMNS, addMessage, canAsk, notifyStaff, ownerColumn, ownerFields, unreadFor, type ThreadRow } from "@/lib/vinnustod/threads";
+import { MAX_BODY, MAX_SUBJECT, subjectFrom, THREAD_COLUMNS, addMessage, canAsk, notifyStaff, ownerColumn, ownerFields, unreadFor, type ThreadRow } from "@/lib/vinnustod/threads";
 
 export const runtime = "nodejs";
 
@@ -26,9 +26,9 @@ export async function POST(req: Request) {
     return fail("Of margar spurningar á stuttum tíma. Reyndu aftur eftir smá stund.", 429);
   }
   const body = await readJson(req);
-  const subject = cleanLine(body.subject, MAX_SUBJECT);
   const text = cleanText(body.body, MAX_BODY);
-  if (!subject) return fail("Skrifaðu fyrirsögn.");
+  // Fyrirsögn er valkvæð (eldri útgáfur sendu hana); annars fyrsta lína skilaboðanna.
+  const subject = cleanLine(body.subject, MAX_SUBJECT) || subjectFrom(text);
   if (!text) return fail("Skrifaðu spurninguna.");
 
   const { data: thread, error } = await supabaseAdmin.from("gatt_threads")

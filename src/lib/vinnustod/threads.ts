@@ -14,6 +14,19 @@ import { sendVsEmail } from "./server";
 
 export const MAX_BODY = 4000;
 export const MAX_SUBJECT = 140;
+const SUBJECT_SHOWN = 80;
+
+/**
+ * Fyrirsögn samtals = fyrsta lína skilaboðanna, stytt. Enginn skrifar
+ * fyrirsögn sérstaklega; viðtakandinn sér upphaf skilaboðanna í listanum.
+ */
+export function subjectFrom(body: string): string {
+  const first = (body.split(/\r?\n/).map((l) => l.trim()).find(Boolean) ?? "").replace(/\s+/g, " ");
+  if (first.length <= SUBJECT_SHOWN) return first;
+  const cut = first.slice(0, SUBJECT_SHOWN);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > 40 ? cut.slice(0, space) : cut).replace(/[\s,.;:–-]+$/, "")}…`;
+}
 
 export interface ThreadRow {
   id: string;
