@@ -36,7 +36,7 @@ export function NewQuestion({ initial, onCancel, onCreated }: { initial: string;
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true); setErr(null);
-    const r = await vsApi<{ id: string }>("/api/vinnustod/threads", { body: { subject, body } });
+    const r = await vsApi<{ id: string }>("/api/vinnustod/threads", { body: { subject, body }, staff: true });
     setBusy(false);
     if (!r.ok) { setErr(r.error ?? "Ekki tókst að senda"); return; }
     onCreated(r.id);
@@ -70,7 +70,7 @@ export function ThreadView({ id, onBack, onRead }: { id: string; onBack: () => v
   const bottom = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
-    const r = await vsApi<{ thread: Thread; messages: Message[] }>(`/api/vinnustod/threads/${id}`);
+    const r = await vsApi<{ thread: Thread; messages: Message[] }>(`/api/vinnustod/threads/${id}`, { staff: true });
     if (r.ok) { setData({ thread: r.thread, messages: r.messages }); onRead(); }
     else setErr(r.error ?? "Samtalið fannst ekki");
   }, [id, onRead]);
@@ -87,7 +87,7 @@ export function ThreadView({ id, onBack, onRead }: { id: string; onBack: () => v
     e.preventDefault();
     if (!reply.trim()) return;
     setBusy(true); setErr(null);
-    const r = await vsApi(`/api/vinnustod/threads/${id}`, { body: { body: reply } });
+    const r = await vsApi(`/api/vinnustod/threads/${id}`, { body: { body: reply }, staff: true });
     setBusy(false);
     if (!r.ok) { setErr(r.error ?? "Ekki tókst að senda"); return; }
     setReply("");
@@ -144,7 +144,7 @@ export function QuestionsCard({ onOpen, onNew, onUnreadChange }: {
   const [threads, setThreads] = useState<Thread[] | null>(null);
   const [all, setAll] = useState(false);
   const load = useCallback(async () => {
-    const r = await vsApi<{ threads: Thread[] }>("/api/vinnustod/threads");
+    const r = await vsApi<{ threads: Thread[] }>("/api/vinnustod/threads", { staff: true });
     if (r.ok) { setThreads(r.threads); onUnreadChange?.(r.threads.filter((t) => t.unread).length); }
   }, [onUnreadChange]);
   useEffect(() => {
@@ -162,7 +162,7 @@ export function QuestionsCard({ onOpen, onNew, onUnreadChange }: {
           Spurningar til Fjarlækninga
         </h2>
       </div>
-      <p className="mt-1 text-xs text-slate-500">Óviss um erindi? Spyrðu okkur — svarið kemur hér og í pósti.</p>
+      <p className="mt-1 text-xs text-slate-500">Spurning um þjónustuna? Skrifaðu stjórnanda Fjarlækninga — svarið kemur hér og í pósti.</p>
       <Button className="mt-3 w-full" onClick={onNew}><Plus className="h-4 w-4" /> Ný spurning</Button>
       <div className="mt-3 divide-y divide-slate-100">
         {threads === null ? <div className="h-12 animate-pulse rounded-lg bg-slate-100" />

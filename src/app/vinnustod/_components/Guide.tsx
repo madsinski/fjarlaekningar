@@ -10,18 +10,18 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft, Check, ChevronDown, ExternalLink, FlaskConical, MessageCircle, Pill, Search, X,
+  ArrowLeft, Camera, Check, ChevronDown, ExternalLink, FlaskConical, MessageCircle, Pill, Search, X,
 } from "lucide-react";
 import { cx } from "@/app/hsu/_components/ui";
-import { EditableText } from "./Texts";
+import { EditableText, useGuideContent } from "./Texts";
 
 export { CopyButton } from "./Texts";
 import {
-  GUIDE_ANSWERS, GUIDE_FACTS, GUIDE_MEDS, GUIDE_PROBLEMS, GUIDE_SELFTESTS, SELFTEST_INFO_URL,
-  SELFTEST_STAFF_NOTE, problemPageUrl,
-  type GuideProblem, type GuideSelftest, type Lang,
+  GUIDE_FACTS, GUIDE_MEDS, GUIDE_PROBLEMS, GUIDE_SELFTESTS, SELFTEST_INFO_URL,
+  SELFTEST_STAFF_NOTE, SITE, problemPageUrl,
+  type GuideAnswer, type GuideFact, type GuideMedGroup, type GuideProblem, type GuideSelftest, type Lang,
 } from "@/lib/nurse-guide";
-import { search } from "@/lib/nurse-guide-search";
+import { searchGuide } from "@/lib/nurse-guide-search";
 
 const icon = (slug: string) => `/fjarlaekningar-icons/portal/${slug}.png`;
 
@@ -112,12 +112,12 @@ export function SearchHero({ q, setQ, inputRef, onPick, status }: {
 
 // ── Meginreglur (grænu og rauðu spjöldin) ───────────────────────────────────
 
-export function RuleCards() {
+export function RuleCards({ facts = GUIDE_FACTS, title = "Það helsta um þjónustuna" }: { facts?: GuideFact[]; title?: string }) {
   const groups = [
-    { tone: "ok" as const, title: "Svona virkar þjónustan", facts: GUIDE_FACTS.filter((f) => f.tone === "ok") },
-    { tone: "no" as const, title: "Hentar ekki", facts: GUIDE_FACTS.filter((f) => f.tone === "no") },
-    { tone: "info" as const, title: "Hver má nota hana", facts: GUIDE_FACTS.filter((f) => f.tone === "info") },
-  ];
+    { tone: "ok" as const, title: "Svona virkar þjónustan", facts: facts.filter((f) => f.tone === "ok") },
+    { tone: "no" as const, title: "Hentar ekki", facts: facts.filter((f) => f.tone === "no") },
+    { tone: "info" as const, title: "Hver má nota hana", facts: facts.filter((f) => f.tone === "info") },
+  ].filter((g) => g.facts.length);
   const style = {
     ok: { box: "border-emerald-200 bg-emerald-50", head: "text-emerald-800", dot: "bg-emerald-500" },
     no: { box: "border-red-200 bg-red-50", head: "text-red-800", dot: "bg-red-500" },
@@ -125,8 +125,8 @@ export function RuleCards() {
   };
   return (
     <section aria-labelledby="rules-h" className="space-y-3">
-      <h2 id="rules-h" className="text-sm font-bold uppercase tracking-wider text-slate-500">Það helsta um þjónustuna</h2>
-      <div className="grid gap-3 md:grid-cols-3">
+      <h2 id="rules-h" className="text-sm font-bold uppercase tracking-wider text-slate-500">{title}</h2>
+      <div className={cx("grid gap-3", groups.length === 3 ? "md:grid-cols-3" : groups.length === 2 ? "md:grid-cols-2" : "")}>
         {groups.map((g) => (
           <div key={g.tone} className={cx("rounded-2xl border p-4", style[g.tone].box)}>
             <h3 className={cx("text-sm font-bold", style[g.tone].head)}>{g.title}</h3>
@@ -166,6 +166,8 @@ function ProblemTile({ p, onOpen }: { p: GuideProblem; onOpen: () => void }) {
 
 function ProblemDetail({ p, lang, setLang, onBack, onSms }: { p: GuideProblem; lang: Lang; setLang: (l: Lang) => void; onBack?: () => void; onSms: () => void }) {
   const tests = GUIDE_SELFTESTS.filter((t) => p.selftests?.includes(t.key));
+  const { livePages } = useGuideContent();
+  const pageUrl = livePages.includes(p.slug) ? problemPageUrl(p.slug) : `${SITE}/thjonusta`;
   return (
     <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
       <header className="flex flex-wrap items-center gap-4 border-b border-slate-100 p-5">
@@ -179,8 +181,13 @@ function ProblemDetail({ p, lang, setLang, onBack, onSms }: { p: GuideProblem; l
         <div className="min-w-0 flex-1">
           <h2 className="text-xl font-bold text-slate-900">{p.title}</h2>
           <p className="text-sm text-slate-600">{p.summary}</p>
+          {p.photo && (
+            <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
+              <Camera className="h-3.5 w-3.5" /> Sjúklingur sendir mynd með erindinu
+            </p>
+          )}
         </div>
-        <a href={problemPageUrl(p.slug)} target="_blank" rel="noopener noreferrer"
+        <a href={pageUrl} target="_blank" rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-[var(--hsu-dark)] ring-1 ring-slate-200 hover:bg-slate-50">
           <ExternalLink className="h-4 w-4" /> Á vefnum
         </a>
@@ -262,7 +269,7 @@ function SelftestSection({ lang, setLang, tests, expanded }: { lang: Lang; setLa
 
 // ── Algengar spurningar og lyf ──────────────────────────────────────────────
 
-function AnswersSection({ answers, title = "Algengar spurningar — tilbúin svör" }: { answers: typeof GUIDE_ANSWERS; title?: string }) {
+function AnswersSection({ answers, title = "Algengar spurningar — svör af vefnum" }: { answers: GuideAnswer[]; title?: string }) {
   return (
     <section className="space-y-3">
       <h2 className="text-lg font-bold text-slate-900">{title}</h2>
@@ -278,13 +285,10 @@ function AnswersSection({ answers, title = "Algengar spurningar — tilbúin sv�
   );
 }
 
-function MedsSection({ q, defaultOpen }: { q: string; defaultOpen: boolean }) {
-  const [open, setOpen] = useState(defaultOpen);
-  const groups = useMemo(() => GUIDE_MEDS
-    .map((g) => ({ ...g, items: q ? search(g.items, q, (i) => ({ title: i })) : g.items }))
-    .filter((g) => g.items.length), [q]);
+function MedsSection({ groups, searching }: { groups: GuideMedGroup[]; searching: boolean }) {
+  const [open, setOpen] = useState(false);
   if (!groups.length) return null;
-  const shown = open || Boolean(q);
+  const shown = open || searching;
   return (
     <section className="rounded-2xl border border-slate-200 bg-white">
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={shown}
@@ -316,11 +320,9 @@ export function GuideBody({ q, setQ, openSlug, setOpenSlug, lang, setLang, onSms
   onSms: () => void; onAsk?: (q: string) => void;
 }) {
   const topRef = useRef<HTMLDivElement>(null);
-  const problems = useMemo(() => search(GUIDE_PROBLEMS, q, (p) => ({
-    title: p.title, keywords: [...p.keywords, p.titleEn], body: [p.summary, ...p.suitable, ...p.notSuitable, p.reply],
-  })), [q]);
-  const answers = useMemo(() => search(GUIDE_ANSWERS, q, (a) => ({ title: a.q, keywords: a.keywords, body: [a.a] })), [q]);
-  const tests = useMemo(() => search(GUIDE_SELFTESTS, q, (t) => ({ title: t.title, keywords: ["sjálfspróf", "heimapróf", "próf"], body: [t.what, t.when, t.where] })), [q]);
+  const { answers: allAnswers } = useGuideContent();
+  const hits = useMemo(() => searchGuide(q, allAnswers), [q, allAnswers]);
+  const { problems, tests, answers } = hits;
   const searching = q.trim().length > 0;
   const opened = openSlug ? GUIDE_PROBLEMS.find((p) => p.slug === openSlug) ?? null : null;
 
@@ -336,8 +338,7 @@ export function GuideBody({ q, setQ, openSlug, setOpenSlug, lang, setLang, onSms
   }
 
   if (searching) {
-    const medsHit = GUIDE_MEDS.some((g) => search(g.items, q, (i) => ({ title: i })).length > 0);
-    const nothing = !problems.length && !answers.length && !tests.length && !medsHit;
+    const nothing = hits.empty;
     return (
       <div ref={topRef} className="space-y-6">
         <p className="text-sm text-slate-500" aria-live="polite">
@@ -363,9 +364,16 @@ export function GuideBody({ q, setQ, openSlug, setOpenSlug, lang, setLang, onSms
             <div className="grid gap-2 sm:grid-cols-2">{problems.map((p) => <ProblemTile key={p.slug} p={p} onOpen={() => setOpenSlug(p.slug)} />)}</div>
           </section>
         )}
+        <MedsSection groups={hits.meds} searching />
+        {hits.facts.length > 0 && <RuleCards facts={hits.facts} title="Um þjónustuna" />}
+        {hits.access && (
+          <section className="space-y-3">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500">Svona kemst sjúklingur inn</h2>
+            <PatientTextBox title="Almennur texti með hlekkjum" id={`access:${lang}`} lang={lang} setLang={setLang} onSms={onSms} />
+          </section>
+        )}
         {tests.length > 0 && <SelftestSection lang={lang} setLang={setLang} tests={tests} expanded />}
-        {answers.length > 0 && <AnswersSection answers={answers} title="Tilbúin svör" />}
-        <MedsSection q={q} defaultOpen={false} />
+        {answers.length > 0 && <AnswersSection answers={answers} title="Algengar spurningar" />}
       </div>
     );
   }
@@ -381,11 +389,11 @@ export function GuideBody({ q, setQ, openSlug, setOpenSlug, lang, setLang, onSms
       <RuleCards />
       <section className="space-y-3">
         <h2 className="text-lg font-bold text-slate-900">Svona kemst sjúklingur inn</h2>
-        <PatientTextBox title="Almennur texti með hlekk" id={`access:${lang}`} lang={lang} setLang={setLang} onSms={onSms} />
+        <PatientTextBox title="Almennur texti með hlekkjum" id={`access:${lang}`} lang={lang} setLang={setLang} onSms={onSms} />
       </section>
       <SelftestSection lang={lang} setLang={setLang} tests={GUIDE_SELFTESTS} />
-      <AnswersSection answers={GUIDE_ANSWERS} />
-      <MedsSection q="" defaultOpen={false} />
+      <AnswersSection answers={allAnswers} />
+      <MedsSection groups={GUIDE_MEDS} searching={false} />
     </div>
   );
 }

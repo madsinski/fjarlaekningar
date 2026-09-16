@@ -4,15 +4,15 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getSmsActor } from "@/lib/sms-actor";
 import { sameOrigin, throttle } from "@/lib/vinnustod/auth";
 import { UUID_RE, cleanText, fail, json, originOf, readJson } from "@/lib/vinnustod/server";
-import { MAX_BODY, THREAD_COLUMNS, addMessage, loadMessages, notifyStaff, type ThreadRow } from "@/lib/vinnustod/threads";
+import { MAX_BODY, THREAD_COLUMNS, addMessage, canAsk, loadMessages, notifyStaff, ownerColumn, type ThreadRow } from "@/lib/vinnustod/threads";
 
 export const runtime = "nodejs";
 
-/** Þráðurinn — aðeins ef hann tilheyrir þessum notanda. */
+/** Þráðurinn — aðeins ef hann tilheyrir þeim sem spyr. */
 async function ownThread(req: Request, id: string) {
   const actor = await getSmsActor(req);
-  if (!actor || actor.kind !== "vs" || !UUID_RE.test(id)) return null;
-  const { data } = await supabaseAdmin.from("gatt_threads").select(THREAD_COLUMNS).eq("id", id).eq("user_id", actor.id).maybeSingle();
+  if (!actor || !canAsk(actor) || !UUID_RE.test(id)) return null;
+  const { data } = await supabaseAdmin.from("gatt_threads").select(THREAD_COLUMNS).eq("id", id).eq(ownerColumn(actor.kind), actor.id).maybeSingle();
   return data ? { actor, thread: data as ThreadRow } : null;
 }
 
@@ -35,7 +35,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const body = await readJson(req);
   const text = cleanText(body.body, MAX_BODY);
   if (!text) return fail("Skeytið er tómt.");
-  await addMessage({ threadId: id, kind: "user", authorId: own.actor.id, authorName: own.actor.name, body: text });
+  await addMessage({ threadId: id, kind: "user", askerKind: own.actor.kind, authorId: own.actor.id, authorName: own.actor.name, body: text });
   notifyStaff({
     origin: originOf(req), userName: own.actor.name, workplace: own.actor.workplace ?? "",
     subject: own.thread.subject, body: text, isNew: false, replyTo: own.actor.email ?? "",

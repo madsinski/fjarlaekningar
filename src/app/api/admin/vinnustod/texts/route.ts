@@ -11,6 +11,7 @@ import { getVsAdmin } from "@/lib/vinnustod/admin";
 import { sameOrigin } from "@/lib/vinnustod/auth";
 import { cleanText, fail, json, readJson } from "@/lib/vinnustod/server";
 import { defaultText, hasPortalLink, textNeedsLink } from "@/lib/nurse-guide";
+import { getGuideContent } from "@/lib/vinnustod/guide-content";
 
 export const runtime = "nodejs";
 
@@ -22,7 +23,7 @@ export async function PUT(req: Request) {
   if (!admin) return fail("Krefst stjórnanda með tveggja þrepa auðkenningu", 403);
   const body = await readJson(req);
   const id = String(body.id ?? "");
-  const fallback = defaultText(id);
+  const fallback = defaultText(id, await getGuideContent());
   if (fallback === null) return fail("Óþekktur texti", 404);
 
   const key = `text:${id}`;

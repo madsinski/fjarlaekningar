@@ -135,3 +135,27 @@ begin
     execute format('create policy %I on public.%I for all using (false) with check (false)', t || '_none', t);
   end loop;
 end $$;
+
+-- ── Spurningar frá öllum sem nota vinnustöðina (2026-09-16) ────────────────
+-- Ekki aðeins notendur vinnustöðvar heldur líka starfsfólk Fjarlækninga og
+-- læknar HSU-vaktakerfisins spyrja stjórnanda. Þráðurinn á nákvæmlega einn
+-- eiganda; nafn, netfang og vinnustaður eru afrituð svo innhólfið þurfi ekki
+-- að fletta upp í þremur töflum.
+alter table public.gatt_threads alter column user_id drop not null;
+alter table public.gatt_threads add column if not exists owner_kind text not null default 'vs';
+alter table public.gatt_threads add column if not exists owner_staff uuid references public.staff (id) on delete cascade;
+alter table public.gatt_threads add column if not exists owner_hsu uuid references public.hsu_doctors (id) on delete cascade;
+alter table public.gatt_threads add column if not exists owner_name text not null default '';
+alter table public.gatt_threads add column if not exists owner_email text not null default '';
+alter table public.gatt_threads add column if not exists owner_workplace text not null default '';
+alter table public.gatt_threads drop constraint if exists gatt_threads_owner_chk;
+alter table public.gatt_threads add constraint gatt_threads_owner_chk check (
+  (owner_kind = 'vs'    and user_id is not null and owner_staff is null and owner_hsu is null) or
+  (owner_kind = 'staff' and user_id is null and owner_staff is not null and owner_hsu is null) or
+  (owner_kind = 'hsu'   and user_id is null and owner_staff is null and owner_hsu is not null)
+);
+create index if not exists gatt_threads_staff_idx on public.gatt_threads (owner_staff, last_message_at desc);
+create index if not exists gatt_threads_hsu_idx on public.gatt_threads (owner_hsu, last_message_at desc);
+update public.gatt_threads t set owner_name = u.name, owner_email = u.email, owner_workplace = u.workplace
+  from public.gatt_users u where t.user_id = u.id and t.owner_email = '';
+alter table public.gatt_messages add column if not exists author_hsu uuid references public.hsu_doctors (id) on delete set null;

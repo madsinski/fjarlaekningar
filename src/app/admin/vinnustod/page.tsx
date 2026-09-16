@@ -3,8 +3,8 @@
 // Vinnustöð — stjórnun: spurningar starfsfólks, notendur, tilkynningar og
 // stillingar. Aðeins stjórnandi með tveggja þrepa auðkenningu.
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, Check, Copy, Megaphone, MessageCircle, RefreshCw, Send, Settings, UserPlus, Users } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Check, Copy, Megaphone, MessageCircle, RefreshCw, Settings, UserPlus, Users } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import Inbox from "./Inbox";
 

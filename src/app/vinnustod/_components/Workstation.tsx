@@ -20,7 +20,7 @@ import { GuideBody, SearchHero } from "./Guide";
 import { NewQuestion, QuestionsCard, ThreadView } from "./QuestionsPanel";
 import SettingsPanel from "./SettingsPanel";
 import SmsPanel from "./SmsPanel";
-import { TextsProvider, type SharedText } from "./Texts";
+import { TextsProvider, type GuideContent, type SharedText } from "./Texts";
 import { Drawer, FjLogo, PORTAL_URL, Qr, useServiceStatus, vsApi } from "./shared";
 
 export interface VsMe {
@@ -55,8 +55,8 @@ function initialDrawer(me: VsMe): DrawerState {
   return null;
 }
 
-export default function Workstation({ me, announcements, unread: initialUnread, texts, refresh }: {
-  me: VsMe; announcements: Announcement[]; unread: number; texts: Record<string, SharedText>; refresh: () => void;
+export default function Workstation({ me, announcements, unread: initialUnread, texts, guide, refresh }: {
+  me: VsMe; announcements: Announcement[]; unread: number; texts: Record<string, SharedText>; guide: GuideContent; refresh: () => void;
 }) {
   const [q, setQ] = useState("");
   const [openSlug, setOpenSlug] = useState<string | null>(null);
@@ -112,7 +112,7 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
   };
 
   return (
-    <TextsProvider userKey={`${me.kind}:${me.id}`} canShare={me.canAnswer} initial={texts}>
+    <TextsProvider canEdit={me.canAnswer} initial={texts} guide={guide}>
       <div className="min-h-screen bg-slate-50 pb-24 lg:pb-10">
         <header className="sticky top-0 z-40 bg-[#062a38] text-white shadow-sm">
           <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-2.5 sm:px-6">
@@ -163,7 +163,7 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
               onSms={focusSms} onAsk={me.canMessage ? (text) => setDrawer({ kind: "new", draft: `Spurning: ${text}` }) : undefined} />
           </div>
 
-          <aside className="order-first min-w-0 space-y-4 lg:order-none lg:sticky lg:top-[4.25rem] lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:pb-2 [scrollbar-width:thin]">
+          <aside className={cx("min-w-0 space-y-4 lg:order-none", !q && !openSlug && "order-first", "lg:sticky lg:top-[4.25rem] lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:pb-2 [scrollbar-width:thin]")}>
             <div id="sms" className="scroll-mt-20"><SmsPanel ref={phoneRef} compact /></div>
 
             {me.canMessage && (

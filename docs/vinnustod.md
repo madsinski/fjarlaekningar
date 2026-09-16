@@ -24,8 +24,9 @@ vinnudaginn.
 3. **Læknar í HSU-vaktakerfinu** — með sinni innskráningu; hlekkur í valmynd
    læknisins á *Mín síða*.
 
-Aðeins notendur vinnustöðvar (1) spyrja spurninga og hafa *Stillingar*. Stjórnandi
-Fjarlækninga (með `aal2`) sér í staðinn innhólfið og getur breytt textum fyrir alla.
+Allir þrír hópar geta sent stjórnanda Fjarlækninga spurningu (tvíhliða samtal).
+Stjórnandi (með `aal2`) sér í staðinn innhólfið og er sá eini sem breytir textum.
+Aðeins notendur vinnustöðvar (1) hafa *Stillingar*.
 
 ### Nýir notendur
 
@@ -55,22 +56,38 @@ Einn skjár, engir flipar — hjúkrunarfræðingurinn er í símanum og þarf a
 - Samtal, ný spurning, innhólf, stillingar og stór QR-kóði opnast í skúffu.
 - `?t=sms` (og gamla `/sms`) fer beint í símanúmerið.
 
-## Textar sem má breyta
+## Textar til að afrita
 
-Allir afritanlegir textar (erindi, almenni textinn, sjálfspróf, tilbúin svör) hafa
-**Breyta**. Textinn leysist upp í þessari röð:
+Allir afrita; **aðeins stjórnandi** (starfsmaður með hlutverkið admin og tveggja
+þrepa auðkenningu) sér **Breyta** og vistar fyrir alla — `gatt_settings`, lykill
+`text:<auðkenni>`, ein röð á texta. „Upprunalegur texti“ eyðir breytingunni.
+Þjónninn (`/api/admin/vinnustod/texts`) framfylgir sömu reglu.
 
-1. **Eigin útgáfa** — „Vista hjá mér“; geymd í vafranum (t.d. með nafni stöðvar).
-   „Nota sameiginlega textann“ afturkallar.
-2. **Útgáfa Fjarlækninga** — „Vista fyrir alla“ (aðeins stjórnandi, `aal2`);
-   `gatt_settings`, lykill `text:<auðkenni>`, ein röð á texta. „Upprunalegur texti“
-   eyðir henni.
-3. **Sjálfgefinn texti** í `src/lib/nurse-guide.ts` (`defaultText`).
+Hver texti til sjúklings endar á tveimur merktum hlekkjum:
 
-„Afrita“ í breytiham notar breytinguna aðeins í þetta sinn. Texti til sjúklings
-verður að innihalda slóð — viðmótið varar við og þjónninn neitar að vista án hennar.
+    Sjúklingagátt (innskráning): https://app.medalia.is/fjarlaekningar-hsu
+    Nánari upplýsingar: https://www.fjarlaekningar.is/thjonusta/<erindi>
+
+(`/thjonusta` ef síða erindisins er ekki opin á vefnum). Texti til sjúklings verður
+að innihalda slóð — viðmótið varar við og þjónninn neitar að vista án hennar.
 Auðkenni: `problem:<slug>:<is|en>`, `access:<is|en>`, `selftest:<key>:<is|en>`,
-`answer:<key>`.
+`answer:faq<n>`.
+
+## Algengar spurningar — af vefnum
+
+Svörin eru lesin úr „Algengum spurningum“ á `/thjonusta` í vefumsjóninni
+(`src/lib/vinnustod/guide-content.ts`), svo orðalagið er alltaf það sama og á vefnum.
+**Verð er ekki nefnt í vinnustöðinni:** spurningunni um kostnað er sleppt og
+setningar um komugjald teknar út. Breyting á spurningu á vefnum birtist hér strax.
+
+## Leit
+
+`searchGuide` í `src/lib/nurse-guide-search.ts` leitar í erindum, sjálfsprófum,
+algengum spurningum, meginreglum (spjöldunum), lyfjaflokkum og aðgangstextanum.
+Broddstafir skipta ekki máli og löng orð finnast líka í annarri beygingu
+(„blóðprufur“ → „blóðprufa“). Lyfjaflokkur finnst á heiti eða samheiti
+(„benzó“, „róandi“, „ADHD“) og sýnir þá öll lyfin í flokknum. **Bættu við samheitum
+(`keywords`) í `nurse-guide.ts` þegar starfsfólk finnur ekki eitthvað.**
 
 ## Efnið í *Upplýsingar*
 
@@ -80,10 +97,15 @@ auk reglna sem tæknistjóri gaf beint (18 ára, aðeins fyrir sig sjálfan, eng
 blóðprufur né myndgreiningar, engin líkamsskoðun). **Breytist efnið á vefnum þarf að
 breyta því hér líka.**
 
-Erindi sem eru falin á vefnum (húðvandamál, augnsýkingar, almenn
-læknisþjónusta) eru ekki í leiðarvísinum.
+Öll 13 erindin eru í leiðarvísinum, líka húðvandamál, augnsýkingar og almenn
+læknisþjónusta (sem voru falin á vefnum 16.9.2026). Hlekkurinn „Á vefnum“ vísar á
+síðu erindisins aðeins þegar hún er opin, annars á `/thjonusta`.
 
 ## Spurningar og svör
+
+Þráður á einn eiganda (`gatt_threads.owner_kind`: `vs`, `staff` eða `hsu`, með
+`user_id` / `owner_staff` / `owner_hsu`); nafn, netfang og vinnustaður eru afrituð
+í þráðinn. Hver sér aðeins sína þræði.
 
 - Ný spurning eða svar frá starfsmanni → póstur á netföngin undir *Stillingar*
   (sjálfgefið `fjarlaekningar@fjarlaekningar.is`), með hlekk á `/admin/vinnustod`.

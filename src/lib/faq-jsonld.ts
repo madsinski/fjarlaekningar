@@ -12,7 +12,7 @@ import type { LocaleContent } from "./site-content/types";
 const FAQ_SLOTS = 24;
 
 /** CMS answers carry list markup and a template token; searches want prose. */
-function plain(answer: string): string {
+export function plain(answer: string): string {
   return answer
     .split("\n")
     .map((line) => line.trim())
@@ -25,11 +25,17 @@ function plain(answer: string): string {
     .trim();
 }
 
-export function faqJsonLd(c: LocaleContent, url: string) {
-  const entries = Array.from({ length: FAQ_SLOTS }, (_, i) => ({
+/** Spurningar og svör eins og þau birtast á vefnum, með raufarnúmeri. */
+export function faqEntries(c: LocaleContent) {
+  return Array.from({ length: FAQ_SLOTS }, (_, i) => ({
+    slot: i + 1,
     q: (c[`faq${i + 1}_q`] ?? "").trim(),
     a: plain(c[`faq${i + 1}_a`] ?? ""),
   })).filter((e) => e.q && e.a);
+}
+
+export function faqJsonLd(c: LocaleContent, url: string) {
+  const entries = faqEntries(c);
 
   if (!entries.length) return null;
 

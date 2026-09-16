@@ -31,7 +31,7 @@ const btnGhost = `${btn} border border-slate-300 bg-white text-slate-700 hover:b
 
 interface InboxThread {
   id: string; subject: string; status: "open" | "closed"; last_message_at: string; last_author: "user" | "staff"; unread: boolean;
-  user: { name: string; email: string; workplace: string; title: string } | null;
+  user: { kind: "vs" | "staff" | "hsu"; name: string; email: string; workplace: string; title: string; active: boolean } | null;
 }
 interface Msg { id: string; author_kind: "user" | "staff"; author_name: string; body: string; created_at: string }
 
@@ -126,7 +126,9 @@ function InboxThreadView({ id, onBack }: { id: string; onBack: () => void }) {
             <div>
               <h2 className="text-lg font-bold">{data.thread.subject}</h2>
               <p className="text-sm text-slate-500">
-                {data.user?.name} · {data.user?.title}{data.user?.workplace ? `, ${data.user.workplace}` : ""} · <a className="underline" href={`mailto:${data.user?.email}`}>{data.user?.email}</a>
+                {[data.user?.name, [data.user?.title, data.user?.workplace].filter(Boolean).join(", ")].filter(Boolean).join(" · ")}
+                {data.user?.email ? <> · <a className="underline" href={`mailto:${data.user.email}`}>{data.user.email}</a></> : null}
+                {data.user && !data.user.active ? <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs">Óvirkur — fær ekki póst</span> : null}
               </p>
             </div>
             {data.thread.status === "open"

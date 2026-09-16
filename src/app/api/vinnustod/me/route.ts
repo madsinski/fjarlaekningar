@@ -11,6 +11,8 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getSmsActor } from "@/lib/sms-actor";
 import { hashSecret, passwordProblem, pinProblem, sameOrigin, sha256, verifySecret, SESSION_COOKIE } from "@/lib/vinnustod/auth";
 import { fail, json, readJson } from "@/lib/vinnustod/server";
+import { canAsk, ownerColumn } from "@/lib/vinnustod/threads";
+import { getGuideContent } from "@/lib/vinnustod/guide-content";
 
 export const runtime = "nodejs";
 
@@ -26,9 +28,9 @@ export async function GET(req: Request) {
       .select("id", { count: "exact", head: true }).eq("status", "open").eq("last_author", "user");
     unread = count ?? 0;
   }
-  if (actor.kind === "vs") {
+  if (canAsk(actor)) {
     const { data: threads } = await supabaseAdmin.from("gatt_threads")
-      .select("last_message_at, last_author, user_read_at").eq("user_id", actor.id);
+      .select("last_message_at, last_author, user_read_at").eq(ownerColumn(actor.kind), actor.id);
     unread = (threads ?? []).filter((t) => t.last_author === "staff" && (!t.user_read_at || t.user_read_at < t.last_message_at)).length;
   }
   const { data: news } = await supabaseAdmin.from("gatt_announcements")
@@ -49,12 +51,13 @@ export async function GET(req: Request) {
       id: actor.id, name: actor.name, kind: actor.kind, email: actor.email ?? "",
       workplace: actor.workplace ?? "", title: actor.title ?? "",
       hasPin: actor.hasPin ?? false, mustChangePassword: actor.mustChangePassword ?? false,
-      canMessage: actor.kind === "vs",
+      canMessage: canAsk(actor),
       canAnswer: actor.kind === "staff" && actor.isAdmin,
     },
     unread,
     announcements: news ?? [],
     texts,
+    guide: await getGuideContent(),
   });
 }
 

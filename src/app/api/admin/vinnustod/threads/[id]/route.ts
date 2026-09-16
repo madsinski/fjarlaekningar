@@ -3,7 +3,7 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getVsAdmin } from "@/lib/vinnustod/admin";
 import { UUID_RE, cleanText, fail, json, originOf, readJson } from "@/lib/vinnustod/server";
-import { MAX_BODY, THREAD_COLUMNS, addMessage, loadMessages, notifyUser, type ThreadRow } from "@/lib/vinnustod/threads";
+import { MAX_BODY, THREAD_COLUMNS, addMessage, askersFor, loadMessages, notifyUser, type ThreadRow } from "@/lib/vinnustod/threads";
 
 export const runtime = "nodejs";
 
@@ -21,10 +21,8 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   const { id } = await ctx.params;
   const thread = await load(id);
   if (!thread) return fail("Samtalið fannst ekki", 404);
-  const [{ data: user }, messages] = await Promise.all([
-    supabaseAdmin.from("gatt_users").select("id, name, email, workplace, title").eq("id", thread.user_id).maybeSingle(),
-    loadMessages(id),
-  ]);
+  const [askers, messages] = await Promise.all([askersFor([thread]), loadMessages(id)]);
+  const user = askers.get(id) ?? null;
   await supabaseAdmin.from("gatt_threads").update({ staff_read_at: new Date().toISOString() }).eq("id", id);
   return json({ ok: true, thread, user, messages });
 }
@@ -39,8 +37,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const text = cleanText(body.body, MAX_BODY);
   if (!text) return fail("Svarið er tómt.");
   await addMessage({ threadId: id, kind: "staff", authorId: admin.id, authorName: admin.name, body: text });
-  const { data: user } = await supabaseAdmin.from("gatt_users").select("name, email, active").eq("id", thread.user_id).maybeSingle();
-  if (user?.active) {
+  const user = (await askersFor([thread])).get(id);
+  if (user?.active && user.email) {
     notifyUser({ origin: originOf(req), to: user.email, name: user.name, subject: thread.subject, body: text, staffName: admin.name });
   }
   return json({ ok: true });
