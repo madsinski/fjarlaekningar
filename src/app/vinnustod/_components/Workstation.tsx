@@ -20,6 +20,7 @@ import { GuideBody, SearchHero } from "./Guide";
 import { NewQuestion, QuestionsCard, ThreadView } from "./QuestionsPanel";
 import SettingsPanel from "./SettingsPanel";
 import SmsPanel from "./SmsPanel";
+import TriageCard from "./TriageCard";
 import { TextsProvider, type GuideContent, type SharedText } from "./Texts";
 import { Drawer, FjLogo, PORTAL_URL, Qr, useServiceStatus, vsApi } from "./shared";
 
@@ -67,6 +68,8 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
   const phoneRef = useRef<HTMLInputElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const status = useServiceStatus();
+  /** Notandinn er að leita eða með erindi opið — þá kemur það efst í síma. */
+  const focused = Boolean(q.trim() || openSlug);
 
   const focusSms = useCallback(() => {
     const el = phoneRef.current;
@@ -149,8 +152,14 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
             </span>
           )} />
 
-        <main className="mx-auto mt-6 grid max-w-7xl items-start gap-6 px-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_370px]">
-          <div className="min-w-0 space-y-6">
+        {/* Í síma: gervigreindarmat → SMS/spurningar → leiðarvísir; í leit eða
+            opnu erindi koma niðurstöðurnar fyrst. Á stórum skjá: matið og
+            leiðarvísirinn í vinstri dálki, hliðardálkurinn fastur hægra megin. */}
+        <main className="mx-auto mt-6 grid max-w-7xl items-start gap-6 px-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_370px] lg:grid-rows-[auto_1fr]">
+          <div className={cx("min-w-0 lg:order-none lg:col-start-1 lg:row-start-1", focused ? "order-2" : "order-1")}>
+            <TriageCard onOpenProblem={(slug) => { setQ(""); setOpenSlug(slug); }} />
+          </div>
+          <div className={cx("min-w-0 space-y-6 lg:order-none lg:col-start-1 lg:row-start-2", focused ? "order-1" : "order-3")}>
             {announcements.map((a) => (
               <Notice key={a.id} tone={a.level === "warning" ? "warn" : "info"}>
                 <span className="flex items-start gap-2">
@@ -163,7 +172,7 @@ export default function Workstation({ me, announcements, unread: initialUnread, 
               onSms={focusSms} onAsk={me.canMessage ? (text) => setDrawer({ kind: "new", draft: `Spurning: ${text}` }) : undefined} />
           </div>
 
-          <aside className={cx("min-w-0 space-y-4 lg:order-none", !q && !openSlug && "order-first", "lg:sticky lg:top-[4.25rem] lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:pb-2 [scrollbar-width:thin]")}>
+          <aside className={cx("min-w-0 space-y-4 lg:order-none lg:col-start-2 lg:row-span-2 lg:row-start-1", focused ? "order-3" : "order-2", "lg:sticky lg:top-[4.25rem] lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:pb-2 [scrollbar-width:thin]")}>
             <div id="sms" className="scroll-mt-20"><SmsPanel ref={phoneRef} compact /></div>
 
             {me.canMessage && (

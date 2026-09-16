@@ -80,6 +80,25 @@ Svörin eru lesin úr „Algengum spurningum“ á `/thjonusta` í vefumsjóninn
 **Verð er ekki nefnt í vinnustöðinni:** spurningunni um kostnað er sleppt og
 setningar um komugjald teknar út. Breyting á spurningu á vefnum birtist hér strax.
 
+## Gervigreindarmat — „Hentar erindið Fjarlækningum?“
+
+Efst í vinstri dálki (fyrst í síma). Hjúkrunarfræðingur límir inn skilaboð frá
+sjúklingi; `/api/vinnustod/triage` fjarlægir kennitölur, símanúmer og netföng
+(`src/lib/vinnustod/redact.ts`), sendir textann til OpenAI (`gpt-5.4`,
+`store: false`) með reglunum og erindalistanum úr `nurse-guide.ts`
+(`src/lib/vinnustod/triage.ts`) og skilar: hentar / hentar ekki / óljóst,
+erindi, viðvörunum, næsta skrefi og spurningum. Hnappur opnar erindið með texta og
+hlekk. Ekkert er vistað; takmörk 30 möt á klst. á notanda.
+
+- Viðvörun um persónuupplýsingar birtist alltaf, og lifandi ábending ef kennitala,
+  símanúmer eða netfang sést. **Nöfn finnast ekki sjálfkrafa.**
+- Líkanið er beðið um að velja „óljóst“ í vafa. Prufusett: 9 dæmigerð skilaboð
+  (þvagfærasýking, Stesolid, brjóstverkur, barn, útbrot, frunsa, blóðprufa,
+  innskotsárás) — 8 rétt, eitt varfærnara en vænst var.
+- **Persónuvernd sjúklinga:** textinn er um sjúkling. HSU er ábyrgðaraðili
+  sjúklingaupplýsinga, svo OpenAI þarf að koma fram sem undirvinnsluaðili í
+  vinnslusamningi og persónuverndarstefnu þjónustunnar.
+
 ## Má endurnýja lyfið?
 
 Í erindinu *Lyfjaendurnýjun* er lyfjaleit (`checkMedication`): **rautt** ef heiti

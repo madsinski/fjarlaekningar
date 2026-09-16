@@ -7,7 +7,7 @@
 // dagsetningu. Enski kaflinn um Google er það sem Google les við yfirferð
 // OAuth-forritsins; hann verður að passa við umfangið í src/lib/google-calendar.ts.
 
-export const STAFF_PRIVACY_VERSION = "1.0";
+export const STAFF_PRIVACY_VERSION = "1.1";
 export const STAFF_PRIVACY_UPDATED = "16.9.2026";
 
 export const STAFF_PRIVACY_IS = `
@@ -69,7 +69,9 @@ Starfsfólk Fjarlækninga og læknar vaktakerfis HSU geta líka notað Vinnustö
 - Spurningar og skilaboð milli þín og Fjarlækninga, með nafni, netfangi og vinnustað.
 - **SMS-sendingar:** hver sendi, hvenær, símanúmer viðtakanda, texti skeytisins (getur innihaldið fornafn sjúklings sem þú slærð inn) og hvort skeytið komst til skila. Símanúmer og nafn sjúklings eru upplýsingar um sjúklinginn og eru aðeins notuð til að senda hlekkinn og fylgjast með að hann berist.
 
-Vinsamlega skrifaðu **aldrei** heilsufarsupplýsingar um sjúklinga í spurningar eða skilaboð í Vinnustöðinni.
+- **Gervigreindarmat („Hentar erindið Fjarlækningum?“):** textinn sem þú límir inn er sendur til OpenAI til mats og svarið birt þér. Áður en hann er sendur eru kennitölur, símanúmer og netföng fjarlægð sjálfkrafa. Hvorki textinn né svarið eru vistuð hjá okkur. Við skráum aðeins að mat hafi verið gert, til að takmarka fjölda mata.
+
+Vinsamlega skrifaðu **aldrei** heilsufarsupplýsingar um nafngreinda sjúklinga í spurningar eða skilaboð í Vinnustöðinni, og settu ekki nöfn eða aðrar persónuupplýsingar í gervigreindarmatið.
 
 ### Allir hópar
 
@@ -108,9 +110,10 @@ Við notum eftirfarandi þjónustuaðila, sem vinna upplýsingar aðeins samkvæ
 - **Vercel** — hýsing vefsins og kerfanna. Netþjónaföllin keyra í Dublin á Írlandi.
 - **Resend** — sending tölvupósts frá kerfunum.
 - **Twilio** — sending SMS úr Vinnustöðinni (fær símanúmer viðtakanda og texta skeytisins).
+- **OpenAI** — gervigreindarmat í Vinnustöðinni (fær aðeins textann sem límdur er inn, eftir að kennitölur, símanúmer og netföng hafa verið fjarlægð). Samkvæmt skilmálum OpenAI er efni sem sent er um forritaskil þess ekki notað til að þjálfa líkön; við biðjum OpenAI um að vista það ekki.
 - **Google** — aðeins ef þú tengir Google-dagatal (sjá kafla 5).
 
-Resend, Twilio, Google og Vercel eru bandarísk fyrirtæki. Berist upplýsingar út fyrir EES byggir flutningurinn á gildum flutningsheimildum samkvæmt GDPR, svo sem stöðluðum samningsákvæðum framkvæmdastjórnar ESB eða EU–US Data Privacy Framework.
+Resend, Twilio, OpenAI, Google og Vercel eru bandarísk fyrirtæki. Berist upplýsingar út fyrir EES byggir flutningurinn á gildum flutningsheimildum samkvæmt GDPR, svo sem stöðluðum samningsákvæðum framkvæmdastjórnar ESB eða EU–US Data Privacy Framework.
 
 Upplýsingum er ekki miðlað til annarra nema lög krefjist þess. Stjórnendur HSU sjá upplýsingar um lækna í vaktakerfi HSU (nafn, óskir, vaktir) eins og þarf til að skipuleggja vaktir, og stjórnandi Fjarlækninga sér samtöl og SMS-skrá Vinnustöðvar.
 
@@ -152,7 +155,7 @@ export const STAFF_PRIVACY_EN = `
 
 This notice explains how **Fjarlækningar ehf.** (reg. no. 480922-0340, Hofsvallagötu 57, 107 Reykjavík, Iceland) processes personal data about the people who work with us: our staff and contractors, doctors on the Fjarlækningar and HSU Vestmannaeyjar shift rosters, and staff of partner health centres who use the Fjarlækningar workstation. The Icelandic text above is the full notice; this section summarises it. Contact: [mads@fjarlaekningar.is](mailto:mads@fjarlaekningar.is).
 
-We process account details (name, email, phone, role), sign-in data (password and PIN stored only as one-way hashes, sessions, trusted devices, and the IP address of sign-in attempts, deleted after 24 hours), shift preferences and schedules, contract and invoicing details for contractors, and messages and SMS logs from the workstation. Data is hosted by Supabase in Ireland and our server functions run on Vercel in Dublin; email is sent through Resend and SMS through Twilio. Where data leaves the EEA, transfers rely on valid GDPR transfer mechanisms. You have the rights of access, rectification, erasure, restriction, portability and objection, and may complain to Persónuvernd, the Icelandic Data Protection Authority.
+We process account details (name, email, phone, role), sign-in data (password and PIN stored only as one-way hashes, sessions, trusted devices, and the IP address of sign-in attempts, deleted after 24 hours), shift preferences and schedules, contract and invoicing details for contractors, and messages and SMS logs from the workstation. Data is hosted by Supabase in Ireland and our server functions run on Vercel in Dublin; email is sent through Resend and SMS through Twilio. Text pasted into the workstation's AI suitability check is sent to OpenAI after national ID numbers, phone numbers and email addresses are removed; it is not stored by us. Where data leaves the EEA, transfers rely on valid GDPR transfer mechanisms. You have the rights of access, rectification, erasure, restriction, portability and objection, and may complain to Persónuvernd, the Icelandic Data Protection Authority.
 
 ## Google user data
 
