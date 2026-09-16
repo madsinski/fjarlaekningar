@@ -104,6 +104,17 @@ setningar um komugjald teknar út. Breyting á spurningu á vefnum birtist hér 
   lokuð síða fær hljóð tækisins með tilkynningunni. iPhone: aðeins ef síðunni
   hefur verið bætt á heimaskjá.
 
+## Hver er við
+
+Á /admin/vinnustod → Samtöl er listinn „Hver er við“: allir sem nota vinnustöðina,
+eftir starfsstöð, með stöðu — **virk** (síðan opin, flipinn sýnilegur og notaður
+síðustu 5 mín.), **innskráð, óvirk** (gild innskráning en síðan í bakgrunni,
+ónotuð eða lokuð), **útskráð** eða **ekki virkjað**. Opin vinnustöð sendir merki á
+30 sek. fresti (`usePresence` → `/api/vinnustod/presence`, taflan `gatt_presence`);
+útskráning eyðir röðinni. Reglurnar eru í `src/lib/vinnustod/presence.ts`.
+Starfsfólk Fjarlækninga telst innskráð í 12 klst. frá síðasta merki (lotan er hjá
+Supabase). „Skrifa“ opnar ný skilaboð með viðtakandann valinn.
+
 ## Gervigreindarmat — „Hentar erindið Fjarlækningum?“
 
 Efst í vinstri dálki (fyrst í síma). Hjúkrunarfræðingur límir inn skilaboð frá

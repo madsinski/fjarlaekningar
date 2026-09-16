@@ -39,8 +39,10 @@ interface Recipient { kind: "vs" | "staff" | "hsu"; id: string; name: string; em
 const KIND_IS: Record<Recipient["kind"], string> = { vs: "Vinnustöð", staff: "Starfsfólk", hsu: "Læknar HSU" };
 interface Msg { id: string; author_kind: "user" | "staff"; author_name: string; body: string; created_at: string }
 
-export default function Inbox({ onAwaitingChange, refresh = 0, compact = false }: {
+export default function Inbox({ onAwaitingChange, refresh = 0, compact = false, composeTo }: {
   onAwaitingChange?: (n: number) => void; refresh?: number;
+  /** Opna „Ný skilaboð“ með þennan viðtakanda valinn (nonce breytist við hvern smell). */
+  composeTo?: { kind: Recipient["kind"]; id: string; nonce: number } | null;
   /** Í þröngum hliðardálki (vinnustöðin): minna bil, allt í einum dálki. */
   compact?: boolean;
 } = {}) {
@@ -48,6 +50,14 @@ export default function Inbox({ onAwaitingChange, refresh = 0, compact = false }
   const [threads, setThreads] = useState<InboxThread[] | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [composing, setComposing] = useState(false);
+  const [presetTo, setPresetTo] = useState<{ kind: Recipient["kind"]; id: string } | null>(null);
+  useEffect(() => {
+    if (!composeTo) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPresetTo({ kind: composeTo.kind, id: composeTo.id });
+    setOpen(null);
+    setComposing(true);
+  }, [composeTo]);
   const [err, setErr] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -73,7 +83,7 @@ export default function Inbox({ onAwaitingChange, refresh = 0, compact = false }
 
   if (open) return <InboxThreadView id={open} refresh={refresh} compact={compact} onBack={() => { setOpen(null); void load(); }} />;
   if (composing) {
-    return <Compose compact={compact} onCancel={() => setComposing(false)} onSent={(id) => { setComposing(false); setOpen(id); void load(); }} />;
+    return <Compose key={presetTo ? `${presetTo.kind}:${presetTo.id}` : "new"} compact={compact} initialTo={presetTo} onCancel={() => { setComposing(false); setPresetTo(null); }} onSent={(id) => { setComposing(false); setOpen(id); void load(); }} />;
   }
   return (
     <div className="space-y-3">
@@ -201,7 +211,9 @@ function InboxThreadView({ id, onBack, refresh = 0, compact = false }: { id: str
 }
 
 /** Stjórnandi hefur samtal: velur viðtakanda og skrifar skilaboð. */
-function Compose({ onCancel, onSent, compact = false }: { onCancel: () => void; onSent: (id: string) => void; compact?: boolean }) {
+function Compose({ onCancel, onSent, compact = false, initialTo = null }: {
+  onCancel: () => void; onSent: (id: string) => void; compact?: boolean; initialTo?: { kind: Recipient["kind"]; id: string } | null;
+}) {
   const [people, setPeople] = useState<Recipient[] | null>(null);
   const [q, setQ] = useState("");
   const [to, setTo] = useState<Recipient | null>(null);
@@ -211,9 +223,11 @@ function Compose({ onCancel, onSent, compact = false }: { onCancel: () => void; 
 
   useEffect(() => {
     void api<{ recipients: Recipient[] }>("/api/admin/vinnustod/recipients").then((r) => {
-      if (r.ok) setPeople(r.recipients); else setErr(r.error ?? "Mistókst");
+      if (!r.ok) { setErr(r.error ?? "Mistókst"); return; }
+      setPeople(r.recipients);
+      if (initialTo) setTo(r.recipients.find((x) => x.kind === initialTo.kind && x.id === initialTo.id) ?? null);
     });
-  }, []);
+  }, [initialTo]);
 
   const fold = (x: string) => x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/þ/g, "th").replace(/ð/g, "d").replace(/æ/g, "ae");
   const shown = (people ?? []).filter((p) => !q.trim() || fold(`${p.name} ${p.email} ${p.workplace} ${p.title}`).includes(fold(q.trim())));

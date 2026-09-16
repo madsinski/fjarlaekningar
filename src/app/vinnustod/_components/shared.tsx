@@ -413,3 +413,44 @@ export function flashTitle(text: string) {
   };
   document.addEventListener("visibilitychange", stop);
 }
+
+// ── Viðvera („Hver er við“ hjá stjórnanda) ─────────────────────────────────
+// Opin síða lætur vita á 30 sek. fresti og strax þegar flipinn verður
+// sýnilegur eða falinn. „Virk(ur)“ = flipinn sýnilegur og notandinn snerti
+// síðuna síðustu 5 mín.
+
+const ACTIVE_WINDOW_MS = 5 * 60_000;
+
+export function usePresence() {
+  useEffect(() => {
+    let lastInput = Date.now();
+    const touch = () => { lastInput = Date.now(); };
+    const beat = () => {
+      const active = document.visibilityState === "visible" && Date.now() - lastInput < ACTIVE_WINDOW_MS;
+      void vsApi("/api/vinnustod/presence", { body: { active }, staff: true });
+    };
+    const onVisible = () => { if (document.visibilityState === "visible") touch(); beat(); };
+    const onHide = () => {
+      // Síðunni lokað: láta vita án þess að bíða (keepalive lifir útskráningu síðunnar).
+      try { void fetch("/api/vinnustod/presence", { method: "DELETE", keepalive: true, credentials: "same-origin" }); } catch { /* ekkert */ }
+    };
+    beat();
+    const t = setInterval(beat, 30_000);
+    const opts = { passive: true } as const;
+    window.addEventListener("pointerdown", touch, opts);
+    window.addEventListener("keydown", touch, opts);
+    window.addEventListener("wheel", touch, opts);
+    window.addEventListener("touchstart", touch, opts);
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("pagehide", onHide);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("pointerdown", touch);
+      window.removeEventListener("keydown", touch);
+      window.removeEventListener("wheel", touch);
+      window.removeEventListener("touchstart", touch);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("pagehide", onHide);
+    };
+  }, []);
+}

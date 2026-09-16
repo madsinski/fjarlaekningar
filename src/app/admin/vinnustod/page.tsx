@@ -8,6 +8,7 @@ import { Check, Copy, Megaphone, MessageCircle, RefreshCw, Settings, UserPlus, U
 import { PushToggle, UnreadDot, chimeOnce, useFaviconBadge, useLiveSignal, useSoundPref, useUnlockAudio } from "@/app/vinnustod/_components/shared";
 import { supabase } from "@/lib/supabase";
 import Inbox from "./Inbox";
+import Presence from "./Presence";
 
 type Tab = "spurningar" | "notendur" | "tilkynningar" | "stillingar";
 
@@ -45,6 +46,7 @@ export default function VinnustodAdminPage() {
   const [awaiting, setAwaiting] = useState(0);
   const [live, setLive] = useState<{ topic: string | null; vapidKey: string | null }>({ topic: null, vapidKey: null });
   const [pulse, setPulse] = useState(0);
+  const [composeTo, setComposeTo] = useState<{ kind: "vs" | "staff" | "hsu"; id: string; nonce: number } | null>(null);
   const [soundOn, setSoundOn] = useSoundPref();
   useUnlockAudio();
   const poll = useCallback(async () => {
@@ -107,7 +109,14 @@ export default function VinnustodAdminPage() {
         ))}
       </div>
       <div className="mt-6">
-        {tab === "spurningar" && <Inbox onAwaitingChange={setAwaiting} refresh={pulse} />}
+        {tab === "spurningar" && (
+          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <Inbox onAwaitingChange={setAwaiting} refresh={pulse} composeTo={composeTo} />
+            <div className="lg:sticky lg:top-4">
+              <Presence refresh={pulse} onWrite={(p) => setComposeTo({ kind: p.kind, id: p.id, nonce: Date.now() })} />
+            </div>
+          </div>
+        )}
         {tab === "notendur" && <UsersTab />}
         {tab === "tilkynningar" && <AnnouncementsTab />}
         {tab === "stillingar" && <SettingsTab />}

@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { DEVICE_COOKIE, endSession, sameOrigin, sha256 } from "@/lib/hsu/auth";
+import { DEVICE_COOKIE, endSession, getDoctorSession, sameOrigin, sha256 } from "@/lib/hsu/auth";
 import { fail, json, readJson } from "@/lib/hsu/server";
 
 export const runtime = "nodejs";
@@ -11,6 +11,9 @@ export async function POST(req: Request) {
   if (!sameOrigin(req)) return fail("Ógild beiðni", 403);
   const body = await readJson(req);
   const jar = await cookies();
+  const me = await getDoctorSession();
+  // Viðvera í vinnustöðinni hverfur með innskráningunni.
+  if (me) await supabaseAdmin.from("gatt_presence").delete().eq("owner_kind", "hsu").eq("owner_id", me.id);
   await endSession(jar);
   if (body.forget) {
     const dev = jar.get(DEVICE_COOKIE)?.value;

@@ -185,3 +185,20 @@ create policy gatt_push_subscriptions_none on public.gatt_push_subscriptions for
 -- prófar líka sem hjúkrunarfræðingur): einkvæmt á (endpoint, eigandi).
 alter table public.gatt_push_subscriptions drop constraint if exists gatt_push_subscriptions_endpoint_key;
 create unique index if not exists gatt_push_endpoint_owner_uidx on public.gatt_push_subscriptions (endpoint, owner_kind, owner_id);
+
+-- ── Hver er við (viðvera) ───────────────────────────────────────────────────
+-- Opin vinnustöð lætur vita á ~30 sek. fresti: last_seen_at (síðan opin) og
+-- last_active_at (notandi snerti síðuna nýlega og flipinn var sýnilegur).
+-- Útskráning eyðir röðinni.
+create table if not exists public.gatt_presence (
+  owner_kind     text not null check (owner_kind in ('vs', 'staff', 'hsu')),
+  owner_id       uuid not null,
+  last_seen_at   timestamptz not null default now(),
+  last_active_at timestamptz,
+  user_agent     text not null default '',
+  primary key (owner_kind, owner_id)
+);
+alter table public.gatt_presence enable row level security;
+drop policy if exists gatt_presence_none on public.gatt_presence;
+create policy gatt_presence_none on public.gatt_presence for all using (false) with check (false);
+alter table public.gatt_presence add column if not exists active boolean not null default false;

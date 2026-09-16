@@ -22,7 +22,7 @@ import SettingsPanel from "./SettingsPanel";
 import SmsPanel from "./SmsPanel";
 import TriageCard from "./TriageCard";
 import { TextsProvider, type GuideContent, type SharedText } from "./Texts";
-import { Drawer, FjLogo, PORTAL_URL, PushToggle, Qr, UnreadDot, chimeOnce, flashTitle, useLiveSignal, useServiceStatus, useFaviconBadge, useSoundPref, useUnlockAudio, vsApi } from "./shared";
+import { Drawer, FjLogo, PORTAL_URL, PushToggle, Qr, UnreadDot, chimeOnce, flashTitle, useLiveSignal, useServiceStatus, useFaviconBadge, usePresence, useSoundPref, useUnlockAudio, vsApi } from "./shared";
 
 export interface VsMe {
   id: string;
@@ -120,6 +120,7 @@ export default function Workstation({ me, announcements: initialAnnouncements, u
     }
   });
   useFaviconBadge(unread);
+  usePresence();
 
   // Ný tilkynning: hljóð, borðinn blikkar í nokkrar sekúndur og flipaheitið
   // blikkar ef flipinn er í bakgrunni.

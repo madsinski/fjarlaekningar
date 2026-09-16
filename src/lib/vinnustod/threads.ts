@@ -196,23 +196,27 @@ export async function askersFor(threads: ThreadRow[]): Promise<Map<string, Asker
   return out;
 }
 
-export interface Recipient { kind: SmsActor["kind"]; id: string; name: string; email: string; workplace: string; title: string }
+export interface Recipient { kind: SmsActor["kind"]; id: string; name: string; email: string; workplace: string; title: string; isAdmin?: boolean }
 
 /** Allir virkir sem stjórnandi getur skrifað — sjá /api/admin/vinnustod/recipients. */
-export async function listRecipients(): Promise<Recipient[]> {
+export async function listRecipients(opts: { includeAdmins?: boolean } = {}): Promise<Recipient[]> {
   const [{ data: users }, { data: staff }, { data: docs }] = await Promise.all([
     supabaseAdmin.from("gatt_users").select("id, name, email, workplace, title").eq("active", true),
     supabaseAdmin.from("staff").select("id, name, email, role, roles").eq("active", true),
     supabaseAdmin.from("hsu_doctors").select("id, name, email").eq("active", true),
   ]);
+  const rolesOf = (s: { role: string; roles: string[] | null }): string[] => (Array.isArray(s.roles) && s.roles.length ? s.roles : [s.role]);
   const staffRows = (staff ?? []).filter((s) => {
-    const roles: string[] = Array.isArray(s.roles) && s.roles.length ? s.roles : [s.role];
-    // Stjórnendur sjá innhólfið; lögfræðingar komast ekki í vinnustöðina.
-    return !roles.includes("admin") && !roles.every((r) => r === "lawyer");
+    const roles = rolesOf(s);
+    // Stjórnendur sjá innhólfið (nema beðið sé um þá); lögfræðingar komast ekki í vinnustöðina.
+    return (opts.includeAdmins || !roles.includes("admin")) && !roles.every((r) => r === "lawyer");
   });
   const out: Recipient[] = [
     ...(users ?? []).map((u) => ({ kind: "vs" as const, id: u.id, name: u.name, email: u.email, workplace: u.workplace ?? "", title: u.title ?? "" })),
-    ...staffRows.map((s) => ({ kind: "staff" as const, id: s.id, name: s.name || s.email, email: s.email, workplace: "Fjarlækningar", title: KIND_LABEL.staff })),
+    ...staffRows.map((s) => ({
+      kind: "staff" as const, id: s.id, name: s.name || s.email, email: s.email, workplace: "Fjarlækningar",
+      title: rolesOf(s).includes("admin") ? "Stjórnandi" : KIND_LABEL.staff, isAdmin: rolesOf(s).includes("admin"),
+    })),
     ...(docs ?? []).map((d) => ({ kind: "hsu" as const, id: d.id, name: d.name, email: d.email, workplace: "HSU Vestmannaeyjum", title: KIND_LABEL.hsu })),
   ];
   return out.sort((a, b) => a.name.localeCompare(b.name, "is"));
