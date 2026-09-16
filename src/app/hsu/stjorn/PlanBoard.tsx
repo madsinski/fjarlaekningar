@@ -13,7 +13,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  AlertTriangle, ArrowRight, Ban, Clock, Eraser, Hand, Heart, Loader2, Plus, RefreshCw, Shield, Shuffle, Sparkles, Trash2, Undo2, Wand2, X,
+  AlertTriangle, ArrowRight, Ban, Clock, Eraser, Hand, Heart, Loader2, Merge, Plus, RefreshCw, Scissors, Shield, Shuffle, Sparkles, Trash2, Undo2, Wand2, X,
 } from "lucide-react";
 import { monthWeeks } from "../_components/PrefsEditor";
 import { Badge, Button, Card, Field, Modal, Notice, cx, hsuApi, inputCls, shortName } from "../_components/ui";
@@ -22,7 +22,8 @@ import {
   type PlanPrefs, type PlanSlot, type UnfilledReason,
 } from "@/lib/hsu/plan";
 import {
-  SHIFT_PERIOD_IS, WEEKDAY_ORDER, WEEKDAY_SHORT_IS, dayLabel, hhmm, holidayName, isWeekendish, markFor, monthLabel, periodOf, type HsuDoctor, type HsuShift,
+  SHIFT_PERIOD_IS, WEEKDAY_ORDER, WEEKDAY_SHORT_IS, dayLabel, hhmm, holidayName, isOvernight, isWeekendish, markFor, minutesOf, monthLabel, periodOf, typeAppliesOn,
+  type HsuDoctor, type HsuShift, type HsuShiftType,
 } from "@/lib/hsu/types";
 import type { PlannerCtx } from "./types";
 
@@ -257,7 +258,7 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
                     {mark === "off" && <Ban className="h-3 w-3 text-red-500" />}
                     {mark === "want" && <Heart className="h-3 w-3 text-emerald-600" />}
                     {h && <span className="truncate text-[9px] font-semibold text-amber-600" title={h}>{h}</span>}
-                    <button onClick={() => setAddFor(date)} title="Bæta við aukavakt" aria-label={`Bæta við aukavakt ${dayLabel(date)}`}
+                    <button onClick={() => setAddFor(date)} title="Bæta við vakt þennan dag" aria-label={`Bæta við vakt ${dayLabel(date)}`}
                       className="ml-auto hidden rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 group-hover:block">
                       <Plus className="h-3 w-3" />
                     </button>
@@ -412,7 +413,7 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
           onAssign={async (doc) => { setSlotOpen(null); await apply([{ id: slotShift.id, doctor_id: doc }]); }}
           onChanged={async () => { setSlotOpen(null); await ctx.reload(); }} />
       )}
-      {addFor && <AddShiftModal date={addFor} doctors={doctors} onClose={() => setAddFor(null)} onDone={async () => { setAddFor(null); await ctx.reload(); }} />}
+      {addFor && <AddShiftModal date={addFor} doctors={doctors} types={data.shiftTypes} onClose={() => setAddFor(null)} onDone={async () => { setAddFor(null); await ctx.reload(); }} />}
     </div>
   );
 }
@@ -441,6 +442,10 @@ function SlotModal({ shift, ctx, shifts, doctors, prefs, toSlots, stats, onClose
   }, [doctors, shifts, shift, prefs, toSlots, stats]);
 
   const h = holidayName(shift.shift_date);
+  // Hálfur dagur: skipta stakri vakt um hádegi, eða sameina helmingana aftur.
+  const siblings = shifts.filter((x) => x.id !== shift.id && x.shift_date === shift.shift_date && x.shift_type_id === shift.shift_type_id);
+  const adjacent = siblings.some((x) => hhmm(x.starts) === hhmm(shift.ends) || hhmm(x.ends) === hhmm(shift.starts));
+  const canSplit = !isOvernight(shift.starts, shift.ends) && minutesOf(shift.ends) - minutesOf(shift.starts) >= 120;
 
   return (
     <Modal open onClose={onClose} title={`${shift.label || "Vakt"} · ${dayLabel(shift.shift_date)}`}>
@@ -478,7 +483,28 @@ function SlotModal({ shift, ctx, shifts, doctors, prefs, toSlots, stats, onClose
       {shift.doctor_id && (
         <Button variant="ghost" className="mt-3 w-full" onClick={() => onAssign(null)}><X className="h-4 w-4" /> Taka lækni af vaktinni</Button>
       )}
-      <div className="mt-5 space-y-2 border-t border-slate-100 pt-4">
+      <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+        {canSplit && (
+          <Button size="sm" variant="ghost" busy={busy === "split"} onClick={async () => {
+            setBusy("split");
+            const r = await hsuApi(`/api/hsu/admin/shifts/${shift.id}/split`, { body: { action: "split" }, staff: true });
+            setBusy(null);
+            if (!r.ok) { alert(r.error ?? "Mistókst"); return; }
+            onChanged();
+          }}><Scissors className="h-3.5 w-3.5" /> Skipta um hádegi</Button>
+        )}
+        {adjacent && (
+          <Button size="sm" variant="ghost" busy={busy === "merge"} onClick={async () => {
+            setBusy("merge");
+            const r = await hsuApi(`/api/hsu/admin/shifts/${shift.id}/split`, { body: { action: "merge" }, staff: true });
+            setBusy(null);
+            if (!r.ok) { alert(r.error ?? "Mistókst"); return; }
+            onChanged();
+          }}><Merge className="h-3.5 w-3.5" /> Sameina í heila vakt</Button>
+        )}
+      </div>
+
+      <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
         <Field label="Athugasemd við vakt">
           <input className={inputCls} value={note} onChange={(e) => setNote(e.target.value)} placeholder="t.d. „Mæting kl. 9 vegna fundar“" />
         </Field>
@@ -505,7 +531,9 @@ function SlotModal({ shift, ctx, shifts, doctors, prefs, toSlots, stats, onClose
   );
 }
 
-function AddShiftModal({ date, doctors, onClose, onDone }: { date: string; doctors: HsuDoctor[]; onClose: () => void; onDone: () => void }) {
+function AddShiftModal({ date, doctors, types, onClose, onDone }: { date: string; doctors: HsuDoctor[]; types: HsuShiftType[]; onClose: () => void; onDone: () => void }) {
+  const usable = types.filter((t) => t.active && typeAppliesOn(t, date));
+  const [typeId, setTypeId] = useState(usable[0]?.id ?? "");
   const [label, setLabel] = useState("Aukavakt");
   const [starts, setStarts] = useState("08:00");
   const [ends, setEnds] = useState("16:00");
@@ -513,13 +541,21 @@ function AddShiftModal({ date, doctors, onClose, onDone }: { date: string; docto
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   return (
-    <Modal open onClose={onClose} title={`Aukavakt · ${dayLabel(date)}`}>
+    <Modal open onClose={onClose} title={`Bæta við vakt · ${dayLabel(date)}`}>
       <div className="space-y-3">
+        <Field label="Vaktategund" hint={typeId ? "Ein vakt til viðbótar af þessari tegund þennan dag (t.d. þriðji læknir á flýtimóttöku)." : "Eigin tímar og heiti."}>
+          <select className={inputCls} value={typeId} onChange={(e) => setTypeId(e.target.value)}>
+            {usable.map((t) => <option key={t.id} value={t.id}>{t.name} ({hhmm(t.starts)}–{hhmm(t.ends)})</option>)}
+            <option value="">Aukavakt — eigin tímar</option>
+          </select>
+        </Field>
+        {!typeId && <>
         <Field label="Heiti"><input className={inputCls} value={label} onChange={(e) => setLabel(e.target.value)} /></Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Frá"><input type="time" className={inputCls} value={starts} onChange={(e) => setStarts(e.target.value)} /></Field>
           <Field label="Til"><input type="time" className={inputCls} value={ends} onChange={(e) => setEnds(e.target.value)} /></Field>
         </div>
+        </>}
         <Field label="Læknir">
           <select className={inputCls} value={doctor} onChange={(e) => setDoctor(e.target.value)}>
             <option value="">— enginn enn —</option>
@@ -529,7 +565,12 @@ function AddShiftModal({ date, doctors, onClose, onDone }: { date: string; docto
         {err && <Notice tone="err">{err}</Notice>}
         <Button className="w-full" busy={busy} onClick={async () => {
           setBusy(true); setErr(null);
-          const r = await hsuApi("/api/hsu/admin/shifts", { body: { shift_date: date, label, starts, ends, doctor_id: doctor || null }, staff: true });
+          const r = await hsuApi("/api/hsu/admin/shifts", {
+            body: typeId
+              ? { shift_date: date, shift_type_id: typeId, doctor_id: doctor || null }
+              : { shift_date: date, label, starts, ends, doctor_id: doctor || null },
+            staff: true,
+          });
           setBusy(false);
           if (!r.ok) { setErr(r.error ?? "Mistókst"); return; }
           onDone();

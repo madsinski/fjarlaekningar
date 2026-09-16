@@ -121,16 +121,13 @@ function ShiftTypeCard({ ctx, type }: { ctx: PlannerCtx; type?: HsuShiftType }) 
         <Field label="Hvíld eftir (dagar)"><input type="number" min={0} max={7} className={inputCls} value={v.rest_days_after} onChange={(e) => set({ rest_days_after: Number(e.target.value) })} /></Field>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Læknar á vakt" hint={v.slots_per_day > 1 ? `${v.slots_per_day} vaktir á dag af þessari tegund` : "Ein vakt á dag"}>
+        <Field label="Læknar á vakt" hint={v.slots_per_day > 1 ? `${v.slots_per_day} læknar allan daginn` : "Einn læknir allan daginn"}>
           <input type="number" min={1} max={6} className={inputCls} value={v.slots_per_day}
             onChange={(e) => set({ slots_per_day: Math.min(6, Math.max(1, Number(e.target.value) || 1)) })} />
         </Field>
-        <Field label="Skipta um hádegi" hint={v.split_at ? `${v.starts}–${v.split_at} og ${v.split_at}–${v.ends}` : "Ein heil vakt"}>
-          <div className="flex items-center gap-2">
-            <input type="checkbox" className="h-4 w-4" checked={Boolean(v.split_at)}
-              onChange={(e) => set({ split_at: e.target.checked ? "12:00" : null })} />
-            {v.split_at && <input type="time" className={inputCls} value={v.split_at.slice(0, 5)} onChange={(e) => set({ split_at: e.target.value })} />}
-          </div>
+        <Field label="Hádegi" hint="Notað þegar stakri vakt er skipt í tvennt á vaktaplaninu (hálfur dagur).">
+          <input type="time" className={inputCls} value={(v.split_at ?? "12:00").slice(0, 5)}
+            onChange={(e) => set({ split_at: e.target.value || null })} />
         </Field>
       </div>
       <div>

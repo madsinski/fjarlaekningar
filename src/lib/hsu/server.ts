@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendEmail, escapeHtml } from "@/lib/email";
 import { getHsuActor, sameOrigin, type HsuActor } from "./auth";
 import {
-  datesInMonth, minutesOf, monthLabel, monthRange, slotsOfType, typeAppliesOn, holidayName,
+  datesInMonth, monthLabel, monthRange, splitTimeOf, typeAppliesOn, holidayName,
   type HsuDoctor, type HsuMonth, type HsuPreference, type HsuShift, type HsuShiftType, type HsuSwap,
 } from "./types";
 
@@ -83,7 +83,7 @@ export async function loadShiftTypes(activeOnly = false): Promise<HsuShiftType[]
   if (error) throw new Error(error.message);
   const rank: Record<string, number> = { forvakt: 0, other: 1, bakvakt: 2 };
   return (data ?? [])
-    .map((t) => ({ ...t, starts: t.starts.slice(0, 5), ends: t.ends.slice(0, 5) }))
+    .map((t) => ({ ...t, starts: t.starts.slice(0, 5), ends: t.ends.slice(0, 5), split_at: t.split_at ? String(t.split_at).slice(0, 5) : null }))
     // Dagvaktir fyrst, svo forvakt, almennar vaktir og bakvakt.
     .sort((a, b) => (a.period === "day" ? 0 : 1) - (b.period === "day" ? 0 : 1) || (a.sort ?? 0) - (b.sort ?? 0) || (rank[a.kind] ?? 1) - (rank[b.kind] ?? 1) || String(a.short).localeCompare(String(b.short))) as HsuShiftType[];
 }
@@ -128,52 +128,88 @@ export async function loadPendingSwaps(): Promise<HsuSwap[]> {
  * mánuðinum. Bætir aðeins við — eyðir aldrei vakt sem þegar er til, því á henni
  * getur setið læknir sem hefur þegar skipulagt sig í kringum hana.
  */
+/**
+ * Tryggja að vaktir mánaðarins séu í takt við vaktategundirnar.
+ *
+ * Talningin miðast við hve margir læknar eiga að BYRJA vaktina: hver vakt sem
+ * hefst á upphafstíma tegundarinnar er einn "straumur". Vakt sem hefur verið
+ * skipt um hádegi telst því einn straumur (fyrri hlutinn), ekki tveir — annars
+ * myndi skipting kalla á nýja vakt í hvert sinn.
+ *
+ * Vakt sem læknir er á er aldrei fjarlægð.
+ */
 export async function ensureSlots(month: string): Promise<number> {
   const types = await loadShiftTypes(true);
   let existing = await loadMonthShifts(month);
   const status = (await loadMonth(month))?.status;
+  const typeById = new Map(types.map((t) => [t.id, t]));
 
-  /** Vaktir sem EIGA að vera til: dagur → tegund → vaktanúmer. */
-  const wanted = new Map<string, { typeId: string; starts: string; ends: string; label: string; index: number }>();
+  const key = (s: { shift_date: string; shift_type_id: string | null }) => `${s.shift_date}|${s.shift_type_id}`;
+  const byDayType = new Map<string, HsuShift[]>();
+  for (const s of existing) {
+    if (!s.shift_type_id) continue;
+    (byDayType.get(key(s)) ?? byDayType.set(key(s), []).get(key(s))!).push(s);
+  }
+
+  /** Er vaktin í því formi sem tegundin gefur núna: heil vakt eða helmingur? */
+  const currentShape = (s: HsuShift, t: HsuShiftType) => {
+    const split = splitTimeOf(t);
+    const [a, b] = [s.starts.slice(0, 5), s.ends.slice(0, 5)];
+    return (a === t.starts && b === t.ends) || (a === t.starts && b === split) || (a === split && b === t.ends);
+  };
+
+  const remove: string[] = [];
+  const rows: Record<string, unknown>[] = [];
+
   for (const date of datesInMonth(month)) {
     for (const t of types) {
-      if (!typeAppliesOn(t, date)) continue;
-      for (const slot of slotsOfType(t)) {
-        wanted.set(`${date}|${t.id}|${slot.index}`, { typeId: t.id, starts: slot.starts, ends: slot.ends, label: slot.label, index: slot.index });
+      const here = byDayType.get(`${date}|${t.id}`) ?? [];
+      if (!typeAppliesOn(t, date)) {
+        remove.push(...here.filter((s) => !s.doctor_id).map((s) => s.id));
+        continue;
+      }
+      // Vaktir í úreltu formi (tímum tegundarinnar breytt) og tómar: burt.
+      const stale = here.filter((s) => !s.doctor_id && !currentShape(s, t));
+      remove.push(...stale.map((s) => s.id));
+      const live = here.filter((s) => !stale.includes(s));
+
+      const streams = live.filter((s) => s.starts.slice(0, 5) === t.starts);
+      const want = Math.max(1, Math.min(6, t.slots_per_day ?? 1));
+      const usedIndexes = new Set(live.map((s) => s.slot_index ?? 0));
+      for (let i = streams.length; i < want; i++) {
+        let index = 0;
+        while (usedIndexes.has(index)) index++;
+        usedIndexes.add(index);
+        rows.push({
+          shift_date: date, shift_type_id: t.id, slot_index: index, label: (t.short || t.name).slice(0, 30),
+          starts: t.starts, ends: t.ends, status: "assigned", published: status === "published",
+        });
+      }
+      // Of margar vaktir eftir að fjöldinn var lækkaður: tómir straumar víkja.
+      // Sé straumurinn hálfur dagur fer tómi seinni helmingurinn með honum.
+      if (streams.length > want) {
+        let drop = streams.length - want;
+        for (const s of streams) {
+          if (drop <= 0) break;
+          if (s.doctor_id) continue;
+          const partner = live.find((x) => x.id !== s.id && x.starts.slice(0, 5) === s.ends.slice(0, 5));
+          if (partner && partner.doctor_id) continue;
+          remove.push(s.id);
+          if (partner) remove.push(partner.id);
+          drop--;
+        }
       }
     }
   }
 
-  // Tómar vaktir sem passa ekki lengur við vaktategundirnar (tegund gerð óvirk,
-  // dögum breytt, frídagaregla, skipting um hádegi, fjöldi lækna) eru fjarlægðar
-  // — líka í birtum mánuði, enda er enginn læknir á þeim. Vakt með lækni er
-  // aldrei snert: hún er hluti af plani sem fólk hefur þegar séð.
-  const stale = existing.filter((s) => {
-    if (s.doctor_id || !s.shift_type_id) return false;
-    const want = wanted.get(`${s.shift_date}|${s.shift_type_id}|${s.slot_index ?? 0}`);
-    return !want || want.starts !== s.starts.slice(0, 5) || want.ends !== s.ends.slice(0, 5);
-  });
-  if (stale.length) {
-    const { error } = await supabaseAdmin.from("hsu_shifts").delete().in("id", stale.map((s) => s.id));
-    if (error) throw new Error(error.message);
-    const gone = new Set(stale.map((s) => s.id));
-    existing = existing.filter((s) => !gone.has(s.id));
-  }
+  // Vaktir af tegund sem er ekki lengur virk (eða hefur verið eytt).
+  remove.push(...existing.filter((s) => !s.doctor_id && s.shift_type_id && !typeById.has(s.shift_type_id)).map((s) => s.id));
 
-  const have = new Set(existing.map((s) => `${s.shift_date}|${s.shift_type_id}|${s.slot_index ?? 0}`));
-  const rows: Record<string, unknown>[] = [];
-  for (const [key, want] of wanted) {
-    if (have.has(key)) continue;
-    const date = key.split("|")[0];
-    // Sé læknir þegar á vakt sem nær yfir þennan tíma (t.d. gömul heil dagvakt
-    // eftir að skipting um hádegi var sett á) bætum við ekki hálfri vakt ofan á.
-    const covered = existing.some((s) =>
-      s.doctor_id && s.shift_date === date && s.shift_type_id === want.typeId && covers(s, want));
-    if (covered) continue;
-    rows.push({
-      shift_date: date, shift_type_id: want.typeId, slot_index: want.index, label: want.label,
-      starts: want.starts, ends: want.ends, status: "assigned", published: status === "published",
-    });
+  if (remove.length) {
+    const { error } = await supabaseAdmin.from("hsu_shifts").delete().in("id", [...new Set(remove)]);
+    if (error) throw new Error(error.message);
+    const gone = new Set(remove);
+    existing = existing.filter((s) => !gone.has(s.id));
   }
   if (rows.length) {
     // insert, ekki upsert: einkvæmi (dagur, tegund, númer) er hlutvísir, og
@@ -182,18 +218,6 @@ export async function ensureSlots(month: string): Promise<number> {
     if (error && error.code !== "23505") throw new Error(error.message);
   }
   return rows.length;
-}
-
-/** Nær vaktin `outer` yfir allan tíma `inner`? Vakt yfir miðnætti nær í næsta sólarhring. */
-function covers(outer: { starts: string; ends: string }, inner: { starts: string; ends: string }): boolean {
-  const range = (x: { starts: string; ends: string }) => {
-    const s = minutesOf(x.starts);
-    const e = minutesOf(x.ends);
-    return [s, e > s ? e : e + 24 * 60] as const;
-  };
-  const [os, oe] = range(outer);
-  const [is, ie] = range(inner);
-  return os <= is && ie <= oe;
 }
 
 // ── Tölvupóstur ─────────────────────────────────────────────────────────────

@@ -64,7 +64,7 @@ export interface HsuShiftType {
   period: ShiftPeriod;
   /** Hve margir læknar eru samtímis á vaktinni (t.d. tveir á flýtimóttöku). */
   slots_per_day: number;
-  /** Skipting um hádegi: vaktinni er skipt í fyrri og síðari hluta á þessum tíma. */
+  /** Klukkan sem vakt af þessari tegund er skipt á þegar hún er tekin í tvennt (sjálfgefið 12:00). */
   split_at: string | null;
   rest_days_after: number;
   color: string;
@@ -207,24 +207,17 @@ export function timesOverlap(a: { starts: string; ends: string }, b: { starts: s
 }
 
 /**
- * Vaktir dagsins af einni tegund: skipting um hádegi gefur tvo hluta, og
- * slots_per_day gefur samhliða vaktir af hverjum hluta.
+ * Vaktir dagsins af einni tegund: ein heil vakt fyrir hvern lækni sem á að vera
+ * á vaktinni. Hálfur dagur er undantekning sem yfirlæknir býr til á einstakri
+ * vakt („skipta um hádegi“), ekki regla á tegundinni.
  */
-export function slotsOfType(t: Pick<HsuShiftType, "starts" | "ends" | "short" | "name" | "slots_per_day" | "split_at">): { index: number; starts: string; ends: string; label: string }[] {
-  const base = t.short || t.name;
-  const split = t.split_at?.slice(0, 5);
-  const parts = split && minutesOf(t.starts) < minutesOf(split) && minutesOf(split) < minutesOf(t.ends)
-    ? [{ starts: t.starts, ends: split, suffix: " f.h." }, { starts: split, ends: t.ends, suffix: " e.h." }]
-    : [{ starts: t.starts, ends: t.ends, suffix: "" }];
+export function slotsOfType(t: Pick<HsuShiftType, "starts" | "ends" | "short" | "name" | "slots_per_day">): { index: number; starts: string; ends: string; label: string }[] {
   const per = Math.max(1, Math.min(6, t.slots_per_day ?? 1));
-  const out: { index: number; starts: string; ends: string; label: string }[] = [];
-  parts.forEach((p, pi) => {
-    for (let i = 0; i < per; i++) {
-      out.push({ index: pi * 10 + i, starts: p.starts, ends: p.ends, label: `${base}${p.suffix}${per > 1 ? ` ${i + 1}` : ""}`.slice(0, 30) });
-    }
-  });
-  return out;
+  return Array.from({ length: per }, (_, i) => ({ index: i, starts: t.starts, ends: t.ends, label: (t.short || t.name).slice(0, 30) }));
 }
+
+/** Klukkan sem vakt er skipt á þegar hún er tekin í tvennt. */
+export const splitTimeOf = (t: { split_at?: string | null }) => (t.split_at ?? "12:00").slice(0, 5);
 
 /** Vakt yfir miðnætti (t.d. 08–08 eða 16–08) endar næsta dag. */
 export function isOvernight(starts: string, ends: string): boolean {
