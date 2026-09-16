@@ -12,7 +12,7 @@
 // SMS-ið hverfi ekki. Í síma raðast þetta í einn dálk með stiku neðst.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertTriangle, ChevronDown, LogOut, Megaphone, MessageCircle, QrCode, Search, Send, Settings, Volume2, VolumeX } from "lucide-react";
+import { AlertTriangle, ChevronDown, LogOut, Megaphone, X, MessageCircle, QrCode, Search, Send, Settings, Volume2, VolumeX } from "lucide-react";
 import { Card, cx } from "@/app/hsu/_components/ui";
 import Inbox from "@/app/admin/vinnustod/Inbox";
 import type { Lang } from "@/lib/nurse-guide";
@@ -22,7 +22,7 @@ import SettingsPanel from "./SettingsPanel";
 import SmsPanel from "./SmsPanel";
 import TriageCard from "./TriageCard";
 import { TextsProvider, type GuideContent, type SharedText } from "./Texts";
-import { Drawer, FjLogo, PORTAL_URL, PushToggle, Qr, UnreadDot, chimeOnce, useLiveSignal, useServiceStatus, useFaviconBadge, useSoundPref, useUnlockAudio, vsApi } from "./shared";
+import { Drawer, FjLogo, PORTAL_URL, PushToggle, Qr, UnreadDot, chimeOnce, flashTitle, useLiveSignal, useServiceStatus, useFaviconBadge, useSoundPref, useUnlockAudio, vsApi } from "./shared";
 
 export interface VsMe {
   id: string;
@@ -114,9 +114,26 @@ export default function Workstation({ me, announcements: initialAnnouncements, u
   useLiveSignal(live.topic, (kind) => {
     setPulse((n) => n + 1);
     void refreshUnread();
-    if (kind === "message" && soundOn) chimeOnce();
+    if (kind === "message") {
+      if (soundOn) chimeOnce();
+      flashTitle("Ný skilaboð");
+    }
   });
   useFaviconBadge(unread);
+
+  // Ný tilkynning: hljóð, borðinn blikkar í nokkrar sekúndur og flipaheitið
+  // blikkar ef flipinn er í bakgrunni.
+  const seenAnnouncements = useRef(new Set(initialAnnouncements.map((a) => a.id)));
+  const [freshAnnouncements, setFreshAnnouncements] = useState<string[]>([]);
+  useEffect(() => {
+    const fresh = announcements.filter((a) => !seenAnnouncements.current.has(a.id)).map((a) => a.id);
+    if (!fresh.length) return;
+    for (const id of fresh) seenAnnouncements.current.add(id);
+    if (soundOn) chimeOnce();
+    flashTitle("Ný tilkynning");
+    setFreshAnnouncements((ids) => [...ids, ...fresh]);
+    setTimeout(() => setFreshAnnouncements((ids) => ids.filter((id) => !fresh.includes(id))), 10_000);
+  }, [announcements, soundOn]);
   // Könnunin (varaleið) getur líka fundið nýtt — þá hljóð ef fjöldinn hækkar.
   const lastUnread = useRef(initialUnread);
   useEffect(() => {
@@ -175,7 +192,7 @@ export default function Workstation({ me, announcements: initialAnnouncements, u
           </div>
         </header>
 
-        <AnnouncementBanner items={announcements} />
+        <AnnouncementBanner items={announcements} fresh={freshAnnouncements} />
 
         <SearchHero q={q} setQ={setQuery} inputRef={searchRef}
           status={status && (
@@ -302,23 +319,56 @@ function MobileBtn({ icon, label, onClick, badge }: { icon: React.ReactNode; lab
   );
 }
 
-/** Tilkynningar frá Fjarlækningum — borði efst, undir yfirstikunni. */
-function AnnouncementBanner({ items }: { items: Announcement[] }) {
-  if (!items.length) return null;
+/**
+ * Tilkynningar frá Fjarlækningum — áberandi borði efst, undir yfirstikunni.
+ * Hver notandi getur lokað tilkynningu; það geymist í þessum vafra og ný
+ * tilkynning birtist alltaf.
+ */
+const DISMISS_KEY = "vs-dismissed-announcements";
+
+function AnnouncementBanner({ items, fresh }: { items: Announcement[]; fresh: string[] }) {
+  const [dismissed, setDismissed] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(DISMISS_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (raw) setDismissed(JSON.parse(raw) as string[]);
+    } catch { /* einkagluggi — allar tilkynningar birtast */ }
+  }, []);
+  const dismiss = (id: string) => {
+    // Aðeins þær sem enn eru virkar eru geymdar, svo listinn stækki ekki endalaust.
+    const next = [...new Set([...dismissed, id])].filter((x) => items.some((a) => a.id === x));
+    setDismissed(next);
+    try { window.localStorage.setItem(DISMISS_KEY, JSON.stringify(next)); } catch { /* sjá að ofan */ }
+  };
+  const shown = items.filter((a) => !dismissed.includes(a.id));
+  if (!shown.length) return null;
   return (
-    <div role="region" aria-label="Tilkynningar frá Fjarlækningum" aria-live="polite">
-      {items.map((a) => {
+    <div role="region" aria-label="Tilkynningar frá Fjarlækningum" aria-live="assertive">
+      {shown.map((a) => {
         const warn = a.level === "warning";
         return (
-          <div key={a.id} className={cx("border-b", warn ? "border-amber-500 bg-amber-400 text-slate-950" : "border-cyan-700 bg-cyan-600 text-white")}>
-            <div className="mx-auto flex max-w-7xl items-start gap-3 px-4 py-3 sm:px-6">
-              <span className={cx("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full", warn ? "bg-slate-950/10" : "bg-white/15")}>
-                {warn ? <AlertTriangle className="h-5 w-5" /> : <Megaphone className="h-5 w-5" />}
+          <div key={a.id} role={warn ? "alert" : "status"}
+            className={cx("relative overflow-hidden border-b-2 shadow-md", fresh.includes(a.id) && "animate-pulse ring-4 ring-inset ring-white/80",
+              warn ? "border-red-800 bg-gradient-to-r from-red-600 via-red-600 to-orange-500 text-white" : "border-amber-500 bg-gradient-to-r from-amber-300 to-amber-400 text-slate-950")}>
+            <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6">
+              <span className="relative flex h-10 w-10 shrink-0 items-center justify-center">
+                <span className={cx("absolute inline-flex h-full w-full animate-ping rounded-full opacity-40", warn ? "bg-white" : "bg-amber-600")} />
+                <span className={cx("relative flex h-10 w-10 items-center justify-center rounded-full", warn ? "bg-white text-red-600" : "bg-slate-950 text-amber-300")}>
+                  {warn ? <AlertTriangle className="h-5 w-5" /> : <Megaphone className="h-5 w-5" />}
+                </span>
               </span>
-              <div className="min-w-0 [overflow-wrap:anywhere]">
-                <p className="font-bold leading-snug">{a.title}</p>
-                {a.body ? <p className={cx("mt-0.5 whitespace-pre-wrap text-sm", warn ? "text-slate-900" : "text-cyan-50")}>{a.body}</p> : null}
+              <div className="min-w-0 flex-1 [overflow-wrap:anywhere]">
+                <p className={cx("text-[11px] font-extrabold uppercase tracking-widest", warn ? "text-red-100" : "text-amber-900")}>
+                  {warn ? "Mikilvæg tilkynning" : "Tilkynning frá Fjarlækningum"}
+                </p>
+                <p className="text-base font-bold leading-snug sm:text-lg">{a.title}</p>
+                {a.body ? <p className={cx("mt-0.5 whitespace-pre-wrap text-sm", warn ? "text-red-50" : "text-slate-900")}>{a.body}</p> : null}
               </div>
+              <button type="button" onClick={() => dismiss(a.id)} aria-label={`Loka tilkynningu: ${a.title}`} title="Loka"
+                className={cx("shrink-0 rounded-full p-2 transition", warn ? "hover:bg-white/20" : "hover:bg-slate-950/10")}>
+                <X className="h-5 w-5" />
+              </button>
             </div>
           </div>
         );

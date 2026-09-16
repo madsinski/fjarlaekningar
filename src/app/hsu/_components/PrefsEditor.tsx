@@ -67,7 +67,7 @@ export function monthWeeks(month: string): (string | null)[][] {
 }
 
 export default function PrefsEditor({
-  month, initial, status, reviewNote, editable, lockedReason, onSave, mode = "doctor", onLoadPrevious,
+  month, initial, status, reviewNote, editable, lockedReason, onSave, mode = "doctor", onLoadPrevious, dayWorkSlot, onProgress,
 }: {
   month: string;
   initial: PrefDraft;
@@ -78,6 +78,10 @@ export default function PrefsEditor({
   mode?: "doctor" | "admin";
   onSave: (draft: PrefDraft, opts: { submit: boolean; alsoNext: boolean; approve?: boolean }) => Promise<{ ok: boolean; error?: string; copiedTo?: string | null }>;
   onLoadPrevious?: () => Promise<PrefDraft | null>;
+  /** Fastir dagvinnudagar læknisins (gilda alla mánuði) — birtast í skrefi 3. */
+  dayWorkSlot?: React.ReactNode;
+  /** Hvaða skref eru búin (2 = dagar merktir, 6 = sent) — fyrir yfirlitið efst. */
+  onProgress?: (p: { daysMarked: boolean; sent: boolean }) => void;
 }) {
   const [draft, setDraft] = useState<PrefDraft>(initial);
   const [brush, setBrush] = useState<Brush>("off");
@@ -165,6 +169,11 @@ export default function PrefsEditor({
     return { off, want, ok, unmarked: dates.length - off - want - ok };
   }, [draft, dates]);
 
+  const steps = mode === "doctor" && editable;
+  const daysMarked = counts.off + counts.want + counts.ok > 0 || Object.keys(draft.weekday_marks).length > 0;
+  const sent = (status === "submitted" || status === "approved") && !dirty;
+  useEffect(() => { onProgress?.({ daysMarked, sent }); }, [onProgress, daysMarked, sent]);
+
   const save = async (submit: boolean, approve = false) => {
     if (draft.min_shifts != null && draft.max_shifts != null && draft.min_shifts > draft.max_shifts) {
       setMsg({ tone: "err", text: "Lágmark getur ekki verið hærra en hámark." });
@@ -230,10 +239,12 @@ export default function PrefsEditor({
       )}
       {!editable && lockedReason && <Notice tone="info">{lockedReason}</Notice>}
 
-      {editable && (
-        <div>
-          <div className="text-xs font-semibold text-slate-600">1. Veldu pensil og smelltu eða dragðu yfir daga</div>
-          <div className="mt-2 grid grid-cols-2 gap-2 sm:inline-grid sm:w-auto sm:grid-cols-3">
+      <Step n={2} steps={steps} done={daysMarked} id="skref-2" title="Merktu dagana"
+        hint="Veldu pensil og smelltu eða dragðu yfir dagana. Smelltu á vikudag efst til að setja reglu fyrir alla þá daga. Ómerktir dagar teljast lausir."
+        plainTitle={editable ? "Veldu pensil og smelltu eða dragðu yfir daga" : undefined}>
+        {editable && (
+          <div className="mb-3">
+<div className="grid grid-cols-2 gap-2 sm:inline-grid sm:w-auto sm:grid-cols-3">
             {brushes.map((b) => (
               <button key={b.key} type="button" data-on={brush === b.key} onClick={() => setBrush(b.key)}
                 className={cx("inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 transition", b.cls)}>
@@ -241,9 +252,8 @@ export default function PrefsEditor({
               </button>
             ))}
           </div>
-        </div>
-      )}
-
+          </div>
+        )}
       <div className="select-none">
         <div className="grid grid-cols-7 gap-1.5">
           {WEEKDAY_ORDER.map((wd) => {
@@ -300,12 +310,14 @@ export default function PrefsEditor({
         </div>
       </div>
 
-      <div>
-        <div className="text-xs font-semibold text-slate-600">{editable ? "2. " : ""}Dagvaktir á flýtimóttöku</div>
-        <p className="mt-0.5 text-[11px] text-slate-500">
-          Vinnurðu allan daginn eða hálfan? Þetta gildir um alla daga mánaðarins.
-          Þurfi einn dagur að vera öðruvísi merkirðu hann með penslinum „Aðeins f.h.“ eða „Aðeins e.h.“ hér að ofan.
-        </p>
+      </Step>
+
+      <Step n={3} steps={steps} id="skref-3" optional title="Dagvaktir á flýtimóttöku"
+        hint="Hvaða daga vinnur þú dagvinnu, og allan daginn eða hálfan? Þurfi einn dagur að vera öðruvísi merkirðu hann með penslinum „Aðeins f.h.“ eða „Aðeins e.h.“ í skrefi 2."
+        plainTitle="Dagvaktir á flýtimóttöku">
+        {dayWorkSlot}
+        <div className={dayWorkSlot ? "mt-4" : ""}>
+          <div className="text-xs font-semibold text-slate-600">Allan daginn eða hálfan — gildir um alla daga mánaðarins</div>
         <div className="mt-1.5 flex flex-wrap items-center gap-1">
           {(["all", "am", "pm"] as const).map((v) => (
             <button key={v} type="button" disabled={!editable} onClick={() => update((x) => ({ ...x, day_part: v }))}
@@ -321,14 +333,12 @@ export default function PrefsEditor({
             </span>
           )}
         </div>
-      </div>
+        </div>
+      </Step>
 
-      <div>
-        <div className="text-xs font-semibold text-slate-600">{editable ? "3. " : ""}Kvöld- og næturvaktir (forvakt og bakvakt)</div>
-        <p className="mt-0.5 text-[11px] text-slate-500">
-          Viltu aðeins kvöldvaktir á ákveðnum vikudögum — t.d. eingöngu fimmtudaga? Veldu þá hér. Enginn valinn = allir dagar.
-          Dagvaktir (flýtimóttaka) ráðast ekki af þessu.
-        </p>
+      <Step n={4} steps={steps} id="skref-4" optional title="Kvöld- og næturvaktir (forvakt og bakvakt)"
+        hint="Viltu aðeins kvöldvaktir á ákveðnum vikudögum — t.d. eingöngu fimmtudaga? Veldu þá hér. Allir dagar valdir = engin takmörkun."
+        plainTitle="Kvöld- og næturvaktir (forvakt og bakvakt)">
         <div className="mt-1.5 flex flex-wrap items-center gap-1">
           {WEEKDAY_ORDER.map((d) => {
             const on = draft.evening_weekdays.length === 0 || draft.evening_weekdays.includes(d);
@@ -344,11 +354,14 @@ export default function PrefsEditor({
             <button type="button" onClick={() => update((x) => ({ ...x, evening_weekdays: [] }))} className="px-2 text-xs font-medium text-slate-500 underline">Allir dagar</button>
           )}
         </div>
-      </div>
+      </Step>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <div className="text-xs font-semibold text-slate-600">{editable ? "4. " : ""}Fjöldi vakta í mánuðinum</div>
+      <Step n={5} steps={steps} id="skref-5" optional title="Fjöldi vakta og athugasemd"
+        hint="Hve margar vaktir viltu í mánuðinum, og er eitthvað sem yfirlæknir ætti að vita?"
+        plainTitle="Fjöldi vakta og athugasemd">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <div className="text-xs font-semibold text-slate-600">Fjöldi vakta í mánuðinum</div>
           <div className="mt-1 flex items-center gap-2">
             <input type="number" min={0} max={31} placeholder="Minnst" disabled={!editable} value={draft.min_shifts ?? ""}
               onChange={(e) => update((d) => ({ ...d, min_shifts: e.target.value === "" ? null : Math.max(0, Number(e.target.value)) }))}
@@ -359,16 +372,19 @@ export default function PrefsEditor({
               className={cx(inputCls, "w-24")} aria-label="Mest vaktir" />
           </div>
           <p className="mt-1 text-[11px] text-slate-500">Autt = eftir starfshlutfalli.</p>
-        </div>
-        <div>
-          <div className="text-xs font-semibold text-slate-600">{editable ? "5. " : ""}Athugasemd til yfirlæknis</div>
+          </div>
+          <div>
+            <div className="text-xs font-semibold text-slate-600">Athugasemd til yfirlæknis</div>
           <textarea rows={2} disabled={!editable} value={draft.note} placeholder="t.d. „Get tekið aukavaktir um Þjóðhátíð“"
             onChange={(e) => update((d) => ({ ...d, note: e.target.value }))} className={cx(inputCls, "mt-1")} />
+          </div>
         </div>
-      </div>
+      </Step>
 
       {editable && (
-        <div className="space-y-3 border-t border-slate-100 pt-4">
+        <Step n={6} steps={steps} done={sent} id="skref-6" title="Sendu óskirnar"
+          hint="Óskirnar berast yfirlækni þegar þú smellir á „Senda óskir“. „Vista drög“ geymir þær án þess að senda.">
+          <div className="space-y-3">
           <label className="flex items-start gap-2.5 text-sm text-slate-700">
             <input type="checkbox" className="mt-0.5 h-4 w-4" checked={alsoNext} onChange={(e) => setAlsoNext(e.target.checked)} />
             <span>
@@ -390,9 +406,75 @@ export default function PrefsEditor({
               </>
             )}
           </div>
-        </div>
+          </div>
+        </Step>
       )}
     </div>
+  );
+}
+
+/**
+ * Eitt skref: stórt númer, fyrirsögn og ein setning um hvað á að gera. Hjá
+ * yfirlækni (og þegar mánuður er læstur) er það einföld fyrirsögn eins og áður.
+ */
+export function Step({ n, steps, title, hint, plainTitle, done, optional, id, children }: {
+  n: number; steps: boolean; title: string; hint?: string; plainTitle?: string; done?: boolean; optional?: boolean; id?: string; children: React.ReactNode;
+}) {
+  if (!steps) {
+    return (
+      <div>
+        {plainTitle && <div className="mb-1.5 text-xs font-semibold text-slate-600">{plainTitle}</div>}
+        {children}
+      </div>
+    );
+  }
+  return (
+    <section id={id} aria-labelledby={id ? `${id}-h` : undefined} className={cx("scroll-mt-24 rounded-2xl border bg-white p-4 sm:p-5", done ? "border-emerald-200" : "border-slate-200")}>
+      <div className="flex items-start gap-3">
+        <span className={cx("flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base font-bold", done ? "bg-emerald-500 text-white" : "bg-[var(--hsu)] text-white")}
+          aria-label={done ? `Skref ${n}, lokið` : `Skref ${n}`}>
+          {done ? <Check className="h-5 w-5" /> : n}
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 id={id ? `${id}-h` : undefined} className="flex flex-wrap items-center gap-2 text-base font-bold text-slate-900">
+            {title}
+            {optional && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Valfrjálst</span>}
+          </h3>
+          {hint && <p className="mt-0.5 text-sm text-slate-600">{hint}</p>}
+          <div className="mt-3">{children}</div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** Yfirlit skrefanna efst — hvert þeirra er hlekkur á sitt skref. */
+export function PrefsStepNav({ daysMarked, sent }: { daysMarked: boolean; sent: boolean }) {
+  const items = [
+    { n: 1, label: "Mánuður", done: true },
+    { n: 2, label: "Dagar", done: daysMarked },
+    { n: 3, label: "Dagvaktir", done: false, optional: true },
+    { n: 4, label: "Kvöld og nætur", done: false, optional: true },
+    { n: 5, label: "Fjöldi og athugasemd", done: false, optional: true },
+    { n: 6, label: "Senda", done: sent },
+  ];
+  return (
+    <nav aria-label="Skref" className="overflow-x-auto">
+      <ol className="flex min-w-max items-center gap-1">
+        {items.map((it, i) => (
+          <li key={it.n} className="flex items-center gap-1">
+            <a href={`#skref-${it.n}`} className="flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100">
+              <span className={cx("flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold",
+                it.done ? "bg-emerald-500 text-white" : it.optional ? "bg-slate-200 text-slate-600" : "bg-[var(--hsu)] text-white")}>
+                {it.done ? <Check className="h-3.5 w-3.5" /> : it.n}
+              </span>
+              {it.label}
+            </a>
+            {i < items.length - 1 && <span aria-hidden className="h-px w-3 bg-slate-300 sm:w-5" />}
+          </li>
+        ))}
+      </ol>
+    </nav>
   );
 }
 

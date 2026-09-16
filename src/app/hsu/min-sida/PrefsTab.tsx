@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import PrefsEditor, { draftFrom, type PrefDraft } from "../_components/PrefsEditor";
+import { useCallback, useMemo, useState } from "react";
+import PrefsEditor, { PrefsStepNav, Step, draftFrom, type PrefDraft } from "../_components/PrefsEditor";
 import { useState as useReactState } from "react";
 import { CalendarClock, Check, Loader2 } from "lucide-react";
-import { Button, Card, Notice, cx, hsuApi, capFirst } from "../_components/ui";
+import { Button, Notice, cx, hsuApi, capFirst } from "../_components/ui";
 import type { PortalData } from "@/lib/hsu/portal";
 import { MONTH_STATUS_IS, WEEKDAY_ORDER, WEEKDAY_SHORT_IS, dayLabel, monthKey, monthLabel, shiftMonth, type HsuPreference, type MonthStatus } from "@/lib/hsu/types";
 
@@ -43,6 +43,11 @@ export default function PrefsTab({ data, initialMonth, refresh }: { data: Portal
       ? "Yfirlæknir hefur samþykkt óskirnar þínar."
       : "Óskirnar eru hjá yfirlækni til yfirferðar.";
 
+  const [progress, setProgress] = useState({ daysMarked: false, sent: false });
+  const onProgress = useCallback((p: { daysMarked: boolean; sent: boolean }) => {
+    setProgress((prev) => (prev.daysMarked === p.daysMarked && prev.sent === p.sent ? prev : p));
+  }, []);
+
   const save = async (draft: PrefDraft, opts: { submit: boolean; alsoNext: boolean }) => {
     const r = await hsuApi<{ copiedTo: string | null }>("/api/hsu/me/preferences", {
       method: "PUT",
@@ -58,51 +63,57 @@ export default function PrefsTab({ data, initialMonth, refresh }: { data: Portal
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div>
         <h1 className="text-xl font-bold">Vaktaóskir</h1>
         <p className="text-sm text-slate-500">
-          Merktu daga sem þú <span className="font-semibold text-red-600">getur ekki</span> unnið, daga sem þú <span className="font-semibold text-emerald-600">vilt gjarnan</span> vinna
-          og daga sem þú ert <span className="font-semibold text-[var(--hsu)]">laus</span>. „Get ekki“ er virt skilyrðislaust; „vil gjarnan“ er ósk sem reynt er að verða við.
-          Ómerktir dagar teljast lausir.
+          Farðu í gegnum skrefin hér að neðan og sendu óskirnar í lokin.{" "}
+          <span className="font-semibold text-red-600">Get ekki</span> er virt skilyrðislaust;{" "}
+          <span className="font-semibold text-emerald-600">vil gjarnan</span> er ósk sem reynt er að verða við.
         </p>
       </div>
 
-      <DayWeekdaysCard initial={data.me.dayWeekdays} refresh={refresh} />
-
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {options.map((m) => {
-          const row = data.months.find((x) => x.month === m);
-          const p = data.prefs.find((x) => x.month === m);
-          return (
-            <button key={m} onClick={() => setMonth(m)}
-              className={cx("shrink-0 rounded-2xl border px-4 py-2.5 text-left transition", m === month ? "border-[var(--hsu)] bg-[var(--hsu-soft)]" : "border-slate-200 bg-white hover:bg-slate-50")}>
-              <div className="text-sm font-bold text-slate-900">{capFirst(monthLabel(m))}</div>
-              <div className="text-[11px] text-slate-500">
-                {row ? MONTH_STATUS_IS[row.status] : "Ekki opnað"}{p ? ` · ${{ draft: "drög", submitted: "sent", approved: "samþykkt", changes_requested: "breyta" }[p.status]}` : ""}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      {monthRow?.status === "collecting" && monthRow.prefs_deadline && (
-        <p className="text-sm text-slate-600">Skilafrestur: <span className="font-semibold">{dayLabel(monthRow.prefs_deadline)}</span>{monthRow.note ? ` · ${monthRow.note}` : ""}</p>
+      {editable && (
+        <div className="rounded-2xl border border-slate-200 bg-white px-2 py-1.5 shadow-sm">
+          <PrefsStepNav daysMarked={progress.daysMarked} sent={progress.sent} />
+        </div>
       )}
-      {!monthRow && <p className="text-sm text-slate-500">Yfirlæknir hefur ekki opnað þennan mánuð enn, en þú getur skráð óskir strax — t.d. sumarfrí.</p>}
 
-      <Card className="p-4 sm:p-6">
-        <PrefsEditor
-          month={month}
-          initial={initial}
-          status={pref?.status ?? "none"}
-          reviewNote={pref?.review_note}
-          editable={editable}
-          lockedReason={lockedReason}
-          onSave={save}
-          onLoadPrevious={loadPrevious}
-        />
-      </Card>
+      <Step n={1} steps id="skref-1" done title="Veldu mánuð"
+        hint="Veldu mánuðinn sem þú skráir óskir fyrir. Þú getur líka skráð óskir fram í tímann, t.d. sumarfrí.">
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {options.map((m) => {
+            const row = data.months.find((x) => x.month === m);
+            const p = data.prefs.find((x) => x.month === m);
+            return (
+              <button key={m} onClick={() => setMonth(m)} aria-pressed={m === month}
+                className={cx("shrink-0 rounded-2xl border px-4 py-2.5 text-left transition", m === month ? "border-[var(--hsu)] bg-[var(--hsu-soft)] ring-2 ring-[var(--hsu)]/30" : "border-slate-200 bg-white hover:bg-slate-50")}>
+                <div className="text-sm font-bold text-slate-900">{capFirst(monthLabel(m))}</div>
+                <div className="text-[11px] text-slate-500">
+                  {row ? MONTH_STATUS_IS[row.status] : "Ekki opnað"}{p ? ` · ${{ draft: "drög", submitted: "sent", approved: "samþykkt", changes_requested: "breyta" }[p.status]}` : ""}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        {monthRow?.status === "collecting" && monthRow.prefs_deadline && (
+          <p className="mt-2 text-sm text-slate-700">Skilafrestur: <span className="font-bold">{dayLabel(monthRow.prefs_deadline)}</span>{monthRow.note ? ` · ${monthRow.note}` : ""}</p>
+        )}
+        {!monthRow && <p className="mt-2 text-sm text-slate-500">Yfirlæknir hefur ekki opnað þennan mánuð enn, en þú getur skráð óskir strax.</p>}
+      </Step>
+
+      <PrefsEditor
+        month={month}
+        initial={initial}
+        status={pref?.status ?? "none"}
+        reviewNote={pref?.review_note}
+        editable={editable}
+        lockedReason={lockedReason}
+        onSave={save}
+        onLoadPrevious={loadPrevious}
+        onProgress={onProgress}
+        dayWorkSlot={<DayWeekdaysCard initial={data.me.dayWeekdays} refresh={refresh} />}
+      />
     </div>
   );
 }
@@ -130,13 +141,12 @@ function DayWeekdaysCard({ initial, refresh }: { initial: number[]; refresh: () 
   };
 
   return (
-    <Card className="p-4 sm:p-5">
-      <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
-        <CalendarClock className="h-4 w-4 text-[var(--hsu)]" /> Dagvinnudagar (flýtimóttaka)
+    <div className="rounded-xl bg-slate-50 p-3">
+      <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+        <CalendarClock className="h-4 w-4 text-[var(--hsu)]" /> Dagvinnudagar — gilda alla mánuði
       </div>
-      <p className="mt-1 text-xs text-slate-500">
-        Hvaða vikudaga vinnur þú dagvinnu? Þú færð aðeins dagvaktir þá daga. Enginn valinn = allir dagar.
-        Þetta gildir þar til þú breytir því — ekki bara þennan mánuð. Kvöld- og næturvaktir ráðast af óskunum hér fyrir neðan.
+      <p className="mt-0.5 text-[11px] text-slate-500">
+        Hvaða vikudaga vinnur þú dagvinnu? Þú færð aðeins dagvaktir þá daga. Allir valdir = allir dagar. Vistast sér, strax.
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-1">
         {WEEKDAY_ORDER.map((d) => (
@@ -153,6 +163,6 @@ function DayWeekdaysCard({ initial, refresh }: { initial: number[]; refresh: () 
         {busy && !dirty && <Loader2 className="h-4 w-4 animate-spin text-slate-400" />}
       </div>
       {err && <div className="mt-2"><Notice tone="err">{err}</Notice></div>}
-    </Card>
+    </div>
   );
 }

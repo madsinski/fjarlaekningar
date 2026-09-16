@@ -106,16 +106,9 @@ export function ThreadView({ id, onBack, onRead, refresh = 0 }: { id: string; on
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <button onClick={onBack} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-600 hover:underline">
-          <ArrowLeft className="h-4 w-4" /> Öll skilaboð
-        </button>
-        {data && (
-          <button type="button" onClick={remove} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50">
-            <Trash2 className="h-3.5 w-3.5" /> Eyða samtali
-          </button>
-        )}
-      </div>
+      <button onClick={onBack} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-600 hover:underline">
+        <ArrowLeft className="h-4 w-4" /> Öll skilaboð
+      </button>
       {!data ? (
         err ? <Notice tone="err">{err}</Notice> : <div className="h-40 animate-pulse rounded-2xl bg-slate-100" />
       ) : (
@@ -140,9 +133,13 @@ export function ThreadView({ id, onBack, onRead, refresh = 0 }: { id: string; on
               onKeyDown={(e) => onEnterSend(e, () => void send())}
               placeholder={data.thread.status === "closed" ? "Samtalinu var lokið — skrifaðu til að opna það aftur" : "Skrifa svar…"} />
             {err && <Notice tone="err">{err}</Notice>}
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] text-slate-400">{ENTER_HINT}</span>
-              <Button type="submit" busy={busy} disabled={!reply.trim()}>
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" onClick={remove} title="Eyða samtalinu hjá báðum"
+                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-red-700 ring-1 ring-red-200 hover:bg-red-50">
+                <Trash2 className="h-4 w-4" /> Eyða
+              </button>
+              <span className="ml-auto hidden text-[11px] text-slate-400 sm:inline">{ENTER_HINT}</span>
+              <Button type="submit" busy={busy} disabled={!reply.trim()} className="ml-auto sm:ml-0">
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Senda
               </Button>
             </div>

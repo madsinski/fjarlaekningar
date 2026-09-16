@@ -58,9 +58,13 @@ async function broadcast(topic: string, event: "msg" | "sync" = "msg"): Promise<
 async function push(target: LiveTarget, note: { title: string; body: string; url: string; tag: string }): Promise<void> {
   if (!ensureVapid()) return;
   let q = supabaseAdmin.from("gatt_push_subscriptions").select("id, endpoint, p256dh, auth");
-  if ("everyone" in target) return; // tilkynningar fara aðeins á skjáinn
-  q = "admins" in target ? q.eq("is_admin", true) : q.eq("owner_kind", target.kind).eq("owner_id", target.id);
-  const { data } = await q;
+  if (!("everyone" in target)) {
+    q = "admins" in target ? q.eq("is_admin", true) : q.eq("owner_kind", target.kind).eq("owner_id", target.id);
+  }
+  const { data: rows } = await q;
+  // Sama tæki getur verið skráð fyrir fleiri en eina innskráningu — ein tilkynning á tæki.
+  const seen = new Set<string>();
+  const data = (rows ?? []).filter((r) => (seen.has(r.endpoint) ? false : (seen.add(r.endpoint), true)));
   await Promise.all((data ?? []).map(async (s) => {
     try {
       await webpush.sendNotification(
@@ -133,7 +137,18 @@ export async function signalSync(owner: LiveTarget | null): Promise<void> {
   ]);
 }
 
-/** Tilkynningum breytt: allar opnar vinnustöðvar sækja þær strax. */
-export async function signalAnnouncements(): Promise<void> {
-  await broadcast(liveTopic({ everyone: true }), "sync");
+/**
+ * Tilkynningum breytt: allar opnar vinnustöðvar sækja þær strax. Ný virk
+ * tilkynning fer líka í öll tæki sem hafa leyft tilkynningar.
+ */
+export async function signalAnnouncements(fresh?: { id: string; title: string; body: string; level: string }): Promise<void> {
+  await Promise.all([
+    broadcast(liveTopic({ everyone: true }), "sync"),
+    fresh ? push({ everyone: true }, {
+      title: `${fresh.level === "warning" ? "⚠ Mikilvæg tilkynning" : "Tilkynning"}: ${fresh.title}`.slice(0, 120),
+      body: fresh.body.slice(0, 160),
+      url: "/vinnustod",
+      tag: `vs-ann-${fresh.id}`,
+    }) : Promise.resolve(),
+  ]);
 }

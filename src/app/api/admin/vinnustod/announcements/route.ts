@@ -25,14 +25,14 @@ export async function POST(req: Request) {
   if (!title) return fail("Skrifaðu fyrirsögn.");
   const expires = typeof body.expires_at === "string" && body.expires_at ? new Date(body.expires_at) : null;
   if (expires && Number.isNaN(expires.getTime())) return fail("Ógild dagsetning.");
-  const { error } = await supabaseAdmin.from("gatt_announcements").insert({
+  const { data: row, error } = await supabaseAdmin.from("gatt_announcements").insert({
     title,
     body: cleanText(body.body, 2000),
     level: body.level === "warning" ? "warning" : "info",
     expires_at: expires?.toISOString() ?? null,
     created_by: admin.name,
-  });
-  if (error) return fail(error.message, 500);
-  after(() => signalAnnouncements().catch(() => {}));
+  }).select("id, title, body, level").single();
+  if (error || !row) return fail(error?.message ?? "Vistun mistókst", 500);
+  after(() => signalAnnouncements(row).catch(() => {}));
   return json({ ok: true });
 }

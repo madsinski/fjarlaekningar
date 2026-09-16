@@ -390,3 +390,26 @@ export function onEnterSend(e: React.KeyboardEvent<HTMLTextAreaElement>, send: (
 }
 
 export const ENTER_HINT = "Enter sendir · Shift+Enter ný lína";
+
+// ── Blikkandi flipaheiti þegar flipinn er í bakgrunni ──────────────────────
+let flashTimer: ReturnType<typeof setInterval> | undefined;
+const FLASH_RE = /^⚠ [^·]+ · /;
+
+/** Flipaheitið blikkar „⚠ texti“ þar til notandinn opnar flipann. */
+export function flashTitle(text: string) {
+  if (typeof document === "undefined" || !document.hidden || flashTimer) return;
+  const base = () => document.title.replace(FLASH_RE, "");
+  let on = false;
+  flashTimer = setInterval(() => {
+    on = !on;
+    document.title = on ? `⚠ ${text} · ${base()}` : base();
+  }, 1000);
+  const stop = () => {
+    if (document.hidden) return;
+    clearInterval(flashTimer);
+    flashTimer = undefined;
+    document.title = base();
+    document.removeEventListener("visibilitychange", stop);
+  };
+  document.addEventListener("visibilitychange", stop);
+}

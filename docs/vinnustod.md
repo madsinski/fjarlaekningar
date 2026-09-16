@@ -178,7 +178,10 @@ tölvupóst og svarar þar. Viðtakendalisti: `/api/admin/vinnustod/recipients`.
 Undir *Tilkynningar* í stjórnborði: fyrirsögn, texti, tegund (upplýsingar eða gul
 viðvörun) og valkvæð gildistími. Birtast sem borði efst í vinnustöðinni, undir
 yfirstikunni, hjá öllum — strax (merki á sameiginlegri rás `liveTopic({ everyone })`)
-og annars innan mínútu.
+og annars innan mínútu. Viðvörun er rauð („Mikilvæg tilkynning“), upplýsingar gular.
+Ný tilkynning: hljóð, borðinn blikkar í ~10 sek., flipaheitið blikkar í bakgrunni og
+tilkynning fer í öll tæki sem hafa leyft tilkynningar. Hver notandi getur lokað
+tilkynningu (geymt í vafranum); ný tilkynning birtist alltaf.
 
 ## Öryggi
 

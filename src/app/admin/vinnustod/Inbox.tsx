@@ -166,12 +166,6 @@ function InboxThreadView({ id, onBack, refresh = 0, compact = false }: { id: str
                 {data.user && !data.user.active ? <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs">Óvirkur — fær ekki póst</span> : null}
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {data.thread.status === "open"
-                ? <button className={btnGhost} onClick={() => setStatus("closed")}><Check className="h-4 w-4" /> Merkja lokið</button>
-                : <button className={btnGhost} onClick={() => setStatus("open")}>Opna aftur</button>}
-              <button className={`${btn} border border-red-200 bg-white text-red-700 hover:bg-red-50`} onClick={remove}><Trash2 className="h-4 w-4" /> Eyða</button>
-            </div>
           </div>
           <div className="mt-4 space-y-3">
             {data.messages.map((m) => (
@@ -189,10 +183,16 @@ function InboxThreadView({ id, onBack, refresh = 0, compact = false }: { id: str
               onKeyDown={(e) => onEnterSend(e, () => void send())}
               placeholder="Skilaboð — birtast viðtakandanum í vinnustöðinni og fara í tölvupósti" />
             {err && <p className="text-sm text-red-600">{err}</p>}
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] text-slate-400">{ENTER_HINT}</span>
-              <button className={btnPrimary} disabled={busy || !reply.trim()} onClick={send}><Send className="h-4 w-4" /> Senda</button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button className={`${btn} border border-red-200 bg-white text-red-700 hover:bg-red-50`} onClick={remove} title="Eyða samtalinu hjá báðum">
+                <Trash2 className="h-4 w-4" /> Eyða
+              </button>
+              {data.thread.status === "open"
+                ? <button className={btnGhost} onClick={() => setStatus("closed")}><Check className="h-4 w-4" /> Merkja lokið</button>
+                : <button className={btnGhost} onClick={() => setStatus("open")}>Opna aftur</button>}
+              <button className={`${btnPrimary} ml-auto`} disabled={busy || !reply.trim()} onClick={send}><Send className="h-4 w-4" /> Senda</button>
             </div>
+            <p className="text-right text-[11px] text-slate-400">{ENTER_HINT}</p>
           </div>
         </div>
       )}
