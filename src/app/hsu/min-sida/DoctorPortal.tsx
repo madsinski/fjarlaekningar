@@ -76,7 +76,7 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
         links={[
           // SMS-gáttin tilheyrir Fjarlækningum, ekki vaktakerfinu — en læknir
           // hér kemst í hana með sinni innskráningu.
-          { href: "/sms", label: "Senda sjúklingi hlekk (SMS)", icon: "message" as const },
+          { href: "/vinnustod", label: "Vinnustöð Fjarlækninga (SMS)", icon: "message" as const },
           ...(me.role === "head" ? [{ href: "/hsu/stjorn", label: "Vaktaskipulag (yfirlæknir)", icon: "grid" as const }] : []),
         ]}
       />

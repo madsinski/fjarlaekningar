@@ -11,6 +11,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { originOf } from "@/lib/vinnustod/server";
 
 export const runtime = "nodejs";
 
@@ -41,9 +42,9 @@ export async function POST(req: Request) {
     console.warn("[sms] TWILIO_AUTH_TOKEN vantar — staða skeytis ekki vistuð");
     return new NextResponse("", { status: 204 });
   }
-  // Twilio undirritar nákvæmlega þá slóð sem var skráð í StatusCallback.
-  const url = new URL(req.url);
-  const publicUrl = `${process.env.NEXT_PUBLIC_SITE_URL || url.origin}${url.pathname}`;
+  // Twilio undirritar nákvæmlega þá slóð sem var skráð í StatusCallback — og
+  // hún var mynduð með originOf í /api/sms/send. Sama fall hér, sama slóð.
+  const publicUrl = `${originOf(req)}${new URL(req.url).pathname}`;
   if (!validSignature(publicUrl, params, signature)) {
     return new NextResponse("Forbidden", { status: 403 });
   }

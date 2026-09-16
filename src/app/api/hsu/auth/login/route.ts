@@ -23,6 +23,11 @@ export async function POST(req: Request) {
   if (!(await throttle(`login:${clientIp(req)}`, 30, 900))) {
     return fail("Of margar innskráningartilraunir frá þessu neti. Reyndu aftur eftir stutta stund.", 429);
   }
+  // Á hvert netfang, óháð því hvort það er skráð: sá sem prófar lykilorð nær
+  // aldrei læsingunni, sem annars segði að reikningurinn væri til.
+  if (!(await throttle(`login-email:${email}`, 6, 900))) {
+    return fail("Of margar innskráningartilraunir. Reyndu aftur eftir stutta stund.", 429);
+  }
 
   const { data: d } = await supabaseAdmin
     .from("hsu_doctors")

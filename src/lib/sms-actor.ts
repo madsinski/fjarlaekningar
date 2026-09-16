@@ -1,38 +1,63 @@
-// Hver má senda SMS á sjúkling — og hvaðan hann er skráður inn.
+// Hver notar vinnustöðina — og hvaðan hann er skráður inn.
 //
-// TVENNS KONAR INNSKRÁNING liggur að sama verkfærinu:
+// ÞRENNS KONAR INNSKRÁNING liggur að sama verkfærinu:
+//   * Notandi vinnustöðvar (gatt_users, kakan vs_session) — hjúkrunarfræðingar
+//     og annað starfsfólk samstarfsstofnana. Einföld innskráning eins og í
+//     vaktakerfinu: lykilorð eða aðgangskóði, engin tveggja þrepa auðkenning.
 //   * Starfsmaður Fjarlækninga (staff-taflan, Bearer-lykill úr Supabase Auth).
-//     Hjúkrunarfræðingar á heilsugæslunni fá boð hingað inn, líka með
-//     @hsu.is netfangi, og fá hlutverkið `nurse`.
-//   * Læknir í HSU-vaktakerfinu (hsu_doctors, kexlota á sama léni). Hann er
-//     þegar með aðgang og á ekki að þurfa annan.
+//   * Læknir í HSU-vaktakerfinu (hsu_doctors, kakan hsu_session). Hann er þegar
+//     með aðgang og á ekki að þurfa annan.
 //
-// Sjálft kerfið tilheyrir Fjarlækningum, ekki vaktakerfinu: sniðmátin,
-// sendingasagan og Twilio-aðgangurinn eru hér.
+// Sjálft kerfið tilheyrir Fjarlækningum, ekki vaktakerfinu.
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getDoctorSession } from "@/lib/hsu/auth";
+import { getVsUser } from "@/lib/vinnustod/auth";
 
 export interface SmsActor {
   /** Auðkenni í sinni töflu. */
   id: string;
   name: string;
-  /** Hvaðan hann kom — ræður því í hvorn dálkinn sendingin er skráð. */
-  kind: "staff" | "hsu";
+  /** Hvaðan hann kom — ræður því í hvaða dálk sendingin er skráð. */
+  kind: "vs" | "staff" | "hsu";
   /** Sér hann allar sendingar eða aðeins sínar eigin? */
   isAdmin: boolean;
+  email?: string;
+  workplace?: string;
+  title?: string;
+  hasPin?: boolean;
+  mustChangePassword?: boolean;
 }
 
-/** Hlutverk starfsmanna sem mega ekki senda. Lögfræðingur á ekkert erindi hér. */
+function jwtAal(token: string): string | null {
+  // Lesið án sannprófunar — en aðeins notað ef getUser staðfestir sama lykil.
+  try {
+    return JSON.parse(Buffer.from(token.split(".")[1] ?? "", "base64url").toString()).aal ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Hlutverk starfsmanna sem mega ekki nota vinnustöðina. */
 const BLOCKED_STAFF_ROLES = new Set(["lawyer"]);
 
 /**
- * Leysir úr innskráningunni. Skilar null sé enginn innskráður — eða sé
- * starfsmaðurinn óvirkur.
+ * Leysir úr innskráningunni. Notandi vinnustöðvar gengur fyrir: sé hann
+ * skráður inn í þessum vafra er það hann sem situr við tölvuna.
  */
 export async function getSmsActor(req: Request): Promise<SmsActor | null> {
+  const vs = await getVsUser();
+  if (vs) {
+    return {
+      id: vs.id, name: vs.name, kind: "vs", isAdmin: false, email: vs.email,
+      workplace: vs.workplace, title: vs.title, hasPin: vs.has_pin, mustChangePassword: vs.must_change_password,
+    };
+  }
+
   const auth = req.headers.get("authorization");
-  if (auth?.startsWith("Bearer ")) {
+  // Starfsmaður Fjarlækninga sér sendingasögu allra (símanúmer sjúklinga), svo
+  // lotan verður að hafa staðist tveggja þrepa auðkenningu — eins og stjórnborðið.
+  if (auth?.startsWith("Bearer ") && jwtAal(auth.slice(7)) === "aal2") {
     const { data, error } = await supabaseAdmin.auth.getUser(auth.slice(7));
     if (!error && data.user?.id) {
       const { data: staff } = await supabaseAdmin
@@ -44,20 +69,22 @@ export async function getSmsActor(req: Request): Promise<SmsActor | null> {
         const roles: string[] = Array.isArray(staff.roles) && staff.roles.length ? staff.roles : [staff.role];
         if (roles.every((r) => BLOCKED_STAFF_ROLES.has(r))) return null;
         return {
-          id: staff.id,
-          name: staff.name || staff.email,
-          kind: "staff",
-          isAdmin: roles.includes("admin"),
+          id: staff.id, name: staff.name || staff.email, kind: "staff",
+          isAdmin: roles.includes("admin"), email: staff.email, workplace: "Fjarlækningar",
         };
       }
     }
   }
 
-  // Engin starfsmannalota: er þetta læknir úr vaktakerfinu?
   // getDoctorSession skilar aðeins virkum lækni.
   const doctor = await getDoctorSession();
   if (doctor) {
-    return { id: doctor.id, name: doctor.name, kind: "hsu", isAdmin: doctor.role === "head" };
+    return { id: doctor.id, name: doctor.name, kind: "hsu", isAdmin: doctor.role === "head", email: doctor.email, workplace: "HSU Vestmannaeyjum" };
   }
   return null;
+}
+
+/** Dálkurinn í sms_messages sem heldur utan um sendandann. */
+export function senderColumn(kind: SmsActor["kind"]): "sent_by_gatt" | "sent_by_staff" | "sent_by_hsu" {
+  return kind === "vs" ? "sent_by_gatt" : kind === "staff" ? "sent_by_staff" : "sent_by_hsu";
 }

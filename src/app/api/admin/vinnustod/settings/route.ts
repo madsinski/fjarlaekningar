@@ -1,0 +1,42 @@
+// Stillingar vinnustöðvar: hvaða lén mega nýskrá sig, og hverjir fá póst um spurningar.
+
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getVsAdmin } from "@/lib/vinnustod/admin";
+import { allowedDomains, notifyEmails } from "@/lib/vinnustod/auth";
+import { fail, json, readJson } from "@/lib/vinnustod/server";
+
+export const runtime = "nodejs";
+
+const DENY = "Krefst stjórnanda með tveggja þrepa auðkenningu";
+const DOMAIN_RE = /^[a-z0-9-]+(\.[a-z0-9-]+)+$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const list = (v: unknown) => (Array.isArray(v) ? v : String(v ?? "").split(/[\s,;]+/)).map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+
+export async function GET(req: Request) {
+  if (!(await getVsAdmin(req))) return fail(DENY, 403);
+  return json({ ok: true, allowedDomains: await allowedDomains(), notifyEmails: await notifyEmails() });
+}
+
+export async function PUT(req: Request) {
+  if (!(await getVsAdmin(req))) return fail(DENY, 403);
+  const body = await readJson(req);
+  const now = new Date().toISOString();
+  if ("allowedDomains" in body) {
+    const domains = [...new Set(list(body.allowedDomains).map((d) => d.replace(/^@/, "")))];
+    const bad = domains.find((d) => !DOMAIN_RE.test(d));
+    if (bad) return fail(`Ógilt lén: ${bad}`);
+    // Almenn netfangalén myndu opna nýskráningu fyrir hvern sem er.
+    const open = domains.find((d) => ["gmail.com", "hotmail.com", "outlook.com", "yahoo.com", "icloud.com", "simnet.is", "internet.is"].includes(d));
+    if (open) return fail(`${open} er almennt póstlén — þá gæti hver sem er skráð sig.`);
+    await supabaseAdmin.from("gatt_settings").upsert({ key: "allowed_domains", value: domains, updated_at: now });
+  }
+  if ("notifyEmails" in body) {
+    const emails = [...new Set(list(body.notifyEmails))];
+    const bad = emails.find((e) => !EMAIL_RE.test(e));
+    if (bad) return fail(`Ógilt netfang: ${bad}`);
+    if (!emails.length) return fail("Að minnsta kosti eitt netfang þarf að fá tilkynningar.");
+    await supabaseAdmin.from("gatt_settings").upsert({ key: "notify_emails", value: emails, updated_at: now });
+  }
+  return json({ ok: true });
+}

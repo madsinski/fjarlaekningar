@@ -1,14 +1,19 @@
 // Senda sjúklingi hlekk á þjónustuna, og lesa sendingasöguna.
 //
-// Opið bæði starfsfólki Fjarlækninga (Bearer) og læknum í HSU-vaktakerfinu
-// (kexlota) — sjá sms-actor.ts. Hver sending er skráð: símanúmer er
+// Opið notendum vinnustöðvar, starfsfólki Fjarlækninga og læknum í
+// HSU-vaktakerfinu — sjá sms-actor.ts. Hver sending er skráð: símanúmer er
 // persónuupplýsing og verður að vera rekjanleg til þess sem sendi.
+//
+// Innskráning með köku þýðir að sending verður að koma frá þessari sömu síðu
+// (sameOrigin), annars gæti önnur síða látið vafrann senda SMS í nafni notanda.
 
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getSmsActor } from "@/lib/sms-actor";
+import { getSmsActor, senderColumn } from "@/lib/sms-actor";
 import { SMS_SENDER, prettyPhone, sendSms, smsSegments, toE164 } from "@/lib/sms";
 import { SMS_TEMPLATES, renderTemplate } from "@/lib/sms-templates";
+import { clientIp, sameOrigin, throttle } from "@/lib/vinnustod/auth";
+import { originOf } from "@/lib/vinnustod/server";
 
 export const runtime = "nodejs";
 
@@ -24,9 +29,7 @@ export async function GET(req: Request) {
     .select("id, created_at, sent_by_name, to_number, body, template, segments, status, error_code, error_text, delivered_at")
     .order("created_at", { ascending: false })
     .limit(100);
-  if (!actor.isAdmin) {
-    q = actor.kind === "staff" ? q.eq("sent_by_staff", actor.id) : q.eq("sent_by_hsu", actor.id);
-  }
+  if (!actor.isAdmin) q = q.eq(senderColumn(actor.kind), actor.id);
 
   const { data, error } = await q;
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
@@ -40,8 +43,14 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  if (!sameOrigin(req)) return NextResponse.json({ ok: false, error: "Ógild beiðni" }, { status: 403 });
   const actor = await getSmsActor(req);
   if (!actor) return deny();
+  // Hvert skeyti kostar og berst í síma hjá einhverjum: stolin lota má ekki
+  // geta sent hundruð skeyta. Starfsmaður í samtali sendir fá á klukkustund.
+  if (!(await throttle(`sms:${actor.kind}:${actor.id}`, 30, 3600)) || !(await throttle(`sms-ip:${clientIp(req)}`, 60, 3600))) {
+    return NextResponse.json({ ok: false, error: "Of mörg skeyti á stuttum tíma. Reyndu aftur eftir smá stund." }, { status: 429 });
+  }
 
   const body = (await req.json().catch(() => ({}))) as { to?: string; template?: string; name?: string };
   const to = toE164(String(body.to ?? ""));
@@ -51,14 +60,13 @@ export async function POST(req: Request) {
   const text = renderTemplate(tpl, { name: String(body.name ?? "").trim() });
   const size = smsSegments(text);
 
-  const origin = new URL(req.url).origin;
+  const origin = originOf(req);
   const result = await sendSms({ to, body: text, statusCallback: `${origin}/api/sms/status` });
 
   const { data: row } = await supabaseAdmin
     .from("sms_messages")
     .insert({
-      sent_by_staff: actor.kind === "staff" ? actor.id : null,
-      sent_by_hsu: actor.kind === "hsu" ? actor.id : null,
+      [senderColumn(actor.kind)]: actor.id,
       sent_by_name: actor.name,
       to_number: to,
       sender_id: SMS_SENDER,
