@@ -116,7 +116,7 @@ export async function loadPreferences(month: string, doctorId?: string): Promise
 export async function loadPendingSwaps(): Promise<HsuSwap[]> {
   const { data, error } = await supabaseAdmin
     .from("hsu_swaps")
-    .select("id, shift_id, from_doctor, to_doctor, taken_by, note, status, created_at, shift:hsu_shifts(shift_date, starts, ends, label)")
+    .select("id, shift_id, from_doctor, to_doctor, taken_by, note, status, created_at, shift:hsu_shifts(shift_date, starts, ends, label, shift_type_id)")
     .in("status", ["pending", "awaiting_approval"])
     .order("created_at");
   if (error) throw new Error(error.message);

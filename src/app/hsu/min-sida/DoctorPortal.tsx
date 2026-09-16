@@ -259,9 +259,11 @@ function VinnustundLink({ className }: { className?: string }) {
 }
 
 /** Litur vaktategundar — sama litakóðun og yfirlæknir sér á vaktaplani. */
-function ShiftRow({ s, types, today, onLog, right }: {
+function ShiftRow({ s, types, today, onLog, right, extra }: {
   s: HsuShift; types: HsuShiftType[]; today?: string;
   onLog?: (shift: HsuShift, done: boolean) => void; right?: React.ReactNode;
+  /** Aukalína undir tímanum, t.d. hver bauð vaktina á vaktamarkaði. */
+  extra?: React.ReactNode;
 }) {
   const h = holidayName(s.shift_date);
   const t = types.find((x) => x.id === s.shift_type_id);
@@ -285,6 +287,7 @@ function ShiftRow({ s, types, today, onLog, right }: {
         <div className="truncate text-xs text-slate-500">
           {dayLabel(s.shift_date)}{h ? ` · ${h}` : ""}{t ? ` · ${SHIFT_PERIOD_IS[t.period]}` : ""}{s.note ? ` · ${s.note}` : ""}
         </div>
+        {extra}
         {needsVinnustund && onLog && (
           <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px]">
             {logged ? (
@@ -491,6 +494,17 @@ function Section({ title, empty, children }: { title: string; empty?: string; ch
   );
 }
 
+/** Vakt sem boðin er á vaktamarkaði, á því formi sem ShiftRow les. */
+function swapShift(s: HsuSwap): HsuShift | null {
+  if (!s.shift) return null;
+  return {
+    id: s.shift_id, shift_date: s.shift.shift_date, starts: s.shift.starts, ends: s.shift.ends,
+    label: s.shift.label, shift_type_id: s.shift.shift_type_id ?? null,
+    // Vaktamarkaðurinn segir sjálfur að vaktin sé í boði; merkið væri tvítekið.
+    status: "assigned", note: "", doctor_id: s.from_doctor,
+  } as HsuShift;
+}
+
 function MarketTab({ data, incoming, market, mine, myRequests, name, refresh }: {
   data: PortalData; incoming: HsuSwap[]; market: HsuSwap[]; mine: HsuSwap[]; myRequests: HsuSwap[];
   name: (id: string | null) => string; refresh: () => void;
@@ -520,55 +534,64 @@ function MarketTab({ data, incoming, market, mine, myRequests, name, refresh }: 
 
       <Section title="Boðnar þér" empty="Enginn hefur boðið þér vakt.">
         {incoming.map((s) => (
-          <div key={s.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
-            <div>
-              <div className="text-sm font-semibold">{when(s)}</div>
-              <div className="text-xs text-slate-500">Frá {name(s.from_doctor)}{s.note ? ` · „${s.note}“` : ""}</div>
-              {s.shift && myDates.has(s.shift.shift_date) && <div className="mt-1 flex items-center gap-1 text-xs text-amber-700"><AlertTriangle className="h-3 w-3" /> Þú ert líka á vakt þennan dag</div>}
-            </div>
-            <div className="flex gap-2">
+          <MarketRow key={s.id} s={s} types={data.shiftTypes} fallback={when(s)}
+            who={`Frá ${name(s.from_doctor)}${s.note ? ` · „${s.note}“` : ""}`}
+            clash={Boolean(s.shift && myDates.has(s.shift.shift_date))}
+            actions={<>
               <Button size="sm" onClick={() => act(s.id, "accept")} busy={busy === s.id + "accept"}>Taka vakt</Button>
               <Button size="sm" variant="ghost" onClick={() => act(s.id, "decline")} busy={busy === s.id + "decline"}>Hafna</Button>
-            </div>
-          </div>
+            </>} />
         ))}
       </Section>
 
       <Section title="Á vaktamarkaði" empty="Engar vaktir á vaktamarkaði núna.">
         {market.map((s) => (
-          <div key={s.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
-            <div>
-              <div className="text-sm font-semibold">{when(s)}</div>
-              <div className="text-xs text-slate-500">{name(s.from_doctor)}{s.note ? ` · „${s.note}“` : ""}</div>
-              {s.shift && myDates.has(s.shift.shift_date) && <div className="mt-1 flex items-center gap-1 text-xs text-amber-700"><AlertTriangle className="h-3 w-3" /> Þú ert líka á vakt þennan dag</div>}
-            </div>
-            <Button size="sm" onClick={() => act(s.id, "accept")} busy={busy === s.id + "accept"}>Taka vakt</Button>
-          </div>
+          <MarketRow key={s.id} s={s} types={data.shiftTypes} fallback={when(s)}
+            who={`${name(s.from_doctor)}${s.note ? ` · „${s.note}“` : ""}`}
+            clash={Boolean(s.shift && myDates.has(s.shift.shift_date))}
+            actions={<Button size="sm" onClick={() => act(s.id, "accept")} busy={busy === s.id + "accept"}>Taka vakt</Button>} />
         ))}
       </Section>
 
       {myRequests.length > 0 && (
         <Section title="Bíða samþykkis yfirlæknis">
           {myRequests.map((s) => (
-            <div key={s.id} className="p-4 text-sm"><span className="font-semibold">{when(s)}</span> <span className="text-slate-500">frá {name(s.from_doctor)}</span></div>
+            <MarketRow key={s.id} s={s} types={data.shiftTypes} fallback={when(s)} who={`Frá ${name(s.from_doctor)}`} />
           ))}
         </Section>
       )}
 
       <Section title="Mínar vaktir í boði" empty="Þú ert ekki með vaktir á vaktamarkaði. Settu vakt á markað undir „Mínar vaktir“.">
         {mine.map((s) => (
-          <div key={s.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
-            <div>
-              <div className="text-sm font-semibold">{when(s)}</div>
-              <div className="text-xs text-slate-500">
-                {s.status === "awaiting_approval" ? `${name(s.taken_by)} vill taka hana — bíður yfirlæknis` : s.to_doctor ? `Boðin ${name(s.to_doctor)}` : "Á vaktamarkaði"}
-              </div>
-            </div>
-            <Button size="sm" variant="ghost" onClick={() => act(s.id, "cancel")} busy={busy === s.id + "cancel"}>Afturkalla</Button>
-          </div>
+          <MarketRow key={s.id} s={s} types={data.shiftTypes} fallback={when(s)}
+            who={s.status === "awaiting_approval" ? `${name(s.taken_by)} vill taka hana — bíður yfirlæknis` : s.to_doctor ? `Boðin ${name(s.to_doctor)}` : "Á vaktamarkaði"}
+            actions={<Button size="sm" variant="ghost" onClick={() => act(s.id, "cancel")} busy={busy === s.id + "cancel"}>Afturkalla</Button>} />
         ))}
       </Section>
       <p className="text-xs text-slate-400">Samstarfsfólk: {data.colleagues.filter((c) => c.id !== data.me.id).map((c) => `${shortName(c.name)}${c.phone ? ` (${c.phone})` : ""}`).join(" · ")}</p>
     </div>
   );
+}
+
+/** Lína á vaktamarkaði — sama litakóðun og í „Mínum vöktum“. */
+function MarketRow({ s, types, fallback, who, clash, actions }: {
+  s: HsuSwap; types: HsuShiftType[]; fallback: string; who: string; clash?: boolean; actions?: React.ReactNode;
+}) {
+  const shift = swapShift(s);
+  const extra = (
+    <>
+      <div className="text-xs text-slate-600">{who}</div>
+      {clash && <div className="mt-0.5 flex items-center gap-1 text-xs text-amber-700"><AlertTriangle className="h-3 w-3" /> Þú ert líka á vakt þennan dag</div>}
+    </>
+  );
+  // Vakt sem fannst ekki (t.d. eytt) sést samt, án litar.
+  if (!shift) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+        <div><div className="text-sm font-semibold">{fallback}</div>{extra}</div>
+        {actions && <div className="flex gap-2">{actions}</div>}
+      </div>
+    );
+  }
+  return <ShiftRow s={shift} types={types} extra={extra} right={actions ? <div className="flex shrink-0 flex-wrap justify-end gap-2">{actions}</div> : undefined} />;
 }

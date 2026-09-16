@@ -34,7 +34,7 @@ export async function loadPortal(doctorId: string): Promise<PortalData> {
     supabaseAdmin.from("hsu_months").select("month, status, prefs_deadline, note, published_at").gte("month", monthKey(new Date())).order("month"),
     supabaseAdmin.from("hsu_preferences").select("*").eq("doctor_id", doctorId).gte("month", monthKey(new Date())),
     supabaseAdmin.from("hsu_swaps")
-      .select("id, shift_id, from_doctor, to_doctor, taken_by, note, status, created_at, shift:hsu_shifts!inner(shift_date, starts, ends, label, published)")
+      .select("id, shift_id, from_doctor, to_doctor, taken_by, note, status, created_at, shift:hsu_shifts!inner(shift_date, starts, ends, label, published, shift_type_id)")
       .in("status", ["pending", "awaiting_approval"])
       .gte("shift.shift_date", today)
       .eq("shift.published", true)

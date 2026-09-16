@@ -144,7 +144,7 @@ export interface HsuSwap {
   note: string;
   status: HsuSwapStatus;
   created_at: string;
-  shift?: { shift_date: string; starts: string; ends: string; label: string } | null;
+  shift?: { shift_date: string; starts: string; ends: string; label: string; shift_type_id?: string | null } | null;
 }
 
 export const MONTH_STATUS_ORDER: MonthStatus[] = ["collecting", "review", "planning", "published"];
