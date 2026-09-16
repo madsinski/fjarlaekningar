@@ -95,9 +95,10 @@ hlekk. Ekkert er vistað; takmörk 30 möt á klst. á notanda.
 - Líkanið er beðið um að velja „óljóst“ í vafa. Prufusett: 9 dæmigerð skilaboð
   (þvagfærasýking, Stesolid, brjóstverkur, barn, útbrot, frunsa, blóðprufa,
   innskotsárás) — 8 rétt, eitt varfærnara en vænst var.
-- **Persónuvernd sjúklinga:** textinn er um sjúkling. HSU er ábyrgðaraðili
-  sjúklingaupplýsinga, svo OpenAI þarf að koma fram sem undirvinnsluaðili í
-  vinnslusamningi og persónuverndarstefnu þjónustunnar.
+- **Persónuvernd sjúklinga:** textinn er lýsing á erindi án tengingar við
+  einstakling — engin nöfn, kennitölur eða aðrar auðkennandi upplýsingar fylgja —
+  og telst því ekki til persónuupplýsinga (ákvörðun persónuverndarfulltrúa
+  16.9.2026). Viðvörunin og sjálfvirk hreinsun eru til að halda því þannig.
 
 ## Má endurnýja lyfið?
 
