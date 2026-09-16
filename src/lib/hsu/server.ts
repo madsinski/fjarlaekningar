@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendEmail, escapeHtml } from "@/lib/email";
 import { getHsuActor, sameOrigin, type HsuActor } from "./auth";
 import {
-  datesInMonth, monthLabel, monthRange, slotsOfType, typeAppliesOn, holidayName,
+  datesInMonth, minutesOf, monthLabel, monthRange, slotsOfType, typeAppliesOn, holidayName,
   type HsuDoctor, type HsuMonth, type HsuPreference, type HsuShift, type HsuShiftType, type HsuSwap,
 } from "./types";
 
@@ -144,29 +144,34 @@ export async function ensureSlots(month: string): Promise<number> {
     }
   }
 
-  // Tómar, óbirtar vaktir sem passa ekki lengur við vaktategundirnar (tegund
-  // gerð óvirk, dögum breytt, frídagaregla, skipting um hádegi) eru fjarlægðar.
-  // Vakt með lækni eða sem hefur verið birt er aldrei snert.
-  if (status !== "published") {
-    const stale = existing.filter((s) => {
-      if (s.doctor_id || !s.shift_type_id || (s as { published?: boolean }).published) return false;
-      const want = wanted.get(`${s.shift_date}|${s.shift_type_id}|${s.slot_index ?? 0}`);
-      return !want || want.starts !== s.starts.slice(0, 5) || want.ends !== s.ends.slice(0, 5);
-    });
-    if (stale.length) {
-      const { error } = await supabaseAdmin.from("hsu_shifts").delete().in("id", stale.map((s) => s.id));
-      if (error) throw new Error(error.message);
-      const gone = new Set(stale.map((s) => s.id));
-      existing = existing.filter((s) => !gone.has(s.id));
-    }
+  // Tómar vaktir sem passa ekki lengur við vaktategundirnar (tegund gerð óvirk,
+  // dögum breytt, frídagaregla, skipting um hádegi, fjöldi lækna) eru fjarlægðar
+  // — líka í birtum mánuði, enda er enginn læknir á þeim. Vakt með lækni er
+  // aldrei snert: hún er hluti af plani sem fólk hefur þegar séð.
+  const stale = existing.filter((s) => {
+    if (s.doctor_id || !s.shift_type_id) return false;
+    const want = wanted.get(`${s.shift_date}|${s.shift_type_id}|${s.slot_index ?? 0}`);
+    return !want || want.starts !== s.starts.slice(0, 5) || want.ends !== s.ends.slice(0, 5);
+  });
+  if (stale.length) {
+    const { error } = await supabaseAdmin.from("hsu_shifts").delete().in("id", stale.map((s) => s.id));
+    if (error) throw new Error(error.message);
+    const gone = new Set(stale.map((s) => s.id));
+    existing = existing.filter((s) => !gone.has(s.id));
   }
 
   const have = new Set(existing.map((s) => `${s.shift_date}|${s.shift_type_id}|${s.slot_index ?? 0}`));
   const rows: Record<string, unknown>[] = [];
   for (const [key, want] of wanted) {
     if (have.has(key)) continue;
+    const date = key.split("|")[0];
+    // Sé læknir þegar á vakt sem nær yfir þennan tíma (t.d. gömul heil dagvakt
+    // eftir að skipting um hádegi var sett á) bætum við ekki hálfri vakt ofan á.
+    const covered = existing.some((s) =>
+      s.doctor_id && s.shift_date === date && s.shift_type_id === want.typeId && covers(s, want));
+    if (covered) continue;
     rows.push({
-      shift_date: key.split("|")[0], shift_type_id: want.typeId, slot_index: want.index, label: want.label,
+      shift_date: date, shift_type_id: want.typeId, slot_index: want.index, label: want.label,
       starts: want.starts, ends: want.ends, status: "assigned", published: status === "published",
     });
   }
@@ -177,6 +182,18 @@ export async function ensureSlots(month: string): Promise<number> {
     if (error && error.code !== "23505") throw new Error(error.message);
   }
   return rows.length;
+}
+
+/** Nær vaktin `outer` yfir allan tíma `inner`? Vakt yfir miðnætti nær í næsta sólarhring. */
+function covers(outer: { starts: string; ends: string }, inner: { starts: string; ends: string }): boolean {
+  const range = (x: { starts: string; ends: string }) => {
+    const s = minutesOf(x.starts);
+    const e = minutesOf(x.ends);
+    return [s, e > s ? e : e + 24 * 60] as const;
+  };
+  const [os, oe] = range(outer);
+  const [is, ie] = range(inner);
+  return os <= is && ie <= oe;
 }
 
 // ── Tölvupóstur ─────────────────────────────────────────────────────────────

@@ -83,6 +83,13 @@ Tóm bakvakt sem enginn þarf er ekki gat í planinu og sést ekki á síðu læ
   12:00). Þá verða til *FM f.h.* (08–12) og *FM e.h.* (12–16) og einn læknir
   getur tekið fyrri hlutann og annar þann síðari — eða sami læknir báða.
 
+Breytingar á vaktategund skila sér í mánuð sem þegar hefur verið raðað með
+hnappinum **Uppfæra vaktir** á vaktaplaninu (eða þegar „Fylla í tómar“ /
+„Búa til vaktaplan“ er keyrt). Tómar vaktir sem passa ekki lengur eru þá
+fjarlægðar og nýjar búnar til — líka í birtum mánuði. Vakt sem læknir er á er
+aldrei snert, og ný hálf vakt er ekki búin til ofan á heila vakt sem læknir er
+þegar á.
+
 Reglan um vaktir sama dag miðast við **tíma, ekki hólf**: læknir má taka fyrir
 og eftir hádegi, og dagvakt og svo kvöldvakt, en aldrei tvær vaktir sem skarast.
 Forvakt og bakvakt sama dag eru því áfram tveir ólíkir læknar.

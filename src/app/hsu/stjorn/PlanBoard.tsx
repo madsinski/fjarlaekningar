@@ -13,7 +13,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  AlertTriangle, ArrowRight, Ban, Clock, Eraser, Hand, Heart, Loader2, Plus, Shield, Shuffle, Sparkles, Trash2, Undo2, Wand2, X,
+  AlertTriangle, ArrowRight, Ban, Clock, Eraser, Hand, Heart, Loader2, Plus, RefreshCw, Shield, Shuffle, Sparkles, Trash2, Undo2, Wand2, X,
 } from "lucide-react";
 import { monthWeeks } from "../_components/PrefsEditor";
 import { Badge, Button, Card, Field, Modal, Notice, cx, hsuApi, inputCls, shortName } from "../_components/ui";
@@ -200,6 +200,15 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
           <Button onClick={() => generate("empty")} busy={busy === "empty"} disabled={emptyCount === 0}><Sparkles className="h-4 w-4" /> Fylla í tómar ({emptyCount})</Button>
           <Button variant="ghost" onClick={() => generate("all")} busy={busy === "all"}><Shuffle className="h-4 w-4" /> Raða öllu upp á nýtt</Button>
           <Button variant="ghost" onClick={undoLast} disabled={!undo.length}><Undo2 className="h-4 w-4" /> Afturkalla</Button>
+          <Button variant="ghost" busy={busy === "slots"} title="Sækja breytingar á vaktategundum (tímar, skipting um hádegi, fjöldi lækna) inn í þennan mánuð"
+            onClick={async () => {
+              setBusy("slots"); setMsg(null);
+              const r = await hsuApi<{ created: number }>("/api/hsu/admin/plan", { body: { month, action: "slots" }, staff: true });
+              setBusy(null);
+              if (!r.ok) { setMsg({ tone: "err", text: r.error ?? "Mistókst" }); return; }
+              setMsg({ tone: "ok", text: r.created ? `${r.created} vaktir bættust við eftir stillingum vaktategunda.` : "Vaktir mánaðarins eru í takt við vaktategundirnar." });
+              await ctx.reload();
+            }}><RefreshCw className="h-4 w-4" /> Uppfæra vaktir</Button>
           <Button variant="ghost" onClick={() => {
             if (!confirm("Taka alla lækna af öllum vöktum mánaðarins?")) return;
             void apply(shifts.filter((s) => s.doctor_id).map((s) => ({ id: s.id, doctor_id: null })));
