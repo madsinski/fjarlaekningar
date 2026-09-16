@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendEmail, escapeHtml } from "@/lib/email";
 import { getHsuActor, sameOrigin, type HsuActor } from "./auth";
 import {
-  datesInMonth, monthLabel, monthRange, splitTimeOf, typeAppliesOn, holidayName,
+  datesInMonth, dayPartFor, isOvernight, markFor, minutesOf, monthLabel, monthRange, splitTimeOf, typeAppliesOn, holidayName, weekdayOf,
   type HsuDoctor, type HsuMonth, type HsuPreference, type HsuShift, type HsuShiftType, type HsuSwap,
 } from "./types";
 
@@ -218,6 +218,79 @@ export async function ensureSlots(month: string): Promise<number> {
     if (error && error.code !== "23505") throw new Error(error.message);
   }
   return rows.length;
+}
+
+/**
+ * Skipta dagvöktum um hádegi þar sem læknar óskuðu eftir hálfum degi — og
+ * sameina þær aftur þegar enginn gerir það lengur.
+ *
+ * Flýtimóttakan er oftast heill dagur. Óski læknir eftir fyrri eða síðari
+ * hlutanum þarf vakt sem passar honum, því heil vakt er of löng fyrir hann og
+ * sjálfvirka skiptingin sleppir honum ella. Hér er því ein tóm vakt tekin í
+ * tvennt fyrir hvern slíkan lækni dagsins; hinn helmingurinn stendur opinn og
+ * læknir sem vinnur allan daginn getur tekið hann.
+ *
+ * Aðeins TÓMAR vaktir eru snertar: vakt sem læknir er á breytist aldrei hér.
+ */
+export async function applyHalfDayWishes(month: string): Promise<{ split: number; merged: number }> {
+  const [types, shifts, doctors, prefRows] = await Promise.all([
+    loadShiftTypes(true), loadMonthShifts(month), listDoctors(false), loadPreferences(month),
+  ]);
+  const dayTypes = types.filter((t) => t.period === "day" && !isOvernight(t.starts, t.ends) && minutesOf(t.ends) - minutesOf(t.starts) >= 120);
+  if (!dayTypes.length) return { split: 0, merged: 0 };
+  const prefs = new Map(prefRows.map((p) => [p.doctor_id, p]));
+  const published = (await loadMonth(month))?.status === "published";
+
+  let split = 0;
+  let merged = 0;
+  for (const t of dayTypes) {
+    const at = splitTimeOf(t);
+    for (const date of datesInMonth(month)) {
+      if (!typeAppliesOn(t, date)) continue;
+      const here = shifts.filter((s) => s.shift_date === date && s.shift_type_id === t.id);
+      // Læknar sem vilja hálfan dag þennan dag — og mega vinna dagvinnu á honum.
+      const wishers = doctors.filter((d) =>
+        d.active && dayPartFor(prefs.get(d.id), date) !== "all"
+        && markFor(prefs.get(d.id), date) !== "off"
+        && ((d.day_weekdays ?? []).length === 0 || (d.day_weekdays ?? []).includes(weekdayOf(date)))).length;
+
+      const halfPairs: [HsuShift, HsuShift][] = [];
+      for (const a of here) {
+        if (a.starts.slice(0, 5) !== t.starts || a.ends.slice(0, 5) !== at) continue;
+        const b = here.find((x) => x.id !== a.id && x.starts.slice(0, 5) === at && x.ends.slice(0, 5) === t.ends);
+        if (b) halfPairs.push([a, b]);
+      }
+      const fullEmpty = here.filter((s) => !s.doctor_id && s.starts.slice(0, 5) === t.starts && s.ends.slice(0, 5) === t.ends);
+      const want = Math.min(wishers, fullEmpty.length + halfPairs.length);
+
+      for (let i = halfPairs.length; i < want && i - halfPairs.length < fullEmpty.length; i++) {
+        const s = fullEmpty[i - halfPairs.length];
+        const used = new Set(here.map((x) => x.slot_index ?? 0));
+        let index = 0;
+        while (used.has(index)) index++;
+        const base = (t.short || t.name).slice(0, 20);
+        const { error: upErr } = await supabaseAdmin.from("hsu_shifts").update({ ends: at, label: `${base} f.h.` }).eq("id", s.id);
+        if (upErr) throw new Error(upErr.message);
+        const { error } = await supabaseAdmin.from("hsu_shifts").insert({
+          shift_date: date, shift_type_id: t.id, slot_index: index, label: `${base} e.h.`,
+          starts: at, ends: t.ends, status: "assigned", published,
+        });
+        if (error && error.code !== "23505") throw new Error(error.message);
+        here.push({ ...s, id: `new-${index}`, slot_index: index, starts: at, ends: t.ends });
+        split++;
+      }
+      // Enginn vill hálfan dag lengur: tómir helmingar renna saman í heila vakt.
+      for (const [a, b] of halfPairs.slice(want)) {
+        if (a.doctor_id || b.doctor_id) continue;
+        const { error: upErr } = await supabaseAdmin.from("hsu_shifts").update({ ends: t.ends, label: (t.short || t.name).slice(0, 30) }).eq("id", a.id);
+        if (upErr) throw new Error(upErr.message);
+        const { error } = await supabaseAdmin.from("hsu_shifts").delete().eq("id", b.id);
+        if (error) throw new Error(error.message);
+        merged++;
+      }
+    }
+  }
+  return { split, merged };
 }
 
 // ── Tölvupóstur ─────────────────────────────────────────────────────────────

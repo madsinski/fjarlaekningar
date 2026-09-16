@@ -94,6 +94,30 @@ Reglan um vaktir sama dag miðast við **tíma, ekki hólf**: læknir má taka f
 og eftir hádegi, og dagvakt og svo kvöldvakt, en aldrei tvær vaktir sem skarast.
 Forvakt og bakvakt sama dag eru því áfram tveir ólíkir læknar.
 
+### Hálfur dagur: ósk læknis um f.h. eða e.h.
+
+Í **Óskum** velur hver læknir hvort hann vinnur **allan daginn, fyrir hádegi eða
+eftir hádegi** á flýtimóttöku. Valið gildir allan mánuðinn; þurfi stakur dagur
+að vera öðruvísi málar læknirinn hann með penslinum **Aðeins f.h.** eða
+**Aðeins e.h.** — sá dagur ber þá lítið „f.h.“/„e.h.“ merki í dagatalinu.
+
+Þetta stýrir þrennu:
+
+1. **Skiptingin virðir óskina skilyrðislaust.** Læknir sem vill hálfan dag fær
+   aldrei heila dagvakt.
+2. **Vaktir skiptast sjálfkrafa.** Þegar plan er búið til er ein tóm
+   FM-vakt tekin í tvennt fyrir hvern lækni dagsins sem vill hálfan dag, svo til
+   sé vakt sem passar honum. Hinn helmingurinn stendur opinn og læknir sem
+   vinnur allan daginn getur tekið hann. Hætti læknirinn við óskina renna tómir
+   helmingar aftur saman í heila vakt við næstu keyrslu á **Uppfæra vaktir**.
+   Vakt sem læknir er á er aldrei snert.
+3. **Yfirlæknir má samt setja hann á heila vakt** — hún verður þá beiðni sem
+   læknirinn samþykkir, eins og vakt umfram hámark.
+
+Í vaktaglugganum (smellt á vakt) sést óskin við hvern lækni. Sé smellt á lækni
+sem vill hálfan dag þegar vaktin er heil er vaktinni **skipt sjálfkrafa** og
+hann settur á sinn helming; glugginn segir „Skiptir vaktinni um hádegi“.
+
 ### Kvöldvaktir aðeins tiltekna vikudaga
 
 Í **Óskum** hvers mánaðar getur læknir valið hvaða vikudaga hann tekur
@@ -128,6 +152,30 @@ gildir alls staðar: í sjálfvirku skiptingunni, í árekstramerkingum og á va
 Athugið að um helgar og frídaga skarast FM (08–16) og FV2 (08–08) í tíma. Kerfið
 leyfir sama lækni báðar, enda er það val yfirlæknis; sé það ekki ætlunin má fella
 FM niður á þeim dögum (taka helgar af vikudögum tegundarinnar) eða breyta tímunum.
+
+## Vaktaplanið: hvernig dagurinn er settur upp
+
+Hver dagur í mánaðarplaninu sýnir **eina röð á hverja vaktategund** (FM, FV1,
+BV1 …) og læknana hlið við hlið í röðinni. Dagurinn lengist því ekki þótt fleiri
+læknar séu á flýtimóttöku eða vakt sé skipt um hádegi — hann þéttist til hliðar.
+
+- Séu fleiri en einn í röðinni sýnir spjaldið **upphafsstafi** og lit læknisins;
+  fullt nafn er í smáglugganum þegar bendillinn stöðvast á spjaldinu.
+- **f** og **e** framan við stafina merkja fyrri og síðari hluta dags.
+- Þunn brotalína skilur að dagvaktir (efri hluti) og kvöld-/næturvaktir (neðri).
+- **+** er laus vakt sem vantar lækni á.
+
+Þrjár leiðir til að setja lækni á vakt:
+
+1. **Draga lækni úr listanum á vakt.** Nýtt: læknir sem er dreginn á **daginn
+   sjálfan** (ekki á tiltekna vakt) fer á fyrstu lausu vaktina þann dag —
+   dagvakt fyrst. Sé engin laus opnast gluggi til að bæta við vakt með lækninn
+   þegar valinn.
+2. **Smella á lækni og svo á vaktir** — hentar snertiskjá.
+3. **Smella á vakt** og velja lækni af lista sem raðar eftir því hver á helst að
+   fá hana.
+
+Vakt má líka draga ofan á aðra vakt: læknarnir skipta þá á dögum.
 
 ## Hámark og beiðnir um aukavakt
 

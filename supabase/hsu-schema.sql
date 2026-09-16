@@ -341,3 +341,13 @@ create unique index if not exists hsu_shifts_slot_uidx
 -- Læknir sem tekur t.d. aðeins fimmtudagsvaktir. Tómt fylki = allir dagar.
 -- Ólíkt day_weekdays (fast á lækni, dagvaktir) er þetta ósk fyrir hvern mánuð.
 alter table public.hsu_preferences add column if not exists evening_weekdays smallint[] not null default '{}';
+
+-- ── Ósk um hálfan dag á flýtimóttöku (2026-09-16) ─────────────────────────
+-- Læknir vinnur ýmist allan daginn, fyrir hádegi eða eftir hádegi. day_part er
+-- reglan fyrir mánuðinn; day_part_marks er undantekning fyrir staka daga
+-- ({"2026-10-07":"am"}). Skiptingin sjálf (f.h./e.h.) er á vaktinni, ekki hér.
+alter table public.hsu_preferences
+  add column if not exists day_part text not null default 'all',
+  add column if not exists day_part_marks jsonb not null default '{}'::jsonb;
+alter table public.hsu_preferences drop constraint if exists hsu_preferences_day_part_check;
+alter table public.hsu_preferences add constraint hsu_preferences_day_part_check check (day_part in ('all','am','pm'));

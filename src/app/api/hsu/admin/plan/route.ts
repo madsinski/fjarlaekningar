@@ -13,7 +13,7 @@ import { planMonth, toPlanDoctors, toPlanSlots, type PlanPrefs } from "@/lib/hsu
 import { shiftPhrase } from "@/lib/hsu/market";
 import { notifyDoctors, type DoctorNotice } from "@/lib/hsu/notify";
 import {
-  MONTH_RE, ensureSlots, fail, json, listDoctors, loadMonth, loadMonthShifts, loadPreferences, loadShiftTypes, originOf, readJson, requireManager,
+  MONTH_RE, applyHalfDayWishes, ensureSlots, fail, json, listDoctors, loadMonth, loadMonthShifts, loadPreferences, loadShiftTypes, originOf, readJson, requireManager,
 } from "@/lib/hsu/server";
 
 export const runtime = "nodejs";
@@ -34,9 +34,12 @@ export async function POST(req: Request) {
     }
 
     const created = await ensureSlots(month);
+    // Vaktir sem læknar óskuðu eftir hálfum degi á eru teknar í tvennt fyrst,
+    // svo skiptingin hafi vakt sem passar þeim.
+    const halves = await applyHalfDayWishes(month);
     if (action === "slots") {
-      await audit(auth.actor.label, "plan.slots", month, { created });
-      return json({ ok: true, created });
+      await audit(auth.actor.label, "plan.slots", month, { created, ...halves });
+      return json({ ok: true, created, ...halves });
     }
 
     const [shifts, types, doctors, prefRows] = await Promise.all([
@@ -94,7 +97,7 @@ export async function POST(req: Request) {
     }
 
     await audit(auth.actor.label, "plan.generate", month, { mode, created, changed, unfilled: result.unfilled.length });
-    return json({ ok: true, created, changed, unfilled: result.unfilled, stats: result.stats, month: m });
+    return json({ ok: true, created, ...halves, changed, unfilled: result.unfilled, stats: result.stats, month: m });
   } catch (e) {
     return fail(e instanceof Error ? e.message : String(e), 500);
   }

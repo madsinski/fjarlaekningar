@@ -28,7 +28,10 @@
 //   * Læknir sem þarf bakvakt fær helst forvakt þá daga sem reyndur læknir er laus
 //   * Vaktir dreifast um mánuðinn frekar en að hrannast upp
 
-import { addDays, isOvernight, isWeekendish, markFor, timesOverlap, wantsEveningOn, weekdayOf, type HsuPreference, type ShiftKind, type ShiftPeriod } from "./types";
+import {
+  addDays, dayPartFor, fitsDayPart, isOvernight, isWeekendish, markFor, partOfShift, timesOverlap, wantsEveningOn, weekdayOf,
+  type DayPart, type HsuPreference, type ShiftKind, type ShiftPeriod,
+} from "./types";
 
 export interface PlanSlot {
   /** Auðkenni vaktar (eða "dagsetning|tegund" fyrir óvistaðar). */
@@ -42,6 +45,8 @@ export interface PlanSlot {
   period: ShiftPeriod;
   starts: string;
   ends: string;
+  /** Nær vaktin yfir allan daginn eða hálfan (flýtimóttaka skipt um hádegi)? */
+  part: DayPart;
   /** Haldið óbreyttri líka í "all": t.d. vakt sem bíður samþykkis læknis. */
   locked?: boolean;
   /** Læknirinn samþykkti vaktina umfram hámark sitt — telst ekki árekstur. */
@@ -69,14 +74,14 @@ export function worksDayShift(doctor: Pick<PlanDoctor, "dayWeekdays"> | undefine
   return days.length === 0 || days.includes(weekdayOf(date));
 }
 
-export type PlanPrefs = Pick<HsuPreference, "day_marks" | "weekday_marks" | "evening_weekdays" | "min_shifts" | "max_shifts">;
+export type PlanPrefs = Pick<HsuPreference, "day_marks" | "weekday_marks" | "evening_weekdays" | "day_part" | "day_part_marks" | "min_shifts" | "max_shifts">;
 
 export interface PlanOptions {
   /** empty = fylla aðeins tómar vaktir; all = skipta öllum mánuðinum upp á nýtt. */
   mode?: "empty" | "all";
 }
 
-export type UnfilledReason = "all-off" | "all-busy" | "all-rest" | "all-at-max" | "no-doctors" | "no-bakvakt-doctor" | "no-day-doctor" | "no-evening-doctor";
+export type UnfilledReason = "all-off" | "all-busy" | "all-rest" | "all-at-max" | "no-doctors" | "no-bakvakt-doctor" | "no-day-doctor" | "no-evening-doctor" | "no-fullday-doctor";
 
 export const UNFILLED_REASON_IS: Record<UnfilledReason, string> = {
   "all-off": "Allir læknar hafa merkt „get ekki“ þennan dag",
@@ -87,6 +92,7 @@ export const UNFILLED_REASON_IS: Record<UnfilledReason, string> = {
   "no-bakvakt-doctor": "Forvaktarlæknir þarf bakvakt en enginn með bakvaktarréttindi er laus",
   "no-day-doctor": "Enginn laus læknir vinnur dagvinnu á þessum vikudegi",
   "no-evening-doctor": "Enginn laus læknir óskaði eftir kvöldvöktum á þessum vikudegi",
+  "no-fullday-doctor": "Lausu læknarnir vinna aðeins hálfan dag — skiptu vaktinni um hádegi",
 };
 
 export interface DoctorStat {
@@ -232,10 +238,11 @@ export function planMonth(
   const wants = (id: string, date: string) => markFor(prefs[id], date) === "want";
 
   /** Hörð athugun. Skilar ástæðu ef læknirinn getur ekki tekið vaktina. */
-  const blocker = (id: string, slot: PlanSlot): "skill" | "dayweek" | "eveningweek" | "off" | "busy" | "rest" | "max" | null => {
+  const blocker = (id: string, slot: PlanSlot): "skill" | "dayweek" | "eveningweek" | "daypart" | "off" | "busy" | "rest" | "max" | null => {
     if (slot.kind === "bakvakt" && !byId.get(id)?.canBakvakt) return "skill";
     if (slot.period === "day" && !worksDayShift(byId.get(id), slot.date)) return "dayweek";
     if (slot.period === "evening" && !wantsEveningOn(prefs[id], slot.date)) return "eveningweek";
+    if (slot.period === "day" && !fitsDayPart(dayPartFor(prefs[id], slot.date), slot.part)) return "daypart";
     if (isOff(id, slot.date)) return "off";
     const r = restBlocks(held[id], slot);
     if (r) return r;
@@ -284,7 +291,8 @@ export function planMonth(
   const place = (list: PlanSlot[]) => {
     const baseCandidates = (s: PlanSlot) =>
       pool.filter((d) => !isOff(d.id, s.date) && (s.kind !== "bakvakt" || d.canBakvakt)
-        && (s.period !== "day" || worksDayShift(d, s.date)) && (s.period !== "evening" || wantsEveningOn(prefs[d.id], s.date))).length;
+        && (s.period !== "day" || (worksDayShift(d, s.date) && fitsDayPart(dayPartFor(prefs[d.id], s.date), s.part)))
+        && (s.period !== "evening" || wantsEveningOn(prefs[d.id], s.date))).length;
     const ordered = list.slice().sort((a, b) => baseCandidates(a) - baseCandidates(b) || a.date.localeCompare(b.date));
     for (const s of ordered) {
       if (assignments[s.key]) continue;
@@ -299,6 +307,7 @@ export function planMonth(
         const reason: UnfilledReason = s.kind === "bakvakt" && !skilled.length ? "no-bakvakt-doctor"
           : reasons.has("max") ? "all-at-max" : reasons.has("rest") ? "all-rest" : reasons.has("busy") ? "all-busy"
           : s.kind === "bakvakt" ? "no-bakvakt-doctor"
+          : s.period === "day" && reasons.has("daypart") ? "no-fullday-doctor"
           : s.period === "day" && reasons.has("dayweek") ? "no-day-doctor"
           : s.period === "evening" && reasons.has("eveningweek") ? "no-evening-doctor" : "all-off";
         unfilled.push({ key: s.key, date: s.date, reason });
@@ -432,7 +441,7 @@ export function capFromTarget(target: number): number {
 /** Vaktir úr gagnagrunni → vaktir fyrir skiptinguna. */
 export function toPlanSlots(
   shifts: { id: string; shift_date: string; shift_type_id: string | null; doctor_id: string | null; starts: string; ends: string; confirm_status?: string | null; requested_by?: string | null }[],
-  types: { id: string; rest_days_after: number; kind: ShiftKind; period?: ShiftPeriod }[],
+  types: { id: string; rest_days_after: number; kind: ShiftKind; period?: ShiftPeriod; starts?: string; ends?: string; split_at?: string | null }[],
 ): PlanSlot[] {
   const byId = new Map(types.map((t) => [t.id, t]));
   return shifts.map((s) => {
@@ -440,6 +449,7 @@ export function toPlanSlots(
     return {
       key: s.id, date: s.shift_date, typeId: s.shift_type_id, restAfter: t?.rest_days_after ?? 0,
       starts: s.starts.slice(0, 5), ends: s.ends.slice(0, 5),
+      part: t?.starts && t?.ends ? partOfShift(s, { starts: t.starts, ends: t.ends, split_at: t.split_at ?? null }) : "all",
       doctorId: s.doctor_id, kind: t?.kind ?? "other",
       // Aukavakt án tegundar: dagvakt ef hún hefst fyrir kl. 15 og nær ekki yfir miðnætti.
       period: t?.period ?? (s.starts.slice(0, 5) < "15:00" && !isOvernight(s.starts, s.ends) ? "day" : "evening"),
@@ -488,7 +498,7 @@ export function statsFor(slots: PlanSlot[], doctors: PlanDoctor[], prefs: Record
 
 // ── Árekstrar í núverandi plani (fyrir handvirkar breytingar) ──────────────
 
-export type ConflictKind = "off" | "double" | "rest" | "max" | "skill" | "no_bakvakt" | "day_weekday" | "evening_weekday";
+export type ConflictKind = "off" | "double" | "rest" | "max" | "skill" | "no_bakvakt" | "day_weekday" | "evening_weekday" | "day_part";
 
 export const CONFLICT_IS: Record<ConflictKind, string> = {
   off: "Læknirinn merkti „get ekki“ þennan dag",
@@ -499,6 +509,7 @@ export const CONFLICT_IS: Record<ConflictKind, string> = {
   no_bakvakt: "Læknirinn þarf bakvakt en enginn er á bakvakt þennan dag",
   day_weekday: "Læknirinn vinnur ekki dagvinnu á þessum vikudegi",
   evening_weekday: "Læknirinn óskaði ekki eftir kvöldvöktum á þessum vikudegi",
+  day_part: "Læknirinn óskaði eftir hálfum degi — vaktin nær yfir annan tíma",
 };
 
 /** Vakt → listi árekstra. Tómt = allt í lagi. */
@@ -533,6 +544,7 @@ export function findConflicts(
       // Dagvakt á röngum vikudegi telst ekki árekstur hafi læknirinn samþykkt hana.
       if (info && s.period === "day" && !viaRequest && !worksDayShift(info, s.date)) list.push("day_weekday");
       if (s.period === "evening" && !viaRequest && !wantsEveningOn(prefs[doc], s.date)) list.push("evening_weekday");
+      if (s.period === "day" && !viaRequest && !fitsDayPart(dayPartFor(prefs[doc], s.date), s.part)) list.push("day_part");
       if (info && s.kind === "forvakt" && info.needsBakvakt && !staffedBv.has(s.date)) list.push("no_bakvakt");
       if (list.length) out[s.key] = list;
     });

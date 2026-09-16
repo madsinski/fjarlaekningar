@@ -11,7 +11,7 @@ import {
 import PrefsEditor, { PREF_TONE, PrefsMini, draftFrom, type PrefDraft } from "../_components/PrefsEditor";
 import { Badge, Button, Card, Field, Modal, Notice, cx, hsuApi, inputCls } from "../_components/ui";
 import {
-  PREF_STATUS_IS, WEEKDAY_SHORT_IS, datesInMonth, dayLabel, markFor, monthLabel, type HsuDoctor, type HsuPreference, type MonthStatus,
+  DAY_PART_IS, PREF_STATUS_IS, WEEKDAY_SHORT_IS, datesInMonth, dayLabel, markFor, monthLabel, type HsuDoctor, type HsuPreference, type MonthStatus,
 } from "@/lib/hsu/types";
 import { findConflicts, requiredSlots, statsFor, toPlanDoctors, toPlanSlots, type PlanPrefs } from "@/lib/hsu/plan";
 import type { PlannerCtx } from "./types";
@@ -391,6 +391,12 @@ function StepReview({ ctx, setStatus, goNext }: { ctx: PlannerCtx; setStatus: Se
                   <div className="flex items-center gap-1.5"><Heart className="h-3.5 w-3.5 text-emerald-500" /> {want} óskadagar</div>
                   {ok > 0 && <div className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-[var(--hsu)]" /> {ok} dagar laus</div>}
                   {p?.evening_weekdays?.length ? <div className="font-semibold text-[var(--hsu-dark)]">Kvöldvaktir: {p.evening_weekdays.map((x) => WEEKDAY_SHORT_IS[x]).join(", ")}</div> : null}
+                  {p && (p.day_part !== "all" || Object.keys(p.day_part_marks ?? {}).length > 0) ? (
+                    <div className="font-semibold text-violet-700">
+                      Dagvaktir: {DAY_PART_IS[p.day_part ?? "all"].toLowerCase()}
+                      {Object.keys(p.day_part_marks ?? {}).length > 0 ? ` (${Object.keys(p.day_part_marks).length} dagar sér)` : ""}
+                    </div>
+                  ) : null}
                   <div>Vaktir: {p?.min_shifts ?? "–"} til {p?.max_shifts ?? "–"}</div>
                   {offShare > 0.5 && <div className="flex items-center gap-1 font-semibold text-amber-700"><AlertTriangle className="h-3.5 w-3.5" /> Óvenju margir lokaðir dagar</div>}
                 </div>

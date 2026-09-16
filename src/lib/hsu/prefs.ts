@@ -2,7 +2,7 @@
 // Server-only.
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { datesInMonth, shiftMonth, type DayMark, type Mark, type HsuPreference, type PrefStatus } from "./types";
+import { datesInMonth, shiftMonth, type DayMark, type DayPart, type Mark, type HsuPreference, type PrefStatus } from "./types";
 
 /** 0=sun … 6=lau. Tómt fylki = allir dagar. */
 function cleanWeekdayList(v: unknown): number[] {
@@ -31,6 +31,8 @@ export interface PrefInput {
   day_marks: Record<string, DayMark>;
   weekday_marks: Record<string, Mark>;
   evening_weekdays: number[];
+  day_part: DayPart;
+  day_part_marks: Record<string, DayPart>;
   min_shifts: number | null;
   max_shifts: number | null;
   note: string;
@@ -41,6 +43,8 @@ export function sanitizePrefs(month: string, body: Record<string, unknown>): Pre
     day_marks: cleanMarks<DayMark>(body.day_marks, new Set(datesInMonth(month)), ["off", "want", "ok"]),
     weekday_marks: cleanMarks<Mark>(body.weekday_marks, WEEKDAYS, ["off", "want"]),
     evening_weekdays: cleanWeekdayList(body.evening_weekdays),
+    day_part: body.day_part === "am" || body.day_part === "pm" ? body.day_part : "all",
+    day_part_marks: cleanMarks<DayPart>(body.day_part_marks, new Set(datesInMonth(month)), ["all", "am", "pm"]),
     min_shifts: cleanCount(body.min_shifts),
     max_shifts: cleanCount(body.max_shifts),
     note: typeof body.note === "string" ? body.note.slice(0, 1000) : "",
@@ -103,7 +107,7 @@ export async function copyToNextMonth(doctorId: string, month: string, input: Pr
   await savePrefs({
     doctorId,
     month: next,
-    input: { ...input, day_marks: (existing?.day_marks as Record<string, DayMark>) ?? {} },
+    input: { ...input, day_marks: (existing?.day_marks as Record<string, DayMark>) ?? {}, day_part_marks: {} },
     status,
     enteredBy,
   });

@@ -12,7 +12,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { hsuSync } from "./calendar";
 import { shiftPhrase } from "./market";
 import { notifyDoctors, type DoctorNotice } from "./notify";
-import { markFor, monthRange, wantsEveningOn, type ShiftPeriod } from "./types";
+import { dayPartFor, fitsDayPart, markFor, monthRange, partOfShift, wantsEveningOn, type DayPart, type ShiftPeriod } from "./types";
 import { worksDayShift } from "./plan";
 
 export interface ShiftChange {
@@ -21,6 +21,8 @@ export interface ShiftChange {
 }
 
 export class ShiftRuleError extends Error {}
+
+interface ShiftTypeRow { id: string; kind: string; period: ShiftPeriod; starts: string; ends: string; split_at: string | null }
 
 export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: string; origin: string; notify: boolean }) {
   if (!changes.length) return { changed: 0, requested: 0 };
@@ -42,11 +44,14 @@ export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: s
   const typeIds = [...new Set((before ?? []).map((s) => s.shift_type_id).filter(Boolean))] as string[];
   const newDocIds = [...new Set(real.map((c) => c.doctor_id).filter(Boolean))] as string[];
   const [{ data: types }, { data: docs }] = await Promise.all([
-    typeIds.length ? supabaseAdmin.from("hsu_shift_types").select("id, kind, period").in("id", typeIds) : Promise.resolve({ data: [] as { id: string; kind: string; period: ShiftPeriod }[] }),
+    typeIds.length ? supabaseAdmin.from("hsu_shift_types").select("id, kind, period, starts, ends, split_at").in("id", typeIds) : Promise.resolve({ data: [] as ShiftTypeRow[] }),
     newDocIds.length ? supabaseAdmin.from("hsu_doctors").select("id, name, can_bakvakt, day_weekdays").in("id", newDocIds) : Promise.resolve({ data: [] as { id: string; name: string; can_bakvakt: boolean; day_weekdays: number[] }[] }),
   ]);
   const kindOf = new Map((types ?? []).map((t) => [t.id, t.kind]));
   const periodOfType = new Map((types ?? []).map((t) => [t.id, t.period]));
+  const typeById = new Map((types ?? []).map((t) => [t.id, t as ShiftTypeRow]));
+  const partOf = (s: { shift_type_id: string | null; starts: string; ends: string }): DayPart =>
+    partOfShift(s, s.shift_type_id ? typeById.get(s.shift_type_id) ?? null : null);
   const periodOfShift = (s: { shift_type_id: string | null; starts: string; ends: string }): ShiftPeriod =>
     (s.shift_type_id ? periodOfType.get(s.shift_type_id) : undefined)
     ?? (s.starts.slice(0, 5) < "15:00" && s.ends.slice(0, 5) > s.starts.slice(0, 5) ? "day" : "evening");
@@ -61,7 +66,7 @@ export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: s
   // ── Hvaða nýju vaktir þarf að biðja lækninn um? ─────────────────────────
   // Tvennt kallar á beiðni: dagvakt á vikudegi sem hann vinnur ekki dagvinnu,
   // og vakt umfram hámarkið sem hann skráði.
-  const requestIds = new Map<string, "off" | "weekday" | "eveningweek" | "max">();
+  const requestIds = new Map<string, "off" | "weekday" | "eveningweek" | "daypart" | "max">();
   for (const c of real) {
     const s = byId.get(c.id)!;
     if (!c.doctor_id) continue;
@@ -76,7 +81,7 @@ export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: s
     const docsHere = [...new Set(inMonth.map((c) => c.doctor_id!))];
     const { first, next } = monthRange(month);
     const [{ data: prefRows }, { data: held }] = await Promise.all([
-      supabaseAdmin.from("hsu_preferences").select("doctor_id, max_shifts, day_marks, weekday_marks, evening_weekdays").eq("month", month).in("doctor_id", docsHere),
+      supabaseAdmin.from("hsu_preferences").select("doctor_id, max_shifts, day_marks, weekday_marks, evening_weekdays, day_part, day_part_marks").eq("month", month).in("doctor_id", docsHere),
       supabaseAdmin.from("hsu_shifts").select("id, doctor_id").in("doctor_id", docsHere).gte("shift_date", first).lt("shift_date", next),
     ]);
     const maxOf = new Map((prefRows ?? []).map((p) => [p.doctor_id, p.max_shifts as number | null]));
@@ -89,6 +94,11 @@ export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: s
       // Læknir sem óskaði t.d. aðeins eftir fimmtudagsvöktum: aðrir dagar eru beiðni.
       if (periodOfShift(s) === "evening" && !wantsEveningOn(prefOf.get(c.doctor_id!) as { evening_weekdays?: number[] }, s.shift_date)) {
         requestIds.set(c.id, "eveningweek");
+        continue;
+      }
+      // Læknir sem óskaði eftir hálfum degi: heil vakt eða rangur helmingur er beiðni.
+      if (periodOfShift(s) === "day" && !fitsDayPart(dayPartFor(prefOf.get(c.doctor_id!) as { day_part?: DayPart }, s.shift_date), partOf(s))) {
+        requestIds.set(c.id, "daypart");
       }
     }
     for (const docId of docsHere) {
@@ -143,6 +153,7 @@ export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: s
           line: `${shiftPhrase(s)} — ${
             reason === "off" ? "dagur sem þú merktir „get ekki“"
             : reason === "eveningweek" ? "kvöldvakt á vikudegi sem þú óskaðir ekki eftir"
+            : reason === "daypart" ? "dagvakt utan þess hluta dags sem þú óskaðir eftir"
             : reason === "weekday" ? "dagvakt utan þeirra vikudaga sem þú vinnur dagvinnu"
             : "umfram hámarkið sem þú skráðir"}.`,
         });

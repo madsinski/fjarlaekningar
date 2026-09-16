@@ -96,6 +96,10 @@ export interface HsuPreference {
   weekday_marks: Record<string, Mark>;
   /** Ósk: kvöld- og næturvaktir aðeins þessa vikudaga (0=sun … 6=lau). Tómt = alla daga. */
   evening_weekdays: number[];
+  /** Ósk um dagvaktir: allan daginn, fyrir hádegi eða eftir hádegi. Regla mánaðarins. */
+  day_part: DayPart;
+  /** Undantekningar frá reglunni, dagsetning → hluti dags. */
+  day_part_marks: Record<string, DayPart>;
   min_shifts: number | null;
   max_shifts: number | null;
   note: string;
@@ -220,6 +224,45 @@ export function slotsOfType(t: Pick<HsuShiftType, "starts" | "ends" | "short" | 
 
 /** Klukkan sem vakt er skipt á þegar hún er tekin í tvennt. */
 export const splitTimeOf = (t: { split_at?: string | null }) => (t.split_at ?? "12:00").slice(0, 5);
+
+// ── Hálfur dagur ────────────────────────────────────────────────────────────
+// Flýtimóttakan er oftast heill dagur, en sumir læknar taka aðeins fyrri eða
+// síðari hlutann. Óskin er á lækninum (day_part), skiptingin á vaktinni.
+
+export type DayPart = "all" | "am" | "pm";
+
+export const DAY_PART_IS: Record<DayPart, string> = { all: "Allan daginn", am: "Fyrir hádegi", pm: "Eftir hádegi" };
+export const DAY_PART_SHORT_IS: Record<DayPart, string> = { all: "", am: "f.h.", pm: "e.h." };
+
+/** Ósk læknisins um þennan dag: undantekning dagsins, annars regla mánaðarins. */
+export function dayPartFor(
+  pref: { day_part?: DayPart | null; day_part_marks?: Record<string, DayPart> | null } | null | undefined,
+  date: string,
+): DayPart {
+  return pref?.day_part_marks?.[date] ?? pref?.day_part ?? "all";
+}
+
+/** Hvaða hluta dagsins nær vaktin yfir, miðað við tímana sem tegundin gefur. */
+export function partOfShift(
+  shift: { starts: string; ends: string },
+  type: { starts: string; ends: string; split_at?: string | null } | null | undefined,
+): DayPart {
+  if (!type) return "all";
+  const at = splitTimeOf(type);
+  const [s, e] = [shift.starts.slice(0, 5), shift.ends.slice(0, 5)];
+  if (s === type.starts.slice(0, 5) && e === at) return "am";
+  if (s === at && e === type.ends.slice(0, 5)) return "pm";
+  return "all";
+}
+
+/**
+ * Passar vaktin við óskina? Læknir sem vill allan daginn tekur hvað sem er;
+ * læknir sem vill hálfan dag tekur aðeins sinn helming — heil vakt er of mikið
+ * fyrir hann og þarf þá að skiptast fyrst.
+ */
+export function fitsDayPart(wish: DayPart, slotPart: DayPart): boolean {
+  return wish === "all" || wish === slotPart;
+}
 
 /** Vakt yfir miðnætti (t.d. 08–08 eða 16–08) endar næsta dag. */
 export function isOvernight(starts: string, ends: string): boolean {

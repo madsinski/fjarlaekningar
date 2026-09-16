@@ -8,10 +8,10 @@
 // settar í hausnum og gilda allan mánuðinn; einstakur dagur trompar regluna.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Ban, Check, CircleCheck, Copy, Heart, Eraser, Send, Save } from "lucide-react";
+import { Ban, Check, CircleCheck, Copy, Heart, Eraser, Send, Save, Sunrise, Sunset } from "lucide-react";
 import {
-  WEEKDAY_ORDER, WEEKDAY_SHORT_IS, datesInMonth, dayLabel, holidayName, markFor, monthLabel, shiftMonth, weekdayOf,
-  type DayMark, type HsuPreference, type Mark, type PrefStatus,
+  DAY_PART_IS, WEEKDAY_ORDER, WEEKDAY_SHORT_IS, datesInMonth, dayLabel, holidayName, markFor, monthLabel, shiftMonth, weekdayOf,
+  type DayMark, type DayPart, type HsuPreference, type Mark, type PrefStatus,
 } from "@/lib/hsu/types";
 import { Badge, Button, Notice, cx, inputCls, capFirst } from "./ui";
 
@@ -20,27 +20,33 @@ export interface PrefDraft {
   weekday_marks: Record<string, Mark>;
   /** Kvöld- og næturvaktir aðeins þessa vikudaga. Tómt = alla daga. */
   evening_weekdays: number[];
+  /** Dagvaktir: allan daginn, fyrir hádegi eða eftir hádegi — regla mánaðarins. */
+  day_part: DayPart;
+  /** Stakir dagar sem víkja frá reglunni. */
+  day_part_marks: Record<string, DayPart>;
   min_shifts: number | null;
   max_shifts: number | null;
   note: string;
 }
 
-type Brush = "off" | "want" | "ok" | "clear";
+type Brush = "off" | "want" | "ok" | "am" | "pm" | "clear";
 
 export const PREF_TONE: Record<PrefStatus | "none", "slate" | "blue" | "green" | "amber" | "red"> = {
   none: "slate", draft: "amber", submitted: "blue", approved: "green", changes_requested: "red",
 };
 
 function emptyDraft(): PrefDraft {
-  return { day_marks: {}, weekday_marks: {}, evening_weekdays: [], min_shifts: null, max_shifts: null, note: "" };
+  return { day_marks: {}, weekday_marks: {}, evening_weekdays: [], day_part: "all", day_part_marks: {}, min_shifts: null, max_shifts: null, note: "" };
 }
 
-export function draftFrom(p: Pick<HsuPreference, "day_marks" | "weekday_marks" | "evening_weekdays" | "min_shifts" | "max_shifts" | "note"> | null | undefined): PrefDraft {
+export function draftFrom(p: Pick<HsuPreference, "day_marks" | "weekday_marks" | "evening_weekdays" | "day_part" | "day_part_marks" | "min_shifts" | "max_shifts" | "note"> | null | undefined): PrefDraft {
   if (!p) return emptyDraft();
   return {
     day_marks: { ...(p.day_marks ?? {}) },
     weekday_marks: { ...(p.weekday_marks ?? {}) },
     evening_weekdays: [...(p.evening_weekdays ?? [])],
+    day_part: p.day_part ?? "all",
+    day_part_marks: { ...(p.day_part_marks ?? {}) },
     min_shifts: p.min_shifts ?? null,
     max_shifts: p.max_shifts ?? null,
     note: p.note ?? "",
@@ -100,10 +106,18 @@ export default function PrefsEditor({
 
   const applyBrush = (date: string, b: Brush) => {
     update((d) => {
+      // Hálfur dagur er sjálfstæð merking: dagurinn getur bæði verið „vil
+      // gjarnan" og „aðeins fyrir hádegi".
+      if (b === "am" || b === "pm") {
+        const parts = { ...d.day_part_marks };
+        if (parts[date] === b) delete parts[date]; else parts[date] = b;
+        return { ...d, day_part_marks: parts };
+      }
       const day = { ...d.day_marks };
+      const parts = { ...d.day_part_marks };
       // Hreinsa fjarlægir merkingu dagsins; vikudagsregla gildir þá aftur.
-      if (b === "clear") delete day[date]; else day[date] = b;
-      return { ...d, day_marks: day };
+      if (b === "clear") { delete day[date]; delete parts[date]; } else day[date] = b;
+      return { ...d, day_marks: day, day_part_marks: parts };
     });
   };
 
@@ -111,7 +125,7 @@ export default function PrefsEditor({
   // hægt sé að fletta síðunni með fingri yfir dagatalinu án þess að mála.
   const mouseHandled = useRef(false);
   // Smellur á dag sem þegar ber þessa merkingu tekur hana af (toggle).
-  const brushFor = (date: string): Brush => (brush !== "clear" && draft.day_marks[date] === brush ? "clear" : brush);
+  const brushFor = (date: string): Brush => (brush !== "clear" && brush !== "am" && brush !== "pm" && draft.day_marks[date] === brush ? "clear" : brush);
   const onDown = (e: React.PointerEvent, date: string) => {
     if (!editable || e.pointerType !== "mouse") return;
     e.preventDefault();
@@ -167,7 +181,7 @@ export default function PrefsEditor({
     setBusy(null);
     if (!prev) { setMsg({ tone: "err", text: "Engar óskir fundust fyrir fyrri mánuð." }); return; }
     // Aðeins það sem á við milli mánaða; dagsetningar fyrri mánaðar gera það ekki.
-    update((d) => ({ ...d, weekday_marks: prev.weekday_marks, min_shifts: prev.min_shifts, max_shifts: prev.max_shifts, note: prev.note }));
+    update((d) => ({ ...d, weekday_marks: prev.weekday_marks, evening_weekdays: prev.evening_weekdays, day_part: prev.day_part, min_shifts: prev.min_shifts, max_shifts: prev.max_shifts, note: prev.note }));
   };
 
   const cellTone = (date: string) => {
@@ -184,6 +198,8 @@ export default function PrefsEditor({
     { key: "off", label: "Get ekki", icon: <Ban className="h-4 w-4" />, cls: "data-[on=true]:bg-red-500 data-[on=true]:text-white data-[on=true]:ring-red-500" },
     { key: "want", label: "Vil gjarnan", icon: <Heart className="h-4 w-4" />, cls: "data-[on=true]:bg-emerald-500 data-[on=true]:text-white data-[on=true]:ring-emerald-500" },
     { key: "ok", label: "Laus", icon: <CircleCheck className="h-4 w-4" />, cls: "data-[on=true]:bg-[var(--hsu)] data-[on=true]:text-white data-[on=true]:ring-[var(--hsu)]" },
+    { key: "am", label: "Aðeins f.h.", icon: <Sunrise className="h-4 w-4" />, cls: "data-[on=true]:bg-violet-500 data-[on=true]:text-white data-[on=true]:ring-violet-500" },
+    { key: "pm", label: "Aðeins e.h.", icon: <Sunset className="h-4 w-4" />, cls: "data-[on=true]:bg-violet-500 data-[on=true]:text-white data-[on=true]:ring-violet-500" },
     { key: "clear", label: "Hreinsa", icon: <Eraser className="h-4 w-4" />, cls: "data-[on=true]:bg-slate-700 data-[on=true]:text-white data-[on=true]:ring-slate-700" },
   ];
 
@@ -207,7 +223,7 @@ export default function PrefsEditor({
       {editable && (
         <div>
           <div className="text-xs font-semibold text-slate-600">1. Veldu pensil og smelltu eða dragðu yfir daga</div>
-          <div className="mt-2 grid grid-cols-2 gap-2 sm:inline-grid sm:w-auto sm:grid-cols-4">
+          <div className="mt-2 grid grid-cols-2 gap-2 sm:inline-grid sm:w-auto sm:grid-cols-3">
             {brushes.map((b) => (
               <button key={b.key} type="button" data-on={brush === b.key} onClick={() => setBrush(b.key)}
                 className={cx("inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 transition", b.cls)}>
@@ -253,6 +269,11 @@ export default function PrefsEditor({
                 {m === "want" && <Heart className="h-3 w-3 opacity-80" />}
                 {!m && draft.day_marks[date] === "ok" && <CircleCheck className="h-3 w-3 opacity-80" />}
                 {h && <span className="absolute left-1 top-1 h-1.5 w-1.5 rounded-full bg-amber-400" title={h} />}
+                {draft.day_part_marks[date] && (
+                  <span className={cx("absolute bottom-0.5 right-1 text-[9px] font-bold", m ? "text-white/90" : "text-violet-600")}>
+                    {draft.day_part_marks[date] === "am" ? "f.h." : "e.h."}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -263,12 +284,36 @@ export default function PrefsEditor({
           <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-[var(--hsu)]" /> Laus: {counts.ok}</span>
           <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded ring-1 ring-slate-300" /> Ómerkt: {counts.unmarked}</span>
           <span className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-amber-400" /> Almennur frídagur</span>
+          <span className="inline-flex items-center gap-1"><span className="font-bold text-violet-600">f.h.</span> Aðeins hálfur dagur á flýtimóttöku</span>
           <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-red-50 ring-1 ring-red-200" /> Strikað = vikudagsregla</span>
         </div>
       </div>
 
       <div>
-        <div className="text-xs font-semibold text-slate-600">{editable ? "2. " : ""}Kvöld- og næturvaktir (forvakt og bakvakt)</div>
+        <div className="text-xs font-semibold text-slate-600">{editable ? "2. " : ""}Dagvaktir á flýtimóttöku</div>
+        <p className="mt-0.5 text-[11px] text-slate-500">
+          Vinnurðu allan daginn eða hálfan? Þetta gildir um alla daga mánaðarins.
+          Þurfi einn dagur að vera öðruvísi merkirðu hann með penslinum „Aðeins f.h.“ eða „Aðeins e.h.“ hér að ofan.
+        </p>
+        <div className="mt-1.5 flex flex-wrap items-center gap-1">
+          {(["all", "am", "pm"] as const).map((v) => (
+            <button key={v} type="button" disabled={!editable} onClick={() => update((x) => ({ ...x, day_part: v }))}
+              className={cx("rounded-lg px-3 py-1.5 text-xs font-semibold transition",
+                draft.day_part === v ? "bg-[var(--hsu)] text-white" : "bg-slate-100 text-slate-500")}>
+              {DAY_PART_IS[v]}
+            </button>
+          ))}
+          {Object.keys(draft.day_part_marks).length > 0 && (
+            <span className="ml-1 text-[11px] text-slate-500">
+              {Object.keys(draft.day_part_marks).length} dagar merktir sér
+              {editable && <button type="button" className="ml-1 underline" onClick={() => update((x) => ({ ...x, day_part_marks: {} }))}>hreinsa</button>}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <div className="text-xs font-semibold text-slate-600">{editable ? "3. " : ""}Kvöld- og næturvaktir (forvakt og bakvakt)</div>
         <p className="mt-0.5 text-[11px] text-slate-500">
           Viltu aðeins kvöldvaktir á ákveðnum vikudögum — t.d. eingöngu fimmtudaga? Veldu þá hér. Enginn valinn = allir dagar.
           Dagvaktir (flýtimóttaka) ráðast ekki af þessu.
@@ -292,7 +337,7 @@ export default function PrefsEditor({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <div className="text-xs font-semibold text-slate-600">{editable ? "3. " : ""}Fjöldi vakta í mánuðinum</div>
+          <div className="text-xs font-semibold text-slate-600">{editable ? "4. " : ""}Fjöldi vakta í mánuðinum</div>
           <div className="mt-1 flex items-center gap-2">
             <input type="number" min={0} max={31} placeholder="Minnst" disabled={!editable} value={draft.min_shifts ?? ""}
               onChange={(e) => update((d) => ({ ...d, min_shifts: e.target.value === "" ? null : Math.max(0, Number(e.target.value)) }))}
@@ -305,7 +350,7 @@ export default function PrefsEditor({
           <p className="mt-1 text-[11px] text-slate-500">Autt = eftir starfshlutfalli.</p>
         </div>
         <div>
-          <div className="text-xs font-semibold text-slate-600">{editable ? "4. " : ""}Athugasemd til yfirlæknis</div>
+          <div className="text-xs font-semibold text-slate-600">{editable ? "5. " : ""}Athugasemd til yfirlæknis</div>
           <textarea rows={2} disabled={!editable} value={draft.note} placeholder="t.d. „Get tekið aukavaktir um Þjóðhátíð“"
             onChange={(e) => update((d) => ({ ...d, note: e.target.value }))} className={cx(inputCls, "mt-1")} />
         </div>
