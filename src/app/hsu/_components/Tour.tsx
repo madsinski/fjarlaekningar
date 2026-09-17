@@ -55,7 +55,10 @@ export default function Tour({ steps, open, onClose }: {
     const el = findTarget(step?.target);
     if (!el) { setRect(null); return; }
     const r = el.getBoundingClientRect();
-    setRect({ top: r.top - PAD, left: r.left - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 });
+    // Ljósopið nær ekki út fyrir skjáinn.
+    const top = Math.max(r.top - PAD, 0);
+    const bottom = Math.min(r.bottom + PAD, window.innerHeight);
+    setRect({ top, left: r.left - PAD, width: r.width + PAD * 2, height: Math.max(bottom - top, 0) });
   }, [step?.target]);
 
   // Nýtt skref: keyra before(), bíða eftir að síðan teiknist, fletta að markinu.
@@ -68,8 +71,11 @@ export default function Tour({ steps, open, onClose }: {
       const el = findTarget(step.target);
       if (el) {
         const r = el.getBoundingClientRect();
+        // Stórt mark (t.d. heilt mánaðarplan): efri brún þess efst á skjá.
+        const big = r.height > window.innerHeight * 0.5;
         const offscreen = r.top < 80 || r.bottom > window.innerHeight - (window.innerWidth < 640 ? 260 : 40);
-        if (offscreen) el.scrollIntoView({ block: "center", behavior: "instant" as ScrollBehavior });
+        if (big) window.scrollBy({ top: r.top - 130, behavior: "instant" as ScrollBehavior });
+        else if (offscreen) el.scrollIntoView({ block: "center", behavior: "instant" as ScrollBehavior });
       }
       measure();
       card.current?.focus();
@@ -110,12 +116,13 @@ export default function Tour({ steps, open, onClose }: {
   } else if (mobile) {
     cardStyle = { left: 16, right: 16, bottom: 16 };
   } else {
+    const vh = window.innerHeight;
     const below = rect.top + rect.height + 12;
-    const fitsBelow = below + 220 < window.innerHeight;
     const left = Math.min(Math.max(16, rect.left), vw - CARD_W - 16);
-    cardStyle = fitsBelow
-      ? { top: below, left, width: CARD_W }
-      : { top: Math.max(16, rect.top - 12), left, width: CARD_W, transform: "translateY(-100%)" };
+    if (below + 240 < vh) cardStyle = { top: below, left, width: CARD_W };
+    else if (rect.top - 12 > 240) cardStyle = { top: rect.top - 12, left, width: CARD_W, transform: "translateY(-100%)" };
+    // Hvorki pláss fyrir ofan né neðan (stórt mark): neðst í hægra horni.
+    else cardStyle = { right: 24, bottom: 24, width: CARD_W };
   }
 
   return (

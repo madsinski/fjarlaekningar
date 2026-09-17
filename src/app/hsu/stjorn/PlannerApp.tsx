@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CalendarRange, ChevronLeft, ChevronRight, Settings, Store, Users } from "lucide-react";
 import HsuHeader from "../_components/HsuHeader";
-import { Card, Notice, cx, hsuApi, capFirst } from "../_components/ui";
-import { MONTH_STATUS_IS, monthKey, monthLabel, shiftMonth } from "@/lib/hsu/types";
+import { Card, Notice, cx, hsuApi } from "../_components/ui";
+import { monthKey, shiftMonth } from "@/lib/hsu/types";
 import { supabase } from "@/lib/supabase";
 import type { Overview } from "./types";
 import MonthFlow from "./MonthFlow";
@@ -13,19 +13,24 @@ import MarketAdmin from "./MarketAdmin";
 import SettingsTab from "./SettingsTab";
 import HeadGuide from "./HeadGuide";
 import Tour, { markOnboarding, seenLocally, type TourStep } from "../_components/Tour";
-import { useT } from "@/lib/hsu/i18n/client";
+import { useCommon, useT } from "@/lib/hsu/i18n/client";
+import { capFirstL, monthLabelL, monthStatusL } from "@/lib/hsu/i18n/format";
+import { admin } from "@/lib/hsu/i18n/messages/admin";
 import { onboarding as onboardingMsgs } from "@/lib/hsu/i18n/messages/onboarding";
 
 type Tab = "plan" | "laeknar" | "markadur" | "stillingar";
 
-const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
-  { key: "plan", label: "Mánaðarplan", icon: <CalendarRange className="h-4 w-4" /> },
-  { key: "laeknar", label: "Læknar", icon: <Users className="h-4 w-4" /> },
-  { key: "markadur", label: "Vaktamarkaður", icon: <Store className="h-4 w-4" /> },
-  { key: "stillingar", label: "Stillingar", icon: <Settings className="h-4 w-4" /> },
+// Heiti flipa: lykillinn `tab.${key}` í admin-textasafninu.
+const TABS: { key: Tab; icon: React.ReactNode }[] = [
+  { key: "plan", icon: <CalendarRange className="h-4 w-4" /> },
+  { key: "laeknar", icon: <Users className="h-4 w-4" /> },
+  { key: "markadur", icon: <Store className="h-4 w-4" /> },
+  { key: "stillingar", icon: <Settings className="h-4 w-4" /> },
 ];
 
 export default function PlannerApp() {
+  const t = useT(admin);
+  const c = useCommon();
   const [tab, setTabState] = useState<Tab>("plan");
   const [month, setMonthState] = useState(() => shiftMonth(monthKey(new Date()), 1));
   const [data, setData] = useState<Overview | null>(null);
@@ -36,20 +41,20 @@ export default function PlannerApp() {
   // Slóðin geymir flipa og mánuð, svo hlekkur í tölvupósti opni rétta sýn.
   useEffect(() => {
     const q = new URLSearchParams(window.location.search);
-    const t = q.get("t");
+    const qt = q.get("t");
     const m = q.get("m");
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (t && TABS.some((x) => x.key === t)) setTabState(t as Tab);
+    if (qt && TABS.some((x) => x.key === qt)) setTabState(qt as Tab);
     if (m && /^\d{4}-\d{2}$/.test(m)) setMonthState(m);
   }, []);
 
-  const syncUrl = (t: Tab, m: string) => {
+  const syncUrl = (tb: Tab, m: string) => {
     const url = new URL(window.location.href);
-    url.searchParams.set("t", t);
+    url.searchParams.set("t", tb);
     url.searchParams.set("m", m);
     window.history.replaceState(null, "", url);
   };
-  const setTab = (t: Tab) => { setTabState(t); syncUrl(t, month); };
+  const setTab = (next: Tab) => { setTabState(next); syncUrl(next, month); };
   const setMonth = (m: string) => { setMonthState(m); syncUrl(tab, m); };
 
   // Svar fyrir mánuð sem búið er að fletta frá má ekki skrifa yfir nýrri gögn:
@@ -62,8 +67,8 @@ export default function PlannerApp() {
     if (r.ok) { setData(r); setLoadedFor(month); setError(null); return; }
     const status = (r as { status?: number }).status;
     if (status === 401) { window.location.href = "/hsu?next=/hsu/stjorn"; return; }
-    setError(r.error ?? "Gat ekki sótt gögn");
-  }, [month]);
+    setError(r.error ?? t("planner.loadFailed"));
+  }, [month, t]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -114,10 +119,10 @@ export default function PlannerApp() {
     return (
       <main className="flex min-h-screen items-center justify-center p-6">
         <Card className="max-w-md p-6 text-center">
-          <h1 className="text-lg font-bold">Enginn aðgangur</h1>
+          <h1 className="text-lg font-bold">{t("planner.noAccess")}</h1>
           <p className="mt-2 text-sm text-slate-600">{error}</p>
-          <p className="mt-2 text-xs text-slate-500">Vaktaskipulagið er fyrir yfirlækni HSU og stjórnendur Fjarlækninga (með tvíþátta auðkenningu).</p>
-          <a href="/hsu" className="mt-4 inline-block text-sm font-semibold text-[var(--hsu)] hover:underline">Fara á innskráningu</a>
+          <p className="mt-2 text-xs text-slate-500">{t("planner.noAccessBody")}</p>
+          <a href="/hsu" className="mt-4 inline-block text-sm font-semibold text-[var(--hsu)] hover:underline">{t("planner.toLogin")}</a>
         </Card>
       </main>
     );
@@ -130,12 +135,12 @@ export default function PlannerApp() {
   return (
     <div className="min-h-screen pb-20">
       <HsuHeader
-        unitName={data?.settings.unit_name ?? "Heilsugæslan í Vestmannaeyjum"}
-        subtitle="Vaktaskipulag"
+        unitName={data?.settings.unit_name ?? c("app.unit")}
+        subtitle={c("app.planner")}
         userName={data?.actor.label ?? "…"}
         links={isStaff
-          ? [{ href: "/admin", label: "Stjórnborð Fjarlækninga", icon: "grid" }]
-          : [{ href: "/hsu/min-sida", label: "Mín síða", icon: "user" }]}
+          ? [{ href: "/admin", label: c("nav.fjarAdmin"), icon: "grid" }]
+          : [{ href: "/hsu/min-sida", label: c("nav.myPage"), icon: "user" }]}
         actions={[
           { label: to("menu.tour"), onClick: () => setTourOpen(true), icon: "help" },
           { label: to("menu.guide"), onClick: () => { setTab("plan"); setGuideOpen(true); if (persist) void markOnboarding("guide:head", false); }, icon: "list" },
@@ -149,23 +154,23 @@ export default function PlannerApp() {
       <nav className="sticky top-16 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-3 py-2 sm:px-5">
           <div data-tour="tabs" className="flex gap-1 overflow-x-auto [scrollbar-width:none]">
-            {TABS.map((t) => (
-              <button key={t.key} onClick={() => setTab(t.key)} data-tour={`tab-${t.key}`}
+            {TABS.map((x) => (
+              <button key={x.key} onClick={() => setTab(x.key)} data-tour={`tab-${x.key}`}
                 className={cx("inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition",
-                  tab === t.key ? "bg-[var(--hsu)] text-white" : "text-slate-600 hover:bg-slate-100")}>
-                {t.icon} {t.label}
-                {t.key === "markadur" && awaiting > 0 && <span className="rounded-full bg-red-500 px-1.5 text-[11px] text-white">{awaiting}</span>}
+                  tab === x.key ? "bg-[var(--hsu)] text-white" : "text-slate-600 hover:bg-slate-100")}>
+                {x.icon} {t.dyn(`tab.${x.key}`)}
+                {x.key === "markadur" && awaiting > 0 && <span className="rounded-full bg-red-500 px-1.5 text-[11px] text-white">{awaiting}</span>}
               </button>
             ))}
           </div>
           {tab === "plan" && (
             <div data-tour="month-nav" className="flex items-center gap-1.5">
-              <button onClick={() => setMonth(shiftMonth(month, -1))} aria-label="Fyrri mánuður" className="rounded-xl border border-slate-200 bg-white p-2 hover:bg-slate-50"><ChevronLeft className="h-4 w-4" /></button>
+              <button onClick={() => setMonth(shiftMonth(month, -1))} aria-label={t("planner.prevMonth")} className="rounded-xl border border-slate-200 bg-white p-2 hover:bg-slate-50"><ChevronLeft className="h-4 w-4" /></button>
               <div className="w-40 text-center">
-                <div className="text-sm font-bold leading-tight">{capFirst(monthLabel(month))}</div>
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{monthRow ? MONTH_STATUS_IS[monthRow.status] : "Ekki hafið"}</div>
+                <div className="text-sm font-bold leading-tight">{capFirstL(monthLabelL(month, t.lang), t.lang)}</div>
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{monthStatusL(monthRow ? monthRow.status : "none", t.lang)}</div>
               </div>
-              <button onClick={() => setMonth(shiftMonth(month, 1))} aria-label="Næsti mánuður" className="rounded-xl border border-slate-200 bg-white p-2 hover:bg-slate-50"><ChevronRight className="h-4 w-4" /></button>
+              <button onClick={() => setMonth(shiftMonth(month, 1))} aria-label={t("planner.nextMonth")} className="rounded-xl border border-slate-200 bg-white p-2 hover:bg-slate-50"><ChevronRight className="h-4 w-4" /></button>
             </div>
           )}
         </div>
@@ -174,7 +179,7 @@ export default function PlannerApp() {
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         {isStaff && (
           <div className="mb-4">
-            <Notice tone="info">Þú ert innskráð(ur) sem stjórnandi Fjarlækninga og hefur fullan aðgang að vaktaskipulagi HSU.</Notice>
+            <Notice tone="info">{t("planner.staffNotice")}</Notice>
           </div>
         )}
         {error && <div className="mb-4"><Notice tone="err">{error}</Notice></div>}
@@ -198,7 +203,7 @@ export default function PlannerApp() {
           </>
         )}
         {data && data.doctors.length === 0 && tab !== "laeknar" && (
-          <div className="mt-4"><Notice tone="warn">Engir læknar eru skráðir. <button className="font-semibold underline" onClick={() => setTab("laeknar")}>Bæta við læknum</button></Notice></div>
+          <div className="mt-4"><Notice tone="warn">{t("planner.noDoctors")} <button className="font-semibold underline" onClick={() => setTab("laeknar")}>{t("planner.addDoctors")}</button></Notice></div>
         )}
       </main>
       <Tour steps={tourSteps} open={tourOpen && Boolean(data)} onClose={closeTour} />

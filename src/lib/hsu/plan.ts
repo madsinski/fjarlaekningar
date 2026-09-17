@@ -32,6 +32,8 @@ import {
   addDays, dayPartFor, fitsDayPart, isOvernight, isWeekendish, markFor, partOfShift, timesOverlap, wantsEveningOn, weekdayOf,
   type DayPart, type HsuPreference, type ShiftKind, type ShiftPeriod,
 } from "./types";
+import { translator, type Lang } from "./i18n/core";
+import { apiAdmin } from "./i18n/messages/api-admin";
 
 export interface PlanSlot {
   /** Auðkenni vaktar (eða "dagsetning|tegund" fyrir óvistaðar). */
@@ -83,17 +85,12 @@ export interface PlanOptions {
 
 export type UnfilledReason = "all-off" | "all-busy" | "all-rest" | "all-at-max" | "no-doctors" | "no-bakvakt-doctor" | "no-day-doctor" | "no-evening-doctor" | "no-fullday-doctor";
 
-export const UNFILLED_REASON_IS: Record<UnfilledReason, string> = {
-  "all-off": "Allir læknar hafa merkt „get ekki“ þennan dag",
-  "all-busy": "Allir sem geta eru þegar á vakt þennan dag",
-  "all-rest": "Allir sem geta eru í hvíld eftir fyrri vakt",
-  "all-at-max": "Allir sem geta eru komnir í hámarksfjölda vakta",
-  "no-doctors": "Engir virkir læknar",
-  "no-bakvakt-doctor": "Forvaktarlæknir þarf bakvakt en enginn með bakvaktarréttindi er laus",
-  "no-day-doctor": "Enginn laus læknir vinnur dagvinnu á þessum vikudegi",
-  "no-evening-doctor": "Enginn laus læknir óskaði eftir kvöldvöktum á þessum vikudegi",
-  "no-fullday-doctor": "Lausu læknarnir vinna aðeins hálfan dag — skiptu vaktinni um hádegi",
-};
+/** Ástæða ómannaðrar vaktar á tungumáli notandans. */
+export const unfilledReasonL = (r: UnfilledReason, lang: Lang): string => translator(apiAdmin, lang)(`unfilled.${r}`);
+
+const UNFILLED_REASONS: UnfilledReason[] = ["all-off", "all-busy", "all-rest", "all-at-max", "no-doctors", "no-bakvakt-doctor", "no-day-doctor", "no-evening-doctor", "no-fullday-doctor"];
+/** Íslensku textarnir (eldri notkun); nota unfilledReasonL þar sem texti birtist. */
+export const UNFILLED_REASON_IS = Object.fromEntries(UNFILLED_REASONS.map((r) => [r, unfilledReasonL(r, "is")])) as Record<UnfilledReason, string>;
 
 export interface DoctorStat {
   count: number;
@@ -500,17 +497,12 @@ export function statsFor(slots: PlanSlot[], doctors: PlanDoctor[], prefs: Record
 
 export type ConflictKind = "off" | "double" | "rest" | "max" | "skill" | "no_bakvakt" | "day_weekday" | "evening_weekday" | "day_part";
 
-export const CONFLICT_IS: Record<ConflictKind, string> = {
-  off: "Læknirinn merkti „get ekki“ þennan dag",
-  double: "Læknirinn er á tveimur vöktum á sama tíma",
-  rest: "Of stutt hvíld frá annarri vakt",
-  max: "Fleiri vaktir en hámark læknisins",
-  skill: "Læknirinn hefur ekki bakvaktarréttindi",
-  no_bakvakt: "Læknirinn þarf bakvakt en enginn er á bakvakt þennan dag",
-  day_weekday: "Læknirinn vinnur ekki dagvinnu á þessum vikudegi",
-  evening_weekday: "Læknirinn óskaði ekki eftir kvöldvöktum á þessum vikudegi",
-  day_part: "Læknirinn óskaði eftir hálfum degi — vaktin nær yfir annan tíma",
-};
+/** Árekstur á tungumáli notandans. */
+export const conflictL = (k: ConflictKind, lang: Lang): string => translator(apiAdmin, lang)(`conflict.${k}`);
+
+const CONFLICT_KINDS: ConflictKind[] = ["off", "double", "rest", "max", "skill", "no_bakvakt", "day_weekday", "evening_weekday", "day_part"];
+/** Íslensku textarnir (eldri notkun); nota conflictL þar sem texti birtist. */
+export const CONFLICT_IS = Object.fromEntries(CONFLICT_KINDS.map((k) => [k, conflictL(k, "is")])) as Record<ConflictKind, string>;
 
 /** Vakt → listi árekstra. Tómt = allt í lagi. */
 export function findConflicts(

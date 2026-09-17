@@ -5,7 +5,8 @@ import { audit, hashSecret, issueAccessLink, passwordProblem, pinProblem } from 
 import { DOCTOR_COLUMNS, fail, json, listDoctors, originOf, readJson, requireManager, toPublicDoctor } from "@/lib/hsu/server";
 import { cleanWeekdays, emailAllowed, sendInviteEmail } from "@/lib/hsu/doctors";
 import { isLang } from "@/lib/hsu/i18n/core";
-import { langOf } from "@/lib/hsu/i18n/server";
+import { langOf, tr } from "@/lib/hsu/i18n/server";
+import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
 import { DOCTOR_COLORS, HSU_EMAIL_DOMAIN, normalizeEmail } from "@/lib/hsu/types";
 
 export const runtime = "nodejs";
@@ -19,12 +20,13 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const auth = await requireManager(req);
   if ("res" in auth) return auth.res;
+  const t = tr(req, apiAdmin);
   const body = await readJson(req);
 
   const name = String(body.name ?? "").trim();
   const email = normalizeEmail(String(body.email ?? ""));
-  if (!name) return fail("Nafn vantar.");
-  if (!emailAllowed(email)) return fail(`Notandanafn þarf að vera @${HSU_EMAIL_DOMAIN} netfang.`);
+  if (!name) return fail(t("err.nameMissing"));
+  if (!emailAllowed(email)) return fail(t("err.emailDomain", { domain: HSU_EMAIL_DOMAIN }));
   const role = body.role === "head" ? "head" : "doctor";
   // Tungumál læknisins (viðmót og tölvupóstar); sjálfgefið það sem stjórnandinn notar.
   const lang = isLang(body.lang) ? body.lang : langOf(req);
@@ -44,14 +46,14 @@ export async function POST(req: Request) {
 
   if (mode === "manual") {
     const password = String(body.password ?? "");
-    const problem = passwordProblem(password);
+    const problem = passwordProblem(password, t.lang);
     if (problem) return fail(problem);
     row.password_hash = await hashSecret(password);
     row.activated_at = new Date().toISOString();
     // Lykilorð sem annar valdi á læknirinn að skipta um við fyrstu innskráningu.
     row.must_change_password = body.must_change_password !== false;
     if (body.pin) {
-      const pinErr = pinProblem(String(body.pin));
+      const pinErr = pinProblem(String(body.pin), t.lang);
       if (pinErr) return fail(pinErr);
       row.pin_hash = await hashSecret(String(body.pin));
     }
@@ -59,7 +61,7 @@ export async function POST(req: Request) {
 
   const { data, error } = await supabaseAdmin.from("hsu_doctors").insert(row).select(DOCTOR_COLUMNS).single();
   if (error) {
-    if (error.code === "23505") return fail("Læknir með þetta netfang er þegar skráður.", 409);
+    if (error.code === "23505") return fail(t("err.doctorExists"), 409);
     return fail(error.message, 500);
   }
 

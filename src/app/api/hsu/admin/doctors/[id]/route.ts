@@ -9,25 +9,29 @@ import { cleanWeekdays, emailAllowed, sendInviteEmail, sendPromotedEmail } from 
 import { isLang, translator } from "@/lib/hsu/i18n/core";
 import { accountEmails } from "@/lib/hsu/i18n/messages/account-emails";
 import { notifyDoctors } from "@/lib/hsu/notify";
+import { say } from "@/lib/hsu/shift-edit";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
 
 export const runtime = "nodejs";
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requireManager(req);
   if ("res" in auth) return auth.res;
+  const t = tr(req, apiAdmin);
   const { id } = await ctx.params;
-  if (!UUID_RE.test(id)) return fail("Ógild beiðni");
+  if (!UUID_RE.test(id)) return fail(t("err.badRequest"));
   const body = await readJson(req);
   const self = auth.actor.kind === "doctor" && auth.actor.doctor.id === id;
 
   const { data: current } = await supabaseAdmin.from("hsu_doctors").select(DOCTOR_COLUMNS).eq("id", id).maybeSingle();
-  if (!current) return fail("Læknir fannst ekki", 404);
+  if (!current) return fail(t("err.doctorNotFound"), 404);
 
   const patch: Record<string, unknown> = {};
   if (typeof body.name === "string" && body.name.trim()) patch.name = body.name.trim().slice(0, 120);
   if (typeof body.email === "string") {
     const email = normalizeEmail(body.email);
-    if (!emailAllowed(email)) return fail(`Notandanafn þarf að vera @${HSU_EMAIL_DOMAIN} netfang.`);
+    if (!emailAllowed(email)) return fail(t("err.emailDomain", { domain: HSU_EMAIL_DOMAIN }));
     patch.email = email;
   }
   if (typeof body.phone === "string") patch.phone = body.phone.slice(0, 40);
@@ -40,7 +44,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (body.fte !== undefined) patch.fte = Math.min(100, Math.max(0, Math.round(Number(body.fte)) || 0));
   if (body.role === "head" || body.role === "doctor") {
     // Yfirlæknir getur ekki lækkað sjálfan sig — þá gæti enginn stjórnað.
-    if (self && body.role !== "head") return fail("Þú getur ekki fjarlægt eigin yfirlæknisréttindi.");
+    if (self && body.role !== "head") return fail(t("err.cantDemoteSelf"));
     patch.role = body.role;
   }
   if (isLang(body.lang)) patch.lang = body.lang;
@@ -53,7 +57,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     patch.onboarding = seen;
   }
   if (typeof body.active === "boolean") {
-    if (self && !body.active) return fail("Þú getur ekki afvirkjað sjálfan þig.");
+    if (self && !body.active) return fail(t("err.cantDeactivateSelf"));
     patch.active = body.active;
   }
 
@@ -63,7 +67,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 
   if (body.set_password) {
     const pw = String(body.set_password);
-    const problem = passwordProblem(pw);
+    const problem = passwordProblem(pw, t.lang);
     if (problem) return fail(problem);
     patch.password_hash = await hashSecret(pw);
     patch.must_change_password = true;
@@ -77,7 +81,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (Object.keys(patch).length) {
     const { error } = await supabaseAdmin.from("hsu_doctors").update(patch).eq("id", id);
     if (error) {
-      if (error.code === "23505") return fail("Annar læknir er með þetta netfang.", 409);
+      if (error.code === "23505") return fail(t("err.emailTaken"), 409);
       return fail(error.message, 500);
     }
   }
@@ -92,9 +96,11 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   // breytinguna á að sjá hana strax, ekki næst þegar hann reynir að skrá sig inn.
   if (body.set_password && current.password_hash) {
     notifyDoctors({
-      origin, subject: "Lykilorði þínu var breytt", heading: "Lykilorði breytt",
-      notices: [{ doctorId: id, line: `${auth.actor.label} setti nýtt lykilorð á aðganginn þinn að vaktakerfinu. Þú hefur verið skráð(ur) út af öllum tækjum. Hafðu samband við yfirlækni ef þú kannast ekki við þetta.` }],
-      cta: { label: "Skrá inn", path: "/hsu" },
+      origin,
+      subject: say((l) => l("password.subject")),
+      heading: say((l) => l("password.heading")),
+      notices: [{ doctorId: id, line: say((l) => l("password.line", { by: auth.actor.label })) }],
+      cta: { label: say((l) => l("password.cta")), path: "/hsu" },
     });
   }
 
@@ -144,9 +150,10 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requireManager(req);
   if ("res" in auth) return auth.res;
+  const t = tr(req, apiAdmin);
   const { id } = await ctx.params;
-  if (!UUID_RE.test(id)) return fail("Ógild beiðni");
-  if (auth.actor.kind === "doctor" && auth.actor.doctor.id === id) return fail("Þú getur ekki eytt sjálfum þér.");
+  if (!UUID_RE.test(id)) return fail(t("err.badRequest"));
+  if (auth.actor.kind === "doctor" && auth.actor.doctor.id === id) return fail(t("err.cantDeleteSelf"));
   // Dagatal læknisins hreinsað áður en röðin hverfur — annars sitja vaktirnar
   // eftir í Google-dagatali hans án þess að nokkur geti fjarlægt þær.
   await hsuSync.disconnect(id).catch(() => {});

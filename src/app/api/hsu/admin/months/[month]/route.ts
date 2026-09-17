@@ -10,20 +10,26 @@ import {
 } from "@/lib/hsu/server";
 import { requiredSlots, toPlanDoctors, toPlanSlots } from "@/lib/hsu/plan";
 import { notifyDoctors } from "@/lib/hsu/notify";
-import { MONTH_STATUS_ORDER, dayLabel, monthLabel, type MonthStatus } from "@/lib/hsu/types";
+import { say } from "@/lib/hsu/shift-edit";
+import { MONTH_STATUS_ORDER, type MonthStatus } from "@/lib/hsu/types";
+import { DEFAULT_LANG, isLang, translator, type Lang } from "@/lib/hsu/i18n/core";
+import { dayLabelL, monthLabelL } from "@/lib/hsu/i18n/format";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
 
 export const runtime = "nodejs";
 
 async function activeDoctors() {
-  const { data } = await supabaseAdmin.from("hsu_doctors").select("id, name, email").eq("active", true);
-  return data ?? [];
+  const { data } = await supabaseAdmin.from("hsu_doctors").select("id, name, email, lang").eq("active", true);
+  return (data ?? []).map((d) => ({ ...d, lang: (isLang(d.lang) ? d.lang : DEFAULT_LANG) as Lang }));
 }
 
 export async function PUT(req: Request, ctx: { params: Promise<{ month: string }> }) {
   const auth = await requireManager(req);
   if ("res" in auth) return auth.res;
+  const t = tr(req, apiAdmin);
   const { month } = await ctx.params;
-  if (!MONTH_RE.test(month)) return fail("Ógildur mánuður");
+  if (!MONTH_RE.test(month)) return fail(t("err.badMonth"));
   const body = await readJson(req);
   const origin = originOf(req);
   const before = await loadMonth(month);
@@ -41,12 +47,12 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
 
   if (status === "published" && before?.status !== "published") {
     const shifts = await loadMonthShifts(month);
-    if (shifts.length === 0) return fail("Ekkert vaktaplan er til fyrir mánuðinn.");
+    if (shifts.length === 0) return fail(t("err.noPlan"));
     const [types, doctors] = await Promise.all([loadShiftTypes(), listDoctors(false)]);
     // Aðeins vaktir sem á að manna: bakvakt sem enginn þarf er ekki gat.
     const empty = requiredSlots(toPlanSlots(shifts, types), toPlanDoctors(doctors)).filter((s) => !s.doctorId).length;
     if (empty > 0 && !body.allow_gaps) {
-      return json({ ok: false, error: `${empty} vakt${empty === 1 ? "" : "ir"} án læknis.`, needsConfirm: "gaps", empty }, 409);
+      return json({ ok: false, error: t.n("err.gaps", empty), needsConfirm: "gaps", empty }, 409);
     }
     patch.published_at = new Date().toISOString();
   }
@@ -74,26 +80,30 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
     const shifts = await loadMonthShifts(month);
     const withShifts = [...new Set(shifts.map((s) => s.doctor_id).filter(Boolean))] as string[];
     notifyDoctors({
-      origin, subject: `Vaktaplan ${monthLabel(month)} tekið úr birtingu`, heading: "Vaktaplan tekið úr birtingu",
+      origin,
+      subject: say((l) => l("unpublish.subject", { month: monthLabelL(month, l.lang) })),
+      heading: say((l) => l("unpublish.heading")),
       notices: withShifts.map((doctorId) => ({
         doctorId,
-        line: `${auth.actor.label} tók vaktaplanið fyrir ${monthLabel(month)} úr birtingu til endurskoðunar. Vaktirnar eru ekki lengur í dagatalinu þínu; þú færð að vita þegar það er birt aftur.`,
+        line: say((l) => l("unpublish.line", { by: auth.actor.label, month: monthLabelL(month, l.lang) })),
       })),
-      cta: { label: "Opna mína síðu", path: "/hsu/min-sida" },
+      cta: { label: say((l) => l("unpublish.cta")), path: "/hsu/min-sida" },
       email: "digest",
     });
   }
   const notify = Boolean(body.notify);
-  const label = monthLabel(month);
   if (notify && status === "collecting") {
-    const deadline = saved.prefs_deadline ? ` fyrir ${dayLabel(saved.prefs_deadline)}` : "";
+    const deadline: string | null = saved.prefs_deadline ?? null;
+    const url = `${origin}/hsu/min-sida?t=oskir&m=${month}`;
     after(async () => {
       for (const d of await activeDoctors()) {
-        await sendHsuEmail(d.email, `Skráðu vaktaóskir fyrir ${label}`, hsuEmailHtml({
-          origin, heading: `Vaktaóskir fyrir ${label}`,
-          paragraphs: [`Sæl/l ${d.name}.`, `Opnað hefur verið fyrir vaktaóskir fyrir ${label}. Merktu þá daga sem þú getur ekki unnið og þá sem þú vilt helst vinna${deadline}.`, ...(saved.note ? [saved.note] : [])],
-          cta: { label: "Skrá óskir", url: `${origin}/hsu/min-sida?t=oskir&m=${month}` },
-        }), `Skráðu vaktaóskir fyrir ${label}${deadline}: ${origin}/hsu/min-sida?t=oskir&m=${month}`);
+        const tl = translator(apiAdmin, d.lang);
+        const vars = { month: monthLabelL(month, d.lang), date: deadline ? dayLabelL(deadline, d.lang) : "", url };
+        await sendHsuEmail(d.email, tl("open.subject", vars), hsuEmailHtml({
+          origin, lang: d.lang, heading: tl("open.heading", vars),
+          paragraphs: [tl("email.hello", { name: d.name }), tl(deadline ? "open.bodyDeadline" : "open.body", vars), ...(saved.note ? [saved.note] : [])],
+          cta: { label: tl("open.cta"), url },
+        }), tl(deadline ? "open.textDeadline" : "open.text", vars));
       }
     });
   }
@@ -102,11 +112,13 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
       const shifts = await loadMonthShifts(month);
       for (const d of await activeDoctors()) {
         const n = shifts.filter((s) => s.doctor_id === d.id).length;
-        await sendHsuEmail(d.email, `Vaktaplan ${label} er birt`, hsuEmailHtml({
-          origin, heading: `Vaktaplan ${label}`,
-          paragraphs: [`Sæl/l ${d.name}.`, `Vaktaplan fyrir ${label} hefur verið birt. Þú ert með ${n} vakt${n === 1 ? "" : "ir"}.`, "Vaktirnar birtast sjálfkrafa í dagatalinu þínu ef þú hefur tengt það."],
-          cta: { label: "Sjá vaktirnar mínar", url: `${origin}/hsu/min-sida` },
-        }), `Vaktaplan ${label} er birt. Þú ert með ${n} vaktir. ${origin}/hsu/min-sida`);
+        const tl = translator(apiAdmin, d.lang);
+        const vars = { month: monthLabelL(month, d.lang), url: `${origin}/hsu/min-sida` };
+        await sendHsuEmail(d.email, tl("published.subject", vars), hsuEmailHtml({
+          origin, lang: d.lang, heading: tl("published.heading", vars),
+          paragraphs: [tl("email.hello", { name: d.name }), tl.n("published.body", n, vars), tl("published.calendar")],
+          cta: { label: tl("published.cta"), url: vars.url },
+        }), tl.n("published.text", n, vars));
       }
     });
   }
@@ -125,10 +137,11 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
 export async function POST(req: Request, ctx: { params: Promise<{ month: string }> }) {
   const auth = await requireManager(req);
   if ("res" in auth) return auth.res;
+  const t = tr(req, apiAdmin);
   const { month } = await ctx.params;
-  if (!MONTH_RE.test(month)) return fail("Ógildur mánuður");
+  if (!MONTH_RE.test(month)) return fail(t("err.badMonth"));
   const body = await readJson(req);
-  if (body.action !== "remind") return fail("Óþekkt aðgerð");
+  if (body.action !== "remind") return fail(t("err.unknownAction"));
   const scope = body.scope === "all" || body.scope === "one" ? body.scope : "missing";
   const origin = originOf(req);
   const [prefs, m, doctors] = await Promise.all([loadPreferences(month), loadMonth(month), activeDoctors()]);
@@ -136,7 +149,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ month: string 
   const chosen = scope === "all" ? doctors
     : scope === "one" ? doctors.filter((d) => d.id === body.doctorId)
     : doctors.filter((d) => !done.has(d.id));
-  if (scope === "one" && !chosen.length) return fail("Læknirinn fannst ekki", 404);
+  if (scope === "one" && !chosen.length) return fail(t("err.theDoctorNotFound"), 404);
 
   const targets: typeof doctors = [];
   let skipped = 0;
@@ -144,25 +157,31 @@ export async function POST(req: Request, ctx: { params: Promise<{ month: string 
     if (await throttle(`remind:${month}:${d.id}`, 1, 60)) targets.push(d); else skipped++;
   }
 
-  const label = monthLabel(month);
-  const deadline = m?.prefs_deadline ? ` fyrir ${dayLabel(m.prefs_deadline)}` : "";
+  const deadline: string | null = m?.prefs_deadline ?? null;
   const link = `/hsu/min-sida?t=oskir&m=${month}`;
-  const lineFor = (id: string) => done.has(id)
-    ? `Þú hefur sent óskir fyrir ${label}. Farðu yfir þær${deadline} ef eitthvað hefur breyst.`
-    : `Við eigum eftir að fá vaktaóskirnar þínar fyrir ${label}${deadline}.`;
+  const varsFor = (lang: Lang) => ({ month: monthLabelL(month, lang), date: deadline ? dayLabelL(deadline, lang) : "" });
+  const lineFor = (id: string, lang: Lang) => {
+    const tl = translator(apiAdmin, lang);
+    const key = done.has(id)
+      ? (deadline ? "remind.doneDeadline" : "remind.done")
+      : (deadline ? "remind.missingDeadline" : "remind.missing");
+    return tl(key, varsFor(lang));
+  };
 
   if (targets.length) {
     await supabaseAdmin.from("hsu_notifications").insert(targets.map((d) => ({
-      doctor_id: d.id, title: `Áminning: vaktaóskir fyrir ${label}`, lines: [lineFor(d.id)], link,
+      doctor_id: d.id, title: translator(apiAdmin, d.lang)("remind.title", varsFor(d.lang)), lines: [lineFor(d.id, d.lang)], link,
     })));
   }
   after(async () => {
     for (const d of targets) {
-      await sendHsuEmail(d.email, `Áminning: vaktaóskir fyrir ${label}`, hsuEmailHtml({
-        origin, heading: "Áminning um vaktaóskir",
-        paragraphs: [`Sæl/l ${d.name}.`, lineFor(d.id)],
-        cta: { label: done.has(d.id) ? "Skoða óskirnar mínar" : "Skrá óskir", url: `${origin}${link}` },
-      }), `Áminning: ${lineFor(d.id)} ${origin}${link}`);
+      const tl = translator(apiAdmin, d.lang);
+      const line = lineFor(d.id, d.lang);
+      await sendHsuEmail(d.email, tl("remind.title", varsFor(d.lang)), hsuEmailHtml({
+        origin, lang: d.lang, heading: tl("remind.heading"),
+        paragraphs: [tl("email.hello", { name: d.name }), line],
+        cta: { label: tl(done.has(d.id) ? "remind.ctaView" : "remind.ctaSubmit"), url: `${origin}${link}` },
+      }), tl("remind.text", { line, url: `${origin}${link}` }));
     }
   });
   await audit(auth.actor.label, "month.remind", month, { count: targets.length, scope, names: targets.map((d) => d.name) });
@@ -174,7 +193,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ month: string }
   const auth = await requireManager(req);
   if ("res" in auth) return auth.res;
   const { month } = await ctx.params;
-  if (!MONTH_RE.test(month)) return fail("Ógildur mánuður");
+  if (!MONTH_RE.test(month)) return fail(tr(req, apiAdmin)("err.badMonth"));
   return json({ ok: true, reminders: await recentReminders(month) });
 }
 

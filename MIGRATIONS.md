@@ -29,6 +29,8 @@ modules also need a **Storage bucket** — noted inline.
 
 | 20 | `supabase/vinnustod-schema.sql` | Vinnustöð — notendur (eigin innskráning eins og vaktakerfið), lotur, traust tæki, spurningar/svör, tilkynningar, stillingar; `sms_messages.sent_by_gatt`. Allar `gatt_*` töflur lokaðar vöfrum. Viðbót sama dag: `gatt_threads.owner_*` (spurningar frá starfsfólki og læknum) og `gatt_messages.author_hsu`; `gatt_push_subscriptions` (tilkynningar í tæki); `gatt_presence` (hver er við). Sjá `docs/vinnustod.md`. | ✅ done (2026-09-16, viðbót líka) |
 
+| 21 | `supabase/hsu-schema.sql` (viðbót) | Tungumál og innleiðing: `hsu_doctors.lang` (`is`/`en`, viðmót og tölvupóstar) og `hsu_doctors.onboarding` (hvað notandinn hefur séð — kynning og leiðarvísir). Sjá `docs/hsu-i18n.md`. | ✅ done (2026-09-17) |
+
 > After running a migration, the matching admin module works immediately (no
 > redeploy needed — the tables just start returning data).
 

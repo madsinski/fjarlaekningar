@@ -5,20 +5,25 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { DEVICE_COOKIE, SESSION_COOKIE, hashSecret, passwordProblem, sha256, verifySecret } from "@/lib/hsu/auth";
 import { fail, json, originOf, readJson, requireDoctor } from "@/lib/hsu/server";
 import { notifyDoctors } from "@/lib/hsu/notify";
+import { translator } from "@/lib/hsu/i18n/core";
+import { notifyMsgs } from "@/lib/hsu/i18n/messages/notify";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
 
 export const runtime = "nodejs";
 
 export async function PUT(req: Request) {
   const auth = await requireDoctor(req);
   if ("res" in auth) return auth.res;
+  const t = tr(req, apiDoctor);
   const body = await readJson(req);
   const next = String(body.next ?? "");
-  const problem = passwordProblem(next);
+  const problem = passwordProblem(next, t.lang);
   if (problem) return fail(problem);
 
   const { data: d } = await supabaseAdmin.from("hsu_doctors").select("password_hash, must_change_password").eq("id", auth.doctor.id).single();
-  if (!(await verifySecret(String(body.current ?? ""), d?.password_hash))) return fail("Núverandi lykilorð er rangt.", 401);
-  if (await verifySecret(next, d?.password_hash)) return fail("Nýja lykilorðið má ekki vera það sama og það gamla.");
+  if (!(await verifySecret(String(body.current ?? ""), d?.password_hash))) return fail(t("password.currentWrong"), 401);
+  if (await verifySecret(next, d?.password_hash)) return fail(t("password.sameAsOld"));
 
   await supabaseAdmin
     .from("hsu_doctors")
@@ -34,9 +39,11 @@ export async function PUT(req: Request) {
   await supabaseAdmin.from("hsu_sessions").delete().eq("doctor_id", auth.doctor.id).neq("token_hash", sha256(token));
   await supabaseAdmin.from("hsu_devices").delete().eq("doctor_id", auth.doctor.id).neq("token_hash", sha256(device));
   notifyDoctors({
-    origin: originOf(req), subject: "Lykilorði þínu var breytt", heading: "Lykilorði breytt",
-    notices: [{ doctorId: auth.doctor.id, line: "Lykilorðinu að vaktakerfinu var breytt og önnur tæki skráð út. Ef þetta varst ekki þú skaltu strax velja nýtt lykilorð með „Gleymt lykilorð“ og láta yfirlækni vita." }],
-    cta: { label: "Skrá inn", path: "/hsu" },
+    origin: originOf(req),
+    subject: (l) => translator(notifyMsgs, l)("password.subject"),
+    heading: (l) => translator(notifyMsgs, l)("password.heading"),
+    notices: [{ doctorId: auth.doctor.id, line: (l) => translator(notifyMsgs, l)("password.line") }],
+    cta: { label: (l) => translator(notifyMsgs, l)("cta.login"), path: "/hsu" },
   });
   return json({ ok: true });
 }

@@ -2,6 +2,8 @@
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { MONTH_RE, fail, json, loadMonth, loadMonthShifts, loadShiftTypes, requireDoctor } from "@/lib/hsu/server";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
 
 export const runtime = "nodejs";
 
@@ -9,7 +11,7 @@ export async function GET(req: Request) {
   const auth = await requireDoctor(req);
   if ("res" in auth) return auth.res;
   const month = new URL(req.url).searchParams.get("month") ?? "";
-  if (!MONTH_RE.test(month)) return fail("Ógildur mánuður");
+  if (!MONTH_RE.test(month)) return fail(tr(req, apiDoctor)("req.invalidMonth"));
   const m = await loadMonth(month);
   if (m?.status !== "published") return json({ ok: true, published: false, shifts: [] });
   const [allShifts, types, doctors] = await Promise.all([

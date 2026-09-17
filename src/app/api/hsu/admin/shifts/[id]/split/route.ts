@@ -9,9 +9,12 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit } from "@/lib/hsu/auth";
 import { hsuSync } from "@/lib/hsu/calendar";
 import { shiftPhrase } from "@/lib/hsu/market";
-import { notifyDoctors } from "@/lib/hsu/notify";
+import { notifyDoctors, type Localized } from "@/lib/hsu/notify";
+import { say } from "@/lib/hsu/shift-edit";
 import { SHIFT_COLUMNS, UUID_RE, fail, json, originOf, readJson, requireManager } from "@/lib/hsu/server";
 import { hhmm, isOvernight, minutesOf, splitTimeOf } from "@/lib/hsu/types";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
 
 export const runtime = "nodejs";
 
@@ -20,13 +23,14 @@ const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requireManager(req);
   if ("res" in auth) return auth.res;
+  const t = tr(req, apiAdmin);
   const { id } = await ctx.params;
-  if (!UUID_RE.test(id)) return fail("Ógild beiðni");
+  if (!UUID_RE.test(id)) return fail(t("err.badRequest"));
   const body = await readJson(req);
   const action = body.action === "merge" ? "merge" : "split";
 
   const { data: shift } = await supabaseAdmin.from("hsu_shifts").select(SHIFT_COLUMNS).eq("id", id).maybeSingle();
-  if (!shift) return fail("Vaktin fannst ekki", 404);
+  if (!shift) return fail(t("err.shiftNotFound"), 404);
   const { data: type } = shift.shift_type_id
     ? await supabaseAdmin.from("hsu_shift_types").select("id, short, name, starts, ends, split_at").eq("id", shift.shift_type_id).maybeSingle()
     : { data: null };
@@ -41,17 +45,18 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     .eq("shift_type_id", shift.shift_type_id ?? "")
     .neq("id", id);
 
-  const tellDoctor = (line: string, doctorId: string | null) => {
+  const tellDoctor = (line: Localized, doctorId: string | null) => {
     if (!doctorId || !shift.published) return;
-    notifyDoctors({ origin, subject: "Breyting á vakt", heading: "Breyting á vakt", notices: [{ doctorId, line }], email: "digest" });
+    const subject = say((l) => l("shiftEdit.subject"));
+    notifyDoctors({ origin, subject, heading: subject, notices: [{ doctorId, line }], email: "digest" });
     after(async () => { await hsuSync.syncDoctors([doctorId]); });
   };
 
   if (action === "split") {
-    if (isOvernight(shift.starts, shift.ends)) return fail("Aðeins má skipta vakt sem er innan sama dags.");
+    if (isOvernight(shift.starts, shift.ends)) return fail(t("err.splitSameDay"));
     const at = typeof body.at === "string" && TIME_RE.test(body.at) ? body.at : splitTimeOf(type ?? {});
     const [s, e, m] = [minutesOf(shift.starts), minutesOf(shift.ends), minutesOf(at)];
-    if (!(s < m && m < e)) return fail(`Skiptingin verður að vera á milli ${hhmm(shift.starts)} og ${hhmm(shift.ends)}.`);
+    if (!(s < m && m < e)) return fail(t("err.splitRange", { from: hhmm(shift.starts), to: hhmm(shift.ends) }));
 
     const used = new Set((siblings ?? []).map((x) => x.slot_index ?? 0));
     let index = 0;
@@ -66,7 +71,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     if (error) return fail(error.message, 500);
 
     await audit(auth.actor.label, "shift.split", month, { shiftId: id, at });
-    tellDoctor(`Vaktinni þinni ${shiftPhrase(shift)} var skipt: þú ert nú á ${hhmm(shift.starts)}–${hhmm(at)}.`, shift.doctor_id);
+    tellDoctor(say((l) => l("shiftEdit.split", { shift: shiftPhrase(shift, l.lang), from: hhmm(shift.starts), to: hhmm(at) })), shift.doctor_id);
     return json({ ok: true, shift: { ...shift, ends: at, label: `${base} f.h.` }, created });
   }
 
@@ -74,9 +79,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const before = (siblings ?? []).find((x) => x.ends.slice(0, 5) === shift.starts.slice(0, 5));
   const afterHalf = (siblings ?? []).find((x) => x.starts.slice(0, 5) === shift.ends.slice(0, 5));
   const other = afterHalf ?? before;
-  if (!other) return fail("Enginn samliggjandi helmingur fannst.");
+  if (!other) return fail(t("err.noAdjacentHalf"));
   if (other.doctor_id && shift.doctor_id && other.doctor_id !== shift.doctor_id) {
-    return fail("Læknar eru á báðum helmingum. Taktu annan af áður en þú sameinar.");
+    return fail(t("err.bothHalves"));
   }
   const keep = afterHalf ? shift : other;   // fyrri helmingurinn lifir
   const drop = afterHalf ? other : shift;
@@ -91,6 +96,6 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (delErr) return fail(delErr.message, 500);
 
   await audit(auth.actor.label, "shift.merge", month, { kept: keep.id, removed: drop.id });
-  tellDoctor(`Vaktin þín ${shiftPhrase(keep)} nær nú yfir allan daginn: ${hhmm(keep.starts)}–${hhmm(drop.ends)}.`, doctor);
+  tellDoctor(say((l) => l("shiftEdit.merged", { shift: shiftPhrase(keep, l.lang), from: hhmm(keep.starts), to: hhmm(drop.ends) })), doctor);
   return json({ ok: true, merged: keep.id });
 }

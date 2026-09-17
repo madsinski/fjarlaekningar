@@ -4,23 +4,26 @@
 import { audit } from "@/lib/hsu/auth";
 import { ShiftRuleError, applyShiftChanges, type ShiftChange } from "@/lib/hsu/shift-edit";
 import { UUID_RE, fail, json, originOf, readJson, requireManager } from "@/lib/hsu/server";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   const auth = await requireManager(req);
   if ("res" in auth) return auth.res;
+  const t = tr(req, apiAdmin);
   const body = await readJson(req);
   const raw = Array.isArray(body.changes) ? body.changes : [];
   const changes: ShiftChange[] = [];
   for (const c of raw.slice(0, 200)) {
     const id = String((c as ShiftChange)?.id ?? "");
     const doc = (c as ShiftChange)?.doctor_id ? String((c as ShiftChange).doctor_id) : null;
-    if (!UUID_RE.test(id) || (doc && !UUID_RE.test(doc))) return fail("Ógild beiðni");
+    if (!UUID_RE.test(id) || (doc && !UUID_RE.test(doc))) return fail(t("err.badRequest"));
     changes.push({ id, doctor_id: doc });
   }
   try {
-    const r = await applyShiftChanges(changes, { actor: auth.actor.label, origin: originOf(req), notify: body.notify !== false });
+    const r = await applyShiftChanges(changes, { actor: auth.actor.label, origin: originOf(req), notify: body.notify !== false, lang: t.lang });
     if (r.changed) await audit(auth.actor.label, "shift.assign", typeof body.month === "string" ? body.month : null, { changes: changes.slice(0, 20) });
     return json({ ok: true, ...r });
   } catch (e) {

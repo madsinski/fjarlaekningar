@@ -6,10 +6,20 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { hsuSync } from "./calendar";
 import { audit } from "./auth";
 import { hsuEmailHtml, sendHsuEmail } from "./server";
-import { dayLabel, hhmm, timesOverlap, weekdayOf, WEEKDAY_LONG_IS } from "./types";
+import { hhmm, timesOverlap } from "./types";
+import { DEFAULT_LANG, isLang, translator, type Lang } from "./i18n/core";
+import { dayLabelL, weekdayLongL, weekdayOfDate } from "./i18n/format";
+import { notifyMsgs } from "./i18n/messages/notify";
 
-export function shiftPhrase(s: { shift_date: string; starts: string; ends: string; label?: string }): string {
-  return `${s.label ? `${s.label} ` : ""}${WEEKDAY_LONG_IS[weekdayOf(s.shift_date)]} ${dayLabel(s.shift_date)} kl. ${hhmm(s.starts)}–${hhmm(s.ends)}`;
+/** „FV mánudagur 5. okt. kl. 08:00–16:00“ á tungumáli viðtakandans. */
+export function shiftPhrase(s: { shift_date: string; starts: string; ends: string; label?: string }, lang: Lang = "is"): string {
+  return translator(notifyMsgs, lang)("shift.phrase", {
+    label: s.label ? `${s.label} ` : "",
+    weekday: weekdayLongL(weekdayOfDate(s.shift_date), lang),
+    date: dayLabelL(s.shift_date, lang),
+    from: hhmm(s.starts),
+    to: hhmm(s.ends),
+  });
 }
 
 /** Færa vakt til nýs læknis og loka öllum opnum boðum á henni. */
@@ -40,20 +50,24 @@ export async function transferShift(opts: {
   after(async () => {
     await hsuSync.syncDoctors([opts.fromDoctor, opts.toDoctor]);
     const ids = [opts.fromDoctor, opts.toDoctor].filter(Boolean) as string[];
-    const { data: docs } = await supabaseAdmin.from("hsu_doctors").select("id, name, email").in("id", ids);
+    const { data: docs } = await supabaseAdmin.from("hsu_doctors").select("id, name, email, lang").in("id", ids);
     const from = docs?.find((d) => d.id === opts.fromDoctor);
     const to = docs?.find((d) => d.id === opts.toDoctor);
     if (from && to) {
+      const lang: Lang = isLang(from.lang) ? from.lang : DEFAULT_LANG;
+      const t = translator(notifyMsgs, lang);
+      const vars = { name: to.name, shift: shiftPhrase(shift, lang) };
       await sendHsuEmail(
         from.email,
-        `${to.name} tók vaktina þína`,
+        t("market.taken.subject", vars),
         hsuEmailHtml({
           origin: opts.origin,
-          heading: "Vaktin er komin til annars læknis",
-          paragraphs: [`${to.name} hefur tekið vaktina ${shiftPhrase(shift)}.`, "Hún er farin úr vaktalistanum þínum og dagatalinu."],
-          cta: { label: "Opna mína síðu", url: `${opts.origin}/hsu/min-sida` },
+          lang,
+          heading: t("market.taken.heading"),
+          paragraphs: [t("market.taken.line", vars), t("market.taken.gone")],
+          cta: { label: t("cta.myPage"), url: `${opts.origin}/hsu/min-sida` },
         }),
-        `${to.name} tók vaktina ${shiftPhrase(shift)}.`,
+        t("market.taken.text", vars),
       );
     }
   });

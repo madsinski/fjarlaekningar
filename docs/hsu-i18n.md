@@ -69,11 +69,14 @@ innri rökfræði en eiga ekki að birtast notanda.
 | --- | --- |
 | `common.ts` | mánuðir, vikudagar, stöður, hlutverk, almennir hnappar, frídagar |
 | `onboarding.ts` | kynning á kerfinu (læknar og yfirlæknir), leiðarvísir yfirlæknis |
-| `account-emails.ts` | boð, yfirlæknir, útlit tölvupósta |
-| `auth.ts` | innskráning, aðgangskóði, virkjun, gleymt lykilorð |
-| `portal.ts` | Mín síða (yfirlit, vaktir, óskir, markaður, plan, stillingar, dagatal) |
-| `prefs.ts` | óskaskráning (sameiginleg lækni og yfirlækni) |
-| `stjorn.ts` | vaktaskipulag: mánaðarflæði, læknar, markaður, stillingar |
+| `account-emails.ts` | boð (læknir / yfirlæknir), yfirlæknir skipaður, útlit tölvupósta |
+| `auth.ts` | innskráning, aðgangskóði, virkjun, síðuheiti |
+| `portal.ts` | Mín síða: yfirlit, mínar vaktir, vaktamarkaður |
+| `prefs.ts` | óskaskráning (sameiginleg lækni og yfirlækni) og vaktaplan læknis |
+| `account.ts` | aðgangur, aðgangskóði, lykilorð, dagatal |
+| `stjorn.ts` | mánaðarflæði yfirlæknis og breytingaskrá |
 | `board.ts` | vaktaplanið (draga og sleppa) |
-| `api.ts` | villuboð og svör API-leiða |
-| `notify.ts` | tölvupóstar og tilkynningar um vaktir, óskir og markað |
+| `admin.ts` | læknar, stillingar, vaktamarkaður og rammi vaktaskipulags |
+| `api-admin.ts` | villuboð, tölvupóstar og tilkynningar úr `/api/hsu/admin/*` |
+| `api-doctor.ts` | villuboð úr innskráningu og `/api/hsu/me/*` |
+| `notify.ts` | tölvupóstar og tilkynningar til lækna og yfirlækna (samantekt, markaður) |

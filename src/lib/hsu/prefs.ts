@@ -2,6 +2,8 @@
 // Server-only.
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { translator, type Lang } from "./i18n/core";
+import { apiDoctor } from "./i18n/messages/api-doctor";
 import { datesInMonth, shiftMonth, type DayMark, type DayPart, type Mark, type HsuPreference, type PrefStatus } from "./types";
 
 /** 0=sun … 6=lau. Tómt fylki = allir dagar. */
@@ -38,7 +40,7 @@ export interface PrefInput {
   note: string;
 }
 
-export function sanitizePrefs(month: string, body: Record<string, unknown>): PrefInput | string {
+export function sanitizePrefs(month: string, body: Record<string, unknown>, lang: Lang = "is"): PrefInput | string {
   const p: PrefInput = {
     day_marks: cleanMarks<DayMark>(body.day_marks, new Set(datesInMonth(month)), ["off", "want", "ok"]),
     weekday_marks: cleanMarks<Mark>(body.weekday_marks, WEEKDAYS, ["off", "want"]),
@@ -50,7 +52,7 @@ export function sanitizePrefs(month: string, body: Record<string, unknown>): Pre
     note: typeof body.note === "string" ? body.note.slice(0, 1000) : "",
   };
   if (p.min_shifts != null && p.max_shifts != null && p.min_shifts > p.max_shifts) {
-    return "Lágmark getur ekki verið hærra en hámark.";
+    return translator(apiDoctor, lang)("prefs.minAboveMax");
   }
   return p;
 }

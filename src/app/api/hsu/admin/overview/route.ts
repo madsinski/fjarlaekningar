@@ -4,6 +4,8 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import {
   MONTH_RE, fail, json, listDoctors, loadMonth, loadMonthShifts, loadPendingSwaps, loadPreferences, loadShiftTypes, requireManager,
 } from "@/lib/hsu/server";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
 
 export const runtime = "nodejs";
 
@@ -11,7 +13,7 @@ export async function GET(req: Request) {
   const auth = await requireManager(req);
   if ("res" in auth) return auth.res;
   const month = new URL(req.url).searchParams.get("month") ?? "";
-  if (!MONTH_RE.test(month)) return fail("Ógildur mánuður");
+  if (!MONTH_RE.test(month)) return fail(tr(req, apiAdmin)("err.badMonth"));
 
   try {
     const today = new Date().toISOString().slice(0, 10);

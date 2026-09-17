@@ -4,6 +4,8 @@ import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { clientIp, hashSecret, passwordProblem, pinProblem, sameOrigin, sha256, startSession, throttle, trustDevice } from "@/lib/hsu/auth";
 import { fail, json, readJson } from "@/lib/hsu/server";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
 
 export const runtime = "nodejs";
 
@@ -19,25 +21,27 @@ async function doctorForToken(token: string) {
 }
 
 export async function GET(req: Request) {
-  if (!(await throttle(`invite:${clientIp(req)}`, 60, 900))) return fail("Of margar tilraunir.", 429);
+  const t = tr(req, apiDoctor);
+  if (!(await throttle(`invite:${clientIp(req)}`, 60, 900))) return fail(t("invite.tooMany"), 429);
   const token = new URL(req.url).searchParams.get("token") ?? "";
   const d = await doctorForToken(token);
-  if (!d) return fail("Hlekkurinn er útrunninn eða hefur þegar verið notaður.", 404);
+  if (!d) return fail(t("invite.expired"), 404);
   return json({ ok: true, name: d.name, email: d.email, reset: Boolean(d.password_hash) });
 }
 
 export async function POST(req: Request) {
-  if (!sameOrigin(req)) return fail("Ógild beiðni", 403);
+  const t = tr(req, apiDoctor);
+  if (!sameOrigin(req)) return fail(t("req.invalid"), 403);
   const body = await readJson(req);
   const d = await doctorForToken(String(body.token ?? ""));
-  if (!d) return fail("Hlekkurinn er útrunninn eða hefur þegar verið notaður.", 404);
+  if (!d) return fail(t("invite.expired"), 404);
 
   const password = String(body.password ?? "");
-  const pwErr = passwordProblem(password);
+  const pwErr = passwordProblem(password, t.lang);
   if (pwErr) return fail(pwErr);
   const pin = body.pin ? String(body.pin) : "";
   if (pin) {
-    const pinErr = pinProblem(pin);
+    const pinErr = pinProblem(pin, t.lang);
     if (pinErr) return fail(pinErr);
   }
 

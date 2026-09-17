@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { ChevronDown, CircleHelp, LayoutGrid, ListChecks, LogOut, UserRound, MessageCircle } from "lucide-react";
 import { LanguageSwitch, useCommon } from "@/lib/hsu/i18n/client";
+import { common } from "@/lib/hsu/i18n/messages/common";
 import { HsuLogo, hsuApi, initials } from "./ui";
 
 export default function HsuHeader({
   unitName, userName, subtitle, links = [], onLogout, actions = [],
 }: {
-  unitName: string;
+  /** Heiti starfsstöðvar úr stillingum; sjálfgefna íslenska heitið er þýtt. */
+  unitName?: string;
   userName: string;
   subtitle?: string;
   links?: { href: string; label: string; icon?: "grid" | "user" | "message" }[];
@@ -29,7 +31,7 @@ export default function HsuHeader({
         <a href="/hsu" className="flex min-w-0 items-center gap-3">
           <HsuLogo size={36} />
           <div className="min-w-0">
-            <div className="truncate text-sm font-bold text-slate-900">{unitName}</div>
+            <div className="truncate text-sm font-bold text-slate-900">{!unitName || unitName === common.is["app.unit"] ? t("app.unit") : unitName}</div>
             <div className="truncate text-[11px] font-medium uppercase tracking-wider text-[var(--hsu)]">{subtitle ?? t("app.tagline")}</div>
           </div>
         </a>

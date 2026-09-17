@@ -14,6 +14,16 @@ import { shiftPhrase } from "./market";
 import { notifyDoctors, type DoctorNotice } from "./notify";
 import { dayPartFor, fitsDayPart, markFor, monthRange, partOfShift, wantsEveningOn, type DayPart, type ShiftPeriod } from "./types";
 import { worksDayShift } from "./plan";
+import { DEFAULT_LANG, translator, type Lang, type Translator } from "./i18n/core";
+import { apiAdmin } from "./i18n/messages/api-admin";
+
+type AdminT = Translator<typeof apiAdmin.is>;
+
+/**
+ * Texti á tungumáli viðtakandans fyrir notifyDoctors:
+ * `line: say((t) => t("plan.removed", { shift: shiftPhrase(s, t.lang) }))`.
+ */
+export const say = (fn: (t: AdminT) => string) => (lang: Lang) => fn(translator(apiAdmin, lang));
 
 export interface ShiftChange {
   id: string;
@@ -24,7 +34,8 @@ export class ShiftRuleError extends Error {}
 
 interface ShiftTypeRow { id: string; kind: string; period: ShiftPeriod; starts: string; ends: string; split_at: string | null }
 
-export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: string; origin: string; notify: boolean }) {
+export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: string; origin: string; notify: boolean; lang?: Lang }) {
+  const t = translator(apiAdmin, opts.lang ?? DEFAULT_LANG);
   if (!changes.length) return { changed: 0, requested: 0 };
   const ids = changes.map((c) => c.id);
   const { data: before, error } = await supabaseAdmin
@@ -59,7 +70,7 @@ export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: s
   for (const c of real) {
     const s = byId.get(c.id)!;
     if (c.doctor_id && s.shift_type_id && kindOf.get(s.shift_type_id) === "bakvakt" && !docById.get(c.doctor_id)?.can_bakvakt) {
-      throw new ShiftRuleError(`${docById.get(c.doctor_id)?.name ?? "Læknirinn"} hefur ekki bakvaktarréttindi.`);
+      throw new ShiftRuleError(t("err.noBakvaktRights", { name: docById.get(c.doctor_id)?.name ?? t("err.theDoctor") }));
     }
   }
 
@@ -141,41 +152,43 @@ export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: s
     // Fyrri læknir: vissi hann af vaktinni? Aðeins ef hún var birt og staðfest.
     if (s.doctor_id && s.published && s.confirm_status !== "requested") {
       touched.add(s.doctor_id);
-      notices.push({ doctorId: s.doctor_id, line: `Þú ert ekki lengur á vaktinni ${shiftPhrase(s)}.` });
+      notices.push({ doctorId: s.doctor_id, line: say((tl) => tl("plan.removed", { shift: shiftPhrase(s, tl.lang) })) });
     }
     if (s.doctor_id && s.confirm_status === "requested") {
-      notices.push({ doctorId: s.doctor_id, line: `Beiðni um vaktina ${shiftPhrase(s)} hefur verið dregin til baka.` });
+      notices.push({ doctorId: s.doctor_id, line: say((tl) => tl("plan.withdrawn", { shift: shiftPhrase(s, tl.lang) })) });
     }
     if (c.doctor_id) {
       if (isRequest) {
         requests.push({
           doctorId: c.doctor_id,
-          line: `${shiftPhrase(s)} — ${
-            reason === "off" ? "dagur sem þú merktir „get ekki“"
-            : reason === "eveningweek" ? "kvöldvakt á vikudegi sem þú óskaðir ekki eftir"
-            : reason === "daypart" ? "dagvakt utan þess hluta dags sem þú óskaðir eftir"
-            : reason === "weekday" ? "dagvakt utan þeirra vikudaga sem þú vinnur dagvinnu"
-            : "umfram hámarkið sem þú skráðir"}.`,
+          line: say((tl) => tl("request.line", { shift: shiftPhrase(s, tl.lang), reason: tl.dyn(`request.reason.${reason ?? "max"}`) })),
         });
       } else if (s.published) {
         touched.add(c.doctor_id);
-        notices.push({ doctorId: c.doctor_id, line: `Þú hefur verið sett(ur) á vaktina ${shiftPhrase(s)}.` });
+        notices.push({ doctorId: c.doctor_id, line: say((tl) => tl("plan.assigned", { shift: shiftPhrase(s, tl.lang) })) });
       }
     }
   }
 
   if (touched.size) after(async () => { await hsuSync.syncDoctors([...touched]); });
   if (opts.notify) {
-    notifyDoctors({ origin: opts.origin, subject: "Breyting á vaktaplani", heading: "Breyting á vaktaplani", intro: `${opts.actor} breytti vaktaplaninu:`, notices, email: "digest" });
+    notifyDoctors({
+      origin: opts.origin,
+      subject: say((tl) => tl("plan.subject")),
+      heading: say((tl) => tl("plan.subject")),
+      intro: say((tl) => tl("plan.introEdit", { by: opts.actor })),
+      notices,
+      email: "digest",
+    });
   }
   // Beiðnir fara alltaf út, birt eða ekki: læknirinn þarf að svara þeim.
   notifyDoctors({
     origin: opts.origin,
-    subject: "Beiðni um aukavakt",
-    heading: "Beiðni um aukavakt",
-    intro: `${opts.actor} biður þig um að taka eftirfarandi vakt${requests.length > 1 ? "ir" : ""}. Þær eru fráteknar fyrir þig þar til þú svarar.`,
+    subject: say((tl) => tl("request.subject")),
+    heading: say((tl) => tl("request.subject")),
+    intro: say((tl) => tl.n("request.intro", requests.length, { by: opts.actor })),
     notices: requests,
-    cta: { label: "Svara beiðni", path: "/hsu/min-sida?t=vaktir" },
+    cta: { label: say((tl) => tl("request.cta")), path: "/hsu/min-sida?t=vaktir" },
   });
 
   return { changed: real.length, requested: requestIds.size };

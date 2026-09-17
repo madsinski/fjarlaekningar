@@ -4,18 +4,21 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getDoctorSession, sameOrigin } from "@/lib/hsu/auth";
 import { fail, json, readJson } from "@/lib/hsu/server";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
 
 export const runtime = "nodejs";
 
 const KEYS = ["tour:doctor", "tour:head", "guide:head"] as const;
 
 export async function POST(req: Request) {
-  if (!sameOrigin(req)) return fail("Ógild beiðni", 403);
+  const t = tr(req, apiDoctor);
+  if (!sameOrigin(req)) return fail(t("req.invalid"), 403);
   const doctor = await getDoctorSession();
-  if (!doctor) return fail("Ekki innskráð(ur)", 401);
+  if (!doctor) return fail(t("req.notSignedIn"), 401);
   const body = await readJson(req);
   const key = body.key as (typeof KEYS)[number];
-  if (!KEYS.includes(key)) return fail("Óþekktur lykill");
+  if (!KEYS.includes(key)) return fail(t("req.unknownKey"));
   const { data } = await supabaseAdmin.from("hsu_doctors").select("onboarding").eq("id", doctor.id).single();
   const next = { ...((data?.onboarding ?? {}) as Record<string, string>) };
   if (body.done === false) delete next[key];

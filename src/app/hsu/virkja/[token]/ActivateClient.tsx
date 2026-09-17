@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
+import { useT } from "@/lib/hsu/i18n/client";
+import { auth } from "@/lib/hsu/i18n/messages/auth";
 import PinPad from "../../_components/PinPad";
 import { Button, Field, HsuLogo, Notice, hsuApi, inputCls } from "../../_components/ui";
 
 export default function ActivateClient({ token }: { token: string }) {
+  const t = useT(auth);
   const [info, setInfo] = useState<{ name: string; email: string; reset: boolean } | null>(null);
   const [invalid, setInvalid] = useState<string | null>(null);
   const [pw, setPw] = useState("");
@@ -19,24 +22,27 @@ export default function ActivateClient({ token }: { token: string }) {
     (async () => {
       const r = await hsuApi<{ name: string; email: string; reset: boolean }>(`/api/hsu/auth/invite?token=${encodeURIComponent(token)}`);
       if (r.ok) setInfo({ name: r.name, email: r.email, reset: r.reset });
-      else setInvalid(r.error ?? "Hlekkurinn er ekki gildur.");
+      else setInvalid(r.error ?? "");
     })();
   }, [token]);
 
   const rules = [
-    { ok: pw.length >= 10, label: "Minnst 10 stafir" },
-    { ok: /[A-Za-zÁÐÉÍÓÚÝÞÆÖáðéíóúýþæö]/.test(pw) && /\d/.test(pw), label: "Bókstafir og tölustafir" },
-    { ok: pw.length > 0 && pw === pw2, label: "Eins í bæði skiptin" },
+    { ok: pw.length >= 10, label: t("activate.rule.length") },
+    { ok: /[A-Za-zÁÐÉÍÓÚÝÞÆÖáðéíóúýþæö]/.test(pw) && /\d/.test(pw), label: t("activate.rule.mix") },
+    { ok: pw.length > 0 && pw === pw2, label: t("activate.rule.match") },
   ];
+
+  // Netfangið feitletrað inni í þýddri setningu.
+  const usernameParts = t("activate.username").split("{email}");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!rules.every((r) => r.ok)) { setErr("Lykilorðið uppfyllir ekki skilyrðin."); return; }
-    if (usePin && pin.length !== 4) { setErr("Veldu 4 stafa kóða eða slepptu honum."); return; }
+    if (!rules.every((r) => r.ok)) { setErr(t("activate.rulesFailed")); return; }
+    if (usePin && pin.length !== 4) { setErr(t("activate.pinRequired")); return; }
     setBusy(true); setErr(null);
     const r = await hsuApi<{ next: string }>("/api/hsu/auth/invite", { body: { token, password: pw, pin: usePin ? pin : "" } });
     setBusy(false);
-    if (!r.ok) { setErr(r.error ?? "Ekki tókst að virkja aðganginn"); return; }
+    if (!r.ok) { setErr(r.error ?? t("activate.failed")); return; }
     window.location.href = r.next;
   };
 
@@ -46,31 +52,31 @@ export default function ActivateClient({ token }: { token: string }) {
         <div className="mb-6 flex items-center justify-center gap-3">
           <HsuLogo size={44} />
           <div>
-            <div className="text-sm font-bold text-slate-900">Vaktakerfi lækna</div>
-            <div className="text-xs text-slate-500">Heilsugæslan í Vestmannaeyjum</div>
+            <div className="text-sm font-bold text-slate-900">{t("login.title")}</div>
+            <div className="text-xs text-slate-500">{t("activate.unit")}</div>
           </div>
         </div>
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          {!info && !invalid && <div className="h-48 animate-pulse rounded-2xl bg-slate-100" />}
-          {invalid && (
+          {!info && invalid === null && <div className="h-48 animate-pulse rounded-2xl bg-slate-100" />}
+          {invalid !== null && (
             <div className="space-y-4 text-center">
-              <h1 className="text-lg font-bold">Hlekkurinn virkar ekki</h1>
-              <p className="text-sm text-slate-600">{invalid} Biddu yfirlækni um nýjan hlekk, eða notaðu „Gleymt lykilorð“ á innskráningarsíðunni.</p>
-              <a href="/hsu" className="inline-block text-sm font-semibold text-[var(--hsu)] hover:underline">Fara á innskráningu</a>
+              <h1 className="text-lg font-bold">{t("activate.invalidTitle")}</h1>
+              <p className="text-sm text-slate-600">{invalid || t("activate.invalidDefault")} {t("activate.invalidHelp")}</p>
+              <a href="/hsu" className="inline-block text-sm font-semibold text-[var(--hsu)] hover:underline">{t("activate.toLogin")}</a>
             </div>
           )}
           {info && (
             <form onSubmit={submit} className="space-y-5">
               <div>
-                <h1 className="text-lg font-bold">{info.reset ? "Veldu nýtt lykilorð" : `Velkomin(n), ${info.name.split(" ")[0]}`}</h1>
+                <h1 className="text-lg font-bold">{info.reset ? t("activate.resetTitle") : t("activate.welcome", { name: info.name.split(" ")[0] })}</h1>
                 <p className="mt-1 text-sm text-slate-600">
-                  Notandanafnið þitt er <span className="font-semibold text-slate-900">{info.email}</span>.
+                  {usernameParts[0]}<span className="font-semibold text-slate-900">{info.email}</span>{usernameParts[1]}
                 </p>
               </div>
-              <Field label="Lykilorð">
+              <Field label={t("activate.password")}>
                 <input className={inputCls} type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} />
               </Field>
-              <Field label="Lykilorð aftur">
+              <Field label={t("activate.password2")}>
                 <input className={inputCls} type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} />
               </Field>
               <ul className="space-y-1">
@@ -85,15 +91,15 @@ export default function ActivateClient({ token }: { token: string }) {
                 <label className="flex items-start gap-3">
                   <input type="checkbox" className="mt-1 h-4 w-4" checked={usePin} onChange={(e) => setUsePin(e.target.checked)} />
                   <span>
-                    <span className="block text-sm font-semibold">Velja 4 stafa aðgangskóða</span>
-                    <span className="block text-xs text-slate-500">Fljótleg innskráning í símanum eða tölvunni sem þú notar núna.</span>
+                    <span className="block text-sm font-semibold">{t("activate.pinTitle")}</span>
+                    <span className="block text-xs text-slate-500">{t("activate.pinBody")}</span>
                   </span>
                 </label>
                 {usePin && <div className="mt-5"><PinPad value={pin} onChange={setPin} disabled={busy} /></div>}
               </div>
 
               {err && <Notice tone="err">{err}</Notice>}
-              <Button type="submit" size="lg" className="w-full" busy={busy}>{info.reset ? "Vista lykilorð" : "Virkja aðgang"}</Button>
+              <Button type="submit" size="lg" className="w-full" busy={busy}>{info.reset ? t("activate.savePassword") : t("activate.submit")}</Button>
             </form>
           )}
         </div>

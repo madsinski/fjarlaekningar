@@ -12,7 +12,8 @@
 import { after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { hsuEmailHtml, sendHsuEmail } from "./server";
-import { DEFAULT_LANG, isLang, type Lang } from "./i18n/core";
+import { DEFAULT_LANG, isLang, translator, type Lang } from "./i18n/core";
+import { notifyMsgs } from "./i18n/messages/notify";
 
 /**
  * Texti á tungumáli viðtakandans: fastur strengur (eins á öllum málum) eða
@@ -46,7 +47,7 @@ export function notifyDoctors(opts: {
   if (!ids.length) return;
   after(async () => {
     const { data: docs } = await supabaseAdmin.from("hsu_doctors").select("id, name, email, active, lang").in("id", ids);
-    const cta = opts.cta ?? { label: "Sjá vaktirnar mínar", path: "/hsu/min-sida?t=vaktir" };
+    const cta = opts.cta ?? { label: (l: Lang) => translator(notifyMsgs, l)("cta.myShifts"), path: "/hsu/min-sida?t=vaktir" };
     const active = (docs ?? []).filter((d) => d.active);
     const langOf = (d: { lang?: string | null }): Lang => (isLang(d.lang) ? d.lang : DEFAULT_LANG);
     const intro = (lang: Lang) => (opts.intro ? [localize(opts.intro, lang)] : []);
@@ -75,7 +76,7 @@ export function notifyDoctors(opts: {
           origin: opts.origin,
           lang,
           heading: localize(opts.heading, lang),
-          paragraphs: [`Sæl/l ${d.name}.`, ...intro(lang), ...lines],
+          paragraphs: [translator(notifyMsgs, lang)("hello", { name: d.name }), ...intro(lang), ...lines],
           cta: { label: localize(cta.label, lang), url: `${opts.origin}${cta.path}` },
         }),
         [...intro(lang), ...lines, `${opts.origin}${cta.path}`].join("\n"),
@@ -84,21 +85,24 @@ export function notifyDoctors(opts: {
   });
 }
 
-/** Póstur til yfirlækna (t.d. þegar læknir svarar beiðni). */
-export function notifyHeads(opts: { origin: string; subject: string; heading: string; lines: string[]; path?: string }) {
+/** Póstur til yfirlækna (t.d. þegar læknir svarar beiðni), á tungumáli hvers og eins. */
+export function notifyHeads(opts: { origin: string; subject: Localized; heading: Localized; lines: Localized[]; path?: string }) {
   after(async () => {
-    const { data: heads } = await supabaseAdmin.from("hsu_doctors").select("name, email").eq("role", "head").eq("active", true);
+    const { data: heads } = await supabaseAdmin.from("hsu_doctors").select("name, email, lang").eq("role", "head").eq("active", true);
     for (const h of heads ?? []) {
+      const lang: Lang = isLang(h.lang) ? h.lang : DEFAULT_LANG;
+      const lines = opts.lines.map((l) => localize(l, lang));
       await sendHsuEmail(
         h.email,
-        opts.subject,
+        localize(opts.subject, lang),
         hsuEmailHtml({
           origin: opts.origin,
-          heading: opts.heading,
-          paragraphs: opts.lines,
-          cta: { label: "Opna vaktaskipulag", url: `${opts.origin}${opts.path ?? "/hsu/stjorn"}` },
+          lang,
+          heading: localize(opts.heading, lang),
+          paragraphs: lines,
+          cta: { label: translator(notifyMsgs, lang)("cta.planner"), url: `${opts.origin}${opts.path ?? "/hsu/stjorn"}` },
         }),
-        opts.lines.join("\n"),
+        lines.join("\n"),
       );
     }
   });

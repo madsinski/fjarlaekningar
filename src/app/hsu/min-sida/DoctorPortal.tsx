@@ -6,13 +6,16 @@ import {
   AlertTriangle, ArrowLeftRight, Bell, CalendarCheck, CalendarRange, Check, CheckCircle2, ChevronRight, ClipboardList, ExternalLink, Home, MessageCircle, Settings, Store,
 } from "lucide-react";
 import Tour, { markOnboarding, type TourStep } from "../_components/Tour";
-import { useT } from "@/lib/hsu/i18n/client";
+import { useCommon, useT } from "@/lib/hsu/i18n/client";
 import { onboarding as onboardingMsgs } from "@/lib/hsu/i18n/messages/onboarding";
+import { portal } from "@/lib/hsu/i18n/messages/portal";
+import type { Lang } from "@/lib/hsu/i18n/core";
+import { capFirstL, dayLabelL, holidayL, monthLabelL, shiftPeriodL, weekdayLongL, weekdayShortOf } from "@/lib/hsu/i18n/format";
 import HsuHeader from "../_components/HsuHeader";
-import { Badge, Button, Card, Field, Modal, Notice, cx, firstName, hsuApi, inputCls, shortName, capFirst } from "../_components/ui";
+import { Badge, Button, Card, Field, Modal, Notice, cx, firstName, hsuApi, inputCls, shortName } from "../_components/ui";
 import type { PortalData } from "@/lib/hsu/portal";
 import {
-  SHIFT_PERIOD_IS, WEEKDAY_LONG_IS, dayLabel, hhmm, holidayName, monthKey, monthLabel, shiftMonth, weekdayOf, weekdayShort,
+  hhmm, holidayName, monthKey, shiftMonth, weekdayOf,
   type HsuShift, type HsuShiftType, type HsuSwap,
 } from "@/lib/hsu/types";
 import PrefsTab from "./PrefsTab";
@@ -64,17 +67,17 @@ type Tab = "yfirlit" | "vaktir" | "oskir" | "markadur" | "plan" | "stillingar";
 /** Dagatal og aðgangur voru sitt hvor flipinn; hlekkir á þá eiga áfram að virka. */
 const TAB_ALIASES: Record<string, Tab> = { dagatal: "stillingar", adgangur: "stillingar" };
 
-const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
-  { key: "yfirlit", label: "Yfirlit", icon: <Home className="h-4 w-4" /> },
-  { key: "vaktir", label: "Mínar vaktir", icon: <CalendarCheck className="h-4 w-4" /> },
-  { key: "oskir", label: "Óskir", icon: <ClipboardList className="h-4 w-4" /> },
-  { key: "markadur", label: "Vaktamarkaður", icon: <Store className="h-4 w-4" /> },
-  { key: "plan", label: "Vaktaplan", icon: <CalendarRange className="h-4 w-4" /> },
-  { key: "stillingar", label: "Stillingar", icon: <Settings className="h-4 w-4" /> },
+const TABS: { key: Tab; labelKey: `tab.${Tab}`; icon: React.ReactNode }[] = [
+  { key: "yfirlit", labelKey: "tab.yfirlit", icon: <Home className="h-4 w-4" /> },
+  { key: "vaktir", labelKey: "tab.vaktir", icon: <CalendarCheck className="h-4 w-4" /> },
+  { key: "oskir", labelKey: "tab.oskir", icon: <ClipboardList className="h-4 w-4" /> },
+  { key: "markadur", labelKey: "tab.markadur", icon: <Store className="h-4 w-4" /> },
+  { key: "plan", labelKey: "tab.plan", icon: <CalendarRange className="h-4 w-4" /> },
+  { key: "stillingar", labelKey: "tab.stillingar", icon: <Settings className="h-4 w-4" /> },
 ];
 
-export const shiftWhen = (s: { shift_date: string; starts: string; ends: string; label?: string }) =>
-  `${weekdayShort(s.shift_date)} ${dayLabel(s.shift_date)} · ${s.label ? `${s.label} ` : ""}${hhmm(s.starts)}–${hhmm(s.ends)}`;
+export const shiftWhen = (s: { shift_date: string; starts: string; ends: string; label?: string }, lang: Lang = "is") =>
+  `${weekdayShortOf(s.shift_date, lang)} ${dayLabelL(s.shift_date, lang)} · ${s.label ? `${s.label} ` : ""}${hhmm(s.starts)}–${hhmm(s.ends)}`;
 
 export default function DoctorPortal({ data, initialTab, initialMonth }: { data: PortalData; initialTab: string; initialMonth: string }) {
   const router = useRouter();
@@ -97,6 +100,8 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
 
   const messages = useHsuMessages();
   const me = data.me;
+  const t = useT(portal);
+  const c = useCommon();
 
   // Kynning á kerfinu: sjálfkrafa í fyrsta sinn (eftir að lykilorði hefur verið skipt).
   const to = useT(onboardingMsgs);
@@ -123,7 +128,7 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
     // Lokað = séð, hvort sem farið var í gegn eða sleppt; opnast aftur úr valmyndinni.
     if (!me.onboarding["tour:doctor"]) void markOnboarding("tour:doctor").then(refresh);
   };
-  const name = (id: string | null) => data.colleagues.find((c) => c.id === id)?.name ?? "óþekktur";
+  const name = (id: string | null) => data.colleagues.find((c) => c.id === id)?.name ?? t("unknownDoctor");
 
   const incoming = data.swaps.filter((s) => s.status === "pending" && s.to_doctor === me.id);
   const market = data.swaps.filter((s) => s.status === "pending" && !s.to_doctor && s.from_doctor !== me.id);
@@ -145,8 +150,8 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
         links={[
           // SMS-gáttin tilheyrir Fjarlækningum, ekki vaktakerfinu — en læknir
           // hér kemst í hana með sinni innskráningu.
-          { href: "/vinnustod", label: "Vinnustöð Fjarlækninga (SMS)", icon: "message" as const },
-          ...(me.role === "head" ? [{ href: "/hsu/stjorn", label: "Vaktaskipulag (yfirlæknir)", icon: "grid" as const }] : []),
+          { href: "/vinnustod", label: t("nav.vinnustod"), icon: "message" as const },
+          ...(me.role === "head" ? [{ href: "/hsu/stjorn", label: c("nav.planner"), icon: "grid" as const }] : []),
         ]}
         actions={[{ label: to("menu.tour"), onClick: () => setTourOpen(true), icon: "help" }]}
       />
@@ -154,23 +159,23 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
 
       <nav className="sticky top-16 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div data-tour="tabs" className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-3 py-2 sm:px-5 [scrollbar-width:none]">
-          {TABS.map((t) => {
-            const badge = t.key === "markadur" ? marketCount : t.key === "oskir" ? prefActions.length : t.key === "vaktir" ? data.requests.length + data.notifications.filter((n) => !n.read_at).length : 0;
+          {TABS.map((tb) => {
+            const badge = tb.key === "markadur" ? marketCount : tb.key === "oskir" ? prefActions.length : tb.key === "vaktir" ? data.requests.length + data.notifications.filter((n) => !n.read_at).length : 0;
             return (
-              <button key={t.key} onClick={() => setTab(t.key)} aria-current={tab === t.key ? "page" : undefined} data-tour={`tab-${t.key}`}
+              <button key={tb.key} onClick={() => setTab(tb.key)} aria-current={tab === tb.key ? "page" : undefined} data-tour={`tab-${tb.key}`}
                 className={cx(
                   "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition",
-                  tab === t.key ? "bg-[var(--hsu)] text-white" : "text-slate-600 hover:bg-slate-100",
+                  tab === tb.key ? "bg-[var(--hsu)] text-white" : "text-slate-600 hover:bg-slate-100",
                 )}>
-                {t.icon} {t.label}
-                {badge > 0 && <span className={cx("ml-0.5 rounded-full px-1.5 text-[11px]", tab === t.key ? "bg-white/25" : "bg-red-500 text-white")}>{badge}</span>}
+                {tb.icon} {t(tb.labelKey)}
+                {badge > 0 && <span className={cx("ml-0.5 rounded-full px-1.5 text-[11px]", tab === tb.key ? "bg-white/25" : "bg-red-500 text-white")}>{badge}</span>}
               </button>
             );
           })}
           <button type="button" onClick={openMessages}
             className={cx("relative ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition",
               messages ? "bg-red-50 text-red-700 ring-1 ring-red-200 hover:bg-red-100" : "text-slate-600 hover:bg-slate-100")}>
-            <MessageCircle className="h-4 w-4" /> Skilaboð
+            <MessageCircle className="h-4 w-4" /> {t("messages")}
             <UnreadDot count={messages} className="ml-0.5" />
           </button>
         </div>
@@ -188,7 +193,7 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
         {tab === "plan" && <RosterTab meId={me.id} />}
         {tab === "stillingar" && (
           <div className="space-y-8">
-            <h1 className="text-xl font-bold">Stillingar</h1>
+            <h1 className="text-xl font-bold">{t("settings.title")}</h1>
             <CalendarTab hasToken={me.hasCalendarToken} />
             <AccountTab me={me} refresh={refresh} />
           </div>
@@ -210,8 +215,9 @@ function Overview({ data, incoming, market, prefActions, go, onLog, messages = 0
   const thisMonth = monthKey(new Date());
   const nextMonth = shiftMonth(thisMonth, 1);
   const count = (m: string) => data.myShifts.filter((s) => s.shift_date.startsWith(m)).length;
+  const t = useT(portal);
+  const L = t.lang;
   const hour = new Date().getHours();
-  const greeting = hour < 18 ? "Góðan dag" : "Gott kvöld";
   const daysUntil = nextShift ? Math.round((Date.parse(nextShift.shift_date) - Date.parse(data.today)) / 86400000) : null;
   // Liðnar forvaktir/bakvaktir sem á eftir að merkja við í Vinnustund.
   const onCall = new Set(data.shiftTypes.filter((t) => t.kind === "forvakt" || t.kind === "bakvakt").map((t) => t.id));
@@ -220,42 +226,42 @@ function Overview({ data, incoming, market, prefActions, go, onLog, messages = 0
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">{greeting}, {firstName(data.me.name)}</h1>
+        <h1 className="text-2xl font-bold text-slate-900">{t(hour < 18 ? "greeting.day" : "greeting.evening", { name: firstName(data.me.name) })}</h1>
         <p className="text-sm text-slate-500">{data.unitName}</p>
       </div>
 
       {data.me.mustChangePassword && (
         <Notice tone="warn">
-          <span className="font-semibold">Veldu þitt eigið lykilorð.</span> Lykilorðið þitt var sett af öðrum.{" "}
-          <button className="font-semibold underline" onClick={() => go("stillingar")}>Breyta núna</button>
+          <span className="font-semibold">{t("pw.title")}</span> {t("pw.body")}{" "}
+          <button className="font-semibold underline" onClick={() => go("stillingar")}>{t("pw.change")}</button>
         </Notice>
       )}
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="overflow-hidden md:col-span-2">
           <div className="bg-gradient-to-br from-[var(--hsu)] to-[#2c6cc0] p-5 text-white">
-            <div className="text-xs font-semibold uppercase tracking-wider text-white/70">Næsta vakt</div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-white/70">{t("next.title")}</div>
             {nextShift ? (
               <>
-                <div className="mt-1 text-2xl font-bold">{capFirst(WEEKDAY_LONG_IS[weekdayOf(nextShift.shift_date)])} {dayLabel(nextShift.shift_date)}</div>
-                <div className="mt-0.5 text-white/90">{nextShift.label} · {hhmm(nextShift.starts)}–{hhmm(nextShift.ends)}{holidayName(nextShift.shift_date) ? ` · ${holidayName(nextShift.shift_date)}` : ""}</div>
+                <div className="mt-1 text-2xl font-bold">{capFirstL(weekdayLongL(weekdayOf(nextShift.shift_date), L), L)} {dayLabelL(nextShift.shift_date, L)}</div>
+                <div className="mt-0.5 text-white/90">{nextShift.label} · {hhmm(nextShift.starts)}–{hhmm(nextShift.ends)}{holidayName(nextShift.shift_date) ? ` · ${holidayL(holidayName(nextShift.shift_date), L)}` : ""}</div>
                 <div className="mt-3 inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
-                  {daysUntil === 0 ? "Í dag" : daysUntil === 1 ? "Á morgun" : `Eftir ${daysUntil} daga`}
+                  {daysUntil === 0 ? t("next.today") : daysUntil === 1 ? t("next.tomorrow") : t("next.inDays", { n: daysUntil })}
                 </div>
               </>
             ) : (
-              <div className="mt-1 text-lg font-semibold">Engin vakt á dagskrá</div>
+              <div className="mt-1 text-lg font-semibold">{t("next.none")}</div>
             )}
           </div>
           <div className="grid grid-cols-3 divide-x divide-slate-100">
             {[
-              [monthLabel(thisMonth), count(thisMonth)],
-              [monthLabel(nextMonth), count(nextMonth)],
-              ["Framundan alls", upcoming.length],
+              [monthLabelL(thisMonth, L), count(thisMonth)],
+              [monthLabelL(nextMonth, L), count(nextMonth)],
+              [t("stats.upcoming"), upcoming.length],
             ].map(([l, v]) => (
               <div key={String(l)} className="p-4 text-center">
                 <div className="text-2xl font-bold tabular-nums text-slate-900">{v}</div>
-                <div className="text-[11px] text-slate-500">{capFirst(String(l))}</div>
+                <div className="text-[11px] text-slate-500">{capFirstL(String(l), L)}</div>
               </div>
             ))}
           </div>
@@ -264,49 +270,49 @@ function Overview({ data, incoming, market, prefActions, go, onLog, messages = 0
         <div className="space-y-3">
           {messages > 0 && (
             <ActionCard tone="red" onClick={openMessages}
-              title={messages === 1 ? "Ný skilaboð frá Fjarlækningum" : `${messages} ný skilaboð frá Fjarlækningum`}
-              text="Opnast í Vinnustöð Fjarlækninga" />
+              title={t.n("action.messages", messages)}
+              text={t("action.messages.text")} />
           )}
           {prefActions.map((m) => {
             const month = data.months.find((x) => x.month === m);
             const pref = data.prefs.find((p) => p.month === m);
             return (
               <ActionCard key={m} tone={pref?.status === "changes_requested" ? "red" : "blue"} onClick={() => go("oskir")}
-                title={pref?.status === "changes_requested" ? `Breytinga óskað: ${monthLabel(m)}` : `Skráðu óskir fyrir ${monthLabel(m)}`}
-                text={month?.prefs_deadline ? `Skilafrestur ${dayLabel(month.prefs_deadline)}` : "Merktu daga sem þú getur ekki unnið"} />
+                title={t(pref?.status === "changes_requested" ? "action.prefsChanges" : "action.prefsRegister", { month: monthLabelL(m, L) })}
+                text={month?.prefs_deadline ? t("action.prefsDeadline", { date: dayLabelL(month.prefs_deadline, L) }) : t("action.prefsHint")} />
             );
           })}
           {unlogged.length > 0 && (
             <ActionCard tone="amber" onClick={() => go("vaktir")}
-              title={`${unlogged.length} vakt${unlogged.length === 1 ? "" : "ir"} án útkallaskráningar`}
-              text="Skráðu útköllin í Vinnustund og merktu við" />
+              title={t.n("action.unlogged", unlogged.length)}
+              text={t("action.unlogged.text")} />
           )}
           {data.requests.length > 0 && (
-            <ActionCard tone="red" onClick={() => go("vaktir")} title={`${data.requests.length} beiðni${data.requests.length === 1 ? "" : "r"} um aukavakt`} text="Yfirlæknir bíður eftir svari þínu" />
+            <ActionCard tone="red" onClick={() => go("vaktir")} title={t.n("action.requests", data.requests.length)} text={t("action.requests.text")} />
           )}
           {incoming.length > 0 && (
-            <ActionCard tone="purple" onClick={() => go("markadur")} title={`${incoming.length} vakt${incoming.length === 1 ? "" : "ir"} boðin þér`} text="Taktu afstöðu á vaktamarkaði" />
+            <ActionCard tone="purple" onClick={() => go("markadur")} title={t.n("action.incoming", incoming.length)} text={t("action.incoming.text")} />
           )}
           {market.length > 0 && (
-            <ActionCard tone="amber" onClick={() => go("markadur")} title={`${market.length} á vaktamarkaði`} text="Vaktir sem aðrir læknar vilja láta frá sér" />
+            <ActionCard tone="amber" onClick={() => go("markadur")} title={t("action.market", { n: market.length })} text={t("action.market.text")} />
           )}
           {prefActions.length === 0 && incoming.length === 0 && market.length === 0 && data.requests.length === 0 && unlogged.length === 0 && (
-            <Card className="p-5 text-sm text-slate-500">Ekkert sem bíður þín.</Card>
+            <Card className="p-5 text-sm text-slate-500">{t("action.nothing")}</Card>
           )}
         </div>
       </div>
 
       <div>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">Næstu vaktir</h2>
+          <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">{t("upcoming.title")}</h2>
           <div className="flex items-center gap-3">
             <VinnustundLink className="!px-2.5 !py-1 !text-xs" />
-            <button onClick={() => go("vaktir")} className="text-sm font-semibold text-[var(--hsu)] hover:underline">Allar vaktir</button>
+            <button onClick={() => go("vaktir")} className="text-sm font-semibold text-[var(--hsu)] hover:underline">{t("upcoming.all")}</button>
           </div>
         </div>
         <Card className="divide-y divide-slate-100">
           {upcoming.slice(0, 5).map((s) => <ShiftRow key={s.id} s={s} types={data.shiftTypes} today={data.today} onLog={onLog} />)}
-          {upcoming.length === 0 && <div className="p-5 text-sm text-slate-500">Engar birtar vaktir framundan.</div>}
+          {upcoming.length === 0 && <div className="p-5 text-sm text-slate-500">{t("upcoming.empty")}</div>}
         </Card>
       </div>
     </div>
@@ -348,7 +354,9 @@ function ShiftRow({ s, types, today, onLog, right, extra }: {
   /** Aukalína undir tímanum, t.d. hver bauð vaktina á vaktamarkaði. */
   extra?: React.ReactNode;
 }) {
-  const h = holidayName(s.shift_date);
+  const tr = useT(portal);
+  const L = tr.lang;
+  const h = holidayL(holidayName(s.shift_date), L);
   const t = types.find((x) => x.id === s.shift_type_id);
   const color = t?.color ?? "#64748b";
   // Útköll eru skráð í Vinnustund eftir forvakt og bakvakt.
@@ -358,47 +366,47 @@ function ShiftRow({ s, types, today, onLog, right, extra }: {
   return (
     <div className="flex items-center gap-3 border-l-4 px-4 py-3" style={{ borderColor: color }}>
       <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl text-white" style={{ background: color }}>
-        <span className="text-[10px] font-bold uppercase leading-none opacity-80">{weekdayShort(s.shift_date)}</span>
+        <span className="text-[10px] font-bold uppercase leading-none opacity-80">{weekdayShortOf(s.shift_date, L)}</span>
         <span className="text-lg font-bold leading-tight">{Number(s.shift_date.slice(8))}</span>
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-slate-900">
-          <span className="rounded px-1.5 py-0.5 text-[11px] font-bold text-white" style={{ background: color }}>{s.label || "Vakt"}</span>
-          <span>{t?.name ?? "Vakt"}</span>
+          <span className="rounded px-1.5 py-0.5 text-[11px] font-bold text-white" style={{ background: color }}>{s.label || tr("shift")}</span>
+          <span>{t?.name ?? tr("shift")}</span>
           <span className="font-medium text-slate-500">{hhmm(s.starts)}–{hhmm(s.ends)}</span>
         </div>
         <div className="truncate text-xs text-slate-500">
-          {dayLabel(s.shift_date)}{h ? ` · ${h}` : ""}{t ? ` · ${SHIFT_PERIOD_IS[t.period]}` : ""}{s.note ? ` · ${s.note}` : ""}
+          {dayLabelL(s.shift_date, L)}{h ? ` · ${h}` : ""}{t ? ` · ${shiftPeriodL(t.period, L)}` : ""}{s.note ? ` · ${s.note}` : ""}
         </div>
         {extra}
         {needsVinnustund && onLog && (
           <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px]">
             {logged ? (
-              <button onClick={() => onLog(s, false)} title="Smelltu til að afmerkja"
+              <button onClick={() => onLog(s, false)} title={tr("row.unmarkTitle")}
                 className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-1 font-semibold text-emerald-700 hover:bg-emerald-100">
-                <CheckCircle2 className="h-3.5 w-3.5" /> Útköll skráð í Vinnustund
+                <CheckCircle2 className="h-3.5 w-3.5" /> {tr("row.logged")}
               </button>
             ) : (
               <>
                 <span className={cx("font-medium", started ? "text-amber-700" : "text-slate-500")}>
-                  {started ? "Skráðu útköll vaktarinnar í Vinnustund" : "Mundu að skrá útköll í Vinnustund eftir vaktina"}
+                  {started ? tr("row.logNow") : tr("row.logLater")}
                 </span>
                 <a href={VINNUSTUND_URL} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-700 hover:bg-slate-50">
-                  <ExternalLink className="h-3 w-3" /> Opna
+                  <ExternalLink className="h-3 w-3" /> {tr("row.open")}
                 </a>
                 <button onClick={() => onLog(s, true)}
                   className={cx("inline-flex items-center gap-1 rounded-lg px-2 py-1 font-semibold",
                     started ? "bg-amber-500 text-white hover:brightness-110" : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50")}>
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Skráð
+                  <CheckCircle2 className="h-3.5 w-3.5" /> {tr("row.markLogged")}
                 </button>
               </>
             )}
           </div>
         )}
       </div>
-      {s.status === "open" && <Badge tone="amber">Á vaktamarkaði</Badge>}
-      {s.status === "offered" && <Badge tone="purple">Í boði</Badge>}
+      {s.status === "open" && <Badge tone="amber">{tr("row.onMarket")}</Badge>}
+      {s.status === "offered" && <Badge tone="purple">{tr("row.offered")}</Badge>}
       {right}
     </div>
   );
@@ -411,6 +419,7 @@ function ShiftRow({ s, types, today, onLog, right, extra }: {
  * efst og áberandi; lesnar síðustu daga fyrir neðan, samanbrotnar.
  */
 function NotificationsBlock({ data, refresh }: { data: PortalData; refresh: () => void }) {
+  const t = useT(portal);
   const [busy, setBusy] = useState(false);
   const [showOld, setShowOld] = useState(false);
   const unread = data.notifications.filter((n) => !n.read_at);
@@ -425,7 +434,7 @@ function NotificationsBlock({ data, refresh }: { data: PortalData; refresh: () =
   };
   const when = (iso: string) => {
     const d = new Date(iso);
-    return `${d.getDate()}.${d.getMonth() + 1}. kl. ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    return t("notif.when", { d: d.getDate(), m: d.getMonth() + 1, hh: String(d.getHours()).padStart(2, "0"), mm: String(d.getMinutes()).padStart(2, "0") });
   };
 
   return (
@@ -434,10 +443,10 @@ function NotificationsBlock({ data, refresh }: { data: PortalData; refresh: () =
         <Card className="overflow-hidden border-[var(--hsu)]/40">
           <div className="flex flex-wrap items-center justify-between gap-2 bg-[var(--hsu-soft)] px-4 py-3">
             <h2 className="flex items-center gap-2 text-sm font-bold text-[var(--hsu-dark)]">
-              <Bell className="h-4 w-4" /> {unread.length === 1 ? "Ný breyting á vöktunum þínum" : `${unread.length} nýjar breytingar á vöktunum þínum`}
+              <Bell className="h-4 w-4" /> {t.n("notif.new", unread.length)}
             </h2>
             <Button size="sm" variant="soft" busy={busy} onClick={() => markRead()}>
-              <Check className="h-3.5 w-3.5" /> Merkja lesið
+              <Check className="h-3.5 w-3.5" /> {t("notif.markRead")}
             </Button>
           </div>
           <ul className="divide-y divide-slate-100">
@@ -458,7 +467,7 @@ function NotificationsBlock({ data, refresh }: { data: PortalData; refresh: () =
       {read.length > 0 && (
         <div>
           <button onClick={() => setShowOld((v) => !v)} className="text-xs font-semibold text-slate-500 hover:underline">
-            {showOld ? "Fela eldri breytingar" : `Eldri breytingar (${read.length})`}
+            {showOld ? t("notif.hideOld") : t("notif.showOld", { n: read.length })}
           </button>
           {showOld && (
             <Card className="mt-2 divide-y divide-slate-100">
@@ -480,6 +489,7 @@ function NotificationsBlock({ data, refresh }: { data: PortalData; refresh: () =
 }
 
 function ShiftsTab({ data, swaps, refresh, onLog }: { data: PortalData; swaps: HsuSwap[]; refresh: () => void; onLog: (s: HsuShift, done: boolean) => void }) {
+  const t = useT(portal);
   const [offer, setOffer] = useState<HsuShift | null>(null);
   const [busy, setBusy] = useState(false);
   const byMonth = useMemo(() => {
@@ -489,7 +499,7 @@ function ShiftsTab({ data, swaps, refresh, onLog }: { data: PortalData; swaps: H
   }, [data.myShifts]);
   const pendingFor = (id: string) => swaps.find((s) => s.shift_id === id);
   // Liðin vakt sem á eftir að merkja við er ekki "búin" — hún má ekki daufna.
-  const onCall = new Set(data.shiftTypes.filter((t) => t.kind === "forvakt" || t.kind === "bakvakt").map((t) => t.id));
+  const onCall = new Set(data.shiftTypes.filter((st) => st.kind === "forvakt" || st.kind === "bakvakt").map((st) => st.id));
   const needsLog = (s: HsuShift) => onCall.has(s.shift_type_id ?? "") && !s.vinnustund_logged_at;
 
   const cancel = async (swapId: string) => {
@@ -503,10 +513,9 @@ function ShiftsTab({ data, swaps, refresh, onLog }: { data: PortalData; swaps: H
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h1 className="text-xl font-bold">Mínar vaktir</h1>
+          <h1 className="text-xl font-bold">{t("shifts.title")}</h1>
           <p className="text-sm text-slate-500">
-            Birtar vaktir frá byrjun þessa mánaðar. Viltu losna við vakt? Settu hana á vaktamarkað.
-            Útköll af forvakt og bakvakt skráir þú í Vinnustund og merkir hér við.
+            {t("shifts.intro")}
           </p>
         </div>
         <VinnustundLink />
@@ -515,17 +524,17 @@ function ShiftsTab({ data, swaps, refresh, onLog }: { data: PortalData; swaps: H
       <RequestsBlock data={data} refresh={refresh} />
       {/* Litaskýring: sömu litir og á vaktaplaninu. */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-white px-4 py-3 text-[11px] text-slate-500 ring-1 ring-slate-200">
-        {data.shiftTypes.filter((t) => t.active).map((t) => (
-          <span key={t.id} className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded" style={{ background: t.color }} />
-            <b className="text-slate-700">{t.short || t.name}</b> {t.name} · {hhmm(t.starts)}–{hhmm(t.ends)}
+        {data.shiftTypes.filter((st) => st.active).map((st) => (
+          <span key={st.id} className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded" style={{ background: st.color }} />
+            <b className="text-slate-700">{st.short || st.name}</b> {st.name} · {hhmm(st.starts)}–{hhmm(st.ends)}
           </span>
         ))}
       </div>
-      {byMonth.length === 0 && <Card className="p-8 text-center text-sm text-slate-500">Engar birtar vaktir.</Card>}
+      {byMonth.length === 0 && <Card className="p-8 text-center text-sm text-slate-500">{t("shifts.empty")}</Card>}
       {byMonth.map(([m, rows]) => (
         <section key={m}>
-          <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-500">{monthLabel(m)} · {rows.length} vakt{rows.length === 1 ? "" : "ir"}</h2>
+          <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-500">{t.n("shifts.monthCount", rows.length, { month: monthLabelL(m, t.lang) })}</h2>
           <Card className="divide-y divide-slate-100">
             {rows.map((s) => {
               const past = s.shift_date < data.today;
@@ -533,13 +542,13 @@ function ShiftsTab({ data, swaps, refresh, onLog }: { data: PortalData; swaps: H
               return (
                 <div key={s.id} className={cx(past && !needsLog(s) && "opacity-50")}>
                   <ShiftRow s={s} types={data.shiftTypes} today={data.today} onLog={onLog} right={past ? null : p ? (
-                    <Button variant="ghost" size="sm" busy={busy} onClick={() => cancel(p.id)}>Afturkalla</Button>
+                    <Button variant="ghost" size="sm" busy={busy} onClick={() => cancel(p.id)}>{t("shifts.withdraw")}</Button>
                   ) : (
-                    <Button variant="soft" size="sm" onClick={() => setOffer(s)}><ArrowLeftRight className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Setja á vaktamarkað</span><span className="sm:hidden">Markaður</span></Button>
+                    <Button variant="soft" size="sm" onClick={() => setOffer(s)}><ArrowLeftRight className="h-3.5 w-3.5" /> <span className="hidden sm:inline">{t("shifts.toMarket")}</span><span className="sm:hidden">{t("shifts.toMarketShort")}</span></Button>
                   )} />
                   {p && (
                     <div className="px-4 pb-3 text-xs text-slate-500">
-                      {p.status === "awaiting_approval" ? "Annar læknir vill taka vaktina — bíður samþykkis yfirlæknis." : p.to_doctor ? `Boðin ${data.colleagues.find((c) => c.id === p.to_doctor)?.name ?? ""}. Vaktin er þín þar til hún er tekin.` : "Á vaktamarkaði. Vaktin er þín þar til annar læknir tekur hana."}
+                      {p.status === "awaiting_approval" ? t("shifts.pendingApproval") : p.to_doctor ? t("shifts.offeredTo", { name: data.colleagues.find((c) => c.id === p.to_doctor)?.name ?? "" }) : t("shifts.onMarket")}
                     </div>
                   )}
                 </div>
@@ -554,6 +563,7 @@ function ShiftsTab({ data, swaps, refresh, onLog }: { data: PortalData; swaps: H
 }
 
 function OfferModal({ shift, data, onClose, onDone }: { shift: HsuShift; data: PortalData; onClose: () => void; onDone: () => void }) {
+  const t = useT(portal);
   const [target, setTarget] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -563,35 +573,35 @@ function OfferModal({ shift, data, onClose, onDone }: { shift: HsuShift; data: P
     setBusy(true); setErr(null);
     const r = await hsuApi("/api/hsu/me/swaps", { body: { shift_id: shift.id, to_doctor: target || null, note } });
     setBusy(false);
-    if (!r.ok) { setErr(r.error ?? "Mistókst"); return; }
+    if (!r.ok) { setErr(r.error ?? t("failed")); return; }
     onDone();
   };
   return (
-    <Modal open onClose={onClose} title="Setja á vaktamarkað">
+    <Modal open onClose={onClose} title={t("offer.title")}>
       <div className="space-y-4">
-        <div className="rounded-xl bg-slate-50 p-3 text-sm font-semibold text-slate-800">{shiftWhen(shift)}</div>
+        <div className="rounded-xl bg-slate-50 p-3 text-sm font-semibold text-slate-800">{shiftWhen(shift, t.lang)}</div>
         <div className="space-y-2">
           <label className={cx("flex cursor-pointer items-start gap-3 rounded-xl border p-3", !target ? "border-[var(--hsu)] bg-[var(--hsu-soft)]" : "border-slate-200")}>
             <input type="radio" name="t" className="mt-1" checked={!target} onChange={() => setTarget("")} />
-            <span><span className="block text-sm font-semibold">Setja á vaktamarkað</span><span className="block text-xs text-slate-500">Allir læknar fá tilkynningu og hver sem er getur tekið hana.</span></span>
+            <span><span className="block text-sm font-semibold">{t("offer.market")}</span><span className="block text-xs text-slate-500">{t("offer.market.body")}</span></span>
           </label>
           <label className={cx("flex cursor-pointer items-start gap-3 rounded-xl border p-3", target ? "border-[var(--hsu)] bg-[var(--hsu-soft)]" : "border-slate-200")}>
             <input type="radio" name="t" className="mt-1" checked={Boolean(target)} onChange={() => setTarget(others[0]?.id ?? "")} />
             <span className="flex-1">
-              <span className="block text-sm font-semibold">Bjóða ákveðnum lækni</span>
+              <span className="block text-sm font-semibold">{t("offer.direct")}</span>
               <select className={cx(inputCls, "mt-2")} value={target} onChange={(e) => setTarget(e.target.value)} onClick={(e) => e.stopPropagation()}>
-                <option value="">— veldu lækni —</option>
+                <option value="">{t("offer.pickDoctor")}</option>
                 {others.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </span>
           </label>
         </div>
-        <Field label="Skilaboð (valfrjálst)">
-          <input className={inputCls} value={note} onChange={(e) => setNote(e.target.value)} placeholder="t.d. „Get tekið þína vakt 14. í staðinn“" />
+        <Field label={t("offer.note")}>
+          <input className={inputCls} value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("offer.notePlaceholder")} />
         </Field>
-        <p className="text-xs text-slate-500">Vaktin er áfram á þinni ábyrgð og í dagatalinu þínu þar til annar læknir tekur hana.</p>
+        <p className="text-xs text-slate-500">{t("offer.responsibility")}</p>
         {err && <Notice tone="err">{err}</Notice>}
-        <Button className="w-full" size="lg" onClick={submit} busy={busy}>{target ? "Bjóða vaktina" : "Setja á vaktamarkað"}</Button>
+        <Button className="w-full" size="lg" onClick={submit} busy={busy}>{target ? t("offer.submitDirect") : t("offer.submitMarket")}</Button>
       </div>
     </Modal>
   );
@@ -600,35 +610,36 @@ function OfferModal({ shift, data, onClose, onDone }: { shift: HsuShift; data: P
 // ── Beiðnir um aukavakt ────────────────────────────────────────────────────
 
 function RequestsBlock({ data, refresh }: { data: PortalData; refresh: () => void }) {
+  const t = useT(portal);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   if (!data.requests.length) return null;
   const answer = async (id: string, action: "accept" | "decline") => {
-    if (action === "decline" && !confirm("Hafna vaktinni? Yfirlæknir fær tilkynningu.")) return;
+    if (action === "decline" && !confirm(t("requests.declineConfirm"))) return;
     setBusy(id + action); setErr(null);
     const r = await hsuApi(`/api/hsu/me/requests/${id}`, { body: { action } });
     setBusy(null);
-    if (!r.ok) { setErr(r.error ?? "Mistókst"); return; }
+    if (!r.ok) { setErr(r.error ?? t("failed")); return; }
     refresh();
   };
   return (
     <section>
-      <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-amber-700">Beiðnir um aukavakt</h2>
+      <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-amber-700">{t("requests.title")}</h2>
       <Card className="divide-y divide-amber-100 border-amber-300 bg-amber-50/40">
         {data.requests.map((s) => (
           <div key={s.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div>
               <div className="flex items-center gap-1.5 text-sm font-semibold">
-                <span className="rounded px-1.5 py-0.5 text-[11px] font-bold text-white" style={{ background: data.shiftTypes.find((t) => t.id === s.shift_type_id)?.color ?? "#64748b" }}>{s.label || "Vakt"}</span>
-                {shiftWhen(s)}
+                <span className="rounded px-1.5 py-0.5 text-[11px] font-bold text-white" style={{ background: data.shiftTypes.find((st) => st.id === s.shift_type_id)?.color ?? "#64748b" }}>{s.label || t("shift")}</span>
+                {shiftWhen(s, t.lang)}
               </div>
               <div className="text-xs text-slate-600">
-                {s.requested_by || "Yfirlæknir"} biður þig um þessa vakt. Hún er frátekin fyrir þig þar til þú svarar — samþykktu hana eða hafnaðu.
+                {t("requests.body", { who: s.requested_by || t("requests.head") })}
               </div>
             </div>
             <div className="flex gap-2">
-              <Button size="sm" variant="success" busy={busy === s.id + "accept"} onClick={() => answer(s.id, "accept")}>Samþykkja</Button>
-              <Button size="sm" variant="ghost" busy={busy === s.id + "decline"} onClick={() => answer(s.id, "decline")}>Hafna</Button>
+              <Button size="sm" variant="success" busy={busy === s.id + "accept"} onClick={() => answer(s.id, "accept")}>{t("requests.accept")}</Button>
+              <Button size="sm" variant="ghost" busy={busy === s.id + "decline"} onClick={() => answer(s.id, "decline")}>{t("requests.decline")}</Button>
             </div>
           </div>
         ))}
@@ -666,66 +677,67 @@ function MarketTab({ data, incoming, market, mine, myRequests, name, refresh }: 
   data: PortalData; incoming: HsuSwap[]; market: HsuSwap[]; mine: HsuSwap[]; myRequests: HsuSwap[];
   name: (id: string | null) => string; refresh: () => void;
 }) {
+  const t = useT(portal);
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
   const act = async (id: string, action: "accept" | "decline" | "cancel") => {
     setBusy(id + action); setMsg(null);
     const r = await hsuApi<{ awaitingApproval?: boolean }>(`/api/hsu/me/swaps/${id}`, { method: "PATCH", body: { action } });
     setBusy(null);
-    if (!r.ok) { setMsg({ tone: "err", text: r.error ?? "Mistókst" }); return; }
-    if (action === "accept") setMsg({ tone: "ok", text: r.awaitingApproval ? "Beiðnin er komin til yfirlæknis til samþykkis." : "Vaktin er orðin þín og komin í dagatalið." });
+    if (!r.ok) { setMsg({ tone: "err", text: r.error ?? t("failed") }); return; }
+    if (action === "accept") setMsg({ tone: "ok", text: r.awaitingApproval ? t("market.ok.awaiting") : t("market.ok.taken") });
     refresh();
   };
-  const when = (s: HsuSwap) => (s.shift ? shiftWhen(s.shift) : "");
+  const when = (s: HsuSwap) => (s.shift ? shiftWhen(s.shift, t.lang) : "");
   const myDates = new Set(data.myShifts.map((s) => s.shift_date));
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold">Vaktamarkaður</h1>
+        <h1 className="text-xl font-bold">{t("market.title")}</h1>
         <p className="text-sm text-slate-500">
-          Vaktir sem læknar vilja láta frá sér.{data.marketRequiresApproval ? " Yfirlæknir samþykkir hver skipti." : " Sá sem tekur vakt fær hana strax."}
+          {t(data.marketRequiresApproval ? "market.intro.approval" : "market.intro.direct")}
         </p>
       </div>
       {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
 
-      <Section title="Boðnar þér" empty="Enginn hefur boðið þér vakt.">
+      <Section title={t("market.incoming")} empty={t("market.incoming.empty")}>
         {incoming.map((s) => (
           <MarketRow key={s.id} s={s} types={data.shiftTypes} fallback={when(s)}
-            who={`Frá ${name(s.from_doctor)}${s.note ? ` · „${s.note}“` : ""}`}
+            who={s.note ? t("market.fromNote", { name: name(s.from_doctor), note: s.note }) : t("market.from", { name: name(s.from_doctor) })}
             clash={Boolean(s.shift && myDates.has(s.shift.shift_date))}
             actions={<>
-              <Button size="sm" onClick={() => act(s.id, "accept")} busy={busy === s.id + "accept"}>Taka vakt</Button>
-              <Button size="sm" variant="ghost" onClick={() => act(s.id, "decline")} busy={busy === s.id + "decline"}>Hafna</Button>
+              <Button size="sm" onClick={() => act(s.id, "accept")} busy={busy === s.id + "accept"}>{t("market.take")}</Button>
+              <Button size="sm" variant="ghost" onClick={() => act(s.id, "decline")} busy={busy === s.id + "decline"}>{t("market.decline")}</Button>
             </>} />
         ))}
       </Section>
 
-      <Section title="Á vaktamarkaði" empty="Engar vaktir á vaktamarkaði núna.">
+      <Section title={t("market.open")} empty={t("market.open.empty")}>
         {market.map((s) => (
           <MarketRow key={s.id} s={s} types={data.shiftTypes} fallback={when(s)}
-            who={`${name(s.from_doctor)}${s.note ? ` · „${s.note}“` : ""}`}
+            who={s.note ? t("market.withNote", { name: name(s.from_doctor), note: s.note }) : name(s.from_doctor)}
             clash={Boolean(s.shift && myDates.has(s.shift.shift_date))}
-            actions={<Button size="sm" onClick={() => act(s.id, "accept")} busy={busy === s.id + "accept"}>Taka vakt</Button>} />
+            actions={<Button size="sm" onClick={() => act(s.id, "accept")} busy={busy === s.id + "accept"}>{t("market.take")}</Button>} />
         ))}
       </Section>
 
       {myRequests.length > 0 && (
-        <Section title="Bíða samþykkis yfirlæknis">
+        <Section title={t("market.awaiting")}>
           {myRequests.map((s) => (
-            <MarketRow key={s.id} s={s} types={data.shiftTypes} fallback={when(s)} who={`Frá ${name(s.from_doctor)}`} />
+            <MarketRow key={s.id} s={s} types={data.shiftTypes} fallback={when(s)} who={t("market.from", { name: name(s.from_doctor) })} />
           ))}
         </Section>
       )}
 
-      <Section title="Mínar vaktir í boði" empty="Þú ert ekki með vaktir á vaktamarkaði. Settu vakt á markað undir „Mínar vaktir“.">
+      <Section title={t("market.mine")} empty={t("market.mine.empty")}>
         {mine.map((s) => (
           <MarketRow key={s.id} s={s} types={data.shiftTypes} fallback={when(s)}
-            who={s.status === "awaiting_approval" ? `${name(s.taken_by)} vill taka hana — bíður yfirlæknis` : s.to_doctor ? `Boðin ${name(s.to_doctor)}` : "Á vaktamarkaði"}
-            actions={<Button size="sm" variant="ghost" onClick={() => act(s.id, "cancel")} busy={busy === s.id + "cancel"}>Afturkalla</Button>} />
+            who={s.status === "awaiting_approval" ? t("market.mine.wantsIt", { name: name(s.taken_by) }) : s.to_doctor ? t("market.mine.offeredTo", { name: name(s.to_doctor) }) : t("market.mine.onMarket")}
+            actions={<Button size="sm" variant="ghost" onClick={() => act(s.id, "cancel")} busy={busy === s.id + "cancel"}>{t("market.withdraw")}</Button>} />
         ))}
       </Section>
-      <p className="text-xs text-slate-400">Samstarfsfólk: {data.colleagues.filter((c) => c.id !== data.me.id).map((c) => `${shortName(c.name)}${c.phone ? ` (${c.phone})` : ""}`).join(" · ")}</p>
+      <p className="text-xs text-slate-400">{t("market.colleagues", { list: data.colleagues.filter((c) => c.id !== data.me.id).map((c) => `${shortName(c.name)}${c.phone ? ` (${c.phone})` : ""}`).join(" · ") })}</p>
     </div>
   );
 }
@@ -734,11 +746,12 @@ function MarketTab({ data, incoming, market, mine, myRequests, name, refresh }: 
 function MarketRow({ s, types, fallback, who, clash, actions }: {
   s: HsuSwap; types: HsuShiftType[]; fallback: string; who: string; clash?: boolean; actions?: React.ReactNode;
 }) {
+  const t = useT(portal);
   const shift = swapShift(s);
   const extra = (
     <>
       <div className="text-xs text-slate-600">{who}</div>
-      {clash && <div className="mt-0.5 flex items-center gap-1 text-xs text-amber-700"><AlertTriangle className="h-3 w-3" /> Þú ert líka á vakt þennan dag</div>}
+      {clash && <div className="mt-0.5 flex items-center gap-1 text-xs text-amber-700"><AlertTriangle className="h-3 w-3" /> {t("market.clash")}</div>}
     </>
   );
   // Vakt sem fannst ekki (t.d. eytt) sést samt, án litar.

@@ -4,6 +4,8 @@
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { hsuEventDescription, hsuEventTitle } from "@/lib/hsu/calendar";
+import { DEFAULT_LANG, isLang, translator } from "@/lib/hsu/i18n/core";
+import { notifyMsgs } from "@/lib/hsu/i18n/messages/notify";
 
 export const runtime = "nodejs";
 
@@ -39,7 +41,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ token: string 
   if (token.length < 20) return new Response("Not found", { status: 404 });
   const { data: doctor } = await supabaseAdmin
     .from("hsu_doctors")
-    .select("id, name, active")
+    .select("id, name, active, lang")
     .eq("calendar_token", token)
     .maybeSingle();
   if (!doctor?.active) return new Response("Not found", { status: 404 });
@@ -54,6 +56,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ token: string 
     .gte("shift_date", since)
     .order("shift_date");
 
+  const lang = isLang(doctor.lang) ? doctor.lang : DEFAULT_LANG;
+  const t = translator(notifyMsgs, lang);
   const now = stamp(new Date());
   const lines = [
     "BEGIN:VCALENDAR",
@@ -61,7 +65,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ token: string 
     "PRODID:-//HSU//Vaktir//IS",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    `X-WR-CALNAME:HSU — vaktir (${esc(doctor.name)})`,
+    `X-WR-CALNAME:${esc(t("calendar.name", { name: doctor.name }))}`,
     "REFRESH-INTERVAL;VALUE=DURATION:PT1H",
     "X-PUBLISHED-TTL:PT1H",
     "X-WR-TIMEZONE:Atlantic/Reykjavik",
@@ -75,7 +79,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ token: string 
       `DTEND;VALUE=DATE:${nextDay(s.shift_date)}`,
       `SUMMARY:${esc(hsuEventTitle(s.label, s.starts, s.ends))}`,
       "TRANSP:TRANSPARENT",
-      `DESCRIPTION:${esc(hsuEventDescription(s))}`,
+      `DESCRIPTION:${esc(hsuEventDescription(s, lang))}`,
       "END:VEVENT",
     );
   }

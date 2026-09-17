@@ -4,15 +4,18 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit } from "@/lib/hsu/auth";
 import { UUID_RE, fail, json, readJson, requireManager } from "@/lib/hsu/server";
 import { cleanShiftType } from "@/lib/hsu/shift-types";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
 
 export const runtime = "nodejs";
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requireManager(req);
   if ("res" in auth) return auth.res;
+  const t = tr(req, apiAdmin);
   const { id } = await ctx.params;
-  if (!UUID_RE.test(id)) return fail("Ógild beiðni");
-  const patch = cleanShiftType(await readJson(req), true);
+  if (!UUID_RE.test(id)) return fail(t("err.badRequest"));
+  const patch = cleanShiftType(await readJson(req), true, t.lang);
   if (typeof patch === "string") return fail(patch);
   const { data, error } = await supabaseAdmin.from("hsu_shift_types").update(patch).eq("id", id).select("*").single();
   if (error) return fail(error.message, 500);
@@ -27,8 +30,9 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requireManager(req);
   if ("res" in auth) return auth.res;
+  const t = tr(req, apiAdmin);
   const { id } = await ctx.params;
-  if (!UUID_RE.test(id)) return fail("Ógild beiðni");
+  if (!UUID_RE.test(id)) return fail(t("err.badRequest"));
   const { count } = await supabaseAdmin.from("hsu_shifts").select("id", { count: "exact", head: true }).eq("shift_type_id", id);
   const { error } = count
     ? await supabaseAdmin.from("hsu_shift_types").update({ active: false }).eq("id", id)

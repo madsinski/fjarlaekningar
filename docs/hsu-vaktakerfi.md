@@ -177,6 +177,35 @@ læknar séu á flýtimóttöku eða vakt sé skipt um hádegi — hann þéttis
 
 Vakt má líka draga ofan á aðra vakt: læknarnir skipta þá á dögum.
 
+## Innleiðing: yfirlæknir og nýir læknar
+
+**Yfirlæknir skráður.** Undir *Læknar* → Bæta við lækni → hlutverk *Yfirlæknir*
+(og tungumál). Boðspósturinn er skrifaður fyrir hlutverkið: hvað yfirlæknir gerir,
+fyrstu skrefin og tengiliður Fjarlækninga (`gatt_settings.emergency_contact`).
+Eftir virkjun lendir hann á `/hsu/stjorn`.
+
+**Læknir gerður að yfirlækni.** Hlutverki breytt í *Yfirlæknir*: læknir með virkan
+aðgang fær tölvupóst og tilkynningu á „Mínar vaktir“; læknir sem hefur ekki virkjað
+fær nýtt boð með texta yfirlæknis. Kynning og leiðarvísir yfirlæknis núllstillast.
+
+**Kynning á kerfinu (walkthrough).** Í fyrsta sinn sem notandi opnar kerfið eftir
+virkjun (og eftir að hafa skipt um lykilorð ef þess var krafist) fer sjálfkrafa af
+stað kynning sem lýsir upp hvern hluta og skiptir um flipa:
+læknar á `/hsu/min-sida` (10 skref), yfirlæknir á `/hsu/stjorn` (9 skref). Hún
+opnast aftur úr valmyndinni undir nafninu („Kynning á kerfinu“). Íhlutur:
+`src/app/hsu/_components/Tour.tsx`; mörk eru `data-tour="…"`.
+
+**Fyrstu skref yfirlæknis.** Gátlisti efst á Mánaðarplani (`HeadGuide.tsx`) sem
+merkir sig sjálfur: læknar skráðir og boðnir, vaktategundir, dagatal tengt, opnað
+fyrir óskir, plan búið til, plan birt. „Fela leiðarvísi“ lokar honum; hann opnast
+aftur úr valmyndinni.
+
+**Hvað hefur verið séð:** `hsu_doctors.onboarding` (`{"tour:doctor", "tour:head",
+"guide:head"}` → tími), skráð með `POST /api/hsu/onboarding`. Stjórnandi
+Fjarlækninga sér hvorugt sjálfkrafa en getur opnað bæði úr valmyndinni (vistað í vafranum).
+
+**Tungumál.** Allt kerfið er á íslensku og ensku — sjá `docs/hsu-i18n.md`.
+
 ## Byrja upp á nýtt (Stillingar)
 
 Neðst í *Stillingum* í `/hsu/stjorn` er „Byrja upp á nýtt“: hreinsar **einn mánuð**

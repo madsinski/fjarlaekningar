@@ -3,12 +3,15 @@
 
 import { translator, type Lang } from "./i18n/core";
 import { accountEmails } from "./i18n/messages/account-emails";
+import { apiDoctor } from "./i18n/messages/api-doctor";
+import { tr } from "./i18n/server";
+import { holidayL, monthLabelL } from "./i18n/format";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendEmail, escapeHtml } from "@/lib/email";
 import { getHsuActor, sameOrigin, type HsuActor } from "./auth";
 import {
-  datesInMonth, dayPartFor, isOvernight, markFor, minutesOf, monthLabel, monthRange, splitTimeOf, typeAppliesOn, holidayName, weekdayOf,
+  datesInMonth, dayPartFor, isOvernight, markFor, minutesOf, monthRange, splitTimeOf, typeAppliesOn, holidayName, weekdayOf,
   type HsuDoctor, type HsuMonth, type HsuPreference, type HsuShift, type HsuShiftType, type HsuSwap,
 } from "./types";
 
@@ -32,17 +35,19 @@ export async function readJson(req: Request): Promise<Record<string, unknown>> {
 
 /** Stjórnandi eða yfirlæknir. Skilar svari til að senda beint ef ekki heimilt. */
 export async function requireManager(req: Request): Promise<{ actor: HsuActor } | { res: NextResponse }> {
-  if (req.method !== "GET" && !sameOrigin(req)) return { res: fail("Ógild beiðni", 403) };
+  const t = tr(req, apiDoctor);
+  if (req.method !== "GET" && !sameOrigin(req)) return { res: fail(t("req.invalid"), 403) };
   const actor = await getHsuActor(req);
-  if (!actor) return { res: fail("Ekki innskráð(ur)", 401) };
-  if (!actor.canManage) return { res: fail("Aðeins yfirlæknir hefur aðgang", 403) };
+  if (!actor) return { res: fail(t("req.notSignedIn"), 401) };
+  if (!actor.canManage) return { res: fail(t("req.headOnly"), 403) };
   return { actor };
 }
 
 export async function requireDoctor(req: Request) {
-  if (req.method !== "GET" && !sameOrigin(req)) return { res: fail("Ógild beiðni", 403) } as const;
+  const t = tr(req, apiDoctor);
+  if (req.method !== "GET" && !sameOrigin(req)) return { res: fail(t("req.invalid"), 403) } as const;
   const actor = await getHsuActor(req);
-  if (!actor || actor.kind !== "doctor") return { res: fail("Ekki innskráð(ur)", 401) } as const;
+  if (!actor || actor.kind !== "doctor") return { res: fail(t("req.notSignedIn"), 401) } as const;
   return { doctor: actor.doctor } as const;
 }
 
@@ -336,11 +341,11 @@ export function originOf(req: Request): string {
   return process.env.HSU_PUBLIC_ORIGIN || "https://www.fjarlaekningar.is";
 }
 
-export function monthName(month: string): string {
-  return monthLabel(month);
+export function monthName(month: string, lang: Lang = "is"): string {
+  return monthLabelL(month, lang);
 }
 
-export function describeDate(date: string): string {
-  const h = holidayName(date);
+export function describeDate(date: string, lang: Lang = "is"): string {
+  const h = holidayL(holidayName(date), lang);
   return h ? `${date} (${h})` : date;
 }

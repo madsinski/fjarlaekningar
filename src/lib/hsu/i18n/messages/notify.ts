@@ -1,0 +1,158 @@
+// Tölvupóstar og tilkynningar um vaktir, óskir og vaktamarkað — á tungumáli
+// viðtakandans. Einnig texti í dagatalsatburðum (.ics).
+
+import { defineMessages } from "../core";
+
+export const notifyMsgs = defineMessages(
+  {
+    "hello": "Sæl/l {name}.",
+    "cta.myShifts": "Sjá vaktirnar mínar",
+    "cta.planner": "Opna vaktaskipulag",
+    "cta.myPage": "Opna mína síðu",
+    "cta.market": "Opna vaktamarkað",
+    "cta.viewMarket": "Skoða á vaktamarkaði",
+    "cta.login": "Skrá inn",
+
+    /** {label} = heiti vaktar með bili á eftir (eða tómt), {weekday} = vikudagur, {date} = dagsetning */
+    "shift.phrase": "{label}{weekday} {date} kl. {from}–{to}",
+
+    "digest.subjectSingle": "Breyting á vöktunum þínum",
+    "digest.subject_one": "{n} breyting á vöktunum þínum",
+    "digest.subject_other": "{n} breytingar á vöktunum þínum",
+    "digest.heading": "Breytingar á vaktaplani",
+    "digest.intro": "Yfirlæknir hefur gert eftirfarandi breytingar á vöktunum þínum:",
+
+    "reset.subject": "Nýtt lykilorð — vaktakerfi HSU",
+    "reset.heading": "Nýtt lykilorð",
+    "reset.body": "Beðið var um nýtt lykilorð að vaktakerfi Heilsugæslunnar í Vestmannaeyjum. Hlekkurinn gildir í 2 klukkustundir.",
+    "reset.cta": "Velja nýtt lykilorð",
+    "reset.foot": "Ef þú baðst ekki um þetta máttu hunsa póstinn — lykilorðið þitt er óbreytt.",
+    "reset.text": "Nýtt lykilorð að vaktakerfi HSU: {url} (gildir í 2 klst.)",
+
+    "password.subject": "Lykilorði þínu var breytt",
+    "password.heading": "Lykilorði breytt",
+    "password.line": "Lykilorðinu að vaktakerfinu var breytt og önnur tæki skráð út. Ef þetta varst ekki þú skaltu strax velja nýtt lykilorð með „Gleymt lykilorð“ og láta yfirlækni vita.",
+
+    "dayWeekdays.subject": "{name} breytti dagvinnudögum",
+    "dayWeekdays.heading": "Dagvinnudagar uppfærðir",
+    "dayWeekdays.line": "{name} vinnur nú dagvaktir: {days}.",
+    "dayWeekdays.all": "alla daga",
+
+    "request.accepted.subject": "{name} samþykkti aukavakt",
+    "request.accepted.heading": "Aukavakt samþykkt",
+    "request.accepted.line": "{name} samþykkti að taka vaktina {shift}.",
+    "request.declined.subject": "{name} hafnaði aukavakt",
+    "request.declined.heading": "Aukavakt hafnað",
+    "request.declined.line": "{name} getur ekki tekið vaktina {shift}. Vaktin er aftur án læknis.",
+
+    "market.approval.subject": "Vaktaskipti bíða samþykkis",
+    "market.approval.line": "{name} vill taka vaktina {shift}.",
+
+    "market.declined.subject": "{name} gat ekki tekið vaktina",
+    "market.declined.heading": "Boði hafnað",
+    "market.declined.line": "{name} gat ekki tekið vaktina {shift}. Hún er áfram þín.",
+    "market.declined.hint": "Þú getur boðið hana öðrum lækni eða sett hana á vaktamarkað.",
+    "market.declined.text": "{name} gat ekki tekið vaktina {shift}.",
+
+    "market.cancelled.subject": "Boð um vakt dregið til baka",
+    "market.cancelled.heading": "Boð dregið til baka",
+    "market.cancelled.line": "{name} dró til baka boð um vaktina {shift}.",
+
+    "market.offer.subject": "{name} býður þér vakt",
+    "market.offer.heading": "Þér er boðin vakt",
+    "market.offer.line": "{name} býður þér vaktina {shift}.",
+    "market.open.subject": "Vakt á vaktamarkaði: {shift}",
+    "market.open.heading": "Ný vakt á vaktamarkaði",
+    "market.open.line": "{name} hefur sett vaktina {shift} á vaktamarkað.",
+    "market.note": "Skilaboð: „{note}“",
+    "market.stillYours": "Vaktin er áfram hjá lækninum sem býður hana þar til einhver tekur hana.",
+    "market.text": "{name}: {shift}. {url}",
+
+    "market.taken.subject": "{name} tók vaktina þína",
+    "market.taken.heading": "Vaktin er komin til annars læknis",
+    "market.taken.line": "{name} hefur tekið vaktina {shift}.",
+    "market.taken.gone": "Hún er farin úr vaktalistanum þínum og dagatalinu.",
+    "market.taken.text": "{name} tók vaktina {shift}.",
+
+    "calendar.name": "HSU — vaktir ({name})",
+    "calendar.shift": "Vakt",
+    "calendar.description": "{label} hjá Heilsugæslunni í Vestmannaeyjum, {from}–{to}.",
+    "calendar.onMarket": "Þessi vakt er á vaktamarkaði en er þín þar til annar læknir tekur hana.",
+  },
+  {
+    en: {
+      "hello": "Dear {name},",
+      "cta.myShifts": "View my shifts",
+      "cta.planner": "Open rota planning",
+      "cta.myPage": "Open My page",
+      "cta.market": "Open the shift market",
+      "cta.viewMarket": "View on the shift market",
+      "cta.login": "Sign in",
+
+      "shift.phrase": "{label}{weekday} {date}, {from}–{to}",
+
+      "digest.subjectSingle": "A change to your shifts",
+      "digest.subject_one": "{n} change to your shifts",
+      "digest.subject_other": "{n} changes to your shifts",
+      "digest.heading": "Changes to the rota",
+      "digest.intro": "The chief physician has made the following changes to your shifts:",
+
+      "reset.subject": "New password — HSU rota system",
+      "reset.heading": "New password",
+      "reset.body": "A new password was requested for the Vestmannaeyjar Health Centre rota system. The link is valid for 2 hours.",
+      "reset.cta": "Choose a new password",
+      "reset.foot": "If you did not request this, you can ignore this email — your password is unchanged.",
+      "reset.text": "New password for the HSU rota system: {url} (valid for 2 hours)",
+
+      "password.subject": "Your password was changed",
+      "password.heading": "Password changed",
+      "password.line": "Your rota system password was changed and other devices were signed out. If this was not you, choose a new password straight away using “Forgot password” and let the chief physician know.",
+
+      "dayWeekdays.subject": "{name} changed their day-shift weekdays",
+      "dayWeekdays.heading": "Day-shift weekdays updated",
+      "dayWeekdays.line": "{name} now works day shifts on: {days}.",
+      "dayWeekdays.all": "all days",
+
+      "request.accepted.subject": "{name} accepted an extra shift",
+      "request.accepted.heading": "Extra shift accepted",
+      "request.accepted.line": "{name} agreed to take the shift {shift}.",
+      "request.declined.subject": "{name} declined an extra shift",
+      "request.declined.heading": "Extra shift declined",
+      "request.declined.line": "{name} cannot take the shift {shift}. The shift has no doctor again.",
+
+      "market.approval.subject": "Shift swap awaiting approval",
+      "market.approval.line": "{name} wants to take the shift {shift}.",
+
+      "market.declined.subject": "{name} could not take the shift",
+      "market.declined.heading": "Offer declined",
+      "market.declined.line": "{name} could not take the shift {shift}. It is still yours.",
+      "market.declined.hint": "You can offer it to another doctor or put it on the shift market.",
+      "market.declined.text": "{name} could not take the shift {shift}.",
+
+      "market.cancelled.subject": "Shift offer withdrawn",
+      "market.cancelled.heading": "Offer withdrawn",
+      "market.cancelled.line": "{name} withdrew the offer of the shift {shift}.",
+
+      "market.offer.subject": "{name} is offering you a shift",
+      "market.offer.heading": "You have been offered a shift",
+      "market.offer.line": "{name} is offering you the shift {shift}.",
+      "market.open.subject": "Shift on the shift market: {shift}",
+      "market.open.heading": "New shift on the shift market",
+      "market.open.line": "{name} has put the shift {shift} on the shift market.",
+      "market.note": "Message: “{note}”",
+      "market.stillYours": "The shift stays with the doctor offering it until someone takes it.",
+      "market.text": "{name}: {shift}. {url}",
+
+      "market.taken.subject": "{name} took your shift",
+      "market.taken.heading": "Your shift has gone to another doctor",
+      "market.taken.line": "{name} has taken the shift {shift}.",
+      "market.taken.gone": "It has been removed from your shift list and calendar.",
+      "market.taken.text": "{name} took the shift {shift}.",
+
+      "calendar.name": "HSU — shifts ({name})",
+      "calendar.shift": "Shift",
+      "calendar.description": "{label} at Vestmannaeyjar Health Centre, {from}–{to}.",
+      "calendar.onMarket": "This shift is on the shift market but remains yours until another doctor takes it.",
+    },
+  },
+);

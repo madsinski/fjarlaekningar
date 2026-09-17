@@ -5,6 +5,9 @@
 import { useEffect, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { Loader2, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { DEFAULT_LANG, LANG_COOKIE, isLang, translator, type Lang } from "@/lib/hsu/i18n/core";
+import { useCommon } from "@/lib/hsu/i18n/client";
+import { common } from "@/lib/hsu/i18n/messages/common";
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
 
@@ -66,6 +69,7 @@ export const inputCls =
   "block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[var(--hsu)] focus:outline-none focus:ring-2 focus:ring-[var(--hsu)]/20";
 
 export function Modal({ open, onClose, title, children, wide }: { open: boolean; onClose: () => void; title: string; children: ReactNode; wide?: boolean }) {
+  const c = useCommon();
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -80,7 +84,7 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
         className={cx("max-h-[92vh] w-full overflow-y-auto rounded-t-2xl bg-white shadow-xl sm:rounded-2xl", wide ? "sm:max-w-3xl" : "sm:max-w-md")}>
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-5 py-3">
           <h2 className="text-base font-bold text-slate-900">{title}</h2>
-          <button onClick={onClose} aria-label="Loka" className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X className="h-5 w-5" /></button>
+          <button onClick={onClose} aria-label={c("action.close")} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X className="h-5 w-5" /></button>
         </div>
         <div className="p-5">{children}</div>
       </div>
@@ -96,6 +100,14 @@ export function Notice({ tone, children }: { tone: "ok" | "err" | "info" | "warn
     warn: "border-amber-200 bg-amber-50 text-amber-900",
   };
   return <div className={cx("rounded-xl border px-3.5 py-2.5 text-sm", t[tone])}>{children}</div>;
+}
+
+/** Tungumál vafrans úr kökunni hsu_lang (hsuApi er ekki hook og nær ekki í samhengið). */
+function cookieLang(): Lang {
+  if (typeof document === "undefined") return DEFAULT_LANG;
+  const m = document.cookie.match(new RegExp(`(?:^|;\\s*)${LANG_COOKIE}=([^;]+)`));
+  const v = m?.[1];
+  return isLang(v) ? v : DEFAULT_LANG;
 }
 
 /**
@@ -120,10 +132,10 @@ export async function hsuApi<T = Record<string, unknown>>(path: string, init: { 
       // Staða breytist stöðugt (áminningar, samtöl) — aldrei svar úr skyndiminni vafrans.
       cache: "no-store",
     });
-    const j = await res.json().catch(() => ({ ok: false, error: `Villa (${res.status})` }));
+    const j = await res.json().catch(() => ({ ok: false, error: translator(common, cookieLang())("error.status", { status: res.status }) }));
     return { status: res.status, ...j };
   } catch {
-    return { ok: false, error: "Engin nettenging" } as T & { ok: boolean; error?: string };
+    return { ok: false, error: translator(common, cookieLang())("error.network") } as T & { ok: boolean; error?: string };
   }
 }
 
@@ -153,6 +165,7 @@ export function shortName(name: string): string {
   return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0]}.` : parts[0] ?? name;
 }
 
+/** @deprecated Notið timeAgoL(iso, lang) í src/lib/hsu/i18n/format.ts. */
 export function timeAgoIs(iso: string | null): string {
   if (!iso) return "aldrei";
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);

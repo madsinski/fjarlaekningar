@@ -7,15 +7,20 @@ import { hsuSync } from "@/lib/hsu/calendar";
 import { shiftPhrase } from "@/lib/hsu/market";
 import { notifyHeads } from "@/lib/hsu/notify";
 import { UUID_RE, fail, json, originOf, readJson, requireDoctor } from "@/lib/hsu/server";
+import { translator, type Lang } from "@/lib/hsu/i18n/core";
+import { notifyMsgs } from "@/lib/hsu/i18n/messages/notify";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requireDoctor(req);
   if ("res" in auth) return auth.res;
+  const t = tr(req, apiDoctor);
   const me = auth.doctor;
   const { id } = await ctx.params;
-  if (!UUID_RE.test(id)) return fail("Ógild beiðni");
+  if (!UUID_RE.test(id)) return fail(t("req.invalid"));
   const action = String((await readJson(req)).action ?? "");
 
   const { data: shift } = await supabaseAdmin
@@ -24,20 +29,27 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     .eq("id", id)
     .maybeSingle();
   if (!shift || shift.doctor_id !== me.id || shift.confirm_status !== "requested") {
-    return fail("Beiðnin er ekki lengur virk", 409);
+    return fail(t("request.inactive"), 409);
   }
   const origin = originOf(req);
   const month = shift.shift_date.slice(0, 7);
+  const n = (key: "accepted" | "declined") => ({
+    origin,
+    subject: (l: Lang) => translator(notifyMsgs, l)(`request.${key}.subject` as const, { name: me.name }),
+    heading: (l: Lang) => translator(notifyMsgs, l)(`request.${key}.heading` as const),
+    lines: [(l: Lang) => translator(notifyMsgs, l)(`request.${key}.line` as const, { name: me.name, shift: shiftPhrase(shift, l) })],
+    path: `/hsu/stjorn?t=plan&m=${month}`,
+  });
 
   if (action === "accept") {
     // Skilyrt á stöðuna svo tvöfaldur smellur samþykki ekki vakt sem var dregin til baka á meðan.
     const { data, error } = await supabaseAdmin.from("hsu_shifts")
       .update({ confirm_status: null }).eq("id", id).eq("doctor_id", me.id).eq("confirm_status", "requested").select("id");
     if (error) return fail(error.message, 500);
-    if (!data?.length) return fail("Beiðnin er ekki lengur virk", 409);
+    if (!data?.length) return fail(t("request.inactive"), 409);
     if (shift.published) after(async () => { await hsuSync.syncDoctors([me.id]); });
     await audit(me.name, "request.accept", month, { shiftId: id });
-    notifyHeads({ origin, subject: `${me.name} samþykkti aukavakt`, heading: "Aukavakt samþykkt", lines: [`${me.name} samþykkti að taka vaktina ${shiftPhrase(shift)}.`], path: `/hsu/stjorn?t=plan&m=${month}` });
+    notifyHeads(n("accepted"));
     return json({ ok: true });
   }
 
@@ -46,11 +58,11 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       .update({ doctor_id: null, confirm_status: null, requested_by: "", requested_at: null })
       .eq("id", id).eq("doctor_id", me.id).eq("confirm_status", "requested").select("id");
     if (error) return fail(error.message, 500);
-    if (!data?.length) return fail("Beiðnin er ekki lengur virk", 409);
+    if (!data?.length) return fail(t("request.inactive"), 409);
     await audit(me.name, "request.decline", month, { shiftId: id });
-    notifyHeads({ origin, subject: `${me.name} hafnaði aukavakt`, heading: "Aukavakt hafnað", lines: [`${me.name} getur ekki tekið vaktina ${shiftPhrase(shift)}. Vaktin er aftur án læknis.`], path: `/hsu/stjorn?t=plan&m=${month}` });
+    notifyHeads(n("declined"));
     return json({ ok: true });
   }
 
-  return fail("Óþekkt aðgerð");
+  return fail(t("req.unknownAction"));
 }

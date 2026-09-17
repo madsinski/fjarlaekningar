@@ -5,20 +5,23 @@ import { audit } from "@/lib/hsu/auth";
 import { copyToNextMonth, sanitizePrefs, savePrefs } from "@/lib/hsu/prefs";
 import { MONTH_RE, UUID_RE, fail, json, readJson, requireManager } from "@/lib/hsu/server";
 import type { PrefStatus } from "@/lib/hsu/types";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
 
 export const runtime = "nodejs";
 
 export async function PUT(req: Request) {
   const auth = await requireManager(req);
   if ("res" in auth) return auth.res;
+  const t = tr(req, apiAdmin);
   const body = await readJson(req);
   const month = String(body.month ?? "");
   const doctorId = String(body.doctor_id ?? "");
-  if (!MONTH_RE.test(month) || !UUID_RE.test(doctorId)) return fail("Ógild beiðni");
+  if (!MONTH_RE.test(month) || !UUID_RE.test(doctorId)) return fail(t("err.badRequest"));
   const { data: doc } = await supabaseAdmin.from("hsu_doctors").select("id").eq("id", doctorId).maybeSingle();
-  if (!doc) return fail("Læknir fannst ekki", 404);
+  if (!doc) return fail(t("err.doctorNotFound"), 404);
 
-  const input = sanitizePrefs(month, body);
+  const input = sanitizePrefs(month, body, t.lang);
   if (typeof input === "string") return fail(input);
   const status: PrefStatus = body.approve ? "approved" : "submitted";
   const saved = await savePrefs({ doctorId, month, input, status, enteredBy: auth.actor.label });

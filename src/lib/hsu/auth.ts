@@ -9,7 +9,8 @@
 //
 // Server-only. Aldrei flytja inn í "use client" skrá.
 
-import { LANG_COOKIE, LANG_COOKIE_OPTS, isLang } from "./i18n/core";
+import { LANG_COOKIE, LANG_COOKIE_OPTS, isLang, translator, type Lang } from "./i18n/core";
+import { apiDoctor } from "./i18n/messages/api-doctor";
 import { createHash, randomBytes, scrypt as scryptCb, timingSafeEqual, type ScryptOptions } from "node:crypto";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase-admin";
@@ -59,16 +60,18 @@ export async function verifySecret(secret: string, stored: string | null | undef
 export const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
 export const newToken = (bytes = 32) => randomBytes(bytes).toString("base64url");
 
-export function passwordProblem(pw: string): string | null {
-  if (typeof pw !== "string" || pw.length < 10) return "Lykilorð þarf að vera minnst 10 stafir.";
-  if (pw.length > 200) return "Lykilorð er of langt.";
-  if (!/[A-Za-zÁÐÉÍÓÚÝÞÆÖáðéíóúýþæö]/.test(pw) || !/[0-9]/.test(pw)) return "Lykilorð þarf að innihalda bæði bókstafi og tölustafi.";
+export function passwordProblem(pw: string, lang: Lang = "is"): string | null {
+  const t = translator(apiDoctor, lang);
+  if (typeof pw !== "string" || pw.length < 10) return t("password.tooShort");
+  if (pw.length > 200) return t("password.tooLong");
+  if (!/[A-Za-zÁÐÉÍÓÚÝÞÆÖáðéíóúýþæö]/.test(pw) || !/[0-9]/.test(pw)) return t("password.lettersDigits");
   return null;
 }
 
-export function pinProblem(pin: string): string | null {
-  if (!/^\d{4}$/.test(pin || "")) return "Aðgangskóði er nákvæmlega 4 tölustafir.";
-  if (/^(\d)\1{3}$/.test(pin) || ["1234", "4321", "0123", "9876"].includes(pin)) return "Veldu kóða sem er ekki augljós (t.d. ekki 1111 eða 1234).";
+export function pinProblem(pin: string, lang: Lang = "is"): string | null {
+  const t = translator(apiDoctor, lang);
+  if (!/^\d{4}$/.test(pin || "")) return t("pin.fourDigits");
+  if (/^(\d)\1{3}$/.test(pin) || ["1234", "4321", "0123", "9876"].includes(pin)) return t("pin.obvious");
   return null;
 }
 

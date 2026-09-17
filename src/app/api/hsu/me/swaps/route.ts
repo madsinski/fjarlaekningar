@@ -5,35 +5,40 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit } from "@/lib/hsu/auth";
 import { canDoBakvakt, isBakvaktShift, shiftPhrase } from "@/lib/hsu/market";
 import { UUID_RE, fail, hsuEmailHtml, json, originOf, readJson, requireDoctor, sendHsuEmail } from "@/lib/hsu/server";
+import { DEFAULT_LANG, isLang, translator } from "@/lib/hsu/i18n/core";
+import { notifyMsgs } from "@/lib/hsu/i18n/messages/notify";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   const auth = await requireDoctor(req);
   if ("res" in auth) return auth.res;
+  const t = tr(req, apiDoctor);
   const me = auth.doctor;
   const body = await readJson(req);
   const shiftId = String(body.shift_id ?? "");
   const toDoctor = body.to_doctor ? String(body.to_doctor) : null;
   const note = typeof body.note === "string" ? body.note.slice(0, 300) : "";
-  if (!UUID_RE.test(shiftId) || (toDoctor && !UUID_RE.test(toDoctor))) return fail("Ógild beiðni");
-  if (toDoctor === me.id) return fail("Þú getur ekki boðið sjálfum þér vaktina.");
+  if (!UUID_RE.test(shiftId) || (toDoctor && !UUID_RE.test(toDoctor))) return fail(t("req.invalid"));
+  if (toDoctor === me.id) return fail(t("swap.selfOffer"));
 
   const { data: shift } = await supabaseAdmin
     .from("hsu_shifts")
     .select("id, doctor_id, shift_date, starts, ends, label, published, confirm_status")
     .eq("id", shiftId)
     .maybeSingle();
-  if (!shift || shift.doctor_id !== me.id || !shift.published) return fail("Vaktin tilheyrir þér ekki", 403);
-  if (shift.shift_date < new Date().toISOString().slice(0, 10)) return fail("Vaktin er liðin.");
-  if (shift.confirm_status === "requested") return fail("Svaraðu fyrst beiðninni um þessa vakt.");
+  if (!shift || shift.doctor_id !== me.id || !shift.published) return fail(t("shift.notYours"), 403);
+  if (shift.shift_date < new Date().toISOString().slice(0, 10)) return fail(t("shift.past"));
+  if (shift.confirm_status === "requested") return fail(t("shift.answerRequestFirst"));
   const bakvakt = await isBakvaktShift(shiftId);
-  if (bakvakt && toDoctor && !(await canDoBakvakt(toDoctor))) return fail("Þessi læknir hefur ekki bakvaktarréttindi.");
+  if (bakvakt && toDoctor && !(await canDoBakvakt(toDoctor))) return fail(t("swap.targetNoBakvakt"));
 
-  let target: { id: string; name: string; email: string } | null = null;
+  let target: { id: string; name: string; email: string; lang: string | null } | null = null;
   if (toDoctor) {
-    const { data } = await supabaseAdmin.from("hsu_doctors").select("id, name, email, active").eq("id", toDoctor).maybeSingle();
-    if (!data?.active) return fail("Læknir fannst ekki");
+    const { data } = await supabaseAdmin.from("hsu_doctors").select("id, name, email, active, lang").eq("id", toDoctor).maybeSingle();
+    if (!data?.active) return fail(t("doctor.notFound"));
     target = data;
   }
 
@@ -50,26 +55,30 @@ export async function POST(req: Request) {
 
   const origin = originOf(req);
   after(async () => {
-    const phrase = shiftPhrase(shift);
     // Bakvakt á markaði: aðeins þeir sem mega taka hana fá póst.
-    let others = supabaseAdmin.from("hsu_doctors").select("id, name, email").eq("active", true).neq("id", me.id);
+    let others = supabaseAdmin.from("hsu_doctors").select("id, name, email, lang").eq("active", true).neq("id", me.id);
     if (bakvakt) others = others.eq("can_bakvakt", true);
     const recipients = target ? [target] : ((await others).data ?? []);
     for (const r of recipients) {
+      const lang = isLang(r.lang) ? r.lang : DEFAULT_LANG;
+      const tn = translator(notifyMsgs, lang);
+      const kind = target ? "offer" : "open";
+      const vars = { name: me.name, shift: shiftPhrase(shift, lang) };
       await sendHsuEmail(
         r.email,
-        target ? `${me.name} býður þér vakt` : `Vakt á vaktamarkaði: ${phrase}`,
+        tn(`market.${kind}.subject`, vars),
         hsuEmailHtml({
           origin,
-          heading: target ? "Þér er boðin vakt" : "Ný vakt á vaktamarkaði",
+          lang,
+          heading: tn(`market.${kind}.heading`),
           paragraphs: [
-            target ? `${me.name} býður þér vaktina ${phrase}.` : `${me.name} hefur sett vaktina ${phrase} á vaktamarkað.`,
-            ...(note ? [`Skilaboð: „${note}“`] : []),
-            "Vaktin er áfram hjá lækninum sem býður hana þar til einhver tekur hana.",
+            tn(`market.${kind}.line`, vars),
+            ...(note ? [tn("market.note", { note })] : []),
+            tn("market.stillYours"),
           ],
-          cta: { label: "Skoða á vaktamarkaði", url: `${origin}/hsu/min-sida?t=markadur` },
+          cta: { label: tn("cta.viewMarket"), url: `${origin}/hsu/min-sida?t=markadur` },
         }),
-        `${me.name}: ${phrase}. ${origin}/hsu/min-sida?t=markadur`,
+        tn("market.text", { ...vars, url: `${origin}/hsu/min-sida?t=markadur` }),
       );
     }
   });

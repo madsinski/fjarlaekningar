@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { KeyRound, Lock, Mail, ShieldCheck } from "lucide-react";
+import { LanguageSwitch, useT } from "@/lib/hsu/i18n/client";
+import { auth } from "@/lib/hsu/i18n/messages/auth";
 import PinPad from "./PinPad";
 import { Button, Field, HsuLogo, Notice, firstName, hsuApi, inputCls } from "./ui";
 
 type Stage = "loading" | "pin" | "password" | "forgot" | "offer-pin";
 
 export default function LoginClient({ next }: { next: string }) {
+  const t = useT(auth);
   const [stage, setStage] = useState<Stage>("loading");
   const [device, setDevice] = useState<{ name: string; email: string } | null>(null);
   const [email, setEmail] = useState("");
@@ -40,7 +43,7 @@ export default function LoginClient({ next }: { next: string }) {
     const r = await hsuApi<{ next?: string; deviceRevoked?: boolean }>("/api/hsu/auth/pin", { body: { pin: value } });
     setBusy(false);
     if (r.ok) return go(r.next ?? "/hsu/min-sida");
-    setErr(r.error ?? "Innskráning mistókst");
+    setErr(r.error ?? t("login.failed"));
     setPin("");
     if (r.deviceRevoked || (r as { noPin?: boolean }).noPin) {
       if (device?.email) setEmail(device.email);
@@ -53,7 +56,7 @@ export default function LoginClient({ next }: { next: string }) {
     setBusy(true); setErr(null);
     const r = await hsuApi<{ next: string; hasPin: boolean; mustChangePassword: boolean }>("/api/hsu/auth/login", { body: { email, password } });
     setBusy(false);
-    if (!r.ok) { setErr(r.error ?? "Innskráning mistókst"); return; }
+    if (!r.ok) { setErr(r.error ?? t("login.failed")); return; }
     if (!r.hasPin && !r.mustChangePassword) {
       setDest(r.next);
       setStage("offer-pin");
@@ -65,14 +68,14 @@ export default function LoginClient({ next }: { next: string }) {
   const savePin = async (value: string) => {
     if (pinStep === 1) { setPin(value); setPinStep(2); setPin2(""); return; }
     if (value !== pin) {
-      setErr("Kóðarnir stemma ekki. Reyndu aftur.");
+      setErr(t("pin.mismatch"));
       setPin(""); setPin2(""); setPinStep(1);
       return;
     }
     setBusy(true); setErr(null);
     const r = await hsuApi("/api/hsu/me/pin", { method: "PUT", body: { pin: value, password } });
     setBusy(false);
-    if (!r.ok) { setErr(r.error ?? "Ekki tókst að vista kóðann"); setPin(""); setPin2(""); setPinStep(1); return; }
+    if (!r.ok) { setErr(r.error ?? t("pin.saveFailed")); setPin(""); setPin2(""); setPinStep(1); return; }
     go(dest);
   };
 
@@ -81,17 +84,18 @@ export default function LoginClient({ next }: { next: string }) {
     setBusy(true);
     await hsuApi("/api/hsu/auth/forgot", { body: { email } });
     setBusy(false);
-    setInfo("Ef netfangið er skráð færðu tölvupóst með hlekk til að velja nýtt lykilorð.");
+    setInfo(t("forgot.sent"));
     setStage("password");
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center px-4 py-10">
+    <main className="relative flex min-h-screen flex-col items-center justify-center px-4 py-10">
+      <LanguageSwitch className="absolute right-4 top-4" />
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           <HsuLogo size={64} />
-          <h1 className="mt-4 text-xl font-bold text-slate-900">Vaktakerfi lækna</h1>
-          <p className="text-sm text-slate-500">Heilsugæslan í Vestmannaeyjum · HSU</p>
+          <h1 className="mt-4 text-xl font-bold text-slate-900">{t("login.title")}</h1>
+          <p className="text-sm text-slate-500">{t("login.subtitle")}</p>
         </div>
 
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -99,20 +103,20 @@ export default function LoginClient({ next }: { next: string }) {
 
           {stage === "pin" && device && (
             <div>
-              <p className="text-center text-sm text-slate-600">Velkomin(n) aftur,</p>
+              <p className="text-center text-sm text-slate-600">{t("login.welcomeBack")}</p>
               <p className="text-center text-lg font-bold text-slate-900">{firstName(device.name)}</p>
-              <p className="mb-6 mt-1 text-center text-xs text-slate-500">Sláðu inn aðgangskóðann þinn</p>
+              <p className="mb-6 mt-1 text-center text-xs text-slate-500">{t("login.enterPin")}</p>
               <PinPad value={pin} onChange={(v) => { setPin(v); setErr(null); }} onComplete={submitPin} disabled={busy} error={Boolean(err)} />
               {err && <p className="mt-4 text-center text-sm text-red-600">{err}</p>}
               <div className="mt-6 flex justify-center gap-4 text-sm">
                 <button className="font-medium text-[var(--hsu)] hover:underline" onClick={() => { setEmail(device.email); setStage("password"); setErr(null); }}>
-                  Nota lykilorð
+                  {t("login.usePassword")}
                 </button>
                 <button className="text-slate-500 hover:underline" onClick={async () => {
                   await hsuApi("/api/hsu/auth/logout", { body: { forget: true } });
                   setDevice(null); setEmail(""); setStage("password");
                 }}>
-                  Ekki þú?
+                  {t("login.notYou")}
                 </button>
               </div>
             </div>
@@ -121,14 +125,14 @@ export default function LoginClient({ next }: { next: string }) {
           {stage === "password" && (
             <form onSubmit={submitPassword} className="space-y-4">
               {info && <Notice tone="info">{info}</Notice>}
-              <Field label="Notandanafn" hint="HSU-netfangið þitt, t.d. jon.jonsson@hsu.is">
+              <Field label={t("login.username")} hint={t("login.usernameHint")}>
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                   <input className={`${inputCls} pl-9`} type="text" inputMode="email" autoComplete="username" autoCapitalize="none" spellCheck={false}
-                    value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nafn@hsu.is" required />
+                    value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("login.emailPlaceholder")} required />
                 </div>
               </Field>
-              <Field label="Lykilorð">
+              <Field label={t("login.password")}>
                 <div className="relative">
                   <Lock className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                   <input className={`${inputCls} pl-9`} type="password" autoComplete="current-password"
@@ -136,22 +140,22 @@ export default function LoginClient({ next }: { next: string }) {
                 </div>
               </Field>
               {err && <p className="text-sm text-red-600">{err}</p>}
-              <Button type="submit" size="lg" className="w-full" busy={busy}>Skrá inn</Button>
+              <Button type="submit" size="lg" className="w-full" busy={busy}>{t("login.submit")}</Button>
               <div className="flex justify-between text-sm">
-                <button type="button" className="text-slate-500 hover:underline" onClick={() => { setStage("forgot"); setErr(null); }}>Gleymt lykilorð?</button>
-                {device && <button type="button" className="font-medium text-[var(--hsu)] hover:underline" onClick={() => { setStage("pin"); setErr(null); }}>Nota kóða</button>}
+                <button type="button" className="text-slate-500 hover:underline" onClick={() => { setStage("forgot"); setErr(null); }}>{t("login.forgot")}</button>
+                {device && <button type="button" className="font-medium text-[var(--hsu)] hover:underline" onClick={() => { setStage("pin"); setErr(null); }}>{t("login.usePin")}</button>}
               </div>
             </form>
           )}
 
           {stage === "forgot" && (
             <form onSubmit={sendForgot} className="space-y-4">
-              <p className="text-sm text-slate-600">Sláðu inn HSU-netfangið þitt og við sendum þér hlekk til að velja nýtt lykilorð.</p>
-              <Field label="Netfang">
-                <input className={inputCls} type="text" inputMode="email" autoCapitalize="none" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nafn@hsu.is" required />
+              <p className="text-sm text-slate-600">{t("forgot.intro")}</p>
+              <Field label={t("forgot.email")}>
+                <input className={inputCls} type="text" inputMode="email" autoCapitalize="none" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("login.emailPlaceholder")} required />
               </Field>
-              <Button type="submit" size="lg" className="w-full" busy={busy}>Senda hlekk</Button>
-              <button type="button" className="w-full text-center text-sm text-slate-500 hover:underline" onClick={() => setStage("password")}>Til baka</button>
+              <Button type="submit" size="lg" className="w-full" busy={busy}>{t("forgot.send")}</Button>
+              <button type="button" className="w-full text-center text-sm text-slate-500 hover:underline" onClick={() => setStage("password")}>{t("forgot.back")}</button>
             </form>
           )}
 
@@ -159,9 +163,9 @@ export default function LoginClient({ next }: { next: string }) {
             <div>
               <div className="flex flex-col items-center text-center">
                 <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--hsu-soft)]"><KeyRound className="h-6 w-6 text-[var(--hsu)]" /></span>
-                <h2 className="mt-3 text-base font-bold">Fljótleg innskráning</h2>
+                <h2 className="mt-3 text-base font-bold">{t("pin.offerTitle")}</h2>
                 <p className="mt-1 text-sm text-slate-600">
-                  {pinStep === 1 ? "Veldu 4 stafa aðgangskóða. Næst geturðu skráð þig inn á þessu tæki með honum." : "Sláðu kóðann inn aftur til staðfestingar."}
+                  {pinStep === 1 ? t("pin.offerChoose") : t("pin.offerConfirm")}
                 </p>
               </div>
               <div className="mt-6">
@@ -174,16 +178,16 @@ export default function LoginClient({ next }: { next: string }) {
                 />
               </div>
               {err && <p className="mt-4 text-center text-sm text-red-600">{err}</p>}
-              <button className="mt-6 w-full text-center text-sm text-slate-500 hover:underline" onClick={() => go(dest)}>Sleppa í bili</button>
+              <button className="mt-6 w-full text-center text-sm text-slate-500 hover:underline" onClick={() => go(dest)}>{t("pin.skip")}</button>
             </div>
           )}
         </div>
 
         <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[11px] text-slate-400">
-          <ShieldCheck className="h-3.5 w-3.5" /> Aðgangskóði virkar aðeins á tæki þar sem þú hefur skráð þig inn með lykilorði.
+          <ShieldCheck className="h-3.5 w-3.5" /> {t("login.pinDeviceOnly")}
         </p>
         <p className="mt-2 text-center text-[11px]">
-          <a href="/personuvernd-starfsfolks" className="text-slate-400 underline hover:text-slate-600">Persónuvernd</a>
+          <a href="/personuvernd-starfsfolks" className="text-slate-400 underline hover:text-slate-600">{t("login.privacy")}</a>
         </p>
       </div>
     </main>

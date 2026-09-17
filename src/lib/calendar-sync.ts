@@ -58,7 +58,10 @@ export interface CalendarSyncConfig {
   requireNull?: string[];
   /** Heiti dagatalsins sem búið er til í reikningi læknisins. */
   calendarName: string;
-  eventBody: (s: SyncShiftRow) => { summary: string; description: string };
+  /** `lang` is the doctor's language when `languageOf` is configured, otherwise undefined. */
+  eventBody: (s: SyncShiftRow, lang?: string) => { summary: string; description: string };
+  /** Optional: the doctor's language, so event text follows it (a change rewrites the events). */
+  languageOf?: (doctorId: string) => Promise<string>;
 }
 
 export interface SyncResult {
@@ -83,15 +86,15 @@ function windowStart(): string {
 
 export function createCalendarSync(cfg: CalendarSyncConfig) {
   /** Everything that would change the event. Unchanged hash = no API call. */
-  function hashOf(s: SyncShiftRow): string {
+  function hashOf(s: SyncShiftRow, lang?: string): string {
     return createHash("sha256")
-      .update([s.shift_date, s.starts, s.ends, s.note, s.status, s.label ?? ""].join("|"))
+      .update([s.shift_date, s.starts, s.ends, s.note, s.status, s.label ?? "", ...(lang ? [lang] : [])].join("|"))
       .digest("hex")
       .slice(0, 16);
   }
 
-  function fullBody(s: SyncShiftRow) {
-    const { summary, description } = cfg.eventBody(s);
+  function fullBody(s: SyncShiftRow, lang?: string) {
+    const { summary, description } = cfg.eventBody(s, lang);
     return {
       summary,
       description,
@@ -159,8 +162,8 @@ export function createCalendarSync(cfg: CalendarSyncConfig) {
     }
   }
 
-  async function writeEvent(token: string, calendarId: string, shift: SyncShiftRow, believedToExist: boolean): Promise<void> {
-    const body = fullBody(shift);
+  async function writeEvent(token: string, calendarId: string, shift: SyncShiftRow, believedToExist: boolean, lang?: string): Promise<void> {
+    const body = fullBody(shift, lang);
     const id = eventIdFor(shift.id);
 
     if (believedToExist) {
@@ -204,6 +207,7 @@ export function createCalendarSync(cfg: CalendarSyncConfig) {
     try {
       const token = await accessTokenFor(row);
       const from = windowStart();
+      const lang = cfg.languageOf ? await cfg.languageOf(doctorId) : undefined;
 
       let shiftQuery = supabaseAdmin
         .from(cfg.shiftsTable)
@@ -234,11 +238,11 @@ export function createCalendarSync(cfg: CalendarSyncConfig) {
       let written = 0, removed = 0;
 
       for (const s of shifts) {
-        const h = hashOf(s);
+        const h = hashOf(s, lang);
         const m = have.get(s.id);
         // Same content, same calendar: nothing to say to Google.
         if (m && m.synced_hash === h && m.calendar_id === row.calendar_id) continue;
-        await writeEvent(token, row.calendar_id, s, Boolean(m) && m!.calendar_id === row.calendar_id);
+        await writeEvent(token, row.calendar_id, s, Boolean(m) && m!.calendar_id === row.calendar_id, lang);
         await supabaseAdmin.from(cfg.eventsTable).upsert(
           {
             doctor_id: doctorId,

@@ -11,26 +11,30 @@ import { audit } from "@/lib/hsu/auth";
 import { hsuSync } from "@/lib/hsu/calendar";
 import { planMonth, toPlanDoctors, toPlanSlots, type PlanPrefs } from "@/lib/hsu/plan";
 import { shiftPhrase } from "@/lib/hsu/market";
+import { say } from "@/lib/hsu/shift-edit";
 import { notifyDoctors, type DoctorNotice } from "@/lib/hsu/notify";
 import {
   MONTH_RE, applyHalfDayWishes, ensureSlots, fail, json, listDoctors, loadMonth, loadMonthShifts, loadPreferences, loadShiftTypes, originOf, readJson, requireManager,
 } from "@/lib/hsu/server";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   const auth = await requireManager(req);
   if ("res" in auth) return auth.res;
+  const t = tr(req, apiAdmin);
   const body = await readJson(req);
   const month = String(body.month ?? "");
-  if (!MONTH_RE.test(month)) return fail("Ógildur mánuður");
+  if (!MONTH_RE.test(month)) return fail(t("err.badMonth"));
   const mode = body.mode === "all" ? "all" : "empty";
   const action = body.action === "slots" ? "slots" : "plan";
 
   try {
     let m = await loadMonth(month);
     if (m?.status === "published" && mode === "all" && !body.confirm) {
-      return json({ ok: false, needsConfirm: "published", error: "Mánuðurinn er birtur. Endurskipting breytir vöktum sem læknar hafa þegar séð." }, 409);
+      return json({ ok: false, needsConfirm: "published", error: t("err.publishedReplan") }, 409);
     }
 
     const created = await ensureSlots(month);
@@ -89,11 +93,18 @@ export async function POST(req: Request) {
       for (const [doc, ids] of byDoctor) {
         for (const id of ids) {
           const s = shiftById.get(id)!;
-          if (s.doctor_id) notices.push({ doctorId: s.doctor_id, line: `Þú ert ekki lengur á vaktinni ${shiftPhrase(s)}.` });
-          if (doc) notices.push({ doctorId: doc, line: `Þú hefur verið sett(ur) á vaktina ${shiftPhrase(s)}.` });
+          if (s.doctor_id) notices.push({ doctorId: s.doctor_id, line: say((l) => l("plan.removed", { shift: shiftPhrase(s, l.lang) })) });
+          if (doc) notices.push({ doctorId: doc, line: say((l) => l("plan.assigned", { shift: shiftPhrase(s, l.lang) })) });
         }
       }
-      notifyDoctors({ origin: originOf(req), subject: "Breyting á vaktaplani", heading: "Breyting á vaktaplani", intro: `${auth.actor.label} endurraðaði vaktaplaninu:`, notices, email: "digest" });
+      notifyDoctors({
+        origin: originOf(req),
+        subject: say((l) => l("plan.subject")),
+        heading: say((l) => l("plan.subject")),
+        intro: say((l) => l("plan.introReplan", { by: auth.actor.label })),
+        notices,
+        email: "digest",
+      });
     }
 
     await audit(auth.actor.label, "plan.generate", month, { mode, created, changed, unfilled: result.unfilled.length });

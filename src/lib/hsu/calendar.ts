@@ -2,6 +2,9 @@
 
 import { createCalendarSync } from "@/lib/calendar-sync";
 import { hhmm } from "@/lib/roster";
+import { isLang, translator, type Lang } from "./i18n/core";
+import { doctorLang } from "./i18n/server";
+import { notifyMsgs } from "./i18n/messages/notify";
 
 export const HSU_CALENDAR_NAME = "HSU — vaktir";
 
@@ -14,10 +17,15 @@ export function hsuEventTitle(label: string, starts: string, ends: string): stri
   return `HSU ${label ? `${label} ` : ""}${short(starts)}-${short(ends)}`;
 }
 
-export function hsuEventDescription(s: { label?: string; starts: string; ends: string; note: string; status: string }): string {
+/**
+ * Lýsing atburðar á tungumáli læknisins — bæði í Google-samstillingu
+ * (languageOf) og .ics-áskrift.
+ */
+export function hsuEventDescription(s: { label?: string; starts: string; ends: string; note: string; status: string }, lang: Lang = "is"): string {
+  const t = translator(notifyMsgs, lang);
   const note = (s.note || "").trim();
-  const market = s.status === "open" ? "\n\nÞessi vakt er á vaktamarkaði en er þín þar til annar læknir tekur hana." : "";
-  return `${s.label || "Vakt"} hjá Heilsugæslunni í Vestmannaeyjum, ${hhmm(s.starts)}–${hhmm(s.ends)}.${market}${note ? `\n\n${note}` : ""}`;
+  const market = s.status === "open" ? `\n\n${t("calendar.onMarket")}` : "";
+  return `${t("calendar.description", { label: s.label || t("calendar.shift"), from: hhmm(s.starts), to: hhmm(s.ends) })}${market}${note ? `\n\n${note}` : ""}`;
 }
 
 export const hsuSync = createCalendarSync({
@@ -32,8 +40,9 @@ export const hsuSync = createCalendarSync({
   // Beiðni umfram hámark er ekki vakt fyrr en læknirinn hefur samþykkt hana.
   requireNull: ["confirm_status"],
   calendarName: HSU_CALENDAR_NAME,
-  eventBody: (s) => ({
+  languageOf: (doctorId) => doctorLang(doctorId),
+  eventBody: (s, lang) => ({
     summary: hsuEventTitle(s.label ?? "", s.starts, s.ends),
-    description: hsuEventDescription({ ...s, label: s.label }),
+    description: hsuEventDescription({ ...s, label: s.label }, isLang(lang) ? lang : "is"),
   }),
 });

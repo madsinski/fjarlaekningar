@@ -5,11 +5,15 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { clientIp, issueAccessLink, sameOrigin, throttle } from "@/lib/hsu/auth";
 import { fail, hsuEmailHtml, json, originOf, readJson, sendHsuEmail } from "@/lib/hsu/server";
 import { normalizeEmail } from "@/lib/hsu/types";
+import { DEFAULT_LANG, isLang, translator } from "@/lib/hsu/i18n/core";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
+import { notifyMsgs } from "@/lib/hsu/i18n/messages/notify";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
-  if (!sameOrigin(req)) return fail("Ógild beiðni", 403);
+  if (!sameOrigin(req)) return fail(tr(req, apiDoctor)("req.invalid"), 403);
   const body = await readJson(req);
   const email = normalizeEmail(String(body.email ?? ""));
   const origin = originOf(req);
@@ -20,20 +24,23 @@ export async function POST(req: Request) {
 
   after(async () => {
     if (!email || !allowed) return;
-    const { data: d } = await supabaseAdmin.from("hsu_doctors").select("id, name, email, active").eq("email", email).maybeSingle();
+    const { data: d } = await supabaseAdmin.from("hsu_doctors").select("id, name, email, active, lang").eq("email", email).maybeSingle();
     if (!d?.active) return;
     const url = await issueAccessLink(d.id, "reset", origin);
+    const lang = isLang(d.lang) ? d.lang : DEFAULT_LANG;
+    const t = translator(notifyMsgs, lang);
     await sendHsuEmail(
       d.email,
-      "Nýtt lykilorð — vaktakerfi HSU",
+      t("reset.subject"),
       hsuEmailHtml({
         origin,
-        heading: "Nýtt lykilorð",
-        paragraphs: [`Sæl/l ${d.name}.`, "Beðið var um nýtt lykilorð að vaktakerfi Heilsugæslunnar í Vestmannaeyjum. Hlekkurinn gildir í 2 klukkustundir."],
-        cta: { label: "Velja nýtt lykilorð", url },
-        foot: "Ef þú baðst ekki um þetta máttu hunsa póstinn — lykilorðið þitt er óbreytt.",
+        lang,
+        heading: t("reset.heading"),
+        paragraphs: [t("hello", { name: d.name }), t("reset.body")],
+        cta: { label: t("reset.cta"), url },
+        foot: t("reset.foot"),
       }),
-      `Nýtt lykilorð að vaktakerfi HSU: ${url} (gildir í 2 klst.)`,
+      t("reset.text", { url }),
     );
   });
 

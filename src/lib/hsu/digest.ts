@@ -7,6 +7,8 @@
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { hsuEmailHtml, sendHsuEmail } from "./server";
+import { DEFAULT_LANG, isLang, translator } from "./i18n/core";
+import { notifyMsgs } from "./i18n/messages/notify";
 
 const QUIET_MINUTES = 10;
 const ORIGIN = process.env.HSU_PUBLIC_ORIGIN || "https://www.fjarlaekningar.is";
@@ -35,7 +37,7 @@ export async function runShiftDigest(): Promise<{ doctors: number; notices: numb
       .in("id", list.map((n) => n.id)).is("emailed_at", null).select("id, lines");
     if (!claimed?.length) continue;
 
-    const { data: doc } = await supabaseAdmin.from("hsu_doctors").select("name, email, active").eq("id", doctorId).maybeSingle();
+    const { data: doc } = await supabaseAdmin.from("hsu_doctors").select("name, email, active, lang").eq("id", doctorId).maybeSingle();
     if (!doc?.active) continue;
     // Inngangslínur („X breytti vaktaplaninu:“) koma einu sinni; sömu línur einu sinni.
     const seen = new Set<string>();
@@ -49,16 +51,19 @@ export async function runShiftDigest(): Promise<{ doctors: number; notices: numb
     }
     if (!lines.length) continue;
     const link = "/hsu/min-sida?t=vaktir";
+    const lang = isLang(doc.lang) ? doc.lang : DEFAULT_LANG;
+    const t = translator(notifyMsgs, lang);
     await sendHsuEmail(
       doc.email,
-      lines.length === 1 ? "Breyting á vöktunum þínum" : `${lines.length} breytingar á vöktunum þínum`,
+      lines.length === 1 ? t("digest.subjectSingle") : t.n("digest.subject", lines.length),
       hsuEmailHtml({
         origin: ORIGIN,
-        heading: "Breytingar á vaktaplani",
-        paragraphs: [`Sæl/l ${doc.name}.`, "Yfirlæknir hefur gert eftirfarandi breytingar á vöktunum þínum:", ...lines.map((l) => `• ${l}`)],
-        cta: { label: "Sjá vaktirnar mínar", url: `${ORIGIN}${link}` },
+        lang,
+        heading: t("digest.heading"),
+        paragraphs: [t("hello", { name: doc.name }), t("digest.intro"), ...lines.map((l) => `• ${l}`)],
+        cta: { label: t("cta.myShifts"), url: `${ORIGIN}${link}` },
       }),
-      ["Yfirlæknir hefur gert eftirfarandi breytingar á vöktunum þínum:", ...lines.map((l) => `- ${l}`), `${ORIGIN}${link}`].join("\n"),
+      [t("digest.intro"), ...lines.map((l) => `- ${l}`), `${ORIGIN}${link}`].join("\n"),
     );
     doctors++;
     notices += claimed.length;

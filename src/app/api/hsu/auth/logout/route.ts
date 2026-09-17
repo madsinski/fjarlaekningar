@@ -4,11 +4,13 @@ import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { DEVICE_COOKIE, endSession, getDoctorSession, sameOrigin, sha256 } from "@/lib/hsu/auth";
 import { fail, json, readJson } from "@/lib/hsu/server";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
-  if (!sameOrigin(req)) return fail("Ógild beiðni", 403);
+  if (!sameOrigin(req)) return fail(tr(req, apiDoctor)("req.invalid"), 403);
   const body = await readJson(req);
   const jar = await cookies();
   const me = await getDoctorSession();

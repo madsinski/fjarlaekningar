@@ -2,6 +2,8 @@
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { UUID_RE, fail, json, readJson, requireDoctor } from "@/lib/hsu/server";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
 
 export const runtime = "nodejs";
 
@@ -13,7 +15,7 @@ export async function POST(req: Request) {
   let q = supabaseAdmin.from("hsu_notifications").update({ read_at: new Date().toISOString() })
     .eq("doctor_id", auth.doctor.id).is("read_at", null);
   if (ids) {
-    if (!ids.length) return fail("Ógild beiðni");
+    if (!ids.length) return fail(tr(req, apiDoctor)("req.invalid"));
     q = q.in("id", ids);
   }
   const { error } = await q;

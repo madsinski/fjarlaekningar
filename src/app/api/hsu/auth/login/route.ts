@@ -8,25 +8,26 @@ import {
 } from "@/lib/hsu/auth";
 import { fail, json, readJson } from "@/lib/hsu/server";
 import { normalizeEmail } from "@/lib/hsu/types";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
 
 export const runtime = "nodejs";
 
-const WRONG = "Rangt notandanafn eða lykilorð.";
-
 export async function POST(req: Request) {
-  if (!sameOrigin(req)) return fail("Ógild beiðni", 403);
+  const t = tr(req, apiDoctor);
+  if (!sameOrigin(req)) return fail(t("req.invalid"), 403);
   const body = await readJson(req);
   const email = normalizeEmail(String(body.email ?? ""));
   const password = String(body.password ?? "");
-  if (!email || !password) return fail("Sláðu inn notandanafn og lykilorð.");
+  if (!email || !password) return fail(t("login.missing"));
   // Læsing á reikning stöðvar ekki þann sem prófar eitt lykilorð á alla lækna.
   if (!(await throttle(`login:${clientIp(req)}`, 30, 900))) {
-    return fail("Of margar innskráningartilraunir frá þessu neti. Reyndu aftur eftir stutta stund.", 429);
+    return fail(t("login.tooManyNetwork"), 429);
   }
   // Á hvert netfang, óháð því hvort það er skráð: sá sem prófar lykilorð nær
   // aldrei læsingunni, sem annars segði að reikningurinn væri til.
   if (!(await throttle(`login-email:${email}`, 6, 900))) {
-    return fail("Of margar innskráningartilraunir. Reyndu aftur eftir stutta stund.", 429);
+    return fail(t("login.tooMany"), 429);
   }
 
   const { data: d } = await supabaseAdmin
@@ -37,7 +38,7 @@ export async function POST(req: Request) {
 
   if (d?.locked_until && new Date(d.locked_until).getTime() > Date.now()) {
     const mins = Math.ceil((new Date(d.locked_until).getTime() - Date.now()) / 60000);
-    return fail(`Of margar rangar tilraunir. Reyndu aftur eftir ${mins} mín.`, 429);
+    return fail(t("login.locked", { mins }), 429);
   }
 
   // verifySecret keyrir scrypt líka þegar notandinn er ekki til, svo svartíminn
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
         )
         .eq("id", d.id);
     }
-    return fail(WRONG, 401);
+    return fail(t("login.wrong"), 401);
   }
 
   const jar = await cookies();

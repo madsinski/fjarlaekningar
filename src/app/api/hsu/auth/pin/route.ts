@@ -4,15 +4,18 @@ import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { DEVICE_COOKIE, MAX_PIN_FAILURES, clientIp, sameOrigin, sha256, startSession, throttle, verifySecret } from "@/lib/hsu/auth";
 import { fail, json, readJson } from "@/lib/hsu/server";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
-  if (!sameOrigin(req)) return fail("Ógild beiðni", 403);
-  if (!(await throttle(`pin:${clientIp(req)}`, 30, 900))) return fail("Of margar tilraunir. Reyndu aftur eftir stutta stund.", 429);
+  const t = tr(req, apiDoctor);
+  if (!sameOrigin(req)) return fail(t("req.invalid"), 403);
+  if (!(await throttle(`pin:${clientIp(req)}`, 30, 900))) return fail(t("pin.throttled"), 429);
   const jar = await cookies();
   const deviceToken = jar.get(DEVICE_COOKIE)?.value;
-  if (!deviceToken) return json({ ok: false, error: "Þetta tæki er ekki skráð. Skráðu þig inn með lykilorði.", deviceRevoked: true }, 401);
+  if (!deviceToken) return json({ ok: false, error: t("pin.deviceUnknown"), deviceRevoked: true }, 401);
 
   const { data: dev } = await supabaseAdmin
     .from("hsu_devices")
@@ -21,7 +24,7 @@ export async function POST(req: Request) {
     .maybeSingle();
   if (!dev || new Date(dev.expires_at).getTime() < Date.now()) {
     jar.delete(DEVICE_COOKIE);
-    return json({ ok: false, error: "Þetta tæki er ekki lengur skráð. Skráðu þig inn með lykilorði.", deviceRevoked: true }, 401);
+    return json({ ok: false, error: t("pin.deviceExpired"), deviceRevoked: true }, 401);
   }
 
   const { data: d } = await supabaseAdmin
@@ -30,10 +33,10 @@ export async function POST(req: Request) {
     .eq("id", dev.doctor_id)
     .maybeSingle();
   if (!d?.active || !d.pin_hash) {
-    return json({ ok: false, error: "Enginn aðgangskóði er virkur. Skráðu þig inn með lykilorði.", deviceRevoked: false, noPin: true }, 401);
+    return json({ ok: false, error: t("pin.noPin"), deviceRevoked: false, noPin: true }, 401);
   }
   if (d.locked_until && new Date(d.locked_until).getTime() > Date.now()) {
-    return fail("Aðgangur er tímabundið læstur. Reyndu aftur síðar.", 429);
+    return fail(t("pin.locked"), 429);
   }
 
   const body = await readJson(req);
@@ -46,10 +49,10 @@ export async function POST(req: Request) {
       // Fimm röng gisk: tækið missir traustið. Lykilorð þarf til að fá það aftur.
       await supabaseAdmin.from("hsu_devices").delete().eq("id", dev.id);
       jar.delete(DEVICE_COOKIE);
-      return json({ ok: false, error: "Of margar rangar tilraunir. Skráðu þig inn með lykilorði.", deviceRevoked: true }, 401);
+      return json({ ok: false, error: t("pin.revoked"), deviceRevoked: true }, 401);
     }
     await supabaseAdmin.from("hsu_devices").update({ pin_failures: failures }).eq("id", dev.id);
-    return json({ ok: false, error: `Rangur kóði. ${MAX_PIN_FAILURES - failures} tilraun${MAX_PIN_FAILURES - failures === 1 ? "" : "ir"} eftir.` }, 401);
+    return json({ ok: false, error: t.n("pin.wrong", MAX_PIN_FAILURES - failures) }, 401);
   }
 
   await supabaseAdmin.from("hsu_devices").update({ pin_failures: 0, last_used_at: new Date().toISOString() }).eq("id", dev.id);

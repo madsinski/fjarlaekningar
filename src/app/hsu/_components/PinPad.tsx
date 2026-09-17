@@ -4,6 +4,8 @@
 
 import { useEffect, useRef } from "react";
 import { Delete } from "lucide-react";
+import { useT } from "@/lib/hsu/i18n/client";
+import { auth } from "@/lib/hsu/i18n/messages/auth";
 import { cx } from "./ui";
 
 export default function PinPad({ value, onChange, onComplete, disabled, error }: {
@@ -13,6 +15,7 @@ export default function PinPad({ value, onChange, onComplete, disabled, error }:
   disabled?: boolean;
   error?: boolean;
 }) {
+  const t = useT(auth);
   // Nýjustu gildi í ref: lyklaborðshlustarinn er skráður einu sinni og má ekki
   // kalla á gamla útgáfu af onComplete (hún myndi sjá gamla stöðu foreldris).
   const latest = useRef({ value, onChange, onComplete, disabled });
@@ -42,7 +45,7 @@ export default function PinPad({ value, onChange, onComplete, disabled, error }:
 
   return (
     <div className="select-none">
-      <div className="flex justify-center gap-4" aria-label={`${value.length} af 4 stöfum`}>
+      <div className="flex justify-center gap-4" aria-label={t("pinpad.progress", { n: value.length })}>
         {[0, 1, 2, 3].map((i) => (
           <span key={i} className={cx(
             "h-4 w-4 rounded-full border-2 transition",
@@ -54,7 +57,7 @@ export default function PinPad({ value, onChange, onComplete, disabled, error }:
         {["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "back"].map((k, i) =>
           k === "" ? <span key={i} /> : (
             <button key={i} type="button" onClick={() => press(k)} disabled={disabled}
-              aria-label={k === "back" ? "Eyða" : k}
+              aria-label={k === "back" ? t("pinpad.delete") : k}
               className="flex h-16 items-center justify-center rounded-2xl bg-white text-2xl font-semibold text-slate-800 shadow-sm ring-1 ring-slate-200 transition active:scale-95 active:bg-slate-100 disabled:opacity-50">
               {k === "back" ? <Delete className="h-6 w-6 text-slate-500" /> : k}
             </button>

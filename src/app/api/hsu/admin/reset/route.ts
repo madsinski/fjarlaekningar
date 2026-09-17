@@ -14,7 +14,11 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit } from "@/lib/hsu/auth";
 import { hsuSync } from "@/lib/hsu/calendar";
 import { MONTH_RE, fail, json, readJson, requireManager } from "@/lib/hsu/server";
-import { dayLabel, monthLabel, monthRange } from "@/lib/hsu/types";
+import { monthRange } from "@/lib/hsu/types";
+import { LANGS } from "@/lib/hsu/i18n/core";
+import { dayLabelL, monthLabelL } from "@/lib/hsu/i18n/format";
+import { tr } from "@/lib/hsu/i18n/server";
+import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
 
 export const runtime = "nodejs";
 
@@ -45,9 +49,11 @@ async function notificationIds(s: Scope): Promise<string[]> {
   if (error) throw new Error(error.message);
   const rows = (data ?? []) as { id: string; title: string; lines: string[]; created_at: string }[];
   if (s.scope === "all") return rows.map((r) => r.id);
-  const label = monthLabel(s.month).toLowerCase();
-  const short = dayLabel(`${s.month}-01`).split(" ")[1];
-  const day = new RegExp(`\\b\\d{1,2}\\. ${short.replace(".", "\\.")}`);
+  // Tilkynningar eru á tungumáli hvers læknis: leita að heiti mánaðarins á öllum málum.
+  const labels = LANGS.map((l) => monthLabelL(s.month, l).toLowerCase());
+  const esc = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // „5. okt.“ / „5 Oct“: dagsnúmerið og stutta mánaðarheitið úr dayLabelL.
+  const days = LANGS.map((l) => new RegExp(`\\b${esc(dayLabelL(`${s.month}-01`, l)).replace(/^1/, "\\d{1,2}")}`));
   // „5. okt.“ ber ekki ár: aðeins tilkynningar frá síðustu mánuðum fyrir lok mánaðarins.
   const { first, next } = monthRange(s.month);
   const from = new Date(new Date(first).getTime() - 180 * 86_400_000).toISOString();
@@ -55,7 +61,7 @@ async function notificationIds(s: Scope): Promise<string[]> {
     .filter((r) => {
       const text = `${r.title}\n${(r.lines ?? []).join("\n")}`;
       const recent = r.created_at >= from && r.created_at < next;
-      return text.toLowerCase().includes(label) || text.includes(s.month) || (recent && day.test(text));
+      return labels.some((label) => text.toLowerCase().includes(label)) || text.includes(s.month) || (recent && days.some((day) => day.test(text)));
     })
     .map((r) => r.id);
 }
@@ -79,17 +85,18 @@ export async function GET(req: Request) {
   if ("res" in auth) return auth.res;
   const url = new URL(req.url);
   const s = parseScope(url.searchParams.get("scope"), url.searchParams.get("month"));
-  if (!s) return fail("Ógilt umfang");
+  if (!s) return fail(tr(req, apiAdmin)("err.badScope"));
   return json({ ok: true, counts: await counts(s) });
 }
 
 export async function POST(req: Request) {
   const auth = await requireManager(req);
   if ("res" in auth) return auth.res;
+  const t = tr(req, apiAdmin);
   const body = await readJson(req);
   const s = parseScope(body.scope, body.month);
-  if (!s) return fail("Ógilt umfang");
-  if (String(body.confirm ?? "").trim().toUpperCase() !== RESET_WORD) return fail(`Skrifaðu ${RESET_WORD} til að staðfesta.`);
+  if (!s) return fail(t("err.badScope"));
+  if (String(body.confirm ?? "").trim().toUpperCase() !== RESET_WORD) return fail(t("err.confirmWord", { word: RESET_WORD }));
 
   const before = await counts(s);
   const ids = await shiftIds(s);
@@ -107,10 +114,10 @@ export async function POST(req: Request) {
   const prefs = supabaseAdmin.from("hsu_preferences").delete();
   const months = supabaseAdmin.from("hsu_months").delete();
   const throttles = supabaseAdmin.from("hsu_auth_throttle").delete();
-  const [p, m, t] = s.scope === "month"
+  const [p, m, th] = s.scope === "month"
     ? await Promise.all([prefs.eq("month", s.month), months.eq("month", s.month), throttles.like("key", `remind:${s.month}:%`)])
     : await Promise.all([prefs.not("id", "is", null), months.not("month", "is", null), throttles.like("key", "remind:%")]);
-  const err = p.error ?? m.error ?? t.error;
+  const err = p.error ?? m.error ?? th.error;
   if (err) return fail(err.message, 500);
 
   await audit(auth.actor.label, s.scope === "month" ? "month.reset" : "system.reset", s.scope === "month" ? s.month : null, before);
