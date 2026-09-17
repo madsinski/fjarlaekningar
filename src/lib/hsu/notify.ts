@@ -12,10 +12,20 @@
 import { after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { hsuEmailHtml, sendHsuEmail } from "./server";
+import { DEFAULT_LANG, isLang, type Lang } from "./i18n/core";
+
+/**
+ * Texti á tungumáli viðtakandans: fastur strengur (eins á öllum málum) eða
+ * fall sem skilar textanum fyrir tungumál læknisins, t.d.
+ * `(lang) => translator(notifyMsgs, lang)("shift.moved", { date })`.
+ * Tilkynningin er vistuð á tungumáli læknisins þegar hún verður til.
+ */
+export type Localized = string | ((lang: Lang) => string);
+export const localize = (v: Localized, lang: Lang): string => (typeof v === "function" ? v(lang) : v);
 
 export interface DoctorNotice {
   doctorId: string;
-  line: string;
+  line: Localized;
 }
 
 /**
@@ -24,26 +34,29 @@ export interface DoctorNotice {
  */
 export function notifyDoctors(opts: {
   origin: string;
-  subject: string;
-  heading: string;
-  intro?: string;
+  subject: Localized;
+  heading: Localized;
+  intro?: Localized;
   notices: DoctorNotice[];
-  cta?: { label: string; path: string };
+  cta?: { label: Localized; path: string };
   /** Tölvupóstur: true = strax (sjálfgefið), "digest" = í samantekt síðar, false = enginn. */
   email?: boolean | "digest";
 }) {
   const ids = [...new Set(opts.notices.map((n) => n.doctorId))];
   if (!ids.length) return;
   after(async () => {
-    const { data: docs } = await supabaseAdmin.from("hsu_doctors").select("id, name, email, active").in("id", ids);
+    const { data: docs } = await supabaseAdmin.from("hsu_doctors").select("id, name, email, active, lang").in("id", ids);
     const cta = opts.cta ?? { label: "Sjá vaktirnar mínar", path: "/hsu/min-sida?t=vaktir" };
     const active = (docs ?? []).filter((d) => d.active);
-    // Í kerfinu: ein tilkynning á lækni.
+    const langOf = (d: { lang?: string | null }): Lang => (isLang(d.lang) ? d.lang : DEFAULT_LANG);
+    const intro = (lang: Lang) => (opts.intro ? [localize(opts.intro, lang)] : []);
+    const linesFor = (id: string, lang: Lang) => opts.notices.filter((n) => n.doctorId === id).map((n) => localize(n.line, lang));
+    // Í kerfinu: ein tilkynning á lækni, á hans tungumáli.
     const rows = active
       .map((d) => ({
         doctor_id: d.id,
-        title: opts.heading,
-        lines: [...(opts.intro ? [opts.intro] : []), ...opts.notices.filter((n) => n.doctorId === d.id).map((n) => n.line)],
+        title: localize(opts.heading, langOf(d)),
+        lines: [...intro(langOf(d)), ...linesFor(d.id, langOf(d))],
         link: cta.path,
         email_pending: opts.email === "digest",
       }))
@@ -52,18 +65,20 @@ export function notifyDoctors(opts: {
     if (opts.email === false || opts.email === "digest") return; // samantekt sér um póstinn
 
     for (const d of active) {
-      const lines = opts.notices.filter((n) => n.doctorId === d.id).map((n) => n.line);
+      const lang = langOf(d);
+      const lines = linesFor(d.id, lang);
       if (!lines.length) continue;
       await sendHsuEmail(
         d.email,
-        opts.subject,
+        localize(opts.subject, lang),
         hsuEmailHtml({
           origin: opts.origin,
-          heading: opts.heading,
-          paragraphs: [`Sæl/l ${d.name}.`, ...(opts.intro ? [opts.intro] : []), ...lines],
-          cta: { label: cta.label, url: `${opts.origin}${cta.path}` },
+          lang,
+          heading: localize(opts.heading, lang),
+          paragraphs: [`Sæl/l ${d.name}.`, ...intro(lang), ...lines],
+          cta: { label: localize(cta.label, lang), url: `${opts.origin}${cta.path}` },
         }),
-        [...(opts.intro ? [opts.intro] : []), ...lines, `${opts.origin}${cta.path}`].join("\n"),
+        [...intro(lang), ...lines, `${opts.origin}${cta.path}`].join("\n"),
       );
     }
   });

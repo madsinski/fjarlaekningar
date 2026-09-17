@@ -119,10 +119,10 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
       await sendPromotedEmail(origin, who, auth.actor.label);
       notifyDoctors({
         origin, email: false,
-        subject: translator(accountEmails, who.lang ?? "is")("promoted.subject"),
-        heading: translator(accountEmails, who.lang ?? "is")("promoted.heading"),
-        notices: [{ doctorId: id, line: translator(accountEmails, who.lang ?? "is")("promoted.notice", { by: auth.actor.label }) }],
-        cta: { label: "", path: "/hsu/stjorn" },
+        subject: (l) => translator(accountEmails, l)("promoted.subject"),
+        heading: (l) => translator(accountEmails, l)("promoted.heading"),
+        notices: [{ doctorId: id, line: (l) => translator(accountEmails, l)("promoted.notice", { by: auth.actor.label }) }],
+        cta: { label: (l) => translator(accountEmails, l)("promoted.cta"), path: "/hsu/stjorn" },
       });
     } else if (!body.resend_invite && current.active !== false) {
       link = await issueAccessLink(id, "invite", origin);
