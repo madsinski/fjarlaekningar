@@ -2,9 +2,10 @@
 //
 // Regla: eftir að vaktaplan er birt fær hver læknir að vita af sérhverri
 // breytingu á sínum vöktum. Tilkynningin birtist ALLTAF á „Mínar vaktir“.
-// Tölvupóstur fer aðeins þegar læknirinn þarf að bregðast við eða varðar
-// öryggi (beiðni um aukavakt, lykilorð, vaktamarkaður, óskir) — breytingar
-// yfirlæknis á vaktaplani fara aðeins í kerfið (email: false).
+// Tölvupóstur fer strax þegar læknirinn þarf að bregðast við (beiðni um
+// aukavakt, lykilorð, vaktamarkaður, óskir). Breytingar yfirlæknis á vaktaplani
+// (email: "digest") safnast saman og fara í EINUM samantektarpósti þegar hann
+// hefur ekki breytt neinu í 10 mín. — sjá src/lib/hsu/digest.ts.
 // Línur eru flokkaðar: ein aðgerð sem snertir margar vaktir sama læknis verður
 // ein tilkynning.
 
@@ -28,8 +29,8 @@ export function notifyDoctors(opts: {
   intro?: string;
   notices: DoctorNotice[];
   cta?: { label: string; path: string };
-  /** Senda líka tölvupóst. Sjálfgefið já; breytingar á vaktaplani senda false. */
-  email?: boolean;
+  /** Tölvupóstur: true = strax (sjálfgefið), "digest" = í samantekt síðar, false = enginn. */
+  email?: boolean | "digest";
 }) {
   const ids = [...new Set(opts.notices.map((n) => n.doctorId))];
   if (!ids.length) return;
@@ -44,6 +45,7 @@ export function notifyDoctors(opts: {
         title: opts.heading,
         lines: [...(opts.intro ? [opts.intro] : []), ...opts.notices.filter((n) => n.doctorId === d.id).map((n) => n.line)],
         link: cta.path,
+        email_pending: opts.email === "digest",
       }))
       .filter((r) => r.lines.length > (opts.intro ? 1 : 0));
     if (rows.length) await supabaseAdmin.from("hsu_notifications").insert(rows);

@@ -202,3 +202,11 @@ alter table public.gatt_presence enable row level security;
 drop policy if exists gatt_presence_none on public.gatt_presence;
 create policy gatt_presence_none on public.gatt_presence for all using (false) with check (false);
 alter table public.gatt_presence add column if not exists active boolean not null default false;
+
+-- ── SMS-áminning til stjórnanda um ósvaraðar spurningar ────────────────────
+-- Cron (/api/cron/vinnustod-nudge) sendir eitt SMS þegar spurning hefur ekki
+-- verið opnuð í nudge_after_minutes mínútur. Ekki aftur fyrr en stjórnandi hefur
+-- opnað samtalið (staff_read_at > admin_nudged_at).
+alter table public.gatt_threads add column if not exists admin_nudged_at timestamptz;
+insert into public.gatt_settings (key, value) values ('nudge_phone', '"+3547674393"'::jsonb) on conflict (key) do nothing;
+insert into public.gatt_settings (key, value) values ('nudge_after_minutes', '10'::jsonb) on conflict (key) do nothing;

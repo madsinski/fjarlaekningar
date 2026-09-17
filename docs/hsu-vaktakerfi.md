@@ -199,22 +199,29 @@ birt). Hálfnað skref fær appelsínugula útlínu og stutta stöðu (t.d. „3
 Allar tilkynningar birtast á **Mínar vaktir**: ólesnar efst með „Merkja lesið“, og
 tala á flipanum. Lesnar tilkynningar síðustu 30 daga má opna undir „Eldri breytingar“.
 
-**Breytingar yfirlæknis á vaktaplani fara aðeins í kerfið — enginn tölvupóstur.**
-Póstur fer aðeins þegar læknirinn þarf að bregðast við eða málið varðar öryggi.
+**Breytingar yfirlæknis á vaktaplani** birtast strax í kerfinu og fara í **einum
+samantektarpósti** þegar yfirlæknir hefur ekki breytt vöktum viðkomandi læknis í 10 mín.
+(cron `/api/cron/hsu-digest` á 5 mín. fresti, `src/lib/hsu/digest.ts`) — tíu tilfærslur í
+röð verða að einum pósti. Annar póstur fer strax þegar læknirinn þarf að bregðast við
+eða málið varðar öryggi.
 
 | Atburður | Í kerfinu | Tölvupóstur |
 |---|---|---|
-| Eftir birtingu: læknir færður á eða af vakt (draga, velja, hreinsa, endurraða) | ✓ | — |
-| Eftir birtingu: tími, heiti eða athugasemd vaktar breytist; vakt skipt eða sameinuð | ✓ | — |
-| Eftir birtingu: vakt felld niður | ✓ | — |
-| Vaktaplan tekið úr birtingu | ✓ | — |
+| Eftir birtingu: læknir færður á eða af vakt (draga, velja, hreinsa, endurraða) | ✓ | samantekt |
+| Eftir birtingu: tími, heiti eða athugasemd vaktar breytist; vakt skipt eða sameinuð | ✓ | samantekt |
+| Eftir birtingu: vakt felld niður | ✓ | samantekt |
+| Vaktaplan tekið úr birtingu | ✓ | samantekt |
 | Beiðni um aukavakt (líka fyrir birtingu); svar fer til yfirlækna | ✓ | ✓ |
 | Óskir samþykktar / beðið um breytingar | ✓ | ✓ |
 | Vaktamarkaður: boð, tekin vakt, höfnun, afturkallað boð, samþykkt/hafnað af yfirlækni | ✓ | ✓ |
 | Lykilorði breytt (af lækni eða stjórnanda) — öryggistilkynning | ✓ | ✓ |
-| Opnað fyrir óskir / áminning; vaktaplan birt | — | ✓ |
+| Áminning um óskir (þeim sem eiga eftir, öllum, eða einum lækni — má senda oft) | ✓ | ✓ |
+| Opnað fyrir óskir; vaktaplan birt | — | ✓ |
 
-Í kóðanum: `notifyDoctors(..., email: false)` skrifar aðeins í `hsu_notifications`.
+Í kóðanum: `notifyDoctors(..., email: "digest")` skrifar í `hsu_notifications` með
+`email_pending`; samantektin merkir `emailed_at`. Áminning um óskir er skráð í
+`hsu_audit` (`month.remind`) og síðustu fimm sjást í skrefi 1; sami læknir fær ekki tvær
+áminningar innan mínútu.
 
 ## Útköll í Vinnustund
 

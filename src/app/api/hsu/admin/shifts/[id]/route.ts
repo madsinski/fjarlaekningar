@@ -50,7 +50,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
           notifyDoctors({
             origin: originOf(req), subject: "Breyting á vakt", heading: "Breyting á vakt",
             notices: [{ doctorId: shift.doctor_id, line: `${auth.actor.label} breytti vaktinni ${shiftPhrase(shift)}: ${what.join(", ")}.` }],
-            email: false,
+            email: "digest",
           });
         }
       }
@@ -76,7 +76,7 @@ export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }
     notifyDoctors({
       origin: originOf(req), subject: "Vakt felld niður", heading: "Vakt felld niður",
       notices: [{ doctorId: shift.doctor_id, line: `${auth.actor.label} felldi niður vaktina ${shiftPhrase(shift)}. Hún er farin úr vaktalistanum þínum.` }],
-      email: false,
+      email: "digest",
     });
   }
   // Atburðurinn í dagatali læknisins hverfur við næstu samstillingu, því

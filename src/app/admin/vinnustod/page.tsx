@@ -309,16 +309,21 @@ function AnnouncementsTab() {
 function SettingsTab() {
   const [domains, setDomains] = useState("");
   const [emails, setEmails] = useState("");
+  const [nudgePhone, setNudgePhone] = useState("");
+  const [nudgeMinutes, setNudgeMinutes] = useState("10");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   useEffect(() => {
     (async () => {
-      const r = await api<{ allowedDomains: string[]; notifyEmails: string[] }>("/api/admin/vinnustod/settings");
-      if (r.ok) { setDomains(r.allowedDomains.join(", ")); setEmails(r.notifyEmails.join(", ")); }
+      const r = await api<{ allowedDomains: string[]; notifyEmails: string[]; nudgePhone: string; nudgeAfterMinutes: number }>("/api/admin/vinnustod/settings");
+      if (r.ok) {
+        setDomains(r.allowedDomains.join(", ")); setEmails(r.notifyEmails.join(", "));
+        setNudgePhone(r.nudgePhone ?? ""); setNudgeMinutes(String(r.nudgeAfterMinutes ?? 10));
+      }
     })();
   }, []);
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    const r = await api("/api/admin/vinnustod/settings", { method: "PUT", body: { allowedDomains: domains, notifyEmails: emails } });
+    const r = await api("/api/admin/vinnustod/settings", { method: "PUT", body: { allowedDomains: domains, notifyEmails: emails, nudgePhone, nudgeAfterMinutes: nudgeMinutes } });
     setMsg(r.ok ? { ok: true, text: "Vistað." } : { ok: false, text: r.error ?? "Mistókst" });
   };
   return (
@@ -330,6 +335,18 @@ function SettingsTab() {
       <label className="block text-sm font-semibold">Tilkynningar um nýjar spurningar fara á
         <input className={`${inputCls} mt-1`} value={emails} onChange={(e) => setEmails(e.target.value)} />
       </label>
+      <fieldset className="rounded-xl bg-slate-50 p-3">
+        <legend className="px-1 text-sm font-semibold">SMS ef spurning er ekki opnuð</legend>
+        <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
+          <label className="block text-xs font-semibold text-slate-600">Símanúmer
+            <input className={`${inputCls} mt-1`} value={nudgePhone} onChange={(e) => setNudgePhone(e.target.value)} inputMode="tel" placeholder="+354 …" />
+          </label>
+          <label className="block text-xs font-semibold text-slate-600">Eftir (mínútur)
+            <input className={`${inputCls} mt-1`} type="number" min={1} max={1440} value={nudgeMinutes} onChange={(e) => setNudgeMinutes(e.target.value)} />
+          </label>
+        </div>
+        <span className="mt-1 block text-xs text-slate-500">Eitt SMS þegar spurning frá starfsmanni hefur ekki verið opnuð í svo margar mínútur — ekki aftur fyrr en samtalið hefur verið opnað. Tómt númer = slökkt.</span>
+      </fieldset>
       {msg && <p className={`text-sm ${msg.ok ? "text-emerald-700" : "text-red-600"}`}>{msg.text}</p>}
       <button className={btnPrimary}>Vista</button>
     </form>

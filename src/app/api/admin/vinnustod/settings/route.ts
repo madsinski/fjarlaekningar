@@ -4,6 +4,8 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getVsAdmin } from "@/lib/vinnustod/admin";
 import { allowedDomains, notifyEmails } from "@/lib/vinnustod/auth";
 import { fail, json, readJson } from "@/lib/vinnustod/server";
+import { nudgeSettings } from "@/lib/vinnustod/nudge";
+import { toE164 } from "@/lib/sms";
 
 export const runtime = "nodejs";
 
@@ -15,7 +17,8 @@ const list = (v: unknown) => (Array.isArray(v) ? v : String(v ?? "").split(/[\s,
 
 export async function GET(req: Request) {
   if (!(await getVsAdmin(req))) return fail(DENY, 403);
-  return json({ ok: true, allowedDomains: await allowedDomains(), notifyEmails: await notifyEmails() });
+  const nudge = await nudgeSettings();
+  return json({ ok: true, allowedDomains: await allowedDomains(), notifyEmails: await notifyEmails(), nudgePhone: nudge.phone ?? "", nudgeAfterMinutes: nudge.afterMinutes });
 }
 
 export async function PUT(req: Request) {
@@ -37,6 +40,17 @@ export async function PUT(req: Request) {
     if (bad) return fail(`Ógilt netfang: ${bad}`);
     if (!emails.length) return fail("Að minnsta kosti eitt netfang þarf að fá tilkynningar.");
     await supabaseAdmin.from("gatt_settings").upsert({ key: "notify_emails", value: emails, updated_at: now });
+  }
+  if ("nudgePhone" in body) {
+    const raw = String(body.nudgePhone ?? "").trim();
+    const phone = raw ? toE164(raw) : "";
+    if (raw && !phone) return fail("Ógilt símanúmer fyrir SMS-áminningu.");
+    await supabaseAdmin.from("gatt_settings").upsert({ key: "nudge_phone", value: phone, updated_at: now });
+  }
+  if ("nudgeAfterMinutes" in body) {
+    const n = Math.round(Number(body.nudgeAfterMinutes));
+    if (!Number.isFinite(n) || n < 1 || n > 1440) return fail("Mínútur þurfa að vera á bilinu 1–1440.");
+    await supabaseAdmin.from("gatt_settings").upsert({ key: "nudge_after_minutes", value: n, updated_at: now });
   }
   return json({ ok: true });
 }

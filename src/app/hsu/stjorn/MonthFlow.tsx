@@ -3,7 +3,7 @@
 // Mánaðarplan í fjórum skrefum. Hvert skref segir hvað þarf að gera og býður
 // næsta skref þegar það er tilbúið; yfirlæknir getur samt alltaf flett á milli.
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle, ArrowRight, Ban, BellRing, Check, CheckCheck, ClipboardList, Eye, Heart, History, Megaphone, MessageSquareWarning,
   Pencil, RotateCcw, Send, Sparkles, Undo2,
@@ -172,11 +172,31 @@ function StepCollect({ ctx, setStatus, goNext }: { ctx: PlannerCtx; setStatus: S
     await ctx.reload();
   };
 
-  const remind = async () => {
-    setBusy("remind"); setMsg(null);
-    const r = await hsuApi<{ sent: number }>(`/api/hsu/admin/months/${month}`, { body: { action: "remind" }, staff: true });
+  // Áminningar má senda eins oft og þarf — þeim sem eiga eftir, öllum, eða einum.
+  const [reminders, setReminders] = useState<{ at: string; actor: string; detail: { count?: number; scope?: string; names?: string[] } }[]>([]);
+  const loadReminders = useCallback(async () => {
+    const r = await hsuApi<{ reminders: typeof reminders }>(`/api/hsu/admin/months/${month}`, { staff: true });
+    if (r.ok) setReminders(r.reminders);
+  }, [month]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadReminders();
+  }, [loadReminders]);
+  const remind = async (scope: "missing" | "all" | "one", doctor?: HsuDoctor) => {
+    const key = doctor ? `remind:${doctor.id}` : `remind:${scope}`;
+    setBusy(key); setMsg(null);
+    const r = await hsuApi<{ sent: number; skipped: number; reminders: typeof reminders }>(`/api/hsu/admin/months/${month}`, {
+      body: { action: "remind", scope, doctorId: doctor?.id }, staff: true,
+    });
     setBusy(null);
-    setMsg(r.ok ? { tone: "ok", text: `Áminning send á ${r.sent} lækn${r.sent === 1 ? "i" : "a"}.` } : { tone: "err", text: r.error ?? "Mistókst" });
+    if (!r.ok) { setMsg({ tone: "err", text: r.error ?? "Mistókst" }); return; }
+    const who = doctor ? doctor.name : `${r.sent} lækn${r.sent === 1 ? "i" : "a"}`;
+    setMsg({
+      tone: "ok",
+      text: r.sent ? `Áminning send á ${who}.${r.skipped ? ` ${r.skipped} fékk áminningu fyrir minna en mínútu og var sleppt.` : ""}`
+        : "Engin áminning send — viðkomandi fékk áminningu fyrir minna en mínútu.",
+    });
+    if (r.reminders) setReminders(r.reminders);
   };
 
   if (!m) {
@@ -240,6 +260,9 @@ function StepCollect({ ctx, setStatus, goNext }: { ctx: PlannerCtx; setStatus: S
                   </div>
                 </div>
                 <Badge tone={PREF_TONE[st]}>{PREF_STATUS_IS[st]}</Badge>
+                <Button variant="ghost" size="sm" onClick={() => remind("one", d)} busy={busy === `remind:${d.id}`} title={`Senda ${d.name} áminningu`} aria-label={`Senda ${d.name} áminningu`}>
+                  <BellRing className="h-3.5 w-3.5" />
+                </Button>
                 <Button variant="ghost" size="sm" onClick={() => setEditing(d)}><Pencil className="h-3.5 w-3.5" /> {p ? "Skoða/breyta" : "Skrá fyrir hönd"}</Button>
               </li>
             );
@@ -260,9 +283,27 @@ function StepCollect({ ctx, setStatus, goNext }: { ctx: PlannerCtx; setStatus: S
           )}
         </Card>
         <Card className="space-y-3 p-5">
-          <Button variant="ghost" className="w-full" onClick={remind} busy={busy === "remind"} disabled={sent === doctors.length}>
-            <BellRing className="h-4 w-4" /> Senda áminningu ({doctors.length - sent})
+          <div className="text-sm font-semibold text-slate-800">Áminning um óskir</div>
+          <Button variant="ghost" className="w-full" onClick={() => remind("missing")} busy={busy === "remind:missing"} disabled={sent === doctors.length}>
+            <BellRing className="h-4 w-4" /> Þeim sem eiga eftir ({doctors.length - sent})
           </Button>
+          <Button variant="ghost" className="w-full" onClick={() => remind("all")} busy={busy === "remind:all"} disabled={!doctors.length}>
+            <BellRing className="h-4 w-4" /> Öllum læknum ({doctors.length})
+          </Button>
+          <p className="text-[11px] text-slate-500">Fer í tölvupóst og birtist á „Mínar vaktir“. Má senda eins oft og þarf; bjallan við hvern lækni minnir aðeins hann á.</p>
+          {reminders.length > 0 && (
+            <div className="rounded-lg bg-slate-50 p-2.5 text-[11px] text-slate-600">
+              <div className="font-semibold text-slate-700">Síðustu áminningar</div>
+              <ul className="mt-1 space-y-0.5">
+                {reminders.map((r) => (
+                  <li key={r.at}>
+                    {dayLabel(r.at.slice(0, 10))} kl. {String(new Date(r.at).getHours()).padStart(2, "0")}:{String(new Date(r.at).getMinutes()).padStart(2, "0")} —{" "}
+                    {r.detail.scope === "one" && r.detail.names?.[0] ? r.detail.names[0] : `${r.detail.count ?? 0} lækn${r.detail.count === 1 ? "ir" : "ar"}${r.detail.scope === "all" ? " (allir)" : ""}`}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
           {m.status === "collecting" ? (
             <Button size="lg" className="w-full" busy={busy === "next"} onClick={async () => {

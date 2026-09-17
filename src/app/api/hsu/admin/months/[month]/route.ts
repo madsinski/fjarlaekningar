@@ -3,7 +3,7 @@
 
 import { after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { audit } from "@/lib/hsu/auth";
+import { audit, throttle } from "@/lib/hsu/auth";
 import { hsuSync } from "@/lib/hsu/calendar";
 import {
   DATE_RE, MONTH_RE, fail, hsuEmailHtml, json, listDoctors, loadMonth, loadMonthShifts, loadPreferences, loadShiftTypes, originOf, readJson, requireManager, sendHsuEmail,
@@ -80,7 +80,7 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
         line: `${auth.actor.label} tók vaktaplanið fyrir ${monthLabel(month)} úr birtingu til endurskoðunar. Vaktirnar eru ekki lengur í dagatalinu þínu; þú færð að vita þegar það er birt aftur.`,
       })),
       cta: { label: "Opna mína síðu", path: "/hsu/min-sida" },
-      email: false,
+      email: "digest",
     });
   }
   const notify = Boolean(body.notify);
@@ -114,7 +114,14 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
   return json({ ok: true, month: saved });
 }
 
-/** Áminning til þeirra sem hafa ekki sent inn óskir. */
+/**
+ * Áminning um vaktaóskir — má senda eins oft og þarf.
+ *   { action: "remind", scope: "missing" }            þeim sem eiga eftir að senda
+ *   { action: "remind", scope: "all" }                öllum virkum læknum
+ *   { action: "remind", scope: "one", doctorId }      einum lækni
+ * Sami læknir fær ekki tvær áminningar á sömu mínútu (tvísmellur).
+ * Áminningin fer í tölvupóst og birtist líka á „Mínar vaktir“.
+ */
 export async function POST(req: Request, ctx: { params: Promise<{ month: string }> }) {
   const auth = await requireManager(req);
   if ("res" in auth) return auth.res;
@@ -122,19 +129,57 @@ export async function POST(req: Request, ctx: { params: Promise<{ month: string 
   if (!MONTH_RE.test(month)) return fail("Ógildur mánuður");
   const body = await readJson(req);
   if (body.action !== "remind") return fail("Óþekkt aðgerð");
+  const scope = body.scope === "all" || body.scope === "one" ? body.scope : "missing";
   const origin = originOf(req);
   const [prefs, m, doctors] = await Promise.all([loadPreferences(month), loadMonth(month), activeDoctors()]);
   const done = new Set(prefs.filter((p) => p.status === "submitted" || p.status === "approved").map((p) => p.doctor_id));
-  const targets = doctors.filter((d) => !done.has(d.id));
+  const chosen = scope === "all" ? doctors
+    : scope === "one" ? doctors.filter((d) => d.id === body.doctorId)
+    : doctors.filter((d) => !done.has(d.id));
+  if (scope === "one" && !chosen.length) return fail("Læknirinn fannst ekki", 404);
+
+  const targets: typeof doctors = [];
+  let skipped = 0;
+  for (const d of chosen) {
+    if (await throttle(`remind:${month}:${d.id}`, 1, 60)) targets.push(d); else skipped++;
+  }
+
   const label = monthLabel(month);
   const deadline = m?.prefs_deadline ? ` fyrir ${dayLabel(m.prefs_deadline)}` : "";
-  for (const d of targets) {
-    await sendHsuEmail(d.email, `Áminning: vaktaóskir fyrir ${label}`, hsuEmailHtml({
-      origin, heading: "Áminning um vaktaóskir",
-      paragraphs: [`Sæl/l ${d.name}.`, `Við eigum eftir að fá vaktaóskirnar þínar fyrir ${label}${deadline}.`],
-      cta: { label: "Skrá óskir", url: `${origin}/hsu/min-sida?t=oskir&m=${month}` },
-    }), `Áminning: skráðu vaktaóskir fyrir ${label}: ${origin}/hsu/min-sida?t=oskir&m=${month}`);
+  const link = `/hsu/min-sida?t=oskir&m=${month}`;
+  const lineFor = (id: string) => done.has(id)
+    ? `Þú hefur sent óskir fyrir ${label}. Farðu yfir þær${deadline} ef eitthvað hefur breyst.`
+    : `Við eigum eftir að fá vaktaóskirnar þínar fyrir ${label}${deadline}.`;
+
+  if (targets.length) {
+    await supabaseAdmin.from("hsu_notifications").insert(targets.map((d) => ({
+      doctor_id: d.id, title: `Áminning: vaktaóskir fyrir ${label}`, lines: [lineFor(d.id)], link,
+    })));
   }
-  await audit(auth.actor.label, "month.remind", month, { count: targets.length });
-  return json({ ok: true, sent: targets.length });
+  after(async () => {
+    for (const d of targets) {
+      await sendHsuEmail(d.email, `Áminning: vaktaóskir fyrir ${label}`, hsuEmailHtml({
+        origin, heading: "Áminning um vaktaóskir",
+        paragraphs: [`Sæl/l ${d.name}.`, lineFor(d.id)],
+        cta: { label: done.has(d.id) ? "Skoða óskirnar mínar" : "Skrá óskir", url: `${origin}${link}` },
+      }), `Áminning: ${lineFor(d.id)} ${origin}${link}`);
+    }
+  });
+  await audit(auth.actor.label, "month.remind", month, { count: targets.length, scope, names: targets.map((d) => d.name) });
+  return json({ ok: true, sent: targets.length, skipped, reminders: await recentReminders(month) });
+}
+
+/** Síðustu áminningar fyrir mánuðinn (?reminders). */
+export async function GET(req: Request, ctx: { params: Promise<{ month: string }> }) {
+  const auth = await requireManager(req);
+  if ("res" in auth) return auth.res;
+  const { month } = await ctx.params;
+  if (!MONTH_RE.test(month)) return fail("Ógildur mánuður");
+  return json({ ok: true, reminders: await recentReminders(month) });
+}
+
+async function recentReminders(month: string) {
+  const { data } = await supabaseAdmin.from("hsu_audit").select("at, actor, detail")
+    .eq("action", "month.remind").eq("month", month).order("at", { ascending: false }).limit(5);
+  return data ?? [];
 }

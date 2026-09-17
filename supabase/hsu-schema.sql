@@ -368,3 +368,9 @@ create index if not exists hsu_notifications_doctor_idx on public.hsu_notificati
 alter table public.hsu_notifications enable row level security;
 drop policy if exists hsu_notifications_none on public.hsu_notifications;
 create policy hsu_notifications_none on public.hsu_notifications for all using (false) with check (false);
+
+-- Samantektarpóstur: breytingar á vaktaplani safnast saman og fara í EINUM
+-- pósti þegar yfirlæknir hefur ekki breytt neinu í 10 mín. (cron /api/cron/hsu-digest).
+alter table public.hsu_notifications add column if not exists email_pending boolean not null default false;
+alter table public.hsu_notifications add column if not exists emailed_at timestamptz;
+create index if not exists hsu_notifications_pending_idx on public.hsu_notifications (doctor_id, created_at) where email_pending;

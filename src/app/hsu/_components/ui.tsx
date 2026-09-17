@@ -117,6 +117,8 @@ export async function hsuApi<T = Record<string, unknown>>(path: string, init: { 
       headers,
       body: init.body ? JSON.stringify(init.body) : undefined,
       credentials: "same-origin",
+      // Staða breytist stöðugt (áminningar, samtöl) — aldrei svar úr skyndiminni vafrans.
+      cache: "no-store",
     });
     const j = await res.json().catch(() => ({ ok: false, error: `Villa (${res.status})` }));
     return { status: res.status, ...j };

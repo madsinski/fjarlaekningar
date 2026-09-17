@@ -121,6 +121,15 @@ innskráninga sem þegar eru í gildi. Á /hsu/min-sida er hnappurinn „Skilabo
 rauðum punkti, hljóði og spjaldi á yfirliti þegar læknirinn á ólesin skilaboð frá
 Fjarlækningum; hann opnar vinnustöðina sem læknirinn.
 
+## SMS til stjórnanda um ósvaraðar spurningar
+
+Cron `/api/cron/vinnustod-nudge` (5 mín.) sendir **eitt** SMS í `gatt_settings.nudge_phone`
+þegar spurning frá starfsmanni hefur ekki verið opnuð í `nudge_after_minutes` mínútur
+(sjálfgefið 10). Ekki aftur fyrr en stjórnandi hefur opnað samtalið og nýtt skeyti
+berst (`gatt_threads.admin_nudged_at`). Stillt undir *Stillingar* á /admin/vinnustod;
+tómt númer slekkur. Skeytið er skráð í SMS-skrá sem „Kerfið (áminning)“.
+Krefst `CRON_SECRET` (Vercel, Production).
+
 ## Hver er við
 
 Á /admin/vinnustod → Samtöl er listinn „Hver er við“: allir sem nota vinnustöðina,
