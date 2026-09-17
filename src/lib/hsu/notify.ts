@@ -49,7 +49,7 @@ export function notifyDoctors(opts: {
       }))
       .filter((r) => r.lines.length > (opts.intro ? 1 : 0));
     if (rows.length) await supabaseAdmin.from("hsu_notifications").insert(rows);
-    if (opts.email === false) return;
+    if (opts.email === false || opts.email === "digest") return; // samantekt sér um póstinn
 
     for (const d of active) {
       const lines = opts.notices.filter((n) => n.doctorId === d.id).map((n) => n.line);
