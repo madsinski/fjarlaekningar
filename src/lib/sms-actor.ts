@@ -85,7 +85,24 @@ async function hsuActor(): Promise<SmsActor | null> {
  * skráður inn í þessum vafra er það hann sem situr við tölvuna.
  */
 export async function getSmsActor(req: Request): Promise<SmsActor | null> {
+  // Sé vafrinn skráður inn sem fleiri en einn má velja hver er við tölvuna
+  // (kakan vs_as eða ?as=), t.d. stjórnandi sem er líka læknir í vaktakerfinu.
+  // Aðeins er valið á milli innskráninga sem þegar eru í gildi.
+  const wanted = preferredKind(req);
+  if (wanted) {
+    const pick = wanted === "vs" ? await vsActor() : wanted === "staff" ? await staffActor(req) : await hsuActor();
+    if (pick) return pick;
+  }
   return (await vsActor()) ?? (await staffActor(req)) ?? (await hsuActor());
+}
+
+export const AS_COOKIE = "vs_as";
+
+function preferredKind(req: Request): SmsActor["kind"] | null {
+  const fromQuery = new URL(req.url).searchParams.get("as");
+  const fromCookie = (req.headers.get("cookie") ?? "").split(/;\s*/).find((c) => c.startsWith(`${AS_COOKIE}=`))?.slice(AS_COOKIE.length + 1);
+  const v = fromQuery ?? fromCookie ?? null;
+  return v === "vs" || v === "staff" || v === "hsu" ? v : null;
 }
 
 /**

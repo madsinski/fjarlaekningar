@@ -6,22 +6,22 @@
 
 import { useCallback, useEffect, useState } from "react";
 import VsLogin from "./_components/VsLogin";
-import Workstation, { type Announcement, type LiveInfo, type VsMe } from "./_components/Workstation";
+import Workstation, { type Announcement, type Identity, type LiveInfo, type VsMe } from "./_components/Workstation";
 import type { GuideContent, SharedText } from "./_components/Texts";
 import { vsApi } from "./_components/shared";
 
 type State =
   | { kind: "loading" }
   | { kind: "login" }
-  | { kind: "ready"; me: VsMe; announcements: Announcement[]; unread: number; texts: Record<string, SharedText>; guide: GuideContent; live: LiveInfo }
+  | { kind: "ready"; me: VsMe; announcements: Announcement[]; unread: number; texts: Record<string, SharedText>; guide: GuideContent; live: LiveInfo; identities: Identity[] }
   | { kind: "error"; text: string };
 
 export default function VinnustodPage() {
   const [state, setState] = useState<State>({ kind: "loading" });
 
   const load = useCallback(async () => {
-    const r = await vsApi<{ me: VsMe; announcements: Announcement[]; unread: number; texts?: Record<string, SharedText>; guide?: GuideContent; live?: LiveInfo; status?: number }>("/api/vinnustod/me", { staff: true });
-    if (r.ok) setState({ kind: "ready", me: r.me, announcements: r.announcements, unread: r.unread, texts: r.texts ?? {}, guide: r.guide ?? { answers: [], livePages: [] }, live: r.live ?? { topic: null, vapidKey: null } });
+    const r = await vsApi<{ me: VsMe; announcements: Announcement[]; unread: number; texts?: Record<string, SharedText>; guide?: GuideContent; live?: LiveInfo; identities?: Identity[]; status?: number }>("/api/vinnustod/me", { staff: true });
+    if (r.ok) setState({ kind: "ready", me: r.me, announcements: r.announcements, unread: r.unread, texts: r.texts ?? {}, guide: r.guide ?? { answers: [], livePages: [] }, live: r.live ?? { topic: null, vapidKey: null }, identities: r.identities ?? [] });
     else if (r.status === 401 || r.status === 403) setState({ kind: "login" });
     else setState({ kind: "error", text: r.error ?? "Ekki tókst að hlaða vinnustöðinni" });
   }, []);
@@ -43,5 +43,5 @@ export default function VinnustodPage() {
       </div>
     );
   }
-  return <Workstation me={state.me} announcements={state.announcements} unread={state.unread} texts={state.texts} guide={state.guide} live={state.live} refresh={load} />;
+  return <Workstation me={state.me} announcements={state.announcements} unread={state.unread} texts={state.texts} guide={state.guide} live={state.live} identities={state.identities} refresh={load} />;
 }

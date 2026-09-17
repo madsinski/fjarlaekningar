@@ -8,7 +8,7 @@
 
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getSmsActor } from "@/lib/sms-actor";
+import { getSmsActor, getSmsActors } from "@/lib/sms-actor";
 import { hashSecret, passwordProblem, pinProblem, sameOrigin, sha256, verifySecret, SESSION_COOKIE } from "@/lib/vinnustod/auth";
 import { fail, json, readJson } from "@/lib/vinnustod/server";
 import { canAsk, ownerColumn } from "@/lib/vinnustod/threads";
@@ -21,6 +21,10 @@ export async function GET(req: Request) {
   const actor = await getSmsActor(req);
   if (!actor) return fail("Ekki innskráð(ur)", 401);
 
+  // Aðrar innskráningar í sama vafra — fyrir „Skoða sem“.
+  const identities = (await getSmsActors(req)).map((a) => ({
+    kind: a.kind, name: a.name, label: a.kind === "staff" ? (a.isAdmin ? "Stjórnandi Fjarlækninga" : "Starfsmaður Fjarlækninga") : a.kind === "hsu" ? "Læknir í vaktakerfi HSU" : "Notandi vinnustöðvar",
+  }));
   let unread = 0;
   // Stjórnandi Fjarlækninga svarar spurningunum: hjá honum telur „ólesið“
   // opnar spurningar sem bíða svars.
@@ -56,6 +60,7 @@ export async function GET(req: Request) {
       canAnswer: actor.kind === "staff" && actor.isAdmin,
     },
     unread,
+    identities,
     announcements: news ?? [],
     texts,
     guide: await getGuideContent(),

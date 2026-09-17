@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  AlertTriangle, ArrowLeftRight, Bell, CalendarCheck, CalendarRange, Check, CheckCircle2, ChevronRight, ClipboardList, ExternalLink, Home, Settings, Store,
+  AlertTriangle, ArrowLeftRight, Bell, CalendarCheck, CalendarRange, Check, CheckCircle2, ChevronRight, ClipboardList, ExternalLink, Home, MessageCircle, Settings, Store,
 } from "lucide-react";
 import HsuHeader from "../_components/HsuHeader";
 import { Badge, Button, Card, Field, Modal, Notice, cx, firstName, hsuApi, inputCls, shortName, capFirst } from "../_components/ui";
@@ -16,6 +16,45 @@ import PrefsTab from "./PrefsTab";
 import RosterTab from "./RosterTab";
 import CalendarTab from "./CalendarTab";
 import AccountTab from "./AccountTab";
+import { UnreadDot, chimeOnce, useLiveSignal, useSoundPref, useUnlockAudio } from "@/app/vinnustod/_components/shared";
+
+/**
+ * Skilaboð frá Fjarlækningum til læknisins (þau eru í Vinnustöðinni). Hér
+ * birtist rauður punktur og hljóð þegar eitthvað er ólesið — tafarlaust.
+ */
+function useHsuMessages() {
+  const [unread, setUnread] = useState(0);
+  const [topic, setTopic] = useState<string | null>(null);
+  const [soundOn] = useSoundPref();
+  useUnlockAudio();
+  const load = useCallback(async () => {
+    const r = await hsuApi<{ threads: { unread: boolean }[] }>("/api/vinnustod/threads?as=hsu");
+    if (r.ok) setUnread(r.threads.filter((t) => t.unread).length);
+  }, []);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load();
+    void hsuApi<{ live?: { topic: string | null } }>("/api/vinnustod/me?as=hsu").then((r) => { if (r.ok && r.live) setTopic(r.live.topic); });
+    const t = setInterval(() => { void load(); }, 30_000);
+    return () => clearInterval(t);
+  }, [load]);
+  useLiveSignal(topic, (kind) => {
+    void load();
+    if (kind === "message" && soundOn) chimeOnce();
+  });
+  const last = useRef<number | null>(null);
+  useEffect(() => {
+    if (last.current !== null && unread > last.current && soundOn) chimeOnce();
+    last.current = unread;
+  }, [unread, soundOn]);
+  return unread;
+}
+
+/** Opna Vinnustöðina sem læknirinn (ekki sem stjórnandi, sé vafrinn líka það). */
+function openMessages() {
+  document.cookie = "vs_as=hsu; path=/; max-age=31536000; samesite=lax";
+  window.location.href = "/vinnustod?t=spurningar";
+}
 
 type Tab = "yfirlit" | "vaktir" | "oskir" | "markadur" | "plan" | "stillingar";
 
@@ -53,6 +92,7 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
     if (r.ok) refresh();
   };
 
+  const messages = useHsuMessages();
   const me = data.me;
   const name = (id: string | null) => data.colleagues.find((c) => c.id === id)?.name ?? "óþekktur";
 
@@ -96,12 +136,18 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
               </button>
             );
           })}
+          <button type="button" onClick={openMessages}
+            className={cx("relative ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition",
+              messages ? "bg-red-50 text-red-700 ring-1 ring-red-200 hover:bg-red-100" : "text-slate-600 hover:bg-slate-100")}>
+            <MessageCircle className="h-4 w-4" /> Skilaboð
+            <UnreadDot count={messages} className="ml-0.5" />
+          </button>
         </div>
       </nav>
 
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
         {tab === "yfirlit" && (
-          <Overview data={data} incoming={incoming} market={market} prefActions={prefActions.map((m) => m.month)} go={setTab} onLog={logVinnustund} />
+          <Overview data={data} incoming={incoming} market={market} prefActions={prefActions.map((m) => m.month)} go={setTab} onLog={logVinnustund} messages={messages} />
         )}
         {tab === "vaktir" && <ShiftsTab data={data} swaps={mine} refresh={refresh} onLog={logVinnustund} />}
         {tab === "oskir" && <PrefsTab data={data} initialMonth={initialMonth} refresh={refresh} />}
@@ -123,9 +169,10 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
 
 // ── Yfirlit ────────────────────────────────────────────────────────────────
 
-function Overview({ data, incoming, market, prefActions, go, onLog }: {
+function Overview({ data, incoming, market, prefActions, go, onLog, messages = 0 }: {
   data: PortalData; incoming: HsuSwap[]; market: HsuSwap[]; prefActions: string[]; go: (t: Tab) => void;
   onLog: (s: HsuShift, done: boolean) => void;
+  messages?: number;
 }) {
   const upcoming = data.myShifts.filter((s) => s.shift_date >= data.today);
   const nextShift = upcoming[0];
@@ -184,6 +231,11 @@ function Overview({ data, incoming, market, prefActions, go, onLog }: {
         </Card>
 
         <div className="space-y-3">
+          {messages > 0 && (
+            <ActionCard tone="red" onClick={openMessages}
+              title={messages === 1 ? "Ný skilaboð frá Fjarlækningum" : `${messages} ný skilaboð frá Fjarlækningum`}
+              text="Opnast í Vinnustöð Fjarlækninga" />
+          )}
           {prefActions.map((m) => {
             const month = data.months.find((x) => x.month === m);
             const pref = data.prefs.find((p) => p.month === m);

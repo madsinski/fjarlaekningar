@@ -104,6 +104,23 @@ setningar um komugjald teknar út. Breyting á spurningu á vefnum birtist hér 
   lokuð síða fær hljóð tækisins með tilkynningunni. iPhone: aðeins ef síðunni
   hefur verið bætt á heimaskjá.
 
+## SMS — tvö skeyti
+
+Hjúkrunarfræðingur velur **hvert hlekkurinn fer** (sjúklingagátt til að hefja erindi,
+eða fjarlaekningar.is með upplýsingum; enska útgáfan á /en) og **tungumál**.
+Sniðmátin eru í `src/lib/sms-templates.ts` (`is-portal`, `en-portal`, `is-site`,
+`en-site`). Íslensku skeytin eru tveir hlutar (íslenskir stafir), þau ensku einn.
+Báðar vefslóðirnar þurfa að vera á hvítlista Twilio.
+
+## Skoða sem / skilaboð í HSU-gáttinni
+
+Sé vafri skráður inn sem fleiri en einn (t.d. stjórnandi sem er líka læknir í
+vaktakerfinu) birtist „Skoða sem“ í haus vinnustöðvarinnar; valið er geymt í kökunni
+`vs_as` (eða `?as=`) og `getSmsActor` virðir það — aðeins er valið á milli
+innskráninga sem þegar eru í gildi. Á /hsu/min-sida er hnappurinn „Skilaboð“ með
+rauðum punkti, hljóði og spjaldi á yfirliti þegar læknirinn á ólesin skilaboð frá
+Fjarlækningum; hann opnar vinnustöðina sem læknirinn.
+
 ## Hver er við
 
 Á /admin/vinnustod → Samtöl er listinn „Hver er við“: allir sem nota vinnustöðina,

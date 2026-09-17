@@ -7,7 +7,7 @@
 // sending þar til símafyrirtækið svarar, svo staðan er sýnd og viðvörun birtist
 // ef eitthvað var síað (villa 30007).
 
-import { forwardRef, useCallback, useEffect, useMemo, useState } from "react";
+import { forwardRef, useCallback, useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2, Clock, Loader2, Send, XCircle } from "lucide-react";
 import { Card, Notice, cx, inputCls } from "@/app/hsu/_components/ui";
 import { vsApi, whenIs } from "./shared";
@@ -22,7 +22,7 @@ interface SmsRow {
   error_code: number | null;
   error_text: string;
 }
-interface Template { key: string; label: string; body: string }
+interface Template { key: string; label: string; body: string; lang?: "is" | "en"; target?: "portal" | "site" }
 
 const STATUS_IS: Record<string, string> = {
   queued: "Í biðröð", accepted: "Móttekið", sending: "Í sendingu", sent: "Sent",
@@ -74,18 +74,19 @@ const SmsPanel = forwardRef<HTMLInputElement, { compact?: boolean }>(function Sm
   }, [load]);
 
   const active = templates.find((t) => t.key === tpl);
-  const preview = useMemo(() => {
-    if (!active) return "";
-    const first = name.trim().split(/\s+/)[0] ?? "";
-    return active.body.replace("{nafn}", first ? `${first}, ` : "");
-  }, [active, name]);
+  const target = active?.target ?? "portal";
+  const lang = active?.lang ?? "is";
+  /** Velja sniðmát út frá hlekk og tungumáli. */
+  const pick = (t: "portal" | "site", l: "is" | "en") => {
+    const found = templates.find((x) => (x.target ?? "portal") === t && (x.lang ?? "is") === l);
+    if (found) setTpl(found.key);
+  };
+  const firstName = name.trim().split(/\s+/)[0] ?? "";
+  const preview = active ? active.body.replace("{nafn}", firstName ? `${firstName}, ` : "") : "";
 
   // Íslenskir stafir þýða 70 stafi í hlutann í stað 160.
-  const size = useMemo(() => {
-    const gsm = /^[A-Za-z0-9 @£$¥èéùìòÇØøÅåÆæßÉ!"#¤%&'()*+,\-./:;<=>?¡ÄÖÑÜ§¿äöñüà\n\r]*$/.test(preview);
-    const n = preview.length;
-    return { gsm, chars: n, segments: n <= (gsm ? 160 : 70) ? 1 : Math.ceil(n / (gsm ? 153 : 67)) };
-  }, [preview]);
+  const gsm = /^[A-Za-z0-9 @£$¥èéùìòÇØøÅåÆæßÉ!"#¤%&'()*+,\-./:;<=>?¡ÄÖÑÜ§¿äöñüà\n\r]*$/.test(preview);
+  const size = { gsm, chars: preview.length, segments: preview.length <= (gsm ? 160 : 70) ? 1 : Math.ceil(preview.length / (gsm ? 153 : 67)) };
 
   const digits = phone.replace(/\D/g, "");
   const validPhone = digits.length === 7 || (digits.length === 10 && digits.startsWith("354")) || (phone.trim().startsWith("+") && digits.length >= 8);
@@ -132,13 +133,32 @@ const SmsPanel = forwardRef<HTMLInputElement, { compact?: boolean }>(function Sm
           className={cx(inputCls, "mt-1 text-lg tracking-wide")} />
         <p className="mt-1 text-xs text-slate-500">Sjö tölustafir. Erlent númer þarf + og landsnúmer.</p>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-semibold text-slate-700" htmlFor="sms-tpl">Tungumál</label>
-            <select id="sms-tpl" value={tpl} onChange={(e) => setTpl(e.target.value)} className={cx(inputCls, "mt-1")}>
-              {templates.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
-            </select>
+        <fieldset className="mt-4">
+          <legend className="text-sm font-semibold text-slate-700">Hlekkurinn fer á</legend>
+          <div className="mt-1 grid grid-cols-2 gap-1.5">
+            {([["portal", "Sjúklingagátt", "hefja erindi"], ["site", "fjarlaekningar.is", "upplýsingar"]] as const).map(([k, title, sub]) => (
+              <button key={k} type="button" aria-pressed={target === k} onClick={() => pick(k, lang)}
+                className={cx("rounded-xl px-3 py-2 text-left ring-1 transition",
+                  target === k ? "bg-[var(--hsu)] text-white ring-[var(--hsu)]" : "bg-white text-slate-700 ring-slate-300 hover:bg-slate-50")}>
+                <span className="block text-sm font-semibold">{title}</span>
+                <span className={cx("block text-[11px]", target === k ? "text-white/80" : "text-slate-500")}>{sub}</span>
+              </button>
+            ))}
           </div>
+        </fieldset>
+
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <fieldset>
+            <legend className="text-sm font-semibold text-slate-700">Tungumál</legend>
+            <div className="mt-1 inline-flex w-full rounded-xl bg-slate-100 p-0.5">
+              {([["is", "Íslenska"], ["en", "English"]] as const).map(([l, label]) => (
+                <button key={l} type="button" aria-pressed={lang === l} onClick={() => pick(target, l)}
+                  className={cx("flex-1 rounded-lg px-2 py-1.5 text-sm font-semibold transition", lang === l ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
           <div>
             <label className="block text-sm font-semibold text-slate-700" htmlFor="sms-name">Fornafn <span className="font-normal text-slate-400">(valkvætt)</span></label>
             <input id="sms-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="t.d. Anna" className={cx(inputCls, "mt-1")} />

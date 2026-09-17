@@ -37,6 +37,8 @@ export interface VsMe {
   /** Stjórnandi Fjarlækninga: svarar spurningum og breytir textum fyrir alla. */
   canAnswer: boolean;
 }
+/** Innskráning í sama vafra — „Skoða sem“ velur á milli. */
+export interface Identity { kind: VsMe["kind"]; name: string; label: string }
 /** Leynileg rás fyrir tafarlaus merki og lykill fyrir tilkynningar í tæki. */
 export interface LiveInfo { topic: string | null; vapidKey: string | null; everyoneTopic?: string | null }
 export interface Announcement { id: string; created_at: string; title: string; body: string; level: "info" | "warning" }
@@ -56,8 +58,8 @@ function initialDrawer(me: VsMe): DrawerState {
   return null;
 }
 
-export default function Workstation({ me, announcements: initialAnnouncements, unread: initialUnread, texts, guide, live, refresh }: {
-  me: VsMe; announcements: Announcement[]; unread: number; texts: Record<string, SharedText>; guide: GuideContent; live: LiveInfo; refresh: () => void;
+export default function Workstation({ me, announcements: initialAnnouncements, unread: initialUnread, texts, guide, live, identities = [], refresh }: {
+  me: VsMe; announcements: Announcement[]; unread: number; texts: Record<string, SharedText>; guide: GuideContent; live: LiveInfo; identities?: Identity[]; refresh: () => void;
 }) {
   const [q, setQ] = useState("");
   const [openSlug, setOpenSlug] = useState<string | null>(null);
@@ -176,6 +178,19 @@ export default function Workstation({ me, announcements: initialAnnouncements, u
                 <MessageCircle className="h-4 w-4" /> <span className="hidden sm:inline">{me.canAnswer ? "Samtöl" : "Skilaboð"}</span>
                 <UnreadDot count={unread} className="absolute -right-1 -top-1" />
               </button>
+            )}
+            {identities.length > 1 && (
+              <label className="hidden items-center gap-1.5 text-xs text-cyan-100/80 md:inline-flex">
+                Skoða sem
+                <select value={me.kind} aria-label="Skoða vinnustöðina sem"
+                  onChange={(e) => {
+                    document.cookie = `vs_as=${e.target.value}; path=/; max-age=31536000; samesite=lax`;
+                    window.location.reload();
+                  }}
+                  className="rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-xs font-semibold text-white">
+                  {identities.map((i) => <option key={i.kind} value={i.kind} className="text-slate-900">{i.label}</option>)}
+                </select>
+              </label>
             )}
             <PushToggle vapidKey={live.vapidKey} />
             <button type="button" onClick={() => setSoundOn(!soundOn)} title={soundOn ? "Hljóð við ný skilaboð: á" : "Hljóð við ný skilaboð: af"}
