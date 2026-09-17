@@ -606,6 +606,7 @@ const ACTION_IS: Record<string, string> = {
   "month.planning": "færði mánuð í vaktaplan",
   "month.published": "birti vaktaplan",
   "month.remind": "sendi áminningu",
+  "month.reset": "hreinsaði mánuðinn (byrjað upp á nýtt)",
   "prefs.submit": "sendi inn óskir",
   "prefs.enter": "skráði óskir fyrir lækni",
   "prefs.approve": "samþykkti óskir",

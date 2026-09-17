@@ -179,7 +179,12 @@ export async function GET(req: Request, ctx: { params: Promise<{ month: string }
 }
 
 async function recentReminders(month: string) {
-  const { data } = await supabaseAdmin.from("hsu_audit").select("at, actor, detail")
+  // Eftir „Byrja upp á nýtt“ teljast eldri áminningar ekki með.
+  const { data: reset } = await supabaseAdmin.from("hsu_audit").select("at")
+    .or(`and(action.eq.month.reset,month.eq.${month}),action.eq.system.reset`).order("at", { ascending: false }).limit(1);
+  let q = supabaseAdmin.from("hsu_audit").select("at, actor, detail")
     .eq("action", "month.remind").eq("month", month).order("at", { ascending: false }).limit(5);
+  if (reset?.[0]) q = q.gt("at", reset[0].at);
+  const { data } = await q;
   return data ?? [];
 }

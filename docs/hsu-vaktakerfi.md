@@ -177,6 +177,22 @@ læknar séu á flýtimóttöku eða vakt sé skipt um hádegi — hann þéttis
 
 Vakt má líka draga ofan á aðra vakt: læknarnir skipta þá á dögum.
 
+## Byrja upp á nýtt (Stillingar)
+
+Neðst í *Stillingum* í `/hsu/stjorn` er „Byrja upp á nýtt“: hreinsar **einn mánuð**
+eða **allt vaktakerfið** (`/api/hsu/admin/reset`, aðeins yfirlæknir/stjórnandi).
+Fjöldinn sem verður eytt birtist fyrst og staðfesta þarf með orðinu `HREINSA`.
+
+- **Eytt:** vaktir (og vaktaskipti þeirra), óskir, staða mánaðar (`hsu_months`),
+  tilkynningar til lækna sem varða mánuðinn og áminningalás (`remind:<mánuður>:*`).
+  Tilkynning telst varða mánuðinn ef hún nefnir hann („október 2026“, `2026-10`) eða
+  dag í honum („5. okt.“) og er frá síðustu sex mánuðum fyrir lok hans.
+- **Haldið:** læknar og innskráning þeirra, vaktategundir, stillingar,
+  dagatalstengingar og breytingaskrá (`month.reset` / `system.reset` bætist við,
+  með fjöldanum sem var eytt). Eldri áminningar birtast ekki eftir hreinsun.
+- Læknar fá ekki tilkynningu. Dagatöl eru samstillt strax á eftir, svo eyddar vaktir
+  hverfa úr Google-dagatölum; .ics-áskriftir uppfærast við næstu sókn.
+
 ## Hámark og beiðnir um aukavakt
 
 - „Fylla í tómar“ og sjálfvirk skipting setja engan lækni á fleiri vaktir en **hámarkið

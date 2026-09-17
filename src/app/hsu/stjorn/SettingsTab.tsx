@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Save, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Plus, RotateCcw, Save, Trash2 } from "lucide-react";
 import { Button, Card, Field, Notice, cx, hsuApi, inputCls } from "../_components/ui";
 import {
-  SHIFT_KIND_IS, SHIFT_PERIOD_IS, WEEKDAY_ORDER, WEEKDAY_SHORT_IS, dayLabel, icelandicHolidays, isOvernight, typeAppliesOn, weekdayOf,
+  SHIFT_KIND_IS, SHIFT_PERIOD_IS, monthLabel, WEEKDAY_ORDER, WEEKDAY_SHORT_IS, dayLabel, icelandicHolidays, isOvernight, typeAppliesOn, weekdayOf,
   type HsuShiftType, type ShiftKind, type ShiftPeriod,
 } from "@/lib/hsu/types";
 import type { PlannerCtx } from "./types";
@@ -52,7 +52,89 @@ export default function SettingsTab({ ctx }: { ctx: PlannerCtx }) {
         {data.shiftTypes.map((t) => <ShiftTypeCard key={t.id} ctx={ctx} type={t} />)}
         <ShiftTypeCard ctx={ctx} />
       </div>
+
+      <ResetCard ctx={ctx} />
     </div>
+  );
+}
+
+type ResetCounts = { shifts: number; preferences: number; months: number; swaps: number; notifications: number };
+const RESET_WORD = "HREINSA";
+
+/** Byrja upp á nýtt: hreinsa einn mánuð eða allt vaktakerfið. */
+function ResetCard({ ctx }: { ctx: PlannerCtx }) {
+  const monthOptions = [...new Set([ctx.month, ...ctx.data.months.map((m) => m.month)])].sort();
+  const [scope, setScope] = useState<"month" | "all">("month");
+  const [month, setMonth] = useState(ctx.month);
+  const [counts, setCounts] = useState<ResetCounts | null>(null);
+  const [word, setWord] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
+
+  const query = scope === "all" ? "scope=all" : `scope=month&month=${month}`;
+  const loadCounts = useCallback(async () => {
+    setCounts(null);
+    const r = await hsuApi<{ counts: ResetCounts }>(`/api/hsu/admin/reset?${query}`, { staff: true });
+    if (r.ok) setCounts(r.counts);
+  }, [query]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadCounts();
+  }, [loadCounts]);
+
+  const target = scope === "all" ? "allt vaktakerfið" : monthLabel(month);
+  const reset = async () => {
+    if (word.trim().toUpperCase() !== RESET_WORD) return;
+    if (!confirm(`Hreinsa ${target}? Þetta er ekki hægt að afturkalla.`)) return;
+    setBusy(true); setMsg(null);
+    const r = await hsuApi<{ cleared: ResetCounts }>("/api/hsu/admin/reset", { body: { scope, month, confirm: word }, staff: true });
+    setBusy(false);
+    if (!r.ok) { setMsg({ tone: "err", text: r.error ?? "Mistókst" }); return; }
+    setWord("");
+    setMsg({ tone: "ok", text: `Hreinsað: ${target}. Fjarlægt: ${r.cleared.shifts} vakt${r.cleared.shifts === 1 ? "" : "ir"} og ${r.cleared.preferences} ósk${r.cleared.preferences === 1 ? "" : "ir"}.` });
+    await Promise.all([ctx.reload(), loadCounts()]);
+  };
+
+  const empty = counts && Object.values(counts).every((n) => n === 0);
+  return (
+    <Card className="space-y-4 border-red-200! p-5">
+      <div>
+        <h2 className="flex items-center gap-2 text-lg font-bold text-red-800"><RotateCcw className="h-5 w-5" /> Byrja upp á nýtt</h2>
+        <p className="text-sm text-slate-600">
+          Hreinsar vaktir, vaktaskipti, óskir lækna, stöðu mánaðar og tilkynningar — eins og ekkert hafi verið gert. <b>Haldið:</b> læknar og
+          innskráning þeirra, vaktategundir, stillingar, dagatalstengingar og breytingaskrá. Læknar fá ekki tilkynningu; vaktirnar hverfa úr dagatölum þeirra.
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+        <label className="inline-flex items-center gap-2">
+          <input type="radio" name="reset-scope" checked={scope === "month"} onChange={() => setScope("month")} /> Einn mánuður
+        </label>
+        {scope === "month" && (
+          <span className="block w-full sm:w-52">
+            <select className={inputCls} value={month} onChange={(e) => setMonth(e.target.value)} aria-label="Mánuður">
+              {monthOptions.map((m) => <option key={m} value={m}>{monthLabel(m)}</option>)}
+            </select>
+          </span>
+        )}
+        <label className="inline-flex items-center gap-2">
+          <input type="radio" name="reset-scope" checked={scope === "all"} onChange={() => setScope("all")} /> Allt vaktakerfið (allir mánuðir)
+        </label>
+      </div>
+      <div className="rounded-xl bg-slate-50 px-3.5 py-2.5 text-sm text-slate-700">
+        {!counts ? "Tel…" : empty ? `Ekkert til að hreinsa fyrir ${target}.` : (
+          <>Verður eytt: <b>{counts.shifts}</b> vakt{counts.shifts === 1 ? "" : "ir"}, <b>{counts.preferences}</b> ósk{counts.preferences === 1 ? "" : "ir"},{" "}
+            <b>{counts.swaps}</b> vaktaskipti, <b>{counts.notifications}</b> tilkynning{counts.notifications === 1 ? "" : "ar"} og staða{" "}
+            <b>{counts.months}</b> mánaðar{counts.months === 1 ? "" : "a"}.</>
+        )}
+      </div>
+      <Field label={`Skrifaðu ${RESET_WORD} til að staðfesta`}>
+        <input className={cx(inputCls, "max-w-xs uppercase")} value={word} onChange={(e) => setWord(e.target.value)} autoComplete="off" aria-label="Staðfesting" />
+      </Field>
+      {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
+      <Button variant="danger" onClick={() => void reset()} busy={busy} disabled={word.trim().toUpperCase() !== RESET_WORD || Boolean(empty)}>
+        <RotateCcw className="h-4 w-4" /> Hreinsa {target}
+      </Button>
+    </Card>
   );
 }
 
