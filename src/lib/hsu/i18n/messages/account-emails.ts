@@ -15,6 +15,10 @@ export const accountEmails = defineMessages(
     "invite.tour": "Þegar þú skráir þig inn í fyrsta sinn færðu stutta kynningu á kerfinu.",
     "invite.cta": "Virkja aðganginn",
     "invite.foot": "Hlekkurinn gildir í 14 daga.",
+    "invite.ctaReset": "Velja nýtt lykilorð",
+    "invite.footReset": "Hlekkurinn gildir í 2 klukkustundir.",
+    "invite.bodyReset": "{by} sendi þér hlekk til að velja nýtt lykilorð að vaktakerfi lækna á Heilsugæslunni í Vestmannaeyjum.",
+    "invite.textReset": "Veldu nýtt lykilorð að vaktakerfi HSU: {url}",
     "invite.text": "Virkjaðu aðganginn þinn að vaktakerfi HSU: {url}",
 
     "head.subject": "Þú ert yfirlæknir í vaktakerfi HSU",
@@ -46,6 +50,10 @@ export const accountEmails = defineMessages(
       "invite.tour": "The first time you sign in you'll get a short tour of the system.",
       "invite.cta": "Activate your account",
       "invite.foot": "The link is valid for 14 days.",
+      "invite.ctaReset": "Choose a new password",
+      "invite.footReset": "The link is valid for 2 hours.",
+      "invite.bodyReset": "{by} sent you a link to choose a new password for the doctors' rota at Vestmannaeyjar Health Centre.",
+      "invite.textReset": "Choose a new password for the HSU rota: {url}",
       "invite.text": "Activate your account in the HSU rota: {url}",
 
       "head.subject": "You are chief physician in the HSU rota",

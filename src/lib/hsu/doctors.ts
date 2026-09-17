@@ -27,21 +27,27 @@ async function supportContact(): Promise<string | null> {
   return c?.name && phone ? `${c.name}, ${phone}` : null;
 }
 
-/** Boð um aðgang. Yfirlæknir fær eigin texta um hlutverkið og fyrstu skrefin. */
+/**
+ * Boð um aðgang. Yfirlæknir fær eigin texta um hlutverkið og fyrstu skrefin.
+ * kind = "reset": aðgangur þegar virkur, hlekkurinn velur nýtt lykilorð og
+ * gildir í 2 klst. (sjá issueAccessLink) — textinn segir það rétt.
+ */
 export async function sendInviteEmail(
   origin: string,
   to: { name: string; email: string; role?: string; lang?: Lang },
   url: string,
   invitedBy: string,
+  kind: "invite" | "reset" = "invite",
 ) {
   const lang = to.lang ?? "is";
   const t = translator(accountEmails, lang);
   const head = to.role === "head";
+  const reset = kind === "reset";
   const contact = head ? await supportContact() : null;
   const paragraphs = head
     ? [
         t("invite.hello", { name: to.name }),
-        t("head.body", { by: invitedBy }),
+        reset ? t("invite.bodyReset", { by: invitedBy }) : t("head.body", { by: invitedBy }),
         t("invite.username", { email: to.email }),
         t("head.steps"),
         t("head.own"),
@@ -49,15 +55,19 @@ export async function sendInviteEmail(
       ]
     : [
         t("invite.hello", { name: to.name }),
-        t("invite.body", { by: invitedBy }),
+        reset ? t("invite.bodyReset", { by: invitedBy }) : t("invite.body", { by: invitedBy }),
         t("invite.username", { email: to.email }),
-        t("invite.tour"),
+        ...(reset ? [] : [t("invite.tour")]),
       ];
   return sendHsuEmail(
     to.email,
     t(head ? "head.subject" : "invite.subject"),
-    hsuEmailHtml({ origin, lang, heading: t(head ? "head.heading" : "invite.heading"), paragraphs, cta: { label: t("invite.cta"), url }, foot: t("invite.foot") }),
-    t(head ? "head.text" : "invite.text", { url }),
+    hsuEmailHtml({
+      origin, lang, heading: t(head ? "head.heading" : "invite.heading"), paragraphs,
+      cta: { label: t(reset ? "invite.ctaReset" : "invite.cta"), url },
+      foot: t(reset ? "invite.footReset" : "invite.foot"),
+    }),
+    t(reset ? "invite.textReset" : head ? "head.text" : "invite.text", { url }),
   );
 }
 

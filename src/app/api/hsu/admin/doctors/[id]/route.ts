@@ -110,10 +110,11 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     role: String(patch.role ?? current.role),
     lang: isLang(patch.lang) ? patch.lang : isLang(current.lang) ? current.lang : undefined,
   };
+  const linkKind = current.password_hash ? "reset" : "invite";
   if (body.resend_invite || body.invite_link) {
-    link = await issueAccessLink(id, current.password_hash ? "reset" : "invite", origin);
+    link = await issueAccessLink(id, linkKind, origin);
     if (body.resend_invite) {
-      const r = await sendInviteEmail(origin, who, link, auth.actor.label);
+      const r = await sendInviteEmail(origin, who, link, auth.actor.label, linkKind);
       emailed = r.ok;
     }
   }
