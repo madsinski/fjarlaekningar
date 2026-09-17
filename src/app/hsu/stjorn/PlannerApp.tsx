@@ -11,6 +11,10 @@ import MonthFlow from "./MonthFlow";
 import DoctorsTab from "./DoctorsTab";
 import MarketAdmin from "./MarketAdmin";
 import SettingsTab from "./SettingsTab";
+import HeadGuide from "./HeadGuide";
+import Tour, { markOnboarding, seenLocally, type TourStep } from "../_components/Tour";
+import { useT } from "@/lib/hsu/i18n/client";
+import { onboarding as onboardingMsgs } from "@/lib/hsu/i18n/messages/onboarding";
 
 type Tab = "plan" | "laeknar" | "markadur" | "stillingar";
 
@@ -68,6 +72,44 @@ export default function PlannerApp() {
 
   const patch = useCallback((fn: (d: Overview) => Overview) => setData((d) => (d ? fn(d) : d)), []);
 
+  // Innleiðing yfirlæknis: kynning í fyrsta sinn, svo gátlisti á Mánaðarplani.
+  // Stjórnandi Fjarlækninga sér hvorugt sjálfkrafa en getur opnað úr valmyndinni.
+  const to = useT(onboardingMsgs);
+  const [tourOpen, setTourOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState<boolean | null>(null);
+  const actorKind = data?.actor.kind;
+  const seen = data?.actor.onboarding;
+  useEffect(() => {
+    if (!actorKind || !seen) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setGuideOpen((g) => g ?? (actorKind === "doctor" ? !seen["guide:head"] : false));
+    if (actorKind !== "doctor" || seen["tour:head"]) return;
+    const timer = setTimeout(() => { setTabState("plan"); setTourOpen(true); }, 600);
+    return () => clearTimeout(timer);
+  }, [actorKind, seen]);
+  const persist = actorKind === "doctor";
+  const closeTour = () => {
+    setTourOpen(false);
+    if (persist ? !seen?.["tour:head"] : !seenLocally("tour:head")) {
+      void markOnboarding("tour:head", true, persist).then(() => { if (persist) void load(); });
+    }
+  };
+  const hideGuide = () => {
+    setGuideOpen(false);
+    void markOnboarding("guide:head", true, persist);
+  };
+  const tourSteps: TourStep[] = [
+    { title: to("head.0.title", { name: (data?.actor.label ?? "").split(" (")[0].split(" ")[0] }), body: to("head.0.body") },
+    { target: "tabs", title: to("head.1.title"), body: to("head.1.body"), before: () => setTab("plan") },
+    { target: "month-nav", title: to("head.2.title"), body: to("head.2.body"), before: () => setTab("plan") },
+    { target: "month-flow", title: to("head.3.title"), body: to("head.3.body"), before: () => setTab("plan") },
+    { target: "tab-laeknar", title: to("head.4.title"), body: to("head.4.body"), before: () => setTab("laeknar") },
+    { target: "tab-markadur", title: to("head.5.title"), body: to("head.5.body"), before: () => setTab("markadur") },
+    { target: "tab-stillingar", title: to("head.6.title"), body: to("head.6.body"), before: () => setTab("stillingar") },
+    { target: "user-menu", title: to("head.7.title"), body: to("head.7.body"), before: () => setTab("plan") },
+    { target: "head-guide", title: to("head.8.title"), body: to("head.8.body"), before: () => { setTab("plan"); setGuideOpen(true); } },
+  ];
+
   if (error && !data) {
     return (
       <main className="flex min-h-screen items-center justify-center p-6">
@@ -94,6 +136,10 @@ export default function PlannerApp() {
         links={isStaff
           ? [{ href: "/admin", label: "Stjórnborð Fjarlækninga", icon: "grid" }]
           : [{ href: "/hsu/min-sida", label: "Mín síða", icon: "user" }]}
+        actions={[
+          { label: to("menu.tour"), onClick: () => setTourOpen(true), icon: "help" },
+          { label: to("menu.guide"), onClick: () => { setTab("plan"); setGuideOpen(true); if (persist) void markOnboarding("guide:head", false); }, icon: "list" },
+        ]}
         onLogout={async () => {
           if (isStaff) { await supabase.auth.signOut(); return "/admin/login"; }
           await hsuApi("/api/hsu/auth/logout", { body: {} });
@@ -102,9 +148,9 @@ export default function PlannerApp() {
 
       <nav className="sticky top-16 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-3 py-2 sm:px-5">
-          <div className="flex gap-1 overflow-x-auto [scrollbar-width:none]">
+          <div data-tour="tabs" className="flex gap-1 overflow-x-auto [scrollbar-width:none]">
             {TABS.map((t) => (
-              <button key={t.key} onClick={() => setTab(t.key)}
+              <button key={t.key} onClick={() => setTab(t.key)} data-tour={`tab-${t.key}`}
                 className={cx("inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition",
                   tab === t.key ? "bg-[var(--hsu)] text-white" : "text-slate-600 hover:bg-slate-100")}>
                 {t.icon} {t.label}
@@ -113,7 +159,7 @@ export default function PlannerApp() {
             ))}
           </div>
           {tab === "plan" && (
-            <div className="flex items-center gap-1.5">
+            <div data-tour="month-nav" className="flex items-center gap-1.5">
               <button onClick={() => setMonth(shiftMonth(month, -1))} aria-label="Fyrri mánuður" className="rounded-xl border border-slate-200 bg-white p-2 hover:bg-slate-50"><ChevronLeft className="h-4 w-4" /></button>
               <div className="w-40 text-center">
                 <div className="text-sm font-bold leading-tight">{capFirst(monthLabel(month))}</div>
@@ -139,7 +185,13 @@ export default function PlannerApp() {
           </div>
         ) : (
           <>
-            {tab === "plan" && <MonthFlow ctx={{ data, month, reload: load, patch }} />}
+            {tab === "plan" && guideOpen && (
+              <div data-tour="head-guide">
+                <HeadGuide data={data} onHide={hideGuide}
+                  onGo={(g) => { if (g === "min-sida") window.location.href = "/hsu/min-sida?t=stillingar"; else setTab(g); }} />
+              </div>
+            )}
+            {tab === "plan" && <div data-tour="month-flow"><MonthFlow ctx={{ data, month, reload: load, patch }} /></div>}
             {tab === "laeknar" && <DoctorsTab ctx={{ data, month, reload: load, patch }} />}
             {tab === "markadur" && <MarketAdmin ctx={{ data, month, reload: load, patch }} />}
             {tab === "stillingar" && <SettingsTab ctx={{ data, month, reload: load, patch }} />}
@@ -149,6 +201,7 @@ export default function PlannerApp() {
           <div className="mt-4"><Notice tone="warn">Engir læknar eru skráðir. <button className="font-semibold underline" onClick={() => setTab("laeknar")}>Bæta við læknum</button></Notice></div>
         )}
       </main>
+      <Tour steps={tourSteps} open={tourOpen && Boolean(data)} onClose={closeTour} />
     </div>
   );
 }

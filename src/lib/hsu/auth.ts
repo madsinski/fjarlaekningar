@@ -9,6 +9,7 @@
 //
 // Server-only. Aldrei flytja inn í "use client" skrá.
 
+import { LANG_COOKIE, LANG_COOKIE_OPTS, isLang } from "./i18n/core";
 import { createHash, randomBytes, scrypt as scryptCb, timingSafeEqual, type ScryptOptions } from "node:crypto";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase-admin";
@@ -76,6 +77,7 @@ export function pinProblem(pin: string): string | null {
 const isProd = process.env.NODE_ENV === "production";
 
 export interface CookieJar {
+  get?: (name: string) => { value: string } | undefined;
   set: (name: string, value: string, opts: Record<string, unknown>) => unknown;
   delete: (name: string) => unknown;
 }
@@ -95,11 +97,16 @@ export async function startSession(
     user_agent: userAgent.slice(0, 300),
     expires_at: expires.toISOString(),
   });
-  await supabaseAdmin
+  // Tungumál: val á innskráningarsíðunni vistast á lækninn; annars gildir hans.
+  const chosen = jar.get?.(LANG_COOKIE)?.value;
+  const { data: me } = await supabaseAdmin
     .from("hsu_doctors")
-    .update({ last_login_at: new Date().toISOString(), failed_logins: 0, locked_until: null })
-    .eq("id", doctorId);
+    .update({ last_login_at: new Date().toISOString(), failed_logins: 0, locked_until: null, ...(isLang(chosen) ? { lang: chosen } : {}) })
+    .eq("id", doctorId)
+    .select("lang")
+    .maybeSingle();
   jar.set(SESSION_COOKIE, token, { httpOnly: true, secure: isProd, sameSite: "lax", path: "/", expires });
+  if (!isLang(chosen) && isLang(me?.lang)) jar.set(LANG_COOKIE, me.lang, LANG_COOKIE_OPTS);
 }
 
 /** Treyst tæki: forsenda þess að aðgangskóði virki. */

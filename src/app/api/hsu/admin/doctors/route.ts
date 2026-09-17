@@ -4,6 +4,8 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit, hashSecret, issueAccessLink, passwordProblem, pinProblem } from "@/lib/hsu/auth";
 import { DOCTOR_COLUMNS, fail, json, listDoctors, originOf, readJson, requireManager, toPublicDoctor } from "@/lib/hsu/server";
 import { cleanWeekdays, emailAllowed, sendInviteEmail } from "@/lib/hsu/doctors";
+import { isLang } from "@/lib/hsu/i18n/core";
+import { langOf } from "@/lib/hsu/i18n/server";
 import { DOCTOR_COLORS, HSU_EMAIL_DOMAIN, normalizeEmail } from "@/lib/hsu/types";
 
 export const runtime = "nodejs";
@@ -24,12 +26,14 @@ export async function POST(req: Request) {
   if (!name) return fail("Nafn vantar.");
   if (!emailAllowed(email)) return fail(`Notandanafn þarf að vera @${HSU_EMAIL_DOMAIN} netfang.`);
   const role = body.role === "head" ? "head" : "doctor";
+  // Tungumál læknisins (viðmót og tölvupóstar); sjálfgefið það sem stjórnandinn notar.
+  const lang = isLang(body.lang) ? body.lang : langOf(req);
   const fte = Math.min(100, Math.max(0, Math.round(Number(body.fte ?? 100)) || 0));
   const mode = body.mode === "manual" ? "manual" : body.mode === "link" ? "link" : "invite";
 
   const { count } = await supabaseAdmin.from("hsu_doctors").select("id", { count: "exact", head: true });
   const row: Record<string, unknown> = {
-    name, email, role, fte,
+    name, email, role, fte, lang,
     phone: String(body.phone ?? "").slice(0, 40),
     title: String(body.title ?? "").slice(0, 80),
     can_bakvakt: body.can_bakvakt === true,
@@ -65,7 +69,7 @@ export async function POST(req: Request) {
     const origin = originOf(req);
     link = await issueAccessLink(data.id, "invite", origin);
     if (mode === "invite") {
-      const r = await sendInviteEmail(origin, { name, email }, link, auth.actor.label);
+      const r = await sendInviteEmail(origin, { name, email, role, lang }, link, auth.actor.label);
       emailed = r.ok;
     }
   }

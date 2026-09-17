@@ -5,7 +5,9 @@ import { audit, hashSecret, issueAccessLink, passwordProblem } from "@/lib/hsu/a
 import { hsuSync } from "@/lib/hsu/calendar";
 import { DOCTOR_COLUMNS, UUID_RE, fail, json, originOf, readJson, requireManager, toPublicDoctor } from "@/lib/hsu/server";
 import { HSU_EMAIL_DOMAIN, normalizeEmail } from "@/lib/hsu/types";
-import { cleanWeekdays, emailAllowed, sendInviteEmail } from "@/lib/hsu/doctors";
+import { cleanWeekdays, emailAllowed, sendInviteEmail, sendPromotedEmail } from "@/lib/hsu/doctors";
+import { isLang, translator } from "@/lib/hsu/i18n/core";
+import { accountEmails } from "@/lib/hsu/i18n/messages/account-emails";
 import { notifyDoctors } from "@/lib/hsu/notify";
 
 export const runtime = "nodejs";
@@ -40,6 +42,15 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     // Yfirlæknir getur ekki lækkað sjálfan sig — þá gæti enginn stjórnað.
     if (self && body.role !== "head") return fail("Þú getur ekki fjarlægt eigin yfirlæknisréttindi.");
     patch.role = body.role;
+  }
+  if (isLang(body.lang)) patch.lang = body.lang;
+  // Gerður að yfirlækni: kynning og leiðarvísir yfirlæknis birtast aftur.
+  const promoted = patch.role === "head" && current.role !== "head";
+  if (promoted) {
+    const seen = { ...((current.onboarding ?? {}) as Record<string, string>) };
+    delete seen["tour:head"];
+    delete seen["guide:head"];
+    patch.onboarding = seen;
   }
   if (typeof body.active === "boolean") {
     if (self && !body.active) return fail("Þú getur ekki afvirkjað sjálfan þig.");
@@ -87,11 +98,35 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     });
   }
 
+  const who = {
+    name: String(patch.name ?? current.name),
+    email: String(patch.email ?? current.email),
+    role: String(patch.role ?? current.role),
+    lang: isLang(patch.lang) ? patch.lang : isLang(current.lang) ? current.lang : undefined,
+  };
   if (body.resend_invite || body.invite_link) {
     link = await issueAccessLink(id, current.password_hash ? "reset" : "invite", origin);
     if (body.resend_invite) {
-      const r = await sendInviteEmail(origin, { name: String(patch.name ?? current.name), email: String(patch.email ?? current.email) }, link, auth.actor.label);
+      const r = await sendInviteEmail(origin, who, link, auth.actor.label);
       emailed = r.ok;
+    }
+  }
+
+  // Gerður að yfirlækni: virkur aðgangur fær tilkynningu og póst; óvirkur fær
+  // nýtt boð með texta yfirlæknis (nema boð hafi verið sent í þessari sömu beiðni).
+  if (promoted && who.email) {
+    if (current.password_hash) {
+      await sendPromotedEmail(origin, who, auth.actor.label);
+      notifyDoctors({
+        origin, email: false,
+        subject: translator(accountEmails, who.lang ?? "is")("promoted.subject"),
+        heading: translator(accountEmails, who.lang ?? "is")("promoted.heading"),
+        notices: [{ doctorId: id, line: translator(accountEmails, who.lang ?? "is")("promoted.notice", { by: auth.actor.label }) }],
+        cta: { label: "", path: "/hsu/stjorn" },
+      });
+    } else if (!body.resend_invite && current.active !== false) {
+      link = await issueAccessLink(id, "invite", origin);
+      emailed = (await sendInviteEmail(origin, who, link, auth.actor.label)).ok;
     }
   }
 

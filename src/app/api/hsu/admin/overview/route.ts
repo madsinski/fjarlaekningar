@@ -27,13 +27,33 @@ export async function GET(req: Request) {
       supabaseAdmin.from("hsu_months").select("month, status").order("month").then((r) => r.data ?? []),
     ]);
     const actor = auth.actor;
+    // Innleiðing yfirlæknis: hvað hann hefur séð og hvort dagatalið er tengt.
+    let onboarding: Record<string, string> = {};
+    let calendarConnected = false;
+    if (actor.kind === "doctor") {
+      const [{ data: me }, { data: sync }] = await Promise.all([
+        supabaseAdmin.from("hsu_doctors").select("onboarding, calendar_token").eq("id", actor.doctor.id).maybeSingle(),
+        supabaseAdmin.from("hsu_google_sync").select("doctor_id").eq("doctor_id", actor.doctor.id).maybeSingle(),
+      ]);
+      onboarding = (me?.onboarding ?? {}) as Record<string, string>;
+      calendarConnected = Boolean(me?.calendar_token || sync);
+    }
+    // Tengiliður Fjarlækninga (sama og neyðarnúmerið í vinnustöðinni).
+    const { data: contact } = await supabaseAdmin.from("gatt_settings").select("value").eq("key", "emergency_contact").maybeSingle();
+    const c = (contact?.value ?? null) as { name?: string; phone?: string } | null;
+    const phone = String(c?.phone ?? "").replace(/^\+354\s*/, "").replace(/^(\d{3})(\d{4})$/, "$1 $2");
+    const support = c?.name && phone ? { name: c.name, phone } : null;
     return json({
       ok: true,
       actor: {
         kind: actor.kind,
         label: actor.label,
         doctorId: actor.kind === "doctor" ? actor.doctor.id : null,
+        role: actor.kind === "doctor" ? actor.doctor.role : null,
+        onboarding,
+        calendarConnected,
       },
+      support,
       settings: settings ?? { unit_name: "Heilsugæslan í Vestmannaeyjum", market_requires_approval: false },
       shiftTypes,
       doctors,

@@ -1,5 +1,8 @@
 // Læknaskráning HSU — reglur um notandanafn og boðspóstur. Server-only.
 
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { translator, type Lang } from "./i18n/core";
+import { accountEmails } from "./i18n/messages/account-emails";
 import { hsuEmailHtml, sendHsuEmail } from "./server";
 import { HSU_EMAIL_DOMAIN } from "./types";
 
@@ -16,21 +19,62 @@ export function emailAllowed(email: string): boolean {
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) && (domain === HSU_EMAIL_DOMAIN || extra.includes(domain));
 }
 
-export async function sendInviteEmail(origin: string, to: { name: string; email: string }, url: string, invitedBy: string) {
+/** Tengiliður Fjarlækninga (sama og neyðarnúmer vinnustöðvarinnar), t.d. „Mads Christian Aanesen, 767 4393“. */
+async function supportContact(): Promise<string | null> {
+  const { data } = await supabaseAdmin.from("gatt_settings").select("value").eq("key", "emergency_contact").maybeSingle();
+  const c = (data?.value ?? null) as { name?: string; phone?: string } | null;
+  const phone = String(c?.phone ?? "").replace(/^\+354\s*/, "").replace(/^(\d{3})(\d{4})$/, "$1 $2");
+  return c?.name && phone ? `${c.name}, ${phone}` : null;
+}
+
+/** Boð um aðgang. Yfirlæknir fær eigin texta um hlutverkið og fyrstu skrefin. */
+export async function sendInviteEmail(
+  origin: string,
+  to: { name: string; email: string; role?: string; lang?: Lang },
+  url: string,
+  invitedBy: string,
+) {
+  const lang = to.lang ?? "is";
+  const t = translator(accountEmails, lang);
+  const head = to.role === "head";
+  const contact = head ? await supportContact() : null;
+  const paragraphs = head
+    ? [
+        t("invite.hello", { name: to.name }),
+        t("head.body", { by: invitedBy }),
+        t("invite.username", { email: to.email }),
+        t("head.steps"),
+        t("head.own"),
+        ...(contact ? [t("head.help", { contact })] : []),
+      ]
+    : [
+        t("invite.hello", { name: to.name }),
+        t("invite.body", { by: invitedBy }),
+        t("invite.username", { email: to.email }),
+        t("invite.tour"),
+      ];
   return sendHsuEmail(
     to.email,
-    "Aðgangur að vaktakerfi HSU",
+    t(head ? "head.subject" : "invite.subject"),
+    hsuEmailHtml({ origin, lang, heading: t(head ? "head.heading" : "invite.heading"), paragraphs, cta: { label: t("invite.cta"), url }, foot: t("invite.foot") }),
+    t(head ? "head.text" : "invite.text", { url }),
+  );
+}
+
+/** Læknir með virkan aðgang gerður að yfirlækni. */
+export async function sendPromotedEmail(origin: string, to: { name: string; email: string; lang?: Lang }, invitedBy: string) {
+  const lang = to.lang ?? "is";
+  const t = translator(accountEmails, lang);
+  const contact = await supportContact();
+  const url = `${origin}/hsu/stjorn`;
+  return sendHsuEmail(
+    to.email,
+    t("promoted.subject"),
     hsuEmailHtml({
-      origin,
-      heading: "Velkomin(n) í vaktakerfið",
-      paragraphs: [
-        `Sæl/l ${to.name}.`,
-        `${invitedBy} hefur stofnað aðgang fyrir þig að vaktakerfi lækna á Heilsugæslunni í Vestmannaeyjum. Þar skráir þú vaktaóskir, sérð vaktirnar þínar og getur skipt vöktum á vaktamarkaði.`,
-        `Notandanafnið þitt er ${to.email}. Veldu lykilorð — og, ef þú vilt, fjögurra stafa aðgangskóða til að skrá þig hratt inn í símanum.`,
-      ],
-      cta: { label: "Virkja aðganginn", url },
-      foot: "Hlekkurinn gildir í 14 daga.",
+      origin, lang, heading: t("promoted.heading"),
+      paragraphs: [t("invite.hello", { name: to.name }), t("promoted.body", { by: invitedBy }), t("promoted.steps"), ...(contact ? [t("head.help", { contact })] : [])],
+      cta: { label: t("promoted.cta"), url },
     }),
-    `Virkjaðu aðganginn þinn að vaktakerfi HSU: ${url}`,
+    t("promoted.text", { url }),
   );
 }

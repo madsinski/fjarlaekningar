@@ -18,6 +18,8 @@ export interface HsuDoctor {
   color: string;
   fte: number;
   active: boolean;
+  /** Tungumál læknisins (viðmót og tölvupóstar). */
+  lang: "is" | "en";
   /** Hefur sett lykilorð (virkjað aðgang). */
   activated: boolean;
   has_pin: boolean;

@@ -1,6 +1,8 @@
 // HSU vaktakerfi — gagnaaðgangur á þjóni.
 // Server-only. Allt fer um þjónustulykil; auðkenning er í auth.ts.
 
+import { translator, type Lang } from "./i18n/core";
+import { accountEmails } from "./i18n/messages/account-emails";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendEmail, escapeHtml } from "@/lib/email";
@@ -47,13 +49,13 @@ export async function requireDoctor(req: Request) {
 // ── Læknar ──────────────────────────────────────────────────────────────────
 
 export const DOCTOR_COLUMNS =
-  "id, name, email, phone, title, role, color, fte, active, password_hash, pin_hash, invited_at, invite_token_hash, invite_expires_at, last_login_at, must_change_password, can_bakvakt, needs_bakvakt, day_weekdays";
+  "id, name, email, phone, title, role, color, fte, active, password_hash, pin_hash, invited_at, invite_token_hash, invite_expires_at, last_login_at, must_change_password, can_bakvakt, needs_bakvakt, day_weekdays, lang, onboarding";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function toPublicDoctor(r: any): HsuDoctor {
   return {
     id: r.id, name: r.name, email: r.email, phone: r.phone ?? "", title: r.title ?? "",
-    role: r.role, color: r.color, fte: r.fte, active: r.active,
+    role: r.role, color: r.color, fte: r.fte, active: r.active, lang: r.lang === "en" ? "en" : "is",
     activated: Boolean(r.password_hash),
     has_pin: Boolean(r.pin_hash),
     invited_at: r.invited_at ?? null,
@@ -295,19 +297,21 @@ export async function applyHalfDayWishes(month: string): Promise<{ split: number
 
 // ── Tölvupóstur ─────────────────────────────────────────────────────────────
 
-export function hsuEmailHtml(opts: { origin: string; heading: string; paragraphs: string[]; cta?: { label: string; url: string }; foot?: string }): string {
+export function hsuEmailHtml(opts: { origin: string; heading: string; paragraphs: string[]; cta?: { label: string; url: string }; foot?: string; lang?: Lang }): string {
+  const lang = opts.lang ?? "is";
+  const tl = translator(accountEmails, lang);
   const logo = `${opts.origin}/hsu/hsu-logo-email.png`;
   const p = opts.paragraphs.map((t) => `<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:#334155;">${escapeHtml(t)}</p>`).join("");
   const cta = opts.cta
     ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0 8px;"><tr><td style="border-radius:10px;background:#1d4f91;"><a href="${escapeHtml(opts.cta.url)}" style="display:inline-block;padding:12px 22px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;">${escapeHtml(opts.cta.label)}</a></td></tr></table>
        <p style="margin:10px 0 0;font-size:12px;color:#64748b;word-break:break-all;">${escapeHtml(opts.cta.url)}</p>`
     : "";
-  return `<!doctype html><html lang="is"><body style="margin:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;">
+  return `<!doctype html><html lang="${lang}"><body style="margin:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:28px 12px;"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;border:1px solid #e2e8f0;">
 <tr><td style="padding:24px 28px 8px;"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
 <td><img src="${logo}" width="40" height="40" alt="HSU" style="display:block;"></td>
-<td style="padding-left:12px;"><div style="font-size:14px;font-weight:700;color:#0f172a;">Heilsugæslan í Vestmannaeyjum</div><div style="font-size:12px;color:#64748b;">Vaktakerfi lækna · HSU</div></td>
+<td style="padding-left:12px;"><div style="font-size:14px;font-weight:700;color:#0f172a;">${escapeHtml(tl("layout.unit"))}</div><div style="font-size:12px;color:#64748b;">${escapeHtml(tl("layout.system"))}</div></td>
 </tr></table></td></tr>
 <tr><td style="padding:16px 28px 28px;"><h1 style="margin:0 0 16px;font-size:20px;color:#0f172a;">${escapeHtml(opts.heading)}</h1>${p}${cta}
 ${opts.foot ? `<p style="margin:22px 0 0;font-size:12px;color:#94a3b8;">${escapeHtml(opts.foot)}</p>` : ""}</td></tr>

@@ -374,3 +374,14 @@ create policy hsu_notifications_none on public.hsu_notifications for all using (
 alter table public.hsu_notifications add column if not exists email_pending boolean not null default false;
 alter table public.hsu_notifications add column if not exists emailed_at timestamptz;
 create index if not exists hsu_notifications_pending_idx on public.hsu_notifications (doctor_id, created_at) where email_pending;
+
+-- ── Tungumál og innleiðing (2026-09-17) ────────────────────────────────────
+-- lang: tungumál læknisins (íslenska/enska) — viðmót og tölvupóstar.
+-- onboarding: hvað notandinn hefur séð, {"tour:doctor": tími, "tour:head": tími,
+--   "guide:head": tími}. Kynning og leiðarvísir birtast þar til lykillinn er til.
+--   Núllstillt fyrir yfirlækni þegar læknir er gerður að yfirlækni.
+alter table public.hsu_doctors add column if not exists lang text not null default 'is';
+alter table public.hsu_doctors drop constraint if exists hsu_doctors_lang_check;
+alter table public.hsu_doctors add constraint hsu_doctors_lang_check check (lang in ('is','en'));
+alter table public.hsu_doctors add column if not exists onboarding jsonb not null default '{}'::jsonb;
+alter table public.hsu_doctors drop column if exists head_onboarded_at;

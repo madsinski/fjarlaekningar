@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import {
   AlertTriangle, ArrowLeftRight, Bell, CalendarCheck, CalendarRange, Check, CheckCircle2, ChevronRight, ClipboardList, ExternalLink, Home, MessageCircle, Settings, Store,
 } from "lucide-react";
+import Tour, { markOnboarding, type TourStep } from "../_components/Tour";
+import { useT } from "@/lib/hsu/i18n/client";
+import { onboarding as onboardingMsgs } from "@/lib/hsu/i18n/messages/onboarding";
 import HsuHeader from "../_components/HsuHeader";
 import { Badge, Button, Card, Field, Modal, Notice, cx, firstName, hsuApi, inputCls, shortName, capFirst } from "../_components/ui";
 import type { PortalData } from "@/lib/hsu/portal";
@@ -94,6 +97,32 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
 
   const messages = useHsuMessages();
   const me = data.me;
+
+  // Kynning á kerfinu: sjálfkrafa í fyrsta sinn (eftir að lykilorði hefur verið skipt).
+  const to = useT(onboardingMsgs);
+  const [tourOpen, setTourOpen] = useState(false);
+  useEffect(() => {
+    if (me.onboarding["tour:doctor"] || me.mustChangePassword) return;
+    const timer = setTimeout(() => setTourOpen(true), 500);
+    return () => clearTimeout(timer);
+  }, [me.onboarding, me.mustChangePassword]);
+  const tourSteps: TourStep[] = [
+    { title: to("doctor.0.title", { name: firstName(me.name) }), body: to("doctor.0.body") },
+    { target: "tabs", title: to("doctor.1.title"), body: to("doctor.1.body") },
+    { target: "tab-yfirlit", title: to("doctor.2.title"), body: to("doctor.2.body"), before: () => setTab("yfirlit") },
+    { target: "tab-oskir", title: to("doctor.3.title"), body: to("doctor.3.body"), before: () => setTab("oskir") },
+    { target: "tab-vaktir", title: to("doctor.4.title"), body: to("doctor.4.body"), before: () => setTab("vaktir") },
+    { target: "tab-markadur", title: to("doctor.5.title"), body: to("doctor.5.body"), before: () => setTab("markadur") },
+    { target: "tab-plan", title: to("doctor.6.title"), body: to("doctor.6.body"), before: () => setTab("plan") },
+    { target: "tab-stillingar", title: to("doctor.7.title"), body: to("doctor.7.body"), before: () => setTab("stillingar") },
+    { target: "lang|user-menu", title: to("doctor.8.title"), body: to("doctor.8.body"), before: () => setTab("yfirlit") },
+    { title: to("doctor.9.title"), body: to("doctor.9.body") },
+  ];
+  const closeTour = () => {
+    setTourOpen(false);
+    // Lokað = séð, hvort sem farið var í gegn eða sleppt; opnast aftur úr valmyndinni.
+    if (!me.onboarding["tour:doctor"]) void markOnboarding("tour:doctor").then(refresh);
+  };
   const name = (id: string | null) => data.colleagues.find((c) => c.id === id)?.name ?? "óþekktur";
 
   const incoming = data.swaps.filter((s) => s.status === "pending" && s.to_doctor === me.id);
@@ -119,14 +148,16 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
           { href: "/vinnustod", label: "Vinnustöð Fjarlækninga (SMS)", icon: "message" as const },
           ...(me.role === "head" ? [{ href: "/hsu/stjorn", label: "Vaktaskipulag (yfirlæknir)", icon: "grid" as const }] : []),
         ]}
+        actions={[{ label: to("menu.tour"), onClick: () => setTourOpen(true), icon: "help" }]}
       />
+      <Tour steps={tourSteps} open={tourOpen} onClose={closeTour} />
 
       <nav className="sticky top-16 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-3 py-2 sm:px-5 [scrollbar-width:none]">
+        <div data-tour="tabs" className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-3 py-2 sm:px-5 [scrollbar-width:none]">
           {TABS.map((t) => {
             const badge = t.key === "markadur" ? marketCount : t.key === "oskir" ? prefActions.length : t.key === "vaktir" ? data.requests.length + data.notifications.filter((n) => !n.read_at).length : 0;
             return (
-              <button key={t.key} onClick={() => setTab(t.key)} aria-current={tab === t.key ? "page" : undefined}
+              <button key={t.key} onClick={() => setTab(t.key)} aria-current={tab === t.key ? "page" : undefined} data-tour={`tab-${t.key}`}
                 className={cx(
                   "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition",
                   tab === t.key ? "bg-[var(--hsu)] text-white" : "text-slate-600 hover:bg-slate-100",
