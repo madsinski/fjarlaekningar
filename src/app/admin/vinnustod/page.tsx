@@ -9,6 +9,7 @@ import { PushToggle, UnreadDot, chimeOnce, useFaviconBadge, useLiveSignal, useSo
 import { supabase } from "@/lib/supabase";
 import Inbox from "./Inbox";
 import Presence from "./Presence";
+import Workplaces, { type WorkplaceRow } from "./Workplaces";
 
 type Tab = "spurningar" | "notendur" | "tilkynningar" | "stillingar";
 
@@ -128,19 +129,25 @@ export default function VinnustodAdminPage() {
 // ── Notendur ────────────────────────────────────────────────────────────────
 
 interface VsUserRow {
-  id: string; name: string; email: string; workplace: string; title: string; active: boolean; source: string;
+  id: string; name: string; email: string; workplace: string; workplace_id: string | null; title: string; active: boolean; source: string;
   activated: boolean; has_pin: boolean; invite_pending: boolean; last_login_at: string | null; created_at: string;
 }
 
 function UsersTab() {
   const [users, setUsers] = useState<VsUserRow[] | null>(null);
-  const [form, setForm] = useState({ name: "", email: "", title: "Hjúkrunarfræðingur", workplace: "" });
+  const [form, setForm] = useState({ name: "", email: "", title: "Hjúkrunarfræðingur", workplaceId: "" });
+  const [places, setPlaces] = useState<WorkplaceRow[] | null>(null);
+  const [unlinked, setUnlinked] = useState<string[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string; url?: string } | null>(null);
 
   const load = useCallback(async () => {
-    const r = await api<{ users: VsUserRow[] }>("/api/admin/vinnustod/users");
+    const [r, w] = await Promise.all([
+      api<{ users: VsUserRow[] }>("/api/admin/vinnustod/users"),
+      api<{ workplaces: WorkplaceRow[]; unlinked: string[] }>("/api/admin/vinnustod/workplaces"),
+    ]);
     if (r.ok) setUsers(r.users); else setMsg({ ok: false, text: r.error ?? "Mistókst" });
+    if (w.ok) { setPlaces(w.workplaces); setUnlinked(w.unlinked); }
   }, []);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -154,7 +161,7 @@ function UsersTab() {
     setBusy(null);
     if (!r.ok) { setMsg({ ok: false, text: r.error ?? "Mistókst" }); return; }
     setMsg({ ok: true, text: `Boð sent á ${form.email}.`, url: r.url });
-    setForm({ name: "", email: "", title: "Hjúkrunarfræðingur", workplace: form.workplace });
+    setForm({ name: "", email: "", title: "Hjúkrunarfræðingur", workplaceId: form.workplaceId });
     await load();
   };
   const patch = async (id: string, body: Record<string, unknown>) => {
@@ -167,7 +174,7 @@ function UsersTab() {
   };
 
   return (
-    <div className="grid items-start gap-6 lg:grid-cols-[1fr_340px]">
+    <div className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
         <table className="w-full min-w-[640px] text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
@@ -179,7 +186,15 @@ function UsersTab() {
               : users.map((u) => (
                 <tr key={u.id} className={u.active ? "" : "opacity-50"}>
                   <td className="px-4 py-2.5"><div className="font-semibold">{u.name}</div><div className="text-xs text-slate-500">{u.email} · {u.title}</div></td>
-                  <td className="px-4 py-2.5 text-slate-600">{u.workplace || "—"}</td>
+                  <td className="px-4 py-2.5 text-slate-600">
+                    <select aria-label={`Starfsstöð ${u.name}`} disabled={busy === u.id}
+                      className="w-full min-w-[170px] max-w-[220px] rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
+                      value={u.workplace_id ?? ""}
+                      onChange={(e) => void patch(u.id, { workplaceId: e.target.value || null })}>
+                      <option value="">{u.workplace && !u.workplace_id ? `${u.workplace} (ekki á lista)` : "— Engin —"}</option>
+                      {(places ?? []).filter((p) => p.active || p.id === u.workplace_id).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  </td>
                   <td className="px-4 py-2.5">
                     {!u.active ? <span className="text-xs font-semibold text-slate-500">Óvirkur</span>
                       : u.activated ? <span className="text-xs font-semibold text-emerald-700">Virkur{u.has_pin ? " · kóði" : ""}</span>
@@ -203,13 +218,20 @@ function UsersTab() {
         </table>
       </div>
 
+      <div className="space-y-6">
       <form onSubmit={invite} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="flex items-center gap-2 font-bold"><UserPlus className="h-4 w-4 text-cyan-700" /> Bjóða starfsmanni</h2>
         <p className="text-xs text-slate-500">Starfsfólk með netfang á leyfðu léni getur líka skráð sig sjálft á /vinnustod.</p>
         <label className="block text-sm font-semibold">Nafn<input className={`${inputCls} mt-1`} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></label>
         <label className="block text-sm font-semibold">Netfang<input type="email" className={`${inputCls} mt-1`} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="nafn@hsu.is" required /></label>
         <label className="block text-sm font-semibold">Starfsheiti<input className={`${inputCls} mt-1`} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
-        <label className="block text-sm font-semibold">Starfsstöð<input className={`${inputCls} mt-1`} value={form.workplace} onChange={(e) => setForm({ ...form, workplace: e.target.value })} placeholder="t.d. HSU Vestmannaeyjum" /></label>
+        <label className="block text-sm font-semibold">Starfsstöð
+          <select className={`${inputCls} mt-1`} value={form.workplaceId} onChange={(e) => setForm({ ...form, workplaceId: e.target.value })}>
+            <option value="">— Veldu starfsstöð —</option>
+            {(places ?? []).filter((p) => p.active).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+          <span className="mt-1 block text-xs font-normal text-slate-500">Vantar stöð? Stofnaðu hana undir „Starfsstöðvar“ hér fyrir neðan.</span>
+        </label>
         <button className={`${btnPrimary} w-full justify-center`} disabled={busy === "invite"}>Senda boð</button>
         {msg && (
           <div className={`rounded-lg p-3 text-sm ${msg.ok ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-700"}`}>
@@ -218,6 +240,8 @@ function UsersTab() {
           </div>
         )}
       </form>
+      <Workplaces places={places} unlinked={unlinked} reload={load} />
+      </div>
     </div>
   );
 }

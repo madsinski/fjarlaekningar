@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getVsAdmin } from "@/lib/vinnustod/admin";
 import { issueAccessLink, normalizeEmail } from "@/lib/vinnustod/auth";
 import { cleanLine, fail, json, originOf, readJson, sendVsEmail } from "@/lib/vinnustod/server";
+import { findWorkplace } from "@/lib/vinnustod/workplaces";
 
 export const runtime = "nodejs";
 
@@ -15,7 +16,7 @@ export async function GET(req: Request) {
   const admin = await getVsAdmin(req);
   if (!admin) return fail(DENY, 403);
   const { data, error } = await supabaseAdmin.from("gatt_users")
-    .select("id, created_at, name, email, workplace, title, active, source, created_by, password_hash, pin_hash, invite_expires_at, invited_at, activated_at, last_login_at")
+    .select("id, created_at, name, email, workplace, workplace_id, title, active, source, created_by, password_hash, pin_hash, invite_expires_at, invited_at, activated_at, last_login_at")
     .order("name");
   if (error) return fail(error.message, 500);
   const users = (data ?? []).map(({ password_hash, pin_hash, ...u }) => ({
@@ -39,9 +40,12 @@ export async function POST(req: Request) {
   const { data: existing } = await supabaseAdmin.from("gatt_users").select("id").eq("email", email).maybeSingle();
   if (existing) return fail("Notandi með þetta netfang er þegar til.", 409);
 
+  const place = await findWorkplace(body.workplaceId);
+  if (body.workplaceId && !place) return fail("Starfsstöðin fannst ekki.");
   const { data: user, error } = await supabaseAdmin.from("gatt_users").insert({
     name, email,
-    workplace: cleanLine(body.workplace, 120),
+    workplace_id: place?.id ?? null,
+    workplace: place?.name ?? cleanLine(body.workplace, 120),
     title: cleanLine(body.title, 80) || "Hjúkrunarfræðingur",
     source: "invite",
     created_by: admin.name,

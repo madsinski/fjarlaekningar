@@ -23,7 +23,11 @@ export default function VsLogin({ onDone }: { onDone: () => void }) {
   const [err, setErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [signup, setSignup] = useState({ name: "", email: "", workplace: "", title: "Hjúkrunarfræðingur" });
+  const [signup, setSignup] = useState({ name: "", email: "", workplace: "", workplaceId: "", title: "Hjúkrunarfræðingur" });
+  const [places, setPlaces] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    void vsApi<{ workplaces: { id: string; name: string }[] }>("/api/vinnustod/workplaces").then((r) => { if (r.ok) setPlaces(r.workplaces); });
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -186,7 +190,20 @@ export default function VsLogin({ onDone }: { onDone: () => void }) {
                   <input className={inputCls} value={signup.title} onChange={(e) => setSignup({ ...signup, title: e.target.value })} />
                 </Field>
                 <Field label="Starfsstöð">
-                  <input className={inputCls} value={signup.workplace} onChange={(e) => setSignup({ ...signup, workplace: e.target.value })} placeholder="t.d. Vestmannaeyjar" />
+                  {places.length > 0 ? (
+                    <>
+                      <select className={inputCls} value={signup.workplaceId} onChange={(e) => setSignup({ ...signup, workplaceId: e.target.value })}>
+                        <option value="">— Veldu starfsstöð —</option>
+                        {places.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        <option value="other">Önnur starfsstöð…</option>
+                      </select>
+                      {signup.workplaceId === "other" && (
+                        <input className={`${inputCls} mt-2`} value={signup.workplace} onChange={(e) => setSignup({ ...signup, workplace: e.target.value })} placeholder="Nafn starfsstöðvar" />
+                      )}
+                    </>
+                  ) : (
+                    <input className={inputCls} value={signup.workplace} onChange={(e) => setSignup({ ...signup, workplace: e.target.value })} placeholder="t.d. HSU Vestmannaeyjum" />
+                  )}
                 </Field>
               </div>
               {err && <Notice tone="err">{err}</Notice>}

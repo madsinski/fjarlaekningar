@@ -130,6 +130,16 @@ berst (`gatt_threads.admin_nudged_at`). Stillt undir *Stillingar* á /admin/vinn
 tómt númer slekkur. Skeytið er skráð í SMS-skrá sem „Kerfið (áminning)“.
 Krefst `CRON_SECRET` (Vercel, Production).
 
+## Starfsstöðvar
+
+Á /admin/vinnustod → Notendur: listi starfsstöðva (`gatt_workplaces`) — stofna,
+breyta (nafn, heimilisfang, sími, athugasemd), gera óvirka, **sameina** (notendur
+færast á aðra stöð og hinni er eytt) og eyða (aðeins ef enginn notandi er tengdur).
+Notandi er tengdur með `gatt_users.workplace_id`; textinn `workplace` fylgir nafni
+stöðvarinnar. Boð og breyting notanda velja stöð af listanum; nýskráning velur virka
+stöð eða „Önnur starfsstöð…“ (frjáls texti) — slíkir vinnustaðir birtast efst í
+listanum og ein smella stofnar stöðina og tengir notendurna.
+
 ## Hver er við
 
 Á /admin/vinnustod → Samtöl er listinn „Hver er við“: allir sem nota vinnustöðina,

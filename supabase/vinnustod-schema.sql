@@ -210,3 +210,34 @@ alter table public.gatt_presence add column if not exists active boolean not nul
 alter table public.gatt_threads add column if not exists admin_nudged_at timestamptz;
 insert into public.gatt_settings (key, value) values ('nudge_phone', '"+3547674393"'::jsonb) on conflict (key) do nothing;
 insert into public.gatt_settings (key, value) values ('nudge_after_minutes', '10'::jsonb) on conflict (key) do nothing;
+
+-- ── Starfsstöðvar ───────────────────────────────────────────────────────────
+-- Listi sem stjórnandi viðheldur. gatt_users.workplace (texti) helst við hlið
+-- workplace_id og er uppfærður þegar stöð er endurnefnd, svo allt sem sýnir
+-- vinnustað (póstar, viðvera, SMS-skrá) virkar áfram óbreytt.
+create table if not exists public.gatt_workplaces (
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null,
+  address    text not null default '',
+  phone      text not null default '',
+  note       text not null default '',
+  active     boolean not null default true,
+  created_at timestamptz not null default now(),
+  created_by text not null default ''
+);
+create unique index if not exists gatt_workplaces_name_uidx on public.gatt_workplaces (lower(name));
+alter table public.gatt_workplaces enable row level security;
+drop policy if exists gatt_workplaces_none on public.gatt_workplaces;
+create policy gatt_workplaces_none on public.gatt_workplaces for all using (false) with check (false);
+
+alter table public.gatt_users add column if not exists workplace_id uuid references public.gatt_workplaces (id) on delete set null;
+create index if not exists gatt_users_workplace_idx on public.gatt_users (workplace_id);
+
+-- Núverandi vinnustaðir (frjáls texti) verða að stöðvum.
+insert into public.gatt_workplaces (name, created_by)
+  select distinct on (lower(trim(workplace))) trim(workplace), 'flutt úr notendum'
+  from public.gatt_users where trim(workplace) <> ''
+  on conflict do nothing;
+update public.gatt_users u set workplace_id = w.id
+  from public.gatt_workplaces w
+  where u.workplace_id is null and lower(trim(u.workplace)) = lower(w.name);

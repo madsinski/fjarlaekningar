@@ -9,6 +9,7 @@ import { after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { allowedDomains, clientIp, issueAccessLink, normalizeEmail, sameOrigin, throttle } from "@/lib/vinnustod/auth";
 import { cleanLine, fail, json, originOf, readJson, sendVsEmail } from "@/lib/vinnustod/server";
+import { findWorkplace } from "@/lib/vinnustod/workplaces";
 
 export const runtime = "nodejs";
 
@@ -19,7 +20,9 @@ export async function POST(req: Request) {
   const body = await readJson(req);
   const email = normalizeEmail(String(body.email ?? ""));
   const name = cleanLine(body.name, 120);
-  const workplace = cleanLine(body.workplace, 120);
+  // Valið af lista starfsstöðva; annars frjáls texti (stjórnandi tengir síðar).
+  const place = await findWorkplace(body.workplaceId);
+  const workplace = place && place.active ? place.name : cleanLine(body.workplace, 120);
   const title = cleanLine(body.title, 80);
   if (!name) return fail("Sláðu inn nafn.");
   if (!EMAIL_RE.test(email)) return fail("Sláðu inn gilt netfang.");
@@ -58,7 +61,7 @@ export async function POST(req: Request) {
     }
 
     const { data: created, error } = await supabaseAdmin.from("gatt_users")
-      .insert({ name, email, workplace, title: title || "Hjúkrunarfræðingur", source: "signup", created_by: "nýskráning" })
+      .insert({ name, email, workplace, workplace_id: place && place.active ? place.id : null, title: title || "Hjúkrunarfræðingur", source: "signup", created_by: "nýskráning" })
       .select("id").single();
     if (error || !created) return;
     const url = await issueAccessLink(created.id, "invite", origin);

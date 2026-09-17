@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getVsAdmin } from "@/lib/vinnustod/admin";
 import { issueAccessLink } from "@/lib/vinnustod/auth";
 import { UUID_RE, cleanLine, fail, json, originOf, readJson, sendVsEmail } from "@/lib/vinnustod/server";
+import { findWorkplace } from "@/lib/vinnustod/workplaces";
 
 export const runtime = "nodejs";
 
@@ -39,6 +40,15 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (typeof body.name === "string") patch.name = cleanLine(body.name, 120);
   if (typeof body.workplace === "string") patch.workplace = cleanLine(body.workplace, 120);
   if (typeof body.title === "string") patch.title = cleanLine(body.title, 80);
+  if ("workplaceId" in body) {
+    if (body.workplaceId === null || body.workplaceId === "") { patch.workplace_id = null; patch.workplace = ""; }
+    else {
+      const place = await findWorkplace(body.workplaceId);
+      if (!place) return fail("Starfsstöðin fannst ekki.");
+      patch.workplace_id = place.id;
+      patch.workplace = place.name;
+    }
+  }
   if (!Object.keys(patch).length) return fail("Engu breytt");
   if (patch.name === "") return fail("Nafn má ekki vera autt.");
   const { error } = await supabaseAdmin.from("gatt_users").update(patch).eq("id", id);
