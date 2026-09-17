@@ -385,3 +385,11 @@ alter table public.hsu_doctors drop constraint if exists hsu_doctors_lang_check;
 alter table public.hsu_doctors add constraint hsu_doctors_lang_check check (lang in ('is','en'));
 alter table public.hsu_doctors add column if not exists onboarding jsonb not null default '{}'::jsonb;
 alter table public.hsu_doctors drop column if exists head_onboarded_at;
+
+-- ── Tilkynningar í tölvupósti (2026-09-17) ─────────────────────────────────
+-- Hvaða flokkar fara í póst og hvernig: "now" (strax), "digest" (ein samantekt
+-- á 10 mín.) eða "off". Öryggispóstar (lykilorð, boð) eru ekki stillanlegir.
+-- Sjá src/lib/hsu/email-prefs.ts.
+alter table public.hsu_settings add column if not exists email_prefs jsonb not null default '{}'::jsonb;
+-- Flokkur tilkynningar (shifts, requests, market…) — notaður í samantektarpósti.
+alter table public.hsu_notifications add column if not exists category text;

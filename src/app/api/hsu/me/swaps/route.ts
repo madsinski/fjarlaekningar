@@ -9,6 +9,7 @@ import { DEFAULT_LANG, isLang, translator } from "@/lib/hsu/i18n/core";
 import { notifyMsgs } from "@/lib/hsu/i18n/messages/notify";
 import { tr } from "@/lib/hsu/i18n/server";
 import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
+import { emailMode } from "@/lib/hsu/email-prefs";
 
 export const runtime = "nodejs";
 
@@ -55,6 +56,8 @@ export async function POST(req: Request) {
 
   const origin = originOf(req);
   after(async () => {
+    // Boð á einn lækni er persónulegt; vakt á markaðinn fer á alla — sinn hvor flokkurinn.
+    if ((await emailMode(target ? "marketMine" : "market")) !== "now") return;
     // Bakvakt á markaði: aðeins þeir sem mega taka hana fá póst.
     let others = supabaseAdmin.from("hsu_doctors").select("id, name, email, lang").eq("active", true).neq("id", me.id);
     if (bakvakt) others = others.eq("can_bakvakt", true);

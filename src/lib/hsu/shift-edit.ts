@@ -178,16 +178,18 @@ export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: s
       heading: say((tl) => tl("plan.subject")),
       intro: say((tl) => tl("plan.introEdit", { by: opts.actor })),
       notices,
-      email: "digest",
+      category: "shifts",
     });
   }
-  // Beiðnir fara alltaf út, birt eða ekki: læknirinn þarf að svara þeim.
+  // Beiðnir: læknirinn þarf að svara þeim, en þær safnast saman eins og annað
+  // (sjálfgefið ein samantekt) — sjá stillingar tilkynninga.
   notifyDoctors({
     origin: opts.origin,
     subject: say((tl) => tl("request.subject")),
     heading: say((tl) => tl("request.subject")),
     intro: say((tl) => tl.n("request.intro", requests.length, { by: opts.actor })),
     notices: requests,
+    category: "requests",
     cta: { label: say((tl) => tl("request.cta")), path: "/hsu/min-sida?t=vaktir" },
   });
 

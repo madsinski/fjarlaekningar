@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle, ArrowLeftRight, Bell, CalendarCheck, CalendarRange, Check, CheckCircle2, ChevronRight, ClipboardList, ExternalLink, Home, Settings, Store,
@@ -225,6 +225,7 @@ function Overview({ data, incoming, market, prefActions, go, onLog }: {
             const pref = data.prefs.find((p) => p.month === m);
             return (
               <ActionCard key={m} tone={pref?.status === "changes_requested" ? "red" : "blue"} onClick={() => go("oskir")}
+                urgent cta={t("action.prefsCta")} icon={<ClipboardList className="h-5 w-5" />}
                 title={t(pref?.status === "changes_requested" ? "action.prefsChanges" : "action.prefsRegister", { month: monthLabelL(m, L) })}
                 text={month?.prefs_deadline ? t("action.prefsDeadline", { date: dayLabelL(month.prefs_deadline, L) }) : t("action.prefsHint")} />
             );
@@ -266,17 +267,51 @@ function Overview({ data, incoming, market, prefActions, go, onLog }: {
   );
 }
 
-function ActionCard({ title, text, tone, onClick }: { title: string; text: string; tone: "blue" | "red" | "amber" | "purple"; onClick: () => void }) {
+/**
+ * Verk sem bíður læknisins. `urgent` er fyrir það sem má ekki fara fram hjá
+ * honum (vaktaóskir sem á eftir að skrá): litað bak, hringur um kortið,
+ * áberandi hnappur — og blikkandi punktur ef fresturinn er runninn upp.
+ */
+function ActionCard({ title, text, tone, onClick, urgent = false, cta, icon }: {
+  title: string; text: string; tone: "blue" | "red" | "amber" | "purple"; onClick: () => void;
+  urgent?: boolean; cta?: string; icon?: ReactNode;
+}) {
   const bar = { blue: "bg-[var(--hsu)]", red: "bg-red-500", amber: "bg-amber-400", purple: "bg-violet-500" }[tone];
+  const loud = {
+    blue: "bg-[var(--hsu-soft)] ring-[var(--hsu)]/30",
+    red: "bg-red-50 ring-red-300",
+    amber: "bg-amber-50 ring-amber-300",
+    purple: "bg-violet-50 ring-violet-300",
+  }[tone];
+  const dot = { blue: "bg-[var(--hsu)]", red: "bg-red-500", amber: "bg-amber-500", purple: "bg-violet-500" }[tone];
   return (
-    <button onClick={onClick} className="flex w-full items-stretch overflow-hidden rounded-2xl border border-slate-200 bg-white text-left transition hover:shadow-md">
+    <button onClick={onClick}
+      className={cx("flex w-full items-stretch overflow-hidden rounded-2xl border text-left transition hover:shadow-md",
+        urgent ? cx("border-transparent ring-2 shadow-sm", loud) : "border-slate-200 bg-white")}>
       <span className={cx("w-1.5 shrink-0", bar)} />
-      <span className="flex flex-1 items-center justify-between gap-3 p-4">
-        <span>
-          <span className="block text-sm font-bold text-slate-900">{title}</span>
-          <span className="block text-xs text-slate-500">{text}</span>
+      <span className={cx("flex-1 p-4", urgent && "sm:p-5")}>
+        <span className="flex items-center gap-3">
+          {urgent && icon && (
+            <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[var(--hsu-dark)] shadow-sm">
+              {icon}
+              <span className="absolute -right-1 -top-1 flex h-3 w-3">
+                <span className={cx("absolute h-full w-full animate-ping rounded-full opacity-60", dot)} />
+                <span className={cx("relative h-3 w-3 rounded-full ring-2 ring-white", dot)} />
+              </span>
+            </span>
+          )}
+          <span className="min-w-0 flex-1">
+            <span className={cx("block font-bold text-slate-900", urgent ? "text-base leading-snug" : "text-sm")}>{title}</span>
+            <span className={cx("block", urgent ? "text-sm text-slate-700" : "text-xs text-slate-500")}>{text}</span>
+          </span>
+          {!urgent && <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />}
         </span>
-        <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+        {/* Hnappurinn á eigin línu: dálkurinn er mjór og fyrirsögnin á ekki að þrengjast. */}
+        {urgent && cta && (
+          <span className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl bg-[var(--hsu)] px-3 py-2.5 text-sm font-semibold text-white shadow-sm">
+            {cta} <ChevronRight className="h-4 w-4" />
+          </span>
+        )}
       </span>
     </button>
   );

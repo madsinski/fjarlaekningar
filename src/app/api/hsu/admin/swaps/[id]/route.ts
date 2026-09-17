@@ -10,6 +10,7 @@ import { DEFAULT_LANG, isLang, translator } from "@/lib/hsu/i18n/core";
 import { UUID_RE, fail, hsuEmailHtml, json, originOf, readJson, requireManager, sendHsuEmail } from "@/lib/hsu/server";
 import { tr } from "@/lib/hsu/i18n/server";
 import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
+import { emailMode } from "@/lib/hsu/email-prefs";
 
 export const runtime = "nodejs";
 
@@ -36,6 +37,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     await transferShift({ swapId: swap.id, shiftId: swap.shift_id, fromDoctor: swap.from_doctor, toDoctor: swap.taken_by, actor: auth.actor.label, origin });
     notifyDoctors({
       origin,
+      category: "marketMine",
       subject: say((l) => l("swapApproved.subject")),
       heading: say((l) => l("swapApproved.subject")),
       notices: [{ doctorId: swap.taken_by, line: say((l) => l("swapApproved.line", { by: auth.actor.label, shift: shiftPhrase(shift, l.lang) })) }],
@@ -48,6 +50,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     await supabaseAdmin.from("hsu_swaps").update({ status: "pending", taken_by: null }).eq("id", swap.id);
     await audit(auth.actor.label, "market.reject", shift.shift_date.slice(0, 7), { swapId: swap.id });
     after(async () => {
+      if ((await emailMode("marketMine")) !== "now") return;
       const { data: d } = await supabaseAdmin.from("hsu_doctors").select("name, email, lang").eq("id", swap.taken_by).maybeSingle();
       if (d) {
         const lang = isLang(d.lang) ? d.lang : DEFAULT_LANG;
@@ -71,6 +74,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     const line = say((l) => l("offerCancelled.line", vars(l.lang)));
     notifyDoctors({
       origin,
+      category: "marketMine",
       subject: say((l) => l("offerCancelled.subject")),
       heading: say((l) => l("offerCancelled.subject")),
       notices: [

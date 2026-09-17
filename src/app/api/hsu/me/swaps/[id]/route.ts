@@ -11,6 +11,7 @@ import { DEFAULT_LANG, isLang, translator, type Lang } from "@/lib/hsu/i18n/core
 import { notifyMsgs } from "@/lib/hsu/i18n/messages/notify";
 import { tr } from "@/lib/hsu/i18n/server";
 import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
+import { emailMode } from "@/lib/hsu/email-prefs";
 
 export const runtime = "nodejs";
 
@@ -69,6 +70,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     await supabaseAdmin.from("hsu_shifts").update({ status: "assigned" }).eq("id", swap.shift_id);
     await audit(me.name, "market.decline", shift.shift_date.slice(0, 7), { swapId: swap.id });
     after(async () => {
+      if ((await emailMode("marketMine")) !== "now") return;
       const { data: from } = await supabaseAdmin.from("hsu_doctors").select("email, lang").eq("id", swap.from_doctor).maybeSingle();
       if (from) {
         const lang = isLang(from.lang) ? from.lang : DEFAULT_LANG;
@@ -94,6 +96,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     const told = [swap.to_doctor, swap.taken_by].filter((x, i, a): x is string => Boolean(x) && a.indexOf(x) === i);
     notifyDoctors({
       origin,
+      category: "marketMine",
       subject: (l) => translator(notifyMsgs, l)("market.cancelled.subject"),
       heading: (l) => translator(notifyMsgs, l)("market.cancelled.heading"),
       notices: told.map((doctorId) => ({

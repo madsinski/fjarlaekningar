@@ -16,6 +16,7 @@ import { DEFAULT_LANG, isLang, translator, type Lang } from "@/lib/hsu/i18n/core
 import { dayLabelL, monthLabelL } from "@/lib/hsu/i18n/format";
 import { tr } from "@/lib/hsu/i18n/server";
 import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
+import { emailMode } from "@/lib/hsu/email-prefs";
 
 export const runtime = "nodejs";
 
@@ -88,7 +89,7 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
         line: say((l) => l("unpublish.line", { by: auth.actor.label, month: monthLabelL(month, l.lang) })),
       })),
       cta: { label: say((l) => l("unpublish.cta")), path: "/hsu/min-sida" },
-      email: "digest",
+      category: "shifts",
     });
   }
   const notify = Boolean(body.notify);
@@ -96,6 +97,7 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
     const deadline: string | null = saved.prefs_deadline ?? null;
     const url = `${origin}/hsu/min-sida?t=oskir&m=${month}`;
     after(async () => {
+      if ((await emailMode("prefs")) === "off") return;
       for (const d of await activeDoctors()) {
         const tl = translator(apiAdmin, d.lang);
         const vars = { month: monthLabelL(month, d.lang), date: deadline ? dayLabelL(deadline, d.lang) : "", url };
@@ -109,9 +111,12 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
   }
   if (notify && publishing) {
     after(async () => {
+      if ((await emailMode("publish")) === "off") return;
       const shifts = await loadMonthShifts(month);
       for (const d of await activeDoctors()) {
         const n = shifts.filter((s) => s.doctor_id === d.id).length;
+        // Læknir án vaktar í mánuðinum fær ekki póst um birtinguna.
+        if (n === 0) continue;
         const tl = translator(apiAdmin, d.lang);
         const vars = { month: monthLabelL(month, d.lang), url: `${origin}/hsu/min-sida` };
         await sendHsuEmail(d.email, tl("published.subject", vars), hsuEmailHtml({

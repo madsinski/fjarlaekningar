@@ -11,6 +11,7 @@ import { monthLabelL } from "@/lib/hsu/i18n/format";
 import { doctorLang } from "@/lib/hsu/i18n/server";
 import { tr } from "@/lib/hsu/i18n/server";
 import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
+import { emailMode } from "@/lib/hsu/email-prefs";
 
 export const runtime = "nodejs";
 
@@ -38,6 +39,7 @@ export async function POST(req: Request) {
       subject: say((l) => l("approved.subject", { month: monthLabelL(month, l.lang) })),
       heading: say((l) => l("approved.heading")),
       notices: (data ?? []).map((r) => ({ doctorId: r.doctor_id, line: say((l) => l("approved.line", { by: reviewer, month: monthLabelL(month, l.lang) })) })),
+      category: "prefs",
       cta: { label: say((l) => l("approved.cta")), path: `/hsu/min-sida?t=oskir&m=${month}` },
     });
     await audit(reviewer, "prefs.approve_all", month, { count: data?.length ?? 0 });
@@ -76,6 +78,7 @@ export async function POST(req: Request) {
       subject: say((l) => l("approved.subject", { month: monthLabelL(month, l.lang) })),
       heading: say((l) => l("approved.heading")),
       notices: [{ doctorId, line: say((l) => l(note ? "approved.lineNote" : "approved.line", { by: reviewer, month: monthLabelL(month, l.lang), note })) }],
+      category: "prefs",
       cta: { label: say((l) => l("approved.cta")), path: `/hsu/min-sida?t=oskir&m=${month}` },
     });
   }
@@ -83,6 +86,7 @@ export async function POST(req: Request) {
   if (action === "request_changes") {
     const origin = originOf(req);
     after(async () => {
+      if ((await emailMode("prefs")) === "off") return;
       const { data: d } = await supabaseAdmin.from("hsu_doctors").select("name, email").eq("id", doctorId).maybeSingle();
       if (!d) return;
       const lang = await doctorLang(doctorId);

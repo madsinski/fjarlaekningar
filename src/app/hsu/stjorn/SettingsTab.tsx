@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useState, type ReactNode } from "react";
-import { Plus, RotateCcw, Save, Trash2 } from "lucide-react";
+import { Mail, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
 import { Button, Card, Field, Notice, cx, hsuApi, inputCls } from "../_components/ui";
 import {
   SHIFT_KIND_IS, SHIFT_PERIOD_IS, WEEKDAY_ORDER, icelandicHolidays, isOvernight, typeAppliesOn,
@@ -10,6 +10,7 @@ import {
 import { useCommon, useT } from "@/lib/hsu/i18n/client";
 import { dayLabelL, holidayL, monthLabelL, shiftKindL, shiftPeriodL, weekdayShortL, weekdayShortOf } from "@/lib/hsu/i18n/format";
 import { admin } from "@/lib/hsu/i18n/messages/admin";
+import { EMAIL_CATEGORIES, canDigest, type EmailCategory, type EmailMode } from "@/lib/hsu/email-prefs";
 import type { PlannerCtx } from "./types";
 
 /** Setur íhluti (t.d. feitletrun) í stað {breyta} í þýddum texta. */
@@ -51,6 +52,8 @@ export default function SettingsTab({ ctx }: { ctx: PlannerCtx }) {
         <Button onClick={saveSettings} busy={busy === "s"}><Save className="h-4 w-4" /> {c("action.save")}</Button>
       </Card>
 
+      <EmailSettings ctx={ctx} />
+
       <div>
         <h2 className="text-lg font-bold">{t("settings.types")}</h2>
         <p className="text-sm text-slate-500">
@@ -64,6 +67,56 @@ export default function SettingsTab({ ctx }: { ctx: PlannerCtx }) {
 
       <ResetCard ctx={ctx} />
     </div>
+  );
+}
+
+/** Hvaða tilkynningar fara í tölvupóst — einn hamur á flokk. */
+function EmailSettings({ ctx }: { ctx: PlannerCtx }) {
+  const t = useT(admin);
+  const c = useCommon();
+  const [prefs, setPrefs] = useState(ctx.data.settings.email_prefs);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
+
+  const save = async () => {
+    setBusy(true); setMsg(null);
+    const r = await hsuApi("/api/hsu/admin/settings", { method: "PUT", body: { email_prefs: prefs }, staff: true });
+    setBusy(false);
+    setMsg(r.ok ? { tone: "ok", text: t("settings.saved") } : { tone: "err", text: r.error ?? t("doctors.failed") });
+    if (r.ok) await ctx.reload();
+  };
+  const set = (cat: EmailCategory, mode: EmailMode) => setPrefs((p) => ({ ...p, [cat]: mode }));
+
+  return (
+    <Card className="space-y-4 p-5">
+      <div>
+        <h2 className="flex items-center gap-2 text-lg font-bold"><Mail className="h-5 w-5 text-[var(--hsu)]" /> {t("email.title")}</h2>
+        <p className="mt-1 text-sm text-slate-600">{t("email.intro")}</p>
+      </div>
+      <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+        {EMAIL_CATEGORIES.map((cat) => (
+          <li key={cat} className="flex flex-wrap items-start gap-x-4 gap-y-2 px-4 py-3">
+            <div className="min-w-48 flex-1">
+              <div className="text-sm font-semibold text-slate-900">{t.dyn(`email.cat.${cat}`)}</div>
+              <div className="text-xs text-slate-500">{t.dyn(`email.cat.${cat}.hint`)}</div>
+            </div>
+            <div role="group" aria-label={t.dyn(`email.cat.${cat}`)} className="flex shrink-0 rounded-xl bg-slate-100 p-0.5 text-xs font-semibold">
+              {(["now", "digest", "off"] as EmailMode[]).filter((m) => m !== "digest" || canDigest(cat)).map((m) => (
+                <button key={m} type="button" onClick={() => set(cat, m)} aria-pressed={prefs[cat] === m}
+                  className={cx("rounded-lg px-2.5 py-1.5 transition",
+                    prefs[cat] === m ? "bg-white text-[var(--hsu-dark)] shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-700")}>
+                  {t.dyn(`email.mode.${m}`)}
+                </button>
+              ))}
+            </div>
+          </li>
+        ))}
+      </ul>
+      <p className="text-xs text-slate-500">{t("email.digestHint")}</p>
+      <p className="text-xs text-slate-500">{t("email.always")}</p>
+      {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
+      <Button onClick={() => void save()} busy={busy}><Save className="h-4 w-4" /> {c("action.save")}</Button>
+    </Card>
   );
 }
 

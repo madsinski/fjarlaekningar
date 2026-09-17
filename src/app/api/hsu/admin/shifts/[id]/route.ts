@@ -69,7 +69,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
               doctorId: shift.doctor_id,
               line: say((l) => l("shiftEdit.line", { by: auth.actor.label, shift: shiftPhrase(shift, l.lang), changes: what.map((w) => w(l)).join(", ") })),
             }],
-            email: "digest",
+            category: "shifts",
           });
         }
       }
@@ -98,7 +98,7 @@ export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }
       subject: say((l) => l("cancelled.subject")),
       heading: say((l) => l("cancelled.subject")),
       notices: [{ doctorId: shift.doctor_id, line: say((l) => l("cancelled.line", { by: auth.actor.label, shift: shiftPhrase(shift, l.lang) })) }],
-      email: "digest",
+      category: "shifts",
     });
   }
   // Atburðurinn í dagatali læknisins hverfur við næstu samstillingu, því

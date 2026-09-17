@@ -14,6 +14,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { hsuEmailHtml, sendHsuEmail } from "./server";
 import { DEFAULT_LANG, isLang, translator, type Lang } from "./i18n/core";
 import { notifyMsgs } from "./i18n/messages/notify";
+import { emailMode, type EmailCategory } from "./email-prefs";
 
 /**
  * Texti á tungumáli viðtakandans: fastur strengur (eins á öllum málum) eða
@@ -40,12 +41,18 @@ export function notifyDoctors(opts: {
   intro?: Localized;
   notices: DoctorNotice[];
   cta?: { label: Localized; path: string };
-  /** Tölvupóstur: true = strax (sjálfgefið), "digest" = í samantekt síðar, false = enginn. */
+  /** Flokkur tilkynningar — stillingin (hsu_settings.email_prefs) ræður póstinum. */
+  category?: EmailCategory;
+  /** Handvirkt val sem gengur framar flokknum: true = strax, "digest", false = enginn póstur. */
   email?: boolean | "digest";
 }) {
   const ids = [...new Set(opts.notices.map((n) => n.doctorId))];
   if (!ids.length) return;
   after(async () => {
+    // Stillingin ræður, nema kallandinn taki fram annað.
+    const mode = opts.email !== undefined
+      ? (opts.email === false ? "off" : opts.email === "digest" ? "digest" : "now")
+      : opts.category ? await emailMode(opts.category) : "now";
     const { data: docs } = await supabaseAdmin.from("hsu_doctors").select("id, name, email, active, lang").in("id", ids);
     const cta = opts.cta ?? { label: (l: Lang) => translator(notifyMsgs, l)("cta.myShifts"), path: "/hsu/min-sida?t=vaktir" };
     const active = (docs ?? []).filter((d) => d.active);
@@ -59,11 +66,12 @@ export function notifyDoctors(opts: {
         title: localize(opts.heading, langOf(d)),
         lines: [...intro(langOf(d)), ...linesFor(d.id, langOf(d))],
         link: cta.path,
-        email_pending: opts.email === "digest",
+        category: opts.category ?? null,
+        email_pending: mode === "digest",
       }))
       .filter((r) => r.lines.length > (opts.intro ? 1 : 0));
     if (rows.length) await supabaseAdmin.from("hsu_notifications").insert(rows);
-    if (opts.email === false || opts.email === "digest") return; // samantekt sér um póstinn
+    if (mode !== "now") return; // samantekt (eða slökkt) — enginn póstur núna
 
     for (const d of active) {
       const lang = langOf(d);
@@ -85,25 +93,23 @@ export function notifyDoctors(opts: {
   });
 }
 
-/** Póstur til yfirlækna (t.d. þegar læknir svarar beiðni), á tungumáli hvers og eins. */
-export function notifyHeads(opts: { origin: string; subject: Localized; heading: Localized; lines: Localized[]; path?: string }) {
+/**
+ * Til yfirlækna (t.d. þegar læknir svarar beiðni). Fer sömu leið og aðrar
+ * tilkynningar: birtist í kerfinu hjá hverjum yfirlækni og hlítir stillingunni
+ * fyrir flokkinn „head“ — sjálfgefið ein samantekt í stað pósts við hverja aðgerð.
+ */
+export function notifyHeads(opts: { origin: string; subject: Localized; heading: Localized; lines: Localized[]; path?: string; category?: EmailCategory }) {
   after(async () => {
-    const { data: heads } = await supabaseAdmin.from("hsu_doctors").select("name, email, lang").eq("role", "head").eq("active", true);
-    for (const h of heads ?? []) {
-      const lang: Lang = isLang(h.lang) ? h.lang : DEFAULT_LANG;
-      const lines = opts.lines.map((l) => localize(l, lang));
-      await sendHsuEmail(
-        h.email,
-        localize(opts.subject, lang),
-        hsuEmailHtml({
-          origin: opts.origin,
-          lang,
-          heading: localize(opts.heading, lang),
-          paragraphs: lines,
-          cta: { label: translator(notifyMsgs, lang)("cta.planner"), url: `${opts.origin}${opts.path ?? "/hsu/stjorn"}` },
-        }),
-        lines.join("\n"),
-      );
-    }
+    const { data: heads } = await supabaseAdmin.from("hsu_doctors").select("id").eq("role", "head").eq("active", true);
+    const ids = (heads ?? []).map((h) => h.id as string);
+    if (!ids.length) return;
+    notifyDoctors({
+      origin: opts.origin,
+      subject: opts.subject,
+      heading: opts.heading,
+      category: opts.category ?? "head",
+      notices: ids.flatMap((id) => opts.lines.map((line) => ({ doctorId: id, line }))),
+      cta: { label: (l: Lang) => translator(notifyMsgs, l)("cta.planner"), path: opts.path ?? "/hsu/stjorn" },
+    });
   });
 }

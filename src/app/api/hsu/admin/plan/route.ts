@@ -103,7 +103,7 @@ export async function POST(req: Request) {
         heading: say((l) => l("plan.subject")),
         intro: say((l) => l("plan.introReplan", { by: auth.actor.label })),
         notices,
-        email: "digest",
+        category: "shifts",
       });
     }
 

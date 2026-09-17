@@ -48,7 +48,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const tellDoctor = (line: Localized, doctorId: string | null) => {
     if (!doctorId || !shift.published) return;
     const subject = say((l) => l("shiftEdit.subject"));
-    notifyDoctors({ origin, subject, heading: subject, notices: [{ doctorId, line }], email: "digest" });
+    notifyDoctors({ origin, subject, heading: subject, notices: [{ doctorId, line }], category: "shifts" });
     after(async () => { await hsuSync.syncDoctors([doctorId]); });
   };
 
