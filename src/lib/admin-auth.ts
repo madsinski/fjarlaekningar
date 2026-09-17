@@ -40,3 +40,13 @@ export function isAdmin(staff: CallerStaff | null): boolean {
 export function isLegalReader(staff: CallerStaff | null): boolean {
   return isAdmin(staff) || hasRole(staff, "lawyer");
 }
+
+/** Assurance level of the caller's session ("aal2" = passed MFA). */
+export function callerAal(req: Request): string | null {
+  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
+  try {
+    return JSON.parse(Buffer.from(token.split(".")[1] ?? "", "base64url").toString()).aal ?? null;
+  } catch {
+    return null;
+  }
+}

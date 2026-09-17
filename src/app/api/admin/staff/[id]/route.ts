@@ -1,11 +1,13 @@
-// Update a staff member's roles (and active flag). Admin only.
+// Update a staff member: roles, active flag, and details (name, email, phone,
+// title). Admin only. Changing the email also changes the login (Supabase Auth)
+// and requires an MFA-verified session.
 // Members can hold several roles (e.g. admin + doctor). The primary `role`
 // column is derived from the set by priority so RLS is_admin_staff() keeps
 // working.
 
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
+import { callerAal, getCallerStaff, isAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
@@ -44,6 +46,31 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (typeof body.active === "boolean") update.active = body.active;
   if (typeof body.phone === "string") update.phone = body.phone.trim() || null;
   if (typeof body.title === "string") update.title = body.title.trim() || null;
+  if (typeof body.name === "string") {
+    const name = body.name.trim().slice(0, 120);
+    if (!name) return NextResponse.json({ ok: false, error: "Nafn má ekki vera autt" }, { status: 400 });
+    update.name = name;
+  }
+
+  const { data: before } = await supabaseAdmin.from("staff").select("id, name, email").eq("id", id).maybeSingle();
+  if (!before) return NextResponse.json({ ok: false, error: "Starfsmaður fannst ekki" }, { status: 404 });
+
+  let newEmail: string | null = null;
+  if (typeof body.email === "string" && body.email.trim().toLowerCase() !== String(before.email).toLowerCase()) {
+    newEmail = body.email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+      return NextResponse.json({ ok: false, error: "Ógilt netfang" }, { status: 400 });
+    }
+    if (callerAal(req) !== "aal2") {
+      return NextResponse.json({ ok: false, error: "Breyting á netfangi krefst tveggja þrepa auðkenningar" }, { status: 403 });
+    }
+    const { data: taken } = await supabaseAdmin.from("staff").select("id").ilike("email", newEmail).neq("id", id).maybeSingle();
+    if (taken) return NextResponse.json({ ok: false, error: "Annar starfsmaður er með þetta netfang" }, { status: 409 });
+    // Innskráningin fylgir: nýja netfangið er strax staðfest.
+    const { error: authErr } = await supabaseAdmin.auth.admin.updateUserById(id, { email: newEmail, email_confirm: true });
+    if (authErr) return NextResponse.json({ ok: false, error: `Ekki tókst að breyta innskráningu: ${authErr.message}` }, { status: 400 });
+    update.email = newEmail;
+  }
   if (Object.keys(update).length === 0) return NextResponse.json({ ok: true });
 
   const { data, error } = await supabaseAdmin
@@ -53,6 +80,21 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     .select("id, name, email, phone, role, roles, title, active, invited, onboarded_at, created_at")
     .maybeSingle();
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+
+  // Tengd vaktaskrá fylgir nafni og netfangi.
+  const rosterPatch: Record<string, unknown> = {};
+  if (update.name) rosterPatch.name = update.name;
+  if (newEmail) rosterPatch.email = newEmail;
+  if (Object.keys(rosterPatch).length) await supabaseAdmin.from("roster_doctors").update(rosterPatch).eq("staff_id", id);
+  // Stjórnandi vinnustöðvar skráður með netfangi — listinn fylgir breytingunni.
+  if (newEmail) {
+    const { data: row } = await supabaseAdmin.from("gatt_settings").select("value").eq("key", "vs_admin_emails").maybeSingle();
+    const list = Array.isArray(row?.value) ? (row!.value as string[]) : [];
+    const old = String(before.email).toLowerCase();
+    if (list.map((e) => e.toLowerCase()).includes(old)) {
+      await supabaseAdmin.from("gatt_settings").update({ value: list.map((e) => (e.toLowerCase() === old ? newEmail : e)) }).eq("key", "vs_admin_emails");
+    }
+  }
   return NextResponse.json({ ok: true, staff: data });
 }
 

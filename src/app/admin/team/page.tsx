@@ -59,6 +59,10 @@ export default function TeamPage() {
   const [title, setTitle] = useState("");
   const [phone, setPhone] = useState("");
   const [openDocs, setOpenDocs] = useState<string | null>(null);
+  // Breyta upplýsingum starfsmanns (nafn, netfang, sími, titill).
+  const [editing, setEditing] = useState<{ id: string; name: string; email: string; phone: string; title: string } | null>(null);
+  const [editErr, setEditErr] = useState<string | null>(null);
+  const [editBusy, setEditBusy] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
@@ -200,9 +204,22 @@ export default function TeamPage() {
     }
   };
 
-  const savePhone = async (id: string, phone: string) => {
-    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, phone } : r)));
-    await fetch(`/api/admin/staff/${id}`, { method: "PATCH", headers: await authHeaders(), body: JSON.stringify({ phone }) });
+  const saveDetails = async () => {
+    if (!editing) return;
+    const row = rows.find((r) => r.id === editing.id);
+    if (row && editing.email.trim().toLowerCase() !== row.email.toLowerCase()
+      && !confirm(`Breyta netfangi ${row.name} í ${editing.email.trim()}?\n\nViðkomandi skráir sig framvegis inn með nýja netfanginu.`)) return;
+    setEditBusy(true); setEditErr(null);
+    const res = await fetch(`/api/admin/staff/${editing.id}`, {
+      method: "PATCH", headers: await authHeaders(),
+      body: JSON.stringify({ name: editing.name, email: editing.email, phone: editing.phone, title: editing.title }),
+    });
+    const j = await res.json().catch(() => ({}));
+    setEditBusy(false);
+    if (!res.ok || !j.ok) { setEditErr(j.error || "Ekki tókst að vista"); return; }
+    setRows((prev) => prev.map((r) => (r.id === editing.id ? { ...r, ...j.staff } : r)));
+    setMsg({ type: "ok", text: `Upplýsingar ${j.staff?.name ?? ""} vistaðar.` });
+    setEditing(null);
   };
 
   return (
@@ -344,18 +361,44 @@ export default function TeamPage() {
                 <Fragment key={r.id}>
                 <tr className="border-b border-slate-100 last:border-0">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-slate-900">{r.name}</div>
-                    <div className="text-xs text-slate-500">{r.email}</div>
-                    {r.title && <div className="text-[11px] text-slate-400">{r.title}</div>}
-                    {isAdmin ? (
-                      <input
-                        defaultValue={r.phone || ""}
-                        onBlur={(e) => e.target.value !== (r.phone || "") && savePhone(r.id, e.target.value.trim())}
-                        placeholder="Sími"
-                        className="mt-1 w-36 px-2 py-1 border border-slate-200 rounded text-[11px] outline-none focus:ring-2 focus:ring-cyan-200"
-                      />
+                    {editing?.id === r.id ? (
+                      <form className="space-y-1.5" onSubmit={(e) => { e.preventDefault(); void saveDetails(); }}>
+                        <input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} placeholder="Nafn" required aria-label="Nafn"
+                          className="w-full px-2 py-1 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-cyan-200" autoFocus />
+                        <input type="email" value={editing.email} onChange={(e) => setEditing({ ...editing, email: e.target.value })} placeholder="Netfang" required aria-label="Netfang"
+                          className="w-full px-2 py-1 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-cyan-200" />
+                        <div className="flex gap-1.5">
+                          <input value={editing.phone} onChange={(e) => setEditing({ ...editing, phone: e.target.value })} placeholder="Sími" aria-label="Sími" inputMode="tel"
+                            className="w-1/2 px-2 py-1 border border-slate-300 rounded text-xs outline-none focus:ring-2 focus:ring-cyan-200" />
+                          <input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} placeholder="Titill" aria-label="Titill"
+                            className="w-1/2 px-2 py-1 border border-slate-300 rounded text-xs outline-none focus:ring-2 focus:ring-cyan-200" />
+                        </div>
+                        {editErr && <div className="text-xs text-red-600">{editErr}</div>}
+                        <div className="flex gap-2">
+                          <button type="submit" disabled={editBusy} className="rounded bg-cyan-600 px-3 py-1 text-xs font-semibold text-white hover:bg-cyan-700 disabled:opacity-50">
+                            {editBusy ? "Vista…" : "Vista"}
+                          </button>
+                          <button type="button" onClick={() => { setEditing(null); setEditErr(null); }} className="rounded border border-slate-300 px-3 py-1 text-xs text-slate-700 hover:bg-slate-50">
+                            Hætta við
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-slate-400">Nýtt netfang verður líka innskráningarnetfang.</p>
+                      </form>
                     ) : (
-                      r.phone && <div className="text-[11px] text-slate-400">{r.phone}</div>
+                      <>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-slate-900">{r.name}</span>
+                          {isAdmin && (
+                            <button type="button" onClick={() => { setEditing({ id: r.id, name: r.name, email: r.email, phone: r.phone || "", title: r.title || "" }); setEditErr(null); }}
+                              className="text-[11px] text-cyan-700 underline hover:text-cyan-900">
+                              Breyta
+                            </button>
+                          )}
+                        </div>
+                        <div className="text-xs text-slate-500">{r.email}</div>
+                        {r.title && <div className="text-[11px] text-slate-400">{r.title}</div>}
+                        {r.phone && <div className="text-[11px] text-slate-400">{r.phone}</div>}
+                      </>
                     )}
                   </td>
                   <td className="px-4 py-3">
