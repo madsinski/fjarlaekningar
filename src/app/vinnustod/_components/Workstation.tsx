@@ -208,14 +208,19 @@ export default function Workstation({ me, announcements: initialAnnouncements, u
         <AnnouncementBanner items={announcements} fresh={freshAnnouncements} />
 
         <SearchHero q={q} setQ={setQuery} inputRef={searchRef}
-          status={status && (
-            <span title={status.detail}
-              className={cx("inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1",
-                status.open ? "bg-emerald-400/15 text-emerald-50 ring-emerald-300/40" : "bg-white/10 text-white/85 ring-white/20")}>
-              <span className={cx("h-2.5 w-2.5 rounded-full", status.open ? "bg-emerald-400 shadow-[0_0_0_4px_rgba(52,211,153,0.25)]" : "bg-slate-400")} />
-              {status.text}
-              <span className="font-normal tabular-nums text-white/60">{status.clock}</span>
-            </span>
+          status={(status || emergency) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {status && (
+                <span title={status.detail}
+                  className={cx("inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1",
+                    status.open ? "bg-emerald-400/15 text-emerald-50 ring-emerald-300/40" : "bg-white/10 text-white/85 ring-white/20")}>
+                  <span className={cx("h-2.5 w-2.5 rounded-full", status.open ? "bg-emerald-400 shadow-[0_0_0_4px_rgba(52,211,153,0.25)]" : "bg-slate-400")} />
+                  {status.text}
+                  <span className="font-normal tabular-nums text-white/60">{status.clock}</span>
+                </span>
+              )}
+              {emergency && <EmergencyPill e={emergency} />}
+            </div>
           )} />
 
         {/* Í síma: gervigreindarmat → SMS/spurningar → leiðarvísir; í leit eða
@@ -262,8 +267,6 @@ export default function Workstation({ me, announcements: initialAnnouncements, u
                 )}
               </div>
             )}
-
-            {emergency && <EmergencyCard e={emergency} />}
 
             <div id="sms" className="scroll-mt-20"><SmsPanel ref={phoneRef} compact /></div>
 
@@ -383,26 +386,17 @@ function AnnouncementBanner({ items, fresh }: { items: Announcement[]; fresh: st
   );
 }
 
-/** Neyðarnúmer — hringt beint úr síma eða tölvu. */
-function EmergencyCard({ e }: { e: Emergency }) {
+/** Neyðarnúmer — lítil pilla við „Opið núna“; hringt beint úr síma eða tölvu. */
+function EmergencyPill({ e }: { e: Emergency }) {
   const pretty = e.phone.startsWith("+354") && e.phone.length === 11 ? `${e.phone.slice(4, 7)} ${e.phone.slice(7)}` : e.phone;
   return (
-    <section aria-labelledby="neyd-h" className="rounded-2xl border border-red-200 bg-white p-4 shadow-sm">
-      <h2 id="neyd-h" className="flex items-center gap-2 text-sm font-bold text-red-800">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-600 text-white"><Phone className="h-4 w-4" /></span>
-        Neyðarnúmer Fjarlækninga
-      </h2>
-      {e.note && <p className="mt-1 text-xs text-slate-600">{e.note}</p>}
-      <a href={`tel:${e.phone}`}
-        className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-red-50 px-3 py-2.5 ring-1 ring-red-200 transition hover:bg-red-100">
-        <span className="min-w-0">
-          <span className="block truncate text-sm font-semibold text-slate-900">{e.name || "Fjarlækningar"}</span>
-          <span className="block text-lg font-bold tabular-nums tracking-wide text-red-700">{pretty}</span>
-        </span>
-        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white">
-          <Phone className="h-4 w-4" /> Hringja
-        </span>
-      </a>
-    </section>
+    <a href={`tel:${e.phone}`}
+      title={`Neyðarnúmer Fjarlækninga${e.name ? ` — ${e.name}` : ""}${e.note ? `. ${e.note}` : ""}`}
+      aria-label={`Neyðarnúmer Fjarlækninga: ${e.name ? `${e.name}, ` : ""}${pretty}`}
+      className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/90 ring-1 ring-white/20 transition hover:bg-red-500/80 hover:text-white hover:ring-red-300">
+      <Phone className="h-3.5 w-3.5" />
+      <span className="hidden sm:inline">Neyðarnúmer</span>
+      <span className="tabular-nums">{pretty}</span>
+    </a>
   );
 }

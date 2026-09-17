@@ -254,11 +254,8 @@ export function ConversationCard({ onUnreadChange, refresh = 0, ask }: {
             <UnreadDot count={unread} className="absolute -right-2 -top-2" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="flex items-center gap-2">
-              <span className="font-bold text-slate-900">Samtal við Fjarlækningar</span>
-              {unread > 0 && <span className="text-xs font-bold text-red-700">Ný skilaboð</span>}
-            </span>
-            <span className="block truncate text-xs text-slate-600">
+            <span className="block truncate font-bold text-slate-900">Samtal við Fjarlækningar</span>
+            <span className={cx("block truncate text-xs", unread ? "font-semibold text-red-700" : "text-slate-600")}>
               {thread === undefined ? "…"
                 : thread ? `${thread.last_author === "staff" ? "Fjarlækningar" : "Þú"}: ${thread.subject} · ${whenIs(thread.last_message_at)}`
                 : "Spurning um þjónustuna? Skrifaðu okkur."}

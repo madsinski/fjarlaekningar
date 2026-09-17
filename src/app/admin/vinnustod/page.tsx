@@ -175,47 +175,51 @@ function UsersTab() {
 
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-        <table className="w-full min-w-[640px] text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-            <tr><th className="px-4 py-2">Nafn</th><th className="px-4 py-2">Starfsstöð</th><th className="px-4 py-2">Staða</th><th className="px-4 py-2">Síðast inni</th><th /></tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {users === null ? <tr><td colSpan={5} className="p-4"><div className="h-12 animate-pulse rounded bg-slate-100" /></td></tr>
-              : users.length === 0 ? <tr><td colSpan={5} className="p-6 text-center text-slate-500">Engir notendur enn.</td></tr>
-              : users.map((u) => (
-                <tr key={u.id} className={u.active ? "" : "opacity-50"}>
-                  <td className="px-4 py-2.5"><div className="font-semibold">{u.name}</div><div className="text-xs text-slate-500">{u.email} · {u.title}</div></td>
-                  <td className="px-4 py-2.5 text-slate-600">
-                    <select aria-label={`Starfsstöð ${u.name}`} disabled={busy === u.id}
-                      className="w-full min-w-[170px] max-w-[220px] rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
-                      value={u.workplace_id ?? ""}
-                      onChange={(e) => void patch(u.id, { workplaceId: e.target.value || null })}>
-                      <option value="">{u.workplace && !u.workplace_id ? `${u.workplace} (ekki á lista)` : "— Engin —"}</option>
-                      {(places ?? []).filter((p) => p.active || p.id === u.workplace_id).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
-                  </td>
-                  <td className="px-4 py-2.5">
-                    {!u.active ? <span className="text-xs font-semibold text-slate-500">Óvirkur</span>
-                      : u.activated ? <span className="text-xs font-semibold text-emerald-700">Virkur{u.has_pin ? " · kóði" : ""}</span>
-                      : u.invite_pending ? <span className="text-xs font-semibold text-amber-700">Boð sent{u.source === "signup" ? " (nýskráning)" : ""}</span>
-                      : <span className="text-xs font-semibold text-red-600">Boð útrunnið</span>}
-                  </td>
-                  <td className="px-4 py-2.5 text-xs text-slate-500">{fmt(u.last_login_at)}</td>
-                  <td className="px-4 py-2.5 text-right">
-                    <div className="flex justify-end gap-1.5">
-                      <button className={btnGhost} disabled={busy === u.id} onClick={() => patch(u.id, { action: "resend" })} title={u.activated ? "Senda hlekk til að velja nýtt lykilorð" : "Senda boðið aftur"}>
-                        <RefreshCw className="h-3.5 w-3.5" /> {u.activated ? "Nýtt lykilorð" : "Senda aftur"}
-                      </button>
-                      <button className={btnGhost} disabled={busy === u.id} onClick={() => { if (u.active && !confirm(`Gera ${u.name} óvirka(n)? Innskráning hættir strax að virka.`)) return; void patch(u.id, { active: !u.active }); }}>
-                        {u.active ? "Óvirkja" : "Virkja"}
-                      </button>
+      <div className="min-w-0 rounded-2xl border border-slate-200 bg-white">
+        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+          <h2 className="font-bold text-slate-900">Starfsmenn</h2>
+          {users && <span className="text-xs text-slate-500">{users.filter((u) => u.active).length} virk{users.some((u) => !u.active) ? ` · ${users.filter((u) => !u.active).length} óvirk` : ""}</span>}
+        </div>
+        {users === null ? <div className="m-4 h-12 animate-pulse rounded bg-slate-100" />
+          : users.length === 0 ? <p className="p-6 text-center text-sm text-slate-500">Engir notendur enn.</p>
+          : (
+            <ul className="divide-y divide-slate-100">
+              {users.map((u) => (
+                <li key={u.id} className={`flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 ${u.active ? "" : "opacity-50"}`}>
+                  <div className="min-w-0 flex-[1_1_220px]">
+                    <div className="truncate font-semibold text-slate-900">{u.name}</div>
+                    <div className="truncate text-xs text-slate-500">{u.email}{u.title ? ` · ${u.title}` : ""}</div>
+                    <div className="mt-0.5 text-[11px]">
+                      {!u.active ? <span className="font-semibold text-slate-500">Óvirkur</span>
+                        : u.activated ? <span className="font-semibold text-emerald-700">Virkur{u.has_pin ? " · kóði" : ""}</span>
+                        : u.invite_pending ? <span className="font-semibold text-amber-700">Boð sent{u.source === "signup" ? " (nýskráning)" : ""}</span>
+                        : <span className="font-semibold text-red-600">Boð útrunnið</span>}
+                      <span className="text-slate-400"> · síðast inni {fmt(u.last_login_at)}</span>
                     </div>
-                  </td>
-                </tr>
+                  </div>
+                  <select aria-label={`Starfsstöð ${u.name}`} disabled={busy === u.id}
+                    className="min-w-0 flex-[1_1_160px] rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs"
+                    value={u.workplace_id ?? ""}
+                    onChange={(e) => void patch(u.id, { workplaceId: e.target.value || null })}>
+                    <option value="">{u.workplace && !u.workplace_id ? `${u.workplace} (ekki á lista)` : "— Engin starfsstöð —"}</option>
+                    {(places ?? []).filter((p) => p.active || p.id === u.workplace_id).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                  <div className="flex shrink-0 gap-1">
+                    <button type="button" className="rounded-lg p-2 text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-40" disabled={busy === u.id}
+                      onClick={() => patch(u.id, { action: "resend" })}
+                      title={u.activated ? "Senda hlekk til að velja nýtt lykilorð" : "Senda boðið aftur"}
+                      aria-label={u.activated ? `Nýtt lykilorð fyrir ${u.name}` : `Senda ${u.name} boðið aftur`}>
+                      <RefreshCw className="h-4 w-4" />
+                    </button>
+                    <button type="button" className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-40" disabled={busy === u.id}
+                      onClick={() => { if (u.active && !confirm(`Gera ${u.name} óvirka(n)? Innskráning hættir strax að virka.`)) return; void patch(u.id, { active: !u.active }); }}>
+                      {u.active ? "Óvirkja" : "Virkja"}
+                    </button>
+                  </div>
+                </li>
               ))}
-          </tbody>
-        </table>
+            </ul>
+          )}
       </div>
 
       <div className="space-y-6">
