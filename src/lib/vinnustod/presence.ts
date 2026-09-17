@@ -6,8 +6,8 @@
 //   offline — útskráð(ur)
 //   pending — hefur ekki virkjað aðganginn (aðeins notendur vinnustöðvar)
 //
-// Starfsfólk Fjarlækninga skráir sig inn um Supabase og lotan er ekki geymd hjá
-// okkur; það telst innskráð meðan vinnustöðin hefur verið opin síðustu 12 klst.
+// Stjórnandi (Supabase-innskráning, lotan ekki geymd hjá okkur) telst innskráður
+// meðan vinnustöðin hefur verið opin síðustu 12 klst.
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { listRecipients } from "./threads";
@@ -19,7 +19,9 @@ const STAFF_SESSION_MS = 12 * 3600_000;
 export async function presenceSnapshot() {
   const nowIso = new Date().toISOString();
   const [people, { data: presence }, { data: vsSessions }, { data: hsuSessions }, { data: vsUsers }] = await Promise.all([
-    listRecipients({ includeAdmins: true }),
+    // Aðeins skráðir notendur vinnustöðvarinnar og stjórnandi hennar — ekki
+    // læknar vaktakerfisins eða annað starfsfólk sem hefur ekki notað hana.
+    listRecipients({ includeAdmins: true }).then((all) => all.filter((p) => p.kind === "vs" || p.isAdmin)),
     supabaseAdmin.from("gatt_presence").select("owner_kind, owner_id, last_seen_at, last_active_at, active"),
     supabaseAdmin.from("gatt_sessions").select("user_id, last_seen_at").gt("expires_at", nowIso),
     supabaseAdmin.from("hsu_sessions").select("doctor_id, last_seen_at").gt("expires_at", nowIso),

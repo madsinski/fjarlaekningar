@@ -8,7 +8,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getVsAdmin } from "@/lib/vinnustod/admin";
 import { UUID_RE, cleanLine, cleanText, fail, json, originOf, readJson } from "@/lib/vinnustod/server";
 import {
-  MAX_BODY, MAX_SUBJECT, subjectFrom, THREAD_COLUMNS, addMessage, askersFor, listRecipients, notifyUser, ownerColumn, unreadFor, type ThreadRow,
+  MAX_BODY, MAX_SUBJECT, subjectFrom, THREAD_COLUMNS, addMessage, askersFor, listRecipients, notifyUser, threadFor, unreadFor, type ThreadRow,
 } from "@/lib/vinnustod/threads";
 
 export const runtime = "nodejs";
@@ -42,19 +42,12 @@ export async function POST(req: Request) {
   const subject = cleanLine(body.subject, MAX_SUBJECT) || subjectFrom(text);
   if (!text) return fail("Skeytið er tómt.");
 
-  const { data: thread, error } = await supabaseAdmin.from("gatt_threads").insert({
-    owner_kind: to.kind,
-    [ownerColumn(to.kind)]: to.id,
-    owner_name: to.name,
-    owner_email: to.email,
-    owner_workplace: to.workplace,
-    subject,
-    last_author: "staff",
-  }).select("id").single();
-  if (error || !thread) return fail(error?.message ?? "Vistun mistókst", 500);
+  // Eitt samtal á mann: bætist við samtalið ef það er til.
+  const thread = await threadFor(to, text);
+  if (!thread) return fail("Vistun mistókst", 500);
   await addMessage({ threadId: thread.id, kind: "staff", authorId: admin.id, authorName: admin.name, body: text });
   if (to.email) {
-    notifyUser({ origin: originOf(req), to: to.email, name: to.name, subject, body: text, staffName: admin.name, isNew: true });
+    notifyUser({ origin: originOf(req), to: to.email, name: to.name, subject, body: text, staffName: admin.name, isNew: thread.created });
   }
   return json({ ok: true, id: thread.id });
 }

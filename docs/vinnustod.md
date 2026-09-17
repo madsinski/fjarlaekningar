@@ -202,7 +202,24 @@ breyta því hér líka.**
 læknisþjónusta (sem voru falin á vefnum 16.9.2026). Hlekkurinn „Á vefnum“ vísar á
 síðu erindisins aðeins þegar hún er opin, annars á `/thjonusta`.
 
-## Samtöl — spurningar og skilaboð
+## Samtöl — eitt samtal á hvern notanda
+
+Hver notandi á **eitt** samtal við Fjarlækningar (einkvæmir vísar á `user_id`,
+`owner_staff`, `owner_hsu`; `threadFor` í `src/lib/vinnustod/threads.ts`). Í
+vinnustöðinni heitir það **„Samtal við Fjarlækningar“**: lokað sýnir það rauðan
+punkt og upphaf nýjustu skilaboðanna, opið er það spjall beint í hliðardálkinum.
+Notandi sér aldrei aðra notendur. Fyrirsögn samtalsins er fyrsta lína nýjustu
+skilaboðanna. Eyða tæmir samtalið; næstu skilaboð stofna nýtt.
+
+**Stjórnendur vinnustöðvarinnar** (`gatt_settings.vs_admin_emails`, sjálfgefið
+mads@fjarlaekningar.is; breytt undir Stillingar) svara, fá innhólfið og
+tilkynningar og birtast sem „Stjórnandi“. Aðrir stjórnendur Fjarlækninga eru
+venjulegir notendur vinnustöðvarinnar. Í „Hver er við“ eru aðeins skráðir notendur
+vinnustöðvarinnar og stjórnendur hennar; smellt á línu opnar samtalið við viðkomandi
+(eða ný skilaboð ef ekkert er til).
+
+**Neyðarnúmer Fjarlækninga** (`gatt_settings.emergency_contact`) birtist öllum í
+hliðardálkinum með „Hringja“; breytt undir Stillingar.
 
 Starfsfólk spyr stjórnanda, og **stjórnandi getur hafið samtal við hvern sem er**
 sem kemst inn í vinnustöðina (notendur hennar, starfsfólk Fjarlækninga sem er ekki

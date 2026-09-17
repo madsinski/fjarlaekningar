@@ -8,7 +8,7 @@
 // endurhlaða; samtal og ný spurning opnast í skúffu.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, Loader2, MessageCircle, Plus, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, Loader2, MessageCircle, Send, Trash2 } from "lucide-react";
 import { Button, Card, Field, Notice, cx, inputCls } from "@/app/hsu/_components/ui";
 import { ENTER_HINT, UnreadDot, onEnterSend, vsApi, whenIs } from "./shared";
 
@@ -151,67 +151,164 @@ export function ThreadView({ id, onBack, onRead, refresh = 0 }: { id: string; on
 }
 
 /**
- * Spurningar í hliðardálki: nýjustu samtölin og „Ný spurning“. Samtal opnast í
- * skúffu (onOpen) svo leitin og SMS-ið hverfi ekki á meðan.
+ * „Samtal við Fjarlækningar“ — EITT samtal á hvern notanda. Lokað sýnir það
+ * rauðan punkt og upphaf nýjustu skilaboðanna; opið er það spjall beint í
+ * hliðardálkinum. Fyrstu skilaboðin stofna samtalið.
  */
-export function QuestionsCard({ onOpen, onNew, onUnreadChange, refresh = 0 }: {
-  onOpen: (id: string) => void; onNew: () => void; onUnreadChange?: (n: number) => void; refresh?: number;
+export function ConversationCard({ onUnreadChange, refresh = 0, ask }: {
+  onUnreadChange?: (n: number) => void;
+  refresh?: number;
+  /** Opna spjallið, valfrjálst með drögum (t.d. úr leitinni). nonce breytist við hvert kall. */
+  ask?: { text: string; nonce: number } | null;
 }) {
-  const [threads, setThreads] = useState<Thread[] | null>(null);
-  const [all, setAll] = useState(false);
-  const load = useCallback(async () => {
+  const [thread, setThread] = useState<Thread | null | undefined>(undefined);
+  const [open, setOpen] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("t") === "spurningar");
+  const [messages, setMessages] = useState<Message[] | null>(null);
+  const [reply, setReply] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const box = useRef<HTMLDivElement>(null);
+  const input = useRef<HTMLTextAreaElement>(null);
+  const root = useRef<HTMLDivElement>(null);
+
+  const loadThread = useCallback(async () => {
     const r = await vsApi<{ threads: Thread[] }>("/api/vinnustod/threads", { staff: true });
-    if (r.ok) { setThreads(r.threads); onUnreadChange?.(r.threads.filter((t) => t.unread).length); }
+    if (!r.ok) return null;
+    const t = r.threads[0] ?? null;
+    setThread(t);
+    onUnreadChange?.(t?.unread ? 1 : 0);
+    return t;
   }, [onUnreadChange]);
+
+  const loadMessages = useCallback(async (id: string) => {
+    const r = await vsApi<{ messages: Message[] }>(`/api/vinnustod/threads/${id}`, { staff: true });
+    if (r.ok) {
+      setMessages(r.messages);
+      // Opnað = lesið.
+      setThread((t) => (t ? { ...t, unread: false } : t));
+      onUnreadChange?.(0);
+    }
+  }, [onUnreadChange]);
+
+  const refreshAll = useCallback(async () => {
+    const t = await loadThread();
+    if (open && t) await loadMessages(t.id);
+    if (open && !t) setMessages([]);
+  }, [loadThread, loadMessages, open]);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    void load();
-    const t = setInterval(() => { void load(); }, 20_000);
+    void refreshAll();
+    const t = setInterval(() => { void refreshAll(); }, 20_000);
     return () => clearInterval(t);
-  }, [load]);
+  }, [refreshAll]);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (refresh) void load();
-  }, [refresh, load]);
-  // Ólesin samtöl efst, svo þau sjáist þótt listinn sé styttur.
-  const sorted = [...(threads ?? [])].sort((a, b) => Number(b.unread) - Number(a.unread));
-  const unread = sorted.filter((t) => t.unread).length;
-  const shown = all ? sorted : sorted.slice(0, Math.max(4, unread));
+    if (refresh) void refreshAll();
+  }, [refresh, refreshAll]);
+  useEffect(() => {
+    if (!ask) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOpen(true);
+    if (ask.text) setReply(ask.text);
+    setTimeout(() => {
+      root.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      input.current?.focus();
+    }, 100);
+  }, [ask]);
+  useEffect(() => {
+    if (open && box.current) box.current.scrollTop = box.current.scrollHeight;
+  }, [open, messages?.length]);
+
+  const send = async () => {
+    if (busy || !reply.trim()) return;
+    setBusy(true); setErr(null);
+    const r = await vsApi<{ id: string }>("/api/vinnustod/threads", { body: { body: reply }, staff: true });
+    setBusy(false);
+    if (!r.ok) { setErr(r.error ?? "Ekki tókst að senda"); return; }
+    setReply("");
+    await loadThread();
+    await loadMessages(r.id);
+  };
+  const remove = async () => {
+    if (!thread || !confirm("Eyða samtalinu? Það hverfur líka hjá Fjarlækningum og er ekki hægt að endurheimta.")) return;
+    const r = await vsApi(`/api/vinnustod/threads/${thread.id}`, { method: "DELETE", staff: true });
+    if (!r.ok) { setErr(r.error ?? "Ekki tókst að eyða"); return; }
+    setThread(null); setMessages([]);
+  };
+  const toggle = () => {
+    const next = !open;
+    setOpen(next);
+    if (next && thread) void loadMessages(thread.id);
+    if (next && !thread) setMessages([]);
+  };
+
+  const unread = thread?.unread ? 1 : 0;
   return (
-    <Card className={cx("p-4", unread > 0 && "border-red-300 bg-red-50/60 ring-2 ring-red-200")}>
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 font-bold text-slate-900">
-          <span className={cx("relative flex h-8 w-8 items-center justify-center rounded-lg", unread ? "bg-red-600 text-white" : "bg-[var(--hsu-soft)] text-[var(--hsu)]")}>
-            <MessageCircle className="h-4 w-4" />
-            <UnreadDot count={unread} className="absolute -right-2.5 -top-2.5" />
+    <div ref={root}>
+      <Card className={cx("overflow-hidden", unread > 0 && "border-red-300 ring-2 ring-red-200")}>
+        <button type="button" onClick={toggle} aria-expanded={open}
+          className={cx("flex w-full items-center gap-3 p-4 text-left", unread > 0 ? "bg-red-50/70" : "")}>
+          <span className={cx("relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl", unread ? "bg-red-600 text-white" : "bg-[var(--hsu-soft)] text-[var(--hsu)]")}>
+            <MessageCircle className="h-5 w-5" />
+            <UnreadDot count={unread} className="absolute -right-2 -top-2" />
           </span>
-          <span className="ml-1">Skilaboð við Fjarlækningar</span>
-        </h2>
-        {unread > 0 && <span className="text-xs font-bold text-red-700">{unread === 1 ? "Ný skilaboð" : `${unread} ný skilaboð`}</span>}
-      </div>
-      <p className="mt-1 text-xs text-slate-500">Spurning um þjónustuna? Skrifaðu stjórnanda Fjarlækninga. Svör og skilaboð frá okkur birtast hér og koma í pósti.</p>
-      <Button className="mt-3 w-full" onClick={onNew}><Plus className="h-4 w-4" /> Ný spurning</Button>
-      <div className="mt-3 divide-y divide-slate-100">
-        {threads === null ? <div className="h-12 animate-pulse rounded-lg bg-slate-100" />
-          : threads.length === 0 ? <p className="py-2 text-xs text-slate-500">Engin skilaboð enn.</p>
-          : shown.map((t) => (
-            <button key={t.id} type="button" onClick={() => onOpen(t.id)}
-              className={cx("flex w-full items-center gap-2 rounded-lg px-1 py-2 text-left hover:bg-white", t.unread && "font-bold")}>
-              {t.unread
-                ? <span className="relative flex h-2.5 w-2.5 shrink-0" aria-label="Ólesið"><span className="absolute h-full w-full animate-ping rounded-full bg-red-400 opacity-75" /><span className="relative h-2.5 w-2.5 rounded-full bg-red-600" /></span>
-                : <span className="h-2.5 w-2.5 shrink-0" />}
-              <span className="min-w-0 flex-1 truncate text-sm">{t.subject}</span>
-              <span className={cx("shrink-0 text-[10px] font-semibold", t.unread ? "text-red-700" : t.last_author === "staff" ? "text-emerald-700" : "text-amber-700")}>
-                {t.unread ? "Nýtt" : t.status === "closed" ? "Lokið" : t.last_author === "staff" ? "Frá okkur" : "Bíður"}
-              </span>
-            </button>
-          ))}
-      </div>
-      {(threads?.length ?? 0) > 4 && (
-        <button type="button" onClick={() => setAll((v) => !v)} className="mt-1 text-xs font-semibold text-[var(--hsu-dark)] hover:underline">
-          {all ? "Sýna færri" : `Öll skilaboð (${threads!.length})`}
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-2">
+              <span className="font-bold text-slate-900">Samtal við Fjarlækningar</span>
+              {unread > 0 && <span className="text-xs font-bold text-red-700">Ný skilaboð</span>}
+            </span>
+            <span className="block truncate text-xs text-slate-600">
+              {thread === undefined ? "…"
+                : thread ? `${thread.last_author === "staff" ? "Fjarlækningar" : "Þú"}: ${thread.subject} · ${whenIs(thread.last_message_at)}`
+                : "Spurning um þjónustuna? Skrifaðu okkur."}
+            </span>
+          </span>
+          <ChevronDown className={cx("h-5 w-5 shrink-0 text-slate-400 transition", open && "rotate-180")} />
         </button>
-      )}
-    </Card>
+
+        {open && (
+          <div className="border-t border-slate-100">
+            <div ref={box} className="max-h-80 space-y-2.5 overflow-y-auto bg-slate-50 p-3">
+              {messages === null ? <div className="h-16 animate-pulse rounded-lg bg-slate-100" />
+                : messages.length === 0 ? (
+                  <p className="p-2 text-center text-xs text-slate-500">
+                    Engin skilaboð enn. Skrifaðu stjórnanda Fjarlækninga hér — svarið birtist hér og kemur í pósti.
+                  </p>
+                ) : messages.map((m) => (
+                  <div key={m.id} className={cx("flex", m.author_kind === "user" ? "justify-end" : "justify-start")}>
+                    <div className={cx("max-w-[88%] rounded-2xl px-3 py-2 [overflow-wrap:anywhere]",
+                      m.author_kind === "user" ? "bg-[var(--hsu)] text-white" : "border border-slate-200 bg-white")}>
+                      <div className={cx("text-[10px] font-semibold", m.author_kind === "user" ? "text-white/80" : "text-[var(--hsu)]")}>
+                        {m.author_kind === "staff" ? `${m.author_name} · Fjarlækningar` : "Þú"} · {whenIs(m.created_at)}
+                      </div>
+                      <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed">{m.body}</p>
+                    </div>
+                  </div>
+                ))}
+            </div>
+            <div className="space-y-2 p-3">
+              <p className="text-[11px] text-slate-500">Ekki setja nöfn, kennitölur eða aðrar persónuupplýsingar sjúklinga í skilaboðin.</p>
+              <textarea ref={input} className={cx(inputCls, "min-h-20")} value={reply} maxLength={4000}
+                onChange={(e) => setReply(e.target.value)} onKeyDown={(e) => onEnterSend(e, () => void send())}
+                placeholder="Skrifaðu Fjarlækningum…" aria-label="Skilaboð til Fjarlækninga" />
+              {err && <Notice tone="err">{err}</Notice>}
+              <div className="flex flex-wrap items-center gap-2">
+                {thread && (
+                  <button type="button" onClick={remove} title="Eyða samtalinu hjá báðum"
+                    className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-red-700 ring-1 ring-red-200 hover:bg-red-50">
+                    <Trash2 className="h-4 w-4" /> Eyða
+                  </button>
+                )}
+                <Button onClick={() => void send()} busy={busy} disabled={!reply.trim()} className="ml-auto">
+                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Senda
+                </Button>
+              </div>
+              <p className="text-right text-[10px] text-slate-400">{ENTER_HINT}</p>
+            </div>
+          </div>
+        )}
+      </Card>
+    </div>
   );
 }

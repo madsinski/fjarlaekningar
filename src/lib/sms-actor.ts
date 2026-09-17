@@ -22,6 +22,13 @@ export interface SmsActor {
   kind: "vs" | "staff" | "hsu";
   /** Sér hann allar sendingar eða aðeins sínar eigin? */
   isAdmin: boolean;
+  /**
+   * Stjórnandi VINNUSTÖÐVARINNAR: svarar spurningum starfsfólks, fær innhólfið
+   * og tilkynningar. Ákveðið í gatt_settings.vs_admin_emails (t.d. aðeins
+   * mads@fjarlaekningar.is) — aðrir stjórnendur Fjarlækninga eru venjulegir
+   * notendur vinnustöðvarinnar.
+   */
+  vsAdmin?: boolean;
   email?: string;
   workplace?: string;
   title?: string;
@@ -67,9 +74,11 @@ export async function staffActor(req: Request): Promise<SmsActor | null> {
   if (!staff?.active) return null;
   const roles: string[] = Array.isArray(staff.roles) && staff.roles.length ? staff.roles : [staff.role];
   if (roles.every((r) => BLOCKED_STAFF_ROLES.has(r))) return null;
+  const isAdmin = roles.includes("admin");
   return {
     id: staff.id, name: staff.name || staff.email, kind: "staff",
-    isAdmin: roles.includes("admin"), email: staff.email, workplace: "Fjarlækningar",
+    isAdmin, vsAdmin: isAdmin && (await vsAdminEmails()).includes(String(staff.email).toLowerCase()),
+    email: staff.email, workplace: "Fjarlækningar",
   };
 }
 
@@ -118,4 +127,10 @@ export async function getSmsActors(req: Request): Promise<SmsActor[]> {
 /** Dálkurinn í sms_messages sem heldur utan um sendandann. */
 export function senderColumn(kind: SmsActor["kind"]): "sent_by_gatt" | "sent_by_staff" | "sent_by_hsu" {
   return kind === "vs" ? "sent_by_gatt" : kind === "staff" ? "sent_by_staff" : "sent_by_hsu";
+}
+
+/** Netföng stjórnenda vinnustöðvarinnar (gatt_settings.vs_admin_emails). */
+export async function vsAdminEmails(): Promise<string[]> {
+  const { data } = await supabaseAdmin.from("gatt_settings").select("value").eq("key", "vs_admin_emails").maybeSingle();
+  return Array.isArray(data?.value) ? (data!.value as unknown[]).map((e) => String(e).toLowerCase()) : [];
 }

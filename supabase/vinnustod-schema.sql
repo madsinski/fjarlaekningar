@@ -241,3 +241,31 @@ insert into public.gatt_workplaces (name, created_by)
 update public.gatt_users u set workplace_id = w.id
   from public.gatt_workplaces w
   where u.workplace_id is null and lower(trim(u.workplace)) = lower(w.name);
+
+-- ── Eitt samtal á hvern notanda ─────────────────────────────────────────────
+-- Fleiri samtöl sama eiganda sameinuð í það nýjasta; síðan einkvæmt.
+do $$
+declare r record;
+begin
+  for r in
+    select owner_kind, coalesce(user_id, owner_staff, owner_hsu) as owner,
+           (array_agg(id order by last_message_at desc))[1] as keep
+    from public.gatt_threads group by 1, 2 having count(*) > 1
+  loop
+    update public.gatt_messages m set thread_id = r.keep
+      from public.gatt_threads t
+      where m.thread_id = t.id and t.id <> r.keep and t.owner_kind = r.owner_kind
+        and coalesce(t.user_id, t.owner_staff, t.owner_hsu) = r.owner;
+    delete from public.gatt_threads t
+      where t.id <> r.keep and t.owner_kind = r.owner_kind
+        and coalesce(t.user_id, t.owner_staff, t.owner_hsu) = r.owner;
+  end loop;
+end $$;
+create unique index if not exists gatt_threads_one_vs_uidx on public.gatt_threads (user_id) where user_id is not null;
+create unique index if not exists gatt_threads_one_staff_uidx on public.gatt_threads (owner_staff) where owner_staff is not null;
+create unique index if not exists gatt_threads_one_hsu_uidx on public.gatt_threads (owner_hsu) where owner_hsu is not null;
+
+-- Neyðarnúmer Fjarlækninga — birt í vinnustöðinni, breytt undir Stillingar.
+insert into public.gatt_settings (key, value) values
+  ('emergency_contact', '{"name":"Mads Christian Aanesen","phone":"+3547674393","note":"Brýnar spurningar eða bráð tæknivandamál"}'::jsonb)
+  on conflict (key) do nothing;

@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     auth,
     owner_kind: a.kind,
     owner_id: a.id,
-    is_admin: a.kind === "staff" && a.isAdmin,
+    is_admin: a.kind === "staff" && Boolean(a.vsAdmin),
     user_agent: ua,
   })), { onConflict: "endpoint,owner_kind,owner_id" });
   if (error) return fail("Ekki tókst að vista", 500);

@@ -335,19 +335,23 @@ function SettingsTab() {
   const [emails, setEmails] = useState("");
   const [nudgePhone, setNudgePhone] = useState("");
   const [nudgeMinutes, setNudgeMinutes] = useState("10");
+  const [vsAdmins, setVsAdmins] = useState("");
+  const [emergency, setEmergency] = useState({ name: "", phone: "", note: "" });
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   useEffect(() => {
     (async () => {
-      const r = await api<{ allowedDomains: string[]; notifyEmails: string[]; nudgePhone: string; nudgeAfterMinutes: number }>("/api/admin/vinnustod/settings");
+      const r = await api<{ allowedDomains: string[]; notifyEmails: string[]; nudgePhone: string; nudgeAfterMinutes: number; vsAdmins: string[]; emergency: { name: string; phone: string; note: string } }>("/api/admin/vinnustod/settings");
       if (r.ok) {
         setDomains(r.allowedDomains.join(", ")); setEmails(r.notifyEmails.join(", "));
         setNudgePhone(r.nudgePhone ?? ""); setNudgeMinutes(String(r.nudgeAfterMinutes ?? 10));
+        setVsAdmins((r.vsAdmins ?? []).join(", "));
+        if (r.emergency) setEmergency({ name: r.emergency.name ?? "", phone: r.emergency.phone ?? "", note: r.emergency.note ?? "" });
       }
     })();
   }, []);
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    const r = await api("/api/admin/vinnustod/settings", { method: "PUT", body: { allowedDomains: domains, notifyEmails: emails, nudgePhone, nudgeAfterMinutes: nudgeMinutes } });
+    const r = await api("/api/admin/vinnustod/settings", { method: "PUT", body: { allowedDomains: domains, notifyEmails: emails, nudgePhone, nudgeAfterMinutes: nudgeMinutes, vsAdmins, emergency } });
     setMsg(r.ok ? { ok: true, text: "Vistað." } : { ok: false, text: r.error ?? "Mistókst" });
   };
   return (
@@ -356,9 +360,28 @@ function SettingsTab() {
         <input className={`${inputCls} mt-1`} value={domains} onChange={(e) => setDomains(e.target.value)} placeholder="hsu.is" />
         <span className="mt-1 block text-xs font-normal text-slate-500">Starfsfólk með netfang á þessum lénum getur skráð sig sjálft; staðfesting fer í pósthólf þess. Aðskilið með kommu. Tómt = aðeins boð.</span>
       </label>
+      <label className="block text-sm font-semibold">Stjórnendur vinnustöðvar
+        <input className={`${inputCls} mt-1`} value={vsAdmins} onChange={(e) => setVsAdmins(e.target.value)} placeholder="mads@fjarlaekningar.is" />
+        <span className="mt-1 block text-xs font-normal text-slate-500">Svara spurningum starfsfólks, fá innhólfið og tilkynningar og birtast sem „Stjórnandi“. Aðrir starfsmenn Fjarlækninga eru venjulegir notendur vinnustöðvarinnar. Aðskilið með kommu.</span>
+      </label>
       <label className="block text-sm font-semibold">Tilkynningar um nýjar spurningar fara á
         <input className={`${inputCls} mt-1`} value={emails} onChange={(e) => setEmails(e.target.value)} />
       </label>
+      <fieldset className="rounded-xl border border-red-200 bg-red-50/50 p-3">
+        <legend className="px-1 text-sm font-semibold">Neyðarnúmer Fjarlækninga</legend>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block text-xs font-semibold text-slate-600">Nafn
+            <input className={`${inputCls} mt-1`} value={emergency.name} onChange={(e) => setEmergency({ ...emergency, name: e.target.value })} />
+          </label>
+          <label className="block text-xs font-semibold text-slate-600">Símanúmer
+            <input className={`${inputCls} mt-1`} value={emergency.phone} onChange={(e) => setEmergency({ ...emergency, phone: e.target.value })} inputMode="tel" placeholder="+354 …" />
+          </label>
+        </div>
+        <label className="mt-2 block text-xs font-semibold text-slate-600">Skýring
+          <input className={`${inputCls} mt-1`} value={emergency.note} onChange={(e) => setEmergency({ ...emergency, note: e.target.value })} placeholder="t.d. Brýnar spurningar eða bráð tæknivandamál" />
+        </label>
+        <span className="mt-1 block text-xs text-slate-500">Birtist öllum í vinnustöðinni. Tómt númer = ekki birt.</span>
+      </fieldset>
       <fieldset className="rounded-xl bg-slate-50 p-3">
         <legend className="px-1 text-sm font-semibold">SMS ef spurning er ekki opnuð</legend>
         <div className="grid gap-3 sm:grid-cols-[1fr_140px]">

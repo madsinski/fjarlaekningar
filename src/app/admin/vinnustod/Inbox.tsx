@@ -33,7 +33,7 @@ const btnGhost = `${btn} border border-slate-300 bg-white text-slate-700 hover:b
 
 interface InboxThread {
   id: string; subject: string; status: "open" | "closed"; last_message_at: string; last_author: "user" | "staff"; unread: boolean;
-  user: { kind: "vs" | "staff" | "hsu"; name: string; email: string; workplace: string; title: string; active: boolean } | null;
+  user: { kind: "vs" | "staff" | "hsu"; id: string | null; name: string; email: string; workplace: string; title: string; active: boolean } | null;
 }
 interface Recipient { kind: "vs" | "staff" | "hsu"; id: string; name: string; email: string; workplace: string; title: string }
 const KIND_IS: Record<Recipient["kind"], string> = { vs: "Vinnustöð", staff: "Starfsfólk", hsu: "Læknar HSU" };
@@ -51,12 +51,21 @@ export default function Inbox({ onAwaitingChange, refresh = 0, compact = false, 
   const [open, setOpen] = useState<string | null>(null);
   const [composing, setComposing] = useState(false);
   const [presetTo, setPresetTo] = useState<{ kind: Recipient["kind"]; id: string } | null>(null);
+  // Smellt á manneskju í „Hver er við“: opna samtalið við hana ef það er til
+  // (eitt á mann), annars ný skilaboð með hana valda.
   useEffect(() => {
     if (!composeTo) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPresetTo({ kind: composeTo.kind, id: composeTo.id });
-    setOpen(null);
-    setComposing(true);
+    let cancelled = false;
+    void (async () => {
+      const r = await api<{ threads: InboxThread[] }>("/api/admin/vinnustod/threads");
+      if (cancelled) return;
+      const existing = r.ok ? r.threads.find((t) => t.user?.kind === composeTo.kind && t.user?.id === composeTo.id) : undefined;
+      if (existing) { setComposing(false); setOpen(existing.id); return; }
+      setPresetTo({ kind: composeTo.kind, id: composeTo.id });
+      setOpen(null);
+      setComposing(true);
+    })();
+    return () => { cancelled = true; };
   }, [composeTo]);
   const [err, setErr] = useState<string | null>(null);
 

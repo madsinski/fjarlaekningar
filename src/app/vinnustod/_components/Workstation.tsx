@@ -12,12 +12,12 @@
 // SMS-ið hverfi ekki. Í síma raðast þetta í einn dálk með stiku neðst.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertTriangle, ChevronDown, LogOut, Megaphone, X, MessageCircle, QrCode, Search, Send, Settings, Volume2, VolumeX } from "lucide-react";
+import { AlertTriangle, ChevronDown, LogOut, Megaphone, Phone, X, MessageCircle, QrCode, Search, Send, Settings, Volume2, VolumeX } from "lucide-react";
 import { Card, cx } from "@/app/hsu/_components/ui";
 import Inbox from "@/app/admin/vinnustod/Inbox";
 import type { Lang } from "@/lib/nurse-guide";
 import { GuideBody, SearchHero } from "./Guide";
-import { NewQuestion, QuestionsCard, ThreadView } from "./QuestionsPanel";
+import { ConversationCard } from "./QuestionsPanel";
 import SettingsPanel from "./SettingsPanel";
 import SmsPanel from "./SmsPanel";
 import TriageCard from "./TriageCard";
@@ -37,6 +37,8 @@ export interface VsMe {
   /** Stjórnandi Fjarlækninga: svarar spurningum og breytir textum fyrir alla. */
   canAnswer: boolean;
 }
+/** Neyðarnúmer Fjarlækninga (gatt_settings.emergency_contact). */
+export interface Emergency { name: string; phone: string; note: string }
 /** Innskráning í sama vafra — „Skoða sem“ velur á milli. */
 export interface Identity { kind: VsMe["kind"]; name: string; label: string }
 /** Leynileg rás fyrir tafarlaus merki og lykill fyrir tilkynningar í tæki. */
@@ -45,8 +47,6 @@ export interface Announcement { id: string; created_at: string; title: string; b
 
 type DrawerState =
   | null
-  | { kind: "thread"; id: string }
-  | { kind: "new"; draft: string }
   | { kind: "settings" }
   | { kind: "qr" };
 
@@ -58,8 +58,8 @@ function initialDrawer(me: VsMe): DrawerState {
   return null;
 }
 
-export default function Workstation({ me, announcements: initialAnnouncements, unread: initialUnread, texts, guide, live, identities = [], refresh }: {
-  me: VsMe; announcements: Announcement[]; unread: number; texts: Record<string, SharedText>; guide: GuideContent; live: LiveInfo; identities?: Identity[]; refresh: () => void;
+export default function Workstation({ me, announcements: initialAnnouncements, unread: initialUnread, texts, guide, live, identities = [], emergency = null, refresh }: {
+  me: VsMe; announcements: Announcement[]; unread: number; texts: Record<string, SharedText>; guide: GuideContent; live: LiveInfo; identities?: Identity[]; emergency?: Emergency | null; refresh: () => void;
 }) {
   const [q, setQ] = useState("");
   const [openSlug, setOpenSlug] = useState<string | null>(null);
@@ -67,7 +67,7 @@ export default function Workstation({ me, announcements: initialAnnouncements, u
   const [unread, setUnread] = useState(initialUnread);
   const [announcements, setAnnouncements] = useState(initialAnnouncements);
   const [drawer, setDrawer] = useState<DrawerState>(() => initialDrawer(me));
-  const [threadsKey, setThreadsKey] = useState(0);
+  const [ask, setAsk] = useState<{ text: string; nonce: number } | null>(null);
   // Samtöl stjórnanda opnast sem fellilisti í hliðardálkinum (?t=spurningar opnar hann).
   const [inboxOpen, setInboxOpen] = useState(() =>
     me.canAnswer && typeof window !== "undefined" && new URLSearchParams(window.location.search).get("t") === "spurningar");
@@ -146,11 +146,7 @@ export default function Workstation({ me, announcements: initialAnnouncements, u
   }, [unread, soundOn]);
 
   const setQuery = (v: string) => { setQ(v); if (v) setOpenSlug(null); };
-  const threadRead = useCallback(() => setThreadsKey((k) => k + 1), []);
-  const closeDrawer = useCallback(() => {
-    setDrawer(null);
-    setThreadsKey((k) => k + 1); // nýlesið eða nýtt samtal birtist strax í listanum
-  }, []);
+  const closeDrawer = useCallback(() => setDrawer(null), []);
 
   const logout = async () => {
     if (me.kind === "vs") await vsApi("/api/vinnustod/auth/logout", { body: {} });
@@ -159,6 +155,7 @@ export default function Workstation({ me, announcements: initialAnnouncements, u
 
   const openQuestions = () => {
     if (me.canAnswer) setInboxOpen(true);
+    else setAsk({ text: "", nonce: Date.now() });
     setTimeout(() => document.getElementById("spurningar")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   };
 
@@ -230,14 +227,13 @@ export default function Workstation({ me, announcements: initialAnnouncements, u
           </div>
           <div className={cx("min-w-0 space-y-6 lg:order-none lg:col-start-1 lg:row-start-2", focused ? "order-1" : "order-3")}>
             <GuideBody q={q} setQ={setQuery} openSlug={openSlug} setOpenSlug={setOpenSlug} lang={lang} setLang={setLang}
-              onSms={focusSms} onAsk={me.canMessage ? (text) => setDrawer({ kind: "new", draft: `Sjúklingur spyr um: ${text}\n\n` }) : undefined} />
+              onSms={focusSms} onAsk={me.canMessage ? (text) => setAsk({ text: `Sjúklingur spyr um: ${text}\n\n`, nonce: Date.now() }) : undefined} />
           </div>
 
           <aside className={cx("min-w-0 space-y-4 lg:order-none lg:col-start-2 lg:row-span-2 lg:row-start-1", focused ? "order-3" : "order-2", "lg:sticky lg:top-[4.25rem] lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:pb-2 [scrollbar-width:thin]")}>
             {me.canMessage && (
               <div id="spurningar" className="scroll-mt-20">
-                <QuestionsCard key={threadsKey} onUnreadChange={setUnread} refresh={pulse}
-                  onOpen={(id) => setDrawer({ kind: "thread", id })} onNew={() => setDrawer({ kind: "new", draft: "" })} />
+                <ConversationCard onUnreadChange={setUnread} refresh={pulse} ask={ask} />
               </div>
             )}
             {me.canAnswer && (
@@ -251,7 +247,7 @@ export default function Workstation({ me, announcements: initialAnnouncements, u
                       <UnreadDot count={unread} className="absolute -right-2 -top-2" />
                     </span>
                     <span>
-                      <span className="block font-bold text-slate-900">Samtöl við starfsfólk</span>
+                      <span className="block font-bold text-slate-900">Samtal við Fjarlækningar</span>
                       <span className="block text-xs text-slate-600">
                         {unread === 0 ? "Ekkert bíður svars · skrifa nýtt" : unread === 1 ? "Ný skilaboð bíða svars" : `${unread} samtöl bíða svars`}
                       </span>
@@ -266,6 +262,8 @@ export default function Workstation({ me, announcements: initialAnnouncements, u
                 )}
               </div>
             )}
+
+            {emergency && <EmergencyCard e={emergency} />}
 
             <div id="sms" className="scroll-mt-20"><SmsPanel ref={phoneRef} compact /></div>
 
@@ -296,14 +294,6 @@ export default function Workstation({ me, announcements: initialAnnouncements, u
             : <MobileBtn icon={<QrCode className="h-5 w-5" />} label="QR-kóði" onClick={() => setDrawer({ kind: "qr" })} />}
         </nav>
 
-        {drawer?.kind === "thread" && (
-          <Drawer title="Samtal" onClose={closeDrawer}><ThreadView id={drawer.id} onBack={closeDrawer} onRead={threadRead} refresh={pulse} /></Drawer>
-        )}
-        {drawer?.kind === "new" && (
-          <Drawer title="Ný spurning til Fjarlækninga" onClose={closeDrawer}>
-            <NewQuestion initial={drawer.draft} onCancel={closeDrawer} onCreated={(id) => setDrawer({ kind: "thread", id })} />
-          </Drawer>
-        )}
         {drawer?.kind === "settings" && me.kind === "vs" && (
           <Drawer title="Stillingar" onClose={closeDrawer}><SettingsPanel me={me} refresh={refresh} /></Drawer>
         )}
@@ -390,5 +380,29 @@ function AnnouncementBanner({ items, fresh }: { items: Announcement[]; fresh: st
         );
       })}
     </div>
+  );
+}
+
+/** Neyðarnúmer — hringt beint úr síma eða tölvu. */
+function EmergencyCard({ e }: { e: Emergency }) {
+  const pretty = e.phone.startsWith("+354") && e.phone.length === 11 ? `${e.phone.slice(4, 7)} ${e.phone.slice(7)}` : e.phone;
+  return (
+    <section aria-labelledby="neyd-h" className="rounded-2xl border border-red-200 bg-white p-4 shadow-sm">
+      <h2 id="neyd-h" className="flex items-center gap-2 text-sm font-bold text-red-800">
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-600 text-white"><Phone className="h-4 w-4" /></span>
+        Neyðarnúmer Fjarlækninga
+      </h2>
+      {e.note && <p className="mt-1 text-xs text-slate-600">{e.note}</p>}
+      <a href={`tel:${e.phone}`}
+        className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-red-50 px-3 py-2.5 ring-1 ring-red-200 transition hover:bg-red-100">
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-semibold text-slate-900">{e.name || "Fjarlækningar"}</span>
+          <span className="block text-lg font-bold tabular-nums tracking-wide text-red-700">{pretty}</span>
+        </span>
+        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white">
+          <Phone className="h-4 w-4" /> Hringja
+        </span>
+      </a>
+    </section>
   );
 }

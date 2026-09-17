@@ -124,22 +124,32 @@ export default function Presence({ refresh = 0, onWrite }: { refresh?: number; o
               </summary>
               <ul>
                 {g.list.map((p) => (
-                  <li key={`${p.kind}:${p.id}`} className="flex items-center gap-3 px-4 py-2.5">
-                    <Dot status={p.status} />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-semibold text-slate-900">{p.name}</div>
-                      <div className="truncate text-[11px] text-slate-500">
-                        <span className={p.status === "online" ? "font-semibold text-emerald-700" : p.status === "idle" ? "font-semibold text-amber-700" : ""}>{LABEL[p.status]}</span>
-                        {p.status === "online" ? "" : p.lastActive ? ` · síðast virk ${since(p.lastActive)}` : p.status === "offline" ? " · aldrei opnað" : ""}
-                        {p.title ? ` · ${p.title}` : ""}
-                      </div>
-                    </div>
-                    {onWrite && !p.isAdmin && (
-                      <button type="button" onClick={() => onWrite(p)} title={`Skrifa ${p.name}`}
-                        className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-cyan-800 hover:bg-cyan-50">
-                        <PenSquare className="h-3.5 w-3.5" /> Skrifa
-                      </button>
-                    )}
+                  <li key={`${p.kind}:${p.id}`}>
+                    {(() => {
+                      const clickable = Boolean(onWrite && !p.isAdmin);
+                      const body = (
+                        <>
+                          <Dot status={p.status} />
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm font-semibold text-slate-900">{p.name}</div>
+                            <div className="truncate text-[11px] text-slate-500">
+                              <span className={p.status === "online" ? "font-semibold text-emerald-700" : p.status === "idle" ? "font-semibold text-amber-700" : ""}>{LABEL[p.status]}</span>
+                              {p.status === "online" ? "" : p.lastActive ? ` · síðast virk ${since(p.lastActive)}` : p.status === "offline" ? " · aldrei opnað" : ""}
+                              {p.title ? ` · ${p.title}` : ""}
+                            </div>
+                          </div>
+                          {clickable && <PenSquare className="h-4 w-4 shrink-0 text-slate-300 transition group-hover/row:text-cyan-700" aria-hidden />}
+                        </>
+                      );
+                      return clickable ? (
+                        <button type="button" onClick={() => onWrite!(p)} title={`Samtal við ${p.name}`}
+                          className="group/row flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-cyan-50 focus:bg-cyan-50 focus:outline-none">
+                          {body}
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-3 px-4 py-2.5">{body}</div>
+                      );
+                    })()}
                   </li>
                 ))}
               </ul>

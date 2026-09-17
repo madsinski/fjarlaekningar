@@ -7,7 +7,7 @@
 
 import { after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import type { SmsActor } from "@/lib/sms-actor";
+import { vsAdminEmails, type SmsActor } from "@/lib/sms-actor";
 import { notifyEmails } from "./auth";
 import { signalNewMessage } from "./live";
 import { sendVsEmail } from "./server";
@@ -50,7 +50,9 @@ export const THREAD_COLUMNS = "id, user_id, owner_kind, owner_name, owner_email,
  * Hver má spyrja: allir sem komast inn í vinnustöðina nema stjórnandi
  * Fjarlækninga, sem svarar spurningunum.
  */
-export const canAsk = (a: SmsActor) => !(a.kind === "staff" && a.isAdmin);
+export const canAsk = (a: SmsActor) => !(a.kind === "staff" && a.vsAdmin);
+/** Svarar spurningunum (stjórnandi vinnustöðvarinnar). */
+export const canAnswer = (a: SmsActor) => a.kind === "staff" && Boolean(a.vsAdmin);
 
 /** Dálkurinn sem tengir þráð við eiganda sinn. */
 export function ownerColumn(kind: SmsActor["kind"]): "user_id" | "owner_staff" | "owner_hsu" {
@@ -110,6 +112,8 @@ export async function addMessage(opts: {
     last_message_at: now,
     last_author: opts.kind,
     status: "open",
+    // Eitt samtal á mann: fyrirsögnin sýnir nýjustu skilaboðin.
+    subject: subjectFrom(opts.body) || "Skilaboð",
     ...(opts.kind === "user" ? { user_read_at: now } : { staff_read_at: now }),
   }).eq("id", opts.threadId);
 }
@@ -149,7 +153,7 @@ export function notifyUser(opts: { origin: string; to: string; name: string; sub
   });
 }
 
-export interface Asker { kind: SmsActor["kind"]; name: string; email: string; workplace: string; title: string; active: boolean }
+export interface Asker { kind: SmsActor["kind"]; id: string | null; name: string; email: string; workplace: string; title: string; active: boolean }
 
 const KIND_LABEL: Record<SmsActor["kind"], string> = { vs: "", staff: "Starfsmaður Fjarlækninga", hsu: "Læknir í vaktakerfi HSU" };
 
@@ -182,13 +186,13 @@ export async function askersFor(threads: ThreadRow[]): Promise<Map<string, Asker
     const u = t.user_id ? byId.get(t.user_id) : undefined;
     if (t.owner_kind === "vs") {
       out.set(t.id, {
-        kind: "vs", name: u?.name ?? t.owner_name, email: u?.email ?? t.owner_email,
+        kind: "vs", id: t.user_id, name: u?.name ?? t.owner_name, email: u?.email ?? t.owner_email,
         workplace: u?.workplace ?? t.owner_workplace, title: u?.title ?? "", active: Boolean(u?.active),
       });
     } else {
       const oid = ownerOf.get(t.id);
       out.set(t.id, {
-        kind: t.owner_kind, name: t.owner_name, email: t.owner_email, workplace: t.owner_workplace,
+        kind: t.owner_kind, id: oid ?? null, name: t.owner_name, email: t.owner_email, workplace: t.owner_workplace,
         title: KIND_LABEL[t.owner_kind], active: Boolean(oid && activeIds.has(oid)),
       });
     }
@@ -200,6 +204,7 @@ export interface Recipient { kind: SmsActor["kind"]; id: string; name: string; e
 
 /** Allir virkir sem stjórnandi getur skrifað — sjá /api/admin/vinnustod/recipients. */
 export async function listRecipients(opts: { includeAdmins?: boolean } = {}): Promise<Recipient[]> {
+  const vsAdmins = await vsAdminEmails();
   const [{ data: users }, { data: staff }, { data: docs }] = await Promise.all([
     supabaseAdmin.from("gatt_users").select("id, name, email, workplace, title").eq("active", true),
     supabaseAdmin.from("staff").select("id, name, email, role, roles").eq("active", true),
@@ -208,16 +213,44 @@ export async function listRecipients(opts: { includeAdmins?: boolean } = {}): Pr
   const rolesOf = (s: { role: string; roles: string[] | null }): string[] => (Array.isArray(s.roles) && s.roles.length ? s.roles : [s.role]);
   const staffRows = (staff ?? []).filter((s) => {
     const roles = rolesOf(s);
-    // Stjórnendur sjá innhólfið (nema beðið sé um þá); lögfræðingar komast ekki í vinnustöðina.
-    return (opts.includeAdmins || !roles.includes("admin")) && !roles.every((r) => r === "lawyer");
+    // Stjórnendur vinnustöðvarinnar sjá innhólfið (nema beðið sé um þá);
+    // lögfræðingar komast ekki í vinnustöðina.
+    const answerer = roles.includes("admin") && vsAdmins.includes(String(s.email).toLowerCase());
+    return (opts.includeAdmins || !answerer) && !roles.every((r) => r === "lawyer");
   });
   const out: Recipient[] = [
     ...(users ?? []).map((u) => ({ kind: "vs" as const, id: u.id, name: u.name, email: u.email, workplace: u.workplace ?? "", title: u.title ?? "" })),
     ...staffRows.map((s) => ({
       kind: "staff" as const, id: s.id, name: s.name || s.email, email: s.email, workplace: "Fjarlækningar",
-      title: rolesOf(s).includes("admin") ? "Stjórnandi" : KIND_LABEL.staff, isAdmin: rolesOf(s).includes("admin"),
+      title: vsAdmins.includes(String(s.email).toLowerCase()) && rolesOf(s).includes("admin") ? "Stjórnandi" : KIND_LABEL.staff,
+      isAdmin: vsAdmins.includes(String(s.email).toLowerCase()) && rolesOf(s).includes("admin"),
     })),
     ...(docs ?? []).map((d) => ({ kind: "hsu" as const, id: d.id, name: d.name, email: d.email, workplace: "HSU Vestmannaeyjum", title: KIND_LABEL.hsu })),
   ];
   return out.sort((a, b) => a.name.localeCompare(b.name, "is"));
+}
+
+/**
+ * Samtal eiganda — eitt á hvern notanda. Er búið til ef það er ekki til
+ * (samhliða beiðnir rekast á einkvæma vísinn og sækja þá það sem varð til).
+ */
+export async function threadFor(owner: { kind: SmsActor["kind"]; id: string; name: string; email?: string; workplace?: string }, firstMessage: string): Promise<{ id: string; created: boolean } | null> {
+  const col = ownerColumn(owner.kind);
+  const find = async () => (await supabaseAdmin.from("gatt_threads").select("id").eq(col, owner.id).maybeSingle()).data;
+  const existing = await find();
+  if (existing) return { id: existing.id, created: false };
+  const { data, error } = await supabaseAdmin.from("gatt_threads").insert({
+    owner_kind: owner.kind,
+    [col]: owner.id,
+    owner_name: owner.name,
+    owner_email: owner.email ?? "",
+    owner_workplace: owner.workplace ?? "",
+    subject: subjectFrom(firstMessage) || "Skilaboð",
+  }).select("id").single();
+  if (data) return { id: data.id, created: true };
+  if (error?.code === "23505") {
+    const again = await find();
+    return again ? { id: again.id, created: false } : null;
+  }
+  return null;
 }

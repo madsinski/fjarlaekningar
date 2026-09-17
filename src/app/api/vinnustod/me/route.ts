@@ -11,7 +11,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getSmsActor, getSmsActors } from "@/lib/sms-actor";
 import { hashSecret, passwordProblem, pinProblem, sameOrigin, sha256, verifySecret, SESSION_COOKIE } from "@/lib/vinnustod/auth";
 import { fail, json, readJson } from "@/lib/vinnustod/server";
-import { canAsk, ownerColumn } from "@/lib/vinnustod/threads";
+import { canAnswer, canAsk, ownerColumn } from "@/lib/vinnustod/threads";
 import { getGuideContent } from "@/lib/vinnustod/guide-content";
 import { liveTopic, vapidPublicKey } from "@/lib/vinnustod/live";
 
@@ -23,12 +23,12 @@ export async function GET(req: Request) {
 
   // Aðrar innskráningar í sama vafra — fyrir „Skoða sem“.
   const identities = (await getSmsActors(req)).map((a) => ({
-    kind: a.kind, name: a.name, label: a.kind === "staff" ? (a.isAdmin ? "Stjórnandi Fjarlækninga" : "Starfsmaður Fjarlækninga") : a.kind === "hsu" ? "Læknir í vaktakerfi HSU" : "Notandi vinnustöðvar",
+    kind: a.kind, name: a.name, label: a.kind === "staff" ? (a.vsAdmin ? "Stjórnandi vinnustöðvar" : "Starfsmaður Fjarlækninga") : a.kind === "hsu" ? "Læknir í vaktakerfi HSU" : "Notandi vinnustöðvar",
   }));
   let unread = 0;
   // Stjórnandi Fjarlækninga svarar spurningunum: hjá honum telur „ólesið“
   // opnar spurningar sem bíða svars.
-  if (actor.kind === "staff" && actor.isAdmin) {
+  if (canAnswer(actor)) {
     const { count } = await supabaseAdmin.from("gatt_threads")
       .select("id", { count: "exact", head: true }).eq("status", "open").eq("last_author", "user");
     unread = count ?? 0;
@@ -42,6 +42,9 @@ export async function GET(req: Request) {
     .select("id, created_at, title, body, level").eq("active", true)
     .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
     .order("created_at", { ascending: false }).limit(10);
+  const { data: emergencyRow } = await supabaseAdmin.from("gatt_settings").select("value").eq("key", "emergency_contact").maybeSingle();
+  const em = (emergencyRow?.value ?? null) as { name?: string; phone?: string; note?: string } | null;
+  const emergency = em?.phone ? { name: String(em.name ?? ""), phone: String(em.phone), note: String(em.note ?? "") } : null;
   // Textar sem stjórnandi hefur breytt fyrir alla.
   const { data: custom } = await supabaseAdmin.from("gatt_settings").select("key, value").like("key", "text:%");
   const texts: Record<string, { text: string; by: string; at: string }> = {};
@@ -57,17 +60,18 @@ export async function GET(req: Request) {
       workplace: actor.workplace ?? "", title: actor.title ?? "",
       hasPin: actor.hasPin ?? false, mustChangePassword: actor.mustChangePassword ?? false,
       canMessage: canAsk(actor),
-      canAnswer: actor.kind === "staff" && actor.isAdmin,
+      canAnswer: canAnswer(actor),
     },
     unread,
     identities,
     announcements: news ?? [],
     texts,
+    emergency,
     guide: await getGuideContent(),
     // Leynilegt rásarheiti fyrir tafarlaus merki um ný skilaboð, og lykill
     // fyrir tilkynningar í tæki.
     live: {
-      topic: actor.kind === "staff" && actor.isAdmin ? liveTopic({ admins: true }) : liveTopic({ kind: actor.kind, id: actor.id }),
+      topic: canAnswer(actor) ? liveTopic({ admins: true }) : liveTopic({ kind: actor.kind, id: actor.id }),
       vapidKey: vapidPublicKey(),
       everyoneTopic: liveTopic({ everyone: true }),
     },
