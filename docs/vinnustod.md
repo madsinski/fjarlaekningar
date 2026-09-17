@@ -207,7 +207,10 @@ síðu erindisins aðeins þegar hún er opin, annars á `/thjonusta`.
 Hver notandi á **eitt** samtal við Fjarlækningar (einkvæmir vísar á `user_id`,
 `owner_staff`, `owner_hsu`; `threadFor` í `src/lib/vinnustod/threads.ts`). Í
 vinnustöðinni heitir það **„Samtal við Fjarlækningar“**: lokað sýnir það rauðan
-punkt og upphaf nýjustu skilaboðanna, opið er það spjall beint í hliðardálkinum.
+punkt og upphaf nýjustu skilaboðanna. Skrifreiturinn er alltaf opinn — skrifað
+beint og sent með Enter eða „Senda“ (enginn „Ný skilaboð“-hnappur); örin í hausnum
+sýnir fyrri skilaboð og merkir þau lesin. Tilkynningar (rauður punktur, hljóð,
+merki á flipa, Web Push) eru óbreyttar.
 Notandi sér aldrei aðra notendur. Fyrirsögn samtalsins er fyrsta lína nýjustu
 skilaboðanna. Eyða tæmir samtalið; næstu skilaboð stofna nýtt.
 
