@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import Tour, { markOnboarding, type TourStep } from "../_components/Tour";
 import { useCommon, useT } from "@/lib/hsu/i18n/client";
+import { common } from "@/lib/hsu/i18n/messages/common";
 import { onboarding as onboardingMsgs } from "@/lib/hsu/i18n/messages/onboarding";
 import { portal } from "@/lib/hsu/i18n/messages/portal";
 import type { Lang } from "@/lib/hsu/i18n/core";
@@ -169,6 +170,7 @@ function Overview({ data, incoming, market, go, onLog }: {
 }) {
   const upcoming = data.myShifts.filter((s) => s.shift_date >= data.today);
   const t = useT(portal);
+  const cm = useCommon();
   const hour = new Date().getHours();
   // Liðnar forvaktir/bakvaktir sem á eftir að merkja við í Vinnustund.
   const onCall = new Set(data.shiftTypes.filter((t) => t.kind === "forvakt" || t.kind === "bakvakt").map((t) => t.id));
@@ -179,7 +181,8 @@ function Overview({ data, incoming, market, go, onLog }: {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">{t(hour < 18 ? "greeting.day" : "greeting.evening", { name: firstName(data.me.name) })}</h1>
-        <p className="text-sm text-slate-500">{data.unitName}</p>
+        {/* Sjálfgefna heitið er þýtt; heiti sem yfirlæknir skrifaði sjálfur birtist óbreytt. */}
+        <p className="text-sm text-slate-500">{data.unitName === common.is["app.unit"] ? cm("app.unit") : data.unitName}</p>
       </div>
 
       {/* Leiðin í gegnum mánuðinn — opnast á skrefinu sem á við núna. */}
