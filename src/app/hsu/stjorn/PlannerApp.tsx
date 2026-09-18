@@ -17,6 +17,7 @@ import { useCommon, useT } from "@/lib/hsu/i18n/client";
 import { capFirstL, monthLabelL, monthStatusL } from "@/lib/hsu/i18n/format";
 import { admin } from "@/lib/hsu/i18n/messages/admin";
 import { onboarding as onboardingMsgs } from "@/lib/hsu/i18n/messages/onboarding";
+import { effectiveStatus } from "@/lib/hsu/types";
 
 type Tab = "plan" | "laeknar" | "markadur" | "stillingar";
 
@@ -168,7 +169,7 @@ export default function PlannerApp() {
               <button onClick={() => setMonth(shiftMonth(month, -1))} aria-label={t("planner.prevMonth")} className="rounded-xl border border-slate-200 bg-white p-2 hover:bg-slate-50"><ChevronLeft className="h-4 w-4" /></button>
               <div className="w-40 text-center">
                 <div className="text-sm font-bold leading-tight">{capFirstL(monthLabelL(month, t.lang), t.lang)}</div>
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{monthStatusL(monthRow ? monthRow.status : "none", t.lang)}</div>
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{monthStatusL(effectiveStatus(monthRow, month) ?? "none", t.lang)}</div>
               </div>
               <button onClick={() => setMonth(shiftMonth(month, 1))} aria-label={t("planner.nextMonth")} className="rounded-xl border border-slate-200 bg-white p-2 hover:bg-slate-50"><ChevronRight className="h-4 w-4" /></button>
             </div>

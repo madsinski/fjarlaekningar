@@ -7,6 +7,7 @@ import { MONTH_RE, fail, json, loadMonth, loadPreferences, readJson, requireDoct
 import { monthKey, shiftMonth, type PrefStatus } from "@/lib/hsu/types";
 import { tr } from "@/lib/hsu/i18n/server";
 import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
+import { effectiveStatus } from "@/lib/hsu/types";
 
 export const runtime = "nodejs";
 
@@ -33,7 +34,8 @@ export async function PUT(req: Request) {
   if (typeof input === "string") return fail(input);
 
   const [m, [existing]] = await Promise.all([loadMonth(month), loadPreferences(month, auth.doctor.id)]);
-  if (!doctorMayEdit(m?.status ?? null, existing?.status ?? null)) {
+  // Næstu þrír mánuðir eru opnir án þess að yfirlæknir opni þá.
+  if (!doctorMayEdit(effectiveStatus(m, month), existing?.status ?? null)) {
     return fail(t("prefs.closed"), 409);
   }
 

@@ -58,10 +58,10 @@ export function sanitizePrefs(month: string, body: Record<string, unknown>, lang
 }
 
 /**
- * Má læknirinn sjálfur breyta óskum fyrir þennan mánuð?
- * Aðeins eftir að yfirlæknir hefur opnað mánuðinn: opið meðan óskum er
- * safnað; í yfirferð aðeins ef hann á eftir að senda eða yfirlæknir bað um
- * breytingar. Eftir að vaktaplan fer í smíði er lokað.
+ * Má læknirinn sjálfur breyta óskum fyrir þennan mánuð? `monthStatus` er
+ * virk staða (effectiveStatus): næstu þrír mánuðir teljast opnir. Opið meðan
+ * óskum er safnað; í yfirferð aðeins ef hann á eftir að senda eða yfirlæknir
+ * bað um breytingar. Eftir að vaktaplan fer í smíði er lokað.
  */
 export function doctorMayEdit(monthStatus: string | null, prefStatus: PrefStatus | null): boolean {
   if (monthStatus === "collecting") return true;

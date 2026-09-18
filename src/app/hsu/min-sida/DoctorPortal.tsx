@@ -15,7 +15,7 @@ import HsuHeader from "../_components/HsuHeader";
 import { Badge, Button, Card, Field, Modal, Notice, cx, firstName, hsuApi, inputCls, shortName } from "../_components/ui";
 import type { PortalData } from "@/lib/hsu/portal";
 import {
-  hhmm, holidayName,
+  effectiveStatus, hhmm, holidayName, openWindow,
   type HsuShift, type HsuShiftType, type HsuSwap,
 } from "@/lib/hsu/types";
 import PrefsTab from "./PrefsTab";
@@ -97,7 +97,10 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
   const myRequests = data.swaps.filter((s) => s.status === "awaiting_approval" && s.taken_by === me.id);
   const marketCount = incoming.length + market.length;
 
-  const openPrefMonths = data.months.filter((m) => m.status === "collecting" || m.status === "review");
+  // Næstu þrír mánuðir eru opnir fyrir óskir, auk mánaða sem yfirlæknir hefur enn opna.
+  const openPrefMonths = [...new Set([...openWindow(), ...data.months.map((m) => m.month)])]
+    .map((month) => ({ month, status: effectiveStatus(data.months.find((m) => m.month === month), month) }))
+    .filter((m) => m.status === "collecting" || m.status === "review");
   const prefActions = openPrefMonths.filter((m) => {
     const p = data.prefs.find((x) => x.month === m.month);
     return !p || p.status === "draft" || p.status === "changes_requested";

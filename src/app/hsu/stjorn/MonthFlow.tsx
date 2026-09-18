@@ -6,11 +6,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle, ArrowRight, Ban, BellRing, Check, CheckCheck, ClipboardList, Eye, Heart, History, Megaphone, MessageSquareWarning,
-  Pencil, RotateCcw, Send, Sparkles, Undo2,
+  Pencil, RotateCcw, Sparkles, Undo2,
 } from "lucide-react";
 import PrefsEditor, { PREF_TONE, PrefsMini, draftFrom, type PrefDraft } from "../_components/PrefsEditor";
 import { Badge, Button, Card, Field, Modal, Notice, cx, hsuApi, inputCls } from "../_components/ui";
-import { datesInMonth, markFor, type HsuDoctor, type HsuPreference, type MonthStatus } from "@/lib/hsu/types";
+import { datesInMonth, effectiveStatus, inOpenWindow, markFor, openWindow, opensOn, type HsuDoctor, type HsuPreference, type MonthStatus } from "@/lib/hsu/types";
 import { useCommon, useT } from "@/lib/hsu/i18n/client";
 import { LANG_LOCALE, type Translator } from "@/lib/hsu/i18n/core";
 import { dateTimeL, dayLabelL, dayPartL, monthLabelL, prefStatusL, weekdayShortL } from "@/lib/hsu/i18n/format";
@@ -33,7 +33,8 @@ const STATUS_STEP: Record<MonthStatus, number> = { collecting: 0, review: 1, pla
 export default function MonthFlow({ ctx }: { ctx: PlannerCtx }) {
   const t = useT(stjorn);
   const { data, month } = ctx;
-  const status = data.month?.status ?? null;
+  // Næstu þrír mánuðir eru opnir fyrir óskir án þess að yfirlæknir opni þá.
+  const status = effectiveStatus(data.month, month);
   const reached = status ? STATUS_STEP[status] : -1;
   // Birtur mánuður opnast á vaktaplaninu sjálfu, ekki á birtingarskrefinu:
   // eftir birtingu er það planið sem unnið er með, en ekki birtingin aftur.
@@ -89,7 +90,7 @@ function stepProgress(ctx: PlannerCtx, t: T): StepState[] {
   const published = data.month?.status === "published";
 
   return [
-    !data.month ? { state: "todo", detail: t("progress.notOpened") }
+    !effectiveStatus(data.month, ctx.month) ? { state: "todo", detail: t("progress.notOpened") }
       : n > 0 && sent === n ? { state: "done", detail: t("progress.allSent") } : { state: "partial", detail: t("progress.sent", { x: sent, n }) },
     n > 0 && approved === n ? { state: "done", detail: t("progress.allApproved") }
       : approved > 0 ? { state: "partial", detail: t("progress.approved", { x: approved, n }) } : { state: "todo", detail: t("progress.approved", { x: 0, n }) },
@@ -151,26 +152,19 @@ function StepCollect({ ctx, setStatus, goNext }: { ctx: PlannerCtx; setStatus: S
   const t = useT(stjorn);
   const c = useCommon();
   const { data, month } = ctx;
-  const m = data.month;
+  // Mánuður í opna glugganum án raðar er opinn fyrir óskir; röðin verður til
+  // þegar skilafrestur er vistaður eða mánuðurinn færður áfram.
+  const open3 = inOpenWindow(month);
+  const m = data.month ?? (open3 ? { month, status: "collecting" as const, prefs_deadline: null, note: "", opened_at: "", published_at: null } : null);
   const doctors = data.doctors.filter((d) => d.active);
   const byDoc = prefsByDoctor(data.preferences);
   const sent = doctors.filter((d) => ["submitted", "approved"].includes(byDoc[d.id]?.status ?? "")).length;
 
   const [deadline, setDeadline] = useState(m?.prefs_deadline ?? "");
   const [note, setNote] = useState(m?.note ?? "");
-  const [notify, setNotify] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
   const [editing, setEditing] = useState<HsuDoctor | null>(null);
-
-  const open = async () => {
-    setBusy("open"); setMsg(null);
-    const r = await hsuApi(`/api/hsu/admin/months/${month}`, { method: "PUT", body: { status: "collecting", prefs_deadline: deadline || null, note, notify }, staff: true });
-    setBusy(null);
-    if (!r.ok) { setMsg({ tone: "err", text: r.error ?? t("failed") }); return; }
-    setMsg({ tone: "ok", text: t(notify ? "collect.opened.notified" : "collect.opened") });
-    await ctx.reload();
-  };
 
   const saveMeta = async () => {
     setBusy("meta");
@@ -207,35 +201,15 @@ function StepCollect({ ctx, setStatus, goNext }: { ctx: PlannerCtx; setStatus: S
   };
 
   if (!m) {
+    const past = month < openWindow()[0];
     return (
-      <Card className="overflow-hidden">
-        <div className="grid md:grid-cols-[1fr_1.2fr]">
-          <div className="bg-gradient-to-br from-[var(--hsu)] to-[#2c6cc0] p-6 text-white sm:p-8">
-            <div className="text-xs font-semibold uppercase tracking-wider text-white/70">{t("collect.start.step")}</div>
-            <h2 className="mt-1 text-2xl font-bold">{t("collect.start.title", { month: monthLabelL(month, t.lang) })}</h2>
-            <ol className="mt-5 space-y-3 text-sm text-white/90">
-              <li className="flex gap-2"><span className="font-bold">1.</span> {t("collect.start.1")}</li>
-              <li className="flex gap-2"><span className="font-bold">2.</span> {t("collect.start.2")}</li>
-              <li className="flex gap-2"><span className="font-bold">3.</span> {t("collect.start.3")}</li>
-              <li className="flex gap-2"><span className="font-bold">4.</span> {t("collect.start.4")}</li>
-            </ol>
-          </div>
-          <div className="space-y-4 p-6 sm:p-8">
-            <Field label={t("collect.deadline.label")} hint={t("collect.deadline.hint")}>
-              <input type="date" className={inputCls} value={deadline} onChange={(e) => setDeadline(e.target.value)} />
-            </Field>
-            <Field label={t("collect.note.label")} hint={t("collect.note.hint")}>
-              <textarea rows={3} className={inputCls} value={note} onChange={(e) => setNote(e.target.value)} />
-            </Field>
-            <label className="flex items-center gap-2 text-sm text-slate-700">
-              <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} className="h-4 w-4" />
-              {t("collect.notify", { n: doctors.length })}
-            </label>
-            {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
-            <Button size="lg" className="w-full" onClick={open} busy={busy === "open"}><Send className="h-4 w-4" /> {t("collect.open")}</Button>
-            <p className="text-center text-xs text-slate-500">{t("collect.advance")}</p>
-          </div>
-        </div>
+      <Card className="p-6 sm:p-8">
+        <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">{t("collect.start.step")}</div>
+        <h2 className="mt-1 text-xl font-bold text-slate-900">{t("collect.start.title", { month: monthLabelL(month, t.lang) })}</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          {past ? t("collect.past", { month: monthLabelL(month, t.lang) })
+            : t("collect.later", { month: monthLabelL(month, t.lang), date: dayLabelL(opensOn(month), t.lang) })}
+        </p>
       </Card>
     );
   }
@@ -247,6 +221,7 @@ function StepCollect({ ctx, setStatus, goNext }: { ctx: PlannerCtx; setStatus: S
           <div>
             <h2 className="text-lg font-bold">{t("collect.title")}</h2>
             <p className="text-sm text-slate-500">{t("collect.sentCount", { x: sent, n: doctors.length })}</p>
+            <p className="mt-1 text-xs text-slate-500">{t("collect.auto")}</p>
           </div>
           <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100 sm:w-48">
             <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${doctors.length ? (sent / doctors.length) * 100 : 0}%` }} />
@@ -503,8 +478,8 @@ function StepPlan({ ctx, goNext }: { ctx: PlannerCtx; goNext: () => void }) {
 function StepPublish({ ctx, setStatus, goPlan }: { ctx: PlannerCtx; setStatus: SetStatus; goPlan: () => void }) {
   const t = useT(stjorn);
   const { data, month } = ctx;
-  const [notify, setNotify] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [notify, setNotify] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const published = data.month?.status === "published";
 

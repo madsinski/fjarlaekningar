@@ -20,6 +20,7 @@ export function guideItems(data: Overview) {
     { key: "types", go: "stillingar" as Go, done: data.shiftTypes.some((t) => t.active) },
     // Stjórnandi Fjarlækninga á ekkert dagatal hér.
     ...(data.actor.kind === "doctor" ? [{ key: "calendar", go: "min-sida" as Go, done: data.actor.calendarConnected }] : []),
+    // Óskir eru opnar sjálfkrafa; verk yfirlæknis er að setja skilafrest.
     { key: "open", go: "plan" as Go, done: data.months.length > 0 },
     { key: "plan", go: "plan" as Go, done: reached(["planning", "published"]) },
     { key: "publish", go: "plan" as Go, done: reached(["published"]) },

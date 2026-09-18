@@ -14,7 +14,7 @@ import { useState, type ReactNode } from "react";
 import { ArrowRight, CalendarCheck, Check, CheckCircle2, CircleDashed, ClipboardList, Clock, KeyRound, Lightbulb, UserRound } from "lucide-react";
 import type { PortalData } from "@/lib/hsu/portal";
 import type { HsuSwap } from "@/lib/hsu/types";
-import { holidayName, monthKey, shiftMonth, weekdayOf } from "@/lib/hsu/types";
+import { effectiveStatus, holidayName, openWindow, weekdayOf } from "@/lib/hsu/types";
 import { useT } from "@/lib/hsu/i18n/client";
 import { journey } from "@/lib/hsu/i18n/messages/journey";
 import { dayLabelL, holidayL, monthLabelL, weekdayLongL } from "@/lib/hsu/i18n/format";
@@ -48,10 +48,15 @@ export function useJourney({ data, incoming, market, unlogged, go }: {
   const me = data.me;
 
   // ── Mánuðurinn sem verið er að skipuleggja ──
-  const thisMonth = monthKey(new Date());
-  const inFlow = data.months.filter((m) => m.status === "collecting" || m.status === "review" || m.status === "planning").map((m) => m.month).sort();
-  const planMonth = inFlow[0] ?? shiftMonth(thisMonth, 1);
-  const row = data.months.find((m) => m.month === planMonth);
+  // Næstu þrír mánuðir eru opnir fyrir óskir (effectiveStatus); fyrsti mánuður
+  // sem er enn í vinnslu ræður skrefum 2–3, annars næsti mánuður.
+  const openMonths = openWindow();
+  const candidates = [...new Set([...openMonths, ...data.months.map((m) => m.month)])].filter((m) => m >= openMonths[0]).sort();
+  const stOf = (m: string) => effectiveStatus(data.months.find((x) => x.month === m), m);
+  const planMonth = candidates.find((m) => { const st = stOf(m); return st === "collecting" || st === "review" || st === "planning"; }) ?? openMonths[0];
+  const found = data.months.find((m) => m.month === planMonth);
+  const effective = stOf(planMonth);
+  const row = effective ? { ...(found ?? { month: planMonth, prefs_deadline: null, note: "", published_at: null }), status: effective } : undefined;
   const pref = data.prefs.find((p) => p.month === planMonth);
   const monthName = monthLabelL(planMonth, L);
 

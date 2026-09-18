@@ -5,6 +5,7 @@
 // sama mánuðinn á tvo vegu.
 
 export { monthKey, datesInMonth, shiftMonth, monthRange, monthLabel, weekdayShort, hhmm } from "@/lib/roster";
+import { monthKey as monthKeyOf, shiftMonth as shiftMonthOf } from "@/lib/roster";
 
 export type HsuRole = "doctor" | "head";
 
@@ -150,6 +151,32 @@ export interface HsuSwap {
 }
 
 export const MONTH_STATUS_ORDER: MonthStatus[] = ["collecting", "review", "planning", "published"];
+
+// ── Opinn gluggi ────────────────────────────────────────────────────────────
+// Óskir og vaktaskipulag eru opin þrjá mánuði fram í tímann án þess að
+// yfirlæknir þurfi að opna mánuðinn; hann setur skilafrest og sendir áminningu.
+// Mánuður í glugganum án raðar í hsu_months telst því „collecting“.
+
+export const OPEN_MONTHS_AHEAD = 3;
+
+/** Næstu þrír mánuðir á eftir þessum: ["2026-10", "2026-11", "2026-12"]. */
+export function openWindow(now: string = monthKeyOf(new Date())): string[] {
+  return Array.from({ length: OPEN_MONTHS_AHEAD }, (_, i) => shiftMonthOf(now, i + 1));
+}
+
+export function inOpenWindow(month: string, now?: string): boolean {
+  return openWindow(now).includes(month);
+}
+
+/** Staða mánaðar: skráð staða, annars „collecting“ ef hann er í opna glugganum. */
+export function effectiveStatus(row: { status: MonthStatus } | null | undefined, month: string, now?: string): MonthStatus | null {
+  return row?.status ?? (inOpenWindow(month, now) ? "collecting" : null);
+}
+
+/** Fyrsti dagur þegar mánuðurinn opnast (þremur mánuðum fyrr). */
+export function opensOn(month: string): string {
+  return `${shiftMonthOf(month, -OPEN_MONTHS_AHEAD)}-01`;
+}
 
 export const MONTH_STATUS_IS: Record<MonthStatus, string> = {
   collecting: "Óskir opnar",
