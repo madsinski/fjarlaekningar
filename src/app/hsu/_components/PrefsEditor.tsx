@@ -85,7 +85,7 @@ export function rich(text: string, parts: Record<string, React.ReactNode>): Reac
 }
 
 export default function PrefsEditor({
-  month, initial, status, reviewNote, editable, lockedReason, onSave, mode = "doctor", onLoadPrevious, onProgress, dayWeekdays = [],
+  month, initial, status, reviewNote, editable, lockedReason, onSave, mode = "doctor", onLoadPrevious, onProgress,
 }: {
   month: string;
   initial: PrefDraft;
@@ -96,8 +96,6 @@ export default function PrefsEditor({
   mode?: "doctor" | "admin";
   onSave: (draft: PrefDraft, opts: { submit: boolean; alsoNext: boolean; approve?: boolean }) => Promise<{ ok: boolean; error?: string; copiedTo?: string | null }>;
   onLoadPrevious?: () => Promise<PrefDraft | null>;
-  /** Föstu vikudagarnir á flýtimóttöku (tómt = allir virkir dagar) — sjálfgefið í dagatali skrefs 3. */
-  dayWeekdays?: number[];
   /** Hvaða skref eru búin (2 = dagar merktir, 6 = sent) — fyrir yfirlitið efst. */
   onProgress?: (p: { daysMarked: boolean; fmMarked: boolean; sent: boolean }) => void;
 }) {
@@ -142,10 +140,8 @@ export default function PrefsEditor({
     });
   };
 
-  // ── Skref 3: stakir dagar á flýtimóttöku ──
-  // Sjálfgefið: föstu vikudagarnir og hluti dagsins úr reglu mánaðarins.
-  const fmDefault = (date: string): DayPlan =>
-    dayWeekdays.length === 0 || dayWeekdays.includes(weekdayOf(date)) ? draft.day_part : "none";
+  // ── Skref 3: dagar á flýtimóttöku ──
+  // Aðeins merktir dagar gilda; ómerktur dagur er auður (Hreinsa gerir dag auðan).
   const fmDay = (date: string) => {
     const wd = weekdayOf(date);
     return wd >= 1 && wd <= 5 && !holidayName(date);
@@ -354,12 +350,11 @@ export default function PrefsEditor({
         <div>
           <p className="text-[11px] text-slate-500">{t("step3.calendarHint")}</p>
           {editable && (
-            <div className="mt-2 grid grid-cols-2 gap-2 sm:inline-grid sm:w-auto sm:grid-cols-5">
+            <div className="mt-2 grid grid-cols-2 gap-2 sm:inline-grid sm:w-auto sm:grid-cols-4">
               {([
                 ["all", <Sun key="i" className="h-4 w-4" />, "data-[on=true]:bg-[var(--hsu)] data-[on=true]:text-white data-[on=true]:ring-[var(--hsu)]"],
                 ["am", <Sunrise key="i" className="h-4 w-4" />, "data-[on=true]:bg-[var(--hsu)] data-[on=true]:text-white data-[on=true]:ring-[var(--hsu)]"],
                 ["pm", <Sunset key="i" className="h-4 w-4" />, "data-[on=true]:bg-[var(--hsu)] data-[on=true]:text-white data-[on=true]:ring-[var(--hsu)]"],
-                ["none", <Ban key="i" className="h-4 w-4" />, "data-[on=true]:bg-slate-600 data-[on=true]:text-white data-[on=true]:ring-slate-600"],
                 ["rule", <Eraser key="i" className="h-4 w-4" />, "data-[on=true]:bg-slate-700 data-[on=true]:text-white data-[on=true]:ring-slate-700"],
               ] as [FmBrush, React.ReactNode, string][]).map(([k, icon, cls]) => (
                 <button key={k} type="button" data-on={fmBrush === k} onClick={() => setFmBrush(k)}
@@ -381,16 +376,17 @@ export default function PrefsEditor({
               }
               const blocked = markFor(draft, date) === "off";
               const explicit = draft.day_part_marks[date];
-              const eff: DayPlan = blocked ? "none" : explicit ?? fmDefault(date);
-              const label = blocked ? t("step3.cell.blocked") : t(`step3.cell.${eff}` as "step3.cell.all");
+              const eff: DayPlan | undefined = blocked ? "none" : explicit;
+              const label = blocked ? t("step3.cell.blocked") : eff ? t(`step3.cell.${eff}` as "step3.cell.all") : "";
               return (
                 <button key={date} type="button" disabled={!editable || blocked}
                   onPointerDown={(e) => onFmDown(e, date)} onPointerEnter={() => onFmEnter(date)} onClick={() => onFmTap(date)}
                   aria-label={t("step3.cell.aria", { day: dayLabelL(date, t.lang), state: label })}
                   className={cx("relative flex aspect-square min-h-11 flex-col items-center justify-center rounded-xl text-sm font-semibold transition sm:aspect-[4/3]",
                     blocked ? "bg-red-50 text-red-300 [background-image:repeating-linear-gradient(135deg,transparent_0_6px,rgba(220,38,38,.07)_6px_12px)]"
-                      : eff === "none" ? (explicit ? "bg-slate-200 text-slate-500 ring-2 ring-inset ring-slate-400" : "bg-white text-slate-400 ring-1 ring-inset ring-slate-200")
-                      : explicit ? "bg-[var(--hsu)] text-white" : "bg-[var(--hsu-soft)] text-[var(--hsu-dark)] ring-1 ring-inset ring-[var(--hsu)]/20",
+                      : eff === "none" ? "bg-slate-200 text-slate-500 ring-2 ring-inset ring-slate-400"
+                      : eff ? "bg-[var(--hsu)] text-white"
+                      : "bg-white text-slate-700 ring-1 ring-inset ring-slate-200",
                     editable && !blocked && "hover:brightness-95")}>
                   <span>{n}</span>
                   <span className="text-[9px] font-bold leading-none">{label}</span>
@@ -399,9 +395,7 @@ export default function PrefsEditor({
             })}
           </div>
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-500">
-            <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-[var(--hsu-soft)] ring-1 ring-[var(--hsu)]/20" /> {t("step3.legend.rule")}</span>
             <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-[var(--hsu)]" /> {t("step3.legend.custom")}</span>
-            <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-slate-200 ring-1 ring-slate-400" /> {t("step3.legend.none")}</span>
             <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-red-50 ring-1 ring-red-200" /> {t("step3.legend.blocked")}</span>
           </div>
         </div>

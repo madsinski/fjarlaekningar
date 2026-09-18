@@ -77,19 +77,19 @@ export function worksDayShift(doctor: Pick<PlanDoctor, "dayWeekdays"> | undefine
 }
 
 /**
- * Má læknirinn taka dagvakt þennan dag, að teknum óskum mánaðarins? Stakur
- * dagur í óskunum ræður: valinn dagur gildir líka utan föstu vikudaganna og
- * „none“ tekur daginn út. Annars gilda föstu vikudagarnir.
+ * Má læknirinn taka dagvakt á flýtimóttöku þennan dag? Hafi hann skráð óskir
+ * fyrir mánuðinn gilda AÐEINS dagarnir sem hann merkti í skrefi 3 — ómerktur
+ * dagur er ekki flýtimóttökudagur. Hafi hann engar óskir skráð gilda föstu
+ * vikudagarnir sem yfirlæknir stillir (day_weekdays).
  */
 export function worksDayShiftOn(
   doctor: Pick<PlanDoctor, "dayWeekdays"> | undefined,
   pref: { day_part_marks?: Record<string, string> | null } | null | undefined,
   date: string,
 ): boolean {
-  const mark = pref?.day_part_marks?.[date];
-  if (mark === "none") return false;
-  if (mark === "all" || mark === "am" || mark === "pm") return true;
-  return worksDayShift(doctor, date);
+  if (!pref) return worksDayShift(doctor, date);
+  const mark = pref.day_part_marks?.[date];
+  return mark === "all" || mark === "am" || mark === "pm";
 }
 
 export type PlanPrefs = Pick<HsuPreference, "day_marks" | "weekday_marks" | "evening_weekdays" | "day_part" | "day_part_marks" | "min_shifts" | "max_shifts">;

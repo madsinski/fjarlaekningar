@@ -86,15 +86,31 @@ export default function PrefsTab({ data, initialMonth, refresh }: { data: Portal
         hint={t("step1.hint")}>
         <div className="flex gap-2 overflow-x-auto pb-1">
           {options.map((m) => {
-            const row = data.months.find((x) => x.month === m);
             const p = data.prefs.find((x) => x.month === m);
             return (
               <button key={m} onClick={() => setMonth(m)} aria-pressed={m === month}
                 className={cx("shrink-0 rounded-2xl border px-4 py-2.5 text-left transition", m === month ? "border-[var(--hsu)] bg-[var(--hsu-soft)] ring-2 ring-[var(--hsu)]/30" : "border-slate-200 bg-white hover:bg-slate-50")}>
                 <div className="text-sm font-bold text-slate-900">{capFirstL(monthLabelL(m, t.lang), t.lang)}</div>
-                <div className="text-[11px] text-slate-500">
-                  {row ? monthStatusL(row.status, t.lang) : t("month.notOpened")}{p ? ` · ${{ draft: t("prefShort.draft"), submitted: t("prefShort.submitted"), approved: t("prefShort.approved"), changes_requested: t("prefShort.changes_requested") }[p.status]}` : ""}
-                </div>
+                {(() => {
+                  // Staða læknisins sjálfs fyrir mánuðinn: appelsínugult meðan
+                  // eftir er að senda, grænt þegar sent eða samþykkt.
+                  const st = stOf(m);
+                  const ps = p?.status;
+                  const [label, tone] = ps === "approved" ? [t("month.state.approved"), "green"]
+                    : ps === "submitted" ? [t("month.state.submitted"), "green"]
+                    : ps === "changes_requested" ? [t("month.state.changes"), "red"]
+                    : st === "planning" || st === "published" ? [monthStatusL(st, t.lang), "slate"]
+                    : ps === "draft" ? [t("month.state.draft"), "amber"]
+                    : [t("month.state.notStarted"), "amber"];
+                  return (
+                    <div className={cx("mt-0.5 inline-flex items-center gap-1 text-[11px] font-semibold",
+                      tone === "green" ? "text-emerald-700" : tone === "red" ? "text-red-700" : tone === "amber" ? "text-amber-700" : "text-slate-500")}>
+                      <span className={cx("h-1.5 w-1.5 rounded-full",
+                        tone === "green" ? "bg-emerald-500" : tone === "red" ? "bg-red-500" : tone === "amber" ? "bg-amber-400" : "bg-slate-400")} />
+                      {label}
+                    </div>
+                  );
+                })()}
               </button>
             );
           })}
@@ -115,7 +131,6 @@ export default function PrefsTab({ data, initialMonth, refresh }: { data: Portal
         onSave={save}
         onLoadPrevious={loadPrevious}
         onProgress={onProgress}
-        dayWeekdays={data.me.dayWeekdays}
       />
     </div>
   );
