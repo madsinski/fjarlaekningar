@@ -30,11 +30,12 @@ type Tab = "yfirlit" | "vaktir" | "oskir" | "markadur" | "plan" | "stillingar";
 const TAB_ALIASES: Record<string, Tab> = { dagatal: "stillingar", adgangur: "stillingar" };
 
 const TABS: { key: Tab; labelKey: `tab.${Tab}`; icon: React.ReactNode }[] = [
+  // Í tímaröð mánaðarins: óskir → vaktaplan → mínar vaktir → skipti.
   { key: "yfirlit", labelKey: "tab.yfirlit", icon: <Home className="h-4 w-4" /> },
-  { key: "vaktir", labelKey: "tab.vaktir", icon: <CalendarCheck className="h-4 w-4" /> },
   { key: "oskir", labelKey: "tab.oskir", icon: <ClipboardList className="h-4 w-4" /> },
-  { key: "markadur", labelKey: "tab.markadur", icon: <Store className="h-4 w-4" /> },
   { key: "plan", labelKey: "tab.plan", icon: <CalendarRange className="h-4 w-4" /> },
+  { key: "vaktir", labelKey: "tab.vaktir", icon: <CalendarCheck className="h-4 w-4" /> },
+  { key: "markadur", labelKey: "tab.markadur", icon: <Store className="h-4 w-4" /> },
   { key: "stillingar", labelKey: "tab.stillingar", icon: <Settings className="h-4 w-4" /> },
 ];
 
@@ -77,9 +78,9 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
     { target: "tabs", title: to("doctor.1.title"), body: to("doctor.1.body") },
     { target: "journey|tab-yfirlit", title: to("doctor.2.title"), body: to("doctor.2.body"), before: () => setTab("yfirlit") },
     { target: "tab-oskir", title: to("doctor.3.title"), body: to("doctor.3.body"), before: () => setTab("oskir") },
+    { target: "tab-plan", title: to("doctor.6.title"), body: to("doctor.6.body"), before: () => setTab("plan") },
     { target: "tab-vaktir", title: to("doctor.4.title"), body: to("doctor.4.body"), before: () => setTab("vaktir") },
     { target: "tab-markadur", title: to("doctor.5.title"), body: to("doctor.5.body"), before: () => setTab("markadur") },
-    { target: "tab-plan", title: to("doctor.6.title"), body: to("doctor.6.body"), before: () => setTab("plan") },
     { target: "tab-stillingar", title: to("doctor.7.title"), body: to("doctor.7.body"), before: () => setTab("stillingar") },
     { target: "lang|user-menu", title: to("doctor.8.title"), body: to("doctor.8.body"), before: () => setTab("yfirlit") },
     { title: to("doctor.9.title"), body: to("doctor.9.body") },
