@@ -11,7 +11,7 @@ import { DEFAULT_LANG, isLang, translator, type Lang } from "@/lib/hsu/i18n/core
 import { notifyMsgs } from "@/lib/hsu/i18n/messages/notify";
 import { tr } from "@/lib/hsu/i18n/server";
 import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
-import { emailMode } from "@/lib/hsu/email-prefs";
+import { emailModeFor } from "@/lib/hsu/email-prefs";
 
 export const runtime = "nodejs";
 
@@ -70,7 +70,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     await supabaseAdmin.from("hsu_shifts").update({ status: "assigned" }).eq("id", swap.shift_id);
     await audit(me.name, "market.decline", shift.shift_date.slice(0, 7), { swapId: swap.id });
     after(async () => {
-      if ((await emailMode("marketMine")) !== "now") return;
+      if ((await emailModeFor(swap.from_doctor, "marketMine")) !== "now") return;
       const { data: from } = await supabaseAdmin.from("hsu_doctors").select("email, lang").eq("id", swap.from_doctor).maybeSingle();
       if (from) {
         const lang = isLang(from.lang) ? from.lang : DEFAULT_LANG;

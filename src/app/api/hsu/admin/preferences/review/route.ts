@@ -11,7 +11,7 @@ import { monthLabelL } from "@/lib/hsu/i18n/format";
 import { doctorLang } from "@/lib/hsu/i18n/server";
 import { tr } from "@/lib/hsu/i18n/server";
 import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
-import { emailMode } from "@/lib/hsu/email-prefs";
+import { emailModeFor } from "@/lib/hsu/email-prefs";
 
 export const runtime = "nodejs";
 
@@ -86,7 +86,7 @@ export async function POST(req: Request) {
   if (action === "request_changes") {
     const origin = originOf(req);
     after(async () => {
-      if ((await emailMode("prefs")) === "off") return;
+      if ((await emailModeFor(doctorId, "prefs")) !== "now") return;
       const { data: d } = await supabaseAdmin.from("hsu_doctors").select("name, email").eq("id", doctorId).maybeSingle();
       if (!d) return;
       const lang = await doctorLang(doctorId);

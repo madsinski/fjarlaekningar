@@ -14,7 +14,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { hsuEmailHtml, sendHsuEmail } from "./server";
 import { DEFAULT_LANG, isLang, translator, type Lang } from "./i18n/core";
 import { notifyMsgs } from "./i18n/messages/notify";
-import { emailMode, type EmailCategory } from "./email-prefs";
+import { normalizeEmailPrefs, type EmailCategory, type EmailMode } from "./email-prefs";
 
 /**
  * Texti á tungumáli viðtakandans: fastur strengur (eins á öllum málum) eða
@@ -41,7 +41,7 @@ export function notifyDoctors(opts: {
   intro?: Localized;
   notices: DoctorNotice[];
   cta?: { label: Localized; path: string };
-  /** Flokkur tilkynningar — stillingin (hsu_settings.email_prefs) ræður póstinum. */
+  /** Flokkur tilkynningar — stilling hvers viðtakanda (hsu_doctors.email_prefs) ræður póstinum. */
   category?: EmailCategory;
   /** Handvirkt val sem gengur framar flokknum: true = strax, "digest", false = enginn póstur. */
   email?: boolean | "digest";
@@ -49,11 +49,13 @@ export function notifyDoctors(opts: {
   const ids = [...new Set(opts.notices.map((n) => n.doctorId))];
   if (!ids.length) return;
   after(async () => {
-    // Stillingin ræður, nema kallandinn taki fram annað.
-    const mode = opts.email !== undefined
+    // Hver viðtakandi ræður sínum pósti (Mín síða → Stillingar), nema kallandinn
+    // taki annað fram (t.d. öryggistilkynningar: alltaf strax).
+    const forced: EmailMode | null = opts.email !== undefined
       ? (opts.email === false ? "off" : opts.email === "digest" ? "digest" : "now")
-      : opts.category ? await emailMode(opts.category) : "now";
-    const { data: docs } = await supabaseAdmin.from("hsu_doctors").select("id, name, email, active, lang").in("id", ids);
+      : opts.category ? null : "now";
+    const { data: docs } = await supabaseAdmin.from("hsu_doctors").select("id, name, email, active, lang, email_prefs").in("id", ids);
+    const modeOf = (d: { email_prefs?: unknown }): EmailMode => forced ?? normalizeEmailPrefs(d.email_prefs)[opts.category!];
     const cta = opts.cta ?? { label: (l: Lang) => translator(notifyMsgs, l)("cta.myShifts"), path: "/hsu/min-sida?t=vaktir" };
     const active = (docs ?? []).filter((d) => d.active);
     const langOf = (d: { lang?: string | null }): Lang => (isLang(d.lang) ? d.lang : DEFAULT_LANG);
@@ -67,13 +69,12 @@ export function notifyDoctors(opts: {
         lines: [...intro(langOf(d)), ...linesFor(d.id, langOf(d))],
         link: cta.path,
         category: opts.category ?? null,
-        email_pending: mode === "digest",
+        email_pending: modeOf(d) === "digest",
       }))
       .filter((r) => r.lines.length > (opts.intro ? 1 : 0));
     if (rows.length) await supabaseAdmin.from("hsu_notifications").insert(rows);
-    if (mode !== "now") return; // samantekt (eða slökkt) — enginn póstur núna
-
     for (const d of active) {
+      if (modeOf(d) !== "now") continue; // samantekt (eða slökkt) — enginn póstur núna
       const lang = langOf(d);
       const lines = linesFor(d.id, lang);
       if (!lines.length) continue;

@@ -1,4 +1,3 @@
-import type { EmailCategory, EmailMode } from "@/lib/hsu/email-prefs";
 import type { HsuDoctor, HsuMonth, HsuPreference, HsuShift, HsuShiftType, HsuSwap, MonthStatus } from "@/lib/hsu/types";
 
 export interface Overview {
@@ -11,8 +10,6 @@ export interface Overview {
   settings: {
     unit_name: string;
     market_requires_approval: boolean;
-    /** Hvaða tilkynningar fara í tölvupóst: flokkur → "now" | "digest" | "off". */
-    email_prefs: Record<EmailCategory, EmailMode>;
   };
   /** Tengiliður Fjarlækninga fyrir spurningar. */
   support: { name: string; phone: string } | null;

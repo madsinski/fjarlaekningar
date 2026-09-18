@@ -393,3 +393,9 @@ alter table public.hsu_doctors drop column if exists head_onboarded_at;
 alter table public.hsu_settings add column if not exists email_prefs jsonb not null default '{}'::jsonb;
 -- Flokkur tilkynningar (shifts, requests, market…) — notaður í samantektarpósti.
 alter table public.hsu_notifications add column if not exists category text;
+
+-- ── Tilkynningar í tölvupósti: val hvers læknis (2026-09-18) ───────────────
+-- Hver læknir velur sjálfur hvað hann fær í tölvupósti (Mín síða → Stillingar).
+-- Flokkur → "now" | "digest" | "off"; ósett = sjálfgefið (src/lib/hsu/email-prefs.ts).
+-- hsu_settings.email_prefs er ekki lengur notað.
+alter table public.hsu_doctors add column if not exists email_prefs jsonb not null default '{}'::jsonb;

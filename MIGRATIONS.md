@@ -33,6 +33,8 @@ modules also need a **Storage bucket** — noted inline.
 
 | 22 | `supabase/hsu-schema.sql` (viðbót) | Tilkynningar í tölvupósti: `hsu_settings.email_prefs` (flokkur → strax/samantekt/slökkt) og `hsu_notifications.category`. Sjá „Tilkynningar“ í `docs/hsu-vaktakerfi.md`. | ✅ done (2026-09-17) |
 
+| 23 | `supabase/hsu-schema.sql` (viðbót) | Tölvupóstval hvers læknis: `hsu_doctors.email_prefs` (Mín síða → Stillingar); `hsu_settings.email_prefs` ekki lengur notað. | ✅ done (2026-09-18) |
+
 > After running a migration, the matching admin module works immediately (no
 > redeploy needed — the tables just start returning data).
 

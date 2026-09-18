@@ -10,7 +10,7 @@ import { hhmm, timesOverlap } from "./types";
 import { DEFAULT_LANG, isLang, translator, type Lang } from "./i18n/core";
 import { dayLabelL, weekdayLongL, weekdayOfDate } from "./i18n/format";
 import { notifyMsgs } from "./i18n/messages/notify";
-import { emailMode } from "./email-prefs";
+import { emailModeFor } from "./email-prefs";
 
 /** „FV mánudagur 5. okt. kl. 08:00–16:00“ á tungumáli viðtakandans. */
 export function shiftPhrase(s: { shift_date: string; starts: string; ends: string; label?: string }, lang: Lang = "is"): string {
@@ -50,7 +50,7 @@ export async function transferShift(opts: {
 
   after(async () => {
     await hsuSync.syncDoctors([opts.fromDoctor, opts.toDoctor]);
-    if ((await emailMode("marketMine")) !== "now") return;
+    if ((await emailModeFor(opts.fromDoctor, "marketMine")) !== "now") return;
     const ids = [opts.fromDoctor, opts.toDoctor].filter(Boolean) as string[];
     const { data: docs } = await supabaseAdmin.from("hsu_doctors").select("id, name, email, lang").in("id", ids);
     const from = docs?.find((d) => d.id === opts.fromDoctor);

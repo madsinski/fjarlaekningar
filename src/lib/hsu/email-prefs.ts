@@ -1,5 +1,5 @@
-// Hvaða tilkynningar fara í tölvupóst. Ein stilling á hvern flokk, geymd í
-// hsu_settings.email_prefs. Server-only.
+// Hvaða tilkynningar fara í tölvupóst. Hver læknir velur sjálfur, einn hamur á
+// hvern flokk (hsu_doctors.email_prefs, Mín síða → Stillingar). Server-only.
 //
 //   "now"    — póstur strax
 //   "digest" — safnast saman og fer í EINUM pósti þegar 10 mín. eru liðnar án
@@ -11,67 +11,27 @@
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
-export type EmailMode = "now" | "digest" | "off";
+export * from "./email-categories";
+import { DEFAULT_EMAIL_PREFS, normalizeEmailPrefs as clean, type EmailCategory, type EmailMode } from "./email-categories";
 
-export const EMAIL_CATEGORIES = [
-  "shifts",     // breytingar á vöktum læknis (færslur, tímar, niðurfelling, úr birtingu)
-  "requests",   // beiðni um aukavakt (umfram hámark eða gegn óskum)
-  "market",     // ný vakt á vaktamarkaði — fer á ALLA lækna
-  "marketMine", // vaktaskipti sem snerta lækninn sjálfan (tekin, hafnað, dregin til baka)
-  "prefs",      // vaktaóskir: opnað, áminning, samþykkt, breytinga óskað
-  "publish",    // vaktaplan birt
-  "head",       // til yfirlæknis: svör við beiðnum, vaktaskipti, dagvinnudagar
-] as const;
-export type EmailCategory = (typeof EMAIL_CATEGORIES)[number];
-
-/** Flokkar sem hægt er að setja í samantekt (hinir: aðeins strax/slökkt). */
-const DIGESTABLE: Record<EmailCategory, boolean> = {
-  shifts: true, requests: true, market: true, marketMine: true, prefs: false, publish: false, head: true,
-};
-
-/**
- * Sjálfgefið: það sem krefst viðbragða fer í póst, hitt safnast saman eða er
- * slökkt. Vaktamarkaðurinn er slökktur — hann fór áður á alla lækna við hverja
- * vakt sem einhver bauð.
- */
-export const DEFAULT_EMAIL_PREFS: Record<EmailCategory, EmailMode> = {
-  shifts: "digest",
-  requests: "digest",
-  market: "off",
-  marketMine: "now",
-  prefs: "now",
-  publish: "now",
-  head: "digest",
-};
-
-export function canDigest(c: EmailCategory): boolean {
-  return DIGESTABLE[c];
-}
-
-function clean(raw: unknown): Record<EmailCategory, EmailMode> {
-  const v = (raw ?? {}) as Record<string, unknown>;
-  const out = { ...DEFAULT_EMAIL_PREFS };
-  for (const c of EMAIL_CATEGORIES) {
-    const m = v[c];
-    if (m === "now" || m === "off" || (m === "digest" && canDigest(c))) out[c] = m;
-  }
-  return out;
-}
-
-export function normalizeEmailPrefs(raw: unknown): Record<EmailCategory, EmailMode> {
-  return clean(raw);
-}
-
-/**
- * Lesið beint í hvert sinn: tilkynningar eru fáar og stilling sem var breytt í
- * stjórnborðinu á að gilda strax — líka í öðrum þjónsferlum.
- */
-export async function emailPrefs(): Promise<Record<EmailCategory, EmailMode>> {
-  const { data } = await supabaseAdmin.from("hsu_settings").select("email_prefs").eq("id", 1).maybeSingle();
+/** Stillingar eins læknis, með sjálfgefnum gildum þar sem hann hefur ekkert valið. */
+export async function doctorEmailPrefs(doctorId: string): Promise<Record<EmailCategory, EmailMode>> {
+  const { data } = await supabaseAdmin.from("hsu_doctors").select("email_prefs").eq("id", doctorId).maybeSingle();
   return clean(data?.email_prefs);
 }
 
-/** Hvernig á að senda þennan flokk núna? */
-export async function emailMode(c: EmailCategory): Promise<EmailMode> {
-  return (await emailPrefs())[c];
+/** Hamur flokksins fyrir hvern viðtakanda (lesið beint — breyting gildir strax). */
+export async function emailModesFor(doctorIds: string[], c: EmailCategory): Promise<Map<string, EmailMode>> {
+  const out = new Map<string, EmailMode>();
+  const ids = [...new Set(doctorIds.filter(Boolean))];
+  if (!ids.length) return out;
+  const { data } = await supabaseAdmin.from("hsu_doctors").select("id, email_prefs").in("id", ids);
+  for (const r of data ?? []) out.set(r.id as string, clean(r.email_prefs)[c]);
+  for (const id of ids) if (!out.has(id)) out.set(id, DEFAULT_EMAIL_PREFS[c]);
+  return out;
+}
+
+export async function emailModeFor(doctorId: string | null | undefined, c: EmailCategory): Promise<EmailMode> {
+  if (!doctorId) return "off";
+  return (await emailModesFor([doctorId], c)).get(doctorId) ?? DEFAULT_EMAIL_PREFS[c];
 }

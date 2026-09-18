@@ -16,7 +16,7 @@ import { DEFAULT_LANG, isLang, translator, type Lang } from "@/lib/hsu/i18n/core
 import { dayLabelL, monthLabelL } from "@/lib/hsu/i18n/format";
 import { tr } from "@/lib/hsu/i18n/server";
 import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
-import { emailMode } from "@/lib/hsu/email-prefs";
+import { emailModesFor } from "@/lib/hsu/email-prefs";
 
 export const runtime = "nodejs";
 
@@ -97,8 +97,10 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
     const deadline: string | null = saved.prefs_deadline ?? null;
     const url = `${origin}/hsu/min-sida?t=oskir&m=${month}`;
     after(async () => {
-      if ((await emailMode("prefs")) === "off") return;
-      for (const d of await activeDoctors()) {
+      const docs = await activeDoctors();
+      const modes = await emailModesFor(docs.map((d) => d.id), "prefs");
+      for (const d of docs) {
+        if (modes.get(d.id) !== "now") continue;
         const tl = translator(apiAdmin, d.lang);
         const vars = { month: monthLabelL(month, d.lang), date: deadline ? dayLabelL(deadline, d.lang) : "", url };
         await sendHsuEmail(d.email, tl("open.subject", vars), hsuEmailHtml({
@@ -111,9 +113,11 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
   }
   if (notify && publishing) {
     after(async () => {
-      if ((await emailMode("publish")) === "off") return;
       const shifts = await loadMonthShifts(month);
-      for (const d of await activeDoctors()) {
+      const docs = await activeDoctors();
+      const modes = await emailModesFor(docs.map((d) => d.id), "publish");
+      for (const d of docs) {
+        if (modes.get(d.id) !== "now") continue;
         const n = shifts.filter((s) => s.doctor_id === d.id).length;
         // Læknir án vaktar í mánuðinum fær ekki póst um birtinguna.
         if (n === 0) continue;

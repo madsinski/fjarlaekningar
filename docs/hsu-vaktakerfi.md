@@ -264,32 +264,35 @@ Allar tilkynningar birtast á **Mínar vaktir**: ólesnar efst með „Merkja le
 tala á flipanum. Lesnar tilkynningar síðustu 30 daga má opna undir „Eldri breytingar“.
 **Kerfið sjálft sýnir alltaf allt** — stillingarnar hér að neðan ráða aðeins póstinum.
 
-### Stillingar: *Stillingar → Tilkynningar í tölvupósti*
+### Hver læknir velur: *Mín síða → Stillingar → Tilkynningar í tölvupósti*
 
-Hver flokkur er **Strax**, **Samantekt** eða **Slökkt** (`hsu_settings.email_prefs`,
-`src/lib/hsu/email-prefs.ts`). Samantekt safnast saman og fer í **einum pósti** þegar
-ekkert nýtt hefur bæst við í 10 mín. (cron `/api/cron/hsu-digest` á 5 mín. fresti,
-`src/lib/hsu/digest.ts`); einn póstur getur borið fleiri en einn flokk, með millifyrirsögn
-fyrir hvern.
+Hver læknir ræður sjálfur hvað hann fær í tölvupósti (`hsu_doctors.email_prefs`,
+`/api/hsu/me/email-prefs`, `src/lib/hsu/email-prefs.ts` og `email-categories.ts`).
+Hver flokkur er **Strax**, **Samantekt** eða **Slökkt**; samantekt er aðeins í boði þar
+sem hún virkar (breytingar á vöktum, beiðnir, til yfirlæknis). Samantekt safnast
+saman og fer í **einum pósti** þegar ekkert nýtt hefur bæst við í 10 mín. (cron
+`/api/cron/hsu-digest` á 5 mín. fresti). „Til yfirlæknis“ sést aðeins yfirlæknum.
+Yfirlæknir stillir ekki póst annarra lækna (fyrri almenna stillingin,
+`hsu_settings.email_prefs`, er ekki lengur notuð).
 
 | Flokkur | Hvað | Sjálfgefið |
 |---|---|---|
 | `shifts` | vakt færð, tímum breytt, vakt felld niður, plan tekið úr birtingu, endurröðun | samantekt |
 | `requests` | beiðni um aukavakt (gegn óskum eða umfram hámark) | samantekt |
-| `market` | ný vakt á vaktamarkaði — fór áður á **alla** lækna við hverja vakt | slökkt |
+| `market` | ný vakt á vaktamarkaði | slökkt |
 | `marketMine` | vaktaskipti sem snerta lækninn sjálfan (tekin, hafnað, dregin til baka) | strax |
-| `prefs` | opnað fyrir óskir, óskir samþykktar, breytinga óskað | strax |
+| `prefs` | óskir samþykktar, breytinga óskað | strax |
 | `publish` | vaktaplan birt — aðeins til þeirra sem eiga vakt í mánuðinum | strax |
 | `head` | til yfirlæknis: svör við beiðnum, vaktaskipti í bið, breyttir dagvinnudagar | samantekt |
 
 **Alltaf sent, óháð stillingum:** boð um aðgang, nýtt lykilorð, tilkynning um breytt
 lykilorð — og áminning um óskir, sem yfirlæknir sendir sjálfur með hnappi.
 
-Í kóðanum: `notifyDoctors({ category })` er eini staðurinn sem ákveður póst; flokkurinn
-er skráður á tilkynninguna (`hsu_notifications.category`) og `email_pending` sett ef
-samantekt á við. `notifyHeads` fer sömu leið og skilar yfirlæknum líka tilkynningu í
-kerfinu. Beinir póstar (opnað fyrir óskir, birt, markaðurinn) spyrja `emailMode(flokkur)`
-áður en þeir senda. Áminning um óskir er skráð í `hsu_audit` (`month.remind`) og síðustu
+Í kóðanum: `notifyDoctors({ category })` ákveður póst fyrir hvern viðtakanda eftir hans
+vali; flokkurinn er skráður á tilkynninguna (`hsu_notifications.category`) og
+`email_pending` sett ef hann valdi samantekt. `notifyHeads` fer sömu leið og skilar yfirlæknum líka tilkynningu í
+kerfinu. Beinir póstar (birt, markaðurinn, óskir) spyrja `emailModesFor(viðtakendur, flokkur)`
+og senda aðeins þeim sem völdu „Strax“. Áminning um óskir er skráð í `hsu_audit` (`month.remind`) og síðustu
 fimm sjást í skrefi 1; sami læknir fær ekki tvær áminningar innan mínútu.
 
 ## Útköll í Vinnustund

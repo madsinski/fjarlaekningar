@@ -6,7 +6,6 @@ import {
 } from "@/lib/hsu/server";
 import { tr } from "@/lib/hsu/i18n/server";
 import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
-import { normalizeEmailPrefs } from "@/lib/hsu/email-prefs";
 
 export const runtime = "nodejs";
 
@@ -19,7 +18,7 @@ export async function GET(req: Request) {
   try {
     const today = new Date().toISOString().slice(0, 10);
     const [settings, shiftTypes, doctors, m, prefs, shifts, swaps, auditRows, months] = await Promise.all([
-      supabaseAdmin.from("hsu_settings").select("unit_name, market_requires_approval, email_prefs").eq("id", 1).maybeSingle().then((r) => r.data),
+      supabaseAdmin.from("hsu_settings").select("unit_name, market_requires_approval").eq("id", 1).maybeSingle().then((r) => r.data),
       loadShiftTypes(),
       listDoctors(),
       loadMonth(month),
@@ -60,7 +59,6 @@ export async function GET(req: Request) {
       settings: {
         unit_name: settings?.unit_name ?? "Heilsugæslan í Vestmannaeyjum",
         market_requires_approval: settings?.market_requires_approval ?? false,
-        email_prefs: normalizeEmailPrefs(settings?.email_prefs),
       },
       shiftTypes,
       doctors,

@@ -9,7 +9,7 @@ import { DEFAULT_LANG, isLang, translator } from "@/lib/hsu/i18n/core";
 import { notifyMsgs } from "@/lib/hsu/i18n/messages/notify";
 import { tr } from "@/lib/hsu/i18n/server";
 import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
-import { emailMode } from "@/lib/hsu/email-prefs";
+import { emailModesFor } from "@/lib/hsu/email-prefs";
 
 export const runtime = "nodejs";
 
@@ -56,13 +56,15 @@ export async function POST(req: Request) {
 
   const origin = originOf(req);
   after(async () => {
-    // Boð á einn lækni er persónulegt; vakt á markaðinn fer á alla — sinn hvor flokkurinn.
-    if ((await emailMode(target ? "marketMine" : "market")) !== "now") return;
     // Bakvakt á markaði: aðeins þeir sem mega taka hana fá póst.
     let others = supabaseAdmin.from("hsu_doctors").select("id, name, email, lang").eq("active", true).neq("id", me.id);
     if (bakvakt) others = others.eq("can_bakvakt", true);
     const recipients = target ? [target] : ((await others).data ?? []);
+    // Boð á einn lækni er persónulegt; vakt á markaðinn fer á alla — sinn hvor
+    // flokkurinn, og hver viðtakandi ræður sínum pósti.
+    const modes = await emailModesFor(recipients.map((r) => r.id), target ? "marketMine" : "market");
     for (const r of recipients) {
+      if (modes.get(r.id) !== "now") continue;
       const lang = isLang(r.lang) ? r.lang : DEFAULT_LANG;
       const tn = translator(notifyMsgs, lang);
       const kind = target ? "offer" : "open";

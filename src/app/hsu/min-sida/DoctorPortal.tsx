@@ -23,6 +23,7 @@ import PrefsTab from "./PrefsTab";
 import RosterTab from "./RosterTab";
 import CalendarTab from "./CalendarTab";
 import AccountTab from "./AccountTab";
+import EmailPrefsCard from "./EmailPrefsCard";
 import Journey, { useJourney } from "./Journey";
 
 type Tab = "yfirlit" | "vaktir" | "oskir" | "markadur" | "plan" | "stillingar";
@@ -154,6 +155,7 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
           <div className="space-y-8">
             <h1 className="text-xl font-bold">{t("settings.title")}</h1>
             <CalendarTab hasToken={me.hasCalendarToken} />
+            <EmailPrefsCard initial={me.emailPrefs} role={me.role} />
             <AccountTab me={me} refresh={refresh} />
           </div>
         )}

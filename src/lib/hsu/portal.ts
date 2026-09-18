@@ -3,6 +3,7 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { loadShiftTypes } from "./server";
 import { monthKey, type HsuMonth, type HsuPreference, type HsuShift, type HsuShiftType, type HsuSwap } from "./types";
+import { normalizeEmailPrefs, type EmailCategory, type EmailMode } from "./email-prefs";
 
 export interface Colleague { id: string; name: string; color: string; role: string; phone: string; email: string }
 
@@ -19,6 +20,8 @@ export interface PortalData {
   me: { id: string; name: string; email: string; role: string; hasPin: boolean; mustChangePassword: boolean; hasCalendarToken: boolean; dayWeekdays: number[]; lang: string;
     /** Google-dagatal tengt (vaktir samstillast sjálfkrafa). */
     googleConnected: boolean;
+    /** Tilkynningar í tölvupósti: flokkur → hamur (með sjálfgefnum gildum). */
+    emailPrefs: Record<EmailCategory, EmailMode>;
     /** Hvað notandinn hefur séð: {"tour:doctor": tími, …}. */
     onboarding: Record<string, string> };
   shiftTypes: HsuShiftType[];
@@ -42,7 +45,7 @@ export async function loadPortal(doctorId: string): Promise<PortalData> {
   const first = `${monthKey(new Date())}-01`;
 
   const [me, colleagues, myShifts, months, prefs, swaps, settings, requests, notifications, google] = await Promise.all([
-    supabaseAdmin.from("hsu_doctors").select("id, name, email, role, pin_hash, must_change_password, calendar_token, day_weekdays, lang, onboarding").eq("id", doctorId).single(),
+    supabaseAdmin.from("hsu_doctors").select("id, name, email, role, pin_hash, must_change_password, calendar_token, day_weekdays, lang, onboarding, email_prefs").eq("id", doctorId).single(),
     supabaseAdmin.from("hsu_doctors").select("id, name, color, role, phone, email").eq("active", true).order("name"),
     supabaseAdmin.from("hsu_shifts").select("id, shift_date, shift_type_id, label, starts, ends, doctor_id, status, note, vinnustund_logged_at")
       .eq("doctor_id", doctorId).eq("published", true).is("confirm_status", null).gte("shift_date", first).order("shift_date").order("starts"),
@@ -75,6 +78,7 @@ export async function loadPortal(doctorId: string): Promise<PortalData> {
       hasPin: Boolean(me.data!.pin_hash), mustChangePassword: me.data!.must_change_password,
       hasCalendarToken: Boolean(me.data!.calendar_token),
       googleConnected: Boolean(google.data?.refresh_token && google.data?.calendar_id && google.data?.enabled !== false),
+      emailPrefs: normalizeEmailPrefs(me.data!.email_prefs),
       dayWeekdays: Array.isArray(me.data!.day_weekdays) ? me.data!.day_weekdays.map(Number) : [],
       lang: me.data!.lang ?? "is",
       onboarding: (me.data!.onboarding ?? {}) as Record<string, string>,
