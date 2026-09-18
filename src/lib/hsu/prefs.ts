@@ -59,11 +59,12 @@ export function sanitizePrefs(month: string, body: Record<string, unknown>, lang
 
 /**
  * Má læknirinn sjálfur breyta óskum fyrir þennan mánuð?
- * Opið meðan óskum er safnað; í yfirferð aðeins ef hann á eftir að senda eða
- * yfirlæknir bað um breytingar. Eftir að vaktaplan fer í smíði er lokað.
+ * Aðeins eftir að yfirlæknir hefur opnað mánuðinn: opið meðan óskum er
+ * safnað; í yfirferð aðeins ef hann á eftir að senda eða yfirlæknir bað um
+ * breytingar. Eftir að vaktaplan fer í smíði er lokað.
  */
 export function doctorMayEdit(monthStatus: string | null, prefStatus: PrefStatus | null): boolean {
-  if (!monthStatus || monthStatus === "collecting") return true;
+  if (monthStatus === "collecting") return true;
   if (monthStatus === "review") return prefStatus !== "approved" && prefStatus !== "submitted";
   return false;
 }

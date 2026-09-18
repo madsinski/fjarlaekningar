@@ -14,7 +14,7 @@ import {
   type DayMark, type DayPart, type DayPlan, type HsuPreference, type Mark, type PrefStatus,
 } from "@/lib/hsu/types";
 import { useCommon, useT } from "@/lib/hsu/i18n/client";
-import { capFirstL, dayLabelL, dayPartL, holidayL, monthLabelL, weekdayShortL } from "@/lib/hsu/i18n/format";
+import { capFirstL, dayLabelL, holidayL, monthLabelL, weekdayShortL } from "@/lib/hsu/i18n/format";
 import { prefs } from "@/lib/hsu/i18n/messages/prefs";
 import { Badge, Button, Notice, cx, inputCls } from "./ui";
 
@@ -85,7 +85,7 @@ export function rich(text: string, parts: Record<string, React.ReactNode>): Reac
 }
 
 export default function PrefsEditor({
-  month, initial, status, reviewNote, editable, lockedReason, onSave, mode = "doctor", onLoadPrevious, dayWorkSlot, onProgress, dayWeekdays = [],
+  month, initial, status, reviewNote, editable, lockedReason, onSave, mode = "doctor", onLoadPrevious, onProgress, dayWeekdays = [],
 }: {
   month: string;
   initial: PrefDraft;
@@ -96,12 +96,10 @@ export default function PrefsEditor({
   mode?: "doctor" | "admin";
   onSave: (draft: PrefDraft, opts: { submit: boolean; alsoNext: boolean; approve?: boolean }) => Promise<{ ok: boolean; error?: string; copiedTo?: string | null }>;
   onLoadPrevious?: () => Promise<PrefDraft | null>;
-  /** Fastir dagvinnudagar læknisins (gilda alla mánuði) — birtast í skrefi 3. */
-  dayWorkSlot?: React.ReactNode;
   /** Föstu vikudagarnir á flýtimóttöku (tómt = allir virkir dagar) — sjálfgefið í dagatali skrefs 3. */
   dayWeekdays?: number[];
   /** Hvaða skref eru búin (2 = dagar merktir, 6 = sent) — fyrir yfirlitið efst. */
-  onProgress?: (p: { daysMarked: boolean; sent: boolean }) => void;
+  onProgress?: (p: { daysMarked: boolean; fmMarked: boolean; sent: boolean }) => void;
 }) {
   const t = useT(prefs);
   const c = useCommon();
@@ -219,8 +217,9 @@ export default function PrefsEditor({
 
   const steps = mode === "doctor" && editable;
   const daysMarked = counts.off + counts.want + counts.ok > 0 || Object.keys(draft.weekday_marks).length > 0;
+  const fmMarked = Object.keys(draft.day_part_marks).length > 0;
   const sent = (status === "submitted" || status === "approved") && !dirty;
-  useEffect(() => { onProgress?.({ daysMarked, sent }); }, [onProgress, daysMarked, sent]);
+  useEffect(() => { onProgress?.({ daysMarked, fmMarked, sent }); }, [onProgress, daysMarked, fmMarked, sent]);
 
   const save = async (submit: boolean, approve = false) => {
     if (draft.min_shifts != null && draft.max_shifts != null && draft.min_shifts > draft.max_shifts) {
@@ -348,32 +347,11 @@ export default function PrefsEditor({
 
       </Step>
 
-      <Step n={3} steps={steps} id="skref-3" optional title={t("step3.title")}
+      <Step n={3} steps={steps} done={fmMarked} id="skref-3" title={t("step3.title")}
         hint={t("step3.hint")}
         plainTitle={t("step3.title")}>
-        {dayWorkSlot}
-        <div className={dayWorkSlot ? "mt-4" : ""}>
-          <div className="text-xs font-semibold text-slate-600">{t("step3.dayPartLabel")}</div>
-        <div className="mt-1.5 flex flex-wrap items-center gap-1">
-          {(["all", "am", "pm"] as const).map((v) => (
-            <button key={v} type="button" disabled={!editable} onClick={() => update((x) => ({ ...x, day_part: v }))}
-              className={cx("rounded-lg px-3 py-1.5 text-xs font-semibold transition",
-                draft.day_part === v ? "bg-[var(--hsu)] text-white" : "bg-slate-100 text-slate-500")}>
-              {dayPartL(v, t.lang)}
-            </button>
-          ))}
-          {Object.keys(draft.day_part_marks).length > 0 && (
-            <span className="ml-1 text-[11px] text-slate-500">
-              {t.n("step3.marked", Object.keys(draft.day_part_marks).length)}
-              {editable && <button type="button" className="ml-1 underline" onClick={() => update((x) => ({ ...x, day_part_marks: {} }))}>{t("step3.clear")}</button>}
-            </span>
-          )}
-        </div>
-        </div>
-
-        {/* Einstakir dagar: smellt á dag fer Allan → f.h. → e.h. → Ekki → eftir reglu. */}
-        <div className="mt-5">
-          <div className="text-xs font-semibold text-slate-600">{t("step3.calendarLabel")}</div>
+        {/* Penslar og dagatal: smellt eða dregið yfir daga, eins og í skrefi 2. */}
+        <div>
           <p className="text-[11px] text-slate-500">{t("step3.calendarHint")}</p>
           {editable && (
             <div className="mt-2 grid grid-cols-2 gap-2 sm:inline-grid sm:w-auto sm:grid-cols-5">
@@ -523,12 +501,12 @@ export function Step({ n, steps, title, hint, plainTitle, done, optional, id, ch
 }
 
 /** Yfirlit skrefanna efst — hvert þeirra er hlekkur á sitt skref. */
-export function PrefsStepNav({ daysMarked, sent }: { daysMarked: boolean; sent: boolean }) {
+export function PrefsStepNav({ daysMarked, fmMarked = false, sent }: { daysMarked: boolean; fmMarked?: boolean; sent: boolean }) {
   const t = useT(prefs);
   const items = [
     { n: 1, label: t("nav.1"), done: true },
     { n: 2, label: t("nav.2"), done: daysMarked },
-    { n: 3, label: t("nav.3"), done: false, optional: true },
+    { n: 3, label: t("nav.3"), done: fmMarked },
     { n: 4, label: t("nav.5"), done: false, optional: true },
     { n: 5, label: t("nav.6"), done: sent },
   ];
