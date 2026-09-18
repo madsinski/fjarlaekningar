@@ -17,6 +17,8 @@ export interface PortalNotification {
 
 export interface PortalData {
   me: { id: string; name: string; email: string; role: string; hasPin: boolean; mustChangePassword: boolean; hasCalendarToken: boolean; dayWeekdays: number[]; lang: string;
+    /** Google-dagatal tengt (vaktir samstillast sjálfkrafa). */
+    googleConnected: boolean;
     /** Hvað notandinn hefur séð: {"tour:doctor": tími, …}. */
     onboarding: Record<string, string> };
   shiftTypes: HsuShiftType[];
@@ -39,7 +41,7 @@ export async function loadPortal(doctorId: string): Promise<PortalData> {
   const today = new Date().toISOString().slice(0, 10);
   const first = `${monthKey(new Date())}-01`;
 
-  const [me, colleagues, myShifts, months, prefs, swaps, settings, requests, notifications] = await Promise.all([
+  const [me, colleagues, myShifts, months, prefs, swaps, settings, requests, notifications, google] = await Promise.all([
     supabaseAdmin.from("hsu_doctors").select("id, name, email, role, pin_hash, must_change_password, calendar_token, day_weekdays, lang, onboarding").eq("id", doctorId).single(),
     supabaseAdmin.from("hsu_doctors").select("id, name, color, role, phone, email").eq("active", true).order("name"),
     supabaseAdmin.from("hsu_shifts").select("id, shift_date, shift_type_id, label, starts, ends, doctor_id, status, note, vinnustund_logged_at")
@@ -60,6 +62,7 @@ export async function loadPortal(doctorId: string): Promise<PortalData> {
       .eq("doctor_id", doctorId)
       .or(`read_at.is.null,created_at.gte.${new Date(Date.now() - 30 * 86400_000).toISOString()}`)
       .order("created_at", { ascending: false }).limit(40),
+    supabaseAdmin.from("hsu_google_sync").select("refresh_token, calendar_id, enabled").eq("doctor_id", doctorId).maybeSingle(),
   ]);
 
   for (const r of [me, colleagues, myShifts, months, prefs, swaps, requests, notifications]) {
@@ -71,6 +74,7 @@ export async function loadPortal(doctorId: string): Promise<PortalData> {
       id: me.data!.id, name: me.data!.name, email: me.data!.email, role: me.data!.role,
       hasPin: Boolean(me.data!.pin_hash), mustChangePassword: me.data!.must_change_password,
       hasCalendarToken: Boolean(me.data!.calendar_token),
+      googleConnected: Boolean(google.data?.refresh_token && google.data?.calendar_id && google.data?.enabled !== false),
       dayWeekdays: Array.isArray(me.data!.day_weekdays) ? me.data!.day_weekdays.map(Number) : [],
       lang: me.data!.lang ?? "is",
       onboarding: (me.data!.onboarding ?? {}) as Record<string, string>,

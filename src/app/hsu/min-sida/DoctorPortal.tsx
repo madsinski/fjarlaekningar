@@ -1,27 +1,28 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  AlertTriangle, ArrowLeftRight, Bell, CalendarCheck, CalendarRange, Check, CheckCircle2, ChevronRight, ClipboardList, ExternalLink, Home, Settings, Store,
+  AlertTriangle, ArrowLeftRight, Bell, CalendarCheck, CalendarRange, Check, CheckCircle2, ClipboardList, ExternalLink, Home, Settings, Store,
 } from "lucide-react";
 import Tour, { markOnboarding, type TourStep } from "../_components/Tour";
 import { useCommon, useT } from "@/lib/hsu/i18n/client";
 import { onboarding as onboardingMsgs } from "@/lib/hsu/i18n/messages/onboarding";
 import { portal } from "@/lib/hsu/i18n/messages/portal";
 import type { Lang } from "@/lib/hsu/i18n/core";
-import { capFirstL, dayLabelL, holidayL, monthLabelL, shiftPeriodL, weekdayLongL, weekdayShortOf } from "@/lib/hsu/i18n/format";
+import { dayLabelL, holidayL, monthLabelL, shiftPeriodL, weekdayShortOf } from "@/lib/hsu/i18n/format";
 import HsuHeader from "../_components/HsuHeader";
 import { Badge, Button, Card, Field, Modal, Notice, cx, firstName, hsuApi, inputCls, shortName } from "../_components/ui";
 import type { PortalData } from "@/lib/hsu/portal";
 import {
-  hhmm, holidayName, monthKey, shiftMonth, weekdayOf,
+  hhmm, holidayName,
   type HsuShift, type HsuShiftType, type HsuSwap,
 } from "@/lib/hsu/types";
 import PrefsTab from "./PrefsTab";
 import RosterTab from "./RosterTab";
 import CalendarTab from "./CalendarTab";
 import AccountTab from "./AccountTab";
+import Journey, { useJourney } from "./Journey";
 
 type Tab = "yfirlit" | "vaktir" | "oskir" | "markadur" | "plan" | "stillingar";
 
@@ -74,7 +75,7 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
   const tourSteps: TourStep[] = [
     { title: to("doctor.0.title", { name: firstName(me.name) }), body: to("doctor.0.body") },
     { target: "tabs", title: to("doctor.1.title"), body: to("doctor.1.body") },
-    { target: "tab-yfirlit", title: to("doctor.2.title"), body: to("doctor.2.body"), before: () => setTab("yfirlit") },
+    { target: "journey|tab-yfirlit", title: to("doctor.2.title"), body: to("doctor.2.body"), before: () => setTab("yfirlit") },
     { target: "tab-oskir", title: to("doctor.3.title"), body: to("doctor.3.body"), before: () => setTab("oskir") },
     { target: "tab-vaktir", title: to("doctor.4.title"), body: to("doctor.4.body"), before: () => setTab("vaktir") },
     { target: "tab-markadur", title: to("doctor.5.title"), body: to("doctor.5.body"), before: () => setTab("markadur") },
@@ -136,7 +137,7 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
 
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
         {tab === "yfirlit" && (
-          <Overview data={data} incoming={incoming} market={market} prefActions={prefActions.map((m) => m.month)} go={setTab} onLog={logVinnustund} />
+          <Overview data={data} incoming={incoming} market={market} go={setTab} onLog={logVinnustund} />
         )}
         {tab === "vaktir" && <ShiftsTab data={data} swaps={mine} refresh={refresh} onLog={logVinnustund} />}
         {tab === "oskir" && <PrefsTab data={data} initialMonth={initialMonth} refresh={refresh} />}
@@ -158,22 +159,17 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
 
 // ── Yfirlit ────────────────────────────────────────────────────────────────
 
-function Overview({ data, incoming, market, prefActions, go, onLog }: {
-  data: PortalData; incoming: HsuSwap[]; market: HsuSwap[]; prefActions: string[]; go: (t: Tab) => void;
+function Overview({ data, incoming, market, go, onLog }: {
+  data: PortalData; incoming: HsuSwap[]; market: HsuSwap[]; go: (t: Tab) => void;
   onLog: (s: HsuShift, done: boolean) => void;
 }) {
   const upcoming = data.myShifts.filter((s) => s.shift_date >= data.today);
-  const nextShift = upcoming[0];
-  const thisMonth = monthKey(new Date());
-  const nextMonth = shiftMonth(thisMonth, 1);
-  const count = (m: string) => data.myShifts.filter((s) => s.shift_date.startsWith(m)).length;
   const t = useT(portal);
-  const L = t.lang;
   const hour = new Date().getHours();
-  const daysUntil = nextShift ? Math.round((Date.parse(nextShift.shift_date) - Date.parse(data.today)) / 86400000) : null;
   // Liðnar forvaktir/bakvaktir sem á eftir að merkja við í Vinnustund.
   const onCall = new Set(data.shiftTypes.filter((t) => t.kind === "forvakt" || t.kind === "bakvakt").map((t) => t.id));
   const unlogged = data.myShifts.filter((s) => s.shift_date <= data.today && onCall.has(s.shift_type_id ?? "") && !s.vinnustund_logged_at);
+  const jr = useJourney({ data, incoming, market, unlogged: unlogged.length, go });
 
   return (
     <div className="space-y-6">
@@ -182,73 +178,8 @@ function Overview({ data, incoming, market, prefActions, go, onLog }: {
         <p className="text-sm text-slate-500">{data.unitName}</p>
       </div>
 
-      {data.me.mustChangePassword && (
-        <Notice tone="warn">
-          <span className="font-semibold">{t("pw.title")}</span> {t("pw.body")}{" "}
-          <button className="font-semibold underline" onClick={() => go("stillingar")}>{t("pw.change")}</button>
-        </Notice>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="overflow-hidden md:col-span-2">
-          <div className="bg-gradient-to-br from-[var(--hsu)] to-[#2c6cc0] p-5 text-white">
-            <div className="text-xs font-semibold uppercase tracking-wider text-white/70">{t("next.title")}</div>
-            {nextShift ? (
-              <>
-                <div className="mt-1 text-2xl font-bold">{capFirstL(weekdayLongL(weekdayOf(nextShift.shift_date), L), L)} {dayLabelL(nextShift.shift_date, L)}</div>
-                <div className="mt-0.5 text-white/90">{nextShift.label} · {hhmm(nextShift.starts)}–{hhmm(nextShift.ends)}{holidayName(nextShift.shift_date) ? ` · ${holidayL(holidayName(nextShift.shift_date), L)}` : ""}</div>
-                <div className="mt-3 inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
-                  {daysUntil === 0 ? t("next.today") : daysUntil === 1 ? t("next.tomorrow") : t("next.inDays", { n: daysUntil })}
-                </div>
-              </>
-            ) : (
-              <div className="mt-1 text-lg font-semibold">{t("next.none")}</div>
-            )}
-          </div>
-          <div className="grid grid-cols-3 divide-x divide-slate-100">
-            {[
-              [monthLabelL(thisMonth, L), count(thisMonth)],
-              [monthLabelL(nextMonth, L), count(nextMonth)],
-              [t("stats.upcoming"), upcoming.length],
-            ].map(([l, v]) => (
-              <div key={String(l)} className="p-4 text-center">
-                <div className="text-2xl font-bold tabular-nums text-slate-900">{v}</div>
-                <div className="text-[11px] text-slate-500">{capFirstL(String(l), L)}</div>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        <div className="space-y-3">
-          {prefActions.map((m) => {
-            const month = data.months.find((x) => x.month === m);
-            const pref = data.prefs.find((p) => p.month === m);
-            return (
-              <ActionCard key={m} tone={pref?.status === "changes_requested" ? "red" : "blue"} onClick={() => go("oskir")}
-                urgent cta={t("action.prefsCta")} icon={<ClipboardList className="h-5 w-5" />}
-                title={t(pref?.status === "changes_requested" ? "action.prefsChanges" : "action.prefsRegister", { month: monthLabelL(m, L) })}
-                text={month?.prefs_deadline ? t("action.prefsDeadline", { date: dayLabelL(month.prefs_deadline, L) }) : t("action.prefsHint")} />
-            );
-          })}
-          {unlogged.length > 0 && (
-            <ActionCard tone="amber" onClick={() => go("vaktir")}
-              title={t.n("action.unlogged", unlogged.length)}
-              text={t("action.unlogged.text")} />
-          )}
-          {data.requests.length > 0 && (
-            <ActionCard tone="red" onClick={() => go("vaktir")} title={t.n("action.requests", data.requests.length)} text={t("action.requests.text")} />
-          )}
-          {incoming.length > 0 && (
-            <ActionCard tone="purple" onClick={() => go("markadur")} title={t.n("action.incoming", incoming.length)} text={t("action.incoming.text")} />
-          )}
-          {market.length > 0 && (
-            <ActionCard tone="amber" onClick={() => go("markadur")} title={t("action.market", { n: market.length })} text={t("action.market.text")} />
-          )}
-          {prefActions.length === 0 && incoming.length === 0 && market.length === 0 && data.requests.length === 0 && unlogged.length === 0 && (
-            <Card className="p-5 text-sm text-slate-500">{t("action.nothing")}</Card>
-          )}
-        </div>
-      </div>
+      {/* Leiðin í gegnum mánuðinn — opnast á skrefinu sem á við núna. */}
+      <Journey steps={jr.steps} landing={jr.landing} planMonth={jr.planMonth} extra={<VinnustundLink />} />
 
       <div>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -264,56 +195,6 @@ function Overview({ data, incoming, market, prefActions, go, onLog }: {
         </Card>
       </div>
     </div>
-  );
-}
-
-/**
- * Verk sem bíður læknisins. `urgent` er fyrir það sem má ekki fara fram hjá
- * honum (vaktaóskir sem á eftir að skrá): litað bak, hringur um kortið,
- * áberandi hnappur — og blikkandi punktur ef fresturinn er runninn upp.
- */
-function ActionCard({ title, text, tone, onClick, urgent = false, cta, icon }: {
-  title: string; text: string; tone: "blue" | "red" | "amber" | "purple"; onClick: () => void;
-  urgent?: boolean; cta?: string; icon?: ReactNode;
-}) {
-  const bar = { blue: "bg-[var(--hsu)]", red: "bg-red-500", amber: "bg-amber-400", purple: "bg-violet-500" }[tone];
-  const loud = {
-    blue: "bg-[var(--hsu-soft)] ring-[var(--hsu)]/30",
-    red: "bg-red-50 ring-red-300",
-    amber: "bg-amber-50 ring-amber-300",
-    purple: "bg-violet-50 ring-violet-300",
-  }[tone];
-  const dot = { blue: "bg-[var(--hsu)]", red: "bg-red-500", amber: "bg-amber-500", purple: "bg-violet-500" }[tone];
-  return (
-    <button onClick={onClick}
-      className={cx("flex w-full items-stretch overflow-hidden rounded-2xl border text-left transition hover:shadow-md",
-        urgent ? cx("border-transparent ring-2 shadow-sm", loud) : "border-slate-200 bg-white")}>
-      <span className={cx("w-1.5 shrink-0", bar)} />
-      <span className={cx("flex-1 p-4", urgent && "sm:p-5")}>
-        <span className="flex items-center gap-3">
-          {urgent && icon && (
-            <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[var(--hsu-dark)] shadow-sm">
-              {icon}
-              <span className="absolute -right-1 -top-1 flex h-3 w-3">
-                <span className={cx("absolute h-full w-full animate-ping rounded-full opacity-60", dot)} />
-                <span className={cx("relative h-3 w-3 rounded-full ring-2 ring-white", dot)} />
-              </span>
-            </span>
-          )}
-          <span className="min-w-0 flex-1">
-            <span className={cx("block font-bold text-slate-900", urgent ? "text-base leading-snug" : "text-sm")}>{title}</span>
-            <span className={cx("block", urgent ? "text-sm text-slate-700" : "text-xs text-slate-500")}>{text}</span>
-          </span>
-          {!urgent && <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />}
-        </span>
-        {/* Hnappurinn á eigin línu: dálkurinn er mjór og fyrirsögnin á ekki að þrengjast. */}
-        {urgent && cta && (
-          <span className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl bg-[var(--hsu)] px-3 py-2.5 text-sm font-semibold text-white shadow-sm">
-            {cta} <ChevronRight className="h-4 w-4" />
-          </span>
-        )}
-      </span>
-    </button>
   );
 }
 
