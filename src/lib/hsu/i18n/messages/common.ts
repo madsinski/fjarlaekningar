@@ -85,10 +85,10 @@ export const common = defineMessages(
   },
   {
     en: {
-      "app.name": "HSU Rota",
-      "app.tagline": "Doctors' rota",
+      "app.name": "HSU Shifts",
+      "app.tagline": "Doctors' shifts",
       "app.unit": "Vestmannaeyjar Health Centre",
-      "app.planner": "Rota planning",
+      "app.planner": "Shift planning",
 
       "month.1": "January", "month.2": "February", "month.3": "March", "month.4": "April",
       "month.5": "May", "month.6": "June", "month.7": "July", "month.8": "August",
@@ -108,7 +108,7 @@ export const common = defineMessages(
       "monthStatus.none": "Not started",
       "monthStatus.collecting": "Requests open",
       "monthStatus.review": "Reviewing requests",
-      "monthStatus.planning": "Rota in progress",
+      "monthStatus.planning": "Schedule in progress",
       "monthStatus.published": "Published",
 
       "prefStatus.none": "Not started",
@@ -153,7 +153,7 @@ export const common = defineMessages(
       "action.tour": "Tour of the system",
 
       "nav.myPage": "My page",
-      "nav.planner": "Rota planning (chief)",
+      "nav.planner": "Shift planning (chief)",
       "nav.fjarAdmin": "Fjarlækningar admin",
       "nav.language": "Language",
 

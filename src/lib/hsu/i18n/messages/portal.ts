@@ -132,7 +132,7 @@ export const portal = defineMessages(
       "tab.vaktir": "My shifts",
       "tab.oskir": "Requests",
       "tab.markadur": "Shift market",
-      "tab.plan": "Rota",
+      "tab.plan": "Schedule",
       "tab.stillingar": "Settings",
       "settings.title": "Settings",
       "unknownDoctor": "unknown",

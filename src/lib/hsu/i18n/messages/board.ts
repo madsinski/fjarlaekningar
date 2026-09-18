@@ -186,11 +186,11 @@ export const board = defineMessages(
       "slots.merged_other": "{n} halves merged",
       "slots.inSync": "This month's shifts match the shift types and the doctors' requests.",
 
-      "empty.title": "Create the rota for {month}",
+      "empty.title": "Create the schedule for {month}",
       "empty.body": "The system creates shifts from the shift types ({types}) and distributes them among the doctors according to their working percentage. “Can't work” is always respected, weekends and public holidays are spread evenly, and requested days are honoured where possible.",
       "empty.noTypesList": "none",
       "empty.noTypes": "No active shift types. Set them up under Settings.",
-      "empty.generate": "Create rota",
+      "empty.generate": "Create schedule",
       "empty.slotsOnly": "Empty shifts — assign them myself",
 
       "tool.fillEmpty": "Fill empty ({n})",
