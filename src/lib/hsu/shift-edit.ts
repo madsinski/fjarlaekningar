@@ -13,7 +13,7 @@ import { hsuSync } from "./calendar";
 import { shiftPhrase } from "./market";
 import { notifyDoctors, type DoctorNotice } from "./notify";
 import { dayPartFor, fitsDayPart, markFor, monthRange, partOfShift, wantsEveningOn, type DayPart, type ShiftPeriod } from "./types";
-import { worksDayShift } from "./plan";
+import { worksDayShiftOn } from "./plan";
 import { DEFAULT_LANG, translator, type Lang, type Translator } from "./i18n/core";
 import { apiAdmin } from "./i18n/messages/api-admin";
 
@@ -78,14 +78,6 @@ export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: s
   // Tvennt kallar á beiðni: dagvakt á vikudegi sem hann vinnur ekki dagvinnu,
   // og vakt umfram hámarkið sem hann skráði.
   const requestIds = new Map<string, "off" | "weekday" | "eveningweek" | "daypart" | "max">();
-  for (const c of real) {
-    const s = byId.get(c.id)!;
-    if (!c.doctor_id) continue;
-    const doc = docById.get(c.doctor_id);
-    if (periodOfShift(s) === "day" && !worksDayShift({ dayWeekdays: doc?.day_weekdays ?? [] }, s.shift_date)) {
-      requestIds.set(c.id, "weekday");
-    }
-  }
   const months = [...new Set(real.filter((c) => c.doctor_id).map((c) => byId.get(c.id)!.shift_date.slice(0, 7)))];
   for (const month of months) {
     const inMonth = real.filter((c) => c.doctor_id && byId.get(c.id)!.shift_date.startsWith(month));
@@ -101,6 +93,12 @@ export async function applyShiftChanges(changes: ShiftChange[], opts: { actor: s
     for (const c of inMonth) {
       const s = byId.get(c.id)!;
       if (requestIds.has(c.id)) continue;
+      // Dagvakt á degi sem læknirinn vinnur ekki (föstu vikudagarnir eða stakur dagur í óskunum).
+      const doc = docById.get(c.doctor_id!);
+      if (periodOfShift(s) === "day" && !worksDayShiftOn({ dayWeekdays: doc?.day_weekdays ?? [] }, prefOf.get(c.doctor_id!) as { day_part_marks?: Record<string, string> }, s.shift_date)) {
+        requestIds.set(c.id, "weekday");
+        continue;
+      }
       if (markFor(prefOf.get(c.doctor_id!), s.shift_date) === "off") { requestIds.set(c.id, "off"); continue; }
       // Læknir sem óskaði t.d. aðeins eftir fimmtudagsvöktum: aðrir dagar eru beiðni.
       if (periodOfShift(s) === "evening" && !wantsEveningOn(prefOf.get(c.doctor_id!) as { evening_weekdays?: number[] }, s.shift_date)) {

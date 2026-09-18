@@ -118,6 +118,7 @@ export default function PrefsTab({ data, initialMonth, refresh }: { data: Portal
         onLoadPrevious={loadPrevious}
         onProgress={onProgress}
         dayWorkSlot={<DayWeekdaysCard initial={data.me.dayWeekdays} refresh={refresh} />}
+        dayWeekdays={data.me.dayWeekdays}
       />
     </div>
   );

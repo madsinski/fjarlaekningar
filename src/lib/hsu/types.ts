@@ -101,7 +101,7 @@ export interface HsuPreference {
   /** Ósk um dagvaktir: allan daginn, fyrir hádegi eða eftir hádegi. Regla mánaðarins. */
   day_part: DayPart;
   /** Undantekningar frá reglunni, dagsetning → hluti dags. */
-  day_part_marks: Record<string, DayPart>;
+  day_part_marks: Record<string, DayPlan>;
   min_shifts: number | null;
   max_shifts: number | null;
   note: string;
@@ -232,16 +232,24 @@ export const splitTimeOf = (t: { split_at?: string | null }) => (t.split_at ?? "
 // síðari hlutann. Óskin er á lækninum (day_part), skiptingin á vaktinni.
 
 export type DayPart = "all" | "am" | "pm";
+/**
+ * Stakur dagur á flýtimóttöku: allan daginn, fyrri eða síðari hluta — eða
+ * „none“, ekki á flýtimóttöku þann dag. Dagur með all/am/pm gildir líka utan
+ * föstu vikudaganna (day_weekdays); „none“ tekur daginn út þótt vikudagurinn gildi.
+ */
+export type DayPlan = DayPart | "none";
 
 export const DAY_PART_IS: Record<DayPart, string> = { all: "Allan daginn", am: "Fyrir hádegi", pm: "Eftir hádegi" };
 export const DAY_PART_SHORT_IS: Record<DayPart, string> = { all: "", am: "f.h.", pm: "e.h." };
 
 /** Ósk læknisins um þennan dag: undantekning dagsins, annars regla mánaðarins. */
 export function dayPartFor(
-  pref: { day_part?: DayPart | null; day_part_marks?: Record<string, DayPart> | null } | null | undefined,
+  pref: { day_part?: DayPart | null; day_part_marks?: Record<string, DayPlan> | null } | null | undefined,
   date: string,
 ): DayPart {
-  return pref?.day_part_marks?.[date] ?? pref?.day_part ?? "all";
+  const mark = pref?.day_part_marks?.[date];
+  // „none“ segir hvort læknirinn vinnur daginn (worksDayShiftOn), ekki hvaða hluta.
+  return (mark && mark !== "none" ? mark : null) ?? pref?.day_part ?? "all";
 }
 
 /** Hvaða hluta dagsins nær vaktin yfir, miðað við tímana sem tegundin gefur. */

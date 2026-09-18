@@ -8,13 +8,13 @@
 // settar í hausnum og gilda allan mánuðinn; einstakur dagur trompar regluna.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Ban, Check, CircleCheck, Copy, Heart, Eraser, Send, Save, Sunrise, Sunset } from "lucide-react";
+import { Ban, Check, CircleCheck, Copy, Heart, Eraser, Send, Save } from "lucide-react";
 import {
   WEEKDAY_ORDER, datesInMonth, holidayName, markFor, shiftMonth, weekdayOf,
-  type DayMark, type DayPart, type HsuPreference, type Mark, type PrefStatus,
+  type DayMark, type DayPart, type DayPlan, type HsuPreference, type Mark, type PrefStatus,
 } from "@/lib/hsu/types";
 import { useCommon, useT } from "@/lib/hsu/i18n/client";
-import { capFirstL, dayLabelL, dayPartL, dayPartShortL, holidayL, monthLabelL, weekdayShortL } from "@/lib/hsu/i18n/format";
+import { capFirstL, dayLabelL, dayPartL, holidayL, monthLabelL, weekdayShortL } from "@/lib/hsu/i18n/format";
 import { prefs } from "@/lib/hsu/i18n/messages/prefs";
 import { Badge, Button, Notice, cx, inputCls } from "./ui";
 
@@ -25,16 +25,19 @@ export interface PrefDraft {
   evening_weekdays: number[];
   /** Dagvaktir: allan daginn, fyrir hádegi eða eftir hádegi — regla mánaðarins. */
   day_part: DayPart;
-  /** Stakir dagar sem víkja frá reglunni. */
-  day_part_marks: Record<string, DayPart>;
+  /** Stakir dagar á flýtimóttöku sem víkja frá reglunni (þ.m.t. „none“ = ekki þann dag). */
+  day_part_marks: Record<string, DayPlan>;
   min_shifts: number | null;
   max_shifts: number | null;
   note: string;
 }
 
-type Brush = "off" | "want" | "ok" | "am" | "pm" | "clear";
+type Brush = "off" | "want" | "ok" | "clear";
 /** Það sem pensilstroka gerir í raun — ákveðið á fyrsta degi strokunnar. */
-type Stroke = Brush | "unpart";
+type Stroke = Brush;
+
+/** Röðin þegar smellt er á dag á flýtimóttöku í skrefi 3; eftir „none“ gildir reglan aftur. */
+const FM_CYCLE: DayPlan[] = ["all", "am", "pm", "none"];
 
 export const PREF_TONE: Record<PrefStatus | "none", "slate" | "blue" | "green" | "amber" | "red"> = {
   none: "slate", draft: "amber", submitted: "blue", approved: "green", changes_requested: "red",
@@ -82,7 +85,7 @@ export function rich(text: string, parts: Record<string, React.ReactNode>): Reac
 }
 
 export default function PrefsEditor({
-  month, initial, status, reviewNote, editable, lockedReason, onSave, mode = "doctor", onLoadPrevious, dayWorkSlot, onProgress,
+  month, initial, status, reviewNote, editable, lockedReason, onSave, mode = "doctor", onLoadPrevious, dayWorkSlot, onProgress, dayWeekdays = [],
 }: {
   month: string;
   initial: PrefDraft;
@@ -95,6 +98,8 @@ export default function PrefsEditor({
   onLoadPrevious?: () => Promise<PrefDraft | null>;
   /** Fastir dagvinnudagar læknisins (gilda alla mánuði) — birtast í skrefi 3. */
   dayWorkSlot?: React.ReactNode;
+  /** Föstu vikudagarnir á flýtimóttöku (tómt = allir virkir dagar) — sjálfgefið í dagatali skrefs 3. */
+  dayWeekdays?: number[];
   /** Hvaða skref eru búin (2 = dagar merktir, 6 = sent) — fyrir yfirlitið efst. */
   onProgress?: (p: { daysMarked: boolean; sent: boolean }) => void;
 }) {
@@ -129,18 +134,30 @@ export default function PrefsEditor({
 
   const applyBrush = (date: string, b: Stroke) => {
     update((d) => {
-      // Hálfur dagur er sjálfstæð merking: dagurinn getur bæði verið „vil
-      // gjarnan" og „aðeins fyrir hádegi".
-      if (b === "am" || b === "pm" || b === "unpart") {
-        const parts = { ...d.day_part_marks };
-        if (b === "unpart") delete parts[date]; else parts[date] = b;
-        return { ...d, day_part_marks: parts };
-      }
       const day = { ...d.day_marks };
-      const parts = { ...d.day_part_marks };
       // Hreinsa fjarlægir merkingu dagsins; vikudagsregla gildir þá aftur.
-      if (b === "clear") { delete day[date]; delete parts[date]; } else day[date] = b;
-      return { ...d, day_marks: day, day_part_marks: parts };
+      // Flýtimóttakan (skref 3) er sér og breytist ekki hér.
+      if (b === "clear") delete day[date]; else day[date] = b;
+      return { ...d, day_marks: day };
+    });
+  };
+
+  // ── Skref 3: stakir dagar á flýtimóttöku ──
+  // Sjálfgefið: föstu vikudagarnir og hluti dagsins úr reglu mánaðarins.
+  const fmDefault = (date: string): DayPlan =>
+    dayWeekdays.length === 0 || dayWeekdays.includes(weekdayOf(date)) ? draft.day_part : "none";
+  const fmDay = (date: string) => {
+    const wd = weekdayOf(date);
+    return wd >= 1 && wd <= 5 && !holidayName(date);
+  };
+  const cycleFm = (date: string) => {
+    if (!editable || !fmDay(date) || markFor(draft, date) === "off") return;
+    update((d) => {
+      const parts = { ...d.day_part_marks };
+      const cur = parts[date];
+      const next = cur === undefined ? FM_CYCLE[0] : FM_CYCLE[FM_CYCLE.indexOf(cur) + 1];
+      if (next === undefined) delete parts[date]; else parts[date] = next;
+      return { ...d, day_part_marks: parts };
     });
   };
 
@@ -148,10 +165,7 @@ export default function PrefsEditor({
   // hægt sé að fletta síðunni með fingri yfir dagatalinu án þess að mála.
   const mouseHandled = useRef(false);
   // Smellur á dag sem þegar ber þessa merkingu tekur hana af (toggle).
-  const brushFor = (date: string): Stroke => {
-    if (brush === "am" || brush === "pm") return draft.day_part_marks[date] === brush ? "unpart" : brush;
-    return brush !== "clear" && draft.day_marks[date] === brush ? "clear" : brush;
-  };
+  const brushFor = (date: string): Stroke => (brush !== "clear" && draft.day_marks[date] === brush ? "clear" : brush);
   const onDown = (e: React.PointerEvent, date: string) => {
     if (!editable || e.pointerType !== "mouse") return;
     e.preventDefault();
@@ -220,14 +234,9 @@ export default function PrefsEditor({
     const explicit = draft.day_marks[date];
     const m = markFor(draft, date);
     const fromWeekday = !explicit && m;
-    // Hálfur dagur er sjálfstæð merking: fjólublá fylling ef dagurinn er annars
-    // ómerktur, fjólublár rammi ofan á hinar merkingarnar.
-    const part = draft.day_part_marks[date];
-    const halfRing = part ? " ring-[3px] ring-inset ring-violet-500" : "";
-    if (m === "off") return (fromWeekday ? "bg-red-50 text-red-700 ring-1 ring-inset ring-red-200 [background-image:repeating-linear-gradient(135deg,transparent_0_6px,rgba(220,38,38,.07)_6px_12px)]" : "bg-red-500 text-white") + halfRing;
-    if (m === "want") return (fromWeekday ? "bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200 [background-image:repeating-linear-gradient(135deg,transparent_0_6px,rgba(5,150,105,.08)_6px_12px)]" : "bg-emerald-500 text-white") + halfRing;
-    if (explicit === "ok") return "bg-[var(--hsu)] text-white" + halfRing;
-    if (part) return "bg-violet-500 text-white";
+    if (m === "off") return fromWeekday ? "bg-red-50 text-red-700 ring-1 ring-inset ring-red-200 [background-image:repeating-linear-gradient(135deg,transparent_0_6px,rgba(220,38,38,.07)_6px_12px)]" : "bg-red-500 text-white";
+    if (m === "want") return fromWeekday ? "bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200 [background-image:repeating-linear-gradient(135deg,transparent_0_6px,rgba(5,150,105,.08)_6px_12px)]" : "bg-emerald-500 text-white";
+    if (explicit === "ok") return "bg-[var(--hsu)] text-white";
     return "bg-white text-slate-800 ring-1 ring-inset ring-slate-200 hover:bg-slate-50";
   };
 
@@ -235,8 +244,6 @@ export default function PrefsEditor({
     { key: "off", label: t("brush.off"), icon: <Ban className="h-4 w-4" />, cls: "data-[on=true]:bg-red-500 data-[on=true]:text-white data-[on=true]:ring-red-500" },
     { key: "want", label: t("brush.want"), icon: <Heart className="h-4 w-4" />, cls: "data-[on=true]:bg-emerald-500 data-[on=true]:text-white data-[on=true]:ring-emerald-500" },
     { key: "ok", label: t("brush.ok"), icon: <CircleCheck className="h-4 w-4" />, cls: "data-[on=true]:bg-[var(--hsu)] data-[on=true]:text-white data-[on=true]:ring-[var(--hsu)]" },
-    { key: "am", label: t("brush.am"), icon: <Sunrise className="h-4 w-4" />, cls: "data-[on=true]:bg-violet-500 data-[on=true]:text-white data-[on=true]:ring-violet-500" },
-    { key: "pm", label: t("brush.pm"), icon: <Sunset className="h-4 w-4" />, cls: "data-[on=true]:bg-violet-500 data-[on=true]:text-white data-[on=true]:ring-violet-500" },
     { key: "clear", label: t("brush.clear"), icon: <Eraser className="h-4 w-4" />, cls: "data-[on=true]:bg-slate-700 data-[on=true]:text-white data-[on=true]:ring-slate-700" },
   ];
 
@@ -262,7 +269,7 @@ export default function PrefsEditor({
         plainTitle={editable ? t("step2.plain") : undefined}>
         {editable && (
           <div className="mb-3">
-<div className="grid grid-cols-2 gap-2 sm:inline-grid sm:w-auto sm:grid-cols-3">
+<div className="grid grid-cols-2 gap-2 sm:inline-grid sm:w-auto sm:grid-cols-4">
             {brushes.map((b) => (
               <button key={b.key} type="button" data-on={brush === b.key} onClick={() => setBrush(b.key)}
                 className={cx("inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 transition", b.cls)}>
@@ -308,12 +315,6 @@ export default function PrefsEditor({
                 {m === "want" && <Heart className="h-3 w-3 opacity-80" />}
                 {!m && draft.day_marks[date] === "ok" && <CircleCheck className="h-3 w-3 opacity-80" />}
                 {h && <span className="absolute left-1 top-1 h-1.5 w-1.5 rounded-full bg-amber-400" title={h} />}
-                {draft.day_part_marks[date] && (
-                  <span className={cx("absolute bottom-0.5 right-1 rounded px-0.5 text-[9px] font-bold",
-                    m ? "bg-violet-600 text-white" : "text-white")}>
-                    {dayPartShortL(draft.day_part_marks[date] === "am" ? "am" : "pm", t.lang)}
-                  </span>
-                )}
               </button>
             );
           })}
@@ -324,7 +325,6 @@ export default function PrefsEditor({
           <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-[var(--hsu)]" /> {t("legend.ok", { n: counts.ok })}</span>
           <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded ring-1 ring-slate-300" /> {t("legend.unmarked", { n: counts.unmarked })}</span>
           <span className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-amber-400" /> {t("legend.holiday")}</span>
-          <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-violet-500" /> {t("legend.half", { n: Object.keys(draft.day_part_marks).length })}</span>
           <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-red-50 ring-1 ring-red-200" /> {t("legend.weekdayRule")}</span>
         </div>
       </div>
@@ -353,29 +353,49 @@ export default function PrefsEditor({
           )}
         </div>
         </div>
-      </Step>
 
-      <Step n={4} steps={steps} id="skref-4" optional title={t("step4.title")}
-        hint={t("step4.hint")}
-        plainTitle={t("step4.title")}>
-        <div className="mt-1.5 flex flex-wrap items-center gap-1">
-          {WEEKDAY_ORDER.map((d) => {
-            const on = draft.evening_weekdays.length === 0 || draft.evening_weekdays.includes(d);
-            return (
-              <button key={d} type="button" disabled={!editable}
-                onClick={() => update((x) => ({ ...x, evening_weekdays: x.evening_weekdays.includes(d) ? x.evening_weekdays.filter((y) => y !== d) : [...x.evening_weekdays, d].sort() }))}
-                className={cx("rounded-lg px-3 py-1.5 text-xs font-semibold transition", on ? "bg-[var(--hsu)] text-white" : "bg-slate-100 text-slate-500")}>
-                {weekdayShortL(d, t.lang)}
-              </button>
-            );
-          })}
-          {draft.evening_weekdays.length > 0 && editable && (
-            <button type="button" onClick={() => update((x) => ({ ...x, evening_weekdays: [] }))} className="px-2 text-xs font-medium text-slate-500 underline">{t("step4.allDays")}</button>
-          )}
+        {/* Einstakir dagar: smellt á dag fer Allan → f.h. → e.h. → Ekki → eftir reglu. */}
+        <div className="mt-5">
+          <div className="text-xs font-semibold text-slate-600">{t("step3.calendarLabel")}</div>
+          <p className="text-[11px] text-slate-500">{t("step3.calendarHint")}</p>
+          <div className="mt-2 grid grid-cols-7 gap-1.5 select-none">
+            {WEEKDAY_ORDER.map((wd) => (
+              <div key={wd} className="py-1 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">{weekdayShortL(wd, t.lang)}</div>
+            ))}
+            {weeks.flat().map((date, i) => {
+              if (!date) return <div key={`f${i}`} />;
+              const n = Number(date.slice(8));
+              if (!fmDay(date)) {
+                return <div key={date} className="flex aspect-square min-h-11 items-center justify-center rounded-xl text-sm text-slate-300 sm:aspect-[4/3]">{n}</div>;
+              }
+              const blocked = markFor(draft, date) === "off";
+              const explicit = draft.day_part_marks[date];
+              const eff: DayPlan = blocked ? "none" : explicit ?? fmDefault(date);
+              const label = blocked ? t("step3.cell.blocked") : t(`step3.cell.${eff}` as "step3.cell.all");
+              return (
+                <button key={date} type="button" onClick={() => cycleFm(date)} disabled={!editable || blocked}
+                  aria-label={t("step3.cell.aria", { day: dayLabelL(date, t.lang), state: label })}
+                  className={cx("relative flex aspect-square min-h-11 flex-col items-center justify-center rounded-xl text-sm font-semibold transition sm:aspect-[4/3]",
+                    blocked ? "bg-red-50 text-red-300 [background-image:repeating-linear-gradient(135deg,transparent_0_6px,rgba(220,38,38,.07)_6px_12px)]"
+                      : eff === "none" ? (explicit ? "bg-slate-200 text-slate-500 ring-2 ring-inset ring-slate-400" : "bg-white text-slate-400 ring-1 ring-inset ring-slate-200")
+                      : explicit ? "bg-[var(--hsu)] text-white" : "bg-[var(--hsu-soft)] text-[var(--hsu-dark)] ring-1 ring-inset ring-[var(--hsu)]/20",
+                    editable && !blocked && "hover:brightness-95")}>
+                  <span>{n}</span>
+                  <span className="text-[9px] font-bold leading-none">{label}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-500">
+            <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-[var(--hsu-soft)] ring-1 ring-[var(--hsu)]/20" /> {t("step3.legend.rule")}</span>
+            <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-[var(--hsu)]" /> {t("step3.legend.custom")}</span>
+            <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-slate-200 ring-1 ring-slate-400" /> {t("step3.legend.none")}</span>
+            <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-red-50 ring-1 ring-red-200" /> {t("step3.legend.blocked")}</span>
+          </div>
         </div>
       </Step>
 
-      <Step n={5} steps={steps} id="skref-5" optional title={t("step5.title")}
+      <Step n={4} steps={steps} id="skref-4" optional title={t("step5.title")}
         hint={t("step5.hint")}
         plainTitle={t("step5.title")}>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -401,7 +421,7 @@ export default function PrefsEditor({
       </Step>
 
       {editable && (
-        <Step n={6} steps={steps} done={sent} id="skref-6" title={t("step6.title")}
+        <Step n={5} steps={steps} done={sent} id="skref-5" title={t("step6.title")}
           hint={t("step6.hint")}>
           <div className="space-y-3">
           <label className="flex items-start gap-2.5 text-sm text-slate-700">
@@ -475,9 +495,8 @@ export function PrefsStepNav({ daysMarked, sent }: { daysMarked: boolean; sent: 
     { n: 1, label: t("nav.1"), done: true },
     { n: 2, label: t("nav.2"), done: daysMarked },
     { n: 3, label: t("nav.3"), done: false, optional: true },
-    { n: 4, label: t("nav.4"), done: false, optional: true },
-    { n: 5, label: t("nav.5"), done: false, optional: true },
-    { n: 6, label: t("nav.6"), done: sent },
+    { n: 4, label: t("nav.5"), done: false, optional: true },
+    { n: 5, label: t("nav.6"), done: sent },
   ];
   return (
     <nav aria-label={t("nav.aria")} className="overflow-x-auto">

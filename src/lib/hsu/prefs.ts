@@ -4,7 +4,7 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { translator, type Lang } from "./i18n/core";
 import { apiDoctor } from "./i18n/messages/api-doctor";
-import { datesInMonth, shiftMonth, type DayMark, type DayPart, type Mark, type HsuPreference, type PrefStatus } from "./types";
+import { datesInMonth, shiftMonth, type DayMark, type DayPart, type DayPlan, type Mark, type HsuPreference, type PrefStatus } from "./types";
 
 /** 0=sun … 6=lau. Tómt fylki = allir dagar. */
 function cleanWeekdayList(v: unknown): number[] {
@@ -34,7 +34,7 @@ export interface PrefInput {
   weekday_marks: Record<string, Mark>;
   evening_weekdays: number[];
   day_part: DayPart;
-  day_part_marks: Record<string, DayPart>;
+  day_part_marks: Record<string, DayPlan>;
   min_shifts: number | null;
   max_shifts: number | null;
   note: string;
@@ -46,7 +46,7 @@ export function sanitizePrefs(month: string, body: Record<string, unknown>, lang
     weekday_marks: cleanMarks<Mark>(body.weekday_marks, WEEKDAYS, ["off", "want"]),
     evening_weekdays: cleanWeekdayList(body.evening_weekdays),
     day_part: body.day_part === "am" || body.day_part === "pm" ? body.day_part : "all",
-    day_part_marks: cleanMarks<DayPart>(body.day_part_marks, new Set(datesInMonth(month)), ["all", "am", "pm"]),
+    day_part_marks: cleanMarks<DayPlan>(body.day_part_marks, new Set(datesInMonth(month)), ["all", "am", "pm", "none"]),
     min_shifts: cleanCount(body.min_shifts),
     max_shifts: cleanCount(body.max_shifts),
     note: typeof body.note === "string" ? body.note.slice(0, 1000) : "",

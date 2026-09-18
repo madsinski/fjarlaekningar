@@ -96,10 +96,18 @@ Forvakt og bakvakt sama dag eru því áfram tveir ólíkir læknar.
 
 ### Hálfur dagur: ósk læknis um f.h. eða e.h.
 
-Í **Óskum** velur hver læknir hvort hann vinnur **allan daginn, fyrir hádegi eða
-eftir hádegi** á flýtimóttöku. Valið gildir allan mánuðinn; þurfi stakur dagur
-að vera öðruvísi málar læknirinn hann með penslinum **Aðeins f.h.** eða
-**Aðeins e.h.** — sá dagur ber þá lítið „f.h.“/„e.h.“ merki í dagatalinu.
+Óskirnar eru í fimm skrefum: 1 mánuður · 2 **kvöld- og næturvaktir** (dagatal
+með Get ekki / Vil vinna / Laus, og vikudagsreglur efst) · 3 **flýtimóttaka** ·
+4 fjöldi og athugasemd · 5 senda. „Get ekki“ í skrefi 2 gildir um allar vaktir
+dagsins.
+
+Í skrefi 3 velur læknirinn föstu vikudagana sína á flýtimóttöku og hvort hann
+vinnur **allan daginn, fyrir hádegi eða eftir hádegi**. Undir því er dagatal
+virkra daga: smellt á dag fer **Allan → f.h. → e.h. → Ekki → eftir reglu**. Dagur
+sem er valinn sérstaklega gildir líka utan föstu vikudaganna, og „Ekki“ tekur
+daginn út þótt vikudagurinn gildi (`hsu_preferences.day_part_marks`, gildin
+`all`/`am`/`pm`/`none`; `worksDayShiftOn` í `src/lib/hsu/plan.ts`). Dagar merktir
+„Get ekki“ í skrefi 2 eru læstir í dagatalinu.
 
 Þetta stýrir þrennu:
 
@@ -120,11 +128,9 @@ hann settur á sinn helming; glugginn segir „Skiptir vaktinni um hádegi“.
 
 ### Kvöldvaktir aðeins tiltekna vikudaga
 
-Í **Óskum** hvers mánaðar getur læknir valið hvaða vikudaga hann tekur
-kvöld- og næturvaktir — t.d. eingöngu fimmtudaga. Enginn valinn = allir dagar.
-Þetta snertir ekki dagvaktir, ólíkt því að merkja daginn „get ekki“, sem lokar
-öllum vöktum þess dags. Óskin flyst með þegar „nota sömu óskir fyrir næsta
-mánuð“ er valið.
+Sérstakt skref fyrir kvöldvikudaga var fellt út (2026-09-18): það endurtók
+vikudagsreglurnar efst í skrefi 2. Eldri gildi í `evening_weekdays` eru enn virt
+af skiptingunni, en viðmótið skrifar ekki ný.
 
 Sjálfvirka skiptingin virðir þetta skilyrðislaust; þurfi yfirlæknir lækninn á
 kvöldvakt annan vikudag verður vaktin beiðni sem læknirinn samþykkir.

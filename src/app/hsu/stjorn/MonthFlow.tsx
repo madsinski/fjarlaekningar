@@ -359,7 +359,7 @@ function EditPrefsModal({ ctx, doctor, onClose }: { ctx: PlannerCtx; doctor: Hsu
   };
   return (
     <Modal open onClose={onClose} title={t("prefs.modalTitle", { name: doctor.name })} wide>
-      <PrefsEditor month={ctx.month} initial={initial} status={pref?.status ?? "none"} reviewNote={pref?.review_note} editable mode="admin" onSave={save} />
+      <PrefsEditor month={ctx.month} initial={initial} status={pref?.status ?? "none"} reviewNote={pref?.review_note} editable mode="admin" onSave={save} dayWeekdays={doctor.day_weekdays ?? []} />
     </Modal>
   );
 }
