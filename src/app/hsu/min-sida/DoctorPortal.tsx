@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle, ArrowLeftRight, Bell, CalendarCheck, CalendarRange, Check, CheckCircle2, ClipboardList, ExternalLink, Home, Settings, Store,
@@ -74,16 +74,23 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
   const [tourOpen, setTourOpen] = useState(false);
   const [setupOpen, setSetupOpen] = useState(false);
   const calendarConnected = me.hasCalendarToken || me.googleConnected;
-  const [fromGoogle] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("welcome") === "calendar");
+  // Heimkoma frá Google opnar gluggann einu sinni; eftir lokun gildir það ekki
+  // lengur (annars opnaðist hann aftur þegar gögnin endurnýjast).
+  const [fromGoogle, setFromGoogle] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("welcome") === "calendar");
+  // Lokaði læknirinn glugganum opnast hann ekki sjálfur aftur í þessari heimsókn,
+  // jafnvel þótt gögnin séu ekki orðin uppfærð þegar síðan er endurnýjuð.
+  const setupHandled = useRef(false);
   useEffect(() => {
     if (me.mustChangePassword) return;
-    const needsSetup = fromGoogle || (!me.onboarding["setup:calendar"] && !calendarConnected);
+    const needsSetup = !setupHandled.current && (fromGoogle || (!me.onboarding["setup:calendar"] && !calendarConnected));
     if (!needsSetup && me.onboarding["tour:doctor"]) return;
     const timer = setTimeout(() => (needsSetup ? setSetupOpen(true) : setTourOpen(true)), 400);
     return () => clearTimeout(timer);
   }, [me.onboarding, me.mustChangePassword, calendarConnected, fromGoogle]);
   const closeSetup = () => {
+    setupHandled.current = true;
     setSetupOpen(false);
+    setFromGoogle(false);
     void markOnboarding("setup:calendar").then(refresh);
     // Kynningin tekur við í fyrsta sinn.
     if (!me.onboarding["tour:doctor"]) setTimeout(() => setTourOpen(true), 300);
