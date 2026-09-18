@@ -24,7 +24,7 @@ export const onboarding = defineMessages(
     "doctor.8.title": "Tungumál og hjálp",
     "doctor.8.body": "Skiptu á milli íslensku og ensku hér. Kynninguna opnar þú aftur í valmyndinni undir nafninu þínu.",
     "doctor.9.title": "Allt klárt",
-    "doctor.9.body": "Byrjaðu á að tengja dagatalið í Stillingum og skráðu svo óskir fyrir næstu mánuði. Yfirlæknir sendir áminningu um skilafrest.",
+    "doctor.9.body": "Næsta skref er alltaf efst á Yfirliti. Skráðu óskir fyrir næstu mánuði — yfirlæknir sendir áminningu um skilafrest.",
 
     // ── Kynning fyrir yfirlækni (/hsu/stjorn) ──
     "head.0.title": "Velkomin(n), {name}",
@@ -95,7 +95,7 @@ export const onboarding = defineMessages(
       "doctor.8.title": "Language and help",
       "doctor.8.body": "Switch between Icelandic and English here. You can reopen this tour from the menu under your name.",
       "doctor.9.title": "All set",
-      "doctor.9.body": "Start by connecting your calendar in Settings, then enter requests for the coming months. The chief physician sends a reminder about the deadline.",
+      "doctor.9.body": "The next step is always at the top of the Overview. Enter your requests for the coming months — the chief physician sends a reminder about the deadline.",
 
       "head.0.title": "Welcome, {name}",
       "head.0.body": "As chief physician you plan the HSU doctors' shifts month by month. This tour shows you how — it takes about two minutes.",

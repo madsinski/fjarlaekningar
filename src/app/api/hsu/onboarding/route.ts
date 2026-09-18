@@ -9,7 +9,7 @@ import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
 
 export const runtime = "nodejs";
 
-const KEYS = ["tour:doctor", "tour:head", "guide:head"] as const;
+const KEYS = ["setup:calendar", "tour:doctor", "tour:head", "guide:head"] as const;
 
 export async function POST(req: Request) {
   const t = tr(req, apiDoctor);

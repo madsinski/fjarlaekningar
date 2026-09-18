@@ -28,6 +28,7 @@ export const journey = defineMessages(
     "account.item.calendar": "Tengdu dagatalið — vaktirnar birtast sjálfkrafa í Google, Apple eða Outlook",
     "account.item.pin": "Fjögurra stafa aðgangskóði fyrir símann (valfrjálst)",
     "account.action": "Opna stillingar",
+    "account.calendarAction": "Tengja dagatal",
 
     // 2. Vaktaóskir
     "prefs.title": "Vaktaóskir",
@@ -132,6 +133,7 @@ export const journey = defineMessages(
       "account.item.calendar": "Connect your calendar — shifts appear automatically in Google, Apple or Outlook",
       "account.item.pin": "Four-digit PIN for your phone (optional)",
       "account.action": "Open settings",
+      "account.calendarAction": "Connect calendar",
 
       "prefs.title": "Shift requests",
       "prefs.bar.notOpen": "Not open yet",

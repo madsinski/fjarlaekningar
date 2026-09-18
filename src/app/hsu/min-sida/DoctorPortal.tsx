@@ -24,6 +24,7 @@ import RosterTab from "./RosterTab";
 import CalendarTab from "./CalendarTab";
 import AccountTab from "./AccountTab";
 import EmailPrefsCard from "./EmailPrefsCard";
+import CalendarSetup from "./CalendarSetup";
 import Journey, { useJourney } from "./Journey";
 
 type Tab = "yfirlit" | "vaktir" | "oskir" | "markadur" | "plan" | "stillingar";
@@ -67,14 +68,26 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
   const t = useT(portal);
   const c = useCommon();
 
-  // Kynning á kerfinu: sjálfkrafa í fyrsta sinn (eftir að lykilorði hefur verið skipt).
+  // Fyrsta innskráning: fyrst dagatalið (CalendarSetup), svo kynning á kerfinu.
+  // Hvort tveggja bíður þar til læknirinn hefur valið sér lykilorð.
   const to = useT(onboardingMsgs);
   const [tourOpen, setTourOpen] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(false);
+  const calendarConnected = me.hasCalendarToken || me.googleConnected;
+  const [fromGoogle] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("welcome") === "calendar");
   useEffect(() => {
-    if (me.onboarding["tour:doctor"] || me.mustChangePassword) return;
-    const timer = setTimeout(() => setTourOpen(true), 500);
+    if (me.mustChangePassword) return;
+    const needsSetup = fromGoogle || (!me.onboarding["setup:calendar"] && !calendarConnected);
+    if (!needsSetup && me.onboarding["tour:doctor"]) return;
+    const timer = setTimeout(() => (needsSetup ? setSetupOpen(true) : setTourOpen(true)), 400);
     return () => clearTimeout(timer);
-  }, [me.onboarding, me.mustChangePassword]);
+  }, [me.onboarding, me.mustChangePassword, calendarConnected, fromGoogle]);
+  const closeSetup = () => {
+    setSetupOpen(false);
+    void markOnboarding("setup:calendar").then(refresh);
+    // Kynningin tekur við í fyrsta sinn.
+    if (!me.onboarding["tour:doctor"]) setTimeout(() => setTourOpen(true), 300);
+  };
   const tourSteps: TourStep[] = [
     { title: to("doctor.0.title", { name: firstName(me.name) }), body: to("doctor.0.body") },
     { target: "tabs", title: to("doctor.1.title"), body: to("doctor.1.body") },
@@ -121,6 +134,7 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
         ]}
         actions={[{ label: to("menu.tour"), onClick: () => setTourOpen(true), icon: "help" }]}
       />
+      <CalendarSetup name={me.name} open={setupOpen} onClose={closeSetup} />
       <Tour steps={tourSteps} open={tourOpen} onClose={closeTour} />
 
       <nav className="sticky top-16 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
@@ -143,7 +157,7 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
 
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
         {tab === "yfirlit" && (
-          <Overview data={data} incoming={incoming} market={market} go={setTab} onLog={logVinnustund} />
+          <Overview data={data} incoming={incoming} market={market} go={setTab} onLog={logVinnustund} onCalendar={() => setSetupOpen(true)} />
         )}
         {tab === "vaktir" && <ShiftsTab data={data} swaps={mine} refresh={refresh} onLog={logVinnustund} />}
         {tab === "oskir" && <PrefsTab data={data} initialMonth={initialMonth} refresh={refresh} />}
@@ -166,9 +180,10 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
 
 // ── Yfirlit ────────────────────────────────────────────────────────────────
 
-function Overview({ data, incoming, market, go, onLog }: {
+function Overview({ data, incoming, market, go, onLog, onCalendar }: {
   data: PortalData; incoming: HsuSwap[]; market: HsuSwap[]; go: (t: Tab) => void;
   onLog: (s: HsuShift, done: boolean) => void;
+  onCalendar: () => void;
 }) {
   const upcoming = data.myShifts.filter((s) => s.shift_date >= data.today);
   const t = useT(portal);
@@ -177,7 +192,7 @@ function Overview({ data, incoming, market, go, onLog }: {
   // Liðnar forvaktir/bakvaktir sem á eftir að merkja við í Vinnustund.
   const onCall = new Set(data.shiftTypes.filter((t) => t.kind === "forvakt" || t.kind === "bakvakt").map((t) => t.id));
   const unlogged = data.myShifts.filter((s) => s.shift_date <= data.today && onCall.has(s.shift_type_id ?? "") && !s.vinnustund_logged_at);
-  const jr = useJourney({ data, incoming, market, unlogged: unlogged.length, go });
+  const jr = useJourney({ data, incoming, market, unlogged: unlogged.length, go, onCalendar });
 
   return (
     <div className="space-y-6">

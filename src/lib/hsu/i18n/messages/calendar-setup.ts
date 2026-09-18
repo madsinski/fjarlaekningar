@@ -1,0 +1,100 @@
+// Fyrsta innskráning læknis: vaktirnar í dagatalið — áður en kynningin hefst.
+
+import { defineMessages } from "../core";
+
+export const calendarSetup = defineMessages(
+  {
+    "eyebrow": "Fyrsta skref",
+    "title": "Vaktirnar beint í dagatalið þitt",
+    "welcome": "Velkomin(n), {name}!",
+    "intro": "Tengdu dagatalið þitt svo vaktirnar birtist þar sjálfkrafa og uppfærist þegar eitthvað breytist. Það tekur innan við mínútu.",
+    "question": "Hvaða dagatal notar þú?",
+    "choice.google": "Google Calendar",
+    "choice.google.hint": "Gmail, Android",
+    "choice.apple": "Apple",
+    "choice.apple.hint": "iPhone, iPad, Mac",
+    "choice.outlook": "Outlook",
+    "choice.outlook.hint": "Microsoft 365, hsu.is",
+    "choice.other": "Annað",
+    "choice.other.hint": "Hvaða dagatal sem er",
+    "later": "Seinna",
+    "back": "Velja annað dagatal",
+    "done": "Búið — áfram",
+    "doneHint": "Vaktirnar birtast í dagatalinu innan nokkurra mínútna.",
+    "calendarName": "Dagatalið heitir „HSU — vaktir“ og er aðskilið frá öðrum dagatölum þínum.",
+
+    "google.title": "Tengja Google Calendar",
+    "google.body": "Þú skráir þig inn hjá Google og leyfir vaktakerfinu að setja vaktirnar í sérstakt dagatal. Breytingar birtast strax.",
+    "google.connect": "Tengja Google-dagatal",
+    "google.connected": "Google-dagatalið er tengt",
+    "google.connectedBody": "Vaktirnar þínar fara sjálfkrafa í dagatalið „HSU — vaktir“.",
+    "google.failed": "Tenging við Google tókst ekki ({error}). Reyndu aftur eða veldu annað.",
+    "google.unavailable": "Google-tenging er ekki í boði núna — veldu „Annað“.",
+
+    "apple.title": "Bæta við Apple Calendar",
+    "apple.body": "Smelltu á hnappinn á iPhone, iPad eða Mac og veldu „Gerast áskrifandi“ (Subscribe).",
+    "apple.button": "Bæta við Apple Calendar",
+    "apple.qr": "Í tölvu? Skannaðu kóðann með myndavélinni í iPhone.",
+
+    "outlook.title": "Bæta við Outlook",
+    "outlook.body": "Opnar Outlook á vefnum með dagatalið tilbúið — smelltu þar á „Flytja inn“ (Import).",
+    "outlook.button": "Opna í Outlook",
+    "outlook.app": "Í Outlook-forritinu: Bæta við dagatali → Af vefnum, og límdu hlekkinn.",
+
+    "other.title": "Önnur dagatöl",
+    "other.body": "Afritaðu hlekkinn og bættu honum við sem áskrift („Subscribe“ / „Af vefnum“ / „From URL“) í dagatalinu þínu.",
+
+    "copy": "Afrita hlekk",
+    "copied": "Afritað",
+    "private": "Hlekkurinn er persónulegur — ekki deila honum.",
+    "loading": "Útbý hlekkinn…",
+  },
+  {
+    en: {
+      "eyebrow": "First step",
+      "title": "Your shifts straight into your calendar",
+      "welcome": "Welcome, {name}!",
+      "intro": "Connect your calendar so your shifts appear there automatically and update whenever something changes. It takes less than a minute.",
+      "question": "Which calendar do you use?",
+      "choice.google": "Google Calendar",
+      "choice.google.hint": "Gmail, Android",
+      "choice.apple": "Apple",
+      "choice.apple.hint": "iPhone, iPad, Mac",
+      "choice.outlook": "Outlook",
+      "choice.outlook.hint": "Microsoft 365, hsu.is",
+      "choice.other": "Other",
+      "choice.other.hint": "Any calendar",
+      "later": "Later",
+      "back": "Choose another calendar",
+      "done": "Done — continue",
+      "doneHint": "Your shifts appear in the calendar within a few minutes.",
+      "calendarName": "The calendar is called “HSU — vaktir” and is kept separate from your other calendars.",
+
+      "google.title": "Connect Google Calendar",
+      "google.body": "You sign in with Google and allow the shift system to put your shifts in a separate calendar. Changes appear instantly.",
+      "google.connect": "Connect Google Calendar",
+      "google.connected": "Google Calendar is connected",
+      "google.connectedBody": "Your shifts go automatically into the calendar “HSU — vaktir”.",
+      "google.failed": "Connecting to Google did not work ({error}). Try again or choose another option.",
+      "google.unavailable": "Google connection isn't available right now — choose “Other”.",
+
+      "apple.title": "Add to Apple Calendar",
+      "apple.body": "Tap the button on your iPhone, iPad or Mac and choose “Subscribe”.",
+      "apple.button": "Add to Apple Calendar",
+      "apple.qr": "On a computer? Scan the code with your iPhone camera.",
+
+      "outlook.title": "Add to Outlook",
+      "outlook.body": "Opens Outlook on the web with the calendar ready — click “Import” there.",
+      "outlook.button": "Open in Outlook",
+      "outlook.app": "In the Outlook app: Add calendar → From the web, and paste the link.",
+
+      "other.title": "Other calendars",
+      "other.body": "Copy the link and add it as a subscription (“Subscribe” / “From URL”) in your calendar.",
+
+      "copy": "Copy link",
+      "copied": "Copied",
+      "private": "The link is personal — don't share it.",
+      "loading": "Preparing the link…",
+    },
+  },
+);

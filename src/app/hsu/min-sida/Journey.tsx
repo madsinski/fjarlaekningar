@@ -40,8 +40,10 @@ interface Step {
 
 const hhmm = (t: string) => (t || "").slice(0, 5);
 
-export function useJourney({ data, incoming, market, unlogged, go }: {
+export function useJourney({ data, incoming, market, unlogged, go, onCalendar }: {
   data: PortalData; incoming: HsuSwap[]; market: HsuSwap[]; unlogged: number; go: (t: Tab) => void;
+  /** Opnar dagatalsgluggann (sama og við fyrstu innskráningu). */
+  onCalendar: () => void;
 }): { steps: Step[]; landing: number; planMonth: string } {
   const t = useT(journey);
   const L = t.lang;
@@ -75,7 +77,9 @@ export function useJourney({ data, incoming, market, unlogged, go }: {
       { label: t("account.item.calendar"), done: calendar },
       { label: t("account.item.pin"), done: me.hasPin, optional: true },
     ],
-    actions: accountDone ? [] : [{ label: t("account.action"), onClick: () => go("stillingar"), primary: true }],
+    actions: accountDone ? []
+      : me.mustChangePassword ? [{ label: t("account.action"), onClick: () => go("stillingar"), primary: true }]
+      : [{ label: t("account.calendarAction"), onClick: onCalendar, primary: true }],
   };
 
   // 2. Vaktaóskir

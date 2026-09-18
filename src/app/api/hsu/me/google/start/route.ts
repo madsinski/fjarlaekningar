@@ -12,5 +12,7 @@ export async function GET(req: Request) {
   if (!googleConfigured()) return new Response(tr(req, apiDoctor)("google.notConfigured"), { status: 503 });
   const doctor = await getDoctorSession();
   if (!doctor) return NextResponse.redirect(new URL("/hsu", req.url));
-  return NextResponse.redirect(consentUrl(doctor.id, "/hsu/min-sida?t=stillingar", "hsu"));
+  // Úr fyrstu innskráningu (?return=welcome): aftur í sama gluggann á Yfirliti.
+  const welcome = new URL(req.url).searchParams.get("return") === "welcome";
+  return NextResponse.redirect(consentUrl(doctor.id, welcome ? "/hsu/min-sida?t=yfirlit&welcome=calendar" : "/hsu/min-sida?t=stillingar", "hsu"));
 }
