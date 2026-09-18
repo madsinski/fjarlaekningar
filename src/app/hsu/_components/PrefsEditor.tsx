@@ -8,7 +8,7 @@
 // settar í hausnum og gilda allan mánuðinn; einstakur dagur trompar regluna.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Ban, Check, CircleCheck, Copy, Heart, Eraser, Send, Save } from "lucide-react";
+import { Ban, Check, CircleCheck, Copy, Heart, Eraser, Send, Save, Sun, Sunrise, Sunset } from "lucide-react";
 import {
   WEEKDAY_ORDER, datesInMonth, holidayName, markFor, shiftMonth, weekdayOf,
   type DayMark, type DayPart, type DayPlan, type HsuPreference, type Mark, type PrefStatus,
@@ -36,8 +36,8 @@ type Brush = "off" | "want" | "ok" | "clear";
 /** Það sem pensilstroka gerir í raun — ákveðið á fyrsta degi strokunnar. */
 type Stroke = Brush;
 
-/** Röðin þegar smellt er á dag á flýtimóttöku í skrefi 3; eftir „none“ gildir reglan aftur. */
-const FM_CYCLE: DayPlan[] = ["all", "am", "pm", "none"];
+/** Penslar í skrefi 3 (flýtimóttaka): hluti dagsins, „Ekki“, eða aftur eftir reglu. */
+type FmBrush = DayPlan | "rule";
 
 export const PREF_TONE: Record<PrefStatus | "none", "slate" | "blue" | "green" | "amber" | "red"> = {
   none: "slate", draft: "amber", submitted: "blue", approved: "green", changes_requested: "red",
@@ -112,6 +112,8 @@ export default function PrefsEditor({
   const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
   const [dirty, setDirty] = useState(false);
   const painting = useRef<null | Stroke>(null);
+  const [fmBrush, setFmBrush] = useState<FmBrush>("all");
+  const fmPainting = useRef<null | FmBrush>(null);
 
   useEffect(() => {
     // Nýr mánuður eða nýtt upphafsgildi frá þjóni: byrja upp á nýtt.
@@ -120,7 +122,7 @@ export default function PrefsEditor({
   }, [initial]);
 
   useEffect(() => {
-    const stop = () => { painting.current = null; };
+    const stop = () => { painting.current = null; fmPainting.current = null; };
     window.addEventListener("pointerup", stop);
     window.addEventListener("pointercancel", stop);
     return () => { window.removeEventListener("pointerup", stop); window.removeEventListener("pointercancel", stop); };
@@ -150,16 +152,31 @@ export default function PrefsEditor({
     const wd = weekdayOf(date);
     return wd >= 1 && wd <= 5 && !holidayName(date);
   };
-  const cycleFm = (date: string) => {
-    if (!editable || !fmDay(date) || markFor(draft, date) === "off") return;
+  const fmLocked = (date: string) => !editable || !fmDay(date) || markFor(draft, date) === "off";
+  const applyFm = (date: string, b: FmBrush) => {
+    if (fmLocked(date)) return;
     update((d) => {
       const parts = { ...d.day_part_marks };
-      const cur = parts[date];
-      const next = cur === undefined ? FM_CYCLE[0] : FM_CYCLE[FM_CYCLE.indexOf(cur) + 1];
-      if (next === undefined) delete parts[date]; else parts[date] = next;
+      if (b === "rule") delete parts[date]; else parts[date] = b;
       return { ...d, day_part_marks: parts };
     });
   };
+  // Sami pensill á dag sem þegar ber hann: aftur eftir reglu (eins og í skrefi 2).
+  const fmStrokeFor = (date: string): FmBrush => (fmBrush !== "rule" && draft.day_part_marks[date] === fmBrush ? "rule" : fmBrush);
+  const fmMouse = useRef(false);
+  const onFmDown = (e: React.PointerEvent, date: string) => {
+    if (fmLocked(date) || e.pointerType !== "mouse") return;
+    e.preventDefault();
+    const b = fmStrokeFor(date);
+    fmPainting.current = b;
+    fmMouse.current = true;
+    applyFm(date, b);
+  };
+  const onFmTap = (date: string) => {
+    if (fmMouse.current) { fmMouse.current = false; return; }
+    applyFm(date, fmStrokeFor(date));
+  };
+  const onFmEnter = (date: string) => { if (fmPainting.current) applyFm(date, fmPainting.current); };
 
   // Mús: ýtt niður og dregið málar marga daga. Snerting: aðeins smellur, svo
   // hægt sé að fletta síðunni með fingri yfir dagatalinu án þess að mála.
@@ -358,6 +375,22 @@ export default function PrefsEditor({
         <div className="mt-5">
           <div className="text-xs font-semibold text-slate-600">{t("step3.calendarLabel")}</div>
           <p className="text-[11px] text-slate-500">{t("step3.calendarHint")}</p>
+          {editable && (
+            <div className="mt-2 grid grid-cols-2 gap-2 sm:inline-grid sm:w-auto sm:grid-cols-5">
+              {([
+                ["all", <Sun key="i" className="h-4 w-4" />, "data-[on=true]:bg-[var(--hsu)] data-[on=true]:text-white data-[on=true]:ring-[var(--hsu)]"],
+                ["am", <Sunrise key="i" className="h-4 w-4" />, "data-[on=true]:bg-[var(--hsu)] data-[on=true]:text-white data-[on=true]:ring-[var(--hsu)]"],
+                ["pm", <Sunset key="i" className="h-4 w-4" />, "data-[on=true]:bg-[var(--hsu)] data-[on=true]:text-white data-[on=true]:ring-[var(--hsu)]"],
+                ["none", <Ban key="i" className="h-4 w-4" />, "data-[on=true]:bg-slate-600 data-[on=true]:text-white data-[on=true]:ring-slate-600"],
+                ["rule", <Eraser key="i" className="h-4 w-4" />, "data-[on=true]:bg-slate-700 data-[on=true]:text-white data-[on=true]:ring-slate-700"],
+              ] as [FmBrush, React.ReactNode, string][]).map(([k, icon, cls]) => (
+                <button key={k} type="button" data-on={fmBrush === k} onClick={() => setFmBrush(k)}
+                  className={cx("inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 transition", cls)}>
+                  {icon} {t(`step3.brush.${k}` as "step3.brush.all")}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="mt-2 grid grid-cols-7 gap-1.5 select-none">
             {WEEKDAY_ORDER.map((wd) => (
               <div key={wd} className="py-1 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">{weekdayShortL(wd, t.lang)}</div>
@@ -373,7 +406,8 @@ export default function PrefsEditor({
               const eff: DayPlan = blocked ? "none" : explicit ?? fmDefault(date);
               const label = blocked ? t("step3.cell.blocked") : t(`step3.cell.${eff}` as "step3.cell.all");
               return (
-                <button key={date} type="button" onClick={() => cycleFm(date)} disabled={!editable || blocked}
+                <button key={date} type="button" disabled={!editable || blocked}
+                  onPointerDown={(e) => onFmDown(e, date)} onPointerEnter={() => onFmEnter(date)} onClick={() => onFmTap(date)}
                   aria-label={t("step3.cell.aria", { day: dayLabelL(date, t.lang), state: label })}
                   className={cx("relative flex aspect-square min-h-11 flex-col items-center justify-center rounded-xl text-sm font-semibold transition sm:aspect-[4/3]",
                     blocked ? "bg-red-50 text-red-300 [background-image:repeating-linear-gradient(135deg,transparent_0_6px,rgba(220,38,38,.07)_6px_12px)]"
