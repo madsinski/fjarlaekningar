@@ -9,18 +9,28 @@
 //
 // Two things in this file are worth more than everything else in it:
 //
-//   1. Ask the institution for the baseline MONTH BY MONTH, not as one annual
-//      total. Same request, same goodwill, same effort — but a monthly series
-//      supports interrupted time series, which separates the effect of the
-//      service from a trend that was already running. A single total cannot.
+//   1. Ask for the baseline MONTH BY MONTH, not as one annual total. A monthly
+//      series supports interrupted time series, which separates the effect of
+//      the service from a trend that was already running. A single total
+//      cannot, and cannot be un-aggregated afterwards.
 //
-//   2. Start collecting the same monthly figures at stations that are NOT yet
-//      live. A staged rollout is a stepped wedge waiting to happen: later sites
-//      are controls for earlier ones, concurrently, controlling for everything
-//      that changed nationally that year. It costs one line in an email now and
-//      cannot be recovered once a site goes live.
+//   2. Ask for the same monthly figures at stations that are NOT yet live.
+//      A staged rollout is a stepped wedge waiting to happen: later sites are
+//      comparisons for earlier ones, concurrently, which controls for anything
+//      that changed nationally.
 //
-// Both are free. Neither is possible retrospectively.
+// Note what is and is not recoverable. The baseline itself is NOT lost by
+// going live — it sits in Saga and can be extracted retrospectively whenever
+// somebody runs the query. What expires is the goodwill to run it and the
+// institutional memory of what else was happening that year. The comparison
+// stations expire for real: a station stops being a comparison the day it
+// goes live, and that is the clock actually running.
+//
+// What cannot be recovered at all is anything that had to be asked of a
+// person at the time — how long staff spent per case before, what they
+// thought of the service, what patients would otherwise have done. Those have
+// no record in any system, and a question asked a year late gets a year-late
+// answer.
 
 import type { Module } from "./types";
 
@@ -30,7 +40,18 @@ export type DesignId = "before-after" | "its" | "controlled" | "stepped-wedge";
 
 export type Design = {
   id: DesignId;
+  /**
+   * The proper name. These are real terms from health-services research, not
+   * labels invented here, so they stay — an ethics committee and a journal
+   * both expect them. They are shown as a small secondary label rather than
+   * as the heading, because nobody should have to recognise "stepped wedge"
+   * to choose between four options.
+   */
   name: string;
+  /** What you read first: what you actually do, in words anyone can follow. */
+  plainName: string;
+  /** The procedure itself, in a sentence or two. */
+  whatYouDo: string;
   /** What it does, in one sentence. */
   summary: string;
   /** What it lets you claim that the weaker options do not. */
@@ -51,14 +72,17 @@ export const DESIGNS: Design[] = [
   {
     id: "before-after",
     name: "Uncontrolled before-and-after",
+    plainName: "Compare with how things were before",
+    whatYouDo:
+      "Take the twelve months before the service started at this station, take the twelve months after, and compare the two. Nothing else is measured and no other station is involved.",
     summary: "Compare the twelve months before the service with the twelve months after, at the same site.",
     claim: "Activity changed after we arrived — with no way to show that we were the cause.",
     requires: ["A baseline figure for the period before", "Twelve months of operation"],
     threats: [
-      "Secular trend — Icelandic primary care did not stand still that year, and anything that changed nationally is folded into your result.",
-      "Seasonality — respiratory cases peak in winter. An autumn pilot against a spring baseline can show a large effect that is entirely the calendar.",
-      "Regression to the mean — services tend to be introduced where a problem was unusually bad, and unusually bad periods improve on their own.",
-      "Hawthorne effect — a site that knows it is being evaluated behaves differently.",
+      "Things were already changing anyway. Icelandic primary care did not stand still that year, and whatever shifted nationally gets credited to you (secular trend).",
+      "Winter does the work for you. Four of your case types swing hard with the season — an autumn start compared against a spring baseline can show a big effect that is entirely the calendar.",
+      "Bad patches get better on their own. Services get introduced where things were unusually bad, and unusually bad periods improve without anyone doing anything (regression to the mean).",
+      "People try harder when watched. A station that knows it is being evaluated behaves differently, and that goes into your result too (Hawthorne effect).",
     ],
     cost: "None. This is what you get by default if you decide nothing.",
     strength: 1,
@@ -67,24 +91,30 @@ export const DESIGNS: Design[] = [
   {
     id: "its",
     name: "Interrupted time series",
+    plainName: "Watch the monthly trend and look for a step",
+    whatYouDo:
+      "Instead of two big totals, you plot the number for every single month — before and after. Then you look for a step up or down at the exact month the service started, and for a change in the direction of travel.",
     summary: "Model the monthly series before and after go-live, and test for a change in level and in slope at that point.",
     claim: "Activity changed by X beyond the trend that was already running — which is a causal claim the before-and-after cannot make.",
     requires: [
-      "Monthly data points before go-live — twelve is comfortable, eight is the practical minimum",
-      "Monthly points after, not a single aggregate",
-      "A clearly dated intervention point",
+      "Monthly counts for the period before go-live — twelve is comfortable, eight is the practical minimum. Already sitting in Saga; somebody just has to run the query.",
+      "Monthly counts after too, not one lump sum",
+      "The exact date the service started",
     ],
     threats: [
-      "A co-intervention at the same moment — if the health centre also changed its phone triage the month you launched, the two cannot be separated.",
-      "Still single-site, so anything that happened only at that site is indistinguishable from the service.",
+      "Anything else that changed the same month. If the health centre also reorganised its phone triage when you launched, there is no way to tell the two apart.",
+      "Still one station, so anything peculiar to Vestmannaeyjar looks exactly like the service working.",
     ],
-    cost: "One sentence in the baseline request: monthly figures rather than an annual total. Nothing else changes.",
+    cost: "One sentence in the request to HSU: monthly figures rather than an annual total. The data already exists.",
     strength: 2,
-    decideBy: "Before the baseline is requested. A single annual total cannot be un-aggregated afterwards.",
+    decideBy: "Whenever you ask — the history does not go anywhere. But ask for months, not a year: a single total cannot be broken back down.",
   },
   {
     id: "controlled",
     name: "Controlled before-and-after",
+    plainName: "Compare against a station that hasn't started yet",
+    whatYouDo:
+      "You measure the same things at a second health centre that is not running the service. If your numbers move and theirs do not over the same months, the service is the likeliest explanation.",
     summary: "Run the same measurements at a comparable station that is not receiving the service yet.",
     claim: "Activity changed at our site and did not change at a comparable one over the same period.",
     requires: [
@@ -93,16 +123,19 @@ export const DESIGNS: Design[] = [
       "Agreement from the institution to supply both",
     ],
     threats: [
-      "Sites are never truly comparable — size, staffing and case mix all differ.",
-      "Contamination: in a country this small, patients at the control site may hear about the service and use it.",
+      "No two health centres are really alike — size, staffing and the mix of patients all differ.",
+      "Word travels. In a country this small, patients at the comparison station may hear about the service and use it anyway, which blurs the comparison.",
     ],
     cost: "The institution supplies the same monthly figures for one more station. No work at the control site itself.",
     strength: 3,
-    decideBy: "Before the control site goes live. Once it has the service it is no longer a control.",
+    decideBy: "Before that station goes live. The day it gets the service it stops being a comparison — that is the clock that is actually running.",
   },
   {
     id: "stepped-wedge",
     name: "Stepped wedge",
+    plainName: "Start stations one at a time, each checks the others",
+    whatYouDo:
+      "Stations go live in a planned order. Until its own turn comes, every station that has not started yet is a comparison for the ones already running — so the same change has to show up at each site, at a different time of year.",
     summary: "Stations go live one at a time in a planned order; each acts as a control for the others until its own turn.",
     claim: "The same change followed the service at each site in turn, at different calendar times — which rules out anything that happened nationally.",
     requires: [
@@ -111,15 +144,15 @@ export const DESIGNS: Design[] = [
       "Go-live dates recorded accurately",
     ],
     threats: [
-      "Needs enough sites and enough months; with two sites it is just a controlled before-and-after.",
-      "Contamination between sites in the same institution.",
-      "Later sites benefit from lessons learned at earlier ones, so the effect may grow over the rollout — which is worth reporting rather than hiding.",
+      "Needs more than two stations and enough months. With two it is simply the option above.",
+      "Word travels between stations in the same institution.",
+      "Later stations get a better version of the service, because you learned from the earlier ones — so the effect may grow as you go. Worth reporting rather than hiding: it is an argument for rolling out, not against.",
     ],
     cost:
       "Collecting the same monthly figures at stations before they go live. One line in the request you are already making, and the rollout is staged regardless.",
     strength: 4,
     decideBy:
-      "Before the second station goes live — and baseline collection at the later stations has to start before that. This is the one that expires.",
+      "Before the second station goes live. Vestmannaeyjar started on 17 August 2026 and nothing else has yet, so this is still fully available — but each station that opens removes one comparison.",
   },
 ];
 
@@ -186,6 +219,7 @@ export type DecisionId =
 
 export type Decision = {
   id: DecisionId;
+  /** Plain heading. The technical name, where there is one, lives in `why`. */
   name: string;
   question: string;
   why: string;
@@ -199,10 +233,10 @@ export type Decision = {
 export const DECISIONS: Decision[] = [
   {
     id: "primary-outcome",
-    name: "Primary outcome",
-    question: "Which single figure is the one this evaluation stands or falls on?",
+    name: "The one number this stands or falls on",
+    question: "If you could only report a single figure, which would it be?",
     why:
-      "The programme can produce over forty metrics. Reporting all of them and highlighting whichever came out well is how an evaluation becomes a fishing expedition — and a reviewer who knows the field will say so. Nominating one in advance, in writing, is the cheapest credibility you will ever buy.",
+      "This is called the primary outcome. The programme can produce over forty figures, and reporting all of them while pointing at whichever came out best is how an evaluation turns into a fishing expedition — anyone who knows the field will spot it. Naming one in advance, in writing, is the cheapest credibility you will ever buy.",
     ifLate:
       "Chosen after seeing the data, it is no longer a finding. Everything else becomes secondary and exploratory whether you label it that way or not.",
     suggestion:
@@ -211,8 +245,8 @@ export const DECISIONS: Decision[] = [
   },
   {
     id: "run-in",
-    name: "Run-in period",
-    question: "Are the first weeks at a site excluded from the primary analysis?",
+    name: "The first few weeks",
+    question: "Do the opening weeks at a station count towards the headline result?",
     why:
       "The first month at a new site is atypical in both directions: staff are still learning what fits, and patients mostly do not know the service exists. Including it drags the result down; excluding it without having said so in advance looks like cherry-picking.",
     ifLate:
@@ -223,8 +257,8 @@ export const DECISIONS: Decision[] = [
   },
   {
     id: "season",
-    name: "Seasonal window",
-    question: "How do you stop winter doing the work your service was supposed to do?",
+    name: "Stopping winter taking the credit",
+    question: "How do you make sure the season is not doing the work your service was meant to do?",
     why:
       "Four of the eleven case types are respiratory or infectious and swing hard with the season. A pilot that runs August to December compared against a January to May baseline can show a large effect that is entirely the calendar.",
     ifLate:
@@ -235,8 +269,8 @@ export const DECISIONS: Decision[] = [
   },
   {
     id: "analysis-plan",
-    name: "Analysis plan",
-    question: "Which comparisons will be made, and how, written down before the data is looked at?",
+    name: "Writing the plan down first",
+    question: "What exactly will you compare, and how — agreed before anyone sees a number?",
     why:
       "A dated document written before the numbers exist is the single thing that separates an evaluation from a story told afterwards. It costs an afternoon and it is what an ethics committee, a journal and a procurement evaluator all look for.",
     ifLate:
@@ -247,8 +281,8 @@ export const DECISIONS: Decision[] = [
   },
   {
     id: "missing-data",
-    name: "Missing months",
-    question: "What happens when an export fails or the institution does not send figures?",
+    name: "When a month goes missing",
+    question: "What do you do when an export fails or HSU does not send its figures?",
     why:
       "It will happen. If the rule is invented at the time, it will be invented in whichever direction suits the month in question.",
     ifLate: "A gap filled after the fact is indistinguishable from a gap filled to taste.",
@@ -258,8 +292,8 @@ export const DECISIONS: Decision[] = [
   },
   {
     id: "small-cells",
-    name: "Small cells",
-    question: "What is suppressed in anything that leaves the building?",
+    name: "Numbers too small to publish",
+    question: "What gets held back from anything that leaves the building?",
     why:
       "A case type with three cases at a station of four thousand people can identify someone, and a rate calculated on three cases means nothing anyway.",
     ifLate: "Less harmful than the others, but a rule applied inconsistently across reports is its own problem.",
@@ -293,8 +327,17 @@ export type SiteConfig = { role: SiteRole; goLive?: string; note?: string };
 export type DesignState = {
   design: DesignId;
   cohort: CohortId;
-  /** Decision id → what was decided, and when. */
-  decisions: Record<string, { text: string; decidedAt?: string }>;
+  /**
+   * Decision id → what was decided, and when.
+   *
+   * A decision can be cleared or edited — you have to be able to fix a typo or
+   * change your mind. But an edit records `revisedAt` alongside the original
+   * date and both are shown, because the entire value of deciding in advance
+   * is lost if the text can be quietly rewritten once the numbers are in.
+   * Clearing it removes the entry outright, which reads honestly as "not
+   * decided" rather than as a decision that was never made.
+   */
+  decisions: Record<string, { text: string; decidedAt?: string; revisedAt?: string }>;
   sites: Record<string, SiteConfig>;
   /** Months of monthly baseline requested from the institution. */
   baselineMonths: number;
@@ -327,57 +370,57 @@ export function feasibility(state: DesignState, opts: { preLiveWithData: number;
   const checks: DesignCheck[] = [
     {
       ok: state.baselineMonths >= 8,
-      label: `${state.baselineMonths} months of monthly baseline requested`,
+      label: `Asking HSU for ${state.baselineMonths} separate months of "before" figures`,
       detail:
         state.baselineMonths >= 8
-          ? "Enough pre-intervention points to model the trend that was already running."
-          : "Interrupted time series needs eight monthly points before go-live, twelve to be comfortable. A single annual total supports nothing beyond a plain before-and-after.",
+          ? "Enough separate months before you started to see what the trend was already doing, so you can tell your effect apart from a change that was happening anyway."
+          : "Ask for the figures month by month, not as one yearly total. With a year lumped together you can only say \"it was X before and Y after\" — with monthly figures you can see whether numbers were already moving before you arrived. Eight months is the least that works, twelve is comfortable. The data is in Saga either way; this is only about how you ask for it.",
     },
     {
       ok: goLives === live && live > 0,
-      label: `${goLives} of ${live} live sites have a recorded go-live date`,
+      label: `${goLives} of ${live} live station${live === 1 ? " has" : "s have"} a start date recorded`,
       detail:
         goLives === live && live > 0
-          ? "The intervention point is dated, which every design above the weakest requires."
-          : "Without a dated go-live there is no interruption to model and no wedge to step.",
+          ? "You know exactly when the service started at each station, which is the line everything is measured against."
+          : "Every comparison here is \"before this date\" versus \"after this date\". Without the exact date the service started at a station, there is nothing to compare across.",
     },
     {
       ok: preLive > 0,
-      label: `${preLive} pre-live control site${preLive === 1 ? "" : "s"}`,
+      label: `${preLive} station${preLive === 1 ? "" : "s"} marked as not yet started`,
       detail:
         preLive > 0
-          ? "Later sites can act as concurrent controls — but only while they stay pre-live."
-          : "With no pre-live sites there is no control group, and anything that changed nationally is folded into the result.",
+          ? "Stations without the service act as a comparison — if your numbers move and theirs do not, the service is the likeliest reason."
+          : "With nothing to compare against, anything that changed across Iceland that year gets credited to your service. Mark the HSU stations that have not started yet — they are your comparison group, and each one stops being available the day it goes live.",
     },
     {
       ok: opts.preLiveWithData > 0,
-      label: `${opts.preLiveWithData} pre-live site${opts.preLiveWithData === 1 ? "" : "s"} already supplying data`,
+      label: `${opts.preLiveWithData} not-yet-started station${opts.preLiveWithData === 1 ? " is" : "s are"} actually sending figures`,
       detail:
         opts.preLiveWithData > 0
-          ? "Control data is actually arriving, not merely planned."
-          : "Marking a site pre-live does nothing on its own. The institution has to be sending its monthly figures for that station too — this is the step that expires when the site goes live.",
+          ? "Comparison figures are arriving, not merely planned."
+          : "Ticking a station as \"not yet started\" does nothing on its own. HSU has to be sending you its monthly figures for that station too — otherwise there is nothing to compare with.",
     },
     {
       ok: opts.monthsOfData >= 12,
-      label: `${opts.monthsOfData} months of operating data`,
+      label: `${opts.monthsOfData} month${opts.monthsOfData === 1 ? "" : "s"} of your own figures so far`,
       detail:
         opts.monthsOfData >= 12
-          ? "A full year, so like-for-like calendar months can be compared and the season is not doing the work."
-          : "Under twelve months, any comparison is across different seasons. Four of the eleven case types swing hard with the calendar.",
+          ? "A full year, so you can compare September with September rather than September with March — which matters, because four of your case types are far commoner in winter."
+          : "Under a year you are comparing different seasons, and winter can do the work your service was supposed to do. Four of the eleven case types swing hard with the calendar.",
     },
     {
       ok: !!state.decisions["primary-outcome"]?.text,
-      label: "Primary outcome nominated",
+      label: "Chosen the one number this stands or falls on",
       detail: state.decisions["primary-outcome"]?.text
-        ? "Written down, so the remaining metrics are openly secondary."
-        : "Over forty metrics with no nominated primary is a fishing expedition, and a reviewer who knows the field will say so.",
+        ? "Named in advance, so everything else is openly a secondary finding."
+        : "This system can produce over forty figures. If you decide afterwards which one mattered, you will — completely honestly — pick the one that came out well, and anyone who knows the field will see it. Naming one now costs nothing and is the cheapest credibility there is.",
     },
     {
       ok: !!state.decisions["analysis-plan"]?.text,
-      label: "Analysis plan written",
+      label: "Written down what you will compare, before looking",
       detail: state.decisions["analysis-plan"]?.text
-        ? "Dated before the data, which is what separates an evaluation from a story told afterwards."
-        : "Two pages, dated, before the numbers exist. The cheapest credibility available.",
+        ? "Written and dated before the numbers came in, so nobody can suggest the comparison was chosen to suit the result."
+        : "About two pages, dated: which figures you will compare with which, over what months, and what you will do if a month goes missing. Writing it before you see any numbers is what stops you picking — quite unconsciously — whichever comparison happens to look best. It is also the first document an ethics committee or a procurement evaluator asks for.",
     },
   ];
 

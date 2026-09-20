@@ -11,12 +11,13 @@
 // design picked in an interface and then described in a report as though it
 // were real is worse than admitting to the weaker one.
 
-import { CheckCircle2, ChevronRight, Circle, Clock, TriangleAlert, XCircle } from "lucide-react";
+import { CheckCircle2, ChevronRight, Circle, Clock, FileDown, TriangleAlert, Undo2, XCircle } from "lucide-react";
 import {
   COHORTS, DECISIONS, DESIGNS, DESIGN_BY_ID, SITE_ROLES, feasibility, supportedDesign,
   type DesignState, type SiteRole,
 } from "@/lib/evaluation/design";
-import { Chip, card, input, Plain } from "./ui";
+import { baselineRequest } from "@/lib/evaluation/export";
+import { Chip, DesignDiagram, Plain, card, input } from "./ui";
 
 const STRENGTH_BAR: Record<number, string> = {
   1: "bg-rose-400", 2: "bg-amber-400", 3: "bg-cyan-500", 4: "bg-emerald-500",
@@ -72,8 +73,8 @@ export default function DesignStep({
           <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
           <div>
             <p className="text-sm font-semibold text-rose-900">
-              You have chosen {DESIGN_BY_ID[state.design].name.toLowerCase()}, but the data supports only{" "}
-              {DESIGN_BY_ID[best].name.toLowerCase()}
+              You have chosen &ldquo;{DESIGN_BY_ID[state.design].plainName.toLowerCase()}&rdquo;, but your data only supports{" "}
+              &ldquo;{DESIGN_BY_ID[best].plainName.toLowerCase()}&rdquo;
             </p>
             <p className="mt-0.5 text-xs leading-relaxed text-rose-800">
               Either collect what the stronger design needs — the checks below say what is missing — or report the
@@ -87,7 +88,11 @@ export default function DesignStep({
       {/* ── Design ──────────────────────────────────────────────────────── */}
       <section className={`${card} p-4`}>
         <h3 className="font-bold text-slate-900">Design</h3>
-        <p className="mb-3 text-xs text-slate-500">Strongest option your rollout could support is highlighted.</p>
+        <p className="mb-3 max-w-3xl text-xs leading-relaxed text-slate-500">
+          These four are the standard options in health-services research, in ascending order of how convincing
+          they are. The heading on each card is what you actually do; the proper name sits underneath it, because
+          that is the wording an ethics committee and a journal will expect — but you do not need it to choose.
+        </p>
         <div className="space-y-2">
           {DESIGNS.map((d) => {
             const chosen = state.design === d.id;
@@ -107,32 +112,41 @@ export default function DesignStep({
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-sm font-semibold text-slate-900">{d.name}</span>
+                      <span className="text-sm font-semibold text-slate-900">{d.plainName}</span>
                       <span className="flex gap-0.5" title={`Strength ${d.strength} of 4`}>
                         {[1, 2, 3, 4].map((i) => (
                           <span key={i} className={`h-1.5 w-4 rounded-full ${i <= d.strength ? STRENGTH_BAR[d.strength] : "bg-slate-200"}`} />
                         ))}
                       </span>
-                      {achievable && <Chip className="bg-emerald-100 text-emerald-800">Supported by your data</Chip>}
+                      {achievable && <Chip className="bg-emerald-100 text-emerald-800">Your data supports this</Chip>}
                     </div>
-                    <p className="mt-1 text-xs leading-relaxed text-slate-600"><Plain>{d.summary}</Plain></p>
-                    <p className="mt-1 text-xs font-medium text-slate-700">Lets you say: <Plain>{d.claim}</Plain></p>
+                    <p className="mt-0.5 text-[11px] text-slate-400">
+                      Its proper name, for the ethics letter and any write-up: <span className="font-medium text-slate-500">{d.name}</span>
+                    </p>
+
+                    <p className="mt-1.5 text-xs leading-relaxed text-slate-600"><Plain>{d.whatYouDo}</Plain></p>
+
+                    <div className="mt-2 rounded-lg bg-slate-50 p-2">
+                      <DesignDiagram design={d.id} />
+                    </div>
+
+                    <p className="mt-2 text-xs font-medium text-slate-700">What you get to say: <Plain>{d.claim}</Plain></p>
 
                     <div className="mt-2 grid gap-2 sm:grid-cols-3">
                       <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Needs</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">What it needs</p>
                         <ul className="mt-0.5 space-y-0.5">
                           {d.requires.map((r, i) => <li key={i} className="text-[11px] leading-snug text-slate-600">· {r}</li>)}
                         </ul>
                       </div>
                       <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Does not protect against</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">What could still fool you</p>
                         <ul className="mt-0.5 space-y-0.5">
                           {d.threats.map((r, i) => <li key={i} className="text-[11px] leading-snug text-slate-600">· {r}</li>)}
                         </ul>
                       </div>
                       <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Cost, and when to decide</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">What it costs, and the deadline</p>
                         <p className="mt-0.5 text-[11px] leading-snug text-slate-600"><Plain>{d.cost}</Plain></p>
                         <p className="mt-1 text-[11px] font-medium leading-snug text-rose-700"><Plain>{d.decideBy}</Plain></p>
                       </div>
@@ -166,6 +180,43 @@ export default function DesignStep({
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="mt-3 rounded-lg border border-cyan-200 bg-cyan-50/60 p-3">
+          <p className="text-sm font-semibold text-slate-900">Going live has not cost you the &ldquo;before&rdquo; figures</p>
+          <p className="mt-1 text-xs leading-relaxed text-slate-600">
+            Every contact HSU recorded is sitting in Saga, coded, going back years. It can be pulled out
+            retrospectively whenever somebody runs the query — you do not have to have collected anything in
+            advance. What actually expires is the goodwill to run it, and each station that goes live, because a
+            station stops being a comparison the day it gets the service.
+          </p>
+          <button
+            onClick={() => {
+              const live = stations
+                .filter((n) => state.sites[n]?.role === "live")
+                .map((n) => ({ name: n, goLive: state.sites[n]?.goLive }));
+              const doc = baselineRequest({
+                institution: "HSU",
+                liveStations: live.length ? live : [{ name: "Vestmannaeyjar", goLive: "2026-08-17" }],
+                comparisonStations: stations.filter((n) => state.sites[n]?.role === "pre-live"),
+                monthsBefore: state.baselineMonths,
+              });
+              const blob = new Blob([doc], { type: "text/markdown;charset=utf-8" });
+              const a = document.createElement("a");
+              a.href = URL.createObjectURL(blob);
+              a.download = "baseline-data-request.md";
+              a.click();
+              URL.revokeObjectURL(a.href);
+            }}
+            className="mt-2 flex items-center gap-1.5 rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-900"
+          >
+            <FileDown className="h-4 w-4" /> Write the request to send HSU
+          </button>
+          <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
+            Fills itself in from the stations and dates below. Says exactly which figures, which months, which
+            stations — and spells out that it is counts only, no patient data, which is what keeps this out of
+            research territory.
+          </p>
         </div>
 
         <label className="mt-3 block max-w-xs">
@@ -277,8 +328,10 @@ export default function DesignStep({
       <section className={`${card} p-4`}>
         <h3 className="font-bold text-slate-900">Decide now, in writing</h3>
         <p className="mb-3 max-w-3xl text-xs leading-relaxed text-slate-500">
-          Each of these is defensible decided in advance and indefensible decided afterwards, however analytically
-          correct the late answer is.
+          Each of these is defensible decided in advance and indefensible decided afterwards, however sensible the
+          late answer is. You can retract or change any of them — but an edit is stamped as a revision and both
+          dates are shown, because the whole value of deciding early disappears if the wording can be quietly
+          rewritten once the numbers are in.
         </p>
         <div className="space-y-3">
           {DECISIONS.map((d) => {
@@ -289,6 +342,9 @@ export default function DesignStep({
                   <span className="text-sm font-semibold text-slate-900">{d.name}</span>
                   {d.timeCritical && !value?.text && <Chip className="bg-rose-100 text-rose-700">Time-critical</Chip>}
                   {value?.decidedAt && <Chip className="bg-emerald-100 text-emerald-800">decided {value.decidedAt}</Chip>}
+                  {value?.revisedAt && value.revisedAt !== value.decidedAt && (
+                    <Chip className="bg-amber-100 text-amber-800">revised {value.revisedAt}</Chip>
+                  )}
                 </div>
                 <p className="mt-0.5 text-xs text-slate-600">{d.question}</p>
                 <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{d.why}</p>
@@ -300,17 +356,24 @@ export default function DesignStep({
                     placeholder={d.suggestion}
                     value={value?.text ?? ""}
                     disabled={!canEdit}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const today = new Date().toISOString().slice(0, 10);
                       onChange({
                         ...state,
                         decisions: {
                           ...state.decisions,
-                          [d.id]: { text: e.target.value, decidedAt: value?.decidedAt ?? new Date().toISOString().slice(0, 10) },
+                          [d.id]: {
+                            text: e.target.value,
+                            decidedAt: value?.decidedAt ?? today,
+                            // Only counts as a revision if something was
+                            // already decided on an earlier day.
+                            ...(value?.decidedAt && value.decidedAt !== today ? { revisedAt: today } : {}),
+                          },
                         },
-                      })
-                    }
+                      });
+                    }}
                   />
-                  {!value?.text && canEdit && (
+                  {canEdit && !value?.text && (
                     <button
                       onClick={() =>
                         onChange({
@@ -321,6 +384,19 @@ export default function DesignStep({
                       className="flex shrink-0 items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
                     >
                       Use suggestion <ChevronRight className="h-3 w-3" />
+                    </button>
+                  )}
+                  {canEdit && value?.text && (
+                    <button
+                      onClick={() => {
+                        const next = { ...state.decisions };
+                        delete next[d.id];
+                        onChange({ ...state, decisions: next });
+                      }}
+                      title="Remove this decision entirely — it will read as not yet decided"
+                      className="flex shrink-0 items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700"
+                    >
+                      <Undo2 className="h-3 w-3" /> Retract
                     </button>
                   )}
                 </div>

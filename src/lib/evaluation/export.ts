@@ -115,6 +115,108 @@ export function toReport(
   return lines.join("\n");
 }
 
+// ── Baseline request ────────────────────────────────────────────────────────
+
+/**
+ * The letter to send the institution asking for the "before" figures.
+ *
+ * Going live did not cost you the baseline: every contact the health centre
+ * recorded is in Saga, coded, going back years, and can be pulled out
+ * retrospectively whenever somebody runs the query. What expires is the
+ * goodwill to run it and the memory of what else was happening that year.
+ *
+ * The one thing this asks for that people routinely get wrong is MONTHLY
+ * counts rather than an annual total. A year lumped together can only say
+ * "it was X before and Y after". Month by month shows whether the numbers
+ * were already moving before you arrived — and a total cannot be broken back
+ * down afterwards.
+ */
+export function baselineRequest(opts: {
+  institution: string;
+  liveStations: { name: string; goLive?: string }[];
+  comparisonStations: string[];
+  monthsBefore: number;
+}): string {
+  const first = opts.liveStations.map((s) => s.goLive).filter(Boolean).sort()[0];
+  const from = (() => {
+    if (!first) return "the 24 months before the service started";
+    const d = new Date(first);
+    d.setUTCMonth(d.getUTCMonth() - opts.monthsBefore);
+    return `${d.toISOString().slice(0, 7)} to ${first.slice(0, 7)}`;
+  })();
+
+  const L: string[] = [];
+  L.push(`# Data request — evaluation of the remote service`);
+  L.push("");
+  L.push(`To: ${opts.institution}`);
+  L.push("");
+  L.push(
+    "We are evaluating the remote service as a quality-assurance project and would like to compare it against " +
+    "how things were beforehand. Everything below already exists in Saga — this is a request to run a query " +
+    "over records you already hold, not to collect anything new.",
+  );
+  L.push("");
+  L.push("## What we are asking for");
+  L.push("");
+  L.push(`**Period:** ${from}, and then the same figures each month going forward.`);
+  L.push("");
+  L.push(
+    "**Monthly, please — not a yearly total.** This is the one thing that matters most in how the request is " +
+    "filled. With a year lumped together we can only say \"it was X before and Y after\". Month by month we can " +
+    "see whether your numbers were already moving before we arrived, and separate the two. A total cannot be " +
+    "broken back down afterwards.",
+  );
+  L.push("");
+  L.push("**Stations:**");
+  for (const st of opts.liveStations) L.push(`- ${st.name}${st.goLive ? ` — service started ${st.goLive}` : ""}`);
+  if (opts.comparisonStations.length) {
+    L.push("");
+    L.push(
+      "And, importantly, the same figures for stations **not** running the service. They act as a comparison: " +
+      "if our numbers move and theirs do not over the same months, the service is the likeliest explanation. " +
+      "A station stops being useful for this the day it gets the service, so the sooner these start the better:",
+    );
+    for (const st of opts.comparisonStations) L.push(`- ${st}`);
+  }
+  L.push("");
+  L.push("## The figures, per station per month");
+  L.push("");
+  L.push("1. **Number of contacts** in the diagnosis codes listed below — the core figure.");
+  L.push("2. **Prescriptions issued** in those same codes, and **how many were antibiotics**. This lets us show our prescribing against yours rather than against nothing.");
+  L.push("3. **Did-not-attend rate** for comparable appointments.");
+  L.push("4. **Telephone contacts** to the station, if that is recorded.");
+  L.push("5. **Spend on locum and temporary cover**, monthly.");
+  L.push("");
+  L.push("## Diagnosis codes");
+  L.push("");
+  L.push(
+    "The agreed ICD-10 code set for each of our case types is attached separately. If it is easier at your end, " +
+    "a count per individual code is more useful to us than a count per case type — we can group them ourselves, " +
+    "and having the detail means we can answer questions later without coming back to you.",
+  );
+  L.push("");
+  L.push("## What we are not asking for");
+  L.push("");
+  L.push(
+    "**Counts only. No patient-level data of any kind** — no ID numbers, no dates of birth, no free text, and " +
+    "nothing finer than a month. A date at a station of a few thousand people can identify someone; a monthly " +
+    "count cannot. That is deliberate: it keeps this within quality assurance under the Directorate of Health " +
+    "Act rather than turning it into research, which is why it needs neither patient consent nor an ethics " +
+    "committee. Please suppress or combine any cell with fewer than five cases.",
+  );
+  L.push("");
+  L.push("## One query we would ask you to run yourselves");
+  L.push("");
+  L.push(
+    "For patients seen by the remote service, how many returned to you within seven days with a related problem. " +
+    "This is the single best safety measure available to us, but matching the two sets of records would mean " +
+    "linking identifiable data across two organisations. If you run the query at your end and send us only the " +
+    "count, nothing identifiable crosses between us and the project stays quality assurance.",
+  );
+  L.push("");
+  return L.join("\n");
+}
+
 // ── Charts ──────────────────────────────────────────────────────────────────
 
 const PALETTE = ["#0891b2", "#7c3aed", "#e11d48", "#d97706", "#059669"];

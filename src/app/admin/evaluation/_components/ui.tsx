@@ -103,3 +103,60 @@ export function Plain({ children }: { children: string }) {
     </>
   );
 }
+
+/**
+ * A twelve-month strip showing what each design actually looks like.
+ *
+ * Grey means the station is running as usual; green means the service is
+ * live there. The staircase is the whole idea behind the strongest option,
+ * and it is far quicker to see than to read — which is the point: nobody
+ * should have to recognise the phrase "stepped wedge" to pick between four
+ * options.
+ */
+export function DesignDiagram({ design }: { design: string }) {
+  const rows: { label: string; startsAt: number | null }[] =
+    design === "stepped-wedge"
+      ? [
+          { label: "Station 1", startsAt: 3 },
+          { label: "Station 2", startsAt: 6 },
+          { label: "Station 3", startsAt: 9 },
+        ]
+      : design === "controlled"
+      ? [
+          { label: "Our station", startsAt: 6 },
+          { label: "Comparison", startsAt: null },
+        ]
+      : [{ label: "Our station", startsAt: 6 }];
+
+  const months = 12;
+  return (
+    <div className="space-y-1">
+      {rows.map((r) => (
+        <div key={r.label} className="flex items-center gap-2">
+          <span className="w-20 shrink-0 text-right text-[10px] text-slate-500">{r.label}</span>
+          <div className="flex flex-1 gap-[2px]">
+            {Array.from({ length: months }, (_, i) => {
+              const live = r.startsAt !== null && i >= r.startsAt;
+              const starts = r.startsAt === i;
+              return (
+                <div
+                  key={i}
+                  className={`h-3 flex-1 rounded-[2px] ${live ? "bg-emerald-500" : "bg-slate-200"} ${
+                    starts ? "ring-2 ring-emerald-700 ring-offset-1" : ""
+                  }`}
+                  title={starts ? "service starts here" : live ? "service running" : "as usual"}
+                />
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      <div className="flex items-center gap-3 pl-[88px] pt-0.5 text-[10px] text-slate-500">
+        <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-[2px] bg-slate-200" /> as usual</span>
+        <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-[2px] bg-emerald-500" /> service running</span>
+        <span className="text-slate-400">← 12 months →</span>
+        {design === "its" && <span className="text-slate-400">every month counted separately</span>}
+      </div>
+    </div>
+  );
+}

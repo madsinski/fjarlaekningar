@@ -38,11 +38,14 @@ import { DEFAULT_DESIGN_STATE, type DesignState } from "@/lib/evaluation/design"
 
 type Step = "overview" | "library" | "design" | "modules" | "setup" | "data" | "results";
 
+/** What you actually do. The proper names live on the Study design step, next
+ *  to each option, because that is where they are needed — not on a summary
+ *  card somebody glances at. */
 const DESIGN_LABEL: Record<DesignState["design"], string> = {
-  "before-after": "Uncontrolled before-and-after",
-  its: "Interrupted time series",
-  controlled: "Controlled before-and-after",
-  "stepped-wedge": "Stepped wedge",
+  "before-after": "Comparing with how things were before",
+  its: "Watching the monthly trend for a step",
+  controlled: "Comparing against a station that has not started",
+  "stepped-wedge": "Starting stations one at a time",
 };
 
 const STEPS: { id: Step; label: string; icon: typeof LayoutGrid; n?: number }[] = [
