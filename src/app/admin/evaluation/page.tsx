@@ -488,6 +488,7 @@ export default function EvaluationPage() {
           canEdit={admin && !unavailable}
           onSave={async () => { if (draft) await post({ month: draft }, "Saved."); }}
           onImport={async (rows) => { await post({ action: "import", months: rows }, `${rows.length} station-months imported.`); }}
+          onImportReasons={async (rows) => { await post({ action: "reasons", reasons: rows }, `${rows.length} exclusion reasons imported.`); }}
         />
       )}
 

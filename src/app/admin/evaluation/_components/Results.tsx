@@ -14,6 +14,7 @@ import { Info, TriangleAlert } from "lucide-react";
 import { results } from "@/lib/evaluation/programme";
 import type { Assumptions, Programme } from "@/lib/evaluation/types";
 import { caseTypeRows, pct, type Roster, type Totals } from "@/lib/evaluation/totals";
+import { GATES } from "@/lib/evaluation/exclusions";
 import { ACCENT, Chip, STATUS_RING, card } from "./ui";
 
 export default function Results({
@@ -173,6 +174,87 @@ export default function Results({
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {t.exclusions.total > 0 && (
+        <section className={`${card} p-4`}>
+          <h2 className="text-lg font-bold text-slate-900">Turned away on a red flag</h2>
+          <p className="mb-3 max-w-3xl text-sm leading-relaxed text-slate-600">
+            Two gates, and they say different things. The questionnaire is cheap and applies identically every
+            time. A doctor turning someone away is expensive — the patient has already waited — and each one is
+            arguably a case the form should have caught.
+          </p>
+
+          <div className="mb-3 grid gap-3 sm:grid-cols-2">
+            {GATES.map((g) => {
+              const count = g.id === "form" ? t.exclusions.form : t.exclusions.clinician;
+              return (
+                <div key={g.id} className="rounded-lg border border-slate-200 p-3">
+                  <p className="text-xs font-medium text-slate-600">{g.name}</p>
+                  <p className="text-2xl font-bold text-slate-900">
+                    {count} <span className="text-sm font-medium text-slate-400">({pct(count, t.exclusions.total)}%)</span>
+                  </p>
+                  <p className="mt-0.5 text-[11px] leading-snug text-slate-500">{g.note}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {t.exclusions.leaks.length > 0 && (
+            <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <p className="text-sm font-semibold text-amber-900">
+                {t.exclusions.leaks.length} reason{t.exclusions.leaks.length === 1 ? "" : "s"} the form should have caught
+              </p>
+              <p className="mt-0.5 text-xs leading-relaxed text-amber-800">
+                Each of these is a gap in the questionnaire logic rather than a judgement call. Fix the form and
+                next month&rsquo;s list is shorter — that is the entire point of collecting reasons.
+              </p>
+              <ul className="mt-1.5 space-y-0.5 text-xs text-amber-900">
+                {t.exclusions.leaks.map((l) => (
+                  <li key={l.reason.id}>
+                    <strong>{l.reason.name}</strong> — {l.count} reached a clinician. {l.reason.note}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+                  <th className="py-2 pr-2 font-semibold">Reason</th>
+                  <th className="px-2 py-2 text-right font-semibold">By form</th>
+                  <th className="px-2 py-2 text-right font-semibold">By doctor</th>
+                  <th className="py-2 pl-2 text-right font-semibold">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {t.exclusions.byReason.map((r) => {
+                  const leaking = r.reason.expected === "form" && r.clinician > 0;
+                  return (
+                    <tr key={r.reason.id} className="border-b border-slate-100 last:border-0">
+                      <td className="py-1.5 pr-2 text-slate-800">
+                        {r.reason.name}
+                        {leaking && <Chip className="ml-1.5 bg-amber-100 text-amber-800">leaking</Chip>}
+                      </td>
+                      <td className="px-2 py-1.5 text-right tabular-nums text-slate-600">{r.form || "—"}</td>
+                      <td className={`px-2 py-1.5 text-right tabular-nums ${leaking ? "font-semibold text-amber-700" : "text-slate-600"}`}>
+                        {r.clinician || "—"}
+                      </td>
+                      <td className="py-1.5 pl-2 text-right font-semibold tabular-nums text-slate-900">{r.total}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+            Counts only those who entered. Anyone a nurse or receptionist turned away before they reached the
+            portal is invisible here and always will be — four entry routes, and nobody counts the door.
+          </p>
         </section>
       )}
 

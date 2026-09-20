@@ -37,17 +37,18 @@ modules also need a **Storage bucket** — noted inline.
 
 | 24 | `supabase/evaluation-schema.sql` | Service evaluation — `evaluation_months` (one row per station per month, aggregates only: every column is a count, nothing traceable to a person), `evaluation_documents` and the private `research-docs` storage bucket. Drops the short-lived Icelandic `arangur_manudir`, guarded by a row check that raises rather than destroys. See `docs/evaluation.md`. | ✅ done (2026-09-20) |
 | 25 | `supabase/evaluation-modules-2.sql` | Columns for the second wave of research modules — clinician effort, home tests, image adequacy, reach and equity, demand pattern, out-of-hours, did-not-attend, diagnostic concordance, follow-up adherence, implementation cost. All nullable. | ✅ done (2026-09-20) |
+| 26 | `supabase/evaluation-exclusions.sql` | Turning away separated from referring onward — `excluded_by_doctor` (subset of `cases_referred`) and `exclusion_reasons` jsonb covering both gates. Drops the unused `screening_reasons`. Reason ids are fixed in `src/lib/evaluation/exclusions.ts` and derive from the service's own triage rules. | ✅ done (2026-09-20) |
 
-| 35 | `supabase/roster-schema.sql` | Vaktakerfi Fjarlækninga — `roster_doctors`, `roster_settings`, `roster_shifts`, `roster_swaps`. Undir *Starfsfólk* → Vaktakerfi (`/admin/roster`). Athugið: þetta er mönnun **okkar** þjónustu; `hsu_*` er gæsluvaktakerfi HSU-lækna og óskylt. | ✅ done (staðfest 2026-09-20) |
-| 35 | `supabase/roster-preferences-schema.sql` | Vaktaóskir, fyrri hluti — `roster_doctors.max_shifts_per_month`, `allowed_weekdays`, `shift_note`, `prefs_updated_at`. | ✅ done (staðfest 2026-09-20) |
-| 35 | `supabase/roster-absences-schema.sql` | Vaktaóskir, seinni hluti — `roster_doctor_absences` (frí) og `roster_doctors.preferred_run_length`. Fimm API-leiðir fyrir `/vaktir` óskir og stjórnborð vaktakerfisins reiða sig á töfluna. | ✅ done (2026-09-20) |
-| 35 | `supabase/google-calendar-schema.sql` | Google-dagatalssamstilling fyrir vaktir. Sjá `docs/google-dagatal.md`. | ✅ done (staðfest 2026-09-20) |
-| 35 | `supabase/staff-billing-schema.sql` | Reikningar starfsfólks (`/admin/invoices`). | ✅ done (staðfest 2026-09-20) |
-| 35 | `supabase/contractor-invoice-void-fix.sql` | Lagfæring á ógildingu verktakareikninga. | ✅ done (staðfest 2026-09-20) |
-| 35 | `supabase/staff-contracts-schema.sql` | Ráðningarsamningar starfsfólks. | ✅ done (staðfest 2026-09-20) |
-| 35 | `supabase/staff-documents-schema.sql` | Skjöl starfsfólks. | ✅ done (staðfest 2026-09-20) |
-| 35 | `supabase/stofnanir-schema.sql` | Samstarfsstofnanir — `partner_pages`, deilt um `/samstarf/<slug>`. | ✅ done (staðfest 2026-09-20) |
-| 35 | `supabase/thjonustukonnun.sql` | AI-samantekt á þjónustukönnunum — `survey_ai_summaries`. | ✅ done (staðfest 2026-09-20) |
+| 36 | `supabase/roster-schema.sql` | Vaktakerfi Fjarlækninga — `roster_doctors`, `roster_settings`, `roster_shifts`, `roster_swaps`. Undir *Starfsfólk* → Vaktakerfi (`/admin/roster`). Athugið: þetta er mönnun **okkar** þjónustu; `hsu_*` er gæsluvaktakerfi HSU-lækna og óskylt. | ✅ done (staðfest 2026-09-20) |
+| 36 | `supabase/roster-preferences-schema.sql` | Vaktaóskir, fyrri hluti — `roster_doctors.max_shifts_per_month`, `allowed_weekdays`, `shift_note`, `prefs_updated_at`. | ✅ done (staðfest 2026-09-20) |
+| 36 | `supabase/roster-absences-schema.sql` | Vaktaóskir, seinni hluti — `roster_doctor_absences` (frí) og `roster_doctors.preferred_run_length`. Fimm API-leiðir fyrir `/vaktir` óskir og stjórnborð vaktakerfisins reiða sig á töfluna. | ✅ done (2026-09-20) |
+| 36 | `supabase/google-calendar-schema.sql` | Google-dagatalssamstilling fyrir vaktir. Sjá `docs/google-dagatal.md`. | ✅ done (staðfest 2026-09-20) |
+| 36 | `supabase/staff-billing-schema.sql` | Reikningar starfsfólks (`/admin/invoices`). | ✅ done (staðfest 2026-09-20) |
+| 36 | `supabase/contractor-invoice-void-fix.sql` | Lagfæring á ógildingu verktakareikninga. | ✅ done (staðfest 2026-09-20) |
+| 36 | `supabase/staff-contracts-schema.sql` | Ráðningarsamningar starfsfólks. | ✅ done (staðfest 2026-09-20) |
+| 36 | `supabase/staff-documents-schema.sql` | Skjöl starfsfólks. | ✅ done (staðfest 2026-09-20) |
+| 36 | `supabase/stofnanir-schema.sql` | Samstarfsstofnanir — `partner_pages`, deilt um `/samstarf/<slug>`. | ✅ done (staðfest 2026-09-20) |
+| 36 | `supabase/thjonustukonnun.sql` | AI-samantekt á þjónustukönnunum — `survey_ai_summaries`. | ✅ done (staðfest 2026-09-20) |
 
 > After running a migration, the matching admin module works immediately (no
 > redeploy needed — the tables just start returning data).

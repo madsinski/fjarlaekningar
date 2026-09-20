@@ -41,6 +41,7 @@ export const COLUMNS: Column[] = [
   { name: "referred_specialist", description: "Referred to a specialist or specialty service.", numeric: true },
   { name: "referred_urgent", description: "Sent to emergency care or 112 — AFTER the patient passed the questionnaire. Its own column because this is a near miss of the screen, not an ordinary referral.", numeric: true },
   { name: "referred_other", description: "Anything else.", numeric: true },
+  { name: "excluded_by_doctor", description: "Of those referred, how many were TURNED AWAY as unsuitable — acute symptoms, needs examining, under 18, pregnancy, outside scope — rather than referred onward as normal care. Only this subset is a safety figure. Reasons go in the separate reasons file.", numeric: true },
   { name: "cases_repeat", description: "Same patient, same case type, again within the month. A count — no identifiers.", numeric: true },
   { name: "screening_stops", description: "Questionnaire stopped the patient on a red flag; never reached a clinician. If this is not recorded today it is the most urgent fix.", numeric: true },
   { name: "prescriptions", description: "Cases where a prescription was issued.", numeric: true },
@@ -173,6 +174,7 @@ export function parse(text: string, institution = "hsu"): ImportResult {
     row.referred_urgent += v("referred_urgent");
     row.referred_other += v("referred_other");
     row.screening_stops += v("screening_stops");
+    row.excluded_by_doctor += v("excluded_by_doctor");
     row.prescriptions += v("prescriptions");
     row.antibiotics += v("antibiotics");
     row.codes_outside_set += v("codes_outside_set");
@@ -233,7 +235,7 @@ export const MEDALIA_COLUMNS: (keyof MonthRow | "institution" | "station" | "mon
   "institution", "station", "month",
   "cases_total", "cases_resolved", "cases_referred", "cases_repeat",
   "referred_primary_care", "referred_specialist", "referred_other", "referred_urgent",
-  "codes_outside_set", "screening_stops", "prescriptions", "antibiotics",
+  "codes_outside_set", "screening_stops", "excluded_by_doctor", "prescriptions", "antibiotics",
   "response_median_min", "response_p95_min", "cases_by_type",
   "entry_direct", "entry_nurse", "entry_reception", "entry_records", "entry_other",
   "general_total", "general_resolved", "sources_present",

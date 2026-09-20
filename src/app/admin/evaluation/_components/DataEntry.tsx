@@ -15,6 +15,7 @@ import { useRef, useState } from "react";
 import { CheckCircle2, Download, Loader2, Save, Upload } from "lucide-react";
 import { fieldsBySource } from "@/lib/evaluation/programme";
 import { COLUMNS, parse, template, type ImportIssue } from "@/lib/evaluation/import";
+import { EXCLUSION_REASONS, GATES, REASON_COLUMNS, parseReasons, reasonTemplate } from "@/lib/evaluation/exclusions";
 import { SCOPED_CASE_TYPES, monthName, lastMonths, type MonthRow } from "@/lib/evaluation/totals";
 import { SOURCES, type Programme } from "@/lib/evaluation/types";
 import { SOURCE_CHIP, card, input } from "./ui";
@@ -51,7 +52,7 @@ function NumberField({
 
 export default function DataEntry({
   programme, draft, setDraft, stations, station, setStation, month, setMonth,
-  onSave, onImport, saving, canEdit, institution,
+  onSave, onImport, onImportReasons, saving, canEdit, institution,
 }: {
   programme: Programme;
   draft: MonthRow | null;
@@ -61,6 +62,7 @@ export default function DataEntry({
   month: string; setMonth: (v: string) => void;
   onSave: () => Promise<void>;
   onImport: (rows: MonthRow[]) => Promise<void>;
+  onImportReasons: (rows: ReturnType<typeof parseReasons>["rows"]) => Promise<void>;
   saving: boolean;
   canEdit: boolean;
   institution: string;
@@ -70,6 +72,9 @@ export default function DataEntry({
   const [issues, setIssues] = useState<ImportIssue[]>([]);
   const [lines, setLines] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
+  const reasonRef = useRef<HTMLInputElement>(null);
+  const [reasonRows, setReasonRows] = useState<ReturnType<typeof parseReasons>["rows"]>([]);
+  const [reasonIssues, setReasonIssues] = useState<{ line: number; text: string }[]>([]);
 
   const groups = fieldsBySource(programme);
 
@@ -175,6 +180,101 @@ export default function DataEntry({
               )}
             </div>
           )}
+
+          <div className={`${card} p-4`}>
+            <h3 className="font-semibold text-slate-900">Who was turned away, and why</h3>
+            <div className="mt-2 max-w-3xl space-y-2 text-sm leading-relaxed text-slate-600">
+              <p>
+                A second, much smaller file: <strong className="text-slate-800">one line per station × month ×
+                gate × reason</strong>. Kept separate because putting eleven reasons across two gates into the
+                monthly file would add twenty-two columns to every line, and at its own grain this is a couple of
+                hundred lines a month at most.
+              </p>
+              <p>
+                Two gates say different things. The <strong className="text-slate-800">questionnaire</strong> is
+                cheap and identical every time. A <strong className="text-slate-800">doctor</strong> turning
+                someone away is expensive — the patient has already waited — and each one is arguably a case the
+                form should have caught.
+              </p>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  const blob = new Blob([reasonTemplate()], { type: "text/csv;charset=utf-8" });
+                  const a = document.createElement("a");
+                  a.href = URL.createObjectURL(blob);
+                  a.download = "exclusion-reasons-template.csv";
+                  a.click();
+                  URL.revokeObjectURL(a.href);
+                }}
+                className="flex items-center gap-1.5 rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-900"
+              >
+                <Download className="h-4 w-4" /> Reasons template
+              </button>
+              <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                <Upload className="h-4 w-4" /> Choose reasons file
+                <input
+                  ref={reasonRef}
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    const r = parseReasons(await f.text());
+                    setReasonRows(r.rows); setReasonIssues(r.issues);
+                  }}
+                />
+              </label>
+            </div>
+
+            {(reasonRows.length > 0 || reasonIssues.length > 0) && (
+              <div className="mt-3 rounded-lg border border-slate-200 p-3">
+                <p className="text-sm font-semibold text-slate-800">{reasonRows.length} reason rows read</p>
+                {reasonIssues.length > 0 && (
+                  <ul className="mt-1 space-y-0.5 text-xs text-amber-800">
+                    {reasonIssues.slice(0, 8).map((v, i) => <li key={i}>{v.line ? `Line ${v.line}: ` : ""}{v.text}</li>)}
+                  </ul>
+                )}
+                {reasonRows.length > 0 && (
+                  <button
+                    onClick={async () => { await onImportReasons(reasonRows); setReasonRows([]); setReasonIssues([]); if (reasonRef.current) reasonRef.current.value = ""; }}
+                    disabled={saving || !canEdit}
+                    className="mt-2 flex items-center gap-1.5 rounded-lg bg-cyan-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:opacity-50"
+                  >
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Import reasons
+                  </button>
+                )}
+              </div>
+            )}
+
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full text-sm">
+                <tbody>
+                  {REASON_COLUMNS.map((c) => (
+                    <tr key={c.name} className="border-b border-slate-100 align-top last:border-0">
+                      <td className="py-1.5 pr-3 font-mono text-xs text-cyan-800">{c.name}</td>
+                      <td className="py-1.5 text-xs leading-snug text-slate-600">{c.description}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <p className="mt-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+              The fixed reason list — taken from the service&rsquo;s own triage rules
+            </p>
+            <ul className="mt-1 grid gap-x-4 gap-y-1 sm:grid-cols-2">
+              {EXCLUSION_REASONS.map((r) => (
+                <li key={r.id} className="text-[11px] leading-snug text-slate-600">
+                  <span className="font-mono text-cyan-800">{r.id}</span> — {r.name}{" "}
+                  <span className="text-slate-400">
+                    (normally {GATES.find((g) => g.id === r.expected)!.name.toLowerCase()})
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           <div className={`${card} p-4`}>
             <h3 className="font-semibold text-slate-900">Columns — this is the specification to send Medalia</h3>

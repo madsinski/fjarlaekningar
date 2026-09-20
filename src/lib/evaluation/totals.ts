@@ -11,6 +11,7 @@
 //   differently.
 
 import { erindi } from "@/erindi";
+import { summarise, type ExclusionRow } from "./exclusions";
 
 export type CaseCounts = { total: number; resolved: number; referred: number };
 export type NamedCount = { label: string; count: number };
@@ -33,7 +34,12 @@ export type MonthRow = {
   referred_urgent: number;
   codes_outside_set: number;
   screening_stops: number;
-  screening_reasons: NamedCount[];
+  /** Subset of cases_referred: turned away as unsuitable rather than referred
+   *  onward as normal care. The difference is the whole point — only this is a
+   *  safety figure. */
+  excluded_by_doctor: number;
+  /** Both gates in one place. */
+  exclusion_reasons: ExclusionRow[];
   prescriptions: number;
   antibiotics: number;
   response_median_min: number | null;
@@ -101,7 +107,7 @@ export type MonthRow = {
 const COUNT_KEYS = [
   "cases_total", "cases_resolved", "cases_referred", "cases_repeat",
   "referred_primary_care", "referred_specialist", "referred_other", "referred_urgent",
-  "codes_outside_set", "screening_stops", "prescriptions", "antibiotics",
+  "codes_outside_set", "screening_stops", "excluded_by_doctor", "prescriptions", "antibiotics",
   "entry_direct", "entry_nurse", "entry_reception", "entry_records", "entry_other",
   "general_total", "general_resolved", "survey_sent", "survey_responses",
   "deviations", "near_misses", "serious_incidents",
@@ -126,7 +132,7 @@ export function emptyMonth(institution: string, station: string, month: string):
   for (const k of COUNT_KEYS) (r as Record<string, unknown>)[k] = 0;
   for (const k of NULLABLE_KEYS) (r as Record<string, unknown>)[k] = null;
   r.cases_by_type = {};
-  r.screening_reasons = [];
+  r.exclusion_reasons = [];
   r.general_unresolved_reasons = [];
   r.note = "";
   r.sources_present = [];
@@ -246,7 +252,9 @@ export function total(rows: MonthRow[]) {
     months: rows.length,
     entry,
     byType,
-    screeningReasons: mergeNamed(rows, (r) => r.screening_reasons),
+    // Both gates, with the reasons the form was meant to catch but a clinician
+    // did — each of those is a gap in the questionnaire logic.
+    exclusions: summarise(rows.flatMap((r) => r.exclusion_reasons ?? [])),
     generalUnresolved: mergeNamed(rows, (r) => r.general_unresolved_reasons),
 
     institution_contacts: sumMeasured(rows, (r) => r.institution_contacts),

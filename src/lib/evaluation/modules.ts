@@ -291,25 +291,46 @@ export const MODULES: Module[] = [
   {
     id: "screening",
     name: "Red-flag screening",
-    question: "Who decides a patient is suitable, and does the screen work?",
-    claim: "Nobody screens patients clinically beforehand — deliberately. The questionnaire does, identically, every time, and here is its stop rate.",
+    question: "How many are turned away, at which gate, and for what?",
+    claim: "N patients were excluded on a red flag — M by the questionnaire and K by a clinician — and here is the reason for every one.",
     category: "safety",
+    benefit:
+      "Answers 'who decides the patient is suitable?' with evidence, and shows exactly what is getting past the form.",
+    horizon: "now",
     effort: "medium",
     sources: ["medalia"],
-    benefit:
-      "Answers 'who decides the patient is suitable?' with evidence rather than assertion.",
-    horizon: "now",
     rationale:
-      "This question will be asked hard at any clinical meeting, because patients arrive through four routes and two of them — reception and records staff — are not clinicians. You cannot answer 'an experienced nurse judged it', because that is not true for most arrivals. But you do not need to: a systematic screen applied identically every time beats human judgement that varies by shift and by day. That answer is stronger — and it stands or falls entirely on being able to show the stop rate.",
+      "This question is asked hard at any clinical meeting, because patients arrive by four routes and two of them — reception and records staff — are not clinical. You cannot answer 'an experienced nurse judged it', because that is not true for most arrivals. You do not need to: a systematic screen applied identically every time beats human judgement that varies by shift. But that answer stands or falls on being able to show the stop rate. Two gates matter and they say different things. The questionnaire is cheap and consistent. A clinician turning someone away is expensive — the patient has already waited — and each one is arguably a case the form should have caught. The split, and the reason behind each, is the most actionable safety output in the whole programme.",
     caveat:
-      "It only proves the screen fired, not that it fired correctly. Pair it with the urgent-referral count, which is the near miss of the same screen.",
+      "Only counts those who entered. Anyone a nurse or receptionist turned away before they reached the portal is invisible here and always will be — four entry routes and nobody counts the door. And a low total can mean the scope is well communicated upstream or that nobody is checking; the reason breakdown is what distinguishes them.",
     protocol: [
-      { text: "Confirm Medalia records stopped questionnaires at all, and that they reach the export", detail: "The most urgent question to put to Medalia. If stops are not recorded, this is the fix that has to happen before counting starts — it cannot be reconstructed later.", timeCritical: true },
-      { text: "Agree a fixed list of stop reasons", detail: "About ten categories. Free text here means reading a thousand records at the end of the period." },
-      { text: "Separate urgent escalation after the screen from ordinary referral", detail: "A patient who passed the questionnaire and then had to be sent to emergency care is a near miss of the screen, not a referral. Counted together, the sharpest safety signal you own disappears." },
+      {
+        text: "Confirm Medalia records stopped questionnaires at all, and that they reach the export",
+        detail:
+          "The most urgent question to put to Medalia. If stops are not recorded, this is the fix that has to happen before counting starts — it cannot be reconstructed later.",
+        timeCritical: true,
+      },
+      {
+        text: "Separate turning away from referring onward in the clinician's outcome field",
+        detail:
+          "A patient who needs a dermatologist is the service working correctly. A patient who was pregnant, under 18 or acutely unwell should not have been here. Recorded as one figure, the safety signal disappears into the referral count.",
+        timeCritical: true,
+      },
+      {
+        text: "Use the fixed reason list at both gates",
+        detail:
+          "Eleven categories, taken from the service's own triage rules so they match the clinical logic. Free text here means reading a thousand records at the end of the period.",
+        timeCritical: true,
+      },
+      {
+        text: "Review the leaks every month",
+        detail:
+          "A reason the form was meant to catch but a clinician caught instead is a gap in the questionnaire logic. That monthly list is the entire value of this module — fix the form and the next month's leak list is shorter.",
+      },
     ],
     fields: [
       { key: "screening_stops", label: "Stopped by questionnaire", source: "medalia" },
+      { key: "excluded_by_doctor", label: "Turned away by a doctor", help: "Unsuitable on a red flag — not referred onward as normal care.", source: "medalia" },
       { key: "referred_urgent", label: "Urgent escalation after screening", help: "Emergency care or 112 after the patient passed the questionnaire.", source: "medalia" },
     ],
     documents: [
@@ -317,12 +338,61 @@ export const MODULES: Module[] = [
     ],
     metrics: [
       {
-        id: "stop_rate", name: "Stopped by questionnaire", headline: true,
-        why: "The only evidence that the safety net works. Without it, 'the questionnaire screens them' is an assertion.",
+        id: "excluded_total", name: "Turned away on a red flag", headline: true,
+        why: "The combined catch across both gates. Without the split below it is just a number; with it, it is evidence the screen works.",
+        compute: ({ t }) => {
+          const entered = t.cases_total + t.screening_stops;
+          const total = t.screening_stops + t.excluded_by_doctor;
+          return {
+            value: entered ? `${n(total)}` : null,
+            detail: entered
+              ? `${p(pct(total, entered))} of ${n(entered)} who entered — ${n(t.screening_stops)} by the form, ${n(t.excluded_by_doctor)} by a doctor`
+              : "Needs entries and exclusions in the export",
+            missing: entered ? undefined : "Stopped forms and doctor exclusions in the export",
+          };
+        },
+      },
+      {
+        id: "stop_rate", name: "Caught by the questionnaire",
+        why: "The only evidence the safety net works. Without it, 'the questionnaire screens them' is an assertion.",
         compute: ({ t }) => ({
           value: p(pct(t.screening_stops, t.cases_total + t.screening_stops)),
-          detail: `${n(t.screening_stops)} stopped before reaching a clinician`,
+          detail: `${n(t.screening_stops)} stopped before reaching a clinician — systematic, identical every time`,
           missing: t.screening_stops || t.cases_total ? undefined : "Stopped forms in the export",
+        }),
+      },
+      {
+        id: "clinician_rate", name: "Caught by a doctor instead",
+        why: "Expensive — the patient has already waited — and every one is arguably a case the form should have caught. Rising share means tighten the form.",
+        compute: ({ t }) => {
+          const total = t.screening_stops + t.excluded_by_doctor;
+          return {
+            value: total ? p(pct(t.excluded_by_doctor, total)) : null,
+            detail: total ? `${n(t.excluded_by_doctor)} of ${n(total)} exclusions reached a clinician first` : "No exclusions recorded",
+            status: !total ? undefined : pct(t.excluded_by_doctor, total)! <= 25 ? "good" : "fair",
+          };
+        },
+      },
+      {
+        id: "leaks", name: "Gaps in the form",
+        why: "Reasons the questionnaire was meant to catch but a clinician did. This monthly list is the entire point of the module — each entry is a fix.",
+        compute: ({ t }) => ({
+          value: t.exclusions.leaks.length ? n(t.exclusions.leaks.reduce((a, l) => a + l.count, 0)) : t.exclusions.total ? "0" : null,
+          detail: t.exclusions.leaks.length
+            ? t.exclusions.leaks.slice(0, 3).map((l) => `${l.reason.name} (${l.count})`).join(", ")
+            : t.exclusions.total
+            ? "Nothing the form should have caught got past it"
+            : "Needs the reasons file",
+          missing: t.exclusions.total ? undefined : "Exclusion reasons file",
+          status: !t.exclusions.total ? undefined : t.exclusions.leaks.length ? "fair" : "good",
+        }),
+      },
+      {
+        id: "clinical_referral", name: "Referred onward as normal care",
+        why: "The rest of the referrals — the service working correctly. Kept apart so it does not inflate the safety figures.",
+        compute: ({ t }) => ({
+          value: n(Math.max(0, t.cases_referred - t.excluded_by_doctor)),
+          detail: `Of ${n(t.cases_referred)} referrals, ${n(t.excluded_by_doctor)} were exclusions rather than onward care`,
         }),
       },
       {

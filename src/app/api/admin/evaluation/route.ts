@@ -12,6 +12,7 @@ import { DEFAULT_DESIGN_STATE, type DesignState } from "@/lib/evaluation/design"
 import type { MonthRow, RosterMonth } from "@/lib/evaluation/totals";
 import { MEDALIA_COLUMNS } from "@/lib/evaluation/import";
 import { caseTypeChart, entryChart, toSlides, volumeChart } from "@/lib/evaluation/export";
+import type { ExclusionRow } from "@/lib/evaluation/exclusions";
 import { total, totalRoster, type RosterMonth as RM } from "@/lib/evaluation/totals";
 import { HSU_STATIONS, mergeOnboarding } from "@/lib/station-onboarding";
 
@@ -207,7 +208,7 @@ const WRITABLE = new Set<string>([
   "institution", "station", "month",
   "cases_total", "cases_resolved", "cases_referred", "cases_repeat",
   "referred_primary_care", "referred_specialist", "referred_other", "referred_urgent",
-  "codes_outside_set", "screening_stops", "screening_reasons", "prescriptions", "antibiotics",
+  "codes_outside_set", "screening_stops", "excluded_by_doctor", "exclusion_reasons", "prescriptions", "antibiotics",
   "response_median_min", "response_p95_min", "cases_by_type",
   "entry_direct", "entry_nurse", "entry_reception", "entry_records", "entry_other",
   "general_total", "general_resolved", "general_unresolved_reasons",
@@ -245,6 +246,7 @@ export async function POST(req: Request) {
     programme?: Programme;
     assumptions?: Assumptions;
     design?: DesignState;
+    reasons?: { station: string; month: string; gate: string; reason: string; count: number }[];
     deck?: { station: string; period: string; monthsIso: string[] };
   } = {};
   try { body = await req.json(); } catch { return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 }); }
@@ -290,6 +292,31 @@ export async function POST(req: Request) {
           caller!.id,
         );
         return NextResponse.json({ ok: true, deck });
+      }
+
+      case "reasons": {
+        const rows = body.reasons ?? [];
+        if (!rows.length) return NextResponse.json({ ok: false, error: "No rows" }, { status: 400 });
+        // Grouped to one jsonb array per station-month, and written on its own
+        // so it never disturbs figures that arrived from anywhere else.
+        const byKey = new Map<string, { station: string; month: string; list: ExclusionRow[] }>();
+        for (const r of rows) {
+          const key = `${r.station}|${r.month}`;
+          const entry = byKey.get(key) ?? { station: r.station, month: r.month, list: [] };
+          entry.list.push({ gate: r.gate as ExclusionRow["gate"], reason: r.reason, count: r.count });
+          byKey.set(key, entry);
+        }
+        const inst = (await readStations())[0]?.institution ?? "hsu";
+        const { error } = await supabaseAdmin.from("evaluation_months").upsert(
+          [...byKey.values()].map((e) => ({
+            institution: inst, station: e.station, month: e.month,
+            exclusion_reasons: e.list,
+            entered_by: caller!.id, entered_by_name: caller!.name,
+          })),
+          { onConflict: "institution,station,month" },
+        );
+        if (error) throw error;
+        return NextResponse.json({ ok: true, count: byKey.size });
       }
 
       case "import": {

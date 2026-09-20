@@ -104,6 +104,43 @@ with the calendar, so an autumn pilot against a spring baseline can show an
 effect that is entirely the season), the dated analysis plan, how missing
 months are handled, and small-cell suppression.
 
+## Turning away, and referring onward
+
+These were one figure and should never have been. A patient who needs a
+dermatologist is the service working correctly and is not a safety signal. A
+patient who was pregnant, under eighteen or acutely unwell **should not have
+been here** — and merging the two made that disappear into the referral count.
+
+`cases_referred` is now the total, with `excluded_by_doctor` the subset turned
+away on a red flag. The difference is clinical referral.
+
+**Two gates**, and they say different things:
+
+- **The questionnaire** — systematic, identical every time, cheap. This is the
+  only evidence the safety net works, and the only answer to "who decides the
+  patient is suitable?" when two of the four entry routes are not clinical
+  staff.
+- **A clinician** — expensive, because the patient has already waited, and each
+  one is arguably a case the form should have caught.
+
+Reasons come in a **second, much smaller file** at station × month × gate ×
+reason. Kept separate because eleven reasons across two gates would add
+twenty-two columns to every line of the monthly file; at its own grain it is a
+couple of hundred lines a month at most.
+
+The eleven reason categories are **taken from the service's own triage rules**
+in `src/lib/vinnustod/triage.ts`, so they match the clinical logic rather than
+sitting beside it. Each carries the gate that would normally catch it — which
+produces the most actionable output in the programme: **leaks**, meaning
+reasons the questionnaire was meant to catch but a clinician caught instead.
+Every one of those is a gap in the form logic rather than a judgement call. Fix
+the form and next month's leak list is shorter.
+
+This counts only those who entered. Anyone a nurse or receptionist turned away
+before they reached the portal is invisible here and always will be — four
+entry routes, and nobody counts the door. That is the cohort question, and it
+is answered on the Study design step.
+
 ## The five categories
 
 | Category | Question | Headline |
