@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
   AlertTriangle,
+  BarChart3,
   Building2,
   ClipboardList,
   FileText,
@@ -51,6 +52,7 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
   "/admin/legal": <FileText className="w-5 h-5" />,
   "/admin/presentations": <Presentation className="w-5 h-5" />,
   "/admin/stofnanir": <Building2 className="w-5 h-5" />,
+  "/admin/arangur": <BarChart3 className="w-5 h-5" />,
   "/admin/research": <FlaskConical className="w-5 h-5" />,
   "/admin/clinical": <Activity className="w-5 h-5" />,
   "/admin/surveys": <ClipboardList className="w-5 h-5" />,
