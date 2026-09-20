@@ -10,13 +10,16 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  AlertTriangle, BarChart3, ClipboardList, Clock, FlaskConical, LayoutGrid, Loader2, Settings2, Table2,
+  AlertTriangle, BarChart3, BookOpen, ClipboardList, Clock, Download, ExternalLink, FileText,
+  FlaskConical, LayoutGrid, Loader2, Presentation, Settings2, Table2,
 } from "lucide-react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import ModulePicker from "./_components/ModulePicker";
 import Setup from "./_components/Setup";
 import DataEntry from "./_components/DataEntry";
 import ResultsView from "./_components/Results";
+import Library from "./_components/Library";
 import { ACCENT, Chip, ProgressBars, card, input } from "./_components/ui";
 import {
   enabledModules, headlines, progress, readiness, requiredDocuments, timeCriticalOutstanding,
@@ -29,11 +32,13 @@ import {
   EMPTY_ROSTER, emptyMonth, lastMonths, monthISO, total, totalRoster,
   type MonthRow, type RosterMonth,
 } from "@/lib/evaluation/totals";
+import { toCSV, toReport } from "@/lib/evaluation/export";
 
-type Step = "overview" | "modules" | "setup" | "data" | "results";
+type Step = "overview" | "library" | "modules" | "setup" | "data" | "results";
 
 const STEPS: { id: Step; label: string; icon: typeof LayoutGrid; n?: number }[] = [
   { id: "overview", label: "Overview", icon: LayoutGrid },
+  { id: "library", label: "Library", icon: BookOpen },
   { id: "modules", label: "Choose modules", icon: FlaskConical, n: 1 },
   { id: "setup", label: "Set up", icon: ClipboardList, n: 2 },
   { id: "data", label: "Enter data", icon: Table2, n: 3 },
@@ -172,6 +177,38 @@ export default function EvaluationPage() {
     const j = await res.json();
     setToast(j.ok ? { kind: "ok", text: "Document removed." } : { kind: "err", text: j.error ?? "Failed" });
     if (j.ok) await load();
+  };
+
+  const download = (name: string, body: string, mime: string) => {
+    const blob = new Blob([body], { type: `${mime};charset=utf-8` });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  const periodLabel = `Last ${windowMonths} months`;
+  const stationLabel = station === "__all" ? "all stations" : station;
+
+  const makeDeck = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/evaluation", {
+        method: "POST",
+        headers: await headers(),
+        body: JSON.stringify({ action: "deck", deck: { station, period: periodLabel, monthsIso: windowIso } }),
+      });
+      const j = await res.json();
+      if (j.ok) {
+        setToast({ kind: "ok", text: `Deck created with ${j.deck.slides} slides.` });
+        window.open(`/admin/presentations/${j.deck.id}`, "_blank", "noopener");
+      } else {
+        setToast({ kind: "err", text: j.error ?? "Could not create the deck" });
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -374,6 +411,8 @@ export default function EvaluationPage() {
         </div>
       )}
 
+      {step === "library" && <Library programme={programme} />}
+
       {step === "modules" && <ModulePicker programme={programme} onChange={saveProgramme} canEdit={admin} />}
 
       {step === "setup" && (
@@ -428,6 +467,50 @@ export default function EvaluationPage() {
             </p>
           </div>
           <ResultsView programme={programme} t={totals} roster={roster} a={assumptions} />
+
+          <section className={`${card} p-4`}>
+            <h2 className="text-base font-bold text-slate-900">Take it out of here</h2>
+            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-600">
+              Write the quarterly report as you go rather than saving twelve months and then writing one. Four
+              quarterly reports plus a summary <em>are</em> the annual report, and each is a rehearsal at defending
+              the figures in front of people who know the service. The one written in a single sitting at the end
+              is always worse.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                onClick={() => download(`evaluation-${stationLabel.replace(/\W+/g, "-")}.csv`, toCSV(selected), "text/csv")}
+                disabled={!selected.length}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+              >
+                <Download className="h-4 w-4" /> Raw data (CSV)
+              </button>
+              <button
+                onClick={() => download(
+                  `evaluation-report-${stationLabel.replace(/\W+/g, "-")}.md`,
+                  toReport(programme, { t: totals, roster, a: assumptions }, { station: stationLabel, period: periodLabel, documents }),
+                  "text/markdown",
+                )}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                <FileText className="h-4 w-4" /> Quarterly report (Markdown)
+              </button>
+              <button
+                onClick={makeDeck}
+                disabled={saving || !admin}
+                className="flex items-center gap-1.5 rounded-lg bg-cyan-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:opacity-50"
+              >
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Presentation className="h-4 w-4" />}
+                Create presentation
+                <ExternalLink className="h-3 w-3 opacity-70" />
+              </button>
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-slate-500">
+              The presentation lands in{" "}
+              <Link href="/admin/presentations" className="font-medium text-cyan-700 hover:underline">Presentations</Link>{" "}
+              as an ordinary editable deck, charts included. It opens on a limitations slide before the closing one
+              — stated by you rather than spotted by the audience.
+            </p>
+          </section>
         </div>
       )}
     </div>

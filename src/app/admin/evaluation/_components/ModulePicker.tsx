@@ -14,7 +14,7 @@
 
 import { useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, ChevronDown, GripVertical, Lock, Plus, X } from "lucide-react";
-import { MODULES } from "@/lib/evaluation/modules";
+import { ALL_MODULES } from "@/lib/evaluation/modules";
 import { availableModules, enabledModules, EFFORT_LABEL, unmetDependencies } from "@/lib/evaluation/programme";
 import type { Module, Programme } from "@/lib/evaluation/types";
 import { CATEGORIES } from "@/lib/evaluation/types";
@@ -216,7 +216,7 @@ export default function ModulePicker({
     next.splice(at ?? next.length, 0, id);
     // Turning on a module whose prerequisite is off is almost never what
     // somebody means, so the prerequisite comes with it.
-    const mod = MODULES.find((m) => m.id === id);
+    const mod = ALL_MODULES.find((m) => m.id === id);
     for (const req of mod?.requires ?? []) if (!next.includes(req)) next.unshift(req);
     setEnabled(next);
   };

@@ -71,6 +71,27 @@ export type MonthRow = {
   support_questions: number;
   uptime_pct: number | null;
 
+  // Second-wave modules. All nullable: a module that is off never asks, and
+  // unmeasured must read as unmeasured rather than as zero.
+  clinician_minutes_median: number | null;
+  home_tests_used: number | null;
+  home_tests_changed_decision: number | null;
+  images_submitted: number | null;
+  images_inadequate: number | null;
+  reach_under40_pct: number | null;
+  reach_over70_pct: number | null;
+  reach_other_language_pct: number | null;
+  demand_evening_pct: number | null;
+  demand_weekend_pct: number | null;
+  ooh_alternative_pct: number | null;
+  institution_dna_pct: number | null;
+  concordance_checked: number | null;
+  concordance_agreed: number | null;
+  followup_contacted: number | null;
+  followup_adhered: number | null;
+  implementation_days: number | null;
+  training_hours: number | null;
+
   note: string;
   sources_present: string[];
   entered_by_name?: string;
@@ -92,6 +113,12 @@ const NULLABLE_KEYS = [
   "locum_cost_isk", "institution_calls", "survey_easy_pct", "survey_reuse_pct",
   "survey_would_not_have_sought_pct", "time_to_resolution_median_h", "trips_avoided",
   "staff_nurses_positive_pct", "staff_doctors_positive_pct", "uptime_pct",
+  "clinician_minutes_median", "home_tests_used", "home_tests_changed_decision",
+  "images_submitted", "images_inadequate",
+  "reach_under40_pct", "reach_over70_pct", "reach_other_language_pct",
+  "demand_evening_pct", "demand_weekend_pct", "ooh_alternative_pct", "institution_dna_pct",
+  "concordance_checked", "concordance_agreed", "followup_contacted", "followup_adhered",
+  "implementation_days", "training_hours",
 ] as const;
 
 export function emptyMonth(institution: string, station: string, month: string): MonthRow {
@@ -125,6 +152,13 @@ function weighted(rows: MonthRow[], value: (r: MonthRow) => number | null, weigh
 function sumMeasured(rows: MonthRow[], pick: (r: MonthRow) => number | null): number | null {
   const measured = rows.filter((r) => pick(r) !== null && pick(r) !== undefined);
   return measured.length ? measured.reduce((a, r) => a + (pick(r) || 0), 0) : null;
+}
+
+/** Largest measured value. For a figure recorded once rather than monthly —
+ *  summing "days to open the site" across twelve months would give a year. */
+function maxMeasured(rows: MonthRow[], pick: (r: MonthRow) => number | null): number | null {
+  const measured = rows.map(pick).filter((v): v is number => v !== null && v !== undefined);
+  return measured.length ? Math.max(...measured) : null;
 }
 
 function mergeNamed(rows: MonthRow[], pick: (r: MonthRow) => NamedCount[]): NamedCount[] {
@@ -230,6 +264,28 @@ export function total(rows: MonthRow[]) {
     staff_nurses_positive_pct: weighted(rows, (r) => r.staff_nurses_positive_pct, () => 1),
     staff_doctors_positive_pct: weighted(rows, (r) => r.staff_doctors_positive_pct, () => 1),
     uptime_pct: weighted(rows, (r) => r.uptime_pct, () => 1),
+
+    home_tests_used: sumMeasured(rows, (r) => r.home_tests_used),
+    home_tests_changed_decision: sumMeasured(rows, (r) => r.home_tests_changed_decision),
+    images_submitted: sumMeasured(rows, (r) => r.images_submitted),
+    images_inadequate: sumMeasured(rows, (r) => r.images_inadequate),
+    concordance_checked: sumMeasured(rows, (r) => r.concordance_checked),
+    concordance_agreed: sumMeasured(rows, (r) => r.concordance_agreed),
+    followup_contacted: sumMeasured(rows, (r) => r.followup_contacted),
+    followup_adhered: sumMeasured(rows, (r) => r.followup_adhered),
+    // Implementation is entered once, in the go-live month, so the maximum
+    // across the window is the figure — summing it would multiply by months.
+    implementation_days: maxMeasured(rows, (r) => r.implementation_days),
+    training_hours: maxMeasured(rows, (r) => r.training_hours),
+
+    clinician_minutes_median: weighted(rows, (r) => r.clinician_minutes_median, (r) => r.cases_total),
+    reach_under40_pct: weighted(rows, (r) => r.reach_under40_pct, (r) => r.cases_total),
+    reach_over70_pct: weighted(rows, (r) => r.reach_over70_pct, (r) => r.cases_total),
+    reach_other_language_pct: weighted(rows, (r) => r.reach_other_language_pct, (r) => r.cases_total),
+    demand_evening_pct: weighted(rows, (r) => r.demand_evening_pct, (r) => r.cases_total),
+    demand_weekend_pct: weighted(rows, (r) => r.demand_weekend_pct, (r) => r.cases_total),
+    ooh_alternative_pct: weighted(rows, (r) => r.ooh_alternative_pct, (r) => r.survey_responses),
+    institution_dna_pct: weighted(rows, (r) => r.institution_dna_pct, () => 1),
   };
 }
 

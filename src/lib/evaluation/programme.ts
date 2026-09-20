@@ -5,7 +5,7 @@
 // the dashboard metrics are all projections of the same source. Switch a
 // module off and its fields, its documents, its steps and its numbers all go.
 
-import { MODULES, MODULE_BY_ID, CORE_MODULE_IDS } from "./modules";
+import { ALL_MODULES, MODULE_BY_ID, CORE_MODULE_IDS } from "./modules";
 import type { Assumptions, Category, DocSpec, Field, MetricValue, Module, Programme, Source, Step } from "./types";
 import { CATEGORIES } from "./types";
 import type { Roster, Totals } from "./totals";
@@ -25,9 +25,9 @@ export type UploadedDoc = {
 export function enabledModules(p: Programme): Module[] {
   const ids = new Set([...CORE_MODULE_IDS, ...p.enabled]);
   const order = p.enabled.length ? p.enabled : [];
-  return MODULES.filter((m) => ids.has(m.id)).sort((a, b) => {
+  return ALL_MODULES.filter((m) => ids.has(m.id)).sort((a, b) => {
     const ia = order.indexOf(a.id), ib = order.indexOf(b.id);
-    if (ia === -1 && ib === -1) return MODULES.indexOf(a) - MODULES.indexOf(b);
+    if (ia === -1 && ib === -1) return ALL_MODULES.indexOf(a) - ALL_MODULES.indexOf(b);
     if (ia === -1) return 1;
     if (ib === -1) return -1;
     return ia - ib;
@@ -36,7 +36,7 @@ export function enabledModules(p: Programme): Module[] {
 
 export function availableModules(p: Programme): Module[] {
   const on = new Set(enabledModules(p).map((m) => m.id));
-  return MODULES.filter((m) => !on.has(m.id));
+  return ALL_MODULES.filter((m) => !on.has(m.id));
 }
 
 /** A module whose prerequisite is switched off. Worth surfacing rather than

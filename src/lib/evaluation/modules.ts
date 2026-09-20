@@ -11,6 +11,7 @@
 // Order here is the order they are offered. Cheap and load-bearing first.
 
 import type { Module } from "./types";
+import { EXTRA_MODULES } from "./modules-extra";
 import { pct } from "./totals";
 
 const n = (v: number) => v.toLocaleString("en-GB");
@@ -27,6 +28,9 @@ export const MODULES: Module[] = [
     core: true,
     effort: "low",
     sources: ["medalia"],
+    benefit:
+      "Tells you, case type by case type, whether the service does what it claims.",
+    horizon: "now",
     rationale:
       "The base claim. Everything else is either a gate on it or a consequence of it. The aim is not the highest possible number — eleven green ticks above 95% convinces nobody. A table where nine types are strong, two are marginal and you can say what you changed is far more credible and shows an organisation that learns.",
     caveat:
@@ -90,6 +94,9 @@ export const MODULES: Module[] = [
     core: true,
     effort: "low",
     sources: ["medalia"],
+    benefit:
+      "Turns the two-hour promise into a number you can put on a slide.",
+    horizon: "now",
     rationale:
       "The promise that gets tested out loud at every single meeting. It comes free from timestamps already in Medalia, which makes it the strongest single figure in the set for the least work.",
     caveat:
@@ -130,6 +137,9 @@ export const MODULES: Module[] = [
     core: true,
     effort: "low",
     sources: ["survey"],
+    benefit:
+      "Lets you say 'no serious incidents' and be believed.",
+    horizon: "now",
     rationale:
       "A gate rather than a scale: an excellent resolution rate alongside one serious incident is a failed project, and no good number elsewhere offsets it. Note that zero is only believable if it is visible that somebody was counting — which is why deviations and near misses sit beside it rather than hidden.",
     caveat:
@@ -168,6 +178,9 @@ export const MODULES: Module[] = [
     category: "effectiveness",
     effort: "medium",
     sources: ["medalia"],
+    benefit:
+      "Makes your numbers comparable with national primary care instead of self-referential.",
+    horizon: "now",
     rationale:
       "Underrated, and the single highest-value item in the whole programme. Not because of the coding itself but because of comparability: without codes our numbers are self-referential — '400 cases' means nothing to a listener. With ICD-10 codes you can set them against the national contact register and say what share of the expected volume for a population this size you handled. That is a completely different claim, and the codes are the join key to the institution's denominator.",
     caveat:
@@ -203,6 +216,9 @@ export const MODULES: Module[] = [
     category: "effectiveness",
     effort: "low",
     sources: ["medalia"],
+    benefit:
+      "Tells you which case types to build next, from evidence rather than hunch.",
+    horizon: "now",
     rationale:
       "The catch-all category is where case types twelve, thirteen and fourteen are hiding. Low effort — the volume is small enough to categorise by hand once a month — and it produces the slide that sells itself, because it shows a service that grows with the institution rather than a frozen product.",
     caveat:
@@ -238,6 +254,9 @@ export const MODULES: Module[] = [
     category: "effectiveness",
     effort: "low",
     sources: ["internal"],
+    benefit:
+      "Catches a miscount before it reaches a report.",
+    horizon: "now",
     rationale:
       "Doctors already log patients seen against their own shifts in the rota. That is a second counter on the same thing Medalia counts, from a different system and a different person — and two independent counters that agree are far stronger than one that cannot be checked. If they diverge, one of them is wrong and you need to know before the figure reaches a report.",
     caveat:
@@ -276,6 +295,9 @@ export const MODULES: Module[] = [
     category: "safety",
     effort: "medium",
     sources: ["medalia"],
+    benefit:
+      "Answers 'who decides the patient is suitable?' with evidence rather than assertion.",
+    horizon: "now",
     rationale:
       "This question will be asked hard at any clinical meeting, because patients arrive through four routes and two of them — reception and records staff — are not clinicians. You cannot answer 'an experienced nurse judged it', because that is not true for most arrivals. But you do not need to: a systematic screen applied identically every time beats human judgement that varies by shift and by day. That answer is stronger — and it stands or falls entirely on being able to show the stop rate.",
     caveat:
@@ -322,6 +344,9 @@ export const MODULES: Module[] = [
     category: "safety",
     effort: "medium",
     sources: ["medalia", "institution"],
+    benefit:
+      "Kills the prescription-pipeline objection before it is raised.",
+    horizon: "now",
     rationale:
       "The first attack on any remote service will always be that it is a prescription pipeline wearing a white coat. If you arrive with stewardship figures that stand up against local primary care, that discussion is finished before it starts. Arrive without them and somebody else runs it.",
     caveat:
@@ -367,6 +392,9 @@ export const MODULES: Module[] = [
     category: "safety",
     effort: "high",
     sources: ["institution"],
+    benefit:
+      "Shows the problems stayed solved, not merely closed.",
+    horizon: "later",
     rationale:
       "The best safety measure there is for a service like this: it catches the cases that looked resolved and were not. Nothing else in the set covers that.",
     caveat:
@@ -405,6 +433,9 @@ export const MODULES: Module[] = [
     effort: "medium",
     requires: ["case-mix"],
     sources: ["institution"],
+    benefit:
+      "Lets you say what share of the health centre's relevant workload you took.",
+    horizon: "now",
     rationale:
       "The figure that makes every other figure comparable. The denominator is not in our systems and never will be — patients reach us through four different routes, so we cannot count what did not arrive. It is in the institution's contact register, joined by diagnostic code. That is better than anything we could have counted ourselves: their data, their system, nationally standardised. Nobody argues with a contact register; everybody argues with a number we produced.",
     caveat:
@@ -444,6 +475,9 @@ export const MODULES: Module[] = [
     category: "workload",
     effort: "high",
     sources: ["study", "derived"],
+    benefit:
+      "Tells you whether you are removing work or just moving it — while you can still fix it.",
+    horizon: "now",
     rationale:
       "The real risk in the whole project, and the one nothing else can see. The nurse now has to assess whether the case fits, explain a service the patient has never heard of, send a link, and take the patient back if anything went wrong. It is entirely possible that each case costs the health centre more minutes than it saves — the service would look excellent on every patient measure and still be adding to the load it was meant to relieve. That is the commonest finding in remote-care research, and it is invisible in every figure that starts after the patient reaches Medalia.",
     caveat:
@@ -491,6 +525,9 @@ export const MODULES: Module[] = [
     category: "workload",
     effort: "low",
     sources: ["medalia"],
+    benefit:
+      "Shows the service standing on its own as direct arrivals grow.",
+    horizon: "now",
     rationale:
       "A patient who arrives directly costs the health centre zero minutes. That makes the entry mix a workload measure rather than a marketing one, and a rising direct share is the story itself: the service standing on its own. It also fixes the weighting for the time study, which should only cover cases that pass through staff.",
     caveat:
@@ -529,6 +566,9 @@ export const MODULES: Module[] = [
     category: "workload",
     effort: "medium",
     sources: ["institution"],
+    benefit:
+      "Puts a cost per case against the locum spend it displaces.",
+    horizon: "later",
     rationale:
       "Locum and temporary cover is the budget line we are actually competing with, and it is the line a procurement evaluator will look at first.",
     caveat:
@@ -567,6 +607,9 @@ export const MODULES: Module[] = [
     category: "experience",
     effort: "medium",
     sources: ["survey"],
+    benefit:
+      "Gives you the patient's voice in a form a buyer takes seriously.",
+    horizon: "now",
     rationale:
       "Effort is a better-validated instrument than general satisfaction and it is more interesting to a buyer — nobody purchases on 'people found it fine'. Keep it to three questions; beyond that the response rate collapses and you have nothing.",
     caveat:
@@ -615,6 +658,9 @@ export const MODULES: Module[] = [
     effort: "low",
     requires: ["patient-survey"],
     sources: ["survey"],
+    benefit:
+      "Quantifies the people who would otherwise have gone without care.",
+    horizon: "now",
     rationale:
       "Two things that cost one extra question each and that almost nobody measures. 'Where would you have gone otherwise?' is the cheapest possible route to the displacement figure, and institutions understand displacement. Make 'nowhere — I would have left it' a fixed option: those answers are pure access gain and the strongest argument the patient side has. Second, the time the patient actually experienced runs from their first attempt to get help, not from submission — it includes the phone queue and the days until an appointment, and that is where the real gain sits, not in our two hours.",
     caveat:
@@ -670,6 +716,9 @@ export const MODULES: Module[] = [
     category: "scalability",
     effort: "low",
     sources: ["internal"],
+    benefit:
+      "Proves you can actually run the service month after month.",
+    horizon: "now",
     rationale:
       "A service nobody will staff does not transfer to the next site, however good the patient numbers are. This is what the next institution is really buying, and it comes free — the rota already holds it, so nothing has to be typed in.",
     caveat:
@@ -724,6 +773,9 @@ export const MODULES: Module[] = [
     category: "scalability",
     effort: "low",
     sources: ["internal"],
+    benefit:
+      "Shows a site learning to run the service without you.",
+    horizon: "now",
     rationale:
       "A falling support load over the year is a direct measure that the site learned to run the service without us. That is precisely the story the next institution wants to hear, and unlike coverage it is genuinely per-station.",
     caveat:
@@ -754,6 +806,9 @@ export const MODULES: Module[] = [
     category: "scalability",
     effort: "medium",
     sources: ["survey"],
+    benefit:
+      "Gives you the sentence a doctor at the next site will ask for.",
+    horizon: "now",
     rationale:
       "Survey nurses and doctors separately. The doctors matter more than they appear to: a doctor at the next institution does not ask management how it went — they ask the doctor on site. Note also that convenience and workload are not the same thing. Having an answer instead of saying 'I don't know', not being the one who turns someone away empty-handed — that is real relief and it keeps people in post, but it does not show up in minutes. A service can improve convenience and increase workload at the same time, and staff will still want it. That is a good outcome, but it must not be sold as workload relief.",
     caveat:
@@ -793,5 +848,10 @@ export const MODULES: Module[] = [
   },
 ];
 
-export const MODULE_BY_ID = new Map(MODULES.map((m) => [m.id, m]));
-export const CORE_MODULE_IDS = MODULES.filter((m) => m.core).map((m) => m.id);
+/** The catalogue, in offer order: the eighteen the pilot was designed around,
+ *  then the second wave. Order inside a category is cheap-and-load-bearing
+ *  first, which is also the order a reviewer should work down. */
+export const ALL_MODULES: Module[] = [...MODULES, ...EXTRA_MODULES];
+
+export const MODULE_BY_ID = new Map(ALL_MODULES.map((m) => [m.id, m]));
+export const CORE_MODULE_IDS = ALL_MODULES.filter((m) => m.core).map((m) => m.id);

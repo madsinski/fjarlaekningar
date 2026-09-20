@@ -10,6 +10,8 @@ import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
 import { DEFAULT_ASSUMPTIONS, EMPTY_PROGRAMME, type Assumptions, type Programme } from "@/lib/evaluation/types";
 import type { MonthRow, RosterMonth } from "@/lib/evaluation/totals";
 import { MEDALIA_COLUMNS } from "@/lib/evaluation/import";
+import { caseTypeChart, entryChart, toSlides, volumeChart } from "@/lib/evaluation/export";
+import { total, totalRoster, type RosterMonth as RM } from "@/lib/evaluation/totals";
 import { HSU_STATIONS, mergeOnboarding } from "@/lib/station-onboarding";
 
 export const runtime = "nodejs";
@@ -128,6 +130,72 @@ export async function GET(req: Request) {
   }
 }
 
+/**
+ * Generate a deck into the presentations module.
+ *
+ * Charts are rendered here as SVG and uploaded to `presentation-assets`, which
+ * is a public bucket — so the slide can reference them by URL like any other
+ * image and the deck keeps working when it is shared or exported. They are
+ * files rather than inline markup because a slide's image field takes a URL,
+ * and because a chart that has been written down does not silently change when
+ * next month's data arrives.
+ */
+async function buildDeck(
+  programme: Programme,
+  assumptions: Assumptions,
+  rows: MonthRow[],
+  rosterMonths: RM[],
+  activeDoctors: number,
+  station: string,
+  period: string,
+  staffId: string,
+) {
+  const t = total(rows);
+  const roster = totalRoster(rosterMonths, activeDoctors);
+  const stamp = Date.now();
+
+  const upload = async (name: string, svg: string): Promise<string | undefined> => {
+    const path = `evaluation/${stamp}-${name}.svg`;
+    const { error } = await supabaseAdmin.storage
+      .from("presentation-assets")
+      .upload(path, Buffer.from(svg, "utf8"), { contentType: "image/svg+xml", upsert: true });
+    if (error) return undefined;
+    return supabaseAdmin.storage.from("presentation-assets").getPublicUrl(path).data.publicUrl;
+  };
+
+  const charts = {
+    volume: await upload("volume", volumeChart(rows)),
+    caseTypes: await upload("case-types", caseTypeChart(t)),
+    entry: await upload("entry-routes", entryChart(t)),
+  };
+
+  const slides = toSlides(programme, { t, roster, a: assumptions }, { station, period, charts });
+
+  // A slug that is stable per station and date but cannot collide with a deck
+  // someone made by hand.
+  const base = `evaluation-${station.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${new Date().toISOString().slice(0, 10)}`;
+  let slug = base;
+  for (let i = 2; i < 40; i++) {
+    const { data } = await supabaseAdmin.from("presentation_decks").select("id").eq("slug", slug).maybeSingle();
+    if (!data) break;
+    slug = `${base}-${i}`;
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("presentation_decks")
+    .insert({
+      slug,
+      title: `Service evaluation — ${station}`,
+      data: { slides, design: "lifeline" },
+      created_by: staffId,
+      updated_by: staffId,
+    })
+    .select("id, slug")
+    .single();
+  if (error) throw error;
+  return { ...data, slides: slides.length };
+}
+
 /** Whitelist rather than blacklist, so a new column on the table does not
  *  silently become writable from a browser. */
 const WRITABLE = new Set<string>([
@@ -144,6 +212,12 @@ const WRITABLE = new Set<string>([
   "staff_nurses_positive_pct", "staff_doctors_positive_pct",
   "deviations", "near_misses", "serious_incidents",
   "doctors_left", "support_questions", "uptime_pct",
+  "clinician_minutes_median", "home_tests_used", "home_tests_changed_decision",
+  "images_submitted", "images_inadequate",
+  "reach_under40_pct", "reach_over70_pct", "reach_other_language_pct",
+  "demand_evening_pct", "demand_weekend_pct", "ooh_alternative_pct", "institution_dna_pct",
+  "concordance_checked", "concordance_agreed", "followup_contacted", "followup_adhered",
+  "implementation_days", "training_hours",
   "note", "sources_present",
 ]);
 
@@ -165,6 +239,7 @@ export async function POST(req: Request) {
     months?: Partial<MonthRow>[];
     programme?: Programme;
     assumptions?: Assumptions;
+    deck?: { station: string; period: string; monthsIso: string[] };
   } = {};
   try { body = await req.json(); } catch { return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 }); }
 
@@ -180,6 +255,29 @@ export async function POST(req: Request) {
         if (!body.assumptions) return NextResponse.json({ ok: false, error: "Assumptions missing" }, { status: 400 });
         await writeSetting(ASSUMPTIONS_KEY, body.assumptions, caller!.id);
         return NextResponse.json({ ok: true });
+      }
+
+      case "deck": {
+        if (!body.deck?.station) return NextResponse.json({ ok: false, error: "Station required" }, { status: 400 });
+        const [rowsRes, programme, assumptions, roster] = await Promise.all([
+          supabaseAdmin.from("evaluation_months").select("*").order("month", { ascending: true }),
+          readSetting<Programme>(PROGRAMME_KEY, EMPTY_PROGRAMME),
+          readSetting<Assumptions>(ASSUMPTIONS_KEY, DEFAULT_ASSUMPTIONS),
+          readRoster().catch(() => ({ months: [], activeDoctors: 0 })),
+        ]);
+        const want = new Set(body.deck.monthsIso ?? []);
+        const rows = ((rowsRes.data ?? []) as MonthRow[]).filter(
+          (r) => (body.deck!.station === "__all" || r.station === body.deck!.station) && (!want.size || want.has(r.month.slice(0, 10))),
+        );
+        const deck = await buildDeck(
+          programme, assumptions, rows,
+          roster.months.filter((m) => !want.size || want.has(m.month)),
+          roster.activeDoctors,
+          body.deck.station === "__all" ? "all stations" : body.deck.station,
+          body.deck.period,
+          caller!.id,
+        );
+        return NextResponse.json({ ok: true, deck });
       }
 
       case "import": {

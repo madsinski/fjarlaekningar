@@ -125,6 +125,12 @@ export type MetricContext = {
 
 export type Effort = "low" | "medium" | "high";
 
+/** Whether this is worth doing in the pilot or is a later ambition. Lets an
+ *  advisor triage a long catalogue without reading every card: "now" is what
+ *  the Vestmannaeyjar year should carry, "later" is what a second site, a
+ *  publication or a tender would want and which needs groundwork first. */
+export type Horizon = "now" | "later";
+
 export type Module = {
   id: string;
   name: string;
@@ -133,8 +139,12 @@ export type Module = {
   /** The sentence you get to say if the module works out. */
   claim: string;
   category: Category;
+  /** One plain sentence on what you practically get. Written for scanning a
+   *  long list, not for winning an argument. */
+  benefit: string;
   /** Why this is worth doing — the argument for the advisor. */
   rationale: string;
+  horizon: Horizon;
   /** What it cannot show. Stated up front, because the person who names their
    *  own limitations first owns the discussion that follows. */
   caveat: string;
