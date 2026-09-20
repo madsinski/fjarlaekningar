@@ -21,7 +21,7 @@ modules also need a **Storage bucket** — noted inline.
 | 13 | `supabase/signatures-schema.sql` | Email signatures | ✅ done |
 | 14 | `supabase/site-content-schema.sql` | Website CMS (site content, draft/publish) | ✅ done |
 | 15 | `supabase/site-settings-schema.sql` | Coming-soon gate toggle (site_settings) | ✅ done |
-| 16 | `supabase/outreach-schema.sql` | Fréttabréf — subscribers + campaigns | ⬜ run this |
+| 16 | `supabase/outreach-schema.sql` | Fréttabréf — subscribers + campaigns. `outreach-seed-campaigns.sql` (tvö drög að herferðum) keyrt líka. | ✅ done (staðfest 2026-09-20 — hafði verið keyrt fyrr en var rangt merkt hér) |
 | 17 | `supabase/admin-read-lockdown.sql` | Admin-module reads restricted to `admin` via RLS (legal stays admin + lawyer). Doctor data is unaffected — it goes through service-role APIs. | ✅ done |
 | 18 | `supabase/hsu-schema.sql` | HSU vaktakerfi (Vestmannaeyjar) — eigin innskráning, óskir, vaktaplan, vaktamarkaður. Allar `hsu_*` töflur lokaðar vöfrum. Sjá `docs/hsu-vaktakerfi.md`. Síðari viðbætur í sömu skrá (forvakt/bakvakt, beiðnir, takmörkun innskráninga) keyrðar líka. | ✅ done (2026-09-15) |
 
@@ -43,3 +43,27 @@ modules also need a **Storage bucket** — noted inline.
 Progress on later phases (presentations, research, communication, surveys,
 privacy requests, error logging, version history) is appended here as each
 ships.
+
+## Ókeyrt — staðfest 2026-09-20
+
+Samanburður á `create table` í `supabase/*.sql` við töflurnar í grunninum (61)
+skilaði einni skrá sem vantar, og hún dregur aðra með sér:
+
+| Skrá | Staða | Áhrif |
+|---|---|---|
+| `supabase/roster-preferences-schema.sql` | ⬜ ókeyrt | `roster_doctors` hefur engan dálk úr óskaskránum (`preferred_run_length` o.fl.) |
+| `supabase/roster-absences-schema.sql` | ⬜ ókeyrt | `roster_doctor_absences` er ekki til |
+
+Fimm API-leiðir vísa í `roster_doctor_absences` og falla því:
+`/api/vaktir/[token]/prefs`, `/api/vaktir/[token]/prefs/absences`,
+`/api/vaktir/[token]/prefs/absences/[id]`, `/api/admin/roster`,
+`/api/admin/roster/assign`.
+
+`roster_doctors` og `roster_shifts` eru með raunveruleg gögn (4 læknar,
+45 vaktir), svo grunnmódúllinn er í notkun — það eru vaktaóskir og frí sem
+eru ómigreruð. Keyra þarf `roster-preferences-schema.sql` á undan
+`roster-absences-schema.sql`.
+
+> Þessi listi er handvirkur og getur skolast til. Fljótleg leið til að
+> staðfesta: bera `create table if not exists public.<nafn>` í `supabase/*.sql`
+> saman við `information_schema.tables`.
