@@ -23,7 +23,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: "/admin/presentations", label: "Kynningar & prentefni" },
   { href: "/admin/stofnanir", label: "Samstarfsstofnanir" },
   { href: "/admin/onboarding", label: "Ný stöð — verkferli", adminOnly: true },
-  { href: "/admin/arangur", label: "Árangur", adminOnly: true },
+  { href: "/admin/evaluation", label: "Service evaluation", adminOnly: true },
   { href: "/admin/research", label: "Rannsóknir" },
   { href: "/admin/clinical", label: "Klínísk reiknirit" },
   { href: "/admin/surveys", label: "Kannanir" },
