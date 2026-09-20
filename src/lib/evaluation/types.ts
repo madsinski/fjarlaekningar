@@ -121,6 +121,9 @@ export type MetricContext = {
   t: import("./totals").Totals;
   roster: import("./totals").Roster;
   a: Assumptions;
+  /** Present once a design has been chosen. Optional so every other metric
+   *  stays independent of it. */
+  design?: import("./design").DesignState;
 };
 
 export type Effort = "low" | "medium" | "high";

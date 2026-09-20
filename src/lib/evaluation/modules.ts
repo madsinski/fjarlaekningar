@@ -12,6 +12,7 @@
 
 import type { Module } from "./types";
 import { EXTRA_MODULES } from "./modules-extra";
+import { DESIGN_MODULE } from "./design";
 import { pct } from "./totals";
 
 const n = (v: number) => v.toLocaleString("en-GB");
@@ -851,7 +852,7 @@ export const MODULES: Module[] = [
 /** The catalogue, in offer order: the eighteen the pilot was designed around,
  *  then the second wave. Order inside a category is cheap-and-load-bearing
  *  first, which is also the order a reviewer should work down. */
-export const ALL_MODULES: Module[] = [...MODULES, ...EXTRA_MODULES];
+export const ALL_MODULES: Module[] = [DESIGN_MODULE, ...MODULES, ...EXTRA_MODULES];
 
 export const MODULE_BY_ID = new Map(ALL_MODULES.map((m) => [m.id, m]));
 export const CORE_MODULE_IDS = ALL_MODULES.filter((m) => m.core).map((m) => m.id);

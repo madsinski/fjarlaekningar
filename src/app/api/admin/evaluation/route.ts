@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
 import { DEFAULT_ASSUMPTIONS, EMPTY_PROGRAMME, type Assumptions, type Programme } from "@/lib/evaluation/types";
+import { DEFAULT_DESIGN_STATE, type DesignState } from "@/lib/evaluation/design";
 import type { MonthRow, RosterMonth } from "@/lib/evaluation/totals";
 import { MEDALIA_COLUMNS } from "@/lib/evaluation/import";
 import { caseTypeChart, entryChart, toSlides, volumeChart } from "@/lib/evaluation/export";
@@ -18,6 +19,7 @@ export const runtime = "nodejs";
 
 const PROGRAMME_KEY = "evaluation_programme";
 const ASSUMPTIONS_KEY = "evaluation_assumptions";
+const DESIGN_KEY = "evaluation_design";
 
 async function readSetting<T>(key: string, fallback: T): Promise<T> {
   const { data } = await supabaseAdmin.from("site_settings").select("value").eq("key", key).maybeSingle();
@@ -93,13 +95,14 @@ export async function GET(req: Request) {
   if (!caller) return NextResponse.json({ ok: false, error: "Sign-in required" }, { status: 401 });
 
   try {
-    const [monthsRes, programme, assumptions, stations, roster, docsRes] = await Promise.all([
+    const [monthsRes, programme, assumptions, stations, roster, docsRes, design] = await Promise.all([
       supabaseAdmin.from("evaluation_months").select("*").order("month", { ascending: true }),
       readSetting<Programme>(PROGRAMME_KEY, EMPTY_PROGRAMME),
       readSetting<Assumptions>(ASSUMPTIONS_KEY, DEFAULT_ASSUMPTIONS),
       readStations(),
       readRoster().catch(() => ({ months: [], activeDoctors: 0 })),
       supabaseAdmin.from("evaluation_documents").select("*").order("created_at", { ascending: false }),
+      readSetting<DesignState>(DESIGN_KEY, DEFAULT_DESIGN_STATE),
     ]);
     if (monthsRes.error) throw monthsRes.error;
 
@@ -111,6 +114,7 @@ export async function GET(req: Request) {
       stations,
       roster,
       documents: docsRes.data ?? [],
+      design,
       admin: isAdmin(caller),
     });
   } catch {
@@ -125,6 +129,7 @@ export async function GET(req: Request) {
       stations: [{ institution: "hsu", short: "HSU", stations: HSU_STATIONS }],
       roster: { months: [], activeDoctors: 0 },
       documents: [],
+      design: DEFAULT_DESIGN_STATE,
       admin: isAdmin(caller),
     });
   }
@@ -239,6 +244,7 @@ export async function POST(req: Request) {
     months?: Partial<MonthRow>[];
     programme?: Programme;
     assumptions?: Assumptions;
+    design?: DesignState;
     deck?: { station: string; period: string; monthsIso: string[] };
   } = {};
   try { body = await req.json(); } catch { return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 }); }
@@ -254,6 +260,12 @@ export async function POST(req: Request) {
       case "assumptions": {
         if (!body.assumptions) return NextResponse.json({ ok: false, error: "Assumptions missing" }, { status: 400 });
         await writeSetting(ASSUMPTIONS_KEY, body.assumptions, caller!.id);
+        return NextResponse.json({ ok: true });
+      }
+
+      case "design": {
+        if (!body.design) return NextResponse.json({ ok: false, error: "Design missing" }, { status: 400 });
+        await writeSetting(DESIGN_KEY, body.design, caller!.id);
         return NextResponse.json({ ok: true });
       }
 

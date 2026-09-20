@@ -35,6 +35,75 @@ metrics; all 29 ask for 58 and show 41.
 Three modules are **core** and cannot be removed — resolution, incidents and
 response time. Without them there is no evaluation, only anecdote.
 
+## Study design
+
+The measurement system originally had no stated design, which is not a cosmetic
+gap: an unstated design defaults to the weakest one — **uncontrolled
+before-and-after at a single site** — and silently inherits secular trend,
+seasonality, regression to the mean and the Hawthorne effect. None of those can
+be dealt with afterwards.
+
+`/admin/evaluation` → **Study design** records the choice and checks whether the
+data can carry it. Four options, in ascending strength:
+
+| Design | Lets you say | Costs | Decide by |
+|---|---|---|---|
+| Uncontrolled before-and-after | Activity changed after we arrived | nothing | the fallback |
+| Interrupted time series | Activity changed **beyond the trend already running** | one sentence in the baseline request | before the baseline is requested |
+| Controlled before-and-after | …and did not change at a comparable site | one more station's figures | before the control site goes live |
+| Stepped wedge | The same change followed the service at **each** site in turn | one line in an email | **before the second site goes live** |
+
+**Two upgrades are nearly free and both expire.**
+
+1. **Ask for the baseline month by month, not as an annual total.** Same
+   request, same goodwill, same effort — but a monthly series supports
+   interrupted time series, which separates your effect from a trend that was
+   already running. Eight monthly points is the practical minimum, twelve is
+   comfortable, twenty-four also gives the seasonal shape. A single total
+   cannot be un-aggregated afterwards.
+
+2. **Start collecting the same monthly figures at stations that are not live
+   yet.** A staged rollout is a stepped wedge waiting to happen: later sites
+   are controls for earlier ones, concurrently, which rules out anything that
+   changed nationally that year. A station is only a control while it has no
+   service.
+
+The page is deliberately blunt about the difference between the design you have
+chosen and the design your data supports, because a design that exists only in
+an interface will still be described in a report as though it were real.
+Marking a site pre-live does nothing on its own — the institution has to be
+sending its figures for that station too, and the check distinguishes the two.
+
+### Cohort
+
+Three possible answers to "who counts as in", and they give materially
+different resolution rates:
+
+- **Everyone offered the service** — the denominator an institution actually
+  asks about, and **not measurable**: patients arrive through four routes and
+  nobody counts those turned away at the door. Any attempt produces a biased
+  number with false precision, which is worse than none.
+- **Everyone who started a questionnaire** — closest to intention-to-treat,
+  includes the screened-out, the honest denominator for a safety claim.
+- **Everyone who reached a clinician** — measures the service on the work it is
+  designed for, and must always be reported next to the stop rate. On its own
+  it is the flattering number and will be read as such.
+
+### Decided in advance, or not at all
+
+Six decisions are defensible made in advance and indefensible made afterwards,
+however analytically correct the late answer is. The primary outcome is the
+sharpest: the programme can produce forty-plus metrics, and reporting all of
+them while highlighting whichever came out well is how an evaluation becomes a
+fishing expedition. Nominating one in writing beforehand is the cheapest
+credibility available.
+
+The others are the run-in rule (dropping a bad first month after seeing it is
+indefensible), the seasonal window (four of the eleven case types swing hard
+with the calendar, so an autumn pilot against a spring baseline can show an
+effect that is entirely the season), the dated analysis plan, how missing
+months are handled, and small-cell suppression.
+
 ## The five categories
 
 | Category | Question | Headline |

@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle, BarChart3, BookOpen, ClipboardList, Clock, Download, ExternalLink, FileText,
-  FlaskConical, LayoutGrid, Loader2, Presentation, Settings2, Table2,
+  FlaskConical, LayoutGrid, Loader2, Microscope, Presentation, Settings2, Table2,
 } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -20,6 +20,7 @@ import Setup from "./_components/Setup";
 import DataEntry from "./_components/DataEntry";
 import ResultsView from "./_components/Results";
 import Library from "./_components/Library";
+import DesignStep from "./_components/DesignStep";
 import { ACCENT, Chip, ProgressBars, card, input } from "./_components/ui";
 import {
   enabledModules, headlines, progress, readiness, requiredDocuments, timeCriticalOutstanding,
@@ -33,16 +34,25 @@ import {
   type MonthRow, type RosterMonth,
 } from "@/lib/evaluation/totals";
 import { toCSV, toReport } from "@/lib/evaluation/export";
+import { DEFAULT_DESIGN_STATE, type DesignState } from "@/lib/evaluation/design";
 
-type Step = "overview" | "library" | "modules" | "setup" | "data" | "results";
+type Step = "overview" | "library" | "design" | "modules" | "setup" | "data" | "results";
+
+const DESIGN_LABEL: Record<DesignState["design"], string> = {
+  "before-after": "Uncontrolled before-and-after",
+  its: "Interrupted time series",
+  controlled: "Controlled before-and-after",
+  "stepped-wedge": "Stepped wedge",
+};
 
 const STEPS: { id: Step; label: string; icon: typeof LayoutGrid; n?: number }[] = [
   { id: "overview", label: "Overview", icon: LayoutGrid },
   { id: "library", label: "Library", icon: BookOpen },
-  { id: "modules", label: "Choose modules", icon: FlaskConical, n: 1 },
-  { id: "setup", label: "Set up", icon: ClipboardList, n: 2 },
-  { id: "data", label: "Enter data", icon: Table2, n: 3 },
-  { id: "results", label: "Results", icon: BarChart3, n: 4 },
+  { id: "design", label: "Study design", icon: Microscope, n: 1 },
+  { id: "modules", label: "Choose modules", icon: FlaskConical, n: 2 },
+  { id: "setup", label: "Set up", icon: ClipboardList, n: 3 },
+  { id: "data", label: "Enter data", icon: Table2, n: 4 },
+  { id: "results", label: "Results", icon: BarChart3, n: 5 },
 ];
 
 export default function EvaluationPage() {
@@ -51,6 +61,7 @@ export default function EvaluationPage() {
   const [programme, setProgramme] = useState<Programme>(EMPTY_PROGRAMME);
   const [assumptions, setAssumptions] = useState<Assumptions>(DEFAULT_ASSUMPTIONS);
   const [documents, setDocuments] = useState<UploadedDoc[]>([]);
+  const [design, setDesign] = useState<DesignState>(DEFAULT_DESIGN_STATE);
   const [stations, setStations] = useState<{ institution: string; short: string; stations: string[] }[]>([]);
   const [rosterRaw, setRosterRaw] = useState<{ months: RosterMonth[]; activeDoctors: number }>({ months: [], activeDoctors: 0 });
   const [loading, setLoading] = useState(true);
@@ -84,6 +95,7 @@ export default function EvaluationPage() {
         setProgramme({ ...EMPTY_PROGRAMME, ...(j.programme ?? {}) });
         setAssumptions({ ...DEFAULT_ASSUMPTIONS, ...(j.assumptions ?? {}) });
         setDocuments(j.documents ?? []);
+        setDesign({ ...DEFAULT_DESIGN_STATE, ...(j.design ?? {}) });
         setStations(j.stations ?? []);
         setRosterRaw(j.roster ?? { months: [], activeDoctors: 0 });
         setUnavailable(!!j.unavailable);
@@ -118,7 +130,7 @@ export default function EvaluationPage() {
     () => (rosterRaw.months.length ? totalRoster(rosterRaw.months.filter((r) => windowIso.includes(r.month)), rosterRaw.activeDoctors) : EMPTY_ROSTER),
     [rosterRaw, windowIso],
   );
-  const ctx = useMemo(() => ({ t: totals, roster, a: assumptions }), [totals, roster, assumptions]);
+  const ctx = useMemo(() => ({ t: totals, roster, a: assumptions, design }), [totals, roster, assumptions, design]);
 
   const ready = useMemo(() => readiness(programme, documents, ctx), [programme, documents, ctx]);
   const prog = useMemo(() => progress(ready), [ready]);
@@ -147,6 +159,11 @@ export default function EvaluationPage() {
   const saveProgramme = async (p: Programme) => {
     setProgramme(p);
     await fetch("/api/admin/evaluation", { method: "POST", headers: await headers(), body: JSON.stringify({ action: "programme", programme: p }) });
+  };
+
+  const saveDesign = async (d: DesignState) => {
+    setDesign(d);
+    await fetch("/api/admin/evaluation", { method: "POST", headers: await headers(), body: JSON.stringify({ action: "design", design: d }) });
   };
 
   const saveAssumptions = async (a: Assumptions) => {
@@ -342,6 +359,24 @@ export default function EvaluationPage() {
             })}
           </div>
 
+          <button
+            onClick={() => setStep("design")}
+            className={`${card} flex w-full items-center gap-3 p-4 text-left transition hover:border-slate-300`}
+          >
+            <Microscope className="h-5 w-5 shrink-0 text-slate-400" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-slate-900">
+                Study design: {DESIGN_LABEL[design.design]}
+              </p>
+              <p className="text-xs leading-relaxed text-slate-500">
+                {design.baselineMonths} months of monthly baseline ·{" "}
+                {Object.values(design.sites).filter((x) => x.role === "pre-live").length} pre-live control sites ·{" "}
+                {Object.keys(design.decisions).filter((k) => design.decisions[k]?.text).length} of 6 decisions recorded
+              </p>
+            </div>
+            <span className="shrink-0 text-xs font-medium text-cyan-700">Review →</span>
+          </button>
+
           <div className={`${card} p-4`}>
             <h2 className="flex items-center gap-2 text-base font-bold text-slate-900">
               <Settings2 className="h-4 w-4 text-slate-400" /> Module readiness
@@ -412,6 +447,17 @@ export default function EvaluationPage() {
       )}
 
       {step === "library" && <Library programme={programme} />}
+
+      {step === "design" && (
+        <DesignStep
+          state={design}
+          onChange={saveDesign}
+          canEdit={admin}
+          stations={allStations}
+          monthsOfData={new Set(months.map((m) => m.month.slice(0, 10))).size}
+          stationsWithData={new Set(months.map((m) => m.station))}
+        />
+      )}
 
       {step === "modules" && <ModulePicker programme={programme} onChange={saveProgramme} canEdit={admin} />}
 
