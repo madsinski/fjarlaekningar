@@ -37,6 +37,17 @@ modules also need a **Storage bucket** — noted inline.
 
 | 24 | `supabase/arangur-schema.sql` | Árangursmælingar — `arangur_manudir` (ein röð á stöð á mánuði, eingöngu samantekt: hver dálkur er fjöldi, ekkert rekjanlegt til einstaklings) og `site_settings` lykillinn `arangur_forsendur`. Lokuð vöfrum fyrir skrif; starfsfólk les. Sjá `docs/arangur.md`. | ✅ done (2026-09-20) |
 
+| 25 | `supabase/roster-schema.sql` | Vaktakerfi Fjarlækninga — `roster_doctors`, `roster_settings`, `roster_shifts`, `roster_swaps`. Undir *Starfsfólk* → Vaktakerfi (`/admin/roster`). Athugið: þetta er mönnun **okkar** þjónustu; `hsu_*` er gæsluvaktakerfi HSU-lækna og óskylt. | ✅ done (staðfest 2026-09-20) |
+| 26 | `supabase/roster-preferences-schema.sql` | Vaktaóskir, fyrri hluti — `roster_doctors.max_shifts_per_month`, `allowed_weekdays`, `shift_note`, `prefs_updated_at`. | ✅ done (staðfest 2026-09-20) |
+| 27 | `supabase/roster-absences-schema.sql` | Vaktaóskir, seinni hluti — `roster_doctor_absences` (frí) og `roster_doctors.preferred_run_length`. Fimm API-leiðir fyrir `/vaktir` óskir og stjórnborð vaktakerfisins reiða sig á töfluna. | ✅ done (2026-09-20) |
+| 28 | `supabase/google-calendar-schema.sql` | Google-dagatalssamstilling fyrir vaktir. Sjá `docs/google-dagatal.md`. | ✅ done (staðfest 2026-09-20) |
+| 29 | `supabase/staff-billing-schema.sql` | Reikningar starfsfólks (`/admin/invoices`). | ✅ done (staðfest 2026-09-20) |
+| 30 | `supabase/contractor-invoice-void-fix.sql` | Lagfæring á ógildingu verktakareikninga. | ✅ done (staðfest 2026-09-20) |
+| 31 | `supabase/staff-contracts-schema.sql` | Ráðningarsamningar starfsfólks. | ✅ done (staðfest 2026-09-20) |
+| 32 | `supabase/staff-documents-schema.sql` | Skjöl starfsfólks. | ✅ done (staðfest 2026-09-20) |
+| 33 | `supabase/stofnanir-schema.sql` | Samstarfsstofnanir — `partner_pages`, deilt um `/samstarf/<slug>`. | ✅ done (staðfest 2026-09-20) |
+| 34 | `supabase/thjonustukonnun.sql` | AI-samantekt á þjónustukönnunum — `survey_ai_summaries`. | ✅ done (staðfest 2026-09-20) |
+
 > After running a migration, the matching admin module works immediately (no
 > redeploy needed — the tables just start returning data).
 
@@ -44,23 +55,22 @@ Progress on later phases (presentations, research, communication, surveys,
 privacy requests, error logging, version history) is appended here as each
 ships.
 
-## Ókeyrt — staðfest 2026-09-20
+## Staða — staðfest 2026-09-20
 
-| Skrá | Staða |
-|---|---|
-| `supabase/roster-absences-schema.sql` | ⬜ ókeyrt — `roster_doctor_absences` er ekki til og `roster_doctors.preferred_run_length` vantar |
+**Engin ókeyrð migration.** Allar 28 schema-skrárnar eru keyrðar: hver tafla úr
+`create table if not exists` og hver dálkur úr `add column if not exists` er til
+í grunninum (62 töflur).
 
-Fimm API-leiðir vísa í `roster_doctor_absences` og falla því:
-`/api/vaktir/[token]/prefs`, `/api/vaktir/[token]/prefs/absences`,
-`/api/vaktir/[token]/prefs/absences/[id]`, `/api/admin/roster`,
-`/api/admin/roster/assign`. Vaktaóskir og frí eru því ómigreruð þótt
-grunnmódúllinn sé í fullri notkun (4 læknar, 45 vaktir, 100% mönnun).
+Ef listinn skolast til aftur, staðfestu svona frekar en að treysta hökunum:
 
-`roster-preferences-schema.sql` er hins vegar **keyrð** — allir fjórir dálkar
-(`max_shifts_per_month`, `allowed_weekdays`, `shift_note`, `prefs_updated_at`)
-eru til. Fyrri útgáfa þessa kafla sagði annað og var röng: hún leitaði að
-dálkanöfnum sem skráin skilgreinir ekki.
+```sql
+-- töflur
+select table_name from information_schema.tables where table_schema = 'public';
+-- dálkar
+select table_name, column_name from information_schema.columns where table_schema = 'public';
+```
 
-> Listinn er handvirkur og getur skolast til. Staðfesting: berðu
-> `create table if not exists public.<nafn>` og `add column if not exists`
-> í `supabase/*.sql` saman við `information_schema`.
+og berðu saman við `create table if not exists public.<nafn>` og
+`alter table public.<tafla> add column if not exists <dálkur>` í `supabase/*.sql`.
+**Athugaðu dálkana líka, ekki bara töflurnar** — skrá getur verið hálfkeyrð, og
+töflusamanburður einn gefur þá ranglega grænt.
