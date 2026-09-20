@@ -109,6 +109,49 @@ export type Manudur = {
   updated_at?: string;
 };
 
+/**
+ * Mönnun okkar eigin þjónustu — úr `roster_*` (Vaktakerfi undir /admin/team),
+ * EKKI úr `hsu_*`. Þau síðarnefndu eru gæsluvaktakerfið sem við byggðum FYRIR
+ * HSU og segja ekkert um hvort Fjarlækningar hafi verið mannaðar.
+ *
+ * Mikilvægt við lestur: vaktir Fjarlækninga eru þjónustuvíðar. Sami læknir
+ * þjónar öllum stöðvum, svo mönnun er EKKI stöðvarbundin tala. Hún er sú sama
+ * hvaða stöð sem er valin, og viðmótið verður að segja það — annars les
+ * einhver „98% mönnun“ á Selfoss-flipanum og heldur að það eigi við Selfoss.
+ */
+export type Roster = {
+  vaktir: number;
+  mannadar: number;
+  /** Ólíkir læknar sem tóku vakt á tímabilinu. */
+  laeknar: number;
+  /** Virkir læknar á skrá núna — staða, ekki tímabil. */
+  virkir_laeknar: number;
+  /** Sjúklingar sem læknar skráðu sjálfir á vaktir sínar. */
+  sjuklingar: number;
+  /** Vaktaskipti (vaktamarkaður). */
+  skipti: number;
+};
+
+/** Ein mánaðarröð úr vaktakerfinu. Læknar eru geymdir sem auðkenni en ekki
+ *  fjöldi, svo hægt sé að telja ÓLÍKA lækni yfir valið tímabil. */
+export type RosterManudur = { month: string; vaktir: number; mannadar: number; laeknar: string[]; sjuklingar: number; skipti: number };
+
+/** Leggur saman valda mánuði og telur ólíka lækni rétt. */
+export function leggjaSamanRoster(radir: RosterManudur[], virkir_laeknar: number): Roster {
+  const laeknar = new Set<string>();
+  for (const r of radir) for (const l of r.laeknar) laeknar.add(l);
+  return {
+    vaktir: radir.reduce((a, r) => a + r.vaktir, 0),
+    mannadar: radir.reduce((a, r) => a + r.mannadar, 0),
+    laeknar: laeknar.size,
+    virkir_laeknar,
+    sjuklingar: radir.reduce((a, r) => a + r.sjuklingar, 0),
+    skipti: radir.reduce((a, r) => a + r.skipti, 0),
+  };
+}
+
+export const ROSTER_TOMUR: Roster = { vaktir: 0, mannadar: 0, laeknar: 0, virkir_laeknar: 0, sjuklingar: 0, skipti: 0 };
+
 export type Forsendur = {
   /** Mínútur af vinnu stofnunarinnar sem eitt leyst erindi hefði kostað.
    *  Sjálfgefið er ÁGISKUN þar til tímamælingin liggur fyrir. */
@@ -312,7 +355,7 @@ const pct = (n: number | null) => (n === null ? null : `${n}%`);
 const isk = (n: number | null) => (n === null ? null : `${Math.round(n / 1000).toLocaleString("is-IS")} þús.`);
 const num = (n: number) => n.toLocaleString("is-IS");
 
-export function greina(s: Samtala, f: Forsendur): FlokkurNidurstada[] {
+export function greina(s: Samtala, f: Forsendur, r: Roster = ROSTER_TOMUR): FlokkurNidurstada[] {
   const lausn = hlutfall(s.erindi_leyst, s.erindi_alls);
   const heildarflaedi = s.samskipti_kodar !== null ? s.samskipti_kodar + s.erindi_alls : null;
   const hlutdeild = heildarflaedi ? hlutfall(s.erindi_alls, heildarflaedi) : null;
@@ -356,6 +399,17 @@ export function greina(s: Samtala, f: Forsendur): FlokkurNidurstada[] {
           undir: "Erindi sem lentu á greiningarkóða utan þess sem erindið átti að ná yfir. Fyrsta merki um að umfangið sé að reka.",
           heimild: "medalia",
           stada: s.erindi_alls ? (hlutfall(s.kodar_utan_setts, s.erindi_alls)! <= 5 ? "godur" : "midlungs") : undefined,
+        },
+        {
+          id: "krossprof", heiti: "Skráð af læknum", gildi: r.sjuklingar ? num(r.sjuklingar) : null,
+          undir: r.sjuklingar && s.erindi_alls
+            ? `Læknar skráðu ${num(r.sjuklingar)} sjúklinga á vaktir sínar; Medalia telur ${num(s.erindi_alls)} erindi — ${Math.abs(Math.round(((r.sjuklingar - s.erindi_alls) / s.erindi_alls) * 100))}% munur. Tveir óháðir teljarar sem eiga að vera sammála; geri þeir það ekki er annar að telja vitlaust og það þarf að vita áður en talan fer í skýrslu.`
+            : "Óháður teljari úr vaktakerfinu — læknar skrá sjálfir fjölda á hverja vakt.",
+          heimild: "okkar",
+          vantar: r.sjuklingar ? undefined : "Læknar skrái sjúklingafjölda á vaktir",
+          stada: r.sjuklingar && s.erindi_alls
+            ? (Math.abs(r.sjuklingar - s.erindi_alls) / s.erindi_alls <= 0.1 ? "godur" : "midlungs")
+            : undefined,
         },
         {
           id: "endurtekin", heiti: "Endurtekin erindi", gildi: num(s.erindi_endurtekin),
@@ -536,28 +590,37 @@ export function greina(s: Samtala, f: Forsendur): FlokkurNidurstada[] {
       ...FLOKKAR[4],
       afHverju:
         "Vantaði í bæði markmiðin en er hvatinn að öllu verkefninu — Vestmannaeyjar eru tilraunastöð og spurningin er hvort þetta sé endurtakanlegt á næstu stöð. Þjónusta sem enginn nennir að manna er ekki yfirfæranleg, hversu góðar sem sjúklingatölurnar eru. Þetta er síðasta setningin í kynningunni og hún er sú sem selur.",
+      forsenda:
+        "Mönnunartölur eru ÞJÓNUSTUVÍÐAR, ekki stöðvarbundnar: sami læknir þjónar öllum stöðvum, svo þessi flokkur breytist ekki þótt stöð sé valin hér að ofan. Þær koma úr Vaktakerfinu (/admin/team), ekki úr vaktakerfi HSU — það síðarnefnda er gæsluvaktir HSU-lækna og segir ekkert um mönnun Fjarlækninga.",
       haus: {
         id: "monnun",
         heiti: "Mönnun",
-        gildi: pct(s.monnun_hlutfall),
-        undir: s.monnun_hlutfall === null
-          ? "Hlutfall daga þar sem þjónustan var mönnuð allan opnunartímann"
-          : `${s.laeknar_virkir} læknar tóku vaktir${s.laeknar_haettu ? `, ${s.laeknar_haettu} hættu` : ""}`,
+        gildi: r.vaktir ? pct(hlutfall(r.mannadar, r.vaktir)) : null,
+        undir: r.vaktir
+          ? `${num(r.mannadar)} af ${num(r.vaktir)} vöktum mannaðar · ${r.laeknar} læknar tóku vakt`
+          : "Engar vaktir á tímabilinu",
         heimild: "okkar",
-        vantar: s.monnun_hlutfall === null ? "Vaktakerfi — hsu_shifts" : undefined,
-        stada: s.monnun_hlutfall === null ? undefined : s.monnun_hlutfall >= 98 ? "godur" : s.monnun_hlutfall >= 90 ? "midlungs" : "slakur",
+        vantar: r.vaktir ? undefined : "Vaktir skráðar í Vaktakerfi (/admin/team)",
+        stada: !r.vaktir ? undefined : hlutfall(r.mannadar, r.vaktir)! >= 98 ? "godur" : hlutfall(r.mannadar, r.vaktir)! >= 90 ? "midlungs" : "slakur",
       },
       undir: [
         {
           id: "velta", heiti: "Starfsmannavelta lækna",
-          gildi: s.laeknar_virkir ? pct(hlutfall(s.laeknar_haettu, s.laeknar_virkir)) : null,
-          undir: `${num(s.laeknar_haettu)} af ${num(s.laeknar_virkir)} virkum. Alvöru mælikvarði á yfirfæranleika, ekki mjúkur.`,
+          gildi: r.virkir_laeknar ? pct(hlutfall(s.laeknar_haettu, r.virkir_laeknar)) : null,
+          undir: `${num(s.laeknar_haettu)} hættu af ${num(r.virkir_laeknar)} virkum á skrá. Alvöru mælikvarði á yfirfæranleika, ekki mjúkur — vaktakerfið geymir enga dagsetningu á brotthvarfi, svo talan er slegin inn.`,
           heimild: "okkar",
+        },
+        {
+          id: "skipti", heiti: "Vaktaskipti",
+          gildi: r.vaktir ? pct(hlutfall(r.skipti, r.vaktir)) : null,
+          undir: `${num(r.skipti)} skipti á ${num(r.vaktir)} vöktum. Há tala þýðir að planið haldi ekki — mönnun sem næst aðeins með stöðugum skiptum er ekki mönnun sem flyst á næstu stöð.`,
+          heimild: "okkar",
+          stada: !r.vaktir ? undefined : hlutfall(r.skipti, r.vaktir)! <= 10 ? "godur" : "midlungs",
         },
         {
           id: "studningur", heiti: "Stuðningsspurningar frá stöð",
           gildi: num(s.studningsspurningar),
-          undir: "Fallandi tala yfir tímabilið er beinlínis mælikvarði á að stöðin hafi orðið sjálfbjarga — nákvæmlega sagan sem næsta stofnun vill heyra.",
+          undir: "Fallandi tala yfir tímabilið er beinlínis mælikvarði á að stöðin hafi orðið sjálfbjarga — nákvæmlega sagan sem næsta stofnun vill heyra. Þetta ER stöðvarbundið.",
           heimild: "okkar",
         },
         {

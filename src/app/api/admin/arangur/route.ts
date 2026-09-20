@@ -12,7 +12,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
-import { FORSENDUR_SJALFGEFID, type Forsendur, type Manudur } from "@/lib/arangur";
+import { FORSENDUR_SJALFGEFID, type Forsendur, type Manudur, type RosterManudur } from "@/lib/arangur";
 import { HSU_STATIONS, mergeOnboarding } from "@/lib/station-onboarding";
 
 export const runtime = "nodejs";
@@ -37,16 +37,66 @@ async function lesaStodvar(): Promise<{ institution: string; short: string; stat
   return ut.length ? ut : [{ institution: "hsu", short: "HSU", stations: HSU_STATIONS }];
 }
 
+/**
+ * Mönnun Fjarlækninga — úr `roster_*` (Vaktakerfi undir /admin/team).
+ *
+ * EKKI úr `hsu_*`: þau eru gæsluvaktakerfið sem við byggðum FYRIR HSU og segja
+ * ekkert um hvort okkar eigin þjónusta hafi verið mönnuð.
+ *
+ * Skilað sundurliðað á mánuði með læknaauðkennum, svo viðmótið geti talið
+ * ÓLÍKA lækni yfir hvaða tímabil sem valið er. Væri fjöldinn lagður saman hér
+ * teldist sami læknir tvisvar þegar tveir mánuðir eru skoðaðir saman.
+ */
+async function lesaRoster(): Promise<{ manudir: RosterManudur[]; virkir_laeknar: number }> {
+  const fra = new Date();
+  fra.setUTCMonth(fra.getUTCMonth() - 24);
+  const fraISO = fra.toISOString().slice(0, 10);
+
+  const [shifts, doctors, swaps] = await Promise.all([
+    supabaseAdmin.from("roster_shifts").select("id, shift_date, doctor_id, patients_seen").gte("shift_date", fraISO),
+    supabaseAdmin.from("roster_doctors").select("id").eq("active", true),
+    supabaseAdmin.from("roster_swaps").select("shift_id").eq("status", "accepted"),
+  ]);
+
+  const manudir = new Map<string, RosterManudur>();
+  const manudurAfVakt = new Map<string, string>();
+
+  for (const v of shifts.data ?? []) {
+    const month = `${String(v.shift_date).slice(0, 7)}-01`;
+    manudurAfVakt.set(v.id as string, month);
+    const m = manudir.get(month) ?? { month, vaktir: 0, mannadar: 0, laeknar: [], sjuklingar: 0, skipti: 0 };
+    m.vaktir++;
+    if (v.doctor_id) {
+      m.mannadar++;
+      if (!m.laeknar.includes(v.doctor_id as string)) m.laeknar.push(v.doctor_id as string);
+    }
+    m.sjuklingar += (v.patients_seen as number) || 0;
+    manudir.set(month, m);
+  }
+
+  for (const sw of swaps.data ?? []) {
+    const month = manudurAfVakt.get(sw.shift_id as string);
+    const m = month ? manudir.get(month) : undefined;
+    if (m) m.skipti++;
+  }
+
+  return {
+    manudir: [...manudir.values()].sort((a, b) => a.month.localeCompare(b.month)),
+    virkir_laeknar: doctors.data?.length ?? 0,
+  };
+}
+
 export async function GET(req: Request) {
   const caller = await getCallerStaff(req);
   if (!caller) return NextResponse.json({ ok: false, error: "Innskráningar krafist" }, { status: 401 });
 
   try {
-    const [manudirRes, forsendur, gatlisti, stodvar] = await Promise.all([
+    const [manudirRes, forsendur, gatlisti, stodvar, roster] = await Promise.all([
       supabaseAdmin.from("arangur_manudir").select("*").order("month", { ascending: true }),
       lesaStillingu<Forsendur>(FORSENDUR_LYKILL, FORSENDUR_SJALFGEFID),
       lesaStillingu<{ done: Record<string, boolean> }>(GATLISTI_LYKILL, { done: {} }),
       lesaStodvar(),
+      lesaRoster().catch(() => ({ manudir: [], virkir_laeknar: 0 })),
     ]);
 
     if (manudirRes.error) throw manudirRes.error;
@@ -56,6 +106,7 @@ export async function GET(req: Request) {
       forsendur,
       gatlisti: gatlisti.done ?? {},
       stodvar,
+      roster,
       admin: isAdmin(caller),
     });
   } catch {
@@ -68,6 +119,7 @@ export async function GET(req: Request) {
       forsendur: FORSENDUR_SJALFGEFID,
       gatlisti: {},
       stodvar: [{ institution: "hsu", short: "HSU", stations: HSU_STATIONS }],
+      roster: { manudir: [], virkir_laeknar: 0 },
       admin: isAdmin(caller),
     });
   }

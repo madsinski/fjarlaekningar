@@ -28,6 +28,12 @@ við skoðun í fimm flokka sem hver hefur sitt sönnunarstig og sinn bilunarhá
 | **Upplifun** | Var þetta betra fyrir manneskjuna? | Sögðu ferlið einfalt | 1 — röddin |
 | **Yfirfæranleiki** *(hlið)* | Er þetta endurtakanlegt? | Mönnun | Af hverju við mælum |
 
+Mönnunartölur koma sjálfkrafa úr `roster_*` — Vaktakerfinu undir `/admin/team` — og eru **ekki** slegnar inn. Athugið að það er ekki `hsu_*`: þau eru gæsluvaktakerfið sem við byggðum *fyrir* HSU og segja ekkert um hvort okkar eigin þjónusta hafi verið mönnuð.
+
+Og þær eru **þjónustuvíðar, ekki stöðvarbundnar**: sami læknir þjónar öllum stöðvum, svo mönnun breytist ekki þótt stöð sé valin. Viðmótið segir það, því annars les einhver „100% mönnun“ á Selfoss-flipanum og heldur að það eigi við Selfoss. Ólíkir læknar eru taldir yfir valið tímabil en ekki lagðir saman milli mánaða — sami læknir í tveimur mánuðum er einn læknir.
+
+`roster_shifts.patients_seen` gefur **óháðan teljara**: læknar skrá sjálfir fjölda á hverja vakt. Sé mikill munur á honum og erindafjölda Medalia er annar teljarinn rangur, og það þarf að vita áður en talan fer í skýrslu.
+
 Öryggi er sér flokkur en ekki undirmælikvarði af því það er **hlið en ekki
 kvarði**: frábært lausnarhlutfall með einu alvarlegu atviki er fallið verkefni.
 Yfirfæranleiki vantaði í bæði markmiðin en er hvatinn að öllu verkefninu —

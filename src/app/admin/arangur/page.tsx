@@ -8,8 +8,8 @@ import {
 import { supabase } from "@/lib/supabase";
 import {
   FORSENDUR_SJALFGEFID, HEIMILD_HEITI, MAELD_ERINDI, erindiRadir, greina,
-  leggjaSaman, manudurHeiti, manudurISO, sidustuManudir, tomurManudur,
-  type Forsendur, type Heimild, type Manudur, type Stada,
+  leggjaSaman, leggjaSamanRoster, manudurHeiti, manudurISO, sidustuManudir, tomurManudur,
+  type Forsendur, type Heimild, type Manudur, type RosterManudur, type Stada,
 } from "@/lib/arangur";
 import { DALKAR, lesa, sniðmat, type InnflutningsVilla } from "@/lib/arangur-innflutningur";
 import { GATLISTI, TIDNI_HEITI, kafliStada, timanaemtOgOgert, type Tidni } from "@/lib/arangur-gatlisti";
@@ -82,6 +82,7 @@ export default function ArangurPage() {
   const [forsendur, setForsendur] = useState<Forsendur>(FORSENDUR_SJALFGEFID);
   const [gatlisti, setGatlisti] = useState<Record<string, boolean>>({});
   const [stodvar, setStodvar] = useState<{ institution: string; short: string; stations: string[] }[]>([]);
+  const [roster, setRoster] = useState<{ manudir: RosterManudur[]; virkir_laeknar: number }>({ manudir: [], virkir_laeknar: 0 });
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
   const [admin, setAdmin] = useState(false);
@@ -118,6 +119,7 @@ export default function ArangurPage() {
         setForsendur({ ...FORSENDUR_SJALFGEFID, ...(j.forsendur ?? {}) });
         setGatlisti(j.gatlisti ?? {});
         setStodvar(j.stodvar ?? []);
+        setRoster(j.roster ?? { manudir: [], virkir_laeknar: 0 });
         setUnavailable(!!j.unavailable);
         setAdmin(!!j.admin);
         const fyrsta = j.stodvar?.[0]?.stations?.[0] ?? "";
@@ -144,7 +146,13 @@ export default function ArangurPage() {
     [manudir, stod, gluggi],
   );
   const samtala = useMemo(() => leggjaSaman(valdir), [valdir]);
-  const flokkar = useMemo(() => greina(samtala, forsendur), [samtala, forsendur]);
+  // Mönnun er þjónustuvíð: vaktirnar eru ekki stöðvarbundnar, svo hér er aðeins
+  // síað á tímabil og ALDREI á stöð. Sami læknir þjónar öllum stöðvum.
+  const rosterSamtala = useMemo(
+    () => leggjaSamanRoster(roster.manudir.filter((r) => gluggi.includes(r.month)), roster.virkir_laeknar),
+    [roster, gluggi],
+  );
+  const flokkar = useMemo(() => greina(samtala, forsendur, rosterSamtala), [samtala, forsendur, rosterSamtala]);
   const radir = useMemo(() => erindiRadir(samtala), [samtala]);
 
   // ── Skráning ──────────────────────────────────────────────────────────────
@@ -628,9 +636,13 @@ export default function ArangurPage() {
 
           <section className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
             <h3 className="mb-1 font-semibold text-slate-900">Úr okkar kerfum</h3>
-            <div className="grid gap-3 sm:grid-cols-4">
-              <Tala label="Læknar sem tóku vaktir" value={drog.laeknar_virkir} onChange={(v) => setja({ laeknar_virkir: v ?? 0 })} />
-              <Tala label="Hættu í mánuðinum" value={drog.laeknar_haettu} onChange={(v) => setja({ laeknar_haettu: v ?? 0 })} />
+            <p className="mb-3 max-w-3xl text-xs leading-relaxed text-slate-600">
+              Mönnun, fjöldi lækna á vakt, vaktaskipti og sjúklingar skráðir af læknum koma sjálfkrafa úr
+              Vaktakerfinu undir <a href="/admin/team" className="font-medium text-cyan-700 hover:underline">Starfsfólk</a> og
+              eru ekki slegin inn hér. Aðeins það sem vaktakerfið geymir ekki er handvirkt.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Tala label="Læknar sem hættu í mánuðinum" value={drog.laeknar_haettu} onChange={(v) => setja({ laeknar_haettu: v ?? 0 })} hint="Vaktakerfið geymir enga dagsetningu á brotthvarfi." />
               <Tala label="Stuðningsspurningar" value={drog.studningsspurningar} onChange={(v) => setja({ studningsspurningar: v ?? 0 })} hint="Fallandi tala = stöðin orðin sjálfbjarga." />
               <Tala nullanlegt label="Uppitími (%)" value={drog.uppitimi_hlutfall} onChange={(v) => setja({ uppitimi_hlutfall: v })} />
             </div>

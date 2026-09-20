@@ -46,24 +46,21 @@ ships.
 
 ## Ókeyrt — staðfest 2026-09-20
 
-Samanburður á `create table` í `supabase/*.sql` við töflurnar í grunninum (61)
-skilaði einni skrá sem vantar, og hún dregur aðra með sér:
-
-| Skrá | Staða | Áhrif |
-|---|---|---|
-| `supabase/roster-preferences-schema.sql` | ⬜ ókeyrt | `roster_doctors` hefur engan dálk úr óskaskránum (`preferred_run_length` o.fl.) |
-| `supabase/roster-absences-schema.sql` | ⬜ ókeyrt | `roster_doctor_absences` er ekki til |
+| Skrá | Staða |
+|---|---|
+| `supabase/roster-absences-schema.sql` | ⬜ ókeyrt — `roster_doctor_absences` er ekki til og `roster_doctors.preferred_run_length` vantar |
 
 Fimm API-leiðir vísa í `roster_doctor_absences` og falla því:
 `/api/vaktir/[token]/prefs`, `/api/vaktir/[token]/prefs/absences`,
 `/api/vaktir/[token]/prefs/absences/[id]`, `/api/admin/roster`,
-`/api/admin/roster/assign`.
+`/api/admin/roster/assign`. Vaktaóskir og frí eru því ómigreruð þótt
+grunnmódúllinn sé í fullri notkun (4 læknar, 45 vaktir, 100% mönnun).
 
-`roster_doctors` og `roster_shifts` eru með raunveruleg gögn (4 læknar,
-45 vaktir), svo grunnmódúllinn er í notkun — það eru vaktaóskir og frí sem
-eru ómigreruð. Keyra þarf `roster-preferences-schema.sql` á undan
-`roster-absences-schema.sql`.
+`roster-preferences-schema.sql` er hins vegar **keyrð** — allir fjórir dálkar
+(`max_shifts_per_month`, `allowed_weekdays`, `shift_note`, `prefs_updated_at`)
+eru til. Fyrri útgáfa þessa kafla sagði annað og var röng: hún leitaði að
+dálkanöfnum sem skráin skilgreinir ekki.
 
-> Þessi listi er handvirkur og getur skolast til. Fljótleg leið til að
-> staðfesta: bera `create table if not exists public.<nafn>` í `supabase/*.sql`
-> saman við `information_schema.tables`.
+> Listinn er handvirkur og getur skolast til. Staðfesting: berðu
+> `create table if not exists public.<nafn>` og `add column if not exists`
+> í `supabase/*.sql` saman við `information_schema`.
