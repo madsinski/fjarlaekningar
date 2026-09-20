@@ -92,9 +92,25 @@ const SKRIFANLEGT = new Set([
   "note", "heimildir",
 ]);
 
-function hreinsa(m: Partial<Manudur>, caller: { id: string; name: string }) {
+/**
+ * Dálkarnir sem Medalia-skráin á að ráða. Innflutningur skrifar EKKERT utan
+ * þessa lista — annars myndi endurinnflutningur á mánuði þurrka út tölur sem
+ * einhver sló inn handvirkt úr samskiptaskrá eða könnun, og sá sem flytur inn
+ * hefur enga leið til að sjá að það gerðist.
+ */
+const MEDALIA_DALKAR = new Set([
+  "institution", "station", "month",
+  "erindi_alls", "erindi_leyst", "erindi_visad", "erindi_endurtekin",
+  "visad_heilsugaesla", "visad_serfraedi", "visad_annad", "visad_brad",
+  "kodar_utan_setts", "listi_stodvadur", "lyfsedlar", "syklalyf",
+  "svartimi_midgildi_min", "svartimi_p95_min", "erindi_sundurlidun",
+  "adkoma_beint", "adkoma_hjukrunarfr", "adkoma_mottaka", "adkoma_gagnafr", "adkoma_annad",
+  "almenn_alls", "almenn_leyst", "heimildir",
+]);
+
+function hreinsa(m: Partial<Manudur>, caller: { id: string; name: string }, leyfd: Set<string> = SKRIFANLEGT) {
   const ut: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(m)) if (SKRIFANLEGT.has(k)) ut[k] = v;
+  for (const [k, v] of Object.entries(m)) if (leyfd.has(k)) ut[k] = v;
   ut.entered_by = caller.id;
   ut.entered_by_name = caller.name;
   return ut;
@@ -129,12 +145,12 @@ export async function POST(req: Request) {
       case "innflutningur": {
         const radir = (body.manudir ?? []).filter((m) => m.station && m.month);
         if (!radir.length) return NextResponse.json({ ok: false, error: "Engar raðir" }, { status: 400 });
-        // Innflutningur skrifar aðeins Medalia-dálkana yfir. Tölur sem koma
-        // annars staðar frá — samskiptaskrá, kannanir — eru slegnar inn
-        // handvirkt og mega ekki þurrkast út þótt skrá sé flutt inn aftur.
+        // Aðeins Medalia-dálkarnir. Tölur sem koma annars staðar frá —
+        // samskiptaskrá, kannanir — eru slegnar inn handvirkt og mega ekki
+        // þurrkast út þótt skrá sé flutt inn aftur fyrir sama mánuð.
         const { error } = await supabaseAdmin
           .from("arangur_manudir")
-          .upsert(radir.map((m) => hreinsa(m, caller!)), { onConflict: "institution,station,month" });
+          .upsert(radir.map((m) => hreinsa(m, caller!, MEDALIA_DALKAR)), { onConflict: "institution,station,month" });
         if (error) throw error;
         return NextResponse.json({ ok: true, fjoldi: radir.length });
       }

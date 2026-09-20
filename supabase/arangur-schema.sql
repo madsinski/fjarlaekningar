@@ -165,5 +165,5 @@ create trigger trg_arangur_manudir_updated_at
 -- skjalfest — ekki grafin í kóða. Hún er líka það fyrsta sem verður dregið í
 -- efa, svo hún á að vera auðvelt að verja.
 insert into public.site_settings (key, value)
-values ('arangur_forsendur', '{"min_a_erindi": 20, "klst_i_laeknisdegi": 7, "svartimi_markmid_min": 120}'::jsonb)
+values ('arangur_forsendur', '{"min_a_erindi": 20, "min_kostnadur_a_erindi": 0, "klst_i_laeknisdegi": 7, "svartimi_markmid_min": 120, "timamaeling_gerd": false}'::jsonb)
 on conflict (key) do nothing;

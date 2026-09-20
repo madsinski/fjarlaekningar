@@ -35,6 +35,8 @@ modules also need a **Storage bucket** — noted inline.
 
 | 23 | `supabase/hsu-schema.sql` (viðbót) | Tölvupóstval hvers læknis: `hsu_doctors.email_prefs` (Mín síða → Stillingar); `hsu_settings.email_prefs` ekki lengur notað. | ✅ done (2026-09-18) |
 
+| 24 | `supabase/arangur-schema.sql` | Árangursmælingar — `arangur_manudir` (ein röð á stöð á mánuði, eingöngu samantekt: hver dálkur er fjöldi, ekkert rekjanlegt til einstaklings) og `site_settings` lykillinn `arangur_forsendur`. Lokuð vöfrum fyrir skrif; starfsfólk les. Sjá `docs/arangur.md`. | ✅ done (2026-09-20) |
+
 > After running a migration, the matching admin module works immediately (no
 > redeploy needed — the tables just start returning data).
 
