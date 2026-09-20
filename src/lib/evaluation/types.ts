@@ -154,6 +154,14 @@ export type Module = {
   effort: Effort;
   /** Always on — removing it would leave nothing to report. */
   core?: boolean;
+  /**
+   * Not an outcome. A meta module governs how the evaluation is run rather
+   * than measuring the service, so it carries protocol steps, documents and
+   * readiness like any other but is kept off the results dashboard — where it
+   * would otherwise displace the headline of whatever category it was filed
+   * under, and hide the claim that category exists to make.
+   */
+  meta?: boolean;
   /** Other modules this one needs. */
   requires?: string[];
   sources: Source[];

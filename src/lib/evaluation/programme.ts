@@ -34,6 +34,12 @@ export function enabledModules(p: Programme): Module[] {
   });
 }
 
+/** Modules that govern how the evaluation is run rather than measuring the
+ *  service. Shown on their own rather than inside an outcome category. */
+export function metaModules(p: Programme): Module[] {
+  return enabledModules(p).filter((m) => m.meta);
+}
+
 export function availableModules(p: Programme): Module[] {
   const on = new Set(enabledModules(p).map((m) => m.id));
   return ALL_MODULES.filter((m) => !on.has(m.id));
@@ -133,7 +139,10 @@ export function results(p: Programme, ctx: { t: Totals; roster: Roster; a: Assum
   return CATEGORIES.map((category) => ({
     category,
     modules: on
-      .filter((m) => m.category === category.id)
+      // Meta modules govern how the evaluation is run rather than measuring
+      // the service. Leaving them in put "Design" at the top of Effectiveness
+      // and pushed the resolution rate out of sight.
+      .filter((m) => m.category === category.id && !m.meta)
       .map((module) => ({ module, values: module.metrics.map((metric) => ({ metric, value: metric.compute(ctx) })) })),
   })).filter((c) => c.modules.length);
 }

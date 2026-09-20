@@ -17,8 +17,112 @@ import { useMemo, useState } from "react";
 import { CheckCircle2, Clock, FileText, Gauge } from "lucide-react";
 import { ALL_MODULES } from "@/lib/evaluation/modules";
 import { enabledModules, EFFORT_LABEL } from "@/lib/evaluation/programme";
-import { CATEGORIES, SOURCES, type Category, type Horizon, type Programme } from "@/lib/evaluation/types";
+import { CATEGORIES, SOURCES, type Category, type Horizon, type Module, type Programme } from "@/lib/evaluation/types";
 import { ACCENT, Chip, SOURCE_CHIP, card } from "./ui";
+
+/** One catalogue entry. At module scope rather than inline: a component
+ *  created during render is a new type every time, which remounts every card
+ *  in the list and collapses any open detail. */
+function Entry({ m, inProgramme }: { m: Module; inProgramme: boolean }) {
+  const a = ACCENT[m.category];
+  return (
+    <article className={`relative overflow-hidden ${card}`}>
+      <div className={`absolute inset-y-0 left-0 w-1 ${a.bar}`} />
+      <div className="py-4 pl-5 pr-4">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <h3 className="text-sm font-bold text-slate-900">{m.name}</h3>
+          {inProgramme && (
+            <Chip className="bg-emerald-100 text-emerald-800">
+              <CheckCircle2 className="mr-0.5 h-2.5 w-2.5" /> In programme
+            </Chip>
+          )}
+          {m.core && <Chip className="bg-slate-800 text-white">Core</Chip>}
+          {m.horizon === "later" && <Chip className="bg-slate-100 text-slate-600">Later</Chip>}
+          <Chip className="bg-slate-100 text-slate-600">
+            <Gauge className="mr-0.5 h-2.5 w-2.5" /> {EFFORT_LABEL[m.effort]}
+          </Chip>
+        </div>
+
+        <p className="mt-1.5 text-sm text-slate-700">{m.question}</p>
+        <p className={`mt-0.5 text-xs font-medium ${a.text}`}>{m.benefit}</p>
+
+        <div className={`mt-2.5 rounded-lg ${a.soft} px-3 py-2`}>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">The claim it earns</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-slate-700">{m.claim}</p>
+        </div>
+
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Why it is worth doing</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{m.rationale}</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">What it cannot show</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{m.caveat}</p>
+          </div>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-slate-100 pt-2.5 text-[11px] text-slate-500">
+          <span className="flex flex-wrap items-center gap-1">
+            Data from:
+            {m.sources.map((s) => (
+              <span key={s} className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${SOURCE_CHIP[s]}`}>
+                {SOURCES[s].name}
+              </span>
+            ))}
+          </span>
+          <span><strong className="font-semibold text-slate-700">{m.metrics.length}</strong> metric{m.metrics.length === 1 ? "" : "s"}</span>
+          <span><strong className="font-semibold text-slate-700">{m.fields.length}</strong> field{m.fields.length === 1 ? "" : "s"}</span>
+          <span><strong className="font-semibold text-slate-700">{m.protocol.length}</strong> step{m.protocol.length === 1 ? "" : "s"}</span>
+          {m.documents.length > 0 && (
+            <span className="flex items-center gap-1">
+              <FileText className="h-3 w-3" /> {m.documents.length} document{m.documents.length === 1 ? "" : "s"}
+            </span>
+          )}
+          {m.protocol.some((s) => s.timeCritical) && (
+            <span className="flex items-center gap-1 font-medium text-rose-600">
+              <Clock className="h-3 w-3" /> has time-critical steps
+            </span>
+          )}
+          {m.requires?.length && (
+            <span className="text-slate-500">
+              needs {m.requires.map((r) => ALL_MODULES.find((x) => x.id === r)?.name ?? r).join(", ")}
+            </span>
+          )}
+        </div>
+
+        <details className="mt-2">
+          <summary className="cursor-pointer text-[11px] font-medium text-slate-500 hover:text-slate-800">
+            What it produces and what it asks of you
+          </summary>
+          <div className="mt-2 grid gap-3 sm:grid-cols-2">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Metrics</p>
+              <ul className="mt-0.5 space-y-1">
+                {m.metrics.map((x) => (
+                  <li key={x.id} className="text-[11px] leading-relaxed text-slate-600">
+                    <strong className="font-semibold text-slate-800">{x.name}</strong> — {x.why}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Protocol</p>
+              <ol className="mt-0.5 space-y-1">
+                {m.protocol.map((s, i) => (
+                  <li key={i} className="text-[11px] leading-relaxed text-slate-600">
+                    {i + 1}. {s.text}
+                    {s.timeCritical && <span className="ml-1 font-semibold text-rose-600">time-critical</span>}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </details>
+      </div>
+    </article>
+  );
+}
 
 export default function Library({ programme }: { programme: Programme }) {
   const [horizon, setHorizon] = useState<Horizon | "all">("all");
@@ -87,9 +191,27 @@ export default function Library({ programme }: { programme: Programme }) {
         </div>
       </div>
 
-      {CATEGORIES.filter((c) => shown.some((m) => m.category === c.id)).map((cat) => {
-        const a = ACCENT[cat.id];
-        const items = shown.filter((m) => m.category === cat.id);
+      {shown.some((m) => m.meta) && (
+        <section>
+          <div className="mb-2 flex flex-wrap items-baseline gap-2">
+            <h2 className="text-lg font-bold text-slate-900">How the evaluation is run</h2>
+            <span className="text-sm text-slate-500">Not an outcome</span>
+          </div>
+          <p className="mb-3 max-w-3xl text-xs leading-relaxed text-slate-500">
+            These govern what the figures are allowed to mean rather than measuring the service, so they carry
+            protocol steps and documents like any other module but stay off the results dashboard — where a
+            design would otherwise displace the headline of whatever category it sat under.
+          </p>
+          <div className="space-y-3">
+            {shown.filter((m) => m.meta).map((m) => (
+              <Entry key={m.id} m={m} inProgramme={on.has(m.id)} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {CATEGORIES.filter((c) => shown.some((m) => m.category === c.id && !m.meta)).map((cat) => {
+        const items = shown.filter((m) => m.category === cat.id && !m.meta);
         return (
           <section key={cat.id}>
             <div className="mb-2 flex flex-wrap items-baseline gap-2">
@@ -101,101 +223,7 @@ export default function Library({ programme }: { programme: Programme }) {
 
             <div className="space-y-3">
               {items.map((m) => (
-                <article key={m.id} className={`relative overflow-hidden ${card}`}>
-                  <div className={`absolute inset-y-0 left-0 w-1 ${a.bar}`} />
-                  <div className="py-4 pl-5 pr-4">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <h3 className="text-sm font-bold text-slate-900">{m.name}</h3>
-                      {on.has(m.id) && (
-                        <Chip className="bg-emerald-100 text-emerald-800">
-                          <CheckCircle2 className="mr-0.5 h-2.5 w-2.5" /> In programme
-                        </Chip>
-                      )}
-                      {m.core && <Chip className="bg-slate-800 text-white">Core</Chip>}
-                      {m.horizon === "later" && <Chip className="bg-slate-100 text-slate-600">Later</Chip>}
-                      <Chip className="bg-slate-100 text-slate-600">
-                        <Gauge className="mr-0.5 h-2.5 w-2.5" /> {EFFORT_LABEL[m.effort]}
-                      </Chip>
-                    </div>
-
-                    <p className="mt-1.5 text-sm text-slate-700">{m.question}</p>
-                    <p className={`mt-0.5 text-xs font-medium ${a.text}`}>{m.benefit}</p>
-
-                    <div className={`mt-2.5 rounded-lg ${a.soft} px-3 py-2`}>
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">The claim it earns</p>
-                      <p className="mt-0.5 text-xs leading-relaxed text-slate-700">{m.claim}</p>
-                    </div>
-
-                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Why it is worth doing</p>
-                        <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{m.rationale}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">What it cannot show</p>
-                        <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{m.caveat}</p>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-slate-100 pt-2.5 text-[11px] text-slate-500">
-                      <span className="flex flex-wrap items-center gap-1">
-                        Data from:
-                        {m.sources.map((s) => (
-                          <span key={s} className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${SOURCE_CHIP[s]}`}>
-                            {SOURCES[s].name}
-                          </span>
-                        ))}
-                      </span>
-                      <span><strong className="font-semibold text-slate-700">{m.metrics.length}</strong> metric{m.metrics.length === 1 ? "" : "s"}</span>
-                      <span><strong className="font-semibold text-slate-700">{m.fields.length}</strong> field{m.fields.length === 1 ? "" : "s"}</span>
-                      <span><strong className="font-semibold text-slate-700">{m.protocol.length}</strong> step{m.protocol.length === 1 ? "" : "s"}</span>
-                      {m.documents.length > 0 && (
-                        <span className="flex items-center gap-1">
-                          <FileText className="h-3 w-3" /> {m.documents.length} document{m.documents.length === 1 ? "" : "s"}
-                        </span>
-                      )}
-                      {m.protocol.some((s) => s.timeCritical) && (
-                        <span className="flex items-center gap-1 font-medium text-rose-600">
-                          <Clock className="h-3 w-3" /> has time-critical steps
-                        </span>
-                      )}
-                      {m.requires?.length && (
-                        <span className="text-slate-500">
-                          needs {m.requires.map((r) => ALL_MODULES.find((x) => x.id === r)?.name ?? r).join(", ")}
-                        </span>
-                      )}
-                    </div>
-
-                    <details className="mt-2">
-                      <summary className="cursor-pointer text-[11px] font-medium text-slate-500 hover:text-slate-800">
-                        What it produces and what it asks of you
-                      </summary>
-                      <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                        <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Metrics</p>
-                          <ul className="mt-0.5 space-y-1">
-                            {m.metrics.map((x) => (
-                              <li key={x.id} className="text-[11px] leading-relaxed text-slate-600">
-                                <strong className="font-semibold text-slate-800">{x.name}</strong> — {x.why}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Protocol</p>
-                          <ol className="mt-0.5 space-y-1">
-                            {m.protocol.map((s, i) => (
-                              <li key={i} className="text-[11px] leading-relaxed text-slate-600">
-                                {i + 1}. {s.text}
-                                {s.timeCritical && <span className="ml-1 font-semibold text-rose-600">time-critical</span>}
-                              </li>
-                            ))}
-                          </ol>
-                        </div>
-                      </div>
-                    </details>
-                  </div>
-                </article>
+                <Entry key={m.id} m={m} inProgramme={on.has(m.id)} />
               ))}
             </div>
           </section>

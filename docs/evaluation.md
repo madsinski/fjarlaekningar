@@ -35,6 +35,22 @@ metrics; all 29 ask for 58 and show 41.
 Three modules are **core** and cannot be removed — resolution, incidents and
 response time. Without them there is no evaluation, only anecdote.
 
+## Meta modules
+
+A module tagged `meta` governs **how the evaluation is run** rather than
+measuring the service. Study design is the only one so far. It carries protocol
+steps, documents and readiness like any other module — those matter — but it is
+kept off the results dashboard.
+
+Without that flag it displaced the headline of whatever category it was filed
+under: "Design: uncontrolled before-and-after" appeared at the top of
+Effectiveness, hiding the resolution rate, which is the one claim that category
+exists to make.
+
+Which module leads a category is otherwise the catalogue order, and that is
+under your control — reorder the selected modules on the picker and the
+category headline follows.
+
 ## Study design
 
 The measurement system originally had no stated design, which is not a cosmetic
