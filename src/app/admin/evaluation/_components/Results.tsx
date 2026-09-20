@@ -15,7 +15,7 @@ import { results } from "@/lib/evaluation/programme";
 import type { Assumptions, Programme } from "@/lib/evaluation/types";
 import { caseTypeRows, pct, type Roster, type Totals } from "@/lib/evaluation/totals";
 import { GATES } from "@/lib/evaluation/exclusions";
-import { ACCENT, Chip, STATUS_RING, card } from "./ui";
+import { ACCENT, Chip, STATUS_RING, card, Plain } from "./ui";
 
 export default function Results({
   programme, t, roster, a,
@@ -36,7 +36,7 @@ export default function Results({
               <span className="text-sm text-slate-500">{category.question}</span>
               {category.gate && <Chip className="bg-slate-800 text-white">Gate</Chip>}
             </div>
-            <p className="mb-3 max-w-3xl text-xs leading-relaxed text-slate-500">{category.note}</p>
+            <p className="mb-3 max-w-3xl text-xs leading-relaxed text-slate-500"><Plain>{category.note}</Plain></p>
 
             <div className="space-y-3">
               {modules.map(({ module, values }) => {
@@ -55,7 +55,7 @@ export default function Results({
                           <p className="mt-0.5 text-3xl font-bold tracking-tight text-slate-900">
                             {head.value.value ?? <span className="text-lg font-medium text-slate-400">Pending</span>}
                           </p>
-                          <p className="mt-1 text-xs leading-snug text-slate-600">{head.value.detail}</p>
+                          <p className="mt-1 text-xs leading-snug text-slate-600"><Plain>{head.value.detail}</Plain></p>
                           {head.value.missing && (
                             <p className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-cyan-700">
                               <Info className="h-3 w-3" /> Needs: {head.value.missing}
@@ -68,13 +68,13 @@ export default function Results({
                               ? "border-amber-200 bg-amber-50 text-amber-900"
                               : "border-slate-200 bg-slate-50 text-slate-600"
                           }`}>
-                            {head.value.assumption}
+                            <Plain>{head.value.assumption}</Plain>
                           </p>
                         )}
                       </div>
 
                       <div>
-                        <p className="mb-2 text-xs leading-relaxed text-slate-600">{head.metric.why}</p>
+                        <p className="mb-2 text-xs leading-relaxed text-slate-600"><Plain>{head.metric.why}</Plain></p>
                         {rest.length > 0 && (
                           <div className="grid gap-2 sm:grid-cols-2">
                             {rest.map(({ metric, value }) => (
@@ -83,7 +83,7 @@ export default function Results({
                                 <p className="text-lg font-semibold text-slate-900">
                                   {value.value ?? <span className="text-sm font-medium text-slate-400">—</span>}
                                 </p>
-                                <p className="mt-0.5 text-[11px] leading-snug text-slate-500">{value.detail}</p>
+                                <p className="mt-0.5 text-[11px] leading-snug text-slate-500"><Plain>{value.detail}</Plain></p>
                                 {value.missing && <p className="mt-1 text-[11px] font-medium text-cyan-700">Needs: {value.missing}</p>}
                               </div>
                             ))}
@@ -195,7 +195,7 @@ export default function Results({
                   <p className="text-2xl font-bold text-slate-900">
                     {count} <span className="text-sm font-medium text-slate-400">({pct(count, t.exclusions.total)}%)</span>
                   </p>
-                  <p className="mt-0.5 text-[11px] leading-snug text-slate-500">{g.note}</p>
+                  <p className="mt-0.5 text-[11px] leading-snug text-slate-500"><Plain>{g.note}</Plain></p>
                 </div>
               );
             })}
@@ -213,7 +213,7 @@ export default function Results({
               <ul className="mt-1.5 space-y-0.5 text-xs text-amber-900">
                 {t.exclusions.leaks.map((l) => (
                   <li key={l.reason.id}>
-                    <strong>{l.reason.name}</strong> — {l.count} reached a clinician. {l.reason.note}
+                    <strong>{l.reason.name}</strong> — {l.count} reached a clinician. <Plain>{l.reason.note}</Plain>
                   </li>
                 ))}
               </ul>
@@ -260,34 +260,25 @@ export default function Results({
 
       {t.entry.total > 0 && (
         <section className={`${card} p-4`}>
-          <h2 className="text-lg font-bold text-slate-900">How patients arrived</h2>
+          <h2 className="text-lg font-bold text-slate-900">How patients reached us</h2>
           <p className="mb-3 max-w-3xl text-sm text-slate-600">
-            A patient who arrives directly costs the health centre nothing. A rising direct share is the service
-            becoming self-sufficient.
+            A patient who comes straight to the service costs the health centre nothing — no phone call, nobody
+            explaining it, nobody routing them. So a growing left-hand bar is the clearest sign the service is
+            standing on its own.
           </p>
-          <div className="flex h-3 overflow-hidden rounded-full">
-            {([
-              ["Direct", t.entry.direct, "bg-emerald-500"],
-              ["Nurse", t.entry.nurse, "bg-cyan-500"],
-              ["Reception", t.entry.reception, "bg-violet-400"],
-              ["Records", t.entry.records, "bg-amber-400"],
-              ["Other", t.entry.other, "bg-slate-300"],
-            ] as [string, number, string][]).map(([label, v, colour]) => (
-              <div key={label} className={colour} style={{ width: `${(v / t.entry.total) * 100}%` }} title={`${label}: ${v}`} />
-            ))}
+          <div className="flex h-4 overflow-hidden rounded-full">
+            <div className="bg-emerald-500" style={{ width: `${(t.entry.direct / t.entry.total) * 100}%` }} />
+            <div className="bg-cyan-500" style={{ width: `${(t.entry.viaStaff / t.entry.total) * 100}%` }} />
           </div>
-          <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-600">
-            {([
-              ["Direct", t.entry.direct, "bg-emerald-500"],
-              ["Nurse", t.entry.nurse, "bg-cyan-500"],
-              ["Reception", t.entry.reception, "bg-violet-400"],
-              ["Records", t.entry.records, "bg-amber-400"],
-              ["Other", t.entry.other, "bg-slate-300"],
-            ] as [string, number, string][]).map(([label, v, colour]) => (
-              <span key={label} className="flex items-center gap-1.5">
-                <span className={`h-2 w-2 rounded-full ${colour}`} /> {label} {pct(v, t.entry.total)}%
-              </span>
-            ))}
+          <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-600">
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              Came directly — {pct(t.entry.direct, t.entry.total)}% ({t.entry.direct})
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-cyan-500" />
+              Sent by health centre staff — {pct(t.entry.viaStaff, t.entry.total)}% ({t.entry.viaStaff})
+            </span>
           </div>
         </section>
       )}

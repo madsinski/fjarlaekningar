@@ -17,7 +17,7 @@ import { enabledModules } from "@/lib/evaluation/programme";
 import type { UploadedDoc } from "@/lib/evaluation/programme";
 import type { Programme } from "@/lib/evaluation/types";
 import { CATEGORIES } from "@/lib/evaluation/types";
-import { ACCENT, Chip, card } from "./ui";
+import { ACCENT, Chip, card, Plain } from "./ui";
 
 export default function Setup({
   programme, documents, canEdit, onToggleStep, onUpload, onDeleteDoc, onOpenDoc,
@@ -95,7 +95,7 @@ export default function Setup({
                         {step.timeCritical && !isDone && (
                           <Chip className="ml-1.5 bg-rose-100 text-rose-700">Time-critical</Chip>
                         )}
-                        {step.detail && <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{step.detail}</p>}
+                        {step.detail && <p className="mt-0.5 text-xs leading-relaxed text-slate-500"><Plain>{step.detail}</Plain></p>}
                         {step.link && (
                           <a href={step.link.href} className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-cyan-700 hover:underline">
                             {step.link.label} <ExternalLink className="h-3 w-3" />
@@ -123,7 +123,7 @@ export default function Setup({
                               {doc.name}
                               {doc.required && <span className="ml-1 font-normal text-rose-600">required</span>}
                             </p>
-                            <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">{doc.why}</p>
+                            <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500"><Plain>{doc.why}</Plain></p>
                           </div>
                           {canEdit && (
                             <>

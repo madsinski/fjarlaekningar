@@ -16,7 +16,7 @@ import {
   COHORTS, DECISIONS, DESIGNS, DESIGN_BY_ID, SITE_ROLES, feasibility, supportedDesign,
   type DesignState, type SiteRole,
 } from "@/lib/evaluation/design";
-import { Chip, card, input } from "./ui";
+import { Chip, card, input, Plain } from "./ui";
 
 const STRENGTH_BAR: Record<number, string> = {
   1: "bg-rose-400", 2: "bg-amber-400", 3: "bg-cyan-500", 4: "bg-emerald-500",
@@ -115,8 +115,8 @@ export default function DesignStep({
                       </span>
                       {achievable && <Chip className="bg-emerald-100 text-emerald-800">Supported by your data</Chip>}
                     </div>
-                    <p className="mt-1 text-xs leading-relaxed text-slate-600">{d.summary}</p>
-                    <p className="mt-1 text-xs font-medium text-slate-700">Lets you say: {d.claim}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-600"><Plain>{d.summary}</Plain></p>
+                    <p className="mt-1 text-xs font-medium text-slate-700">Lets you say: <Plain>{d.claim}</Plain></p>
 
                     <div className="mt-2 grid gap-2 sm:grid-cols-3">
                       <div>
@@ -133,8 +133,8 @@ export default function DesignStep({
                       </div>
                       <div>
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Cost, and when to decide</p>
-                        <p className="mt-0.5 text-[11px] leading-snug text-slate-600">{d.cost}</p>
-                        <p className="mt-1 text-[11px] font-medium leading-snug text-rose-700">{d.decideBy}</p>
+                        <p className="mt-0.5 text-[11px] leading-snug text-slate-600"><Plain>{d.cost}</Plain></p>
+                        <p className="mt-1 text-[11px] font-medium leading-snug text-rose-700"><Plain>{d.decideBy}</Plain></p>
                       </div>
                     </div>
                   </div>
@@ -262,10 +262,10 @@ export default function DesignStep({
                   {!c.measurable && <Chip className="bg-slate-200 text-slate-600">not measurable</Chip>}
                   {chosen && <Chip className="bg-slate-900 text-white">Chosen</Chip>}
                 </div>
-                <p className="mt-0.5 text-xs text-slate-600">{c.definition}</p>
+                <p className="mt-0.5 text-xs text-slate-600"><Plain>{c.definition}</Plain></p>
                 <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
-                  <p className="text-[11px] leading-relaxed text-slate-600"><strong className="text-slate-700">For:</strong> {c.argument}</p>
-                  <p className="text-[11px] leading-relaxed text-slate-600"><strong className="text-slate-700">Against:</strong> {c.problem}</p>
+                  <p className="text-[11px] leading-relaxed text-slate-600"><strong className="text-slate-700">For:</strong> <Plain>{c.argument}</Plain></p>
+                  <p className="text-[11px] leading-relaxed text-slate-600"><strong className="text-slate-700">Against:</strong> <Plain>{c.problem}</Plain></p>
                 </div>
               </button>
             );

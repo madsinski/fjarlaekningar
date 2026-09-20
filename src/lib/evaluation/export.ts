@@ -193,8 +193,8 @@ export function caseTypeChart(t: Totals): string {
  *  growing left-hand band is the workload story in one picture. */
 export function entryChart(t: Totals): string {
   const parts: [string, number][] = [
-    ["Direct", t.entry.direct], ["Nurse", t.entry.nurse], ["Reception", t.entry.reception],
-    ["Records", t.entry.records], ["Other", t.entry.other],
+    ["Came directly", t.entry.direct],
+    ["Sent by health centre staff", t.entry.viaStaff],
   ];
   const total = t.entry.total;
   if (!total) return svgShell(900, 200, `<text x="450" y="100" text-anchor="middle" fill="#94a3b8" font-size="18">No entry-route data yet</text>`);

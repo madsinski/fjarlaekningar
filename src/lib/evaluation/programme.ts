@@ -150,8 +150,13 @@ export function results(p: Programme, ctx: { t: Totals; roster: Roster; a: Assum
 /** Headline figure per category — the one that goes on the wall. */
 export function headlines(p: Programme, ctx: { t: Totals; roster: Roster; a: Assumptions }) {
   return results(p, ctx).map((c) => {
-    const first = c.modules.flatMap((m) => m.values.map((v) => ({ ...v, module: m.module }))).find((v) => v.metric.headline);
-    return { category: c.category, top: first };
+    // The module marked `lead` answers the category's own question. Falling
+    // back to catalogue order only when it is switched off, because the order
+    // is about where a reviewer should start reading, not about which figure
+    // belongs on the wall.
+    const ordered = [...c.modules].sort((a, b) => Number(!!b.module.lead) - Number(!!a.module.lead));
+    const top = ordered.flatMap((m) => m.values.map((v) => ({ ...v, module: m.module }))).find((v) => v.metric.headline);
+    return { category: c.category, top };
   });
 }
 

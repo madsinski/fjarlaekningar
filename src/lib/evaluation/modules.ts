@@ -26,6 +26,7 @@ export const MODULES: Module[] = [
     question: "Do these cases actually get resolved remotely?",
     claim: "X% of cases were resolved entirely in the remote service, and we can show it case type by case type.",
     category: "effectiveness",
+    lead: true,
     core: true,
     effort: "low",
     sources: ["medalia"],
@@ -46,9 +47,6 @@ export const MODULES: Module[] = [
       { key: "cases_total", label: "Cases received", source: "medalia" },
       { key: "cases_resolved", label: "Resolved remotely", source: "medalia" },
       { key: "cases_referred", label: "Referred onward", source: "medalia" },
-      { key: "referred_primary_care", label: "→ primary care", source: "medalia" },
-      { key: "referred_specialist", label: "→ specialist", source: "medalia" },
-      { key: "referred_other", label: "→ other", source: "medalia" },
       { key: "cases_repeat", label: "Repeat cases", help: "Same patient, same problem, again.", source: "medalia" },
     ],
     documents: [
@@ -71,11 +69,11 @@ export const MODULES: Module[] = [
         compute: ({ t }) => ({ value: n(t.cases_total), detail: `Across ${t.months} ${t.months === 1 ? "month" : "months"}` }),
       },
       {
-        id: "referral_mix", name: "Where referrals went",
-        why: "Referral is not failure. Where it goes is what tells you whether the scope is right.",
+        id: "referral_mix", name: "Sent on to someone else",
+        why: "Referring is not failure — it is the service knowing where its limits are. Read it next to how many were turned away, because only that part is a safety signal.",
         compute: ({ t }) => ({
           value: n(t.cases_referred),
-          detail: `Primary care ${t.referred_primary_care} · specialist ${t.referred_specialist} · other ${t.referred_other}`,
+          detail: `${n(Math.max(0, t.cases_referred - t.excluded_by_doctor))} passed on to someone who could help, ${n(t.excluded_by_doctor)} turned away as unsuitable`,
         }),
       },
       {
@@ -135,6 +133,7 @@ export const MODULES: Module[] = [
     question: "Is anyone being harmed?",
     claim: "No serious incidents, N deviations logged and closed — and here is the system that would have caught one.",
     category: "safety",
+    lead: true,
     core: true,
     effort: "low",
     sources: ["survey"],
@@ -257,6 +256,9 @@ export const MODULES: Module[] = [
     sources: ["internal"],
     benefit:
       "Catches a miscount before it reaches a report.",
+    // Checks whether our own numbers are right rather than measuring the
+    // service, so it stays off the outcome dashboard like the study design.
+    meta: true,
     horizon: "now",
     rationale:
       "Doctors already log patients seen against their own shifts in the rota. That is a second counter on the same thing Medalia counts, from a different system and a different person — and two independent counters that agree are far stronger than one that cannot be checked. If they diverge, one of them is wrong and you need to know before the figure reaches a report.",
@@ -331,7 +333,6 @@ export const MODULES: Module[] = [
     fields: [
       { key: "screening_stops", label: "Stopped by questionnaire", source: "medalia" },
       { key: "excluded_by_doctor", label: "Turned away by a doctor", help: "Unsuitable on a red flag — not referred onward as normal care.", source: "medalia" },
-      { key: "referred_urgent", label: "Urgent escalation after screening", help: "Emergency care or 112 after the patient passed the questionnaire.", source: "medalia" },
     ],
     documents: [
       { id: "screen-spec", name: "Screening logic", why: "Which red flags stop a patient and why. This is the document that answers 'who decides they are suitable?'", required: true },
@@ -396,13 +397,21 @@ export const MODULES: Module[] = [
         }),
       },
       {
-        id: "urgent", name: "Urgent after screening",
-        why: "A near miss of the screen itself, and the sharpest safety signal in our own data.",
-        compute: ({ t }) => ({
-          value: n(t.referred_urgent),
-          detail: "Sent to emergency care or 112 after passing the questionnaire",
-          status: t.referred_urgent === 0 ? "good" : "fair",
-        }),
+        id: "urgent", name: "Acute cases that got past the form",
+        why: "The sharpest safety signal we have: someone acutely unwell answered the questionnaire, it let them through, and a doctor had to catch it. Comes from the reasons file rather than the monthly export, which is better — it is coded as a reason rather than a bare flag.",
+        compute: ({ t }) => {
+          const acute = t.exclusions.byReason.find((r) => r.reason.id === "acute");
+          return {
+            value: acute ? n(acute.clinician) : t.exclusions.total ? "0" : null,
+            detail: acute
+              ? `${n(acute.form)} stopped by the form, ${n(acute.clinician)} reached a doctor first`
+              : t.exclusions.total
+              ? "No acute cases got past the questionnaire"
+              : "Comes from the exclusion reasons file",
+            missing: t.exclusions.total ? undefined : "Exclusion reasons file",
+            status: !t.exclusions.total ? undefined : acute?.clinician ? "fair" : "good",
+          };
+        },
       },
     ],
   },
@@ -548,6 +557,7 @@ export const MODULES: Module[] = [
     sources: ["study", "derived"],
     benefit:
       "Tells you whether you are removing work or just moving it — while you can still fix it.",
+    lead: true,
     horizon: "now",
     rationale:
       "The real risk in the whole project, and the one nothing else can see. The nurse now has to assess whether the case fits, explain a service the patient has never heard of, send a link, and take the patient back if anything went wrong. It is entirely possible that each case costs the health centre more minutes than it saves — the service would look excellent on every patient measure and still be adding to the load it was meant to relieve. That is the commonest finding in remote-care research, and it is invisible in every figure that starts after the patient reaches Medalia.",
@@ -604,16 +614,13 @@ export const MODULES: Module[] = [
     caveat:
       "It tells you nothing about the people who never arrived. That is the denominator's job, not this module's.",
     protocol: [
-      { text: "Give each route its own portal link", detail: "Direct, nurse, reception, records. No question for the patient, no recall bias, nothing anyone can forget — the route records itself. One change in code: the portal URL is hard-coded in six places.", timeCritical: true },
+      { text: "Give each route its own portal link", detail: "At minimum one link people use themselves and one the health centre hands out. No question for the patient, nothing anyone has to remember — the route records itself. One change in code: the portal URL is hard-coded in six places.", timeCritical: true },
       { text: "Confirm with Medalia that the route reaches the export", detail: "Separate portal slugs or a query parameter, whichever they prefer." },
       { text: "Link the routes to each partner's service URL", link: { href: "/admin/stofnanir", label: "Partner institutions" } },
     ],
     fields: [
-      { key: "entry_direct", label: "Direct", source: "medalia" },
-      { key: "entry_nurse", label: "Via nurse", source: "medalia" },
-      { key: "entry_reception", label: "Via reception", source: "medalia" },
-      { key: "entry_records", label: "Via records staff", source: "medalia" },
-      { key: "entry_other", label: "Other / unknown", source: "medalia" },
+      { key: "entry_direct", label: "Came directly", source: "medalia" },
+      { key: "entry_via_staff", label: "Sent by health centre staff", help: "Nurse, reception or records — the export cannot separate them.", source: "medalia" },
     ],
     documents: [],
     metrics: [
@@ -631,9 +638,9 @@ export const MODULES: Module[] = [
 
   {
     id: "economics",
-    name: "Cost per resolved case",
-    question: "What does this cost compared with what it replaces?",
-    claim: "Cost per resolved case against the locum spend it displaces.",
+    name: "Locum spend it competes with",
+    question: "What is the health centre currently paying to cover this work?",
+    claim: "Locum and temporary cover spend before and after, against the cases we took off them.",
     category: "workload",
     effort: "medium",
     sources: ["institution"],
@@ -641,7 +648,7 @@ export const MODULES: Module[] = [
       "Puts a cost per case against the locum spend it displaces.",
     horizon: "later",
     rationale:
-      "Locum and temporary cover is the budget line we are actually competing with, and it is the line a procurement evaluator will look at first.",
+      "Locum and temporary cover is the budget line we are actually competing with, and the one a buyer looks at first. Note what this does NOT do: it cannot give a cost per case, because that needs our own cost per case as well and we do not collect it here. Put the two side by side and let the reader do the division — a cost-per-case figure we produced ourselves would be argued with anyway.",
     caveat:
       "Never present displacement as fact. Self-reported counterfactuals and cost avoidance are the first things a sceptical reader pulls apart — label them as estimates and they survive.",
     protocol: [
@@ -680,6 +687,7 @@ export const MODULES: Module[] = [
     sources: ["survey"],
     benefit:
       "Gives you the patient's voice in a form a buyer takes seriously.",
+    lead: true,
     horizon: "now",
     rationale:
       "Effort is a better-validated instrument than general satisfaction and it is more interesting to a buyer — nobody purchases on 'people found it fine'. Keep it to three questions; beyond that the response rate collapses and you have nothing.",
@@ -789,6 +797,7 @@ export const MODULES: Module[] = [
     sources: ["internal"],
     benefit:
       "Proves you can actually run the service month after month.",
+    lead: true,
     horizon: "now",
     rationale:
       "A service nobody will staff does not transfer to the next site, however good the patient numbers are. This is what the next institution is really buying, and it comes free — the rota already holds it, so nothing has to be typed in.",

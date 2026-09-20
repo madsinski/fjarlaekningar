@@ -28,10 +28,6 @@ export type MonthRow = {
   cases_resolved: number;
   cases_referred: number;
   cases_repeat: number;
-  referred_primary_care: number;
-  referred_specialist: number;
-  referred_other: number;
-  referred_urgent: number;
   codes_outside_set: number;
   screening_stops: number;
   /** Subset of cases_referred: turned away as unsuitable rather than referred
@@ -46,10 +42,10 @@ export type MonthRow = {
   response_p95_min: number | null;
   cases_by_type: Record<string, CaseCounts>;
   entry_direct: number;
-  entry_nurse: number;
-  entry_reception: number;
-  entry_records: number;
-  entry_other: number;
+  /** Routed by a nurse, receptionist or records staff. The export cannot
+   *  separate them, so they are counted together — what matters for workload
+   *  is whether the health centre spent time on it at all. */
+  entry_via_staff: number;
   general_total: number;
   general_resolved: number;
   general_unresolved_reasons: NamedCount[];
@@ -106,9 +102,8 @@ export type MonthRow = {
 
 const COUNT_KEYS = [
   "cases_total", "cases_resolved", "cases_referred", "cases_repeat",
-  "referred_primary_care", "referred_specialist", "referred_other", "referred_urgent",
   "codes_outside_set", "screening_stops", "excluded_by_doctor", "prescriptions", "antibiotics",
-  "entry_direct", "entry_nurse", "entry_reception", "entry_records", "entry_other",
+  "entry_direct", "entry_via_staff",
   "general_total", "general_resolved", "survey_sent", "survey_responses",
   "deviations", "near_misses", "serious_incidents",
   "doctors_left", "support_questions",
@@ -240,11 +235,8 @@ export function total(rows: MonthRow[]) {
 
   const entry = {
     direct: counts.entry_direct,
-    nurse: counts.entry_nurse,
-    reception: counts.entry_reception,
-    records: counts.entry_records,
-    other: counts.entry_other,
-    total: counts.entry_direct + counts.entry_nurse + counts.entry_reception + counts.entry_records + counts.entry_other,
+    viaStaff: counts.entry_via_staff,
+    total: counts.entry_direct + counts.entry_via_staff,
   };
 
   return {

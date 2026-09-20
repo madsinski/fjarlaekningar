@@ -31,29 +31,66 @@ export type Column = { name: string; description: string; numeric?: boolean; opt
 /** The specification, exactly as it should arrive. This is the document that
  *  goes to Medalia — not a description of it, but the list itself. */
 export const COLUMNS: Column[] = [
-  { name: "station", description: "Health centre, written as the institution writes it — \"Vestmannaeyjar\", \"Vík í Mýrdal\"." },
-  { name: "month", description: "The month, yyyy-mm. Never a date — a date at a small station is identifying." },
-  { name: "case_type", description: "Case-type slug from the Fjarlækningar list, e.g. kvef-hosti-halsbolga." },
-  { name: "cases_total", description: "Cases received in this category.", numeric: true },
-  { name: "cases_resolved", description: "Closed entirely in the remote service, no referral.", numeric: true },
-  { name: "cases_referred", description: "Referred onward by a clinician. Should equal the sum of the referred_* columns.", numeric: true },
-  { name: "referred_primary_care", description: "Referred to primary care.", numeric: true },
-  { name: "referred_specialist", description: "Referred to a specialist or specialty service.", numeric: true },
-  { name: "referred_urgent", description: "Sent to emergency care or 112 — AFTER the patient passed the questionnaire. Its own column because this is a near miss of the screen, not an ordinary referral.", numeric: true },
-  { name: "referred_other", description: "Anything else.", numeric: true },
-  { name: "excluded_by_doctor", description: "Of those referred, how many were TURNED AWAY as unsuitable — acute symptoms, needs examining, under 18, pregnancy, outside scope — rather than referred onward as normal care. Only this subset is a safety figure. Reasons go in the separate reasons file.", numeric: true },
-  { name: "cases_repeat", description: "Same patient, same case type, again within the month. A count — no identifiers.", numeric: true },
-  { name: "screening_stops", description: "Questionnaire stopped the patient on a red flag; never reached a clinician. If this is not recorded today it is the most urgent fix.", numeric: true },
-  { name: "prescriptions", description: "Cases where a prescription was issued.", numeric: true },
-  { name: "antibiotics", description: "Of which antibiotics. The stewardship figure.", numeric: true },
-  { name: "codes_outside_set", description: "Cases that landed on a diagnostic code outside the agreed set for this case type.", numeric: true },
-  { name: "response_median_min", description: "Median response time in MINUTES — a duration, never a timestamp.", numeric: true, optional: true },
-  { name: "response_p95_min", description: "95th percentile response time in minutes.", numeric: true, optional: true },
-  { name: "entry_direct", description: "Arrived directly at the service.", numeric: true, optional: true },
-  { name: "entry_nurse", description: "Routed by a nurse.", numeric: true, optional: true },
-  { name: "entry_reception", description: "Routed by reception.", numeric: true, optional: true },
-  { name: "entry_records", description: "Routed by records staff.", numeric: true, optional: true },
-  { name: "entry_other", description: "Other or unknown route.", numeric: true, optional: true },
+  { name: "station", description: "Which health centre. Written the way the institution writes it — \"Vestmannaeyjar\", \"Vík í Mýrdal\"." },
+  { name: "month", description: "Which month, as yyyy-mm. Never an exact date: a date at a station of four thousand people can identify someone, a month cannot." },
+  { name: "case_type", description: "Which of the case types this row is about, using the short name from the list at the bottom of this page." },
+  { name: "cases_total", description: "How many patients came to us with this kind of problem that month.", numeric: true },
+  { name: "cases_resolved", description: "How many were dealt with completely, without sending the patient anywhere else.", numeric: true },
+  { name: "cases_referred", description: "How many were sent on to someone else. Two different things end up here — a patient who genuinely needed a specialist, and a patient who should never have used the service at all. The next column separates them.", numeric: true },
+  {
+    name: "excluded_by_doctor",
+    description:
+      "Of those referred, how many were TURNED AWAY rather than passed on. Turned away means the doctor decided the service could not safely handle it — acutely unwell, needs examining, under 18, pregnant, outside what we offer. Only this subset is a safety figure; the rest is the service working normally.",
+    numeric: true,
+  },
+  { name: "cases_repeat", description: "Patients who came back that month with the same problem again. A high number means the first answer did not hold.", numeric: true },
+  {
+    name: "screening_stops",
+    description:
+      "How many were stopped by the questionnaire itself before any doctor saw them — the built-in red flags firing. This is the single most important safety number we have, because two of the four ways patients reach us do not involve clinical staff at all. If Medalia does not currently record this, that is the most urgent thing to fix.",
+    numeric: true,
+  },
+  { name: "prescriptions", description: "How many of these cases ended with a prescription of any kind.", numeric: true },
+  {
+    name: "antibiotics",
+    description:
+      "Of those, how many were antibiotics. Expect to be asked about this by every doctor you present to — the standing suspicion about remote services is that they hand out antibiotics too easily, and this is the number that settles it either way.",
+    numeric: true,
+  },
+  {
+    name: "codes_outside_set",
+    description:
+      "An early warning that the service is drifting. You agree in advance which diagnosis codes each case type should normally produce — say three to five ICD-10 codes for \"cold, cough and sore throat\". This counts the cases that came out as something else entirely. A few is normal. A rising number means patients are bringing problems the case type was never designed for, and you want to know that long before anyone notices in the clinic.",
+    numeric: true,
+  },
+  {
+    name: "response_median_min",
+    description:
+      "The typical wait, in minutes. Half of patients waited less than this, half waited more. Use the middle value rather than the average, because one case that sat overnight would drag an average up and make a good month look bad.",
+    numeric: true,
+    optional: true,
+  },
+  {
+    name: "response_p95_min",
+    description:
+      "The bad end of the wait, in minutes. If this reads 95, then 95 out of every 100 patients got an answer within 95 minutes and only the slowest 5 waited longer. It is here because the typical wait can look excellent while a handful of patients wait many hours — and those are the ones who complain, and the ones the two-hour promise is actually tested on.",
+    numeric: true,
+    optional: true,
+  },
+  {
+    name: "entry_direct",
+    description:
+      "How many patients came straight to the service themselves. These cost the health centre nothing at all — no phone call, no explaining, no one routing them — so a growing share here is the clearest sign the service is standing on its own.",
+    numeric: true,
+    optional: true,
+  },
+  {
+    name: "entry_nurse_other",
+    description:
+      "How many were sent to us by someone at the health centre — a nurse, a receptionist or records staff. These do cost the health centre time, which is why they are counted apart from the ones who came directly.",
+    numeric: true,
+    optional: true,
+  },
 ];
 
 export const REQUIRED_COLUMNS = COLUMNS.filter((c) => !c.optional).map((c) => c.name);
@@ -169,20 +206,13 @@ export function parse(text: string, institution = "hsu"): ImportResult {
     row.cases_resolved += v("cases_resolved");
     row.cases_referred += v("cases_referred");
     row.cases_repeat += v("cases_repeat");
-    row.referred_primary_care += v("referred_primary_care");
-    row.referred_specialist += v("referred_specialist");
-    row.referred_urgent += v("referred_urgent");
-    row.referred_other += v("referred_other");
     row.screening_stops += v("screening_stops");
     row.excluded_by_doctor += v("excluded_by_doctor");
     row.prescriptions += v("prescriptions");
     row.antibiotics += v("antibiotics");
     row.codes_outside_set += v("codes_outside_set");
     row.entry_direct += v("entry_direct");
-    row.entry_nurse += v("entry_nurse");
-    row.entry_reception += v("entry_reception");
-    row.entry_records += v("entry_records");
-    row.entry_other += v("entry_other");
+    row.entry_via_staff += v("entry_nurse_other");
 
     const prev: CaseCounts = row.cases_by_type[slug] ?? { total: 0, resolved: 0, referred: 0 };
     row.cases_by_type[slug] = {
@@ -234,9 +264,8 @@ export function parse(text: string, institution = "hsu"): ImportResult {
 export const MEDALIA_COLUMNS: (keyof MonthRow | "institution" | "station" | "month" | "sources_present")[] = [
   "institution", "station", "month",
   "cases_total", "cases_resolved", "cases_referred", "cases_repeat",
-  "referred_primary_care", "referred_specialist", "referred_other", "referred_urgent",
   "codes_outside_set", "screening_stops", "excluded_by_doctor", "prescriptions", "antibiotics",
   "response_median_min", "response_p95_min", "cases_by_type",
-  "entry_direct", "entry_nurse", "entry_reception", "entry_records", "entry_other",
+  "entry_direct", "entry_via_staff",
   "general_total", "general_resolved", "sources_present",
 ];

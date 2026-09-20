@@ -8,6 +8,7 @@
 // reading any of them, so it has to mean the same thing in every place.
 
 import type { Category, Source, Status } from "@/lib/evaluation/types";
+import { gloss } from "@/lib/evaluation/glossary";
 
 export const ACCENT: Record<Category, { bar: string; chip: string; ring: string; soft: string; text: string }> = {
   effectiveness: { bar: "bg-cyan-500", chip: "bg-cyan-100 text-cyan-900", ring: "ring-cyan-400", soft: "bg-cyan-50", text: "text-cyan-700" },
@@ -65,5 +66,40 @@ export function ProgressBars({ steps, docs, metrics }: { steps: number; docs: nu
         </div>
       ))}
     </div>
+  );
+}
+
+/**
+ * Descriptive text with the unavoidable technical words explained in place.
+ *
+ * The terms stay — an ethics committee and a journal expect them, and
+ * softening the wording would weaken those documents — but nobody should need
+ * to know what "secular trend" means to read a dashboard. Hover or focus the
+ * dotted word and the plain meaning appears.
+ *
+ * Keyboard reachable on purpose: a tooltip that only responds to a mouse is
+ * one half the people reading this cannot get to.
+ */
+export function Plain({ children }: { children: string }) {
+  return (
+    <>
+      {gloss(children).map((seg, i) =>
+        seg.term ? (
+          <span key={i} tabIndex={0} className="group relative cursor-help border-b border-dotted border-slate-400 outline-none">
+            {seg.text}
+            <span
+              role="tooltip"
+              className="pointer-events-none absolute bottom-full left-0 z-30 mb-1 hidden w-64 rounded-lg bg-slate-900 p-2.5 text-left text-[11px] font-normal leading-relaxed text-white shadow-lg group-hover:block group-focus:block"
+            >
+              <strong className="block text-white">{seg.term.term}</strong>
+              <span className="mt-0.5 block text-slate-200">{seg.term.plain}</span>
+              {seg.term.soWhat && <span className="mt-1 block text-slate-400">{seg.term.soWhat}</span>}
+            </span>
+          </span>
+        ) : (
+          <span key={i}>{seg.text}</span>
+        ),
+      )}
+    </>
   );
 }

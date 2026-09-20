@@ -19,15 +19,15 @@ export const CATEGORIES: { id: Category; name: string; question: string; gate?: 
   {
     id: "effectiveness",
     name: "Effectiveness",
-    question: "Do the cases get resolved?",
-    note: "The base claim. Without it nothing else matters.",
+    question: "Do the cases get sorted out?",
+    note: "The base claim. If these problems do not get resolved remotely, nothing else here matters.",
   },
   {
     id: "safety",
     name: "Safety",
-    question: "Is anyone harmed?",
+    question: "Is anyone coming to harm?",
     gate: true,
-    note: "A gate, not a scale. An excellent resolution rate with one serious incident is a failed project, and no good number elsewhere offsets it.",
+    note: "The one thing that cannot be traded off. A great resolution rate alongside one serious incident is a failed project — no good number anywhere else makes up for it. Everything else on this page is better-or-worse; this is pass-or-fail.",
   },
   {
     id: "workload",
@@ -39,14 +39,13 @@ export const CATEGORIES: { id: Category; name: string; question: string; gate?: 
     id: "experience",
     name: "Patient experience",
     question: "Was this better for the person?",
-    note: "Not the same as effectiveness. The system can work perfectly and still be worse to use.",
+    note: "Not the same as effectiveness. The service can work perfectly and still be unpleasant to use.",
   },
   {
     id: "scalability",
-    name: "Scalability",
-    question: "Can this be repeated at the next site?",
-    gate: true,
-    note: "The reason the pilot exists. A service nobody will staff does not transfer, however good the patient numbers are.",
+    name: "Can we repeat it?",
+    question: "Could another health centre run this too?",
+    note: "The reason the pilot exists. This decides whether you go to the next station — not whether this one worked. A service nobody will staff does not transfer, however good the patient numbers are.",
   },
 ];
 
@@ -162,6 +161,13 @@ export type Module = {
    * under, and hide the claim that category exists to make.
    */
   meta?: boolean;
+  /**
+   * Leads its category on the overview. Chosen deliberately, because the card
+   * has to answer the category's own question: "does this take work off the
+   * health centre?" is answered by workload relief, not by share of contact
+   * volume, and leaving it to catalogue order put the wrong one there.
+   */
+  lead?: boolean;
   /** Other modules this one needs. */
   requires?: string[];
   sources: Source[];

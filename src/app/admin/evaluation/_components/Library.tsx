@@ -18,7 +18,7 @@ import { CheckCircle2, Clock, FileText, Gauge } from "lucide-react";
 import { ALL_MODULES } from "@/lib/evaluation/modules";
 import { enabledModules, EFFORT_LABEL } from "@/lib/evaluation/programme";
 import { CATEGORIES, SOURCES, type Category, type Horizon, type Module, type Programme } from "@/lib/evaluation/types";
-import { ACCENT, Chip, SOURCE_CHIP, card } from "./ui";
+import { ACCENT, Chip, SOURCE_CHIP, card, Plain } from "./ui";
 
 /** One catalogue entry. At module scope rather than inline: a component
  *  created during render is a new type every time, which remounts every card
@@ -44,21 +44,21 @@ function Entry({ m, inProgramme }: { m: Module; inProgramme: boolean }) {
         </div>
 
         <p className="mt-1.5 text-sm text-slate-700">{m.question}</p>
-        <p className={`mt-0.5 text-xs font-medium ${a.text}`}>{m.benefit}</p>
+        <p className={`mt-0.5 text-xs font-medium ${a.text}`}><Plain>{m.benefit}</Plain></p>
 
         <div className={`mt-2.5 rounded-lg ${a.soft} px-3 py-2`}>
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">The claim it earns</p>
-          <p className="mt-0.5 text-xs leading-relaxed text-slate-700">{m.claim}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-slate-700"><Plain>{m.claim}</Plain></p>
         </div>
 
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Why it is worth doing</p>
-            <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{m.rationale}</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-slate-600"><Plain>{m.rationale}</Plain></p>
           </div>
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">What it cannot show</p>
-            <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{m.caveat}</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-slate-600"><Plain>{m.caveat}</Plain></p>
           </div>
         </div>
 
@@ -101,7 +101,7 @@ function Entry({ m, inProgramme }: { m: Module; inProgramme: boolean }) {
               <ul className="mt-0.5 space-y-1">
                 {m.metrics.map((x) => (
                   <li key={x.id} className="text-[11px] leading-relaxed text-slate-600">
-                    <strong className="font-semibold text-slate-800">{x.name}</strong> — {x.why}
+                    <strong className="font-semibold text-slate-800">{x.name}</strong> — <Plain>{x.why}</Plain>
                   </li>
                 ))}
               </ul>
@@ -219,7 +219,7 @@ export default function Library({ programme }: { programme: Programme }) {
               <span className="text-sm text-slate-500">{cat.question}</span>
               {cat.gate && <Chip className="bg-slate-800 text-white">Gate</Chip>}
             </div>
-            <p className="mb-3 max-w-3xl text-xs leading-relaxed text-slate-500">{cat.note}</p>
+            <p className="mb-3 max-w-3xl text-xs leading-relaxed text-slate-500"><Plain>{cat.note}</Plain></p>
 
             <div className="space-y-3">
               {items.map((m) => (

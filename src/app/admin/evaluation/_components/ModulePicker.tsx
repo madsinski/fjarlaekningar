@@ -18,7 +18,7 @@ import { ALL_MODULES } from "@/lib/evaluation/modules";
 import { availableModules, enabledModules, EFFORT_LABEL, unmetDependencies } from "@/lib/evaluation/programme";
 import type { Module, Programme } from "@/lib/evaluation/types";
 import { CATEGORIES } from "@/lib/evaluation/types";
-import { ACCENT, Chip, card, input } from "./ui";
+import { ACCENT, Chip, card, input, Plain } from "./ui";
 
 function ModuleCard({
   m, selected, onToggle, onDragStart, onDragOver, onDrop, dragging, note, onNote, canEdit,
@@ -89,17 +89,17 @@ function ModuleCard({
           <div className="mt-3 space-y-3 border-t border-slate-100 pt-3">
             <div className={`rounded-lg ${a.soft} px-3 py-2`}>
               <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">The claim it earns</p>
-              <p className={`mt-0.5 text-xs font-medium leading-relaxed ${a.text}`}>{m.claim}</p>
+              <p className={`mt-0.5 text-xs font-medium leading-relaxed ${a.text}`}><Plain>{m.claim}</Plain></p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Why it is worth doing</p>
-                <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{m.rationale}</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-slate-600"><Plain>{m.rationale}</Plain></p>
               </div>
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">What it cannot show</p>
-                <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{m.caveat}</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-slate-600"><Plain>{m.caveat}</Plain></p>
               </div>
             </div>
 
