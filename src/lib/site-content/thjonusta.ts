@@ -68,6 +68,12 @@ export const THJONUSTA_SECTIONS: SiteSection[] = [
 
 
 export const THJONUSTA_FIELDS: SiteField[] = [
+  // How the page appears in Google/Bing. Empty = the built-in title and
+  // description in code, so publishing an empty field changes nothing.
+  { key: "meta_title", label: "Titill í leitarvélum", group: "Leitarvélar", type: "text",
+    help: "Birtist sem fyrirsögn í leitarniðurstöðum Google og Bing (u.þ.b. 50–60 stafir). „| Fjarlækningar“ bætist sjálfkrafa aftan við. Tómt = sjálfgefinn titill." },
+  { key: "meta_description", label: "Lýsing í leitarvélum", group: "Leitarvélar", type: "textarea",
+    help: "Textinn undir fyrirsögninni í leitarniðurstöðum (u.þ.b. 120–160 stafir). Tómt = sjálfgefin lýsing." },
   // Hero
   { key: "hero_eyebrow", label: "Merki (lítill borði)", group: "Hetjusvæði", type: "text" },
   { key: "hero_heading", label: "Fyrirsögn", group: "Hetjusvæði", type: "heading" },

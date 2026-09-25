@@ -7,7 +7,7 @@ import { ArrowLeft, BadgeCheck } from "lucide-react";
 import { localeHref } from "@/lib/locale";
 import { personSlug } from "@/lib/seo";
 import { ui } from "@/lib/site-content/ui-strings";
-import { erindiReview } from "@/lib/site-content/erindi-pages";
+import { erindiFaq, erindiKey, erindiReview } from "@/lib/site-content/erindi-pages";
 import MedsList, { type MedCategory } from "../MedsList";
 import TriageTrigger from "@/app/components/TriageTrigger";
 import type { Locale, LocaleContent } from "@/lib/site-content/types";
@@ -291,7 +291,7 @@ export default function ErindiView({
                   const inner = (
                     <>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={`/erindi-icons/${n.slug}.png`} alt="" loading="lazy" width={20} height={20}
+                      <img src={`/erindi-icons/${n.slug}.webp`} alt="" loading="lazy" width={20} height={20}
                         className={`h-5 w-5 shrink-0 object-contain ${here ? "" : "opacity-60 group-hover:opacity-100"}`} />
                       <span className="leading-snug">{n.title}</span>
                     </>
@@ -334,7 +334,7 @@ export default function ErindiView({
 
       <div className="flex max-w-3xl items-start gap-5">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`/erindi-icons/${slug}.png`} alt="" width={72} height={72} className="w-18 h-18 shrink-0 object-contain" />
+        <img src={`/erindi-icons/${slug}.webp`} alt="" width={72} height={72} className="w-18 h-18 shrink-0 object-contain" />
         <div>
           {c.eyebrow && (
             <p className="text-xs font-semibold uppercase tracking-widest text-brand-cyan-dark mb-2">{c.eyebrow}</p>
@@ -376,6 +376,32 @@ export default function ErindiView({
         </div>
       ) : (
         <p className="mt-5 max-w-3xl text-lg text-slate-600 leading-relaxed">{lead}</p>
+      )}
+
+      {/* Symptoms and treatment: the two things people search this condition
+          for ("… einkenni", "… lyf"). Shown only once their text is published. */}
+      {erindiLines(c[`${erindiKey(slug)}_symptoms`]).length > 0 && (
+        <section className="mt-12 max-w-3xl">
+          <h2 className="text-xl font-bold text-slate-900">{c[`${erindiKey(slug)}_symptoms_heading`] || t.symptoms}</h2>
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+            {erindiLines(c[`${erindiKey(slug)}_symptoms`]).map((line) => (
+              <li key={line} className="flex gap-2.5 text-slate-700 leading-relaxed">
+                <span aria-hidden className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--primary)]" />
+                {line}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {erindiParagraphs(c[`${erindiKey(slug)}_treatment`]).length > 0 && (
+        <section className="mt-12 max-w-3xl">
+          <h2 className="text-xl font-bold text-slate-900">{c[`${erindiKey(slug)}_treatment_heading`] || t.treatment}</h2>
+          <div className="mt-4 space-y-4">
+            {erindiParagraphs(c[`${erindiKey(slug)}_treatment`]).map((para) => (
+              <p key={para.slice(0, 40)} className="text-slate-700 leading-relaxed">{para}</p>
+            ))}
+          </div>
+        </section>
       )}
 
       {suitable.length > 0 && (
@@ -491,6 +517,25 @@ export default function ErindiView({
           </div>
           {c.advice_note && <p className="mt-5 text-sm text-slate-500">{c.advice_note}</p>}
         </div>
+      )}
+
+      {/* Questions people actually ask about this condition. Also emitted as
+          FAQPage data (erindi-page.tsx), from the same field. */}
+      {erindiFaq(c[`${erindiKey(slug)}_faq`]).length > 0 && (
+        <section className="mt-12 max-w-3xl">
+          <h2 className="text-xl font-bold text-slate-900">{t.faqHeading}</h2>
+          <div className="mt-4 divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
+            {erindiFaq(c[`${erindiKey(slug)}_faq`]).map(({ q, a }) => (
+              <details key={q} className="group px-5 py-4 [&_summary::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold text-slate-900">
+                  {q}
+                  <span aria-hidden className="text-slate-400 transition-transform group-open:rotate-45">+</span>
+                </summary>
+                <p className="mt-2.5 text-slate-700 leading-relaxed">{a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* What the service will NOT take comes before the self-care advice:

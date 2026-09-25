@@ -102,7 +102,7 @@ export default function HomeView({
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={`/erindi-icons/${s.slug}.png`}
+                  src={`/erindi-icons/${s.slug}.webp`}
                   alt=""
                   loading="lazy"
                   width={40}

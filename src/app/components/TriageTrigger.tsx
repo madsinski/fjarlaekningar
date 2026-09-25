@@ -3,7 +3,8 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import type { TriageVariant } from "./TriageDialog";
-import { PORTAL_URL, type TriageExample } from "@/lib/triage";
+import { PORTAL_URL } from "@/lib/portal";
+import type { TriageExample } from "@/lib/triage";
 import type { LocaleContent } from "@/lib/site-content/types";
 
 // Whether the triage is live, and its words (already resolved for the page's

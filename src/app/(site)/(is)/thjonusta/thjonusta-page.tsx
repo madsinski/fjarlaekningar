@@ -24,9 +24,14 @@ const META = {
 } as const;
 
 export async function thjonustaMetadata(locale: Locale): Promise<Metadata> {
-  const { enReady } = await getPage("thjonusta", locale);
+  const { c, enReady } = await getPage("thjonusta", locale);
+  // CMS search title/description when published (group "Leitarvélar"),
+  // otherwise the built-in ones above.
+  const metaTitle = c.meta_title?.trim();
   return {
     ...META[locale],
+    ...(metaTitle ? { title: { absolute: `${metaTitle} | Fjarlækningar` } } : {}),
+    ...(c.meta_description?.trim() ? { description: c.meta_description.trim() } : {}),
     alternates: alternatesFor("/thjonusta", locale, enReady),
     ...(locale === "en" && !enReady ? { robots: { index: false, follow: true } } : {}),
   };

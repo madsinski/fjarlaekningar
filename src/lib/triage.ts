@@ -17,7 +17,9 @@ import type { RegionId } from "./triage-places";
 
 export type { RegionId } from "./triage-places";
 
-export const PORTAL_URL = "https://app.medalia.is/fjarlaekningar-hsu";
+import { PORTAL_URL } from "./portal";
+
+export { PORTAL_URL };
 
 export type ServiceKey =
   | "112" | "brada" | "1700" | "heilsugaesla" | "heilsuvera" | "fjar" | "other-adult";
@@ -189,9 +191,9 @@ export const TRIAGE: Record<string, TriageNode> = {
       { label: { is: "Eitthvað af eftirfarandi vandamálum", en: "One of these problems" },
         next: "r-fjar", visual: { gallery: true }, section: 1 },
       { label: { is: "Endurnýjun á lyfi sem ég nota", en: "A renewal of a medicine I already take" }, next: "meds",
-        visual: { img: "/erindi-icons/lyfjuendurnyjun.png" }, section: 1 },
+        visual: { img: "/erindi-icons/lyfjuendurnyjun.webp" }, section: 1 },
       { label: { is: "Læknisvottorð", en: "A medical certificate" }, next: "cert",
-        visual: { img: "/erindi-icons/laeknisvottord.png" }, section: 1 },
+        visual: { img: "/erindi-icons/laeknisvottord.webp" }, section: 1 },
       { label: { is: "Annað sem ég get lýst með texta eða myndum", en: "Something else I can describe in writing or with photos" },
         next: "r-fjar", visual: { img: "/triage-icons/myndavel.svg" }, section: 1 },
       { label: { is: "Blóðprufa, myndgreining, speglun eða tilvísun",

@@ -372,6 +372,44 @@ export const ERINDI_FIELDS: SiteField[] = [
       type: "textarea",
       help: "DRÖG — ÞARF YFIRFERÐ LÆKNIS. Opnunartexti síðunnar, beint undir fyrirsögninni: hvað vandamálið er, dæmigerð einkenni, hvað er algengt. Auð lína skilur að málsgreinar.",
     },
+    // Sections that answer what people search ("þvagfærasýking einkenni",
+    // "… lyf"). Optional: nothing renders until the text is published, so the
+    // code can ship before the doctor has approved a word of it.
+    {
+      key: `${erindiKey(e.slug)}_symptoms_heading`,
+      label: `${e.title} — fyrirsögn: einkenni`,
+      group: e.title,
+      type: "text",
+      help: "T.d. „Einkenni þvagfærasýkingar“. Orðalagið sem fólk leitar að skiptir máli fyrir Google.",
+    },
+    {
+      key: `${erindiKey(e.slug)}_symptoms`,
+      label: `${e.title} — einkenni (eitt í hverja línu)`,
+      group: e.title,
+      type: "textarea",
+      help: "ÞARF YFIRFERÐ LÆKNIS. Birtist sem listi. Tómt = hlutinn birtist ekki.",
+    },
+    {
+      key: `${erindiKey(e.slug)}_treatment_heading`,
+      label: `${e.title} — fyrirsögn: meðferð og lyf`,
+      group: e.title,
+      type: "text",
+      help: "T.d. „Meðferð og lyf við þvagfærasýkingu“.",
+    },
+    {
+      key: `${erindiKey(e.slug)}_treatment`,
+      label: `${e.title} — meðferð og lyf`,
+      group: e.title,
+      type: "textarea",
+      help: "ÞARF YFIRFERÐ LÆKNIS. Auð lína skilur að málsgreinar. Tómt = hlutinn birtist ekki.",
+    },
+    {
+      key: `${erindiKey(e.slug)}_faq`,
+      label: `${e.title} — algengar spurningar`,
+      group: e.title,
+      type: "textarea",
+      help: "ÞARF YFIRFERÐ LÆKNIS. Hver spurning er sér blokk: fyrsta línan er spurningin, næstu línur svarið, og auð lína á milli spurninga. Fer líka í leitarvélagögn (FAQPage). Tómt = hlutinn birtist ekki.",
+    },
     {
       key: `${erindiKey(e.slug)}_selftest`,
       label: `${e.title} — sjálfspróf`,
@@ -824,3 +862,14 @@ export const ERINDI_DEFAULTS_EN: LocaleContent = {
 
 /** Are the pages switched on? Anything but "on" keeps them dark. */
 export const erindiPagesLive = (c: LocaleContent) => c.pages_live === "on";
+
+
+/** "Spurning?\nSvar …\n\nSpurning 2?\nSvar …" → [{ q, a }]. Blocks without an
+ *  answer are dropped rather than shown as a bare question. */
+export function erindiFaq(v?: string): { q: string; a: string }[] {
+  return (v ?? "")
+    .split(/\n\s*\n/)
+    .map((block) => block.split("\n").map((l) => l.trim()).filter(Boolean))
+    .filter((lines) => lines.length >= 2)
+    .map(([q, ...a]) => ({ q, a: a.join(" ") }));
+}

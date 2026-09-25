@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { erindi, localizeErindi } from "@/erindi";
 import { getPage, getPageContent } from "@/lib/site-content/server";
-import { ERINDI_WITH_MEDS, erindiKey, erindiPagesLive, erindiTitle, erindiSeoTitleKey, erindiReview } from "@/lib/site-content/erindi-pages";
+import { ERINDI_WITH_MEDS, erindiFaq, erindiKey, erindiPagesLive, erindiTitle, erindiSeoTitleKey, erindiReview } from "@/lib/site-content/erindi-pages";
 import { erindiShown } from "@/lib/site-content/thjonusta";
 import { ui } from "@/lib/site-content/ui-strings";
 import type { Locale } from "@/lib/site-content/types";
@@ -150,9 +150,25 @@ export default async function ErindiPage({ params, locale }: Params & { locale: 
     },
   };
 
+  // FAQPage from the same field the page renders, so they cannot disagree.
+  const faq = erindiFaq(d.c[`${erindiKey(slug)}_faq`]);
+  const faqLd = faq.length
+    ? {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        url: url(`/thjonusta/${slug}`),
+        mainEntity: faq.map(({ q, a }) => ({
+          "@type": "Question",
+          name: q,
+          acceptedAnswer: { "@type": "Answer", text: a },
+        })),
+      }
+    : null;
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {faqLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />}
       <ErindiView
         c={d.c}
         slug={slug}

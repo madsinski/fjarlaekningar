@@ -327,7 +327,7 @@ function Options({
                 className={`${CARD} flex items-center gap-2.5 p-2.5`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/erindi-icons/${ex.slug}.png`} alt="" width={36} height={36} loading="lazy" className="h-9 w-9 shrink-0 object-contain" />
+                <img src={`/erindi-icons/${ex.slug}.webp`} alt="" width={36} height={36} loading="lazy" className="h-9 w-9 shrink-0 object-contain" />
                 <span className="min-w-0 hyphens-manual text-[13px] font-medium leading-tight text-slate-800">{soft(ex.title)}</span>
               </button>
             ))}

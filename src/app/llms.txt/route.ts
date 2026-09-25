@@ -11,9 +11,9 @@
 // telemedicine service must not present it as somewhere to take an emergency.
 
 import { SITE_URL } from "@/lib/seo";
-import { erindi, localizeErindi } from "@/erindi";
+import { localizeErindi } from "@/erindi";
 import { getPageContent } from "@/lib/site-content/server";
-import { erindiPagesLive, erindiKey, erindiTitle, erindiSeoTitleKey, erindiReview } from "@/lib/site-content/erindi-pages";
+import { erindiPagesLive, erindiKey, erindiTitle, erindiReview } from "@/lib/site-content/erindi-pages";
 import { erindiShown } from "@/lib/site-content/thjonusta";
 
 export const runtime = "nodejs";

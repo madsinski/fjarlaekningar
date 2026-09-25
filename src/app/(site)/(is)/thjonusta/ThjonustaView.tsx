@@ -181,7 +181,7 @@ export default function ThjonustaView({
               <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={`/erindi-icons/${s.slug}.png`}
+                src={`/erindi-icons/${s.slug}.webp`}
                 alt=""
                 loading="lazy"
                 width={80}
