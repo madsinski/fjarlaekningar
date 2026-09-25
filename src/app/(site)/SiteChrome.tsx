@@ -2,6 +2,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ScrollToTop from "../components/ScrollToTop";
 import { TriageProvider } from "../components/TriageTrigger";
+import { triageText } from "@/lib/triage";
 import { getPageContent } from "@/lib/site-content/server";
 import type { Locale } from "@/lib/site-content/types";
 
@@ -31,7 +32,7 @@ export default async function SiteChrome({
   // all pages without threading a prop into each hero — see globals.css.
   const eyebrowsOff = chrome.show_eyebrows === "off";
   return (
-    <TriageProvider on={home.triage_on === "on"}>
+    <TriageProvider on={home.triage_on === "on"} text={triageText(home)}>
       <ScrollToTop />
       <Navbar content={chrome} locale={locale} />
       <main className={`flex-1${eyebrowsOff ? " eyebrows-off" : ""}`}>{children}</main>

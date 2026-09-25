@@ -1,23 +1,19 @@
 "use client";
 
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
-import { usePathname } from "next/navigation";
 import TriageDialog from "./TriageDialog";
 import { PORTAL_URL } from "@/lib/triage";
-import { pathLocale } from "@/lib/locale";
-import type { Locale } from "@/lib/site-content/types";
+import type { LocaleContent } from "@/lib/site-content/types";
 
-// Whether the triage is live. OFF unless a provider says otherwise, so any
+// Whether the triage is live, and its words (already resolved for the page's
+// language — see triageText()). OFF unless a provider says otherwise, so any
 // button rendered outside SiteChrome (or before the CMS switch is published)
 // is just the ordinary portal link.
-const TriageLive = createContext(false);
+type TriageState = { on: boolean; text: LocaleContent };
+const Triage = createContext<TriageState>({ on: false, text: {} });
 
-export function TriageProvider({ on, children }: { on: boolean; children: ReactNode }) {
-  return <TriageLive.Provider value={on}>{children}</TriageLive.Provider>;
-}
-
-export function useTriageLive() {
-  return useContext(TriageLive);
+export function TriageProvider({ on, text, children }: TriageState & { children: ReactNode }) {
+  return <Triage.Provider value={{ on, text }}>{children}</Triage.Provider>;
 }
 
 /**
@@ -29,16 +25,12 @@ export function useTriageLive() {
 export default function TriageTrigger({
   className,
   children,
-  locale,
 }: {
   className?: string;
   children: ReactNode;
-  locale?: Locale;
 }) {
-  const live = useTriageLive();
+  const { on: live, text } = useContext(Triage);
   const [open, setOpen] = useState(false);
-  const pathname = usePathname();
-  const lang = locale ?? pathLocale(pathname ?? "/") ?? "is";
   const close = useCallback(() => setOpen(false), []);
 
   return (
@@ -58,7 +50,7 @@ export default function TriageTrigger({
       >
         {children}
       </a>
-      {open && <TriageDialog onClose={close} locale={lang} />}
+      {open && <TriageDialog onClose={close} text={text} />}
     </>
   );
 }

@@ -5,6 +5,7 @@
 // the CMS stores per-locale overrides. resolveHome() flattens a stored
 // { is:{}, en:{} } blob for one locale, falling back to the Icelandic default.
 
+import { TRIAGE_FIELDS, TRIAGE_DEFAULTS_IS, TRIAGE_DEFAULTS_EN } from "../triage";
 import {
   resolveFields,
   type Locale,
@@ -138,6 +139,10 @@ export const HOME_FIELDS: SiteField[] = [
   { key: "cta_body", label: "Texti", group: "Ákall (CTA)", type: "textarea" },
   { key: "cta_button", label: "Hnappur", group: "Ákall (CTA)", type: "text" },
   { key: "cta_footer", label: "Neðanmálstexti", group: "Ákall (CTA)", type: "textarea" },
+
+  // The triage popup's words — last, so 68 fields of popup text don't sit
+  // between the hero and the rest of the page in the editor.
+  ...TRIAGE_FIELDS,
 ];
 
 // ── Icelandic defaults (verbatim from the current page) ─────────────────────
@@ -154,6 +159,7 @@ export const HOME_DEFAULTS_IS: LocaleContent = {
   hero_cta_secondary: "Sjá þjónustu",
   triage_on: "off",
   triage_hero_link: "Ekki viss hvert þú átt að leita? Svaraðu nokkrum spurningum",
+  ...TRIAGE_DEFAULTS_IS,
 
   services_heading: "Algeng erindi leyst innan tveggja klukkustunda",
   services_body:
@@ -222,6 +228,7 @@ export const HOME_DEFAULTS_EN: LocaleContent = {
   ...Object.fromEntries(HOME_FIELDS.map((f) => [f.key, ""])),
   team_cta: "Meet the team",
   triage_hero_link: "Not sure where to go? Answer a few questions",
+  ...TRIAGE_DEFAULTS_EN,
 };
 
 /**

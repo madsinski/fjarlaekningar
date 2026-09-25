@@ -12,7 +12,7 @@
 // (docs/medalia/medalia_common.py, SCOPE_REASONS): anything the doctors cannot
 // resolve in writing is routed away here, before sign-in, instead of after.
 
-import type { Locale } from "./site-content/types";
+import type { LocaleContent, SiteField } from "./site-content/types";
 
 export const PORTAL_URL = "https://app.medalia.is/fjarlaekningar-hsu";
 export const HEILSUVERA_URL = "https://www.heilsuvera.is";
@@ -38,6 +38,8 @@ export type TriageQuestion = {
 };
 
 export type TriageAction = {
+  /** Stable id: the label is ONE CMS field per id, however many results use it. */
+  id: string;
   label: L;
   href: string;
   primary?: boolean;
@@ -56,13 +58,13 @@ export type TriageNode = TriageQuestion | TriageResult;
 
 const tel = (n: string) => `tel:${n.replace(/\s/g, "")}`;
 
-const CALL_112: TriageAction = { label: { is: "Hringja í 112", en: "Call 112" }, href: tel("112"), primary: true };
-const CALL_1700: TriageAction = { label: { is: "Hringja í 1700", en: "Call 1700" }, href: tel("1700") };
+const CALL_112: TriageAction = { id: "call112", label: { is: "Hringja í 112", en: "Call 112" }, href: tel("112"), primary: true };
+const CALL_1700: TriageAction = { id: "call1700", label: { is: "Hringja í 1700", en: "Call 1700" }, href: tel("1700") };
 const OPEN_HEILSUVERA: TriageAction = {
-  label: { is: "Opna Heilsuveru", en: "Open Heilsuvera" }, href: HEILSUVERA_URL,
+  id: "heilsuvera", label: { is: "Opna Heilsuveru", en: "Open Heilsuvera" }, href: HEILSUVERA_URL,
 };
 const OPEN_PORTAL: TriageAction = {
-  label: { is: "Opna sjúklingagátt", en: "Open the patient portal" }, href: PORTAL_URL, primary: true,
+  id: "portal", label: { is: "Opna sjúklingagátt", en: "Open the patient portal" }, href: PORTAL_URL, primary: true,
 };
 
 export const TRIAGE_START = "emergency";
@@ -168,7 +170,7 @@ export const TRIAGE: Record<string, TriageNode> = {
       { is: "Ef þú ert með hugsanir um að skaða þig: Hjálparsími Rauða krossins, 1717, er opinn allan sólarhringinn.",
         en: "If you are having thoughts of harming yourself: the Red Cross helpline, 1717, is open around the clock." },
     ],
-    actions: [CALL_112, { label: { is: "Hringja í 1717", en: "Call 1717" }, href: tel("1717") }],
+    actions: [CALL_112, { id: "call1717", label: { is: "Hringja í 1717", en: "Call 1717" }, href: tel("1717") }],
   },
 
   "r-brada": {
@@ -270,27 +272,132 @@ export const TRIAGE: Record<string, TriageNode> = {
   },
 };
 
-export const TRIAGE_UI = {
-  is: {
-    title: "Hvert á ég að leita?",
-    intro: "Nokkrar spurningar vísa þér á þá þjónustu sem hentar best. Það tekur innan við mínútu.",
-    back: "Til baka",
-    restart: "Byrja aftur",
-    close: "Loka",
-    skip: "Beint í sjúklingagátt",
-    why: "Hvers vegna?",
-    disclaimer: "Leiðbeining um þjónustuleiðir, ekki læknisfræðilegt mat.",
-    step: (n: number) => `Skref ${n}`,
-  },
-  en: {
-    title: "Where should I go?",
-    intro: "A few questions point you to the service that fits best. It takes less than a minute.",
-    back: "Back",
-    restart: "Start again",
-    close: "Close",
-    skip: "Straight to the patient portal",
-    why: "Why?",
-    disclaimer: "Guidance on where to go, not a medical assessment.",
-    step: (n: number) => `Step ${n}`,
-  },
-} satisfies Record<Locale, unknown>;
+// ------------------------------------------------------------ CMS
+//
+// Every patient-facing string above is a field on the HOME page in the CMS
+// (/admin/website/home, groups "Leiðarvísir — …"). The tree — which answer
+// leads where — stays here in code; only the words are editable. The strings
+// above are the built-in defaults, so an empty CMS renders exactly this text.
+//
+// Lists are one textarea with one item per line; result text is one textarea
+// with a blank line between paragraphs.
+
+const UI_TEXT: Record<string, L> = {
+  title: { is: "Hvert á ég að leita?", en: "Where should I go?" },
+  intro: { is: "Nokkrar spurningar vísa þér á þá þjónustu sem hentar best. Það tekur innan við mínútu.",
+           en: "A few questions point you to the service that fits best. It takes less than a minute." },
+  step: { is: "Skref", en: "Step" },
+  back: { is: "Til baka", en: "Back" },
+  restart: { is: "Byrja aftur", en: "Start again" },
+  close: { is: "Loka", en: "Close" },
+  skip: { is: "Beint í sjúklingagátt", en: "Straight to the patient portal" },
+  why: { is: "Hvers vegna?", en: "Why?" },
+  disclaimer: { is: "Leiðbeining um þjónustuleiðir, ekki læknisfræðilegt mat.",
+                en: "Guidance on where to go, not a medical assessment." },
+};
+
+const UI_LABELS: Record<string, string> = {
+  title: "Titill leiðarvísis", intro: "Inngangur", step: "Orðið „Skref“ (númer bætist við)",
+  back: "Hnappur: til baka", restart: "Hnappur: byrja aftur", close: "Hnappur: loka (skjálesari)",
+  skip: "Tengill: beint í sjúklingagátt", why: "Merki við skýringu", disclaimer: "Fyrirvari neðst",
+};
+
+const NODE_NAMES: Record<string, string> = {
+  emergency: "Skref 1 · Bráð einkenni",
+  who: "Skref 2 · Fyrir hvern",
+  need: "Skref 3 · Hvað þarftu",
+  meds: "Skref 3a · Lyf",
+  "exam-wait": "Skref 3b · Getur beðið?",
+  "r-112": "Niðurstaða · 112",
+  "r-brada": "Niðurstaða · Bráðamóttaka",
+  "r-1700": "Niðurstaða · 1700",
+  "r-heilsugaesla": "Niðurstaða · Heilsugæsla",
+  "r-heilsuvera": "Niðurstaða · Heilsuvera",
+  "r-child": "Niðurstaða · Barn",
+  "r-other-adult": "Niðurstaða · Annar fullorðinn",
+  "r-fjar": "Niðurstaða · Fjarlækningar",
+};
+
+const ACTION_NAMES: Record<string, string> = {
+  call112: "Hnappur: hringja í 112", call1700: "Hnappur: hringja í 1700",
+  call1717: "Hnappur: hringja í 1717", heilsuvera: "Hnappur: opna Heilsuveru",
+  portal: "Hnappur: opna sjúklingagátt",
+};
+
+const key = (...parts: (string | number)[]) => ["triage", ...parts].join("_").replace(/-/g, "_");
+
+/** CMS keys for every string in the popup. */
+export const TK = {
+  ui: (name: string) => key("ui", name),
+  action: (id: string) => key("act", id),
+  question: (node: string) => key(node, "q"),
+  hint: (node: string) => key(node, "hint"),
+  list: (node: string) => key(node, "list"),
+  option: (node: string, i: number) => key(node, "opt", i + 1),
+  why: (node: string, i: number) => key(node, "opt", i + 1, "why"),
+  eyebrow: (node: string) => key(node, "eyebrow"),
+  title: (node: string) => key(node, "title"),
+  body: (node: string) => key(node, "body"),
+};
+
+const G_UI = "Leiðarvísir — almennur texti";
+const G_Q = "Leiðarvísir — spurningar";
+const G_R = "Leiðarvísir — niðurstöður";
+
+export const TRIAGE_FIELDS: SiteField[] = [];
+export const TRIAGE_DEFAULTS_IS: LocaleContent = {};
+export const TRIAGE_DEFAULTS_EN: LocaleContent = {};
+
+function add(field: Omit<SiteField, "group"> & { group: string }, text: L) {
+  TRIAGE_FIELDS.push(field);
+  TRIAGE_DEFAULTS_IS[field.key] = text.is;
+  TRIAGE_DEFAULTS_EN[field.key] = text.en;
+}
+const join = (items: L[], sep: string): L => ({
+  is: items.map((x) => x.is).join(sep),
+  en: items.map((x) => x.en).join(sep),
+});
+
+for (const [name, text] of Object.entries(UI_TEXT)) {
+  add({
+    key: TK.ui(name), label: UI_LABELS[name], group: G_UI,
+    type: name === "intro" ? "textarea" : "text",
+    ...(name === "title" ? { help: "Ef íslenskum texta er breytt birtist hann líka á ensku þar til enska útgáfan er uppfærð. Uppfærðu því enska textann um leið." } : {}),
+  }, text);
+}
+const actions = new Map<string, TriageAction>();
+for (const node of Object.values(TRIAGE)) {
+  if (node.kind === "result") for (const a of node.actions) actions.set(a.id, a);
+}
+for (const [id, a] of actions) {
+  add({ key: TK.action(id), label: ACTION_NAMES[id] ?? id, group: G_UI, type: "text" }, a.label);
+}
+for (const [id, node] of Object.entries(TRIAGE)) {
+  const n = NODE_NAMES[id] ?? id;
+  if (node.kind === "question") {
+    add({ key: TK.question(id), label: `${n} — spurning`, group: G_Q, type: "text" }, node.question);
+    if (node.hint) add({ key: TK.hint(id), label: `${n} — leiðbeining`, group: G_Q, type: "text" }, node.hint);
+    if (node.list) {
+      add({ key: TK.list(id), label: `${n} — listi`, group: G_Q, type: "textarea",
+            help: "Eitt atriði í hverja línu." }, join(node.list, "\n"));
+    }
+    node.options.forEach((o, i) => {
+      add({ key: TK.option(id, i), label: `${n} — svar ${i + 1}`, group: G_Q, type: "text" }, o.label);
+      if (o.why) {
+        add({ key: TK.why(id, i), label: `${n} — svar ${i + 1}: hvers vegna`, group: G_Q, type: "textarea",
+              help: "Birtist efst á niðurstöðunni sem þetta svar leiðir til." }, o.why);
+      }
+    });
+  } else {
+    add({ key: TK.eyebrow(id), label: `${n} — merki`, group: G_R, type: "text" }, node.eyebrow);
+    add({ key: TK.title(id), label: `${n} — fyrirsögn`, group: G_R, type: "text" }, node.title);
+    add({ key: TK.body(id), label: `${n} — texti`, group: G_R, type: "textarea",
+          help: "Auð lína á milli efnisgreina." }, join(node.body, "\n\n"));
+  }
+}
+
+/** The popup's strings out of a page's resolved content — only these travel
+ *  to the browser, not the whole home page. */
+export function triageText(c: LocaleContent): LocaleContent {
+  return Object.fromEntries(Object.entries(c).filter(([k]) => k.startsWith("triage_")));
+}

@@ -502,7 +502,6 @@ export default function ErindiView({
         {c.cta_body && <p className="mt-3 text-brand-cyan-subtle max-w-xl">{c.cta_body}</p>}
         {linked ? (
           <TriageTrigger
-            locale={locale}
             className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[var(--primary-dark)] hover:bg-slate-50"
           >
             {c.cta_label}

@@ -444,7 +444,6 @@ export default function HomeView({
                 is the right place at all. Same popup as the portal button. */}
             {c.triage_on === "on" && c.triage_hero_link && (
               <TriageTrigger
-                locale={locale}
                 className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--primary-dark)] underline-offset-4 hover:underline"
               >
                 {c.triage_hero_link}

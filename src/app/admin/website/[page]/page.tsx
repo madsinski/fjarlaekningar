@@ -7,6 +7,7 @@ import { ArrowLeft, Eye, EyeOff, Globe2, Languages, Send, Check, ExternalLink, A
 import { supabase } from "@/lib/supabase";
 import HomeView from "@/app/(site)/HomeView";
 import { TriageProvider } from "@/app/components/TriageTrigger";
+import { triageText } from "@/lib/triage";
 import ThjonustaView from "@/app/(site)/(is)/thjonusta/ThjonustaView";
 import UmOkkurView from "@/app/(site)/(is)/um-okkur/UmOkkurView";
 import HafaSambandView from "@/app/(site)/(is)/hafa-samband/HafaSambandView";
@@ -231,7 +232,7 @@ function Preview({
       // The preview follows the DRAFT triage switch, so the popup can be
       // tried here before "Birta" puts it on the live site.
       return (
-        <TriageProvider on={c.triage_on === "on"}>
+        <TriageProvider on={c.triage_on === "on"} text={triageText(c)}>
           <HomeView
             c={c}
             order={order}
