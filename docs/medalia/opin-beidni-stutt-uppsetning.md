@@ -1,4 +1,4 @@
-# Opin beiðni, stutt útgáfa — uppsetningarblað fyrir Medalia
+# Opin beiðni — uppsetningarblað fyrir Medalia
 
 Handvirk uppsetning, spurning fyrir spurningu, í réttri röð.
 Búið til beint úr `opin-beidni.json` svo textinn og rökin séu örugglega þau sömu.
@@ -121,11 +121,152 @@ Gátreitur — já/nei · **SKYLDA**
 
 ---
 
-## Síða 3 · Hvað er að?
+## Síða 3 · Hentar erindið fjarþjónustu?
 
 **Sýnd öllum.**
 
-### 3.1 · `erindi-type`
+### 3.1 · `scope-intro`
+
+Skýringartexti
+
+> Sumt er ekki hægt að leysa í skriflegri fjarþjónustu, sama hversu vel því er lýst. Lestu listann og svaraðu svo spurningunni fyrir neðan. Þannig sparar þú þér bið eftir svari sem getur ekki hjálpað þér.
+>
+> • Erindið snýst um einhvern annan en þig, til dæmis barnið þitt, maka eða foreldri.
+> • Þú vilt fá beiðni um blóðprufu eða aðra rannsókn, til dæmis þvag- eða hormónamælingu.
+> • Þú vilt fá beiðni um myndgreiningu (röntgen, tölvusneiðmynd, segulómun eða ómun) eða speglun (til dæmis maga- eða ristilspeglun).
+> • Þú vilt fá tilvísun til sérfræðings vegna vandamáls sem þarf nánari sögu og skoðun.
+> • Vandamálið þarf skoðun, til dæmis að hlusta á hjarta eða lungu, skoða eyru eða háls, þreifa á kvið eða meta áverka, hnút eða fyrirferð.
+> • Þú vilt fá lyfseðil fyrir lyf sem þú færð skömmtuð í lyfjarúllu frá apóteki, eða breytingu á skömmtuninni.
+
+### 3.2 · `scope-gate`
+
+Einn valkostur — radio · **SKYLDA**
+
+**Spurning:** Á eitthvað af ofangreindu við um erindið þitt?
+
+| kóði | það sem sjúklingurinn sér |
+|---|---|
+| `yes` | Já |
+| `no` | Nei |
+
+*Hjálpartexti:* Viltu aðeins fá útskýringu á niðurstöðum sem þú hefur þegar fengið, eða endurnýjun á lyfi sem þú sækir sjálf eða sjálfur í apótek? Það getum við gert. Svaraðu þá „Nei“.
+
+### 3.3 · `scope-stop`
+
+Skýringartexti
+
+> ⛔ Við getum ekki afgreitt þetta erindi í fjarþjónustu.
+>
+> Það er ekki vegna þess að erindið skipti ekki máli, heldur vegna þess að það þarf þjónustu sem ekki er hægt að veita skriflega. Merktu við hvað á við og þá sérðu hvert þú getur leitað.
+>
+> Þú þarft ekki að senda erindið. Ef þú merktir við þetta fyrir mistök, breyttu svarinu í „Nei“ til að halda áfram.
+
+**Birtist ef:** `scope-gate` = `yes`
+
+### 3.4 · `scope-which`
+
+Fjölval — gátreitir · **SKYLDA**
+
+**Spurning:** Hvað af þessu á við? Merktu við allt sem á við.
+
+**Birtist ef:** `scope-gate` = `yes`
+
+| kóði | það sem sjúklingurinn sér |
+|---|---|
+| `other-person` | Erindið snýst um barn eða annan einstakling |
+| `lab-tests` | Beiðni um blóðprufu eða aðra rannsókn |
+| `imaging` | Beiðni um myndgreiningu eða speglun |
+| `referral` | Tilvísun sem þarf nánari sögu og skoðun |
+| `exam` | Vandamál sem þarf að skoða |
+| `dose-dispensed` | Lyf í lyfjarúllu (lyfjaskömmtun) |
+
+### 3.5 · `scope-why-other-person`
+
+Skýringartexti
+
+> Erindi fyrir aðra
+>
+> Læknir getur aðeins metið þann sem sendir erindið sjálfur, skráður inn með eigin rafrænum skilríkjum. Við getum ekki metið barn eða annan einstakling út frá lýsingu þinni.
+>
+> • Fullorðnir geta sent eigið erindi hingað.
+> • Vegna barna: hafðu samband við heilsugæslu barnsins, til dæmis í gegnum Heilsuveru, eða hringdu í 1700 til að fá ráðgjöf.
+> • Veikist barn skyndilega eða alvarlega: farðu á næstu bráðamóttöku eða hringdu í 112.
+
+**Birtist ef:** `scope-which` = `other-person`
+
+### 3.6 · `scope-why-lab-tests`
+
+Skýringartexti
+
+> Blóðprufur og aðrar rannsóknir
+>
+> Við biðjum ekki um rannsóknir í fjarþjónustu. Læknirinn sem biður um rannsókn ber ábyrgð á að fylgja niðurstöðunum eftir og það er best gert þar sem þú ert í reglulegri eftirfylgd.
+>
+> • Hafðu samband við heilsugæsluna þína eða heimilislækni.
+> • Viltu aðeins fá útskýringu á niðurstöðum sem þú hefur þegar fengið? Það getum við gert. Breyttu þá svarinu hér fyrir ofan í „Nei“.
+
+**Birtist ef:** `scope-which` = `lab-tests`
+
+### 3.7 · `scope-why-imaging`
+
+Skýringartexti
+
+> Myndgreining og speglanir
+>
+> Beiðni um myndgreiningu eða speglun þarf að byggja á viðtali og skoðun, og niðurstöðunum þarf að fylgja eftir. Það er ekki hægt í skriflegri fjarþjónustu.
+>
+> • Hafðu samband við heilsugæsluna þína eða heimilislækni.
+> • Eftir slys eða áverka: farðu á slysa- og bráðamóttöku.
+
+**Birtist ef:** `scope-which` = `imaging`
+
+### 3.8 · `scope-why-referral`
+
+Skýringartexti
+
+> Tilvísanir
+>
+> Góð tilvísun byggir á ítarlegri sögu og skoðun svo sérfræðingurinn fái þær upplýsingar sem hann þarf. Það getum við ekki veitt skriflega.
+>
+> • Hafðu samband við heilsugæsluna þína eða heimilislækni.
+> • Fullorðnir geta oft bókað tíma beint hjá sérfræðilækni án tilvísunar.
+
+**Birtist ef:** `scope-which` = `referral`
+
+### 3.9 · `scope-why-exam`
+
+Skýringartexti
+
+> Vandamál sem þarf að skoða
+>
+> Læknirinn getur ekki hlustað, þreifað eða horft í eyru og háls í gegnum skriflegt erindi. Þegar skoðun ræður greiningunni er ekki öruggt að meta vandamálið hér.
+>
+> • Hafðu samband við heilsugæsluna þína.
+> • Utan opnunartíma heilsugæslunnar: Læknavaktin, sími 1700.
+> • Eftir slys eða áverka: farðu á slysa- og bráðamóttöku.
+
+**Birtist ef:** `scope-which` = `exam`
+
+### 3.10 · `scope-why-dose-dispensed`
+
+Skýringartexti
+
+> Lyf í lyfjarúllu
+>
+> Skömmtuð lyf eru afgreidd eftir skömmtunarkorti sem læknirinn þinn heldur utan um. Til að öll lyfin skili sér rétt í rúlluna þarf sá læknir að gera breytingarnar.
+>
+> • Hafðu samband við heilsugæsluna þína eða heimilislækni.
+> • Apótekið sem skammtar lyfin getur leiðbeint þér um næstu skref.
+
+**Birtist ef:** `scope-which` = `dose-dispensed`
+
+---
+
+## Síða 4 · Hvað er að?
+
+**Öll síðan birtist ef:** `scope-gate` = `no`
+
+### 4.1 · `erindi-type`
 
 Einn valkostur — radio · **SKYLDA**
 
@@ -140,7 +281,7 @@ Einn valkostur — radio · **SKYLDA**
 | `certificate` | Vottorð eða staðfesting |
 | `other` | Annað eða ég er ekki viss |
 
-### 3.2 · `free-guide`
+### 4.2 · `free-guide`
 
 Skýringartexti
 
@@ -155,7 +296,7 @@ Skýringartexti
 >
 > Engin þörf á læknisfræðilegum orðum. Skrifaðu frekar of mikið en of lítið.
 
-### 3.3 · `free-text`
+### 4.3 · `free-text`
 
 Langur texti — textareitur · **SKYLDA**
 
@@ -163,7 +304,7 @@ Langur texti — textareitur · **SKYLDA**
 
 *Skýring í reit:* Byrjaðu hér. Notaðu punktana að ofan sem leiðarvísi.
 
-### 3.4 · `free-worry`
+### 4.4 · `free-worry`
 
 Langur texti — textareitur
 
@@ -175,11 +316,11 @@ Langur texti — textareitur
 
 ---
 
-## Síða 4 · Nokkur atriði sem gleymast oft
+## Síða 5 · Nokkur atriði sem gleymast oft
 
 **Öll síðan birtist ef:** `erindi-type` = `new-problem` EÐA `erindi-type` = `known-problem`
 
-### 4.1 · `sym-duration`
+### 5.1 · `sym-duration`
 
 Einn valkostur — radio · **SKYLDA**
 
@@ -196,7 +337,7 @@ Einn valkostur — radio · **SKYLDA**
 | `3-12m` | 3–12 mánuði |
 | `over-1y` | Lengur en ár |
 
-### 4.2 · `sym-course`
+### 5.2 · `sym-course`
 
 Einn valkostur — radio · **SKYLDA**
 
@@ -209,7 +350,7 @@ Einn valkostur — radio · **SKYLDA**
 | `better` | Batnandi |
 | `fluctuating` | Kemur og fer |
 
-### 4.3 · `sym-impact`
+### 5.3 · `sym-impact`
 
 Einn valkostur — radio · **SKYLDA**
 
@@ -222,7 +363,7 @@ Einn valkostur — radio · **SKYLDA**
 | `moderate` | Töluverð – ég hef þurft að draga úr |
 | `severe` | Mikil – ég kemst ekki í vinnu eða skóla |
 
-### 4.4 · `sym-fever`
+### 5.4 · `sym-fever`
 
 Einn valkostur — radio · **SKYLDA**
 
@@ -235,7 +376,7 @@ Einn valkostur — radio · **SKYLDA**
 | `no` | Nei |
 | `unsure` | Veit ekki |
 
-### 4.5 · `sym-fever-temp`
+### 5.5 · `sym-fever-temp`
 
 Tala með einingu — °C
 
@@ -243,13 +384,13 @@ Tala með einingu — °C
 
 **Birtist ef:** `sym-fever` = `measured`
 
-### 4.6 · `sym-pain-score`
+### 5.6 · `sym-pain-score`
 
 Tala 0–10 — hnappar
 
 **Spurning:** Verkir núna? 0 = engir verkir, 10 = verstu verkir sem þú getur ímyndað þér.
 
-### 4.7 · `sym-seen-doctor`
+### 5.7 · `sym-seen-doctor`
 
 Einn valkostur — radio · **SKYLDA**
 
@@ -260,7 +401,7 @@ Einn valkostur — radio · **SKYLDA**
 | `yes` | Já |
 | `no` | Nei |
 
-### 4.8 · `sym-seen-doctor-what`
+### 5.8 · `sym-seen-doctor-what`
 
 Langur texti — textareitur · **SKYLDA**
 
@@ -272,11 +413,11 @@ Langur texti — textareitur · **SKYLDA**
 
 ---
 
-## Síða 5 · Lyfið
+## Síða 6 · Lyfið
 
 **Öll síðan birtist ef:** `erindi-type` = `medication`
 
-### 5.1 · `med-type`
+### 6.1 · `med-type`
 
 Einn valkostur — radio · **SKYLDA**
 
@@ -289,13 +430,13 @@ Einn valkostur — radio · **SKYLDA**
 | `question` | Spurning um lyf, skammta eða milliverkanir |
 | `new` | Nýtt lyf sem ég tel mig þurfa |
 
-### 5.2 · `med-controlled`
+### 6.2 · `med-controlled`
 
 Skýringartexti
 
 > Ekki er ávísað ávana- og fíknilyfjum í fjarþjónustu — meðal annars ópíóíðum, róandi lyfjum, svefnlyfjum og ADHD-lyfjum.
 
-### 5.3 · `med-name`
+### 6.3 · `med-name`
 
 Stuttur texti — ein lína · **SKYLDA**
 
@@ -305,7 +446,7 @@ Stuttur texti — ein lína · **SKYLDA**
 
 *Hjálpartexti:* Skrifaðu nákvæmlega eins og stendur á pakkningunni, eða sendu mynd af henni aftar í þessari beiðni.
 
-### 5.4 · `med-dose`
+### 6.4 · `med-dose`
 
 Stuttur texti — ein lína · **SKYLDA**
 
@@ -313,7 +454,7 @@ Stuttur texti — ein lína · **SKYLDA**
 
 *Skýring í reit:* t.d. 1 tafla að morgni
 
-### 5.5 · `med-supply`
+### 6.5 · `med-supply`
 
 Einn valkostur — radio · **SKYLDA**
 
@@ -328,7 +469,7 @@ Einn valkostur — radio · **SKYLDA**
 | `month` | Innan mánaðar |
 | `later` | Seinna en eftir mánuð |
 
-### 5.6 · `med-side-effect-what`
+### 6.6 · `med-side-effect-what`
 
 Langur texti — textareitur · **SKYLDA**
 
@@ -338,7 +479,7 @@ Langur texti — textareitur · **SKYLDA**
 
 *Skýring í reit:* Segðu líka hvort þú hefur breytt skammti eða hætt að taka lyfið
 
-### 5.7 · `med-monitoring`
+### 6.7 · `med-monitoring`
 
 Einn valkostur — radio
 
@@ -352,11 +493,11 @@ Einn valkostur — radio
 
 ---
 
-## Síða 6 · Rannsóknin
+## Síða 7 · Rannsóknin
 
 **Öll síðan birtist ef:** `erindi-type` = `results`
 
-### 6.1 · `res-what`
+### 7.1 · `res-what`
 
 Stuttur texti — ein lína · **SKYLDA**
 
@@ -364,7 +505,7 @@ Stuttur texti — ein lína · **SKYLDA**
 
 *Skýring í reit:* t.d. blóðprufa, röntgen, sýnataka
 
-### 6.2 · `res-where`
+### 7.2 · `res-where`
 
 Stuttur texti — ein lína · **SKYLDA**
 
@@ -374,17 +515,17 @@ Stuttur texti — ein lína · **SKYLDA**
 
 ---
 
-## Síða 7 · Vottorðið
+## Síða 8 · Vottorðið
 
 **Öll síðan birtist ef:** `erindi-type` = `certificate`
 
-### 7.1 · `cert-policy`
+### 8.1 · `cert-policy`
 
 Skýringartexti
 
 > Læknir getur aðeins vottað það sem hann getur staðfest með mati sínu. Vottorð aftur í tímann fyrir veikindi sem enginn læknir hefur metið eru almennt ekki gefin út.
 
-### 7.2 · `cert-type`
+### 8.2 · `cert-type`
 
 Einn valkostur — radio · **SKYLDA**
 
@@ -398,7 +539,7 @@ Einn valkostur — radio · **SKYLDA**
 | `sports` | Íþrótta- eða heilbrigðisvottorð |
 | `other` | Annað |
 
-### 7.3 · `cert-period`
+### 8.3 · `cert-period`
 
 Stuttur texti — ein lína · **SKYLDA**
 
@@ -408,17 +549,17 @@ Stuttur texti — ein lína · **SKYLDA**
 
 ---
 
-## Síða 8 · Öryggisatriði og myndir
+## Síða 9 · Öryggisatriði og myndir
 
-**Sýnd öllum.**
+**Öll síðan birtist ef:** `scope-gate` = `no`
 
-### 8.1 · `bg-intro`
+### 9.1 · `bg-intro`
 
 Skýringartexti
 
 > Þessar fjórar spurningar ráða því hvaða meðferð er örugg fyrir þig. Svaraðu þeim jafnvel þótt þér finnist þær ótengdar.
 
-### 8.2 · `bg-meds`
+### 9.2 · `bg-meds`
 
 Einn valkostur — radio · **SKYLDA**
 
@@ -429,7 +570,7 @@ Einn valkostur — radio · **SKYLDA**
 | `yes` | Já |
 | `no` | Nei |
 
-### 8.3 · `bg-meds-list`
+### 9.3 · `bg-meds-list`
 
 Langur texti — textareitur · **SKYLDA**
 
@@ -437,9 +578,9 @@ Langur texti — textareitur · **SKYLDA**
 
 **Birtist ef:** `bg-meds` = `yes`
 
-*Skýring í reit:* Skrifaðu líka getnaðarvarnir, bætiefni og lyf sem þú kaupir án lyfseðils. Eitt lyf í hverja línu.
+*Skýring í reit:* Líka getnaðarvarnir, bætiefni og lyf án lyfseðils. Eitt lyf í hverja línu.
 
-### 8.4 · `bg-allergy`
+### 9.4 · `bg-allergy`
 
 Einn valkostur — radio · **SKYLDA**
 
@@ -451,7 +592,7 @@ Einn valkostur — radio · **SKYLDA**
 | `no` | Nei |
 | `unsure` | Veit ekki |
 
-### 8.5 · `bg-allergy-list`
+### 9.5 · `bg-allergy-list`
 
 Langur texti — textareitur · **SKYLDA**
 
@@ -461,7 +602,7 @@ Langur texti — textareitur · **SKYLDA**
 
 *Skýring í reit:* t.d. penisillín – útbrot
 
-### 8.6 · `bg-chronic`
+### 9.6 · `bg-chronic`
 
 Einn valkostur — radio · **SKYLDA**
 
@@ -473,7 +614,7 @@ Einn valkostur — radio · **SKYLDA**
 | `no` | Nei |
 | `unsure` | Veit ekki |
 
-### 8.7 · `bg-chronic-list`
+### 9.7 · `bg-chronic-list`
 
 Langur texti — textareitur · **SKYLDA**
 
@@ -483,7 +624,7 @@ Langur texti — textareitur · **SKYLDA**
 
 *Skýring í reit:* t.d. sykursýki, astmi, háþrýstingur, skjaldkirtilssjúkdómur
 
-### 8.8 · `bg-pregnancy`
+### 9.8 · `bg-pregnancy`
 
 Einn valkostur — radio · **SKYLDA**
 
@@ -497,7 +638,7 @@ Einn valkostur — radio · **SKYLDA**
 | `possible` | Möguleiki er á þungun |
 | `na` | Á ekki við |
 
-### 8.9 · `img-gate`
+### 9.9 · `img-gate`
 
 Einn valkostur — radio · **SKYLDA**
 
@@ -510,7 +651,7 @@ Einn valkostur — radio · **SKYLDA**
 
 *Hjálpartexti:* t.d. útbrot, sár, bólga, auga, lyfjapakkning eða niðurstöður úr rannsókn.
 
-### 8.10 · `img-tips`
+### 9.10 · `img-tips`
 
 Skýringartexti
 
@@ -518,7 +659,7 @@ Skýringartexti
 
 **Birtist ef:** `img-gate` = `yes`
 
-### 8.11 · `img-files`
+### 9.11 · `img-files`
 
 Viðhengi — mynd
 
@@ -528,11 +669,11 @@ Viðhengi — mynd
 
 ---
 
-## Síða 9 · Staðfesting
+## Síða 10 · Staðfesting
 
-**Sýnd öllum.**
+**Öll síðan birtist ef:** `scope-gate` = `no`
 
-### 9.1 · `exp-wish`
+### 10.1 · `exp-wish`
 
 Fjölval — gátreitir · **SKYLDA**
 
@@ -543,19 +684,18 @@ Fjölval — gátreitir · **SKYLDA**
 | `advice` | Mati og ráðgjöf |
 | `prescription` | Lyfseðli |
 | `referral` | Tilvísun til sérfræðings |
-| `tests` | Beiðni um rannsókn |
 | `certificate` | Vottorði |
 | `unsure` | Veit ekki, vil bara láta meta þetta |
 
 *Hjálpartexti:* Læknirinn metur sjálfstætt hvað á við, en það er gott að vita hvað þú vonaðist eftir.
 
-### 9.2 · `final-all`
+### 10.2 · `final-all`
 
 Gátreitur — já/nei · **SKYLDA**
 
 **Spurning:** Ég staðfesti að upplýsingarnar eru réttar eftir minni bestu vitund, að ég skil að læknirinn getur ekki skoðað mig og gæti þurft að vísa mér áfram eða hafna erindinu, og ég samþykki að Fjarlækningar vinni þessar heilsufarsupplýsingar samkvæmt persónuverndarstefnu félagsins.
 
-### 9.3 · `final-thanks`
+### 10.3 · `final-thanks`
 
 Skýringartexti
 

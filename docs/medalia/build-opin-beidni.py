@@ -16,6 +16,8 @@ Output: opin-beidni.json
 """
 import json
 
+from medalia_common import SCOPE_OK, scope_page
+
 ITEM_CONTROL = "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl"
 ITEM_CONTROL_SYS = "http://hl7.org/fhir/questionnaire-item-control"
 ENTRY_FORMAT = "http://hl7.org/fhir/StructureDefinition/entryFormat"
@@ -250,7 +252,7 @@ P3 = page("p3-flokkun", "Um hvað snýst erindið?", [
           ("travel", "Ferðalög og bólusetningar"),
           ("other", "Annað eða veit ekki"),
       )),
-])
+], gate=SCOPE_OK)
 
 # ---------------------------------------------------------------- page 4
 DURATION = opts(
@@ -534,7 +536,7 @@ P8 = page("p8-bakgrunnur", "Um heilsu þína", [
       help_text="Hæð og þyngd eru notaðar til að reikna örugga lyfjaskammta."),
     q("bg-weight", "Þyngd", "quantity",
       ext=[{"url": UNIT, "valueCoding": {"code": "kg", "display": "kg", "system": UCUM}}]),
-])
+], gate=SCOPE_OK)
 
 # ---------------------------------------------------------------- page 9
 P9 = page("p9-lysing", "Lýstu vandamálinu með þínum eigin orðum", [
@@ -564,7 +566,7 @@ P9 = page("p9-lysing", "Lýstu vandamálinu með þínum eigin orðum", [
     q("free-extra", "Er eitthvað annað sem læknirinn ætti að vita?", "text",
       ext=placeholder("t.d. eitthvað í fjölskyldunni, vinnuaðstæður, "
                       "fyrri reynsla af meðferð. Þú mátt sleppa þessu.")),
-])
+], gate=SCOPE_OK)
 
 # ---------------------------------------------------------------- page 10
 P10 = page("p10-myndir", "Myndir", [
@@ -586,7 +588,7 @@ P10 = page("p10-myndir", "Myndir", [
     )), "img-gate", "yes"),
     gated(q("img-files", "Hengdu myndir við hér", "attachment", repeats=True),
           "img-gate", "yes"),
-])
+], gate=SCOPE_OK)
 
 # ---------------------------------------------------------------- page 11
 P11 = page("p11-lok", "Væntingar og staðfesting", [
@@ -596,7 +598,6 @@ P11 = page("p11-lok", "Væntingar og staðfesting", [
           ("advice", "Mati og ráðgjöf um hvað ég á að gera"),
           ("prescription", "Lyfseðli"),
           ("referral", "Tilvísun til sérfræðings"),
-          ("tests", "Beiðni um rannsókn, t.d. blóðprufu eða myndatöku"),
           ("certificate", "Vottorði"),
           ("unsure", "Ég veit það ekki, ég vil bara láta meta þetta"),
       ),
@@ -624,7 +625,7 @@ P11 = page("p11-lok", "Væntingar og staðfesting", [
     display("final-thanks",
             "Takk fyrir. Erindið fer nú til læknis sem les það og svarar þér. "
             "Ef ástand þitt versnar á meðan þú bíður, hringdu í 1700 eða 112."),
-])
+], gate=SCOPE_OK)
 
 questionnaire = {
     "resourceType": "Questionnaire",
@@ -662,7 +663,7 @@ questionnaire = {
             },
         }
     ],
-    "item": [P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11],
+    "item": [P1, P2, scope_page(), P3, P4, P5, P6, P7, P8, P9, P10, P11],
 }
 
 if __name__ == "__main__":

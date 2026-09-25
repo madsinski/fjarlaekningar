@@ -32,6 +32,8 @@ Output: opin-beidni-stutt.json
 """
 import json
 
+from medalia_common import SCOPE_OK, scope_page
+
 ITEM_CONTROL = "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl"
 ITEM_CONTROL_SYS = "http://hl7.org/fhir/questionnaire-item-control"
 ENTRY_FORMAT = "http://hl7.org/fhir/StructureDefinition/entryFormat"
@@ -219,7 +221,7 @@ P3 = page("p3-erindid", "Hvað er að?", [
                       "því sérstaklega."),
       help_text="Áhyggjur sjúklings eru oft besta vísbendingin um hvað þarf "
                 "að útiloka."),
-])
+], gate=SCOPE_OK)
 
 # ---------------------------------------------------------------- 4
 P4 = page("p4-einkenni", "Nokkur atriði sem gleymast oft", [
@@ -377,7 +379,7 @@ P8 = page("p8-oryggi", "Öryggisatriði og myndir", [
     )), "img-gate", "yes"),
     gated(q("img-files", "Hengdu myndir við hér", "attachment", repeats=True),
           "img-gate", "yes"),
-])
+], gate=SCOPE_OK)
 
 # ---------------------------------------------------------------- 9
 P9 = page("p9-lok", "Staðfesting", [
@@ -387,7 +389,6 @@ P9 = page("p9-lok", "Staðfesting", [
           ("advice", "Mati og ráðgjöf"),
           ("prescription", "Lyfseðli"),
           ("referral", "Tilvísun til sérfræðings"),
-          ("tests", "Beiðni um rannsókn"),
           ("certificate", "Vottorði"),
           ("unsure", "Veit ekki, vil bara láta meta þetta"),
       ),
@@ -402,7 +403,7 @@ P9 = page("p9-lok", "Staðfesting", [
     display("final-thanks",
             "Takk fyrir. Læknir les erindið og svarar þér. Ef þér versnar á "
             "meðan þú bíður, hringdu í 1700 eða 112."),
-])
+], gate=SCOPE_OK)
 
 questionnaire = {
     "resourceType": "Questionnaire",
@@ -426,7 +427,7 @@ questionnaire = {
             "code": "patient-questionnaire", "display": "Patient questionnaire",
             "system": "https://medalia.dev/fhir/CodeSystem/questionnaire-contexts"}]},
     }],
-    "item": [P1, P2, P3, P4, P5, P6, P7, P8, P9],
+    "item": [P1, P2, scope_page(), P3, P4, P5, P6, P7, P8, P9],
 }
 
 if __name__ == "__main__":

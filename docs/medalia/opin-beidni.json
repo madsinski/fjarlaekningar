@@ -306,6 +306,277 @@
       "enableBehavior": "all"
     },
     {
+      "linkId": "p-hentar",
+      "type": "group",
+      "text": "Hentar erindið fjarþjónustu?",
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+          "valueCodeableConcept": {
+            "coding": [
+              {
+                "code": "page",
+                "system": "http://hl7.org/fhir/questionnaire-item-control",
+                "display": "Page"
+              }
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "linkId": "scope-intro",
+          "type": "display",
+          "text": "Sumt er ekki hægt að leysa í skriflegri fjarþjónustu, sama hversu vel því er lýst. Lestu listann og svaraðu svo spurningunni fyrir neðan. Þannig sparar þú þér bið eftir svari sem getur ekki hjálpað þér.\n\n• Erindið snýst um einhvern annan en þig, til dæmis barnið þitt, maka eða foreldri.\n• Þú vilt fá beiðni um blóðprufu eða aðra rannsókn, til dæmis þvag- eða hormónamælingu.\n• Þú vilt fá beiðni um myndgreiningu (röntgen, tölvusneiðmynd, segulómun eða ómun) eða speglun (til dæmis maga- eða ristilspeglun).\n• Þú vilt fá tilvísun til sérfræðings vegna vandamáls sem þarf nánari sögu og skoðun.\n• Vandamálið þarf skoðun, til dæmis að hlusta á hjarta eða lungu, skoða eyru eða háls, þreifa á kvið eða meta áverka, hnút eða fyrirferð.\n• Þú vilt fá lyfseðil fyrir lyf sem þú færð skömmtuð í lyfjarúllu frá apóteki, eða breytingu á skömmtuninni."
+        },
+        {
+          "linkId": "scope-gate",
+          "type": "choice",
+          "text": "Á eitthvað af ofangreindu við um erindið þitt?",
+          "required": true,
+          "answerOption": [
+            {
+              "valueCoding": {
+                "code": "yes",
+                "display": "Já"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "no",
+                "display": "Nei"
+              }
+            }
+          ],
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "code": "radio-button",
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "display": "Radio Button"
+                  }
+                ]
+              }
+            }
+          ],
+          "item": [
+            {
+              "linkId": "scope-gate-help",
+              "type": "display",
+              "text": "Viltu aðeins fá útskýringu á niðurstöðum sem þú hefur þegar fengið, eða endurnýjun á lyfi sem þú sækir sjálf eða sjálfur í apótek? Það getum við gert. Svaraðu þá „Nei“.",
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+                  "valueCodeableConcept": {
+                    "coding": [
+                      {
+                        "code": "help",
+                        "system": "http://hl7.org/fhir/questionnaire-item-control"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "linkId": "scope-stop",
+          "type": "display",
+          "text": "⛔ Við getum ekki afgreitt þetta erindi í fjarþjónustu.\n\nÞað er ekki vegna þess að erindið skipti ekki máli, heldur vegna þess að það þarf þjónustu sem ekki er hægt að veita skriflega. Merktu við hvað á við og þá sérðu hvert þú getur leitað.\n\nÞú þarft ekki að senda erindið. Ef þú merktir við þetta fyrir mistök, breyttu svarinu í „Nei“ til að halda áfram.",
+          "enableWhen": [
+            {
+              "question": "scope-gate",
+              "operator": "=",
+              "answerCoding": {
+                "code": "yes",
+                "display": "",
+                "system": ""
+              }
+            }
+          ],
+          "enableBehavior": "all"
+        },
+        {
+          "linkId": "scope-which",
+          "type": "choice",
+          "text": "Hvað af þessu á við? Merktu við allt sem á við.",
+          "required": true,
+          "repeats": true,
+          "answerOption": [
+            {
+              "valueCoding": {
+                "code": "other-person",
+                "display": "Erindið snýst um barn eða annan einstakling"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "lab-tests",
+                "display": "Beiðni um blóðprufu eða aðra rannsókn"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "imaging",
+                "display": "Beiðni um myndgreiningu eða speglun"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "referral",
+                "display": "Tilvísun sem þarf nánari sögu og skoðun"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "exam",
+                "display": "Vandamál sem þarf að skoða"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "dose-dispensed",
+                "display": "Lyf í lyfjarúllu (lyfjaskömmtun)"
+              }
+            }
+          ],
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "code": "check-box",
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "display": "Check Box"
+                  }
+                ]
+              }
+            }
+          ],
+          "enableWhen": [
+            {
+              "question": "scope-gate",
+              "operator": "=",
+              "answerCoding": {
+                "code": "yes",
+                "display": "",
+                "system": ""
+              }
+            }
+          ],
+          "enableBehavior": "all"
+        },
+        {
+          "linkId": "scope-why-other-person",
+          "type": "display",
+          "text": "Erindi fyrir aðra\n\nLæknir getur aðeins metið þann sem sendir erindið sjálfur, skráður inn með eigin rafrænum skilríkjum. Við getum ekki metið barn eða annan einstakling út frá lýsingu þinni.\n\n• Fullorðnir geta sent eigið erindi hingað.\n• Vegna barna: hafðu samband við heilsugæslu barnsins, til dæmis í gegnum Heilsuveru, eða hringdu í 1700 til að fá ráðgjöf.\n• Veikist barn skyndilega eða alvarlega: farðu á næstu bráðamóttöku eða hringdu í 112.",
+          "enableWhen": [
+            {
+              "question": "scope-which",
+              "operator": "=",
+              "answerCoding": {
+                "code": "other-person",
+                "display": "",
+                "system": ""
+              }
+            }
+          ],
+          "enableBehavior": "all"
+        },
+        {
+          "linkId": "scope-why-lab-tests",
+          "type": "display",
+          "text": "Blóðprufur og aðrar rannsóknir\n\nVið biðjum ekki um rannsóknir í fjarþjónustu. Læknirinn sem biður um rannsókn ber ábyrgð á að fylgja niðurstöðunum eftir og það er best gert þar sem þú ert í reglulegri eftirfylgd.\n\n• Hafðu samband við heilsugæsluna þína eða heimilislækni.\n• Viltu aðeins fá útskýringu á niðurstöðum sem þú hefur þegar fengið? Það getum við gert. Breyttu þá svarinu hér fyrir ofan í „Nei“.",
+          "enableWhen": [
+            {
+              "question": "scope-which",
+              "operator": "=",
+              "answerCoding": {
+                "code": "lab-tests",
+                "display": "",
+                "system": ""
+              }
+            }
+          ],
+          "enableBehavior": "all"
+        },
+        {
+          "linkId": "scope-why-imaging",
+          "type": "display",
+          "text": "Myndgreining og speglanir\n\nBeiðni um myndgreiningu eða speglun þarf að byggja á viðtali og skoðun, og niðurstöðunum þarf að fylgja eftir. Það er ekki hægt í skriflegri fjarþjónustu.\n\n• Hafðu samband við heilsugæsluna þína eða heimilislækni.\n• Eftir slys eða áverka: farðu á slysa- og bráðamóttöku.",
+          "enableWhen": [
+            {
+              "question": "scope-which",
+              "operator": "=",
+              "answerCoding": {
+                "code": "imaging",
+                "display": "",
+                "system": ""
+              }
+            }
+          ],
+          "enableBehavior": "all"
+        },
+        {
+          "linkId": "scope-why-referral",
+          "type": "display",
+          "text": "Tilvísanir\n\nGóð tilvísun byggir á ítarlegri sögu og skoðun svo sérfræðingurinn fái þær upplýsingar sem hann þarf. Það getum við ekki veitt skriflega.\n\n• Hafðu samband við heilsugæsluna þína eða heimilislækni.\n• Fullorðnir geta oft bókað tíma beint hjá sérfræðilækni án tilvísunar.",
+          "enableWhen": [
+            {
+              "question": "scope-which",
+              "operator": "=",
+              "answerCoding": {
+                "code": "referral",
+                "display": "",
+                "system": ""
+              }
+            }
+          ],
+          "enableBehavior": "all"
+        },
+        {
+          "linkId": "scope-why-exam",
+          "type": "display",
+          "text": "Vandamál sem þarf að skoða\n\nLæknirinn getur ekki hlustað, þreifað eða horft í eyru og háls í gegnum skriflegt erindi. Þegar skoðun ræður greiningunni er ekki öruggt að meta vandamálið hér.\n\n• Hafðu samband við heilsugæsluna þína.\n• Utan opnunartíma heilsugæslunnar: Læknavaktin, sími 1700.\n• Eftir slys eða áverka: farðu á slysa- og bráðamóttöku.",
+          "enableWhen": [
+            {
+              "question": "scope-which",
+              "operator": "=",
+              "answerCoding": {
+                "code": "exam",
+                "display": "",
+                "system": ""
+              }
+            }
+          ],
+          "enableBehavior": "all"
+        },
+        {
+          "linkId": "scope-why-dose-dispensed",
+          "type": "display",
+          "text": "Lyf í lyfjarúllu\n\nSkömmtuð lyf eru afgreidd eftir skömmtunarkorti sem læknirinn þinn heldur utan um. Til að öll lyfin skili sér rétt í rúlluna þarf sá læknir að gera breytingarnar.\n\n• Hafðu samband við heilsugæsluna þína eða heimilislækni.\n• Apótekið sem skammtar lyfin getur leiðbeint þér um næstu skref.",
+          "enableWhen": [
+            {
+              "question": "scope-which",
+              "operator": "=",
+              "answerCoding": {
+                "code": "dose-dispensed",
+                "display": "",
+                "system": ""
+              }
+            }
+          ],
+          "enableBehavior": "all"
+        }
+      ],
+      "enableBehavior": "all"
+    },
+    {
       "linkId": "p3-flokkun",
       "type": "group",
       "text": "Um hvað snýst erindið?",
@@ -524,6 +795,17 @@
               }
             }
           ]
+        }
+      ],
+      "enableWhen": [
+        {
+          "question": "scope-gate",
+          "operator": "=",
+          "answerCoding": {
+            "code": "no",
+            "display": "",
+            "system": ""
+          }
         }
       ],
       "enableBehavior": "all"
@@ -2393,6 +2675,17 @@
           ]
         }
       ],
+      "enableWhen": [
+        {
+          "question": "scope-gate",
+          "operator": "=",
+          "answerCoding": {
+            "code": "no",
+            "display": "",
+            "system": ""
+          }
+        }
+      ],
       "enableBehavior": "all"
     },
     {
@@ -2472,6 +2765,17 @@
               "valueString": "t.d. eitthvað í fjölskyldunni, vinnuaðstæður, fyrri reynsla af meðferð. Þú mátt sleppa þessu."
             }
           ]
+        }
+      ],
+      "enableWhen": [
+        {
+          "question": "scope-gate",
+          "operator": "=",
+          "answerCoding": {
+            "code": "no",
+            "display": "",
+            "system": ""
+          }
         }
       ],
       "enableBehavior": "all"
@@ -2585,6 +2889,17 @@
           "enableBehavior": "all"
         }
       ],
+      "enableWhen": [
+        {
+          "question": "scope-gate",
+          "operator": "=",
+          "answerCoding": {
+            "code": "no",
+            "display": "",
+            "system": ""
+          }
+        }
+      ],
       "enableBehavior": "all"
     },
     {
@@ -2629,12 +2944,6 @@
               "valueCoding": {
                 "code": "referral",
                 "display": "Tilvísun til sérfræðings"
-              }
-            },
-            {
-              "valueCoding": {
-                "code": "tests",
-                "display": "Beiðni um rannsókn, t.d. blóðprufu eða myndatöku"
               }
             },
             {
@@ -2785,6 +3094,17 @@
           "linkId": "final-thanks",
           "type": "display",
           "text": "Takk fyrir. Erindið fer nú til læknis sem les það og svarar þér. Ef ástand þitt versnar á meðan þú bíður, hringdu í 1700 eða 112."
+        }
+      ],
+      "enableWhen": [
+        {
+          "question": "scope-gate",
+          "operator": "=",
+          "answerCoding": {
+            "code": "no",
+            "display": "",
+            "system": ""
+          }
         }
       ],
       "enableBehavior": "all"
