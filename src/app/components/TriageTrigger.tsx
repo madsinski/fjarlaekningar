@@ -14,11 +14,11 @@ import type { LocaleContent } from "@/lib/site-content/types";
 // place search, which no visitor needs until they open the popup.
 const TriageDialog = dynamic(() => import("./TriageDialog"), { ssr: false });
 
-type TriageState = { on: boolean; text: LocaleContent; examples: TriageExample[] };
-const Triage = createContext<TriageState>({ on: false, text: {}, examples: [] });
+type TriageState = { on: boolean; text: LocaleContent; examples: TriageExample[]; clinics: string[] };
+const Triage = createContext<TriageState>({ on: false, text: {}, examples: [], clinics: [] });
 
-export function TriageProvider({ on, text, examples, children }: TriageState & { children: ReactNode }) {
-  return <Triage.Provider value={{ on, text, examples }}>{children}</Triage.Provider>;
+export function TriageProvider({ on, text, examples, clinics, children }: TriageState & { children: ReactNode }) {
+  return <Triage.Provider value={{ on, text, examples, clinics }}>{children}</Triage.Provider>;
 }
 
 /**
@@ -37,7 +37,7 @@ export default function TriageTrigger({
   /** "check" = the "Hentar fjarlækningaþjónusta mér?" button: other title. */
   variant?: TriageVariant;
 }) {
-  const { on: live, text, examples } = useContext(Triage);
+  const { on: live, text, examples, clinics } = useContext(Triage);
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
 
@@ -58,7 +58,7 @@ export default function TriageTrigger({
       >
         {children}
       </a>
-      {open && <TriageDialog onClose={close} text={text} examples={examples} variant={variant} />}
+      {open && <TriageDialog onClose={close} text={text} examples={examples} clinics={clinics} variant={variant} />}
     </>
   );
 }

@@ -154,7 +154,32 @@ Gátreitur — já/nei · **SKYLDA**
 
 **Sýnd öllum.**
 
-### 3.1 · `scope-intro`
+### 3.1 · `reg-gate`
+
+Einn valkostur — radio · **SKYLDA**
+
+**Spurning:** Ertu skráð eða skráður á heilsugæslu þar sem þjónustan er í boði?
+
+| kóði | það sem sjúklingurinn sér |
+|---|---|
+| `yes` | Já |
+| `no` | Nei |
+
+*Hjálpartexti:* Þjónustan er enn sem komið er aðeins í boði fyrir fólk sem er skráð á: Heilsugæslan í Vestmannaeyjum. Ertu ekki viss? Þú sérð á hvaða heilsugæslu þú ert skráð eða skráður á Mínum síðum á island.is.
+
+### 3.2 · `reg-stop`
+
+Skýringartexti
+
+> ⛔ Þjónustan er ekki enn opin á þinni heilsugæslu.
+>
+> Fjarlækningar opna fyrir þjónustuna eina heilsugæslu í einu og fleiri heilsugæslur á Suðurlandi bætast við á næstunni. Þangað til skaltu hafa samband við heilsugæsluna þína, eða hringja í 1700 ef þú þarft ráð strax.
+>
+> Þú þarft ekki að senda erindið. Ef þú merktir við þetta fyrir mistök, breyttu svarinu í „Já“ til að halda áfram.
+
+**Birtist ef:** `reg-gate` = `no`
+
+### 3.3 · `scope-intro`
 
 Skýringartexti
 
@@ -167,11 +192,15 @@ Skýringartexti
 > • Vandamálið þarf skoðun, til dæmis að hlusta á hjarta eða lungu, skoða eyru eða háls, þreifa á kvið eða meta áverka, hnút eða fyrirferð.
 > • Þú vilt fá lyfseðil fyrir lyf sem þú færð skömmtuð í lyfjarúllu frá apóteki, eða breytingu á skömmtuninni.
 
-### 3.2 · `scope-gate`
+**Birtist ef:** `reg-gate` = `yes`
+
+### 3.4 · `scope-gate`
 
 Einn valkostur — radio · **SKYLDA**
 
 **Spurning:** Á eitthvað af ofangreindu við um erindið þitt?
+
+**Birtist ef:** `reg-gate` = `yes`
 
 | kóði | það sem sjúklingurinn sér |
 |---|---|
@@ -180,7 +209,7 @@ Einn valkostur — radio · **SKYLDA**
 
 *Hjálpartexti:* Viltu aðeins fá útskýringu á niðurstöðum sem þú hefur þegar fengið, eða endurnýjun á lyfi sem þú sækir sjálf eða sjálfur í apótek? Það getum við gert. Svaraðu þá „Nei“.
 
-### 3.3 · `scope-stop`
+### 3.5 · `scope-stop`
 
 Skýringartexti
 
@@ -192,7 +221,7 @@ Skýringartexti
 
 **Birtist ef:** `scope-gate` = `yes`
 
-### 3.4 · `scope-which`
+### 3.6 · `scope-which`
 
 Fjölval — gátreitir · **SKYLDA**
 
@@ -209,7 +238,7 @@ Fjölval — gátreitir · **SKYLDA**
 | `exam` | Vandamál sem þarf að skoða |
 | `dose-dispensed` | Lyf í lyfjarúllu (lyfjaskömmtun) |
 
-### 3.5 · `scope-why-other-person`
+### 3.7 · `scope-why-other-person`
 
 Skýringartexti
 
@@ -223,7 +252,7 @@ Skýringartexti
 
 **Birtist ef:** `scope-which` = `other-person`
 
-### 3.6 · `scope-why-lab-tests`
+### 3.8 · `scope-why-lab-tests`
 
 Skýringartexti
 
@@ -236,7 +265,7 @@ Skýringartexti
 
 **Birtist ef:** `scope-which` = `lab-tests`
 
-### 3.7 · `scope-why-imaging`
+### 3.9 · `scope-why-imaging`
 
 Skýringartexti
 
@@ -249,7 +278,7 @@ Skýringartexti
 
 **Birtist ef:** `scope-which` = `imaging`
 
-### 3.8 · `scope-why-referral`
+### 3.10 · `scope-why-referral`
 
 Skýringartexti
 
@@ -262,7 +291,7 @@ Skýringartexti
 
 **Birtist ef:** `scope-which` = `referral`
 
-### 3.9 · `scope-why-exam`
+### 3.11 · `scope-why-exam`
 
 Skýringartexti
 
@@ -276,7 +305,7 @@ Skýringartexti
 
 **Birtist ef:** `scope-which` = `exam`
 
-### 3.10 · `scope-why-dose-dispensed`
+### 3.12 · `scope-why-dose-dispensed`
 
 Skýringartexti
 

@@ -61,6 +61,8 @@ export type TriageQuestion = {
   list?: L[];
   /** A search box above the answers: place names, or the medication list. */
   search?: "places" | "meds";
+  /** Show the heilsugæslur where the service is open (from the CMS). */
+  clinics?: boolean;
   options: TriageOption[];
 };
 
@@ -81,6 +83,8 @@ export type TriageResult = {
   actions: TriageAction[];
   /** Adds a "Þar sem þú ert" box with the advice for the chosen region. */
   local?: LocalNeed;
+  /** Show the heilsugæslur where the service is open (from the CMS). */
+  clinics?: boolean;
 };
 
 /** What a result needs locally — the row of the region table below. */
@@ -140,10 +144,37 @@ export const TRIAGE: Record<string, TriageNode> = {
     kind: "question",
     question: { is: "Fyrir hvern er erindið?", en: "Who is this for?" },
     options: [
-      { label: { is: "Fyrir mig", en: "For me" }, next: "need" },
+      { label: { is: "Fyrir mig", en: "For me" }, next: "registered" },
       { label: { is: "Fyrir barn", en: "For a child" }, next: "child-when" },
       { label: { is: "Fyrir annan fullorðinn, til dæmis maka eða foreldri", en: "For another adult, e.g. a partner or parent" },
         next: "other-self" },
+    ],
+  },
+
+  // The service opens one heilsugæsla at a time and is only for people
+  // registered at an open one. The list comes from the "+" lines on the
+  // Þjónusta page in the CMS, so opening Selfoss there opens it here too.
+  registered: {
+    kind: "question",
+    question: { is: "Ertu skráð eða skráður á heilsugæslu þar sem þjónustan er í boði?",
+                en: "Are you registered at a health centre where the service is available?" },
+    hint: { is: "Ertu ekki viss? Þú sérð á hvaða heilsugæslu þú ert skráð eða skráður á Mínum síðum á island.is.",
+            en: "Not sure? You can see which health centre you are registered at under My pages on island.is." },
+    clinics: true,
+    options: [
+      { label: { is: "Já", en: "Yes" }, next: "need" },
+      { label: { is: "Nei", en: "No" }, next: "r-not-registered" },
+    ],
+  },
+
+  "registered-other": {
+    kind: "question",
+    question: { is: "Er viðkomandi með skráningu á heilsugæslu þar sem þjónustan er í boði?",
+                en: "Are they registered at a health centre where the service is available?" },
+    clinics: true,
+    options: [
+      { label: { is: "Já", en: "Yes" }, next: "r-other-adult" },
+      { label: { is: "Nei", en: "No" }, next: "r-not-registered" },
     ],
   },
 
@@ -278,7 +309,7 @@ export const TRIAGE: Record<string, TriageNode> = {
     hint: { is: "Til þess þarf viðkomandi að skrá sig inn með eigin rafrænum skilríkjum. Þú mátt aðstoða við að fylla út.",
             en: "They need to sign in with their own electronic ID. You are welcome to help fill it in." },
     options: [
-      { label: { is: "Já", en: "Yes" }, next: "r-other-adult" },
+      { label: { is: "Já", en: "Yes" }, next: "registered-other" },
       { label: { is: "Nei, eða ég veit það ekki", en: "No, or I don't know" }, next: "other-when" },
     ],
   },
@@ -435,6 +466,22 @@ export const TRIAGE: Record<string, TriageNode> = {
     actions: [{ ...CALL_112, primary: true }, CALL_1700],
   },
 
+  "r-not-registered": {
+    kind: "result",
+    service: "heilsugaesla",
+    local: "evening",
+    clinics: true,
+    eyebrow: { is: "Ekki enn í boði", en: "Not available yet" },
+    title: { is: "Þjónustan er ekki enn opin á þinni heilsugæslu", en: "The service is not open at your health centre yet" },
+    body: [
+      { is: "Fjarlækningar opna fyrir þjónustuna eina heilsugæslu í einu. Fleiri heilsugæslur á Suðurlandi bætast við á næstunni.",
+        en: "Fjarlækningar is opening the service one health centre at a time. More health centres in South Iceland will follow soon." },
+      { is: "Þangað til skaltu hafa samband við heilsugæsluna þína, eða hringja í 1700 ef þú þarft ráð strax.",
+        en: "Until then, contact your own health centre, or call 1700 if you need advice now." },
+    ],
+    actions: [CALL_1700],
+  },
+
   "r-controlled": {
     kind: "result",
     service: "heilsugaesla",
@@ -536,6 +583,7 @@ const UI_TEXT: Record<string, L> = {
            en: "Remote care suits many common problems, but not all. Answer a few questions and we will point you to the right place, whether that is here or elsewhere. It takes less than a minute." },
   local: { is: "Þar sem þú ert", en: "Where you are" },
   need_more: { is: "Eða eitthvað af þessu", en: "Or one of these" },
+  clinics: { is: "Þjónustan er í boði fyrir fólk sem er skráð á:", en: "The service is available to people registered at:" },
   pick_hint: { is: "Í sjúklingagáttinni velur þú", en: "In the patient portal, choose" },
   place_placeholder: { is: "Skrifaðu nafn staðarins, til dæmis Hafnarfjörður eða Höfn",
                        en: "Type the place name, e.g. Hafnarfjörður or Höfn" },
@@ -564,6 +612,7 @@ const UI_LABELS: Record<string, string> = {
   title_check: "Titill — opnað úr „Hentar fjarlækningaþjónusta mér?“", intro_heading: "Inngangur — fyrirsögn",
   intro: "Inngangur — texti", local: "Fyrirsögn staðbundinna ráða (staður bætist við)",
   need_more: "Skref „Hvað þarftu“ — fyrirsögn seinni hluta",
+  clinics: "Fyrirsögn yfir lista opinna heilsugæslna (listinn kemur af Þjónustusíðunni, „+“ línur)",
   pick_hint: "Niðurstaða Fjarlækninga — „velur þú“ (heiti erindis bætist við)",
   place_placeholder: "Staðarleit — texti í reit", place_nomatch: "Staðarleit — ef ekkert finnst",
   med_placeholder: "Lyfjaleit — texti í reit", med_red_title: "Lyfjaleit — á listanum: fyrirsögn",
@@ -599,6 +648,9 @@ const NODE_NAMES: Record<string, string> = {
   "r-other-er": "Niðurstaða · Annar fullorðinn, bráðamóttaka",
   "r-other-hg": "Niðurstaða · Annar fullorðinn, heilsugæsla",
   "r-controlled": "Niðurstaða · Lyf sem eru ekki endurnýjuð",
+  registered: "Skráning · Ert þú skráð(ur)?",
+  "registered-other": "Skráning · Er viðkomandi skráður?",
+  "r-not-registered": "Niðurstaða · Ekki skráð(ur) á opinni heilsugæslu",
   "r-fjar": "Niðurstaða · Fjarlækningar",
 };
 

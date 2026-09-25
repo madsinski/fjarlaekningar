@@ -4,7 +4,7 @@ import ScrollToTop from "../components/ScrollToTop";
 import { TriageProvider } from "../components/TriageTrigger";
 import { triageExamples, triageText } from "@/lib/triage";
 import { localizeErindi } from "@/erindi";
-import { erindiShown } from "@/lib/site-content/thjonusta";
+import { activeClinics, erindiShown } from "@/lib/site-content/thjonusta";
 import { getPageContent } from "@/lib/site-content/server";
 import type { Locale } from "@/lib/site-content/types";
 
@@ -39,7 +39,7 @@ export default async function SiteChrome({
   // all pages without threading a prop into each hero — see globals.css.
   const eyebrowsOff = chrome.show_eyebrows === "off";
   return (
-    <TriageProvider on={triageOn} text={triageOn ? triageText(home) : {}} examples={triageOn ? examples : []}>
+    <TriageProvider on={triageOn} text={triageOn ? triageText(home) : {}} examples={triageOn ? examples : []} clinics={triageOn ? activeClinics(thjonusta) : []}>
       <ScrollToTop />
       <Navbar content={chrome} locale={locale} />
       <main className={`flex-1${eyebrowsOff ? " eyebrows-off" : ""}`}>{children}</main>

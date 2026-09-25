@@ -268,24 +268,49 @@ SCOPE_REASONS = [
 # questionnaire. Plain enableWhen on a single question — no FHIRPath, no AND.
 SCOPE_OK = ("scope-gate", ["no"])
 
+# Heilsugæslur where the service is open. The service opens one at a time; only
+# people registered at one of these can use it. Keep in step with the "+" lines
+# of "Virk þjónusta" on /thjonusta (the website map and triage read those).
+ACTIVE_CLINICS = ["Heilsugæslan í Vestmannaeyjum"]
+
 
 def scope_page():
     """Out-of-scope screening: requests a written service can never resolve.
     One yes/no gate (same pattern as the red flags); on yes, the patient sees
     why and where to go instead, and every later page is hidden via SCOPE_OK."""
     items = [
-        display("scope-intro",
+        # Registration comes first. The scope question below only appears after
+        # a "yes" here, and every later page hangs on the scope answer — so a
+        # "no" here hides the rest of the questionnaire with single conditions.
+        q("reg-gate",
+          "Ertu skráð eða skráður á heilsugæslu þar sem þjónustan er í boði?",
+          "choice", required=True, options=YES_NO, ext=RADIO,
+          help_text="Þjónustan er enn sem komið er aðeins í boði fyrir fólk sem "
+                    "er skráð á: " + ", ".join(ACTIVE_CLINICS) + ". Ertu ekki "
+                    "viss? Þú sérð á hvaða heilsugæslu þú ert skráð eða skráður "
+                    "á Mínum síðum á island.is."),
+        gated(display("reg-stop",
+                      "⛔ Þjónustan er ekki enn opin á þinni heilsugæslu.\n\n"
+                      "Fjarlækningar opna fyrir þjónustuna eina heilsugæslu í "
+                      "einu og fleiri heilsugæslur á Suðurlandi bætast við á "
+                      "næstunni. Þangað til skaltu hafa samband við heilsugæsluna "
+                      "þína, eða hringja í 1700 ef þú þarft ráð strax.\n\n"
+                      "Þú þarft ekki að senda erindið. Ef þú merktir við þetta "
+                      "fyrir mistök, breyttu svarinu í „Já“ til að halda áfram."),
+              "reg-gate", "no"),
+        gated(display("scope-intro",
                 "Sumt er ekki hægt að leysa í skriflegri fjarþjónustu, sama "
                 "hversu vel því er lýst. Lestu listann og svaraðu svo "
                 "spurningunni fyrir neðan. Þannig sparar þú þér bið eftir "
                 "svari sem getur ekki hjálpað þér.\n\n"
                 + "\n".join("• " + line for _, line, _, _ in SCOPE_REASONS)),
-        q("scope-gate", "Á eitthvað af ofangreindu við um erindið þitt?",
+              "reg-gate", "yes"),
+        gated(q("scope-gate", "Á eitthvað af ofangreindu við um erindið þitt?",
           "choice", required=True, options=YES_NO, ext=RADIO,
           help_text="Viltu aðeins fá útskýringu á niðurstöðum sem þú hefur "
                     "þegar fengið, eða endurnýjun á lyfi sem þú sækir sjálf "
                     "eða sjálfur í apótek? Það getum við gert. Svaraðu þá "
-                    "„Nei“."),
+                    "„Nei“."), "reg-gate", "yes"),
         gated(display("scope-stop",
                       "⛔ Við getum ekki afgreitt þetta erindi í "
                       "fjarþjónustu.\n\n"

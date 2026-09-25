@@ -315,9 +315,92 @@
       ],
       "item": [
         {
+          "linkId": "reg-gate",
+          "type": "choice",
+          "text": "Ertu skráð eða skráður á heilsugæslu þar sem þjónustan er í boði?",
+          "required": true,
+          "answerOption": [
+            {
+              "valueCoding": {
+                "code": "yes",
+                "display": "Já"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "no",
+                "display": "Nei"
+              }
+            }
+          ],
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "code": "radio-button",
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "display": "Radio Button"
+                  }
+                ]
+              }
+            }
+          ],
+          "item": [
+            {
+              "linkId": "reg-gate-help",
+              "type": "display",
+              "text": "Þjónustan er enn sem komið er aðeins í boði fyrir fólk sem er skráð á: Heilsugæslan í Vestmannaeyjum. Ertu ekki viss? Þú sérð á hvaða heilsugæslu þú ert skráð eða skráður á Mínum síðum á island.is.",
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+                  "valueCodeableConcept": {
+                    "coding": [
+                      {
+                        "code": "help",
+                        "system": "http://hl7.org/fhir/questionnaire-item-control"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "linkId": "reg-stop",
+          "type": "display",
+          "text": "⛔ Þjónustan er ekki enn opin á þinni heilsugæslu.\n\nFjarlækningar opna fyrir þjónustuna eina heilsugæslu í einu og fleiri heilsugæslur á Suðurlandi bætast við á næstunni. Þangað til skaltu hafa samband við heilsugæsluna þína, eða hringja í 1700 ef þú þarft ráð strax.\n\nÞú þarft ekki að senda erindið. Ef þú merktir við þetta fyrir mistök, breyttu svarinu í „Já“ til að halda áfram.",
+          "enableWhen": [
+            {
+              "question": "reg-gate",
+              "operator": "=",
+              "answerCoding": {
+                "code": "no",
+                "display": "",
+                "system": ""
+              }
+            }
+          ],
+          "enableBehavior": "all"
+        },
+        {
           "linkId": "scope-intro",
           "type": "display",
-          "text": "Sumt er ekki hægt að leysa í skriflegri fjarþjónustu, sama hversu vel því er lýst. Lestu listann og svaraðu svo spurningunni fyrir neðan. Þannig sparar þú þér bið eftir svari sem getur ekki hjálpað þér.\n\n• Erindið snýst um einhvern annan en þig, til dæmis barnið þitt, maka eða foreldri.\n• Þú vilt fá beiðni um blóðprufu eða aðra rannsókn, til dæmis þvag- eða hormónamælingu.\n• Þú vilt fá beiðni um myndgreiningu (röntgen, tölvusneiðmynd, segulómun eða ómun) eða speglun (til dæmis maga- eða ristilspeglun).\n• Þú vilt fá tilvísun til sérfræðings vegna vandamáls sem þarf nánari sögu og skoðun.\n• Vandamálið þarf skoðun, til dæmis að hlusta á hjarta eða lungu, skoða eyru eða háls, þreifa á kvið eða meta áverka, hnút eða fyrirferð.\n• Þú vilt fá lyfseðil fyrir lyf sem þú færð skömmtuð í lyfjarúllu frá apóteki, eða breytingu á skömmtuninni."
+          "text": "Sumt er ekki hægt að leysa í skriflegri fjarþjónustu, sama hversu vel því er lýst. Lestu listann og svaraðu svo spurningunni fyrir neðan. Þannig sparar þú þér bið eftir svari sem getur ekki hjálpað þér.\n\n• Erindið snýst um einhvern annan en þig, til dæmis barnið þitt, maka eða foreldri.\n• Þú vilt fá beiðni um blóðprufu eða aðra rannsókn, til dæmis þvag- eða hormónamælingu.\n• Þú vilt fá beiðni um myndgreiningu (röntgen, tölvusneiðmynd, segulómun eða ómun) eða speglun (til dæmis maga- eða ristilspeglun).\n• Þú vilt fá tilvísun til sérfræðings vegna vandamáls sem þarf nánari sögu og skoðun.\n• Vandamálið þarf skoðun, til dæmis að hlusta á hjarta eða lungu, skoða eyru eða háls, þreifa á kvið eða meta áverka, hnút eða fyrirferð.\n• Þú vilt fá lyfseðil fyrir lyf sem þú færð skömmtuð í lyfjarúllu frá apóteki, eða breytingu á skömmtuninni.",
+          "enableWhen": [
+            {
+              "question": "reg-gate",
+              "operator": "=",
+              "answerCoding": {
+                "code": "yes",
+                "display": "",
+                "system": ""
+              }
+            }
+          ],
+          "enableBehavior": "all"
         },
         {
           "linkId": "scope-gate",
@@ -371,7 +454,19 @@
                 }
               ]
             }
-          ]
+          ],
+          "enableWhen": [
+            {
+              "question": "reg-gate",
+              "operator": "=",
+              "answerCoding": {
+                "code": "yes",
+                "display": "",
+                "system": ""
+              }
+            }
+          ],
+          "enableBehavior": "all"
         },
         {
           "linkId": "scope-stop",

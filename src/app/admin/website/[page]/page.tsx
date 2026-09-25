@@ -21,7 +21,11 @@ import IconPicker from "../IconPicker";
 import ErindiView, { erindiLines } from "@/app/(site)/(is)/thjonusta/[slug]/ErindiView";
 import { erindi as ERINDI_LIST, localizeErindi } from "@/erindi";
 import { ERINDI_WITH_MEDS, erindiKey, erindiTitle } from "@/lib/site-content/erindi-pages";
-import { erindiShown } from "@/lib/site-content/thjonusta";
+import { activeClinics, erindiShown, THJONUSTA_DEFAULTS_IS } from "@/lib/site-content/thjonusta";
+
+// The preview lists the open heilsugæslur from the built-in Þjónusta text; the
+// live site reads the published "+" lines instead.
+const PREVIEW_CLINICS = activeClinics(THJONUSTA_DEFAULTS_IS);
 import { ui } from "@/lib/site-content/ui-strings";
 import { pressItems } from "@/lib/site-content/fjolmidlar";
 import { SEO_LIMITS } from "@/lib/site-content/seo";
@@ -193,6 +197,7 @@ function TriagePreview({
             key={`${jump.id}-${jump.n}-${region}`}
             text={triageText(c)}
             examples={triageExamples(localizeErindi(locale))}
+            clinics={PREVIEW_CLINICS}
             initial={triagePath(jump.id, region)}
             focusOnMount={false}
             onScreen={setAt}
@@ -313,7 +318,7 @@ function Preview({
       // The preview follows the DRAFT triage switch, so the popup can be
       // tried here before "Birta" puts it on the live site.
       return (
-        <TriageProvider on={c.triage_on === "on"} text={triageText(c)} examples={triageExamples(localizeErindi(locale))}>
+        <TriageProvider on={c.triage_on === "on"} text={triageText(c)} examples={triageExamples(localizeErindi(locale))} clinics={PREVIEW_CLINICS}>
           <HomeView
             c={c}
             order={order}

@@ -62,11 +62,13 @@ export default function TriageDialog({
   onClose,
   text,
   examples,
+  clinics,
   variant = "portal",
 }: {
   onClose: () => void;
   text: LocaleContent;
   examples?: TriageExample[];
+  clinics?: string[];
   variant?: TriageVariant;
 }) {
   useEffect(() => {
@@ -96,7 +98,7 @@ export default function TriageDialog({
         onClick={(e) => e.stopPropagation()}
         className="flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-w-lg sm:rounded-3xl"
       >
-        <TriagePanel text={text} examples={examples} onClose={onClose} variant={variant} />
+        <TriagePanel text={text} examples={examples} clinics={clinics} onClose={onClose} variant={variant} />
       </div>
     </div>,
     document.body,
@@ -107,6 +109,7 @@ export default function TriageDialog({
 export function TriagePanel({
   text,
   examples = [],
+  clinics = [],
   onClose,
   initial,
   focusOnMount = true,
@@ -116,6 +119,8 @@ export function TriagePanel({
   text: LocaleContent;
   /** Services pictured under "Algengt vandamál" (see triageExamples). */
   examples?: TriageExample[];
+  /** Heilsugæslur where the service is open today (Þjónusta page, "+" lines). */
+  clinics?: string[];
   /** Omit for the inline CMS preview: no close button. */
   onClose?: () => void;
   initial?: TriageStep[];
@@ -231,6 +236,7 @@ export function TriagePanel({
                 ))}
               </ul>
             )}
+            {node.clinics && <ClinicList title={ui("clinics")} clinics={clinics} />}
             {node.search === "places" ? (
               <PlaceStep node={node} id={current.id} text={text} ui={ui} onPick={go} />
             ) : (
@@ -248,7 +254,7 @@ export function TriagePanel({
             )}
           </>
         ) : (
-          <Result id={current.id} node={node} why={why} text={text} steps={steps} headingRef={headingRef} />
+          <Result id={current.id} node={node} why={why} text={text} steps={steps} clinics={clinics} headingRef={headingRef} />
         )}
       </div>
 
@@ -366,6 +372,24 @@ function Options({
           <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-[var(--primary-dark)]" aria-hidden />
         </button>
       ))}
+    </div>
+  );
+}
+
+/** The heilsugæslur where the service is open, as a short list. */
+function ClinicList({ title, clinics }: { title: string; clinics: string[] }) {
+  if (!clinics.length) return null;
+  return (
+    <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
+      <p className="text-sm font-semibold text-emerald-900">{title}</p>
+      <ul className="mt-2 space-y-1">
+        {clinics.map((name) => (
+          <li key={name} className="flex items-center gap-2 text-[15px] text-slate-800">
+            <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-emerald-600" />
+            {name}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -526,6 +550,7 @@ function Result({
   why,
   text,
   steps,
+  clinics,
   headingRef,
 }: {
   id: string;
@@ -533,6 +558,7 @@ function Result({
   why?: string;
   text: LocaleContent;
   steps: TriageStep[];
+  clinics: string[];
   headingRef: React.RefObject<HTMLHeadingElement | null>;
 }) {
   const tone = TONE[node.service];
@@ -561,6 +587,7 @@ function Result({
           {why}
         </div>
       )}
+      {node.clinics && <ClinicList title={text[TK.ui("clinics")]} clinics={clinics} />}
       {pick && node.service === "fjar" && (
         <div className="mt-4 flex items-center gap-3 rounded-2xl border border-brand-cyan-muted bg-brand-cyan-subtle p-3.5">
           <p className="text-[15px] text-slate-800">

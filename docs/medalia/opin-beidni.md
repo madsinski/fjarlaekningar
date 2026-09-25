@@ -55,6 +55,13 @@ Meirihlutinn er einn smellur.
 
 `other` sleppir síðum 4–7 og fer beint í bakgrunn og frjálsan texta.
 
+**Síða 2b — skráning.** Fyrsta spurning síðunnar er hvort sjúklingur sé skráður á
+heilsugæslu þar sem þjónustan er opin (`reg-gate`; listinn er `ACTIVE_CLINICS` í
+`medalia_common.py`, nú aðeins Heilsugæslan í Vestmannaeyjum). Svari hann „Nei“ fær
+hann skýringu og leiðbeiningu, og spurningin um umfang (`scope-gate`) birtist ekki —
+síðurnar á eftir hanga á henni og faldar því líka. Uppfærðu `ACTIVE_CLINICS` um leið og
+„+“ línurnar á /thjonusta þegar ný heilsugæsla opnar.
+
 **Síða 2b — utan umfangs.** Erindi sem ekki er hægt að leysa skriflega: erindi
 fyrir barn eða annan einstakling, beiðni um blóðprufu eða aðra rannsókn, beiðni um
 myndgreiningu eða speglun, tilvísun sem þarf nánari sögu og skoðun, vandamál sem

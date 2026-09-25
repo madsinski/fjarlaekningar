@@ -674,3 +674,16 @@ export const THJONUSTA_DEFAULTS_EN: LocaleContent = {
   ...erindiCardDefaults("en"),
   meds_intro: "Here is a list of the main medications Fjarlækningar cannot renew:",
 };
+
+/**
+ * The heilsugæslur where the service is open today — the "+" lines of
+ * live_locations. Shared by the /thjonusta map and the triage popup, which
+ * only lets people through if they are registered at one of these.
+ */
+export const activeClinics = (c: LocaleContent | null | undefined): string[] =>
+  (c?.live_locations ?? "")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.startsWith("+"))
+    .map((l) => l.slice(1).split("|")[0].trim())
+    .filter(Boolean);
