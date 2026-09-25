@@ -180,7 +180,7 @@ export const TRIAGE: Record<string, TriageNode> = {
 
   need: {
     kind: "question",
-    question: { is: "Hvað þarftu helst?", en: "What do you need most?" },
+    question: { is: "Hvað þarftu hjálp með?", en: "What do you need help with?" },
     hint: { is: "Veldu það sem passar best.", en: "Pick the closest match." },
     options: [
       // Section 1: shown as its heading, followed by one button per service.
