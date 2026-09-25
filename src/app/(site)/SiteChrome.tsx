@@ -31,13 +31,15 @@ export default async function SiteChrome({
     // Which services are switched on — the triage pictures only those.
     getPageContent("thjonusta", locale),
   ]);
+  // Nothing of the popup is sent to the browser until it is switched on.
+  const triageOn = home.triage_on === "on";
   const examples = triageExamples(localizeErindi(locale), (slug) => erindiShown(thjonusta, slug));
   // Site-wide toggle for the small eyebrow pill labels above headings. A class
   // on <main> lets one setting hide every eyebrow (marked .site-eyebrow) across
   // all pages without threading a prop into each hero — see globals.css.
   const eyebrowsOff = chrome.show_eyebrows === "off";
   return (
-    <TriageProvider on={home.triage_on === "on"} text={triageText(home)} examples={examples}>
+    <TriageProvider on={triageOn} text={triageOn ? triageText(home) : {}} examples={triageOn ? examples : []}>
       <ScrollToTop />
       <Navbar content={chrome} locale={locale} />
       <main className={`flex-1${eyebrowsOff ? " eyebrows-off" : ""}`}>{children}</main>
