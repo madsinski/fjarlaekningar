@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { ui } from "@/lib/site-content/ui-strings";
 import type { Locale } from "@/lib/site-content/types";
+import { personSlug } from "@/lib/seo";
 
 // Members are now CMS-editable (see src/lib/site-content/um-okkur.ts): the page
 // resolves the numbered t{i}_* fields for the current locale and passes them in,
@@ -145,6 +146,8 @@ export default function TeamGrid({
         {members.map((member) => (
           <button
             key={`${member.name}-${member.photo}`}
+            // Anchor for "reviewed by" links on the erindi pages.
+            id={personSlug(member.name)}
             type="button"
             onClick={() => setActive(member)}
             title={tr.clickToEnlarge}
@@ -153,7 +156,7 @@ export default function TeamGrid({
               portraits
                 ? "group flex flex-col items-center rounded-2xl px-2 py-3 text-center hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
                 : "group bg-white rounded-2xl border border-slate-200 p-5 text-left hover:shadow-lg hover:border-brand-cyan transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
-            } ${itemClass}`}
+            } scroll-mt-28 ${itemClass}`}
           >
             <div
               className={

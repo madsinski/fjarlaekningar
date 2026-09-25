@@ -6,7 +6,7 @@ import { ERINDI_WITH_MEDS, erindiKey, erindiPagesLive, erindiTitle, erindiSeoTit
 import { erindiShown } from "@/lib/site-content/thjonusta";
 import { ui } from "@/lib/site-content/ui-strings";
 import type { Locale } from "@/lib/site-content/types";
-import { alternatesFor, SITE_URL } from "@/lib/seo";
+import { alternatesFor, personSlug, SITE_URL } from "@/lib/seo";
 import { localeHref } from "@/lib/locale";
 import ErindiView, { erindiLines } from "./ErindiView";
 
@@ -15,15 +15,6 @@ import ErindiView, { erindiLines } from "./ErindiView";
 //
 // These pages are DARK by default: until `pages_live` is switched on in the CMS
 // both URLs 404, so draft medical text is never public and never indexed.
-
-/** "Guðbjartur Ólafsson" → "gudbjartur-olafsson": a stable, ASCII @id per doctor. */
-function personSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/ð/g, "d").replace(/þ/g, "th").replace(/æ/g, "ae")
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-}
 
 export type Params = { params: Promise<{ slug: string }> };
 
@@ -138,6 +129,8 @@ export default async function ErindiPage({ params, locale }: Params & { locale: 
             // One stable id per doctor, so every page points at the same person.
             "@id": `${SITE_URL}/#${personSlug(review.name)}`,
             name: review.name,
+            // Their card on the team page (TeamGrid gives each card this id).
+            url: url(`/um-okkur#${personSlug(review.name)}`),
             ...(review.credentials ? { jobTitle: review.credentials } : {}),
             worksFor: { "@id": `${SITE_URL}/#organization` },
             knowsAbout: ["PrimaryCare", locale === "en" ? "Family medicine" : "Heimilislækningar"],

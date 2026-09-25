@@ -28,7 +28,18 @@ function withPathname(request: NextRequest) {
  * The matcher excludes Next internals (_next), API routes, and any path with
  * a file extension (assets), so only page navigations are gated.
  */
+/** The old production address. Only this exact host is redirected, so preview
+ *  deployments (other *.vercel.app hosts) keep working. */
+const OLD_HOST = "fjarlaekningar.vercel.app";
+
 export async function proxy(request: NextRequest) {
+  // One address for search engines: the old vercel.app copy of every page
+  // redirects permanently to the real domain instead of competing with it.
+  if (request.headers.get("host") === OLD_HOST) {
+    const { pathname, search } = request.nextUrl;
+    return NextResponse.redirect(`https://www.fjarlaekningar.is${pathname}${search}`, 308);
+  }
+
   // Gate state lives in the DB (toggleable from /admin/website) and falls back
   // to the COMING_SOON env var. Cached ~30s — see src/lib/site-gate.ts.
   if (!(await isGateEnabled())) {

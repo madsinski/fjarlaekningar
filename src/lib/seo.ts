@@ -164,3 +164,14 @@ export function organizationJsonLd(
     ],
   };
 }
+
+/** "Guðbjartur Ólafsson" → "gudbjartur-olafsson": one stable, ASCII id per
+ *  person — the team card's anchor on /um-okkur and the Person @id in JSON-LD,
+ *  so a reviewer byline, its markup and the profile all point at the same thing. */
+export function personSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/ð/g, "d").replace(/þ/g, "th").replace(/æ/g, "ae")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}

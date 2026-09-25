@@ -5,6 +5,7 @@
 import Link from "next/link";
 import { ArrowLeft, BadgeCheck } from "lucide-react";
 import { localeHref } from "@/lib/locale";
+import { personSlug } from "@/lib/seo";
 import { ui } from "@/lib/site-content/ui-strings";
 import { erindiReview } from "@/lib/site-content/erindi-pages";
 import MedsList, { type MedCategory } from "../MedsList";
@@ -365,7 +366,13 @@ export default function ErindiView({
           <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
           <span>{t.reviewedBy}</span>
           <span className="font-medium text-slate-700">
-            {review.name}
+            {linked ? (
+              <Link href={localeHref(`/um-okkur#${personSlug(review.name)}`, locale)} className="underline decoration-slate-300 underline-offset-2 hover:text-[var(--primary-dark)] hover:decoration-current">
+                {review.name}
+              </Link>
+            ) : (
+              review.name
+            )}
             {review.credentials ? `, ${review.credentials}` : ""}
           </span>
           <span aria-hidden>·</span>
