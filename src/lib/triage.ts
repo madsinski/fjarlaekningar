@@ -13,6 +13,9 @@
 // resolve in writing is routed away here, before sign-in, instead of after.
 
 import type { LocaleContent, SiteField } from "./site-content/types";
+import type { RegionId } from "./triage-places";
+
+export type { RegionId } from "./triage-places";
 
 export const PORTAL_URL = "https://app.medalia.is/fjarlaekningar-hsu";
 export const HEILSUVERA_URL = "https://www.heilsuvera.is";
@@ -28,13 +31,19 @@ export type TriageOption = {
   /** Shown on the result page: why this answer led here. */
   why?: L;
   /**
-   * Picture for the answer card. Existing site material only: `img` = one of
-   * the colourful service illustrations (/erindi-icons), used for answers
-   * Fjarlækningar handles; `icon` = a neutral line icon, for answers that lead
-   * to another service; `gallery` = the grid of service icons (TRIAGE_EXAMPLES).
-   * Colour means "we can help here", grey means "someone else".
+   * Picture for the answer card: `img` = an illustration (/erindi-icons for
+   * the services, /triage-icons for the rest, same flat style); `gallery` =
+   * the grid of service icons (TRIAGE_EXAMPLES).
    */
-  visual?: { img?: string; icon?: "test-tube" | "hand" | "message-square" | "phone"; gallery?: boolean };
+  visual?: { img?: string; gallery?: boolean };
+  /** Step "Hvað þarftu": 1 = the problems Fjarlækningar handles (the
+   *  gallery answer becomes one button per service), 2 = everything else. */
+  section?: 1 | 2;
+  /** On the location step: the region this answer stands for. */
+  region?: RegionId;
+  /** On a medication-search step: only offered after a search that came out
+   *  red (on the list) or not red (not on the list). Absent = always. */
+  when?: "red" | "not-red";
 };
 
 /** The services shown as pictures under "Algengt vandamál" (erindi slugs). */
@@ -51,6 +60,8 @@ export type TriageQuestion = {
   question: L;
   hint?: L;
   list?: L[];
+  /** A search box above the answers: place names, or the medication list. */
+  search?: "places" | "meds";
   options: TriageOption[];
 };
 
@@ -69,7 +80,12 @@ export type TriageResult = {
   title: L;
   body: L[];
   actions: TriageAction[];
+  /** Adds a "Þar sem þú ert" box with the advice for the chosen region. */
+  local?: LocalNeed;
 };
+
+/** What a result needs locally — the row of the region table below. */
+export type LocalNeed = "er" | "child-er" | "evening";
 
 export type TriageNode = TriageQuestion | TriageResult;
 
@@ -104,7 +120,23 @@ export const TRIAGE: Record<string, TriageNode> = {
     ],
     options: [
       { label: { is: "Já, eitthvað af þessu á við", en: "Yes, something here applies" }, next: "r-112" },
-      { label: { is: "Nei", en: "No" }, next: "who" },
+      { label: { is: "Nei", en: "No" }, next: "location" },
+    ],
+  },
+
+  // Where you are decides where you can go: the answer is carried to every
+  // result that sends people somewhere (see `local` and REGION_TEXT).
+  location: {
+    kind: "question",
+    question: { is: "Hvar ertu núna?", en: "Where are you right now?" },
+    hint: { is: "Það sem er í boði fer eftir því hvar á landinu þú ert. Skrifaðu nafn staðarins eða veldu svæði.",
+            en: "What is available depends on where in Iceland you are. Type the name of the place or pick an area." },
+    search: "places",
+    options: [
+      { label: { is: "Höfuðborgarsvæðið", en: "The capital area" }, next: "who", region: "capital" },
+      { label: { is: "Akureyri og nágrenni", en: "Akureyri and around" }, next: "who", region: "akureyri" },
+      { label: { is: "Selfoss og nágrenni", en: "Selfoss and around" }, next: "who", region: "selfoss" },
+      { label: { is: "Annars staðar á landinu", en: "Elsewhere in Iceland" }, next: "who", region: "rural" },
     ],
   },
 
@@ -124,44 +156,98 @@ export const TRIAGE: Record<string, TriageNode> = {
     question: { is: "Hvað þarftu helst?", en: "What do you need most?" },
     hint: { is: "Veldu það sem passar best.", en: "Pick the closest match." },
     options: [
-      { label: { is: "Algengt vandamál, til dæmis:", en: "A common problem, for example:" },
-        next: "r-fjar", visual: { gallery: true } },
+      // Section 1: shown as its heading, followed by one button per service.
+      { label: { is: "Eitthvað af eftirfarandi vandamálum", en: "One of these problems" },
+        next: "r-fjar", visual: { gallery: true }, section: 1 },
       { label: { is: "Endurnýjun á lyfi sem ég nota", en: "A renewal of a medicine I already take" }, next: "meds",
-        visual: { img: "/erindi-icons/lyfjuendurnyjun.png" } },
-      { label: { is: "Læknisvottorð", en: "A medical certificate" }, next: "r-fjar",
-        visual: { img: "/erindi-icons/laeknisvottord.png" } },
-      { label: { is: "Annað sem ég get lýst í texta eða með myndum", en: "Something else I can describe in writing or with photos" },
-        next: "r-fjar", visual: { img: "/erindi-icons/almenn-laeknisthjonusta.png" } },
+        visual: { img: "/erindi-icons/lyfjuendurnyjun.png" }, section: 1 },
+      { label: { is: "Læknisvottorð", en: "A medical certificate" }, next: "cert",
+        visual: { img: "/erindi-icons/laeknisvottord.png" }, section: 1 },
+      { label: { is: "Annað sem ég get lýst með texta eða myndum", en: "Something else I can describe in writing or with photos" },
+        next: "r-fjar", visual: { img: "/triage-icons/myndavel.svg" }, section: 1 },
       { label: { is: "Blóðprufa, myndgreining, speglun eða tilvísun",
                  en: "A blood test, imaging, endoscopy or a referral" },
-        next: "r-heilsugaesla", visual: { icon: "test-tube" },
+        next: "r-heilsugaesla", visual: { img: "/triage-icons/blodprufa.svg" }, section: 2,
         why: { is: "Læknirinn sem biður um rannsókn eða tilvísun þarf að byggja á viðtali og skoðun og fylgja niðurstöðunum eftir. Það er best gert þar sem þú ert í reglulegri eftirfylgd.",
                en: "The doctor who orders a test or referral needs a consultation and examination to base it on, and has to follow up the results. That is best done where you are followed up regularly." } },
       { label: { is: "Vandamál sem læknir þarf að skoða, til dæmis hlusta, þreifa eða skoða eyru",
                  en: "A problem a doctor needs to examine, e.g. listen to, feel or look in the ears" },
-        next: "exam-wait", visual: { icon: "hand" } },
+        next: "exam-wait", visual: { img: "/erindi-icons/almenn-laeknisthjonusta.png" }, section: 2 },
       { label: { is: "Eftirfylgd með langvinnum sjúkdómi eða skilaboð til heimilislæknis",
                  en: "Follow-up of a long-term condition, or a message to my GP" },
-        next: "r-heilsuvera", visual: { icon: "message-square" } },
+        next: "r-heilsuvera", visual: { img: "/triage-icons/kross.svg" }, section: 2 },
       { label: { is: "Ég veit ekki hversu alvarlegt þetta er", en: "I'm not sure how serious this is" }, next: "r-1700",
-        visual: { icon: "phone" } },
+        visual: { img: "/triage-icons/spurning.svg" }, section: 2 },
     ],
   },
 
   meds: {
     kind: "question",
-    question: { is: "Hvernig færðu lyfið?", en: "How do you get the medicine?" },
+    question: { is: "Hvað á við um lyfið?", en: "Which applies to the medicine?" },
     options: [
-      { label: { is: "Ég sæki það sjálf eða sjálfur í apótek", en: "I collect it from the pharmacy myself" }, next: "r-fjar" },
+      { label: { is: "Lyf sem ég tek að staðaldri og sæki sjálf eða sjálfur í apótek",
+                 en: "A medicine I take regularly and collect from the pharmacy myself" }, next: "meds-check" },
       { label: { is: "Skammtað í lyfjarúllu frá apóteki", en: "Dose-dispensed in a pharmacy roll (lyfjarúlla)" },
         next: "r-heilsugaesla",
         why: { is: "Skömmtuð lyf eru afgreidd eftir skömmtunarkorti sem læknirinn þinn heldur utan um. Til að öll lyfin skili sér rétt í rúlluna þarf sá læknir að gera breytingarnar.",
                en: "Dose-dispensed medicines follow a dispensing card kept by your own doctor. For everything to end up correctly in the roll, that doctor has to make the change." } },
-      { label: { is: "Það er ávana- eða fíknilyf, til dæmis sterkt verkjalyf, svefnlyf, róandi lyf eða ADHD-lyf",
-                 en: "It is a controlled drug, e.g. a strong painkiller, sleeping pill, sedative or ADHD medicine" },
+      { label: { is: "Ávana- eða fíknilyf, til dæmis sterkt verkjalyf, svefnlyf, róandi lyf eða ADHD-lyf",
+                 en: "A controlled drug, e.g. a strong painkiller, sleeping pill, sedative or ADHD medicine" },
+        next: "controlled" },
+      { label: { is: "Ég þarf fjölnota lyfseðil", en: "I need a repeat (multi-use) prescription" },
         next: "r-heilsugaesla",
-        why: { is: "Ávana- og fíknilyfjum er ekki ávísað í fjarþjónustu.",
-               en: "Controlled drugs are not prescribed through remote care." } },
+        why: { is: "Fjarlækningar gefa aðeins út einfalda lyfseðla, ekki fjölnota lyfseðla.",
+               en: "Fjarlækningar only issues single prescriptions, not repeat (multi-use) prescriptions." } },
+    ],
+  },
+
+  // The same medication list and search as the nurses' guide on /vinnustod
+  // (nurse-guide.ts, checkMedication), worded for patients.
+  "meds-check": {
+    kind: "question",
+    question: { is: "Getum við endurnýjað lyfið?", en: "Can we renew the medicine?" },
+    hint: { is: "Leitaðu að heiti lyfsins eða virka efninu til að sjá hvort það er á lista yfir lyf sem eru ekki endurnýjuð í fjarþjónustu.",
+            en: "Search for the name of the medicine or its active ingredient to see whether it is on the list of medicines that are not renewed remotely." },
+    search: "meds",
+    options: [
+      { label: { is: "Lyfið er ekki á listanum — halda áfram", en: "It is not on the list — continue" }, next: "r-fjar", when: "not-red" },
+      { label: { is: "Sjá hvert ég á að leita með þetta lyf", en: "See where to go with this medicine" }, next: "r-controlled", when: "red" },
+      { label: { is: "Ég finn ekki lyfið eða er ekki viss", en: "I can't find it or I'm not sure" }, next: "r-fjar",
+        why: { is: "Listinn er ekki tæmandi. Læknir metur alltaf hvort lyfið er endurnýjað og lætur þig vita ef þú þarft að leita annað.",
+               en: "The list is not exhaustive. A doctor always decides whether a medicine is renewed and tells you if you need to go elsewhere." } },
+    ],
+  },
+
+  controlled: {
+    kind: "question",
+    question: { is: "Ávana- og fíknilyf", en: "Controlled drugs" },
+    hint: { is: "Ávana- og fíknilyfjum er ekki ávísað í fjarþjónustu. Það á meðal annars við um sterk verkjalyf, róandi lyf, svefnlyf og ADHD-lyf. Leitaðu að lyfinu þínu til að vera viss.",
+            en: "Controlled drugs are not prescribed remotely. That includes strong painkillers, sedatives, sleeping pills and ADHD medicines. Search for your medicine to be sure." },
+    search: "meds",
+    options: [
+      { label: { is: "Sjá hvert ég á að leita", en: "See where to go" }, next: "r-controlled" },
+      { label: { is: "Lyfið er ekki á listanum — halda áfram", en: "It is not on the list — continue" }, next: "r-fjar", when: "not-red" },
+    ],
+  },
+
+  cert: {
+    kind: "question",
+    question: { is: "Hvers konar vottorð þarftu?", en: "What kind of certificate do you need?" },
+    hint: { is: "Ertu veik eða veikur núna og þarft vottorð? Farðu til baka og veldu vandamálið þitt. Læknirinn getur gefið vottorð með erindinu.",
+            en: "Ill right now and need a certificate? Go back and choose your problem. The doctor can issue a certificate with the request." },
+    options: [
+      { label: { is: "Veikindavottorð fyrir vinnu eða skóla, vegna erindis sem Fjarlækningar hafa afgreitt",
+                 en: "A sick note for work or school, for a request Fjarlækningar has handled" }, next: "r-fjar" },
+      { label: { is: "Veikindavottorð vegna veikinda sem Fjarlækningar hafa ekki metið",
+                 en: "A sick note for an illness Fjarlækningar has not assessed" },
+        next: "r-heilsugaesla",
+        why: { is: "Læknir getur aðeins vottað veikindi sem hann hefur sjálfur metið. Vottorð vegna annarra veikinda gefur heilsugæslan út.",
+               en: "A doctor can only certify an illness they have assessed. Certificates for other illnesses are issued by your health centre." } },
+      { label: { is: "Annað vottorð, til dæmis vegna ökuskírteinis, íþrótta, ferðalaga eða trygginga",
+                 en: "Another certificate, e.g. for a driving licence, sports, travel or insurance" },
+        next: "r-heilsugaesla",
+        why: { is: "Fjarlækningar gefa aðeins út veikindavottorð fyrir vinnu og skóla vegna erinda sem þær hafa afgreitt. Önnur vottorð gefur heilsugæslan út.",
+               en: "Fjarlækningar only issues sick notes for work and school for requests it has handled. Other certificates are issued by your health centre." } },
     ],
   },
 
@@ -229,11 +315,12 @@ export const TRIAGE: Record<string, TriageNode> = {
   "r-brada": {
     kind: "result",
     service: "brada",
+    local: "er",
     eyebrow: { is: "Slys og áverkar", en: "Accidents and injuries" },
-    title: { is: "Slysa- og bráðamóttaka", en: "Accident and emergency department" },
+    title: { is: "Bráðamóttaka", en: "Emergency department" },
     body: [
-      { is: "Áverkar sem þarf að skoða strax, til dæmis grunur um beinbrot, djúpur skurður eða höfuðhögg, eru metnir á slysa- og bráðamóttöku. Á höfuðborgarsvæðinu er hún á Landspítala í Fossvogi, annars staðar á næstu heilbrigðisstofnun.",
-        en: "Injuries that need an examination now, such as a suspected fracture, a deep cut or a blow to the head, are assessed at an accident and emergency department. In the capital area that is Landspítali in Fossvogur; elsewhere, the nearest healthcare institution." },
+      { is: "Áverkar sem þarf að skoða strax, til dæmis grunur um beinbrot, djúpur skurður eða höfuðhögg, eru metnir á bráðamóttöku.",
+        en: "Injuries that need an examination now, such as a suspected fracture, a deep cut or a blow to the head, are assessed at an emergency department." },
       { is: "Ertu ekki viss? Hringdu í 1700 og fáðu ráð um hvert þú átt að fara.",
         en: "Not sure? Call 1700 for advice on where to go." },
     ],
@@ -243,13 +330,12 @@ export const TRIAGE: Record<string, TriageNode> = {
   "r-1700": {
     kind: "result",
     service: "1700",
+    local: "evening",
     eyebrow: { is: "Ráðgjöf strax", en: "Advice now" },
     title: { is: "Hringdu í 1700", en: "Call 1700" },
     body: [
       { is: "Í síma 1700 færðu ráðgjöf hjúkrunarfræðings allan sólarhringinn og leiðbeiningar um hvert þú átt að leita.",
         en: "On 1700 a nurse gives advice around the clock and tells you where to go." },
-      { is: "Á höfuðborgarsvæðinu tekur Læknavaktin á móti fólki á kvöldin og um helgar, þegar heilsugæslan er lokuð.",
-        en: "In the capital area, Læknavaktin sees patients in the evenings and at weekends, when health centres are closed." },
     ],
     actions: [{ ...CALL_1700, primary: true }],
   },
@@ -285,11 +371,12 @@ export const TRIAGE: Record<string, TriageNode> = {
   "r-child-er": {
     kind: "result",
     service: "brada",
+    local: "child-er",
     eyebrow: { is: "Barn · þolir enga bið", en: "Child · cannot wait" },
-    title: { is: "Bráðamóttaka barna", en: "Children's emergency department" },
+    title: { is: "Farðu með barnið á bráðamóttöku", en: "Take the child to an emergency department" },
     body: [
-      { is: "Farðu með barnið á bráðamóttöku barna á Barnaspítala Hringsins, eða á næstu bráðamóttöku utan höfuðborgarsvæðisins. Hringdu í 112 ef barnið á erfitt með að anda, er meðvitundarlítið eða fær krampa.",
-        en: "Take the child to the children's emergency department at Barnaspítali Hringsins, or the nearest emergency department outside the capital area. Call 112 if the child is struggling to breathe, is hard to rouse or has a seizure." },
+      { is: "Hringdu í 112 ef barnið á erfitt með að anda, er meðvitundarlítið eða fær krampa.",
+        en: "Call 112 if the child is struggling to breathe, is hard to rouse or has a seizure." },
       { is: "Ertu ekki viss? Hringdu í 1700 og fáðu ráð um hvert þú átt að fara.",
         en: "Not sure? Call 1700 for advice on where to go." },
     ],
@@ -299,13 +386,12 @@ export const TRIAGE: Record<string, TriageNode> = {
   "r-child-1700": {
     kind: "result",
     service: "1700",
+    local: "evening",
     eyebrow: { is: "Barn · ráð í dag", en: "Child · advice today" },
     title: { is: "Hringdu í 1700", en: "Call 1700" },
     body: [
       { is: "Í síma 1700 færðu ráðgjöf hjúkrunarfræðings um barnið allan sólarhringinn, og leiðbeiningar um hvort og hvert þú átt að fara með það.",
         en: "On 1700 a nurse gives advice about the child around the clock, and tells you whether and where to take them." },
-      { is: "Á höfuðborgarsvæðinu tekur Læknavaktin á móti börnum á kvöldin og um helgar, þegar heilsugæslan er lokuð.",
-        en: "In the capital area, Læknavaktin sees children in the evenings and at weekends, when health centres are closed." },
     ],
     actions: [{ ...CALL_1700, primary: true }],
   },
@@ -341,15 +427,30 @@ export const TRIAGE: Record<string, TriageNode> = {
   "r-other-er": {
     kind: "result",
     service: "brada",
+    local: "er",
     eyebrow: { is: "Þolir enga bið", en: "Cannot wait" },
     title: { is: "Bráðamóttaka eða 112", en: "Emergency department or 112" },
     body: [
-      { is: "Farðu með viðkomandi á næstu bráðamóttöku. Á höfuðborgarsvæðinu er hún á Landspítala í Fossvogi. Hringdu í 112 ef ástandið er alvarlegt eða ef þú kemst ekki með viðkomandi á staðinn.",
-        en: "Take them to the nearest emergency department; in the capital area that is Landspítali in Fossvogur. Call 112 if it is serious or you cannot get them there yourself." },
+      { is: "Hringdu í 112 ef ástandið er alvarlegt eða ef þú kemst ekki með viðkomandi á staðinn.",
+        en: "Call 112 if it is serious or you cannot get them there yourself." },
       { is: "Ertu ekki viss? Hringdu í 1700 og fáðu ráð um hvert þú átt að fara.",
         en: "Not sure? Call 1700 for advice on where to go." },
     ],
     actions: [{ ...CALL_112, primary: true }, CALL_1700],
+  },
+
+  "r-controlled": {
+    kind: "result",
+    service: "heilsugaesla",
+    eyebrow: { is: "Lyf sem eru ekki endurnýjuð hér", en: "Medicines not renewed here" },
+    title: { is: "Læknirinn sem ávísar lyfinu", en: "The doctor who prescribes it" },
+    body: [
+      { is: "Ávana- og fíknilyf og önnur lyf á listanum eru ekki endurnýjuð í fjarþjónustu, því þau þurfa eftirlit hjá lækni sem þekkir meðferðina þína.",
+        en: "Controlled drugs and the other medicines on the list are not renewed remotely, because they need follow-up by a doctor who knows your treatment." },
+      { is: "Hafðu samband við lækninn sem ávísaði lyfinu síðast eða við heilsugæsluna þína. Á Mínum síðum á Heilsuveru getur þú sent heilsugæslunni skilaboð.",
+        en: "Contact the doctor who last prescribed it, or your health centre. Under My pages on Heilsuvera you can message your health centre." },
+    ],
+    actions: [{ ...OPEN_HEILSUVERA, primary: true }, CALL_1700],
   },
 
   "r-other-hg": {
@@ -381,6 +482,45 @@ export const TRIAGE: Record<string, TriageNode> = {
   },
 };
 
+// ------------------------------------------------------------ where you are
+//
+// The "Þar sem þú ert" box on results with a `local` need. One cell per region
+// and need; every cell is a CMS field (group "Leiðarvísir — staðsetning").
+export const REGION_TEXT: Record<RegionId, Record<LocalNeed, L>> = {
+  capital: {
+    er: { is: "Bráðamóttaka Landspítala í Fossvogi er opin allan sólarhringinn.",
+          en: "The Landspítali emergency department in Fossvogur is open around the clock." },
+    "child-er": { is: "Bráðamóttaka barna á Barnaspítala Hringsins við Hringbraut er opin allan sólarhringinn.",
+                  en: "The children's emergency department at Barnaspítali Hringsins on Hringbraut is open around the clock." },
+    evening: { is: "Læknavaktin tekur á móti fólki á kvöldin og um helgar, þegar heilsugæslan er lokuð. Á dagtíma virka daga sinnir heilsugæslan þín erindinu.",
+               en: "Læknavaktin sees patients in the evenings and at weekends, when health centres are closed. On weekdays, your health centre handles it." },
+  },
+  akureyri: {
+    er: { is: "Bráðamóttaka Sjúkrahússins á Akureyri er opin allan sólarhringinn og þangað má koma án tímapöntunar.",
+          en: "The emergency department at Sjúkrahúsið á Akureyri is open around the clock and takes walk-ins." },
+    "child-er": { is: "Farðu með barnið á bráðamóttöku Sjúkrahússins á Akureyri. Hún er opin allan sólarhringinn.",
+                  en: "Take the child to the emergency department at Sjúkrahúsið á Akureyri. It is open around the clock." },
+    evening: { is: "Utan opnunartíma heilsugæslunnar gefur 1700 þér samband við vaktþjónustu heilsugæslunnar. Á dagtíma virka daga sinnir heilsugæslan þín erindinu.",
+               en: "Outside health-centre hours, 1700 puts you through to the health centre's on-call service. On weekdays, your health centre handles it." },
+  },
+  selfoss: {
+    er: { is: "Bráðamóttaka Heilbrigðisstofnunar Suðurlands á Selfossi er opin allan sólarhringinn og þangað má koma án tímapöntunar.",
+          en: "The HSU emergency department in Selfoss is open around the clock and takes walk-ins." },
+    "child-er": { is: "Farðu með barnið á bráðamóttöku Heilbrigðisstofnunar Suðurlands á Selfossi. Hún er opin allan sólarhringinn.",
+                  en: "Take the child to the HSU emergency department in Selfoss. It is open around the clock." },
+    evening: { is: "Utan opnunartíma heilsugæslunnar gefur 1700 þér samband við vaktþjónustu heilsugæslunnar. Á dagtíma virka daga sinnir heilsugæslan þín erindinu.",
+               en: "Outside health-centre hours, 1700 puts you through to the health centre's on-call service. On weekdays, your health centre handles it." },
+  },
+  rural: {
+    er: { is: "Hringdu í 1700. Þaðan færðu samband við lækni á vakt á þínu svæði og leiðbeiningar um hvert þú átt að fara. Hringdu í 112 ef ástandið er alvarlegt.",
+          en: "Call 1700 to reach the doctor on call in your area and get directions on where to go. Call 112 if it is serious." },
+    "child-er": { is: "Hringdu í 1700. Þaðan færðu samband við lækni á vakt á þínu svæði og leiðbeiningar um hvert þú átt að fara með barnið. Hringdu í 112 ef ástandið er alvarlegt.",
+                  en: "Call 1700 to reach the doctor on call in your area and get directions on where to take the child. Call 112 if it is serious." },
+    evening: { is: "Utan dagvinnutíma sinnir vaktþjónusta heilsugæslunnar á þínu svæði bráðum erindum og 1700 gefur þér samband. Á dagtíma virka daga sinnir heilsugæslan þín erindinu.",
+               en: "Outside working hours, the health centre's on-call service in your area handles urgent matters, and 1700 puts you through. On weekdays, your health centre handles it." },
+  },
+};
+
 // ------------------------------------------------------------ CMS
 //
 // Every patient-facing string above is a field on the HOME page in the CMS
@@ -393,30 +533,60 @@ export const TRIAGE: Record<string, TriageNode> = {
 
 const UI_TEXT: Record<string, L> = {
   title: { is: "Hvert á ég að leita?", en: "Where should I go?" },
-  intro: { is: "Nokkrar spurningar vísa þér á þá þjónustu sem hentar best. Það tekur innan við mínútu.",
-           en: "A few questions point you to the service that fits best. It takes less than a minute." },
+  title_portal: { is: "Áður en þú opnar sjúklingagáttina", en: "Before you open the patient portal" },
+  title_check: { is: "Hentar fjarlækningaþjónusta mér?", en: "Is remote care right for me?" },
+  intro_heading: { is: "Af hverju þessar spurningar?", en: "Why these questions?" },
+  intro: { is: "Fjarlækningar henta mörgum algengum erindum, en ekki öllum. Svaraðu nokkrum spurningum og við vísum þér á réttan stað, hvort sem það er hingað eða annað. Það tekur innan við mínútu.",
+           en: "Remote care suits many common problems, but not all. Answer a few questions and we will point you to the right place, whether that is here or elsewhere. It takes less than a minute." },
+  local: { is: "Þar sem þú ert", en: "Where you are" },
+  need_more: { is: "Eða eitthvað af þessu", en: "Or one of these" },
+  pick_hint: { is: "Í sjúklingagáttinni velur þú", en: "In the patient portal, choose" },
+  place_placeholder: { is: "Skrifaðu nafn staðarins, til dæmis Hafnarfjörður eða Höfn",
+                       en: "Type the place name, e.g. Hafnarfjörður or Höfn" },
+  place_nomatch: { is: "Finnurðu ekki staðinn? Veldu „Annars staðar á landinu“.",
+                   en: "Can't find it? Choose “Elsewhere in Iceland”." },
+  med_placeholder: { is: "Heiti lyfs eða virkt efni, til dæmis Stesolid eða zópíklón",
+                     en: "Medicine name or active ingredient, e.g. Stesolid or zopiclone" },
+  med_red_title: { is: "Þetta lyf endurnýjum við ekki", en: "We do not renew this medicine" },
+  med_red_body: { is: "Það er á lista yfir lyf sem eru ekki endurnýjuð í fjarþjónustu.",
+                  en: "It is on the list of medicines that are not renewed remotely." },
+  med_green_title: { is: "Ekki á listanum — getur hentað lyfjaendurnýjun", en: "Not on the list — may suit a renewal" },
+  med_green_body: { is: "Á við lyf sem þú tekur að staðaldri, og aðeins einfaldan lyfseðil. Listinn er ekki tæmandi og læknir metur alltaf hvort lyfið er endurnýjað.",
+                    en: "For medicines you take regularly, and a single prescription only. The list is not exhaustive and a doctor always decides." },
   step: { is: "Skref", en: "Step" },
   back: { is: "Til baka", en: "Back" },
   restart: { is: "Byrja aftur", en: "Start again" },
   close: { is: "Loka", en: "Close" },
-  skip: { is: "Beint í sjúklingagátt", en: "Straight to the patient portal" },
+  skip: { is: "Ég veit hvað ég þarf — beint í sjúklingagátt", en: "I know what I need — straight to the portal" },
   why: { is: "Hvers vegna?", en: "Why?" },
   disclaimer: { is: "Leiðbeining um þjónustuleiðir, ekki læknisfræðilegt mat.",
                 en: "Guidance on where to go, not a medical assessment." },
 };
 
 const UI_LABELS: Record<string, string> = {
-  title: "Titill leiðarvísis", intro: "Inngangur", step: "Orðið „Skref“ (númer bætist við)",
+  title: "Titill (almennur)", title_portal: "Titill — opnað úr „Opna sjúklingagátt“",
+  title_check: "Titill — opnað úr „Hentar fjarlækningaþjónusta mér?“", intro_heading: "Inngangur — fyrirsögn",
+  intro: "Inngangur — texti", local: "Fyrirsögn staðbundinna ráða (staður bætist við)",
+  need_more: "Skref „Hvað þarftu“ — fyrirsögn seinni hluta",
+  pick_hint: "Niðurstaða Fjarlækninga — „velur þú“ (heiti erindis bætist við)",
+  place_placeholder: "Staðarleit — texti í reit", place_nomatch: "Staðarleit — ef ekkert finnst",
+  med_placeholder: "Lyfjaleit — texti í reit", med_red_title: "Lyfjaleit — á listanum: fyrirsögn",
+  med_red_body: "Lyfjaleit — á listanum: texti", med_green_title: "Lyfjaleit — ekki á listanum: fyrirsögn",
+  med_green_body: "Lyfjaleit — ekki á listanum: texti", step: "Orðið „Skref“ (númer bætist við)",
   back: "Hnappur: til baka", restart: "Hnappur: byrja aftur", close: "Hnappur: loka (skjálesari)",
   skip: "Tengill: beint í sjúklingagátt", why: "Merki við skýringu", disclaimer: "Fyrirvari neðst",
 };
 
 const NODE_NAMES: Record<string, string> = {
   emergency: "Skref 1 · Bráð einkenni",
-  who: "Skref 2 · Fyrir hvern",
-  need: "Skref 3 · Hvað þarftu",
-  meds: "Skref 3a · Lyf",
-  "exam-wait": "Skref 3b · Getur beðið?",
+  location: "Skref 2 · Hvar ertu",
+  who: "Skref 3 · Fyrir hvern",
+  need: "Skref 4 · Hvað þarftu",
+  meds: "Lyf · Hvað á við",
+  "meds-check": "Lyf · Lyfjaleit",
+  controlled: "Lyf · Ávana- og fíknilyf",
+  cert: "Vottorð · Hvers konar",
+  "exam-wait": "Skoðun · Getur beðið?",
   "r-112": "Niðurstaða · 112",
   "r-brada": "Niðurstaða · Bráðamóttaka",
   "r-1700": "Niðurstaða · 1700",
@@ -431,6 +601,7 @@ const NODE_NAMES: Record<string, string> = {
   "r-other-adult": "Niðurstaða · Annar fullorðinn, sjúklingagátt",
   "r-other-er": "Niðurstaða · Annar fullorðinn, bráðamóttaka",
   "r-other-hg": "Niðurstaða · Annar fullorðinn, heilsugæsla",
+  "r-controlled": "Niðurstaða · Lyf sem eru ekki endurnýjuð",
   "r-fjar": "Niðurstaða · Fjarlækningar",
 };
 
@@ -454,6 +625,7 @@ export const TK = {
   eyebrow: (node: string) => key(node, "eyebrow"),
   title: (node: string) => key(node, "title"),
   body: (node: string) => key(node, "body"),
+  local: (region: RegionId, need: LocalNeed) => key("loc", region, need),
 };
 
 const G_UI = "Leiðarvísir — almennur texti";
@@ -512,6 +684,20 @@ for (const [id, node] of Object.entries(TRIAGE)) {
   }
 }
 
+const G_L = "Leiðarvísir — staðsetning";
+const REGION_NAMES: Record<RegionId, string> = {
+  capital: "Höfuðborgarsvæðið", akureyri: "Akureyri", selfoss: "Selfoss", rural: "Annars staðar",
+};
+const NEED_NAMES: Record<LocalNeed, string> = {
+  er: "bráðamóttaka", "child-er": "bráðamóttaka fyrir barn", evening: "kvöld, helgar og dagtími",
+};
+for (const [region, needs] of Object.entries(REGION_TEXT) as [RegionId, Record<LocalNeed, L>][]) {
+  for (const [need, text] of Object.entries(needs) as [LocalNeed, L][]) {
+    add({ key: TK.local(region, need), label: `${REGION_NAMES[region]} — ${NEED_NAMES[need]}`, group: G_L, type: "textarea",
+          ...(region === "capital" && need === "er" ? { help: "Birtist í reitnum „Þar sem þú ert“ á niðurstöðum sem vísa fólki á staðinn, eftir því hvaða svæði var valið." } : {}) }, text);
+  }
+}
+
 /** The popup's strings out of a page's resolved content — only these travel
  *  to the browser, not the whole home page. */
 export function triageText(c: LocaleContent): LocaleContent {
@@ -519,18 +705,22 @@ export function triageText(c: LocaleContent): LocaleContent {
 }
 
 /** One screen in the popup; `via` = the node and option index that led here
- *  (for the "why" note on results). */
-export type TriageStep = { id: string; via?: { from: string; index: number } };
+ *  (for the "why" note on results); `place` = a place picked in the search;
+ *  `pick` = the service button pressed on "Hvað þarftu" (named on the result). */
+export type TriageStep = { id: string; via?: { from: string; index: number }; place?: string; pick?: string };
 
 /** Shortest click path from the start to `target` — used by the CMS preview to
- *  jump straight to any screen while still showing the note that leads there. */
-export function triagePath(target: string): TriageStep[] {
+ *  jump straight to any screen while still showing the note that leads there.
+ *  `regionIndex` picks the answer on the location step (default: first). */
+export function triagePath(target: string, regionIndex = 0): TriageStep[] {
   const queue: TriageStep[][] = [[{ id: TRIAGE_START }]];
   const seen = new Set([TRIAGE_START]);
   while (queue.length) {
     const path = queue.shift()!;
     const last = path[path.length - 1];
-    if (last.id === target) return path;
+    if (last.id === target) {
+      return path.map((st) => (st.via?.from === "location" ? { ...st, via: { from: "location", index: regionIndex } } : st));
+    }
     const node = TRIAGE[last.id];
     if (node?.kind !== "question") continue;
     node.options.forEach((o, index) => {
@@ -540,6 +730,22 @@ export function triagePath(target: string): TriageStep[] {
     });
   }
   return [{ id: TRIAGE_START }];
+}
+
+/** The region (and place name, if typed) chosen on the location step. */
+export function triageWhere(steps: TriageStep[]): { region?: RegionId; label?: string; place?: string } {
+  const st = steps.find((x) => x.via?.from === "location");
+  const node = TRIAGE.location;
+  if (!st?.via || node.kind !== "question") return {};
+  return { region: node.options[st.via.index]?.region, place: st.place };
+}
+
+/** Longest number of further answers from `id` to a result — for the
+ *  progress bar, so it never runs backwards. */
+export function triageRemaining(id: string): number {
+  const node = TRIAGE[id];
+  if (!node || node.kind === "result") return 0;
+  return 1 + Math.max(...node.options.map((o) => triageRemaining(o.next)));
 }
 
 /** Human names of every screen, in tree order (CMS editor labels + preview). */

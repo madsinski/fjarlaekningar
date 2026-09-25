@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
-import TriageDialog from "./TriageDialog";
+import dynamic from "next/dynamic";
+import type { TriageVariant } from "./TriageDialog";
 import { PORTAL_URL, type TriageExample } from "@/lib/triage";
 import type { LocaleContent } from "@/lib/site-content/types";
 
@@ -9,6 +10,10 @@ import type { LocaleContent } from "@/lib/site-content/types";
 // language — see triageText()). OFF unless a provider says otherwise, so any
 // button rendered outside SiteChrome (or before the CMS switch is published)
 // is just the ordinary portal link.
+// Loaded on first click, not with the page: it carries the medication list and
+// place search, which no visitor needs until they open the popup.
+const TriageDialog = dynamic(() => import("./TriageDialog"), { ssr: false });
+
 type TriageState = { on: boolean; text: LocaleContent; examples: TriageExample[] };
 const Triage = createContext<TriageState>({ on: false, text: {}, examples: [] });
 
@@ -25,9 +30,12 @@ export function TriageProvider({ on, text, examples, children }: TriageState & {
 export default function TriageTrigger({
   className,
   children,
+  variant = "portal",
 }: {
   className?: string;
   children: ReactNode;
+  /** "check" = the "Hentar fjarlækningaþjónusta mér?" button: other title. */
+  variant?: TriageVariant;
 }) {
   const { on: live, text, examples } = useContext(Triage);
   const [open, setOpen] = useState(false);
@@ -50,7 +58,7 @@ export default function TriageTrigger({
       >
         {children}
       </a>
-      {open && <TriageDialog onClose={close} text={text} examples={examples} />}
+      {open && <TriageDialog onClose={close} text={text} examples={examples} variant={variant} />}
     </>
   );
 }

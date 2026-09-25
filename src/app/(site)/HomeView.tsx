@@ -439,7 +439,7 @@ export default function HomeView({
                   is the right place at all. Same popup as the portal button;
                   only when the triage is switched on in the CMS. */}
               {c.triage_on === "on" && c.triage_hero_cta && (
-                <TriageTrigger className="inline-flex flex-col items-center justify-center whitespace-nowrap rounded-full border-2 border-[var(--primary-dark)] bg-white/80 px-8 py-2 text-center text-[var(--primary-dark)] transition-colors hover:bg-brand-cyan-subtle">
+                <TriageTrigger variant="check" className="inline-flex flex-col items-center justify-center whitespace-nowrap rounded-full border-2 border-[var(--primary-dark)] bg-white/80 px-8 py-2 text-center text-[var(--primary-dark)] transition-colors hover:bg-brand-cyan-subtle">
                   <span className="font-semibold leading-tight">{c.triage_hero_cta}</span>
                   {c.triage_hero_cta_sub && (
                     <span className="mt-0.5 text-xs font-normal leading-tight text-slate-600">{c.triage_hero_cta_sub}</span>

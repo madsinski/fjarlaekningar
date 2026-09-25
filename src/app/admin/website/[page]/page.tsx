@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 import HomeView from "@/app/(site)/HomeView";
 import { TriageProvider } from "@/app/components/TriageTrigger";
 import { TriagePanel } from "@/app/components/TriageDialog";
-import { TRIAGE_SCREENS, TRIAGE_START, triageExamples, triagePath, triageText } from "@/lib/triage";
+import { TK, TRIAGE, TRIAGE_SCREENS, TRIAGE_START, triageExamples, triagePath, triageText } from "@/lib/triage";
 import ThjonustaView from "@/app/(site)/(is)/thjonusta/ThjonustaView";
 import UmOkkurView from "@/app/(site)/(is)/um-okkur/UmOkkurView";
 import HafaSambandView from "@/app/(site)/(is)/hafa-samband/HafaSambandView";
@@ -141,7 +141,12 @@ function TriagePreview({
   onJump: (id: string) => void;
 }) {
   const [at, setAt] = useState(jump.id);
+  // Which region the preview pretends you picked on "Hvar ertu núna?", so the
+  // "Þar sem þú ert" box of every region can be checked.
+  const [region, setRegion] = useState(0);
   const live = c.triage_on === "on";
+  const location = TRIAGE.location;
+  const regions = location.kind === "question" ? location.options : [];
   return (
     <div className="min-h-full bg-slate-100">
       <div className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur">
@@ -150,6 +155,20 @@ function TriagePreview({
             ? "Kveikt í drögum — fer á vefinn þegar smellt er á „Birta“."
             : "Falið í drögum — forskoðunin sýnir leiðarvísinn samt, en hann fer ekki á vefinn fyrr en kveikt er á honum og smellt á „Birta“."}
         </p>
+        <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+          <span className="font-medium text-slate-500">Svæði í forskoðun:</span>
+          {regions.map((o, i) => (
+            <button
+              key={o.region}
+              type="button"
+              aria-pressed={i === region}
+              onClick={() => setRegion(i)}
+              className={`rounded-full border px-2 py-0.5 ${i === region ? "border-slate-700 bg-slate-700 text-white" : "border-slate-200 bg-white text-slate-600"}`}
+            >
+              {c[TK.option("location", i)] || o.region}
+            </button>
+          ))}
+        </div>
         <div className="flex flex-wrap gap-1.5">
           {TRIAGE_SCREENS.map((sc) => (
             <button
@@ -171,10 +190,10 @@ function TriagePreview({
       <div className="flex justify-center bg-slate-900/40 p-6">
         <div className="flex w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
           <TriagePanel
-            key={`${jump.id}-${jump.n}`}
+            key={`${jump.id}-${jump.n}-${region}`}
             text={triageText(c)}
             examples={triageExamples(localizeErindi(locale))}
-            initial={triagePath(jump.id)}
+            initial={triagePath(jump.id, region)}
             focusOnMount={false}
             onScreen={setAt}
           />
