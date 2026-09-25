@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, Eye, EyeOff, Globe2, Languages, Send, Check, ExternalLink, ArrowUp, ArrowDown, GripVertical, RotateCcw, Copy, Trash2, Plus, ChevronDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import HomeView from "@/app/(site)/HomeView";
+import { TriageProvider } from "@/app/components/TriageTrigger";
 import ThjonustaView from "@/app/(site)/(is)/thjonusta/ThjonustaView";
 import UmOkkurView from "@/app/(site)/(is)/um-okkur/UmOkkurView";
 import HafaSambandView from "@/app/(site)/(is)/hafa-samband/HafaSambandView";
@@ -227,15 +228,19 @@ function Preview({
 }) {
   switch (pageKey) {
     case "home":
+      // The preview follows the DRAFT triage switch, so the popup can be
+      // tried here before "Birta" puts it on the live site.
       return (
-        <HomeView
-          c={c}
-          order={order}
-          locale={locale}
-          press={pressItems(sibling ?? {})}
-          pressHeading={sibling?.front_heading}
-          pressLink={sibling?.front_link}
-        />
+        <TriageProvider on={c.triage_on === "on"}>
+          <HomeView
+            c={c}
+            order={order}
+            locale={locale}
+            press={pressItems(sibling ?? {})}
+            pressHeading={sibling?.front_heading}
+            pressLink={sibling?.front_link}
+          />
+        </TriageProvider>
       );
     case "thjonusta":
       return <ThjonustaView c={c} order={order} locale={locale} />;

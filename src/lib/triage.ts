@@ -273,7 +273,6 @@ export const TRIAGE: Record<string, TriageNode> = {
 export const TRIAGE_UI = {
   is: {
     title: "Hvert á ég að leita?",
-    heroLink: "Ekki viss hvert þú átt að leita? Svaraðu nokkrum spurningum",
     intro: "Nokkrar spurningar vísa þér á þá þjónustu sem hentar best. Það tekur innan við mínútu.",
     back: "Til baka",
     restart: "Byrja aftur",
@@ -285,7 +284,6 @@ export const TRIAGE_UI = {
   },
   en: {
     title: "Where should I go?",
-    heroLink: "Not sure where to go? Answer a few questions",
     intro: "A few questions point you to the service that fits best. It takes less than a minute.",
     back: "Back",
     restart: "Start again",

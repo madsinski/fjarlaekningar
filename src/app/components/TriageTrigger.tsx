@@ -1,11 +1,24 @@
 "use client";
 
-import { useCallback, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import TriageDialog from "./TriageDialog";
 import { PORTAL_URL } from "@/lib/triage";
 import { pathLocale } from "@/lib/locale";
 import type { Locale } from "@/lib/site-content/types";
+
+// Whether the triage is live. OFF unless a provider says otherwise, so any
+// button rendered outside SiteChrome (or before the CMS switch is published)
+// is just the ordinary portal link.
+const TriageLive = createContext(false);
+
+export function TriageProvider({ on, children }: { on: boolean; children: ReactNode }) {
+  return <TriageLive.Provider value={on}>{children}</TriageLive.Provider>;
+}
+
+export function useTriageLive() {
+  return useContext(TriageLive);
+}
 
 /**
  * A real link to the patient portal that opens the "Hvert á ég að leita?"
@@ -22,6 +35,7 @@ export default function TriageTrigger({
   children: ReactNode;
   locale?: Locale;
 }) {
+  const live = useTriageLive();
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const lang = locale ?? pathLocale(pathname ?? "/") ?? "is";
@@ -33,9 +47,10 @@ export default function TriageTrigger({
         href={PORTAL_URL}
         target="_blank"
         rel="noopener noreferrer"
-        aria-haspopup="dialog"
+        aria-haspopup={live ? "dialog" : undefined}
         className={className}
         onClick={(e) => {
+          if (!live) return;
           if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
           e.preventDefault();
           setOpen(true);

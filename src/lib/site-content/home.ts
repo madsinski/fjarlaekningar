@@ -44,6 +44,22 @@ export const HOME_FIELDS: SiteField[] = [
   { key: "hero_cta_primary", label: "Aðalhnappur", group: "Hetjusvæði", type: "text" },
   { key: "hero_cta_secondary", label: "Aukahnappur", group: "Hetjusvæði", type: "text" },
 
+  // "Hvert á ég að leita?" — the triage popup behind every portal button
+  // (src/lib/triage.ts). Read site-wide from the PUBLISHED home content by
+  // SiteChrome, so it goes live on every page only when home is published.
+  {
+    key: "triage_on",
+    label: "Leiðarvísir „Hvert á ég að leita?“",
+    group: "Leiðarvísir",
+    type: "choice",
+    help: "Þegar kveikt er opnar hver „Opna sjúklingagátt“-hnappur á vefnum stuttan leiðarvísi sem vísar á 112, bráðamóttöku, 1700, heilsugæslu, Heilsuveru eða Fjarlækningar áður en farið er í gáttina. Forskoðunin hér sýnir leiðarvísinn um leið og kveikt er, en á vefnum fer hann fyrst í loftið þegar smellt er á „Birta“.",
+    options: [
+      { value: "off", label: "Falið (drög)", hint: "Hnapparnir opna sjúklingagáttina beint, eins og áður." },
+      { value: "on", label: "Birt", hint: "Hnapparnir opna leiðarvísinn fyrst." },
+    ],
+  },
+  { key: "triage_hero_link", label: "Tengill undir hnöppum í hetjusvæði", group: "Leiðarvísir", type: "text" },
+
   // Services
   { key: "services_heading", label: "Fyrirsögn", group: "Þjónusta", type: "heading" },
   { key: "services_body", label: "Texti", group: "Þjónusta", type: "textarea" },
@@ -136,6 +152,8 @@ export const HOME_DEFAULTS_IS: LocaleContent = {
   hero_chip3: "Óháð staðsetningu",
   hero_cta_primary: "Opna sjúklingagátt",
   hero_cta_secondary: "Sjá þjónustu",
+  triage_on: "off",
+  triage_hero_link: "Ekki viss hvert þú átt að leita? Svaraðu nokkrum spurningum",
 
   services_heading: "Algeng erindi leyst innan tveggja klukkustunda",
   services_body:
@@ -203,6 +221,7 @@ export const HOME_DEFAULTS_IS: LocaleContent = {
 export const HOME_DEFAULTS_EN: LocaleContent = {
   ...Object.fromEntries(HOME_FIELDS.map((f) => [f.key, ""])),
   team_cta: "Meet the team",
+  triage_hero_link: "Not sure where to go? Answer a few questions",
 };
 
 /**

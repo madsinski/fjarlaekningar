@@ -1,7 +1,6 @@
 import Link from "next/link";
 import PortalButton from "../components/PortalButton";
 import TriageTrigger from "../components/TriageTrigger";
-import { TRIAGE_UI } from "@/lib/triage";
 import NewsletterSignup from "../components/NewsletterSignup";
 import Band from "./Band";
 import { localizeErindi } from "../../erindi";
@@ -443,13 +442,15 @@ export default function HomeView({
             </div>
             {/* Service navigation, for people who don't yet know whether this
                 is the right place at all. Same popup as the portal button. */}
-            <TriageTrigger
-              locale={locale}
-              className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--primary-dark)] underline-offset-4 hover:underline"
-            >
-              {TRIAGE_UI[locale].heroLink}
-              <span aria-hidden>→</span>
-            </TriageTrigger>
+            {c.triage_on === "on" && c.triage_hero_link && (
+              <TriageTrigger
+                locale={locale}
+                className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--primary-dark)] underline-offset-4 hover:underline"
+              >
+                {c.triage_hero_link}
+                <span aria-hidden>→</span>
+              </TriageTrigger>
+            )}
           </div>
         </div>
       </section>
