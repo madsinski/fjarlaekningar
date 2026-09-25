@@ -8,6 +8,7 @@ import { localeHref } from "@/lib/locale";
 import { ui } from "@/lib/site-content/ui-strings";
 import { erindiReview } from "@/lib/site-content/erindi-pages";
 import MedsList, { type MedCategory } from "../MedsList";
+import TriageTrigger from "@/app/components/TriageTrigger";
 import type { Locale, LocaleContent } from "@/lib/site-content/types";
 
 export type ErindiViewProps = {
@@ -500,12 +501,12 @@ export default function ErindiView({
         <h2 className="text-2xl font-bold">{c.cta_heading}</h2>
         {c.cta_body && <p className="mt-3 text-brand-cyan-subtle max-w-xl">{c.cta_body}</p>}
         {linked ? (
-          <Link
-            href={localeHref("/hafa-samband", locale)}
+          <TriageTrigger
+            locale={locale}
             className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[var(--primary-dark)] hover:bg-slate-50"
           >
             {c.cta_label}
-          </Link>
+          </TriageTrigger>
         ) : (
           <span className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[var(--primary-dark)]">
             {c.cta_label}

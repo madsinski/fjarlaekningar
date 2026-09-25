@@ -1,3 +1,5 @@
+import TriageTrigger from "./TriageTrigger";
+
 interface PortalButtonProps {
   label?: string;
   variant?: "filled" | "outline";
@@ -5,12 +7,11 @@ interface PortalButtonProps {
   className?: string;
 }
 
-// Sjúklingagátt Fjarlækninga. The URL below is the vendor-provisioned portal
-// instance for the HSU pilot and is deliberately left as-is: it is where
-// patients actually land, not a brand reference we can rewrite. Opened
-// directly (the portal is a normal page), so every "Opna sjúklingagátt"
-// button links here.
-const PORTAL_URL = "https://app.medalia.is/fjarlaekningar-hsu";
+// Sjúklingagátt Fjarlækninga. Every "Opna sjúklingagátt" button opens the
+// "Hvert á ég að leita?" triage first (src/lib/triage.ts), which routes
+// requests the doctors cannot resolve in writing to 112, 1700, Heilsuvera or
+// the health centre before the patient signs in. The portal URL itself lives
+// in triage.ts; it is the vendor-provisioned instance for the HSU pilot.
 
 export default function PortalButton({
   label = "Opna sjúklingagátt",
@@ -30,13 +31,10 @@ export default function PortalButton({
       : "border-2 border-[var(--primary-dark)] text-[var(--primary-dark)] hover:bg-[var(--primary-dark)] hover:text-white";
 
   return (
-    <a
-      href={PORTAL_URL}
-      target="_blank"
-      rel="noopener noreferrer"
+    <TriageTrigger
       className={`inline-flex items-center justify-center font-semibold rounded-full transition-all ${sizeClasses[size]} ${variantClasses} ${className}`}
     >
       {label}
-    </a>
+    </TriageTrigger>
   );
 }
