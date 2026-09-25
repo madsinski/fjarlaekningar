@@ -1,13 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Blóðprufa">
-  <!-- Test tube, tilted, with blood and a stopper; a drop beside it. -->
-  <g transform="rotate(28 64 64)">
-    <rect x="46" y="14" width="36" height="14" rx="5" fill="#7c3aed"/>
-    <rect x="42" y="24" width="44" height="8" rx="4" fill="#6d28d9"/>
-    <path d="M50 32h28v58a14 14 0 0 1-28 0z" fill="#e0f2fe" stroke="#1e3a5f" stroke-width="4"/>
-    <path d="M52 60h24v30a12 12 0 0 1-24 0z" fill="#dc2626"/>
-    <path d="M52 60h24v6H52z" fill="#ef4444"/>
-    <rect x="56" y="38" width="4" height="16" rx="2" fill="#ffffff" opacity=".8"/>
-  </g>
-  <path d="M100 70c0 0-12 14-12 22a12 12 0 0 0 24 0c0-8-12-22-12-22z" fill="#dc2626"/>
-  <circle cx="96" cy="92" r="3" fill="#fff" opacity=".7"/>
+  <!-- Professional set (tile + line art): blood sample tube. -->
+  <rect x="4" y="4" width="120" height="120" rx="30" fill="#e6fbff"/>
+  <path d="M52 64h24v22a12 12 0 0 1-24 0z" fill="#e5484d" opacity=".85"/>
+  <path d="M46 30h36M52 30v56a12 12 0 0 0 24 0V30" fill="none" stroke="#0488a4" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M52 64h24" fill="none" stroke="#0488a4" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

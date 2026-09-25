@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Hlustunarpípa">
+  <!-- Professional set (tile + line art): stethoscope. -->
+  <rect x="4" y="4" width="120" height="120" rx="30" fill="#e6fbff"/>
+  <path d="M40 28v22a16 16 0 0 0 32 0V28M40 28h-4M72 28h4" fill="none" stroke="#0488a4" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M56 66v10a18 18 0 0 0 36 0v-8" fill="none" stroke="#0488a4" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="92" cy="60" r="8" fill="#00d6ff" fill-opacity=".25" stroke="#0488a4" stroke-width="6"/>
+</svg>

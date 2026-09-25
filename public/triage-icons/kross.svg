@@ -1,7 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Heilbrigðiskross">
-  <!-- Health cross. Blue on purpose: the red cross on white is a protected
-       emblem (Geneva Conventions) and may not be used as decoration. -->
-  <circle cx="64" cy="64" r="54" fill="#e0f2fe"/>
-  <path d="M50 22h28a4 4 0 0 1 4 4v24h24a4 4 0 0 1 4 4v28a4 4 0 0 1-4 4H82v24a4 4 0 0 1-4 4H50a4 4 0 0 1-4-4V86H22a4 4 0 0 1-4-4V54a4 4 0 0 1 4-4h24V26a4 4 0 0 1 4-4z" fill="#0284c7"/>
-  <path d="M50 22h28a4 4 0 0 1 4 4v8H46v-8a4 4 0 0 1 4-4z" fill="#38bdf8" opacity=".6"/>
+  <!-- Professional set (tile + line art): health cross. Never red on white —
+       the red cross is a protected emblem. -->
+  <rect x="4" y="4" width="120" height="120" rx="30" fill="#e6fbff"/>
+  <path d="M54 30h20a2 2 0 0 1 2 2v20h20a2 2 0 0 1 2 2v20a2 2 0 0 1-2 2H76v20a2 2 0 0 1-2 2H54a2 2 0 0 1-2-2V76H32a2 2 0 0 1-2-2V54a2 2 0 0 1 2-2h20V32a2 2 0 0 1 2-2z" fill="#00d6ff" fill-opacity=".25" stroke="#0488a4" stroke-width="6" stroke-linejoin="round"/>
 </svg>

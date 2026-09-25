@@ -1,11 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Myndavél">
-  <!-- Phone-style camera: body, lens, flash. -->
-  <path d="M44 30h40l6 12H42z" fill="#1e3a5f"/>
-  <rect x="14" y="40" width="100" height="66" rx="14" fill="#38bdf8"/>
-  <rect x="14" y="40" width="100" height="14" rx="7" fill="#0ea5e9"/>
-  <circle cx="64" cy="74" r="24" fill="#1e3a5f"/>
-  <circle cx="64" cy="74" r="16" fill="#e0f2fe"/>
-  <circle cx="64" cy="74" r="9" fill="#0369a1"/>
-  <circle cx="58" cy="68" r="4" fill="#fff"/>
-  <rect x="92" y="50" width="12" height="8" rx="3" fill="#fde68a"/>
+  <!-- Professional set (tile + line art): camera. -->
+  <rect x="4" y="4" width="120" height="120" rx="30" fill="#e6fbff"/>
+  <path d="M30 48a8 8 0 0 1 8-8h9l6-8h22l6 8h9a8 8 0 0 1 8 8v36a8 8 0 0 1-8 8H38a8 8 0 0 1-8-8z" fill="none" stroke="#0488a4" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="64" cy="66" r="13" fill="#00d6ff" fill-opacity=".25" stroke="#0488a4" stroke-width="6"/>
 </svg>

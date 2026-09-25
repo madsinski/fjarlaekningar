@@ -30,9 +30,9 @@ export type TriageOption = {
   /** Shown on the result page: why this answer led here. */
   why?: L;
   /**
-   * Picture for the answer card: `img` = an illustration (/erindi-icons for
-   * the services, /triage-icons for the rest, same flat style); `gallery` =
-   * the grid of service icons (TRIAGE_EXAMPLES).
+   * Picture for the answer card: `img` = /erindi-icons for the services we
+   * offer, /triage-icons (tile + line-art set) for everything else; `gallery`
+   * = the grid of service icons (TRIAGE_EXAMPLES).
    */
   visual?: { img?: string; gallery?: boolean };
   /** Step "Hvað þarftu": 1 = the problems Fjarlækningar handles (the
@@ -199,7 +199,7 @@ export const TRIAGE: Record<string, TriageNode> = {
                en: "The doctor who orders a test or referral needs a consultation and examination to base it on, and has to follow up the results. That is best done where you are followed up regularly." } },
       { label: { is: "Vandamál sem læknir þarf að skoða, til dæmis hlusta, þreifa eða skoða eyru",
                  en: "A problem a doctor needs to examine, e.g. listen to, feel or look in the ears" },
-        next: "exam-wait", visual: { img: "/erindi-icons/almenn-laeknisthjonusta.png" }, section: 2 },
+        next: "exam-wait", visual: { img: "/triage-icons/hlustunarpipa.svg" }, section: 2 },
       { label: { is: "Eftirfylgd með langvinnum sjúkdómi eða skilaboð til heimilislæknis",
                  en: "Follow-up of a long-term condition, or a message to my GP" },
         next: "r-heilsuvera", visual: { img: "/triage-icons/kross.svg" }, section: 2 },
