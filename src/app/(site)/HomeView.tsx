@@ -431,25 +431,28 @@ export default function HomeView({
                 </span>
               ))}
             </div>
-            <div className="mt-10 flex flex-col sm:flex-row gap-4">
-              <PortalButton size="lg" label={c.hero_cta_primary} />
+            {/* Up to three buttons: the row may run wider than the text column on
+                large screens (lg:w-max) rather than squeeze labels onto two lines. */}
+            <div className="mt-10 flex flex-col sm:flex-row sm:flex-wrap lg:w-max lg:flex-nowrap gap-4">
+              <PortalButton size="lg" label={c.hero_cta_primary} className="whitespace-nowrap" />
+              {/* Service navigation, for people who don't yet know whether this
+                  is the right place at all. Same popup as the portal button;
+                  only when the triage is switched on in the CMS. */}
+              {c.triage_on === "on" && c.triage_hero_cta && (
+                <TriageTrigger className="inline-flex flex-col items-center justify-center whitespace-nowrap rounded-full border-2 border-[var(--primary-dark)] bg-white/80 px-8 py-2 text-center text-[var(--primary-dark)] transition-colors hover:bg-brand-cyan-subtle">
+                  <span className="font-semibold leading-tight">{c.triage_hero_cta}</span>
+                  {c.triage_hero_cta_sub && (
+                    <span className="mt-0.5 text-xs font-normal leading-tight text-slate-600">{c.triage_hero_cta_sub}</span>
+                  )}
+                </TriageTrigger>
+              )}
               <Link
                 href={href("/thjonusta")}
-                className="inline-flex items-center justify-center px-10 py-4 rounded-full border-2 border-slate-300 text-slate-700 font-semibold hover:border-slate-400 transition-colors"
+                className="inline-flex items-center whitespace-nowrap justify-center px-10 py-4 rounded-full border-2 border-slate-300 text-slate-700 font-semibold hover:border-slate-400 transition-colors"
               >
                 {c.hero_cta_secondary}
               </Link>
             </div>
-            {/* Service navigation, for people who don't yet know whether this
-                is the right place at all. Same popup as the portal button. */}
-            {c.triage_on === "on" && c.triage_hero_link && (
-              <TriageTrigger
-                className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--primary-dark)] underline-offset-4 hover:underline"
-              >
-                {c.triage_hero_link}
-                <span aria-hidden>→</span>
-              </TriageTrigger>
-            )}
           </div>
         </div>
       </section>

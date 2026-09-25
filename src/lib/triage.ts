@@ -27,7 +27,24 @@ export type TriageOption = {
   next: string;
   /** Shown on the result page: why this answer led here. */
   why?: L;
+  /**
+   * Picture for the answer card. Existing site material only: `img` = one of
+   * the colourful service illustrations (/erindi-icons), used for answers
+   * Fjarlækningar handles; `icon` = a neutral line icon, for answers that lead
+   * to another service; `gallery` = the grid of service icons (TRIAGE_EXAMPLES).
+   * Colour means "we can help here", grey means "someone else".
+   */
+  visual?: { img?: string; icon?: "test-tube" | "hand" | "message-square" | "phone"; gallery?: boolean };
 };
+
+/** The services shown as pictures under "Algengt vandamál" (erindi slugs). */
+export const TRIAGE_EXAMPLES = [
+  "kvef-hosti-halsbolga", "thvagfaera-leggangasykingar", "hudvandamal-utbrot",
+  "augnsykingar-augnlokavandamal", "frunsa", "frjokornaofnaemi", "ristill",
+  "getnadarvorn", "risvandamal", "njalgur",
+];
+
+export type TriageExample = { slug: string; title: string };
 
 export type TriageQuestion = {
   kind: "question";
@@ -96,9 +113,9 @@ export const TRIAGE: Record<string, TriageNode> = {
     question: { is: "Fyrir hvern er erindið?", en: "Who is this for?" },
     options: [
       { label: { is: "Fyrir mig", en: "For me" }, next: "need" },
-      { label: { is: "Fyrir barn", en: "For a child" }, next: "r-child" },
+      { label: { is: "Fyrir barn", en: "For a child" }, next: "child-when" },
       { label: { is: "Fyrir annan fullorðinn, til dæmis maka eða foreldri", en: "For another adult, e.g. a partner or parent" },
-        next: "r-other-adult" },
+        next: "other-self" },
     ],
   },
 
@@ -107,25 +124,27 @@ export const TRIAGE: Record<string, TriageNode> = {
     question: { is: "Hvað þarftu helst?", en: "What do you need most?" },
     hint: { is: "Veldu það sem passar best.", en: "Pick the closest match." },
     options: [
-      { label: { is: "Mat á algengu vandamáli, til dæmis kvefi, þvagfærasýkingu, útbrotum, augnsýkingu eða frunsu",
-                 en: "Assessment of a common problem, e.g. a cold, urinary infection, rash, eye infection or cold sore" },
-        next: "r-fjar" },
-      { label: { is: "Endurnýjun á lyfi sem ég nota", en: "A renewal of a medicine I already take" }, next: "meds" },
-      { label: { is: "Læknisvottorð", en: "A medical certificate" }, next: "r-fjar" },
-      { label: { is: "Beiðni um blóðprufu, myndgreiningu eða speglun, eða tilvísun til sérfræðings",
-                 en: "A blood test, imaging or endoscopy, or a referral to a specialist" },
-        next: "r-heilsugaesla",
+      { label: { is: "Algengt vandamál, til dæmis:", en: "A common problem, for example:" },
+        next: "r-fjar", visual: { gallery: true } },
+      { label: { is: "Endurnýjun á lyfi sem ég nota", en: "A renewal of a medicine I already take" }, next: "meds",
+        visual: { img: "/erindi-icons/lyfjuendurnyjun.png" } },
+      { label: { is: "Læknisvottorð", en: "A medical certificate" }, next: "r-fjar",
+        visual: { img: "/erindi-icons/laeknisvottord.png" } },
+      { label: { is: "Annað sem ég get lýst í texta eða með myndum", en: "Something else I can describe in writing or with photos" },
+        next: "r-fjar", visual: { img: "/erindi-icons/almenn-laeknisthjonusta.png" } },
+      { label: { is: "Blóðprufa, myndgreining, speglun eða tilvísun",
+                 en: "A blood test, imaging, endoscopy or a referral" },
+        next: "r-heilsugaesla", visual: { icon: "test-tube" },
         why: { is: "Læknirinn sem biður um rannsókn eða tilvísun þarf að byggja á viðtali og skoðun og fylgja niðurstöðunum eftir. Það er best gert þar sem þú ert í reglulegri eftirfylgd.",
                en: "The doctor who orders a test or referral needs a consultation and examination to base it on, and has to follow up the results. That is best done where you are followed up regularly." } },
-      { label: { is: "Vandamál sem þarf að skoða, til dæmis hlusta á lungu, skoða eyru eða þreifa á kvið",
-                 en: "A problem that needs an examination, e.g. listening to the lungs, looking in the ears or examining the abdomen" },
-        next: "exam-wait" },
+      { label: { is: "Vandamál sem læknir þarf að skoða, til dæmis hlusta, þreifa eða skoða eyru",
+                 en: "A problem a doctor needs to examine, e.g. listen to, feel or look in the ears" },
+        next: "exam-wait", visual: { icon: "hand" } },
       { label: { is: "Eftirfylgd með langvinnum sjúkdómi eða skilaboð til heimilislæknis",
                  en: "Follow-up of a long-term condition, or a message to my GP" },
-        next: "r-heilsuvera" },
-      { label: { is: "Ég veit ekki hversu alvarlegt þetta er", en: "I'm not sure how serious this is" }, next: "r-1700" },
-      { label: { is: "Annað sem ég get lýst í texta eða með myndum", en: "Something else I can describe in writing or with photos" },
-        next: "r-fjar" },
+        next: "r-heilsuvera", visual: { icon: "message-square" } },
+      { label: { is: "Ég veit ekki hversu alvarlegt þetta er", en: "I'm not sure how serious this is" }, next: "r-1700",
+        visual: { icon: "phone" } },
     ],
   },
 
@@ -155,6 +174,40 @@ export const TRIAGE: Record<string, TriageNode> = {
                en: "What needs an examination cannot be assessed in writing." } },
       { label: { is: "Nei, og það tengist slysi eða áverka", en: "No, and it follows an accident or injury" }, next: "r-brada" },
       { label: { is: "Nei", en: "No" }, next: "r-1700" },
+    ],
+  },
+
+  // Someone else: never a dead end. Every path ends at a real place to go.
+  "child-when": {
+    kind: "question",
+    question: { is: "Hvernig er staðan hjá barninu?", en: "How is the child doing?" },
+    hint: { is: "Læknar Fjarlækninga meta aðeins þann sem sendir erindið sjálfur, en hér sérðu hvert er best að leita með barnið.",
+            en: "Fjarlækningar's doctors only assess the person sending the request, but here is where to go with the child." },
+    options: [
+      { label: { is: "Barnið er mjög veikt og þetta þolir enga bið", en: "The child is very unwell and this cannot wait" }, next: "r-child-er" },
+      { label: { is: "Ég þarf ráð í dag eða í kvöld", en: "I need advice today or tonight" }, next: "r-child-1700" },
+      { label: { is: "Þetta getur beðið til næsta virka dags", en: "It can wait until the next working day" }, next: "r-child-hg" },
+    ],
+  },
+
+  "other-self": {
+    kind: "question",
+    question: { is: "Getur viðkomandi sent erindið sjálf eða sjálfur?", en: "Can they send the request themselves?" },
+    hint: { is: "Til þess þarf viðkomandi að skrá sig inn með eigin rafrænum skilríkjum. Þú mátt aðstoða við að fylla út.",
+            en: "They need to sign in with their own electronic ID. You are welcome to help fill it in." },
+    options: [
+      { label: { is: "Já", en: "Yes" }, next: "r-other-adult" },
+      { label: { is: "Nei, eða ég veit það ekki", en: "No, or I don't know" }, next: "other-when" },
+    ],
+  },
+
+  "other-when": {
+    kind: "question",
+    question: { is: "Hvernig er staðan hjá viðkomandi?", en: "How are they doing?" },
+    options: [
+      { label: { is: "Ástandið er alvarlegt og þolir enga bið", en: "They are very unwell and this cannot wait" }, next: "r-other-er" },
+      { label: { is: "Það þarf ráð í dag eða í kvöld", en: "Advice is needed today or tonight" }, next: "r-1700" },
+      { label: { is: "Þetta getur beðið til næsta virka dags", en: "It can wait until the next working day" }, next: "r-other-hg" },
     ],
   },
 
@@ -229,32 +282,88 @@ export const TRIAGE: Record<string, TriageNode> = {
     actions: [{ ...OPEN_HEILSUVERA, primary: true }, { ...OPEN_PORTAL, primary: false }],
   },
 
-  "r-child": {
+  "r-child-er": {
+    kind: "result",
+    service: "brada",
+    eyebrow: { is: "Barn · þolir enga bið", en: "Child · cannot wait" },
+    title: { is: "Bráðamóttaka barna", en: "Children's emergency department" },
+    body: [
+      { is: "Farðu með barnið á bráðamóttöku barna á Barnaspítala Hringsins, eða á næstu bráðamóttöku utan höfuðborgarsvæðisins. Hringdu í 112 ef barnið á erfitt með að anda, er meðvitundarlítið eða fær krampa.",
+        en: "Take the child to the children's emergency department at Barnaspítali Hringsins, or the nearest emergency department outside the capital area. Call 112 if the child is struggling to breathe, is hard to rouse or has a seizure." },
+      { is: "Ertu ekki viss? Hringdu í 1700 og fáðu ráð um hvert þú átt að fara.",
+        en: "Not sure? Call 1700 for advice on where to go." },
+    ],
+    actions: [{ ...CALL_112, primary: true }, CALL_1700],
+  },
+
+  "r-child-1700": {
+    kind: "result",
+    service: "1700",
+    eyebrow: { is: "Barn · ráð í dag", en: "Child · advice today" },
+    title: { is: "Hringdu í 1700", en: "Call 1700" },
+    body: [
+      { is: "Í síma 1700 færðu ráðgjöf hjúkrunarfræðings um barnið allan sólarhringinn, og leiðbeiningar um hvort og hvert þú átt að fara með það.",
+        en: "On 1700 a nurse gives advice about the child around the clock, and tells you whether and where to take them." },
+      { is: "Á höfuðborgarsvæðinu tekur Læknavaktin á móti börnum á kvöldin og um helgar, þegar heilsugæslan er lokuð.",
+        en: "In the capital area, Læknavaktin sees children in the evenings and at weekends, when health centres are closed." },
+    ],
+    actions: [{ ...CALL_1700, primary: true }],
+  },
+
+  "r-child-hg": {
     kind: "result",
     service: "heilsugaesla",
-    eyebrow: { is: "Erindi fyrir barn", en: "For a child" },
+    eyebrow: { is: "Barn · getur beðið", en: "Child · can wait" },
     title: { is: "Heilsugæsla barnsins", en: "The child's health centre" },
     body: [
-      { is: "Læknar Fjarlækninga meta aðeins þann sem sendir erindið sjálfur, skráður inn með eigin rafrænum skilríkjum.",
-        en: "Fjarlækningar's doctors only assess the person who sends the request, signed in with their own electronic ID." },
-      { is: "Hafðu samband við heilsugæslu barnsins, til dæmis á Heilsuveru, eða hringdu í 1700 til að fá ráðgjöf. Sé barnið mjög veikt: farðu á bráðamóttöku barna á Barnaspítala Hringsins eða hringdu í 112.",
-        en: "Contact the child's health centre, for example through Heilsuvera, or call 1700 for advice. If the child is very unwell: go to the children's emergency department at Barnaspítali Hringsins or call 112." },
+      { is: "Heilsugæslan þar sem barnið er skráð sér um skoðanir, eftirlit og lyf fyrir börn. Á Heilsuveru geta forráðamenn sent heilsugæslu barnsins skilaboð og bókað tíma, eða hringt beint í heilsugæslustöðina.",
+        en: "The health centre where the child is registered handles examinations, check-ups and medicines for children. Through Heilsuvera, guardians can message the child's health centre and book an appointment, or phone the health centre directly." },
+      { is: "Versni barninu á meðan þú bíður, hringdu í 1700 eða 112.",
+        en: "If the child gets worse while you wait, call 1700 or 112." },
     ],
-    actions: [{ ...CALL_1700, primary: true }, OPEN_HEILSUVERA],
+    actions: [{ ...OPEN_HEILSUVERA, primary: true }, CALL_1700],
   },
 
   "r-other-adult": {
     kind: "result",
-    service: "other-adult",
-    eyebrow: { is: "Erindi fyrir aðra", en: "For someone else" },
-    title: { is: "Viðkomandi sendir eigið erindi", en: "They need to send their own request" },
+    service: "fjar",
+    eyebrow: { is: "Erindi fyrir annan", en: "For someone else" },
+    title: { is: "Viðkomandi sendir erindið í sjúklingagáttinni", en: "They send the request through the patient portal" },
     body: [
-      { is: "Læknir getur aðeins metið þann sem sendir erindið sjálfur, skráður inn með eigin rafrænum skilríkjum. Við getum ekki metið annan einstakling út frá lýsingu þinni.",
-        en: "A doctor can only assess the person who sends the request, signed in with their own electronic ID. We cannot assess someone else from your description." },
-      { is: "Ef erindið hentar fjarþjónustu getur viðkomandi sent það sjálf eða sjálfur í sjúklingagáttinni.",
-        en: "If the request suits remote care, they can send it themselves through the patient portal." },
+      { is: "Viðkomandi skráir sig inn með eigin rafrænum skilríkjum og sendir erindið í eigin nafni, því læknir getur aðeins metið þann sem erindið er um. Þú mátt sitja hjá og aðstoða við að fylla út.",
+        en: "They sign in with their own electronic ID and send the request in their own name, because a doctor can only assess the person it concerns. You are welcome to sit with them and help fill it in." },
+      { is: "Læknir svarar innan tveggja klukkustunda á opnunartíma, alla daga milli 10 og 22.",
+        en: "A doctor replies within two hours during opening hours, daily 10–22." },
     ],
-    actions: [{ ...OPEN_PORTAL, primary: false }, CALL_1700],
+    actions: [OPEN_PORTAL, CALL_1700],
+  },
+
+  "r-other-er": {
+    kind: "result",
+    service: "brada",
+    eyebrow: { is: "Þolir enga bið", en: "Cannot wait" },
+    title: { is: "Bráðamóttaka eða 112", en: "Emergency department or 112" },
+    body: [
+      { is: "Farðu með viðkomandi á næstu bráðamóttöku. Á höfuðborgarsvæðinu er hún á Landspítala í Fossvogi. Hringdu í 112 ef ástandið er alvarlegt eða ef þú kemst ekki með viðkomandi á staðinn.",
+        en: "Take them to the nearest emergency department; in the capital area that is Landspítali in Fossvogur. Call 112 if it is serious or you cannot get them there yourself." },
+      { is: "Ertu ekki viss? Hringdu í 1700 og fáðu ráð um hvert þú átt að fara.",
+        en: "Not sure? Call 1700 for advice on where to go." },
+    ],
+    actions: [{ ...CALL_112, primary: true }, CALL_1700],
+  },
+
+  "r-other-hg": {
+    kind: "result",
+    service: "heilsugaesla",
+    eyebrow: { is: "Getur beðið", en: "Can wait" },
+    title: { is: "Heilsugæsla viðkomandi", en: "Their health centre" },
+    body: [
+      { is: "Hringdu í heilsugæslustöð viðkomandi og bókaðu tíma, eða aðstoðaðu við að bóka á Heilsuveru. Þú mátt fylgja viðkomandi í tímann.",
+        en: "Phone the health centre where they are registered and book an appointment, or help them book through Heilsuvera. You are welcome to go with them." },
+      { is: "Versni viðkomandi á meðan þið bíðið, hringdu í 1700 eða 112.",
+        en: "If they get worse while you wait, call 1700 or 112." },
+    ],
+    actions: [{ ...OPEN_HEILSUVERA, primary: true }, CALL_1700],
   },
 
   "r-fjar": {
@@ -313,8 +422,15 @@ const NODE_NAMES: Record<string, string> = {
   "r-1700": "Niðurstaða · 1700",
   "r-heilsugaesla": "Niðurstaða · Heilsugæsla",
   "r-heilsuvera": "Niðurstaða · Heilsuvera",
-  "r-child": "Niðurstaða · Barn",
-  "r-other-adult": "Niðurstaða · Annar fullorðinn",
+  "child-when": "Barn · Staðan",
+  "other-self": "Annar fullorðinn · Getur sent sjálfur?",
+  "other-when": "Annar fullorðinn · Staðan",
+  "r-child-er": "Niðurstaða · Barn, bráðamóttaka",
+  "r-child-1700": "Niðurstaða · Barn, 1700",
+  "r-child-hg": "Niðurstaða · Barn, heilsugæsla",
+  "r-other-adult": "Niðurstaða · Annar fullorðinn, sjúklingagátt",
+  "r-other-er": "Niðurstaða · Annar fullorðinn, bráðamóttaka",
+  "r-other-hg": "Niðurstaða · Annar fullorðinn, heilsugæsla",
   "r-fjar": "Niðurstaða · Fjarlækningar",
 };
 
@@ -400,4 +516,43 @@ for (const [id, node] of Object.entries(TRIAGE)) {
  *  to the browser, not the whole home page. */
 export function triageText(c: LocaleContent): LocaleContent {
   return Object.fromEntries(Object.entries(c).filter(([k]) => k.startsWith("triage_")));
+}
+
+/** One screen in the popup; `via` = the node and option index that led here
+ *  (for the "why" note on results). */
+export type TriageStep = { id: string; via?: { from: string; index: number } };
+
+/** Shortest click path from the start to `target` — used by the CMS preview to
+ *  jump straight to any screen while still showing the note that leads there. */
+export function triagePath(target: string): TriageStep[] {
+  const queue: TriageStep[][] = [[{ id: TRIAGE_START }]];
+  const seen = new Set([TRIAGE_START]);
+  while (queue.length) {
+    const path = queue.shift()!;
+    const last = path[path.length - 1];
+    if (last.id === target) return path;
+    const node = TRIAGE[last.id];
+    if (node?.kind !== "question") continue;
+    node.options.forEach((o, index) => {
+      if (seen.has(o.next)) return;
+      seen.add(o.next);
+      queue.push([...path, { id: o.next, via: { from: last.id, index } }]);
+    });
+  }
+  return [{ id: TRIAGE_START }];
+}
+
+/** Human names of every screen, in tree order (CMS editor labels + preview). */
+export const TRIAGE_SCREENS = Object.keys(TRIAGE).map((id) => ({ id, name: NODE_NAMES[id] ?? id }));
+
+/** The example services for the "Algengt vandamál" picture grid, in the page's
+ *  language, minus any service switched off in the Þjónusta CMS. */
+export function triageExamples(
+  titles: { slug: string; title: string }[],
+  shown: (slug: string) => boolean = () => true,
+): TriageExample[] {
+  return TRIAGE_EXAMPLES.filter(shown)
+    .map((slug) => titles.find((t) => t.slug === slug))
+    .filter((t): t is TriageExample => !!t)
+    .map(({ slug, title }) => ({ slug, title }));
 }

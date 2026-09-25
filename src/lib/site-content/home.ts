@@ -59,7 +59,9 @@ export const HOME_FIELDS: SiteField[] = [
       { value: "on", label: "Birt", hint: "Hnapparnir opna leiðarvísinn fyrst." },
     ],
   },
-  { key: "triage_hero_link", label: "Tengill undir hnöppum í hetjusvæði", group: "Leiðarvísir", type: "text" },
+  { key: "triage_hero_cta", label: "Hnappur í hetjusvæði", group: "Leiðarvísir", type: "text",
+    help: "Birtist á milli „Opna sjúklingagátt“ og „Sjá þjónustu“ og opnar leiðarvísinn. Aðeins sýnilegur þegar kveikt er á leiðarvísinum." },
+  { key: "triage_hero_cta_sub", label: "Hnappur í hetjusvæði — undirtexti", group: "Leiðarvísir", type: "text" },
 
   // Services
   { key: "services_heading", label: "Fyrirsögn", group: "Þjónusta", type: "heading" },
@@ -158,7 +160,8 @@ export const HOME_DEFAULTS_IS: LocaleContent = {
   hero_cta_primary: "Opna sjúklingagátt",
   hero_cta_secondary: "Sjá þjónustu",
   triage_on: "off",
-  triage_hero_link: "Ekki viss hvert þú átt að leita? Svaraðu nokkrum spurningum",
+  triage_hero_cta: "Hentar fjarlækningaþjónusta mér?",
+  triage_hero_cta_sub: "Athugaðu hvert er best að leita",
   ...TRIAGE_DEFAULTS_IS,
 
   services_heading: "Algeng erindi leyst innan tveggja klukkustunda",
@@ -227,7 +230,8 @@ export const HOME_DEFAULTS_IS: LocaleContent = {
 export const HOME_DEFAULTS_EN: LocaleContent = {
   ...Object.fromEntries(HOME_FIELDS.map((f) => [f.key, ""])),
   team_cta: "Meet the team",
-  triage_hero_link: "Not sure where to go? Answer a few questions",
+  triage_hero_cta: "Is remote care right for me?",
+  triage_hero_cta_sub: "Check where it's best to go",
   ...TRIAGE_DEFAULTS_EN,
 };
 

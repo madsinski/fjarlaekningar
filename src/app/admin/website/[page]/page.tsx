@@ -7,7 +7,8 @@ import { ArrowLeft, Eye, EyeOff, Globe2, Languages, Send, Check, ExternalLink, A
 import { supabase } from "@/lib/supabase";
 import HomeView from "@/app/(site)/HomeView";
 import { TriageProvider } from "@/app/components/TriageTrigger";
-import { triageText } from "@/lib/triage";
+import { TriagePanel } from "@/app/components/TriageDialog";
+import { TRIAGE_SCREENS, TRIAGE_START, triageExamples, triagePath, triageText } from "@/lib/triage";
 import ThjonustaView from "@/app/(site)/(is)/thjonusta/ThjonustaView";
 import UmOkkurView from "@/app/(site)/(is)/um-okkur/UmOkkurView";
 import HafaSambandView from "@/app/(site)/(is)/hafa-samband/HafaSambandView";
@@ -18,7 +19,7 @@ import { TEAM_MEMBER_SLOTS, TEAM_ROSTER_GROUP, teamSize } from "@/lib/site-conte
 import IconPicker from "../IconPicker";
 
 import ErindiView, { erindiLines } from "@/app/(site)/(is)/thjonusta/[slug]/ErindiView";
-import { erindi as ERINDI_LIST } from "@/erindi";
+import { erindi as ERINDI_LIST, localizeErindi } from "@/erindi";
 import { ERINDI_WITH_MEDS, erindiKey, erindiTitle } from "@/lib/site-content/erindi-pages";
 import { erindiShown } from "@/lib/site-content/thjonusta";
 import { ui } from "@/lib/site-content/ui-strings";
@@ -120,6 +121,67 @@ function medsFor(slug: string, t?: LocaleContent) {
     { title: t.meds_c_title, items: t.meds_c_items },
     { title: t.meds_d_title, items: t.meds_d_items },
   ].filter((m) => m.title);
+}
+
+/**
+ * The "Hvert á ég að leita?" popup, full size and clickable, with the DRAFT
+ * text — independent of the on/off switch, so it can be written and checked
+ * long before it is published. Chips jump straight to any screen; focusing a
+ * Leiðarvísir field in the editor jumps to the screen that field belongs to.
+ */
+function TriagePreview({
+  c,
+  locale,
+  jump,
+  onJump,
+}: {
+  c: LocaleContent;
+  locale: Locale;
+  jump: { id: string; n: number };
+  onJump: (id: string) => void;
+}) {
+  const [at, setAt] = useState(jump.id);
+  const live = c.triage_on === "on";
+  return (
+    <div className="min-h-full bg-slate-100">
+      <div className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur">
+        <p className="mb-2 text-xs text-slate-600">
+          {live
+            ? "Kveikt í drögum — fer á vefinn þegar smellt er á „Birta“."
+            : "Falið í drögum — forskoðunin sýnir leiðarvísinn samt, en hann fer ekki á vefinn fyrr en kveikt er á honum og smellt á „Birta“."}
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {TRIAGE_SCREENS.map((sc) => (
+            <button
+              key={sc.id}
+              type="button"
+              aria-pressed={sc.id === at}
+              onClick={() => onJump(sc.id)}
+              className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+                sc.id === at
+                  ? "border-cyan-600 bg-cyan-600 text-white"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+              }`}
+            >
+              {sc.name}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="flex justify-center bg-slate-900/40 p-6">
+        <div className="flex w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+          <TriagePanel
+            key={`${jump.id}-${jump.n}`}
+            text={triageText(c)}
+            examples={triageExamples(localizeErindi(locale))}
+            initial={triagePath(jump.id)}
+            focusOnMount={false}
+            onScreen={setAt}
+          />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function ErindiPreview({
@@ -232,7 +294,7 @@ function Preview({
       // The preview follows the DRAFT triage switch, so the popup can be
       // tried here before "Birta" puts it on the live site.
       return (
-        <TriageProvider on={c.triage_on === "on"} text={triageText(c)}>
+        <TriageProvider on={c.triage_on === "on"} text={triageText(c)} examples={triageExamples(localizeErindi(locale))}>
           <HomeView
             c={c}
             order={order}
@@ -904,6 +966,22 @@ export default function SiteContentEditor() {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [previewLocale, setPreviewLocale] = useState<Locale>("is");
+  // Home only: the preview pane shows either the page or the triage popup.
+  const [previewTab, setPreviewTab] = useState<"page" | "triage">("page");
+  const [triageJump, setTriageJump] = useState({ id: TRIAGE_START, n: 0 });
+  const jumpTriage = (id: string) => {
+    setPreviewTab("triage");
+    setTriageJump((j) => ({ id, n: j.n + 1 }));
+  };
+  // A Leiðarvísir field was focused: show the triage, at the screen the field
+  // belongs to (its key is triage_<screen>_…; general text keeps the screen).
+  const onFieldFocus = (fieldKey: string | null | undefined) => {
+    // The switch and the hero button live on the page itself, not in the popup.
+    if (pageKey !== "home" || !fieldKey?.startsWith("triage_") || fieldKey === "triage_on" || fieldKey.startsWith("triage_hero")) return;
+    setPreviewTab("triage");
+    const screen = TRIAGE_SCREENS.find((sc) => fieldKey.startsWith(`triage_${sc.id.replace(/-/g, "_")}_`));
+    if (screen) setTriageJump((j) => (j.id === screen.id ? j : { id: screen.id, n: j.n + 1 }));
+  };
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
@@ -1228,11 +1306,14 @@ export default function SiteContentEditor() {
           )}
           {groups.map((g) => (
             <Fragment key={g.group}>
-            <section className="rounded-xl border border-slate-200 bg-white p-4">
+            <section
+              className="rounded-xl border border-slate-200 bg-white p-4"
+              onFocusCapture={(e) => onFieldFocus((e.target as HTMLElement).closest("[data-field]")?.getAttribute("data-field"))}
+            >
               <h2 className="text-xs font-semibold uppercase tracking-wide text-cyan-700 mb-3">{g.group}</h2>
               <div className="space-y-4">
                 {g.fields.map((f) => (
-                  <div key={f.key}>
+                  <div key={f.key} data-field={f.key}>
                     <div className="text-xs font-medium text-slate-600 mb-1">
                       {f.label}
                       {f.type === "heading" && (
@@ -1385,8 +1466,24 @@ export default function SiteContentEditor() {
         {/* Live preview */}
         <div className="lg:sticky lg:top-4 self-start">
           <div className="flex items-center justify-between mb-2">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 inline-flex items-center gap-1">
-              <Eye className="w-3.5 h-3.5" /> Forskoðun (drög)
+            <div className="flex items-center gap-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 inline-flex items-center gap-1">
+                <Eye className="w-3.5 h-3.5" /> Forskoðun (drög)
+              </div>
+              {pageKey === "home" && (
+                <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden text-xs">
+                  {([["page", "Síðan"], ["triage", "Leiðarvísir"]] as const).map(([tab, label]) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setPreviewTab(tab)}
+                      className={`px-2.5 py-1 ${previewTab === tab ? "bg-cyan-600 text-white" : "bg-white text-slate-600 hover:bg-slate-50"}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden text-xs">
               {(["is", "en"] as Locale[]).map((loc) => (
@@ -1402,6 +1499,9 @@ export default function SiteContentEditor() {
           </div>
           <div className="rounded-xl border border-slate-200 bg-white overflow-hidden" style={{ height: "calc(100vh - 180px)" }}>
             <div className="overflow-auto h-full">
+              {pageKey === "home" && previewTab === "triage" ? (
+                <TriagePreview c={previewContent} locale={previewLocale} jump={triageJump} onJump={jumpTriage} />
+              ) : (
               <div style={{ width: "200%", transform: "scale(0.5)", transformOrigin: "top left" }}>
                 <Preview
                   pageKey={pageKey}
@@ -1415,6 +1515,7 @@ export default function SiteContentEditor() {
                   }
                 />
               </div>
+              )}
             </div>
           </div>
         </div>

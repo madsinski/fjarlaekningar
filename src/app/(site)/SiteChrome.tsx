@@ -2,7 +2,9 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ScrollToTop from "../components/ScrollToTop";
 import { TriageProvider } from "../components/TriageTrigger";
-import { triageText } from "@/lib/triage";
+import { triageExamples, triageText } from "@/lib/triage";
+import { localizeErindi } from "@/erindi";
+import { erindiShown } from "@/lib/site-content/thjonusta";
 import { getPageContent } from "@/lib/site-content/server";
 import type { Locale } from "@/lib/site-content/types";
 
@@ -21,18 +23,21 @@ export default async function SiteChrome({
   locale: Locale;
   children: React.ReactNode;
 }) {
-  const [chrome, home] = await Promise.all([
+  const [chrome, home, thjonusta] = await Promise.all([
     getPageContent("chrome", locale),
     // The triage switch lives on the home page in the CMS but applies to every
     // portal button on the site. Published content only: draft is never live.
     getPageContent("home", locale),
+    // Which services are switched on — the triage pictures only those.
+    getPageContent("thjonusta", locale),
   ]);
+  const examples = triageExamples(localizeErindi(locale), (slug) => erindiShown(thjonusta, slug));
   // Site-wide toggle for the small eyebrow pill labels above headings. A class
   // on <main> lets one setting hide every eyebrow (marked .site-eyebrow) across
   // all pages without threading a prop into each hero — see globals.css.
   const eyebrowsOff = chrome.show_eyebrows === "off";
   return (
-    <TriageProvider on={home.triage_on === "on"} text={triageText(home)}>
+    <TriageProvider on={home.triage_on === "on"} text={triageText(home)} examples={examples}>
       <ScrollToTop />
       <Navbar content={chrome} locale={locale} />
       <main className={`flex-1${eyebrowsOff ? " eyebrows-off" : ""}`}>{children}</main>
