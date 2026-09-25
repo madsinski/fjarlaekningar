@@ -342,6 +342,29 @@ export default function ErindiView({
           <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">{title}</h1>
         </div>
       </div>
+      {/* Clinical review of the WHOLE page: directly under the heading and set
+          apart by rules, before any content, so it cannot read as a note on
+          one paragraph. A label rather than "yfirfarið af <name>", which would
+          need the name declined (af + þágufall). Absent unless a doctor and a
+          date are both recorded. Matches reviewedBy/lastReviewed in JSON-LD. */}
+      {review && (
+        <p className="mt-5 flex max-w-3xl flex-wrap items-center gap-x-1.5 gap-y-1 border-y border-slate-200 py-2.5 text-sm text-slate-500">
+          <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+          <span className="font-medium text-slate-600">{t.reviewedBy}</span>
+          <span className="text-slate-700">
+            {linked ? (
+              <Link href={localeHref(`/um-okkur#${personSlug(review.name)}`, locale)} className="font-medium underline decoration-slate-300 underline-offset-2 hover:text-[var(--primary-dark)] hover:decoration-current">
+                {review.name}
+              </Link>
+            ) : (
+              <span className="font-medium">{review.name}</span>
+            )}
+            {review.credentials ? `, ${review.credentials}` : ""}
+          </span>
+          <span aria-hidden>·</span>
+          <time dateTime={review.date}>{formatReviewDate(review.date, locale)}</time>
+        </p>
+      )}
       {/* The description of the problem is the page's opening text — there is
           no separate one-line summary above it. `lead` still exists, but only
           as the search-result snippet. */}
@@ -353,31 +376,6 @@ export default function ErindiView({
         </div>
       ) : (
         <p className="mt-5 max-w-3xl text-lg text-slate-600 leading-relaxed">{lead}</p>
-      )}
-
-      {/* Clinical review, right under the opening text — the "medically reviewed
-          by" line readers (and search engines weighing medical pages) look for
-          before trusting the rest. Absent unless a doctor and a date are both
-          recorded: an unreviewed page says nothing rather than implying a
-          review that did not happen. Matches reviewedBy/lastReviewed in the
-          page's JSON-LD. */}
-      {review && (
-        <p className="mt-5 flex max-w-3xl flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-slate-500">
-          <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
-          <span>{t.reviewedBy}</span>
-          <span className="font-medium text-slate-700">
-            {linked ? (
-              <Link href={localeHref(`/um-okkur#${personSlug(review.name)}`, locale)} className="underline decoration-slate-300 underline-offset-2 hover:text-[var(--primary-dark)] hover:decoration-current">
-                {review.name}
-              </Link>
-            ) : (
-              review.name
-            )}
-            {review.credentials ? `, ${review.credentials}` : ""}
-          </span>
-          <span aria-hidden>·</span>
-          <time dateTime={review.date}>{formatReviewDate(review.date, locale)}</time>
-        </p>
       )}
 
       {suitable.length > 0 && (

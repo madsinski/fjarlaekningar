@@ -38,7 +38,7 @@ export async function GET() {
     // still real, it just has no page of its own to point at.
     // Who vouches for it: assistants citing a medical answer look for this.
     const r = erindiReview(ec, e.slug);
-    const reviewed = r ? ` (Yfirfarið af ${r.name}${r.credentials ? `, ${r.credentials}` : ""}, ${r.date}.)` : "";
+    const reviewed = r ? ` (Læknisfræðileg yfirferð: ${r.name}${r.credentials ? `, ${r.credentials}` : ""}, ${r.date}.)` : "";
     return live
       ? `- [${title}](${SITE_URL}/thjonusta/${e.slug}): ${lead}${reviewed}`
       : `- ${title}: ${lead}${reviewed}`;

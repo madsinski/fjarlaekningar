@@ -36,7 +36,7 @@ const IS = {
     breadcrumb: "Brauðmylsna",
     services: "Þjónusta",
     backToServices: "Öll erindi",
-    reviewedBy: "Yfirfarið af",
+    reviewedBy: "Læknisfræðileg yfirferð:",
     readAt: "Lesa hjá",
     pressHeading: "Fjallað um okkur",
     pressLink: "Sjá alla umfjöllun",
