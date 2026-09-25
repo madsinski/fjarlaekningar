@@ -475,7 +475,12 @@ function PlaceStep({
         )}
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2.5">
-        {node.options.map((opt, i) => (
+        {/* "Annars staðar á landinu" always last, whatever order the areas
+            were added in (their CMS keys follow the array order). */}
+        {node.options
+          .map((opt, i) => ({ opt, i }))
+          .sort((a, b) => Number(a.opt.region === "rural") - Number(b.opt.region === "rural"))
+          .map(({ opt, i }) => (
           <button
             key={i}
             type="button"

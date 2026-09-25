@@ -1,19 +1,22 @@
 // Places for the "Hvar ertu núna?" step of the triage popup.
 //
-// Where you are decides where you can actually go. Four regions, as defined by
-// Fjarlækningar' doctors:
-//   capital  — Landspítali (bráðamóttaka í Fossvogi), Barnaspítali Hringsins,
-//              Læknavaktin
-//   akureyri — a drop-in bráðamóttaka (Sjúkrahúsið á Akureyri)
-//   selfoss  — a drop-in bráðamóttaka (HSU á Selfossi)
-//   rural    — everywhere else: vaktþjónusta heilsugæslunnar through 1700,
-//              the health centre in daytime
+// Where you are decides where you can actually go. A place gets its own region
+// only if it has a bráðamóttaka that is open 24 hours and takes walk-ins —
+// no calling 1700 first to get the on-call doctor out (the doctors' rule,
+// 2026-09-25). Checked against the institutions' official pages that day:
+//   capital       — Landspítali Fossvogi, Barnaspítali Hringsins, Læknavaktin
+//   akureyri      — Sjúkrahúsið á Akureyri
+//   selfoss       — HSU á Selfossi
+//   reykjanesbaer — HSS í Reykjanesbæ ("opin allan sólarhringinn")
+//   rural         — everywhere else: vaktþjónusta heilsugæslunnar through 1700,
+//                   the health centre in daytime
 //
-// Towns next to Akureyri and Selfoss share their bráðamóttaka. Every other
-// town is "rural" — including towns with a local hospital, which call 1700 to
-// reach the on-call doctor. To give one of them its own advice, add a region.
+// NOT regions (do not meet the rule on their published pages): Akranes (HVE
+// walk-in weekdays 8–16, after that via the ward/1700 — unconfirmed),
+// Ísafjörður, Neskaupstaður and Vestmannaeyjar (staff on call, 1700 first),
+// and the rest. Towns next to a region's hospital share its region.
 
-export type RegionId = "capital" | "akureyri" | "selfoss" | "rural";
+export type RegionId = "capital" | "akureyri" | "selfoss" | "reykjanesbaer" | "rural";
 
 export const PLACES: { name: string; region: RegionId }[] = [
   // Höfuðborgarsvæðið
@@ -28,9 +31,12 @@ export const PLACES: { name: string; region: RegionId }[] = [
   // Selfoss og nágrenni
   ...["Selfoss", "Árborg", "Hveragerði", "Þorlákshöfn", "Eyrarbakki", "Stokkseyri", "Ölfus"]
     .map((name) => ({ name, region: "selfoss" as const })),
-  // Annars staðar á landinu
+  // Reykjanesbær og Suðurnes (HSS)
   ...["Reykjanesbær", "Keflavík", "Njarðvík", "Ásbrú", "Grindavík", "Sandgerði", "Garður",
-      "Suðurnesjabær", "Vogar", "Akranes", "Borgarnes", "Reykholt", "Stykkishólmur",
+      "Suðurnesjabær", "Vogar"]
+    .map((name) => ({ name, region: "reykjanesbaer" as const })),
+  // Annars staðar á landinu
+  ...["Akranes", "Borgarnes", "Reykholt", "Stykkishólmur",
       "Grundarfjörður", "Ólafsvík", "Hellissandur", "Rif", "Búðardalur", "Reykhólar",
       "Ísafjörður", "Bolungarvík", "Súðavík", "Flateyri", "Suðureyri", "Þingeyri",
       "Patreksfjörður", "Tálknafjörður", "Bíldudalur", "Hólmavík", "Drangsnes",

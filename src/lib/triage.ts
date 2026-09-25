@@ -137,6 +137,8 @@ export const TRIAGE: Record<string, TriageNode> = {
       { label: { is: "Akureyri og nágrenni", en: "Akureyri and around" }, next: "who", region: "akureyri" },
       { label: { is: "Selfoss og nágrenni", en: "Selfoss and around" }, next: "who", region: "selfoss" },
       { label: { is: "Annars staðar á landinu", en: "Elsewhere in Iceland" }, next: "who", region: "rural" },
+      // Appended (CMS keys are by position); shown before "Annars staðar".
+      { label: { is: "Reykjanesbær og Suðurnes", en: "Reykjanesbær and Suðurnes" }, next: "who", region: "reykjanesbaer" },
     ],
   },
 
@@ -533,8 +535,8 @@ export const REGION_TEXT: Record<RegionId, Record<LocalNeed, L>> = {
   capital: {
     er: { is: "Bráðamóttaka Landspítala í Fossvogi er opin allan sólarhringinn.",
           en: "The Landspítali emergency department in Fossvogur is open around the clock." },
-    "child-er": { is: "Bráðamóttaka barna á Barnaspítala Hringsins við Hringbraut er opin allan sólarhringinn.",
-                  en: "The children's emergency department at Barnaspítali Hringsins on Hringbraut is open around the clock." },
+    "child-er": { is: "Bráðamóttaka barna á Barnaspítala Hringsins við Hringbraut er opin allan sólarhringinn fyrir veik börn. Eftir slys eða óhapp: bráðamóttakan í Fossvogi.",
+                  en: "The children's emergency department at Barnaspítali Hringsins on Hringbraut is open around the clock for ill children. After an accident or injury: the emergency department in Fossvogur." },
     evening: { is: "Læknavaktin tekur á móti fólki á kvöldin og um helgar, þegar heilsugæslan er lokuð. Á dagtíma virka daga sinnir heilsugæslan þín erindinu.",
                en: "Læknavaktin sees patients in the evenings and at weekends, when health centres are closed. On weekdays, your health centre handles it." },
   },
@@ -551,6 +553,14 @@ export const REGION_TEXT: Record<RegionId, Record<LocalNeed, L>> = {
           en: "The HSU emergency department in Selfoss is open around the clock and takes walk-ins." },
     "child-er": { is: "Farðu með barnið á bráðamóttöku Heilbrigðisstofnunar Suðurlands á Selfossi. Hún er opin allan sólarhringinn.",
                   en: "Take the child to the HSU emergency department in Selfoss. It is open around the clock." },
+    evening: { is: "Utan opnunartíma heilsugæslunnar gefur 1700 þér samband við vaktþjónustu heilsugæslunnar. Á dagtíma virka daga sinnir heilsugæslan þín erindinu.",
+               en: "Outside health-centre hours, 1700 puts you through to the health centre's on-call service. On weekdays, your health centre handles it." },
+  },
+  reykjanesbaer: {
+    er: { is: "Slysa- og bráðamóttaka Heilbrigðisstofnunar Suðurnesja í Reykjanesbæ er opin allan sólarhringinn og þangað má koma án tímapöntunar.",
+          en: "The accident and emergency department at Heilbrigðisstofnun Suðurnesja in Reykjanesbær is open around the clock and takes walk-ins." },
+    "child-er": { is: "Farðu með barnið á slysa- og bráðamóttöku Heilbrigðisstofnunar Suðurnesja í Reykjanesbæ. Hún er opin allan sólarhringinn.",
+                  en: "Take the child to the accident and emergency department at Heilbrigðisstofnun Suðurnesja in Reykjanesbær. It is open around the clock." },
     evening: { is: "Utan opnunartíma heilsugæslunnar gefur 1700 þér samband við vaktþjónustu heilsugæslunnar. Á dagtíma virka daga sinnir heilsugæslan þín erindinu.",
                en: "Outside health-centre hours, 1700 puts you through to the health centre's on-call service. On weekdays, your health centre handles it." },
   },
@@ -735,7 +745,8 @@ for (const [id, node] of Object.entries(TRIAGE)) {
 
 const G_L = "Leiðarvísir — staðsetning";
 const REGION_NAMES: Record<RegionId, string> = {
-  capital: "Höfuðborgarsvæðið", akureyri: "Akureyri", selfoss: "Selfoss", rural: "Annars staðar",
+  capital: "Höfuðborgarsvæðið", akureyri: "Akureyri", selfoss: "Selfoss", reykjanesbaer: "Reykjanesbær",
+  rural: "Annars staðar",
 };
 const NEED_NAMES: Record<LocalNeed, string> = {
   er: "bráðamóttaka", "child-er": "bráðamóttaka fyrir barn", evening: "kvöld, helgar og dagtími",
