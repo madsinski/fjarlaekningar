@@ -12,6 +12,7 @@ import { erindiShown, THJONUSTA_SECTIONS } from "@/lib/site-content/thjonusta";
 import { resolveOrder, type LocaleContent } from "@/lib/site-content/types";
 import { ui } from "@/lib/site-content/ui-strings";
 import { localeHref } from "@/lib/locale";
+import IcelandMap from "./IcelandMap";
 
 // Presentational Þjónusta page.
 //
@@ -399,11 +400,19 @@ export default function ThjonustaView({
     // so it should not share the cyan of ordinary content.
     live: c.live_heading ? (
       <>
-        <div className="max-w-2xl mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
-            {renderHighlighted(c.live_heading)}
-          </h2>
-          <p className="mt-3 text-slate-600">{c.live_body}</p>
+        {/* Heading beside the map on wide screens, above it on phones. */}
+        <div className="mb-12 grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
+          <div className="max-w-2xl">
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+              {renderHighlighted(c.live_heading)}
+            </h2>
+            <p className="mt-3 text-slate-600">{c.live_body}</p>
+          </div>
+          <IcelandMap
+            points={umbrellas.flatMap((u) => u.locations.map((l) => ({ name: l.name, active: l.active })))}
+            liveLabel={tr.serviceLive}
+            soonLabel={tr.comingSoon}
+          />
         </div>
         <div className="space-y-12">
           {umbrellas.map((u) => {
