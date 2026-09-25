@@ -131,7 +131,7 @@ P1 = page("p1-fyrirvari", "Áður en þú byrjar", [
     display("intro-emergency", (
         "⚠️ Þetta er EKKI neyðarþjónusta.\n\n"
         "Hringdu í 112 ef um bráð veikindi eða slys er að ræða.\n"
-        "Hringdu í 1700 (Læknavaktin / Heilsuvera) ef þú þarft ráðgjöf strax.\n"
+        "Hringdu í 1700 (Læknavaktin) ef þú þarft ráðgjöf strax.\n"
         "Hringdu í 543 2222 (Eitrunarmiðstöð) vegna eitrunar eða ofskömmtunar.\n\n"
         "Erindi sem berast hér eru ekki lesin jafnóðum."
     )),

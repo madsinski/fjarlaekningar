@@ -206,8 +206,8 @@ SCOPE_REASONS = [
      "með eigin rafrænum skilríkjum. Við getum ekki metið barn eða annan "
      "einstakling út frá lýsingu þinni.\n\n"
      "• Fullorðnir geta sent eigið erindi hingað.\n"
-     "• Vegna barna: hafðu samband við heilsugæslu barnsins, til dæmis í "
-     "gegnum Heilsuveru, eða hringdu í 1700 til að fá ráðgjöf.\n"
+     "• Vegna barna: hafðu samband við heilsugæslu barnsins, eða hringdu í "
+     "1700 til að fá ráðgjöf.\n"
      "• Veikist barn skyndilega eða alvarlega: farðu á næstu bráðamóttöku "
      "eða hringdu í 112."),
     ("lab-tests",

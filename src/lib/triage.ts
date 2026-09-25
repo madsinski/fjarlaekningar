@@ -18,7 +18,6 @@ import type { RegionId } from "./triage-places";
 export type { RegionId } from "./triage-places";
 
 export const PORTAL_URL = "https://app.medalia.is/fjarlaekningar-hsu";
-export const HEILSUVERA_URL = "https://www.heilsuvera.is";
 
 export type ServiceKey =
   | "112" | "brada" | "1700" | "heilsugaesla" | "heilsuvera" | "fjar" | "other-adult";
@@ -93,9 +92,6 @@ const tel = (n: string) => `tel:${n.replace(/\s/g, "")}`;
 
 const CALL_112: TriageAction = { id: "call112", label: { is: "Hringja í 112", en: "Call 112" }, href: tel("112"), primary: true };
 const CALL_1700: TriageAction = { id: "call1700", label: { is: "Hringja í 1700", en: "Call 1700" }, href: tel("1700") };
-const OPEN_HEILSUVERA: TriageAction = {
-  id: "heilsuvera", label: { is: "Opna Heilsuveru", en: "Open Heilsuvera" }, href: HEILSUVERA_URL,
-};
 const OPEN_PORTAL: TriageAction = {
   id: "portal", label: { is: "Opna sjúklingagátt", en: "Open the patient portal" }, href: PORTAL_URL, primary: true,
 };
@@ -348,24 +344,24 @@ export const TRIAGE: Record<string, TriageNode> = {
     body: [
       { is: "Heilsugæslan sér um skoðanir, blóðprufur, myndgreiningu, tilvísanir, lyfjaskömmtun og eftirfylgd með langvinnum sjúkdómum.",
         en: "Your health centre (heilsugæsla) handles examinations, blood tests, imaging, referrals, dose-dispensed medicines and follow-up of long-term conditions." },
-      { is: "Þú getur bókað tíma eða sent skilaboð á Mínum síðum á Heilsuveru, eða hringt í heilsugæslustöðina þína. Þarftu ráð strax? Hringdu í 1700.",
-        en: "Book an appointment or send a message under My pages on Heilsuvera, or phone your health centre. Need advice now? Call 1700." },
+      { is: "Hafðu samband við heilsugæslustöðina þína og bókaðu tíma. Þarftu ráð strax? Hringdu í 1700.",
+        en: "Contact your health centre and book an appointment. Need advice now? Call 1700." },
     ],
-    actions: [{ ...OPEN_HEILSUVERA, primary: true }, CALL_1700],
+    actions: [CALL_1700],
   },
 
   "r-heilsuvera": {
     kind: "result",
-    service: "heilsuvera",
+    service: "heilsugaesla",
     eyebrow: { is: "Þinn heimilislæknir", en: "Your own GP" },
-    title: { is: "Heilsuvera", en: "Heilsuvera" },
+    title: { is: "Heilsugæslan þín", en: "Your health centre" },
     body: [
-      { is: "Á Mínum síðum á Heilsuveru getur þú sent heilsugæslunni þinni skilaboð, séð niðurstöður rannsókna og bókað tíma. Eftirfylgd með langvinnum sjúkdómi er best hjá lækni sem þekkir sögu þína.",
-        en: "Under My pages on Heilsuvera you can message your health centre, see test results and book appointments. Follow-up of a long-term condition is best with a doctor who knows your history." },
+      { is: "Eftirfylgd með langvinnum sjúkdómi er best hjá heilsugæslunni þinni, hjá lækni sem þekkir sögu þína. Hafðu samband við heilsugæslustöðina og bókaðu tíma.",
+        en: "Follow-up of a long-term condition is best at your health centre, with a doctor who knows your history. Contact your health centre and book an appointment." },
       { is: "Viltu aðeins fá útskýringu á niðurstöðum sem þú hefur þegar fengið? Það geta læknar Fjarlækninga gert.",
         en: "Just want results you already have explained? Fjarlækningar's doctors can do that." },
     ],
-    actions: [{ ...OPEN_HEILSUVERA, primary: true }, { ...OPEN_PORTAL, primary: false }],
+    actions: [{ ...OPEN_PORTAL, primary: false }, CALL_1700],
   },
 
   "r-child-er": {
@@ -402,12 +398,12 @@ export const TRIAGE: Record<string, TriageNode> = {
     eyebrow: { is: "Barn · getur beðið", en: "Child · can wait" },
     title: { is: "Heilsugæsla barnsins", en: "The child's health centre" },
     body: [
-      { is: "Heilsugæslan þar sem barnið er skráð sér um skoðanir, eftirlit og lyf fyrir börn. Á Heilsuveru geta forráðamenn sent heilsugæslu barnsins skilaboð og bókað tíma, eða hringt beint í heilsugæslustöðina.",
-        en: "The health centre where the child is registered handles examinations, check-ups and medicines for children. Through Heilsuvera, guardians can message the child's health centre and book an appointment, or phone the health centre directly." },
+      { is: "Heilsugæslan þar sem barnið er skráð sér um skoðanir, eftirlit og lyf fyrir börn. Hafðu samband við heilsugæslustöðina og bókaðu tíma.",
+        en: "The health centre where the child is registered handles examinations, check-ups and medicines for children. Contact the health centre and book an appointment." },
       { is: "Versni barninu á meðan þú bíður, hringdu í 1700 eða 112.",
         en: "If the child gets worse while you wait, call 1700 or 112." },
     ],
-    actions: [{ ...OPEN_HEILSUVERA, primary: true }, CALL_1700],
+    actions: [CALL_1700],
   },
 
   "r-other-adult": {
@@ -447,10 +443,10 @@ export const TRIAGE: Record<string, TriageNode> = {
     body: [
       { is: "Ávana- og fíknilyf og önnur lyf á listanum eru ekki endurnýjuð í fjarþjónustu, því þau þurfa eftirlit hjá lækni sem þekkir meðferðina þína.",
         en: "Controlled drugs and the other medicines on the list are not renewed remotely, because they need follow-up by a doctor who knows your treatment." },
-      { is: "Hafðu samband við lækninn sem ávísaði lyfinu síðast eða við heilsugæsluna þína. Á Mínum síðum á Heilsuveru getur þú sent heilsugæslunni skilaboð.",
-        en: "Contact the doctor who last prescribed it, or your health centre. Under My pages on Heilsuvera you can message your health centre." },
+      { is: "Hafðu samband við lækninn sem ávísaði lyfinu síðast eða við heilsugæsluna þína.",
+        en: "Contact the doctor who last prescribed it, or your health centre." },
     ],
-    actions: [{ ...OPEN_HEILSUVERA, primary: true }, CALL_1700],
+    actions: [CALL_1700],
   },
 
   "r-other-hg": {
@@ -459,12 +455,12 @@ export const TRIAGE: Record<string, TriageNode> = {
     eyebrow: { is: "Getur beðið", en: "Can wait" },
     title: { is: "Heilsugæsla viðkomandi", en: "Their health centre" },
     body: [
-      { is: "Hringdu í heilsugæslustöð viðkomandi og bókaðu tíma, eða aðstoðaðu við að bóka á Heilsuveru. Þú mátt fylgja viðkomandi í tímann.",
-        en: "Phone the health centre where they are registered and book an appointment, or help them book through Heilsuvera. You are welcome to go with them." },
+      { is: "Hringdu í heilsugæslustöð viðkomandi og bókaðu tíma. Þú mátt fylgja viðkomandi í tímann.",
+        en: "Phone the health centre where they are registered and book an appointment. You are welcome to go with them." },
       { is: "Versni viðkomandi á meðan þið bíðið, hringdu í 1700 eða 112.",
         en: "If they get worse while you wait, call 1700 or 112." },
     ],
-    actions: [{ ...OPEN_HEILSUVERA, primary: true }, CALL_1700],
+    actions: [CALL_1700],
   },
 
   "r-fjar": {
@@ -591,7 +587,8 @@ const NODE_NAMES: Record<string, string> = {
   "r-brada": "Niðurstaða · Bráðamóttaka",
   "r-1700": "Niðurstaða · 1700",
   "r-heilsugaesla": "Niðurstaða · Heilsugæsla",
-  "r-heilsuvera": "Niðurstaða · Heilsuvera",
+  // id kept (CMS keys hang on it); it now sends people to the health centre.
+  "r-heilsuvera": "Niðurstaða · Heilsugæsla, eftirfylgd",
   "child-when": "Barn · Staðan",
   "other-self": "Annar fullorðinn · Getur sent sjálfur?",
   "other-when": "Annar fullorðinn · Staðan",
@@ -607,7 +604,7 @@ const NODE_NAMES: Record<string, string> = {
 
 const ACTION_NAMES: Record<string, string> = {
   call112: "Hnappur: hringja í 112", call1700: "Hnappur: hringja í 1700",
-  call1717: "Hnappur: hringja í 1717", heilsuvera: "Hnappur: opna Heilsuveru",
+  call1717: "Hnappur: hringja í 1717",
   portal: "Hnappur: opna sjúklingagátt",
 };
 

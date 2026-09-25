@@ -37,7 +37,7 @@ Skýringartexti
 > ⚠️ Þetta er EKKI neyðarþjónusta.
 >
 > Hringdu í 112 ef um bráð veikindi eða slys er að ræða.
-> Hringdu í 1700 (Læknavaktin / Heilsuvera) ef þú þarft ráðgjöf strax.
+> Hringdu í 1700 (Læknavaktin) ef þú þarft ráðgjöf strax.
 > Hringdu í 543 2222 (Eitrunarmiðstöð) vegna eitrunar eða ofskömmtunar.
 >
 > Erindi sem berast hér eru ekki lesin jafnóðum.
@@ -218,7 +218,7 @@ Skýringartexti
 > Læknir getur aðeins metið þann sem sendir erindið sjálfur, skráður inn með eigin rafrænum skilríkjum. Við getum ekki metið barn eða annan einstakling út frá lýsingu þinni.
 >
 > • Fullorðnir geta sent eigið erindi hingað.
-> • Vegna barna: hafðu samband við heilsugæslu barnsins, til dæmis í gegnum Heilsuveru, eða hringdu í 1700 til að fá ráðgjöf.
+> • Vegna barna: hafðu samband við heilsugæslu barnsins, eða hringdu í 1700 til að fá ráðgjöf.
 > • Veikist barn skyndilega eða alvarlega: farðu á næstu bráðamóttöku eða hringdu í 112.
 
 **Birtist ef:** `scope-which` = `other-person`
