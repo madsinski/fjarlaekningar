@@ -13,7 +13,7 @@
 import { SITE_URL } from "@/lib/seo";
 import { erindi, localizeErindi } from "@/erindi";
 import { getPageContent } from "@/lib/site-content/server";
-import { erindiPagesLive, erindiKey, erindiTitle, erindiSeoTitleKey } from "@/lib/site-content/erindi-pages";
+import { erindiPagesLive, erindiKey, erindiTitle, erindiSeoTitleKey, erindiReview } from "@/lib/site-content/erindi-pages";
 import { erindiShown } from "@/lib/site-content/thjonusta";
 
 export const runtime = "nodejs";
@@ -36,9 +36,12 @@ export async function GET() {
     const lead = line(ec[`${erindiKey(e.slug)}_lead`] || e.description);
     // Linkable only once the pages are published; until then the erindi is
     // still real, it just has no page of its own to point at.
+    // Who vouches for it: assistants citing a medical answer look for this.
+    const r = erindiReview(ec, e.slug);
+    const reviewed = r ? ` (Yfirfarið af ${r.name}${r.credentials ? `, ${r.credentials}` : ""}, ${r.date}.)` : "";
     return live
-      ? `- [${title}](${SITE_URL}/thjonusta/${e.slug}): ${lead}`
-      : `- ${title}: ${lead}`;
+      ? `- [${title}](${SITE_URL}/thjonusta/${e.slug}): ${lead}${reviewed}`
+      : `- ${title}: ${lead}${reviewed}`;
   });
 
   const body = `# Fjarlækningar

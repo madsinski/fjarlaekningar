@@ -16,6 +16,15 @@ import ErindiView, { erindiLines } from "./ErindiView";
 // These pages are DARK by default: until `pages_live` is switched on in the CMS
 // both URLs 404, so draft medical text is never public and never indexed.
 
+/** "Guðbjartur Ólafsson" → "gudbjartur-olafsson": a stable, ASCII @id per doctor. */
+function personSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/ð/g, "d").replace(/þ/g, "th").replace(/æ/g, "ae")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
 export type Params = { params: Promise<{ slug: string }> };
 
 /** Content for one erindi, or null when the pages are switched off / unknown slug. */
@@ -113,6 +122,10 @@ export default async function ErindiPage({ params, locale }: Params & { locale: 
     url: url(`/thjonusta/${slug}`),
     inLanguage: locale,
     about: { "@type": "MedicalCondition", name: d.title },
+    specialty: "PrimaryCare",
+    audience: { "@type": "MedicalAudience", audienceType: "Patient" },
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    author: { "@id": `${SITE_URL}/#organization` },
     // Who checked this, and when. The single strongest signal a medical page can
     // carry: assistants and search engines both weigh clinical authorship, and
     // an anonymous health page is indistinguishable from content marketing.
@@ -122,8 +135,12 @@ export default async function ErindiPage({ params, locale }: Params & { locale: 
       ? {
           reviewedBy: {
             "@type": "Person",
+            // One stable id per doctor, so every page points at the same person.
+            "@id": `${SITE_URL}/#${personSlug(review.name)}`,
             name: review.name,
             ...(review.credentials ? { jobTitle: review.credentials } : {}),
+            worksFor: { "@id": `${SITE_URL}/#organization` },
+            knowsAbout: ["PrimaryCare", locale === "en" ? "Family medicine" : "Heimilislækningar"],
           },
           lastReviewed: review.date,
           dateModified: review.date,

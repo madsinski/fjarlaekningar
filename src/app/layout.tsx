@@ -147,6 +147,16 @@ export async function generateMetadata(): Promise<Metadata> {
       description: f.description,
       images: [f.ogImage],
     },
+    // Search Console / Bing Webmaster Tools ownership, when the codes are set
+    // (Vercel env). Bing can also import the site straight from Search Console.
+    ...(process.env.GOOGLE_SITE_VERIFICATION || process.env.BING_SITE_VERIFICATION
+      ? {
+          verification: {
+            ...(process.env.GOOGLE_SITE_VERIFICATION ? { google: process.env.GOOGLE_SITE_VERIFICATION } : {}),
+            ...(process.env.BING_SITE_VERIFICATION ? { other: { "msvalidate.01": process.env.BING_SITE_VERIFICATION } } : {}),
+          },
+        }
+      : {}),
     robots: {
       index: true,
       follow: true,

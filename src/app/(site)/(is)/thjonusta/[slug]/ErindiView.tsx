@@ -3,7 +3,7 @@
 // while the text is being edited.
 
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BadgeCheck } from "lucide-react";
 import { localeHref } from "@/lib/locale";
 import { ui } from "@/lib/site-content/ui-strings";
 import { erindiReview } from "@/lib/site-content/erindi-pages";
@@ -354,6 +354,25 @@ export default function ErindiView({
         <p className="mt-5 max-w-3xl text-lg text-slate-600 leading-relaxed">{lead}</p>
       )}
 
+      {/* Clinical review, right under the opening text — the "medically reviewed
+          by" line readers (and search engines weighing medical pages) look for
+          before trusting the rest. Absent unless a doctor and a date are both
+          recorded: an unreviewed page says nothing rather than implying a
+          review that did not happen. Matches reviewedBy/lastReviewed in the
+          page's JSON-LD. */}
+      {review && (
+        <p className="mt-5 flex max-w-3xl flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-slate-500">
+          <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+          <span>{t.reviewedBy}</span>
+          <span className="font-medium text-slate-700">
+            {review.name}
+            {review.credentials ? `, ${review.credentials}` : ""}
+          </span>
+          <span aria-hidden>·</span>
+          <time dateTime={review.date}>{formatReviewDate(review.date, locale)}</time>
+        </p>
+      )}
+
       {suitable.length > 0 && (
         <div className="mt-12 max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
           <h2 className="text-xl font-bold text-slate-900">{c.suitable_heading}</h2>
@@ -481,20 +500,6 @@ export default function ErindiView({
           </div>
           <p className="mt-2 text-sm leading-relaxed text-slate-700">{c.note_body}</p>
         </div>
-      )}
-
-      {/* Clinical review, when there is one. Under the text rather than badged at
-          the top: it is a statement about what you have just read, so it belongs
-          where you finish reading. Absent unless a doctor and a date are both
-          recorded — an unreviewed page says nothing rather than implying a
-          review that did not happen. */}
-      {review && (
-        <p className="mt-12 max-w-3xl border-t border-slate-200 pt-5 text-sm text-slate-500">
-          {t.reviewedBy} <span className="font-medium text-slate-700">{review.name}</span>
-          {review.credentials ? `, ${review.credentials}` : ""}
-          {" · "}
-          <time dateTime={review.date}>{formatReviewDate(review.date, locale)}</time>
-        </p>
       )}
 
       <div className="mt-14 rounded-3xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] p-8 sm:p-10 text-white">
