@@ -5,7 +5,7 @@ import Band from "../../Band";
 import Screenshot from "../../Screenshot";
 import Link from "next/link";
 import { erindiDescKey, localizeErindi } from "../../../../erindi";
-import { erindiTitle } from "@/lib/site-content/erindi-pages";
+import { erindiTitle, erindiHrefSlug } from "@/lib/site-content/erindi-pages";
 import SiteIcon from "@/lib/site-content/SiteIcon";
 import { renderHighlighted } from "@/lib/site-content/highlight";
 import { erindiShown, THJONUSTA_SECTIONS } from "@/lib/site-content/thjonusta";
@@ -196,7 +196,7 @@ export default function ThjonustaView({
             );
             // Until the erindi pages are published the card is plain markup.
             return erindiLive ? (
-              <Link key={s.slug} prefetch={false} href={localeHref(`/thjonusta/${s.slug}`, locale)} className={cardCls}>{inner}</Link>
+              <Link key={s.slug} prefetch={false} href={localeHref(`/thjonusta/${erindiHrefSlug(erindiContent, s.slug)}`, locale)} className={cardCls}>{inner}</Link>
             ) : (
               <div key={s.slug} className={cardCls}>{inner}</div>
             );

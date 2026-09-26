@@ -7,7 +7,7 @@ import { ArrowLeft, BadgeCheck } from "lucide-react";
 import { localeHref } from "@/lib/locale";
 import { personSlug } from "@/lib/seo";
 import { ui } from "@/lib/site-content/ui-strings";
-import { erindiFaq, erindiKey, erindiReview } from "@/lib/site-content/erindi-pages";
+import { conditionPage, erindiFaq, erindiKey, erindiReview } from "@/lib/site-content/erindi-pages";
 import MedsList, { type MedCategory } from "../MedsList";
 import TriageTrigger from "@/app/components/TriageTrigger";
 import type { Locale, LocaleContent } from "@/lib/site-content/types";
@@ -15,6 +15,12 @@ import type { Locale, LocaleContent } from "@/lib/site-content/types";
 export type ErindiViewProps = {
   c: LocaleContent;
   slug: string;
+  /** Whose icon to show — a condition page uses its service's. Default: slug. */
+  iconSlug?: string;
+  /** Condition pages: the other pages about the same service ("Skoðaðu líka"). */
+  siblings?: { slug: string; title: string }[];
+  /** Condition pages: the service to choose in the portal. */
+  portalChoice?: string;
   title: string;
   lead: string;
   about: string;
@@ -219,6 +225,9 @@ function AdviceCardBox({ card, tone }: { card: AdviceCard; tone: "good" | "bad" 
 export default function ErindiView({
   c,
   slug,
+  iconSlug,
+  siblings = [],
+  portalChoice = "",
   title,
   lead,
   about,
@@ -236,6 +245,8 @@ export default function ErindiView({
 }: ErindiViewProps) {
   const t = ui(locale);
   const review = erindiReview(c, slug);
+  // Condition pages have no icon of their own; they use their service's.
+  const icon = (s: string) => conditionPage(s)?.parent ?? s;
 
   // A button, not a thin arrow: a bordered card with the arrow in a tinted chip
   // and a hover state on the whole thing. It is the only way out of a long page,
@@ -291,7 +302,7 @@ export default function ErindiView({
                   const inner = (
                     <>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={`/erindi-icons/${n.slug}.webp`} alt="" loading="lazy" width={20} height={20}
+                      <img src={`/erindi-icons/${icon(n.slug)}.webp`} alt="" loading="lazy" width={20} height={20}
                         className={`h-5 w-5 shrink-0 object-contain ${here ? "" : "opacity-60 group-hover:opacity-100"}`} />
                       <span className="leading-snug">{n.title}</span>
                     </>
@@ -334,7 +345,7 @@ export default function ErindiView({
 
       <div className="flex max-w-3xl items-start gap-5">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`/erindi-icons/${slug}.webp`} alt="" width={72} height={72} className="w-18 h-18 shrink-0 object-contain" />
+        <img src={`/erindi-icons/${iconSlug ?? icon(slug)}.webp`} alt="" width={72} height={72} className="w-18 h-18 shrink-0 object-contain" />
         <div>
           {c.eyebrow && (
             <p className="text-xs font-semibold uppercase tracking-widest text-brand-cyan-dark mb-2">{c.eyebrow}</p>
@@ -376,6 +387,26 @@ export default function ErindiView({
         </div>
       ) : (
         <p className="mt-5 max-w-3xl text-lg text-slate-600 leading-relaxed">{lead}</p>
+      )}
+
+      {/* Condition pages: the sibling conditions, for people unsure which one
+          they have. */}
+      {siblings.length > 0 && (
+        <p className="mt-5 max-w-3xl text-[15px] text-slate-600">
+          <span className="font-medium text-slate-700">{t.seeAlso}</span>{" "}
+          {siblings.map((s, i) => (
+            <span key={s.slug}>
+              {i > 0 && " · "}
+              {linked ? (
+                <Link href={localeHref(`/thjonusta/${s.slug}`, locale)} className="font-medium text-[var(--primary-dark)] underline underline-offset-2 hover:no-underline">
+                  {s.title}
+                </Link>
+              ) : (
+                <span className="font-medium text-[var(--primary-dark)]">{s.title}</span>
+              )}
+            </span>
+          ))}
+        </p>
       )}
 
       {/* Symptoms and treatment: the two things people search this condition
@@ -555,6 +586,11 @@ export default function ErindiView({
       <div className="mt-14 rounded-3xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] p-8 sm:p-10 text-white">
         <h2 className="text-2xl font-bold">{c.cta_heading}</h2>
         {c.cta_body && <p className="mt-3 text-brand-cyan-subtle max-w-xl">{c.cta_body}</p>}
+        {portalChoice && (
+          <p className="mt-3 max-w-xl text-white">
+            {t.portalChoice} <span className="font-semibold">„{portalChoice}“</span>.
+          </p>
+        )}
         {linked ? (
           <TriageTrigger
             className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[var(--primary-dark)] hover:bg-slate-50"

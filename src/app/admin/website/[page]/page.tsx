@@ -20,7 +20,7 @@ import IconPicker from "../IconPicker";
 
 import ErindiView, { erindiLines } from "@/app/(site)/(is)/thjonusta/[slug]/ErindiView";
 import { erindi as ERINDI_LIST, localizeErindi } from "@/erindi";
-import { ERINDI_WITH_MEDS, erindiKey, erindiTitle } from "@/lib/site-content/erindi-pages";
+import { CONDITION_PAGES, ERINDI_WITH_MEDS, conditionPage, erindiKey, erindiTitle } from "@/lib/site-content/erindi-pages";
 import { activeClinics, erindiShown, THJONUSTA_DEFAULTS_IS } from "@/lib/site-content/thjonusta";
 
 // The preview lists the open heilsugæslur from the built-in Þjónusta text; the
@@ -220,7 +220,14 @@ function ErindiPreview({
   thjonusta?: LocaleContent;
 }) {
   const [slug, setSlug] = useState(ERINDI_LIST[0].slug);
-  const item = ERINDI_LIST.find((e) => e.slug === slug)!;
+  // Services plus the condition pages (previewable whether or not the split is
+  // published — they have to be written before they go live).
+  const pages = [
+    ...ERINDI_LIST.map((e) => ({ slug: e.slug, icon: e.slug, title: e.title, titleEn: e.titleEn, description: e.description, descriptionEn: e.descriptionEn })),
+    ...CONDITION_PAGES.map((p) => ({ slug: p.slug, icon: p.parent, title: p.title, titleEn: p.titleEn, description: "", descriptionEn: "" })),
+  ];
+  const item = pages.find((e) => e.slug === slug)!;
+  const cond = conditionPage(slug);
   const title = erindiTitle(c, slug, locale === "en" ? item.titleEn : item.title);
   const k = erindiKey(slug);
   return (
@@ -236,7 +243,7 @@ function ErindiPreview({
           <span className="ml-auto font-mono text-[11px] text-slate-400">/thjonusta/{slug}</span>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          {ERINDI_LIST.map((e) => {
+          {pages.map((e) => {
             const on = e.slug === slug;
             return (
               <button
@@ -251,7 +258,7 @@ function ErindiPreview({
                 }`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/erindi-icons/${e.slug}.png`} alt="" className="h-4 w-4 shrink-0 object-contain" />
+                <img src={`/erindi-icons/${e.icon}.webp`} alt="" className="h-4 w-4 shrink-0 object-contain" />
                 {erindiTitle(c, e.slug, locale === "en" ? e.titleEn : e.title)}
               </button>
             );
@@ -261,6 +268,9 @@ function ErindiPreview({
       <ErindiView
         c={c}
         slug={slug}
+        iconSlug={item.icon}
+        siblings={cond ? CONDITION_PAGES.filter((p) => p.parent === cond.parent && p.slug !== slug).map((p) => ({ slug: p.slug, title: erindiTitle(c, p.slug, locale === "en" ? p.titleEn : p.title) })) : []}
+        portalChoice={cond ? erindiTitle(c, cond.parent, locale === "en" ? ERINDI_LIST.find((e) => e.slug === cond.parent)!.titleEn : ERINDI_LIST.find((e) => e.slug === cond.parent)!.title) : ""}
         title={title}
         lead={c[`${k}_lead`]?.trim() || (locale === "en" ? item.descriptionEn : item.description)}
         about={c[`${k}_about`] ?? ""}

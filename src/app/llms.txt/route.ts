@@ -13,7 +13,7 @@
 import { SITE_URL } from "@/lib/seo";
 import { localizeErindi } from "@/erindi";
 import { getPageContent } from "@/lib/site-content/server";
-import { erindiPagesLive, erindiKey, erindiTitle, erindiReview } from "@/lib/site-content/erindi-pages";
+import { erindiNav, erindiPagesLive, erindiKey, erindiTitle, erindiReview } from "@/lib/site-content/erindi-pages";
 import { erindiShown } from "@/lib/site-content/thjonusta";
 
 export const runtime = "nodejs";
@@ -31,9 +31,11 @@ export async function GET() {
   const live = erindiPagesLive(ec);
   const shown = localizeErindi("is").filter((e) => erindiShown(thj, e.slug));
 
-  const problems = shown.map((e) => {
+  // A split service is listed as its condition pages.
+  const descriptions = Object.fromEntries(shown.map((e) => [e.slug, e.description]));
+  const problems = erindiNav(ec, shown, "is").map((e) => {
     const title = erindiTitle(ec, e.slug, e.title);
-    const lead = line(ec[`${erindiKey(e.slug)}_lead`] || e.description);
+    const lead = line(ec[`${erindiKey(e.slug)}_lead`] || descriptions[e.slug] || "");
     // Linkable only once the pages are published; until then the erindi is
     // still real, it just has no page of its own to point at.
     // Who vouches for it: assistants citing a medical answer look for this.

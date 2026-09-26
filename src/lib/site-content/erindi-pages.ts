@@ -280,6 +280,54 @@ const DRAFT_REFER: Record<string, string> = {
  */
 export const ERINDI_WITH_MEDS = ["lyfjuendurnyjun"];
 
+/**
+ * Condition pages: one service (one Medalia erindi) explained on several pages,
+ * because people search for each condition separately — "þvagfærasýking",
+ * "sveppasýking í leggöngum", "bakteríusýking í leggöngum" — and one page can
+ * only lead with one of them. They are pages, not services: no extra card,
+ * questionnaire or triage entry; every one of them sends people to the parent
+ * service in the portal.
+ *
+ * Dark until `split_thvag` is published "on". Then the three pages go live, the
+ * parent's own URL redirects permanently to the first of them, and the
+ * sitemap, llms.txt, cards and page rail follow. Off = exactly as before.
+ */
+export type ConditionPage = { slug: string; parent: string; title: string; titleEn: string };
+
+export const CONDITION_PAGES: ConditionPage[] = [
+  { slug: "thvagfaerasyking", parent: "thvagfaera-leggangasykingar",
+    title: "Þvagfærasýking og blöðrubólga", titleEn: "Urinary tract infection and cystitis" },
+  { slug: "sveppasyking-i-leggongum", parent: "thvagfaera-leggangasykingar",
+    title: "Sveppasýking í leggöngum", titleEn: "Vaginal thrush" },
+  { slug: "bakteriusyking-i-leggongum", parent: "thvagfaera-leggangasykingar",
+    title: "Bakteríusýking í leggöngum", titleEn: "Bacterial vaginosis" },
+];
+
+export const conditionPage = (slug: string) => CONDITION_PAGES.find((p) => p.slug === slug);
+
+/** Is the split published? */
+export const splitLive = (c: LocaleContent | null | undefined) => c?.split_thvag === "on";
+
+/** The URL slug for a service: its own, or — once split — its first condition page. */
+export function erindiHrefSlug(c: LocaleContent | null | undefined, slug: string): string {
+  if (!splitLive(c)) return slug;
+  return CONDITION_PAGES.find((p) => p.parent === slug)?.slug ?? slug;
+}
+
+/** Page list for rails and "other" links: a split service is replaced by its
+ *  condition pages, everything else is unchanged. */
+export function erindiNav(
+  c: LocaleContent,
+  services: { slug: string; title: string }[],
+  locale: "is" | "en",
+): { slug: string; title: string }[] {
+  return services.flatMap((s) => {
+    const kids = splitLive(c) ? CONDITION_PAGES.filter((p) => p.parent === s.slug) : [];
+    if (!kids.length) return [{ slug: s.slug, title: erindiTitle(c, s.slug, s.title) }];
+    return kids.map((p) => ({ slug: p.slug, title: erindiTitle(c, p.slug, locale === "en" ? p.titleEn : p.title) }));
+  });
+}
+
 export const ERINDI_FIELDS: SiteField[] = [
   {
     key: "pages_live",
@@ -290,6 +338,17 @@ export const ERINDI_FIELDS: SiteField[] = [
     options: [
       { value: "off", label: "Falið (drög)", hint: "Enginn kemst á síðurnar." },
       { value: "on", label: "Birt", hint: "Síðurnar fara í loftið og í sitemap." },
+    ],
+  },
+  {
+    key: "split_thvag",
+    label: "Þvagfæra- og leggangasýkingar í þrjár síður",
+    group: "Birting",
+    type: "choice",
+    help: "Þegar kveikt er birtast þrjár síður í stað einnar: „Þvagfærasýking og blöðrubólga“, „Sveppasýking í leggöngum“ og „Bakteríusýking í leggöngum“. Gamla slóðin vísar þá varanlega á þá fyrstu. Textinn er í hópunum með sömu nöfnum hér að neðan. Forskoðunin sýnir síðurnar hvort sem kveikt er eða ekki.",
+    options: [
+      { value: "off", label: "Ein síða (eins og nú)", hint: "Allt óbreytt." },
+      { value: "on", label: "Þrjár síður", hint: "Nýju síðurnar fara í loftið, gamla slóðin vísar á þær." },
     ],
   },
 
@@ -329,7 +388,7 @@ export const ERINDI_FIELDS: SiteField[] = [
   },
 
   // Per erindi.
-  ...erindi.flatMap((e): SiteField[] => [
+  ...[...erindi, ...CONDITION_PAGES].flatMap((e): SiteField[] => [
     {
       key: erindiTitleKey(e.slug),
       label: `${e.title} — fyrirsögn`,
@@ -446,6 +505,7 @@ export const ERINDI_FIELDS: SiteField[] = [
 
 export const ERINDI_DEFAULTS_IS: LocaleContent = {
   pages_live: "off",
+  split_thvag: "off",
   eyebrow: "Algeng erindi",
   suitable_heading: "Hvað er hægt að leysa?",
   selftest_heading: "Sjálfspróf heima",
@@ -475,6 +535,7 @@ export const ERINDI_DEFAULTS_IS: LocaleContent = {
       [`${erindiKey(e.slug)}_refer`, DRAFT_REFER[e.slug] ?? ""],
     ]),
   ),
+  ...Object.fromEntries(CONDITION_PAGES.map((p) => [erindiTitleKey(p.slug), p.title])),
 
   // Search titles and meta descriptions. Neither appears on the page: the
   // heading names the problem, these have to win the click.
@@ -830,6 +891,7 @@ export const ERINDI_DEFAULTS_EN: LocaleContent = {
     [erindiTitleKey(e.slug), e.titleEn],
     [`${erindiKey(e.slug)}_lead`, e.descriptionEn],
   ])),
+  ...Object.fromEntries(CONDITION_PAGES.map((p) => [erindiTitleKey(p.slug), p.titleEn])),
 
   // Search titles and meta descriptions, English side.
   [erindiSeoTitleKey("kvef-hosti-halsbolga")]: "Sore throat, cold and cough — treatment",

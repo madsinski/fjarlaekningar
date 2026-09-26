@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import ErindiPage, { erindiMetadata, type Params } from "./erindi-page";
 import { erindi } from "@/erindi";
+import { CONDITION_PAGES } from "@/lib/site-content/erindi-pages";
 
 // Prerender every erindi at build time. Without this the route stays dynamic and
 // each visit renders from scratch — these are the pages that have to rank, so
 // they are the last ones that should be paying for a database round trip.
 export function generateStaticParams() {
-  return erindi.map((e) => ({ slug: e.slug }));
+  // Services plus the condition pages (those 404 until the split is published).
+  return [...erindi, ...CONDITION_PAGES].map((e) => ({ slug: e.slug }));
 }
 
 export function generateMetadata(props: Params): Promise<Metadata> {

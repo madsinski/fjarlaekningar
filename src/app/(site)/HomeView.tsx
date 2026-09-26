@@ -4,7 +4,7 @@ import TriageTrigger from "../components/TriageTrigger";
 import NewsletterSignup from "../components/NewsletterSignup";
 import Band from "./Band";
 import { localizeErindi } from "../../erindi";
-import { erindiTitle, erindiPagesLive } from "@/lib/site-content/erindi-pages";
+import { erindiHrefSlug, erindiTitle, erindiPagesLive } from "@/lib/site-content/erindi-pages";
 import { renderHighlighted } from "@/lib/site-content/highlight";
 import { HOME_SECTIONS } from "@/lib/site-content/home";
 import { resolveOrder, type LocaleContent } from "@/lib/site-content/types";
@@ -97,7 +97,7 @@ export default function HomeView({
               <Link
                 key={s.slug}
                 prefetch={false}
-                href={href(erindiLinked ? `/thjonusta/${s.slug}` : "/thjonusta")}
+                href={href(erindiLinked ? `/thjonusta/${erindiHrefSlug(erindiContent, s.slug)}` : "/thjonusta")}
                 className="group flex items-center gap-3 bg-white rounded-xl border border-slate-200 px-4 py-3 hover:shadow-md hover:border-brand-cyan transition-all"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}

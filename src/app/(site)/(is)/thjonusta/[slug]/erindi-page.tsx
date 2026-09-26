@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { erindi, localizeErindi } from "@/erindi";
 import { getPage, getPageContent } from "@/lib/site-content/server";
-import { ERINDI_WITH_MEDS, erindiFaq, erindiKey, erindiPagesLive, erindiTitle, erindiSeoTitleKey, erindiReview } from "@/lib/site-content/erindi-pages";
+import {
+  CONDITION_PAGES, ERINDI_WITH_MEDS, conditionPage, erindiFaq, erindiHrefSlug, erindiKey, erindiNav,
+  erindiPagesLive, erindiTitle, erindiSeoTitleKey, erindiReview, splitLive,
+} from "@/lib/site-content/erindi-pages";
 import { erindiShown } from "@/lib/site-content/thjonusta";
 import { ui } from "@/lib/site-content/ui-strings";
 import type { Locale } from "@/lib/site-content/types";
@@ -18,24 +21,41 @@ import ErindiView, { erindiLines } from "./ErindiView";
 
 export type Params = { params: Promise<{ slug: string }> };
 
-/** Content for one erindi, or null when the pages are switched off / unknown slug. */
+/** Content for one erindi or condition page; null when switched off / unknown;
+ *  `{ redirect }` when a split service's old URL is asked for. */
 async function load(slug: string, locale: Locale) {
   const item = erindi.find((e) => e.slug === slug);
-  if (!item) return null;
+  const cond = conditionPage(slug);
+  if (!item && !cond) return null;
   const { c, enReady } = await getPage("erindi", locale);
   if (!erindiPagesLive(c)) return null;
+  // Condition pages exist only once the split is published.
+  if (cond && !splitLive(c)) return null;
   // Hidden in the Þjónusta CMS: the page goes with the card, or the switch
-  // would leave an unlinked page in the index.
-  if (!erindiShown(await getPageContent("thjonusta", locale), slug)) return null;
+  // would leave an unlinked page in the index. A condition page follows its service.
+  const service = cond ? cond.parent : slug;
+  if (!erindiShown(await getPageContent("thjonusta", locale), service)) return null;
+  // The service's own URL, once split, points permanently at its first page.
+  if (!cond && erindiHrefSlug(c, slug) !== slug) return { redirect: erindiHrefSlug(c, slug) } as const;
   const k = erindiKey(slug);
-  const localized = localizeErindi(locale).find((e) => e.slug === slug)!;
+  const localized = localizeErindi(locale).find((e) => e.slug === service)!;
+  const parentTitle = erindiTitle(c, service, localized.title);
   return {
     c,
     locale,
     enReady,
     slug,
-    title: erindiTitle(c, slug, localized.title),
-    lead: c[`${k}_lead`]?.trim() || localized.description,
+    service,
+    // On a condition page: the service to pick in the portal, and its sibling pages.
+    portalChoice: cond ? parentTitle : "",
+    siblings: cond
+      ? CONDITION_PAGES.filter((p) => p.parent === service && p.slug !== slug).map((p) => ({
+          slug: p.slug,
+          title: erindiTitle(c, p.slug, locale === "en" ? p.titleEn : p.title),
+        }))
+      : [],
+    title: cond ? erindiTitle(c, slug, locale === "en" ? cond.titleEn : cond.title) : parentTitle,
+    lead: c[`${k}_lead`]?.trim() || (cond ? "" : localized.description),
     about: c[`${k}_about`] ?? "",
     selftest: c[`${k}_selftest`] ?? "",
     advice: c[`${k}_advice`] ?? "",
@@ -49,6 +69,7 @@ export async function erindiMetadata({ params }: Params, locale: Locale): Promis
   const d = await load(slug, locale);
   // Switched off: tell crawlers to stay away even if someone has the URL.
   if (!d) return { title: "Erindi", robots: { index: false, follow: false } };
+  if ("redirect" in d) return {};
   // The search title is written for the result page, so it already carries the
   // brand and must not be run through the "%s — Fjarlækningar" template a
   // second time. Falling back to the heading keeps older erindi working.
@@ -76,6 +97,7 @@ export default async function ErindiPage({ params, locale }: Params & { locale: 
   const { slug } = await params;
   const d = await load(slug, locale);
   if (!d) notFound();
+  if ("redirect" in d) permanentRedirect(localeHref(`/thjonusta/${d.redirect}`, locale));
   const t = ui(locale);
   // The medications that cannot be renewed are edited on the Þjónusta page and
   // shown in its FAQ; the lyfjaendurnýjun page shows the very same list rather
@@ -94,14 +116,11 @@ export default async function ErindiPage({ params, locale }: Params & { locale: 
   // the full list costs a row or two and saves a visitor guessing whether the
   // problem they came for is handled at all.
   // Every visible erindi, current one included — the rail marks where you are.
-  const nav = localizeErindi(locale)
-    .filter((e) => erindiShown(thj, e.slug))
-    .map((e) => ({ slug: e.slug, title: erindiTitle(d.c, e.slug, e.title) }));
-  const others = localizeErindi(locale)
-    .filter((e) => e.slug !== slug && erindiShown(thj, e.slug))
-    // Same resolver as the h1: a link that reads differently from the page it
-    // opens is the drift this was all meant to prevent.
-    .map((e) => ({ slug: e.slug, title: erindiTitle(d.c, e.slug, e.title) }));
+  // Same resolver as the h1: a link that reads differently from the page it
+  // opens is the drift this was all meant to prevent. A split service shows
+  // its condition pages instead of itself.
+  const nav = erindiNav(d.c, localizeErindi(locale).filter((e) => erindiShown(thj, e.slug)), locale);
+  const others = nav.filter((e) => e.slug !== slug);
 
   const review = erindiReview(d.c, slug);
   const url = (path: string) => `${SITE_URL}${localeHref(path, locale)}`;
@@ -172,6 +191,9 @@ export default async function ErindiPage({ params, locale }: Params & { locale: 
       <ErindiView
         c={d.c}
         slug={slug}
+        iconSlug={d.service}
+        siblings={d.siblings}
+        portalChoice={d.portalChoice}
         title={d.title}
         lead={d.lead}
         about={d.about}

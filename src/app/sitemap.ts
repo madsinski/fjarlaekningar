@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { SITE_URL } from "@/lib/seo";
 import { erindi } from "@/erindi";
 import { getPage } from "@/lib/site-content/server";
-import { erindiPagesLive, erindiReview } from "@/lib/site-content/erindi-pages";
+import { erindiNav, erindiPagesLive, erindiReview } from "@/lib/site-content/erindi-pages";
 import { erindiShown } from "@/lib/site-content/thjonusta";
 import { pressItems } from "@/lib/site-content/fjolmidlar";
 
@@ -95,7 +95,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (erindiPagesLive(c)) {
       // A hidden erindi has no page, so it must not be advertised in the sitemap.
       const thj = await getPage("thjonusta", "is");
-      for (const e of erindi.filter((x) => erindiShown(thj.c, x.slug))) {
+      // A split service is listed as its condition pages (its own URL redirects).
+      const pages = erindiNav(c, erindi.filter((x) => erindiShown(thj.c, x.slug)), "is");
+      for (const e of pages) {
         // The review date is when the medical text last changed on record; a
         // lastmod that is always "now" teaches Google and Bing to ignore it.
         const review = erindiReview(c, e.slug);
