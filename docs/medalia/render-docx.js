@@ -152,9 +152,9 @@ for (const line of [
 if (q.item.some((p) => NEW_PAGES.has(p.linkId))) {
   body.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [T("Nýtt: skimun fyrir erindi utan umfangs")] }));
   body.push(P([T("Síðan „Hentar erindið fjarþjónustu?“ kemur strax á eftir öryggisskimuninni. "),
-    T("Svari sjúklingur „Já“ fær hann skýringu og leiðbeiningar um hvert hann á að leita, og "),
+    T("Svari sjúklingur „Já“ við einhverri spurningu fær hann skýringu og leiðbeiningar um hvert hann á að leita, og "),
     T("allar síður þar á eftir eru faldar", { bold: true }),
-    T(". Til að það virki þarf að setja skilyrðið scope-gate = „Nei“ á síðurnar sem merktar eru þannig í töflunni hér fyrir neðan. "),
+    T(". Spurningarnar birtast ein af annarri (hver eftir „Nei“ við þá á undan) og síðurnar á eftir fá skilyrðið scope-dose = „Nei“, eins og merkt er í töflunni hér fyrir neðan. "),
     T("Síður sem þegar hanga á spurningunni um eðli erindisins hverfa sjálfkrafa.")], { spacing: { after: 200 } }));
 }
 

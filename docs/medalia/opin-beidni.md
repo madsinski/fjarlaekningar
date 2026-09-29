@@ -43,33 +43,30 @@ Meirihlutinn er einn smellur.
 | 1 | Áður en þú byrjar | alltaf | Fyrirvari, 112/1700, umfang, engin ávana- og fíknilyf, staðfesting |
 | 2 | Öryggisskimun | alltaf | 12 rauð flögg → hlið → hvaða flögg → stöðvunarskilaboð |
 | 2b | Hentar erindið fjarþjónustu? (`p-hentar`) | alltaf | 6 atriði utan umfangs → hlið → hvað á við → hvers vegna og hvert á að leita |
-| 3 | Um hvað snýst erindið? | `scope-gate` = `no` | Eðli erindis (stýrir greiningunni) + líkamssvæði |
+| 3 | Um hvað snýst erindið? | `scope-dose` = `no` | Eðli erindis (stýrir greiningunni) + líkamssvæði |
 | 4 | Einkennin þín | `new-problem`, `known-problem` | Tímalengd, byrjun, kveikja, ferill, áhrif, hiti, verkir, fyrri saga, hvað var reynt |
 | 5 | Lyfjaerindi | `medication` | Tegund erindis, lyf, skammtur, hver ávísaði, birgðir, breytingar, eftirlit |
 | 6 | Niðurstöður og eftirfylgd | `results` | Hvaða rannsókn, hvar/hvenær, hverju á að svara |
 | 7 | Vottorð | `certificate` | Tegund, tímabil, ástæða, viðtakandi |
-| 8 | Um heilsu þína | `scope-gate` = `no` | Langvinnir sjúkdómar, lyf, ofnæmi, þungun, nikótín, áfengi, ferðalög, hæð/þyngd |
-| 9 | Lýsing með eigin orðum | `scope-gate` = `no` | Leiðbeiningar + frjáls texti + áhyggjuspurning |
-| 10 | Myndir | `scope-gate` = `no` | Hlið + myndatökuráð + viðhengi |
-| 11 | Væntingar og staðfesting | `scope-gate` = `no` | Hverju er vonast eftir, sími, fjórar staðfestingar |
+| 8 | Um heilsu þína | `scope-dose` = `no` | Langvinnir sjúkdómar, lyf, ofnæmi, þungun, nikótín, áfengi, ferðalög, hæð/þyngd |
+| 9 | Lýsing með eigin orðum | `scope-dose` = `no` | Leiðbeiningar + frjáls texti + áhyggjuspurning |
+| 10 | Myndir | `scope-dose` = `no` | Hlið + myndatökuráð + viðhengi |
+| 11 | Væntingar og staðfesting | `scope-dose` = `no` | Hverju er vonast eftir, sími, fjórar staðfestingar |
 
 `other` sleppir síðum 4–7 og fer beint í bakgrunn og frjálsan texta.
 
-**Síða 2b — skráning.** Fyrsta spurning síðunnar er hvort sjúklingur sé skráður á
-heilsugæslu þar sem þjónustan er opin (`reg-gate`; listinn er `ACTIVE_CLINICS` í
-`medalia_common.py`, nú aðeins Heilsugæslan í Vestmannaeyjum). Svari hann „Nei“ fær
-hann skýringu og leiðbeiningu, og spurningin um umfang (`scope-gate`) birtist ekki —
-síðurnar á eftir hanga á henni og faldar því líka. Uppfærðu `ACTIVE_CLINICS` um leið og
-„+“ línurnar á /thjonusta þegar ný heilsugæsla opnar.
-
-**Síða 2b — utan umfangs.** Erindi sem ekki er hægt að leysa skriflega: erindi
-fyrir barn eða annan einstakling, beiðni um blóðprufu eða aðra rannsókn, beiðni um
-myndgreiningu eða speglun, tilvísun sem þarf nánari sögu og skoðun, vandamál sem
-þarf að skoða, og lyf í lyfjarúllu. Svari sjúklingur „Já“ felast allar síður á eftir
-(síður 4–7 hanga á `erindi-type` á síðu 3 og hverfa því líka), og hann fær skýringu
-og leiðbeiningu um hvert á að leita fyrir hvert atriði sem hann merkir við. Textinn
-er skilgreindur einu sinni í `SCOPE_REASONS` í `medalia_common.py` og notaður í
-bæði löngu og stuttu útgáfunni.
+**Síða 2b — skráning og umfang.** Fyrst er spurt hvort sjúklingur sé með skráningu
+á heilsugæslu þar sem þjónustan er opin (`reg-gate`; listinn er `ACTIVE_CLINICS` í
+`medalia_common.py`, nú aðeins Heilsugæslan í Vestmannaeyjum). Síðan koma sex
+já/nei-spurningar, hver fyrir sig, um erindi sem ekki er hægt að leysa skriflega:
+erindi fyrir aðra (`scope-other`), blóðprufu eða rannsókn (`scope-labs`),
+myndgreiningu eða speglun (`scope-imaging`), tilvísun (`scope-referral`), skoðun
+(`scope-exam`) og lyf í lyfjarúllu (`scope-dose`). Þær mynda keðju: hver birtist
+aðeins eftir „Nei“ við þá á undan, og „Já“ sýnir skýringu og leiðbeiningu fyrir
+þá spurningu (`<linkId>-stop`) og stöðvar keðjuna. Síðasta spurningin fær því
+aðeins „Nei“ ef öllum sex var svarað „Nei“, og allar síður á eftir hanga á
+`scope-dose` = `no` — eitt skilyrði, engin OG-rökfræði. Textinn er í
+`SCOPE_REASONS` í `medalia_common.py` og gildir fyrir báðar útgáfur.
 
 ## Það sem skiptir mestu máli á hverri síðu
 

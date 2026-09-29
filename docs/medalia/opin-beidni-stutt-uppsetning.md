@@ -154,22 +154,15 @@ Skýringartexti
 
 Skýringartexti
 
-> Sumt er ekki hægt að leysa í skriflegri fjarþjónustu, sama hversu vel því er lýst. Lestu listann og svaraðu svo spurningunni fyrir neðan. Þannig sparar þú þér bið eftir svari sem getur ekki hjálpað þér.
->
-> • Erindið snýst um einhvern annan en þig, til dæmis barnið þitt, maka eða foreldri.
-> • Þú vilt fá beiðni um blóðprufu eða aðra rannsókn, til dæmis þvag- eða hormónamælingu.
-> • Þú vilt fá beiðni um myndgreiningu (röntgen, tölvusneiðmynd, segulómun eða ómun) eða speglun (til dæmis maga- eða ristilspeglun).
-> • Þú vilt fá tilvísun til sérfræðings vegna vandamáls sem þarf nánari sögu og skoðun.
-> • Vandamálið þarf skoðun, til dæmis að hlusta á hjarta eða lungu, skoða eyru eða háls, þreifa á kvið eða meta áverka, hnút eða fyrirferð.
-> • Þú vilt fá lyfseðil fyrir lyf sem þú færð skömmtuð í lyfjarúllu frá apóteki, eða breytingu á skömmtuninni.
+> Sumt er ekki hægt að leysa í skriflegri fjarþjónustu, sama hversu vel því er lýst. Svaraðu næstu spurningum svo við getum gengið úr skugga um að erindið henti. Þannig sparar þú þér bið eftir svari sem getur ekki hjálpað þér.
 
 **Birtist ef:** `reg-gate` = `yes`
 
-### 3.4 · `scope-gate`
+### 3.4 · `scope-other`
 
 Einn valkostur — radio · **SKYLDA**
 
-**Spurning:** Á eitthvað af ofangreindu við um erindið þitt?
+**Spurning:** Snýst erindið um einhvern annan en þig, til dæmis barnið þitt, maka eða foreldri?
 
 **Birtist ef:** `reg-gate` = `yes`
 
@@ -178,122 +171,171 @@ Einn valkostur — radio · **SKYLDA**
 | `yes` | Já |
 | `no` | Nei |
 
-*Hjálpartexti:* Viltu aðeins fá útskýringu á niðurstöðum sem þú hefur þegar fengið, eða endurnýjun á lyfi sem þú sækir í apótek? Það getum við gert. Svaraðu þá „Nei“.
-
-### 3.5 · `scope-stop`
+### 3.5 · `scope-other-stop`
 
 Skýringartexti
 
 > ⛔ Við getum ekki afgreitt þetta erindi í fjarþjónustu.
->
-> Það er ekki vegna þess að erindið skipti ekki máli, heldur vegna þess að það þarf þjónustu sem ekki er hægt að veita skriflega. Merktu við hvað á við og þá sérðu hvert þú getur leitað.
->
-> Þú þarft ekki að senda erindið. Ef þú merktir við þetta fyrir mistök, breyttu svarinu í „Nei“ til að halda áfram.
-
-**Birtist ef:** `scope-gate` = `yes`
-
-### 3.6 · `scope-which`
-
-Fjölval — gátreitir · **SKYLDA**
-
-**Spurning:** Hvað af þessu á við? Merktu við allt sem á við.
-
-**Birtist ef:** `scope-gate` = `yes`
-
-| kóði | það sem sjúklingurinn sér |
-|---|---|
-| `other-person` | Erindið snýst um barn eða annan einstakling |
-| `lab-tests` | Beiðni um blóðprufu eða aðra rannsókn |
-| `imaging` | Beiðni um myndgreiningu eða speglun |
-| `referral` | Tilvísun sem þarf nánari sögu og skoðun |
-| `exam` | Vandamál sem þarf að skoða |
-| `dose-dispensed` | Lyf í lyfjarúllu (lyfjaskömmtun) |
-
-### 3.7 · `scope-why-other-person`
-
-Skýringartexti
-
-> Erindi fyrir aðra
 >
 > Læknir getur aðeins metið þann sem sendir erindið sjálfur, skráður inn með eigin rafrænum skilríkjum. Við getum ekki metið barn eða annan einstakling út frá lýsingu þinni.
 >
 > • Fullorðnir geta sent eigið erindi hingað.
 > • Vegna barna: hafðu samband við heilsugæslu barnsins, eða hringdu í 1700 til að fá ráðgjöf.
 > • Veikist barn skyndilega eða alvarlega: farðu á næstu bráðamóttöku eða hringdu í 112.
+>
+> Þú þarft ekki að senda erindið. Ef þú svaraðir þessu fyrir mistök, breyttu svarinu í „Nei“ til að halda áfram.
 
-**Birtist ef:** `scope-which` = `other-person`
+**Birtist ef:** `scope-other` = `yes`
 
-### 3.8 · `scope-why-lab-tests`
+### 3.6 · `scope-labs`
+
+Einn valkostur — radio · **SKYLDA**
+
+**Spurning:** Viltu fá beiðni um blóðprufu eða aðra rannsókn, til dæmis þvag- eða hormónamælingu?
+
+**Birtist ef:** `scope-other` = `no`
+
+| kóði | það sem sjúklingurinn sér |
+|---|---|
+| `yes` | Já |
+| `no` | Nei |
+
+*Hjálpartexti:* Viltu aðeins fá útskýringu á niðurstöðum sem þú hefur þegar fengið? Það getum við gert. Svaraðu þá „Nei“.
+
+### 3.7 · `scope-labs-stop`
 
 Skýringartexti
 
-> Blóðprufur og aðrar rannsóknir
+> ⛔ Við getum ekki afgreitt þetta erindi í fjarþjónustu.
 >
 > Við biðjum ekki um rannsóknir í fjarþjónustu. Læknirinn sem biður um rannsókn ber ábyrgð á að fylgja niðurstöðunum eftir og það er best gert þar sem þú ert í reglulegri eftirfylgd.
 >
 > • Hafðu samband við heilsugæsluna þína eða heimilislækni.
-> • Viltu aðeins fá útskýringu á niðurstöðum sem þú hefur þegar fengið? Það getum við gert. Breyttu þá svarinu hér fyrir ofan í „Nei“.
+>
+> Þú þarft ekki að senda erindið. Ef þú svaraðir þessu fyrir mistök, breyttu svarinu í „Nei“ til að halda áfram.
 
-**Birtist ef:** `scope-which` = `lab-tests`
+**Birtist ef:** `scope-labs` = `yes`
 
-### 3.9 · `scope-why-imaging`
+### 3.8 · `scope-imaging`
+
+Einn valkostur — radio · **SKYLDA**
+
+**Spurning:** Viltu fá beiðni um myndgreiningu (röntgen, tölvusneiðmynd, segulómun eða ómun) eða speglun (til dæmis maga- eða ristilspeglun)?
+
+**Birtist ef:** `scope-labs` = `no`
+
+| kóði | það sem sjúklingurinn sér |
+|---|---|
+| `yes` | Já |
+| `no` | Nei |
+
+### 3.9 · `scope-imaging-stop`
 
 Skýringartexti
 
-> Myndgreining og speglanir
+> ⛔ Við getum ekki afgreitt þetta erindi í fjarþjónustu.
 >
 > Beiðni um myndgreiningu eða speglun þarf að byggja á viðtali og skoðun, og niðurstöðunum þarf að fylgja eftir. Það er ekki hægt í skriflegri fjarþjónustu.
 >
 > • Hafðu samband við heilsugæsluna þína eða heimilislækni.
 > • Eftir slys eða áverka: farðu á slysa- og bráðamóttöku.
+>
+> Þú þarft ekki að senda erindið. Ef þú svaraðir þessu fyrir mistök, breyttu svarinu í „Nei“ til að halda áfram.
 
-**Birtist ef:** `scope-which` = `imaging`
+**Birtist ef:** `scope-imaging` = `yes`
 
-### 3.10 · `scope-why-referral`
+### 3.10 · `scope-referral`
+
+Einn valkostur — radio · **SKYLDA**
+
+**Spurning:** Viltu fá tilvísun til sérfræðings vegna vandamáls sem þarf nánari sögu og skoðun?
+
+**Birtist ef:** `scope-imaging` = `no`
+
+| kóði | það sem sjúklingurinn sér |
+|---|---|
+| `yes` | Já |
+| `no` | Nei |
+
+### 3.11 · `scope-referral-stop`
 
 Skýringartexti
 
-> Tilvísanir
+> ⛔ Við getum ekki afgreitt þetta erindi í fjarþjónustu.
 >
 > Góð tilvísun byggir á ítarlegri sögu og skoðun svo sérfræðingurinn fái þær upplýsingar sem hann þarf. Það getum við ekki veitt skriflega.
 >
 > • Hafðu samband við heilsugæsluna þína eða heimilislækni.
 > • Fullorðnir geta oft bókað tíma beint hjá sérfræðilækni án tilvísunar.
+>
+> Þú þarft ekki að senda erindið. Ef þú svaraðir þessu fyrir mistök, breyttu svarinu í „Nei“ til að halda áfram.
 
-**Birtist ef:** `scope-which` = `referral`
+**Birtist ef:** `scope-referral` = `yes`
 
-### 3.11 · `scope-why-exam`
+### 3.12 · `scope-exam`
+
+Einn valkostur — radio · **SKYLDA**
+
+**Spurning:** Þarf að skoða vandamálið, til dæmis að hlusta á hjarta eða lungu, skoða eyru eða háls, þreifa á kvið eða meta áverka, hnút eða fyrirferð?
+
+**Birtist ef:** `scope-referral` = `no`
+
+| kóði | það sem sjúklingurinn sér |
+|---|---|
+| `yes` | Já |
+| `no` | Nei |
+
+### 3.13 · `scope-exam-stop`
 
 Skýringartexti
 
-> Vandamál sem þarf að skoða
+> ⛔ Við getum ekki afgreitt þetta erindi í fjarþjónustu.
 >
 > Læknirinn getur ekki hlustað, þreifað eða horft í eyru og háls í gegnum skriflegt erindi. Þegar skoðun ræður greiningunni er ekki öruggt að meta vandamálið hér.
 >
 > • Hafðu samband við heilsugæsluna þína.
 > • Utan opnunartíma heilsugæslunnar: Læknavaktin, sími 1700.
 > • Eftir slys eða áverka: farðu á slysa- og bráðamóttöku.
+>
+> Þú þarft ekki að senda erindið. Ef þú svaraðir þessu fyrir mistök, breyttu svarinu í „Nei“ til að halda áfram.
 
-**Birtist ef:** `scope-which` = `exam`
+**Birtist ef:** `scope-exam` = `yes`
 
-### 3.12 · `scope-why-dose-dispensed`
+### 3.14 · `scope-dose`
+
+Einn valkostur — radio · **SKYLDA**
+
+**Spurning:** Viltu fá lyfseðil fyrir lyf sem þú færð skömmtuð í lyfjarúllu frá apóteki, eða breytingu á skömmtuninni?
+
+**Birtist ef:** `scope-exam` = `no`
+
+| kóði | það sem sjúklingurinn sér |
+|---|---|
+| `yes` | Já |
+| `no` | Nei |
+
+*Hjálpartexti:* Endurnýjun á lyfi sem þú sækir í apótek getum við afgreitt. Svaraðu þá „Nei“.
+
+### 3.15 · `scope-dose-stop`
 
 Skýringartexti
 
-> Lyf í lyfjarúllu
+> ⛔ Við getum ekki afgreitt þetta erindi í fjarþjónustu.
 >
 > Skömmtuð lyf eru afgreidd eftir skömmtunarkorti sem læknirinn þinn heldur utan um. Til að öll lyfin skili sér rétt í rúlluna þarf sá læknir að gera breytingarnar.
 >
 > • Hafðu samband við heilsugæsluna þína eða heimilislækni.
 > • Apótekið sem skammtar lyfin getur leiðbeint þér um næstu skref.
+>
+> Þú þarft ekki að senda erindið. Ef þú svaraðir þessu fyrir mistök, breyttu svarinu í „Nei“ til að halda áfram.
 
-**Birtist ef:** `scope-which` = `dose-dispensed`
+**Birtist ef:** `scope-dose` = `yes`
 
 ---
 
 ## Síða 4 · Hvað er að?
 
-**Öll síðan birtist ef:** `scope-gate` = `no`
+**Öll síðan birtist ef:** `scope-dose` = `no`
 
 ### 4.1 · `erindi-type`
 
@@ -580,7 +622,7 @@ Stuttur texti — ein lína · **SKYLDA**
 
 ## Síða 9 · Öryggisatriði og myndir
 
-**Öll síðan birtist ef:** `scope-gate` = `no`
+**Öll síðan birtist ef:** `scope-dose` = `no`
 
 ### 9.1 · `bg-intro`
 
@@ -700,7 +742,7 @@ Viðhengi — mynd
 
 ## Síða 10 · Staðfesting
 
-**Öll síðan birtist ef:** `scope-gate` = `no`
+**Öll síðan birtist ef:** `scope-dose` = `no`
 
 ### 10.1 · `exp-wish`
 

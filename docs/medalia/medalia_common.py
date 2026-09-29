@@ -195,13 +195,16 @@ def redflag_page(intro_lines, which_options, extra_note=None):
     return page("p2-oryggisskimun", "Öryggisskimun", items)
 
 
+STOP_HEAD = "⛔ Við getum ekki afgreitt þetta erindi í fjarþjónustu.\n\n"
+STOP_TAIL = ("\n\nÞú þarft ekki að senda erindið. Ef þú svaraðir þessu fyrir "
+             "mistök, breyttu svarinu í „Nei“ til að halda áfram.")
+
 SCOPE_REASONS = [
-    # (code, line in the list, short checkbox label, why-not + where-to-go)
-    ("other-person",
-     "Erindið snýst um einhvern annan en þig, til dæmis barnið þitt, maka "
-     "eða foreldri.",
-     "Erindið snýst um barn eða annan einstakling",
-     "Erindi fyrir aðra\n\n"
+    # (linkId, the question, help text or None, why-not + where-to-go on "Já")
+    ("scope-other",
+     "Snýst erindið um einhvern annan en þig, til dæmis barnið þitt, maka "
+     "eða foreldri?",
+     None,
      "Læknir getur aðeins metið þann sem sendir erindið sjálfur, skráður inn "
      "með eigin rafrænum skilríkjum. Við getum ekki metið barn eða annan "
      "einstakling út frá lýsingu þinni.\n\n"
@@ -210,53 +213,49 @@ SCOPE_REASONS = [
      "1700 til að fá ráðgjöf.\n"
      "• Veikist barn skyndilega eða alvarlega: farðu á næstu bráðamóttöku "
      "eða hringdu í 112."),
-    ("lab-tests",
-     "Þú vilt fá beiðni um blóðprufu eða aðra rannsókn, til dæmis þvag- "
-     "eða hormónamælingu.",
-     "Beiðni um blóðprufu eða aðra rannsókn",
-     "Blóðprufur og aðrar rannsóknir\n\n"
+    ("scope-labs",
+     "Viltu fá beiðni um blóðprufu eða aðra rannsókn, til dæmis þvag- eða "
+     "hormónamælingu?",
+     "Viltu aðeins fá útskýringu á niðurstöðum sem þú hefur þegar fengið? "
+     "Það getum við gert. Svaraðu þá „Nei“.",
      "Við biðjum ekki um rannsóknir í fjarþjónustu. Læknirinn sem biður um "
      "rannsókn ber ábyrgð á að fylgja niðurstöðunum eftir og það er best gert "
      "þar sem þú ert í reglulegri eftirfylgd.\n\n"
-     "• Hafðu samband við heilsugæsluna þína eða heimilislækni.\n"
-     "• Viltu aðeins fá útskýringu á niðurstöðum sem þú hefur þegar fengið? "
-     "Það getum við gert. Breyttu þá svarinu hér fyrir ofan í „Nei“."),
-    ("imaging",
-     "Þú vilt fá beiðni um myndgreiningu (röntgen, tölvusneiðmynd, "
-     "segulómun eða ómun) eða speglun (til dæmis maga- eða ristilspeglun).",
-     "Beiðni um myndgreiningu eða speglun",
-     "Myndgreining og speglanir\n\n"
+     "• Hafðu samband við heilsugæsluna þína eða heimilislækni."),
+    ("scope-imaging",
+     "Viltu fá beiðni um myndgreiningu (röntgen, tölvusneiðmynd, segulómun "
+     "eða ómun) eða speglun (til dæmis maga- eða ristilspeglun)?",
+     None,
      "Beiðni um myndgreiningu eða speglun þarf að byggja á viðtali og "
      "skoðun, og niðurstöðunum þarf að fylgja eftir. Það er ekki hægt í "
      "skriflegri fjarþjónustu.\n\n"
      "• Hafðu samband við heilsugæsluna þína eða heimilislækni.\n"
      "• Eftir slys eða áverka: farðu á slysa- og bráðamóttöku."),
-    ("referral",
-     "Þú vilt fá tilvísun til sérfræðings vegna vandamáls sem þarf nánari "
-     "sögu og skoðun.",
-     "Tilvísun sem þarf nánari sögu og skoðun",
-     "Tilvísanir\n\n"
+    ("scope-referral",
+     "Viltu fá tilvísun til sérfræðings vegna vandamáls sem þarf nánari sögu "
+     "og skoðun?",
+     None,
      "Góð tilvísun byggir á ítarlegri sögu og skoðun svo sérfræðingurinn fái "
      "þær upplýsingar sem hann þarf. Það getum við ekki veitt skriflega.\n\n"
      "• Hafðu samband við heilsugæsluna þína eða heimilislækni.\n"
      "• Fullorðnir geta oft bókað tíma beint hjá sérfræðilækni án "
      "tilvísunar."),
-    ("exam",
-     "Vandamálið þarf skoðun, til dæmis að hlusta á hjarta eða lungu, skoða "
-     "eyru eða háls, þreifa á kvið eða meta áverka, hnút eða fyrirferð.",
-     "Vandamál sem þarf að skoða",
-     "Vandamál sem þarf að skoða\n\n"
+    ("scope-exam",
+     "Þarf að skoða vandamálið, til dæmis að hlusta á hjarta eða lungu, "
+     "skoða eyru eða háls, þreifa á kvið eða meta áverka, hnút eða "
+     "fyrirferð?",
+     None,
      "Læknirinn getur ekki hlustað, þreifað eða horft í eyru og háls í "
      "gegnum skriflegt erindi. Þegar skoðun ræður greiningunni er ekki "
      "öruggt að meta vandamálið hér.\n\n"
      "• Hafðu samband við heilsugæsluna þína.\n"
      "• Utan opnunartíma heilsugæslunnar: Læknavaktin, sími 1700.\n"
      "• Eftir slys eða áverka: farðu á slysa- og bráðamóttöku."),
-    ("dose-dispensed",
-     "Þú vilt fá lyfseðil fyrir lyf sem þú færð skömmtuð í lyfjarúllu frá "
-     "apóteki, eða breytingu á skömmtuninni.",
-     "Lyf í lyfjarúllu (lyfjaskömmtun)",
-     "Lyf í lyfjarúllu\n\n"
+    ("scope-dose",
+     "Viltu fá lyfseðil fyrir lyf sem þú færð skömmtuð í lyfjarúllu frá "
+     "apóteki, eða breytingu á skömmtuninni?",
+     "Endurnýjun á lyfi sem þú sækir í apótek getum við afgreitt. "
+     "Svaraðu þá „Nei“.",
      "Skömmtuð lyf eru afgreidd eftir skömmtunarkorti sem læknirinn þinn "
      "heldur utan um. Til að öll lyfin skili sér rétt í rúlluna þarf sá "
      "læknir að gera breytingarnar.\n\n"
@@ -264,9 +263,12 @@ SCOPE_REASONS = [
      "• Apótekið sem skammtar lyfin getur leiðbeint þér um næstu skref."),
 ]
 
-# Pages after the scope page carry this gate, so a "yes" hides the rest of the
-# questionnaire. Plain enableWhen on a single question — no FHIRPath, no AND.
-SCOPE_OK = ("scope-gate", ["no"])
+# The six questions form a chain: each appears only after "Nei" to the one
+# before, and "Já" shows that question's explanation and ends the chain. The
+# last question can therefore only be answered "Nei" if all six were "Nei", so
+# every later page hangs on that one answer — a single enableWhen, no AND
+# (Medalia's reliable pattern; see the header of this file).
+SCOPE_OK = (SCOPE_REASONS[-1][0], ["no"])
 
 # Heilsugæslur where the service is open. The service opens one at a time; only
 # people registered at one of these can use it. Keep in step with the "+" lines
@@ -275,13 +277,11 @@ ACTIVE_CLINICS = ["Heilsugæslan í Vestmannaeyjum"]
 
 
 def scope_page():
-    """Out-of-scope screening: requests a written service can never resolve.
-    One yes/no gate (same pattern as the red flags); on yes, the patient sees
-    why and where to go instead, and every later page is hidden via SCOPE_OK."""
+    """Screening: registration first, then six yes/no questions about requests a
+    written service cannot resolve. Any "Já" (or "Nei" on registration) shows
+    why and where to go instead, and every later page stays hidden."""
     items = [
-        # Registration comes first. The scope question below only appears after
-        # a "yes" here, and every later page hangs on the scope answer — so a
-        # "no" here hides the rest of the questionnaire with single conditions.
+        # Registration first; the chain below starts only after "Já" here.
         q("reg-gate",
           "Ertu með skráningu á heilsugæslu þar sem þjónustan er í boði?",
           "choice", required=True, options=YES_NO, ext=RADIO,
@@ -298,37 +298,21 @@ def scope_page():
                       "fyrir mistök, breyttu svarinu í „Já“ til að halda áfram."),
               "reg-gate", "no"),
         gated(display("scope-intro",
-                "Sumt er ekki hægt að leysa í skriflegri fjarþjónustu, sama "
-                "hversu vel því er lýst. Lestu listann og svaraðu svo "
-                "spurningunni fyrir neðan. Þannig sparar þú þér bið eftir "
-                "svari sem getur ekki hjálpað þér.\n\n"
-                + "\n".join("• " + line for _, line, _, _ in SCOPE_REASONS)),
+                      "Sumt er ekki hægt að leysa í skriflegri fjarþjónustu, "
+                      "sama hversu vel því er lýst. Svaraðu næstu spurningum "
+                      "svo við getum gengið úr skugga um að erindið henti. "
+                      "Þannig sparar þú þér bið eftir svari sem getur ekki "
+                      "hjálpað þér."),
               "reg-gate", "yes"),
-        gated(q("scope-gate", "Á eitthvað af ofangreindu við um erindið þitt?",
-          "choice", required=True, options=YES_NO, ext=RADIO,
-          help_text="Viltu aðeins fá útskýringu á niðurstöðum sem þú hefur "
-                    "þegar fengið, eða endurnýjun á lyfi sem þú sækir í "
-                    "apótek? Það getum við gert. Svaraðu þá "
-                    "„Nei“."), "reg-gate", "yes"),
-        gated(display("scope-stop",
-                      "⛔ Við getum ekki afgreitt þetta erindi í "
-                      "fjarþjónustu.\n\n"
-                      "Það er ekki vegna þess að erindið skipti ekki máli, "
-                      "heldur vegna þess að það þarf þjónustu sem ekki er hægt "
-                      "að veita skriflega. Merktu við hvað á við og þá sérðu "
-                      "hvert þú getur leitað.\n\n"
-                      "Þú þarft ekki að senda erindið. Ef þú merktir við "
-                      "þetta fyrir mistök, breyttu svarinu í „Nei“ til að "
-                      "halda áfram."),
-              "scope-gate", "yes"),
-        gated(q("scope-which", "Hvað af þessu á við? Merktu við allt sem á við.",
-                "choice", required=True, repeats=True, ext=CHECK,
-                options=opts(*[(c, label) for c, _, label, _ in SCOPE_REASONS])),
-              "scope-gate", "yes"),
     ]
-    for code, _, _, advice in SCOPE_REASONS:
-        items.append(gated(display("scope-why-" + code, advice),
-                           "scope-which", code))
+    previous = ("reg-gate", "yes")
+    for link_id, question, help_text, advice in SCOPE_REASONS:
+        items.append(gated(q(link_id, question, "choice", required=True,
+                             options=YES_NO, ext=RADIO, help_text=help_text),
+                           *previous))
+        items.append(gated(display(link_id + "-stop", STOP_HEAD + advice + STOP_TAIL),
+                           link_id, "yes"))
+        previous = (link_id, "no")
     return page("p-hentar", "Hentar erindið fjarþjónustu?", items)
 
 
