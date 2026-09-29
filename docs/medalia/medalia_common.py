@@ -195,72 +195,77 @@ def redflag_page(intro_lines, which_options, extra_note=None):
     return page("p2-oryggisskimun", "Öryggisskimun", items)
 
 
-STOP_HEAD = "⛔ Við getum ekki afgreitt þetta erindi í fjarþjónustu.\n\n"
-STOP_TAIL = ("\n\nÞú þarft ekki að senda erindið. Ef þú svaraðir þessu fyrir "
-             "mistök, breyttu svarinu í „Nei“ til að halda áfram.")
+# Tone: explain what the other service gives the patient, not what we cannot
+# do — no lecturing about stethoscopes and screens.
+STOP_HEAD = "Þetta erindi er betur leyst hjá annarri þjónustu.\n\n"
+STOP_TAIL = ("\n\nÞú þarft því ekki að senda erindið hingað. Ef þú svaraðir "
+             "þessu fyrir mistök getur þú breytt svarinu í „Nei“ og haldið áfram.")
 
 SCOPE_REASONS = [
-    # (linkId, the question, help text or None, why-not + where-to-go on "Já")
+    # (linkId, the question, help text or None, explanation shown on "Já")
     ("scope-other",
      "Snýst erindið um einhvern annan en þig, til dæmis barnið þitt, maka "
      "eða foreldri?",
      None,
-     "Læknir getur aðeins metið þann sem sendir erindið sjálfur, skráður inn "
-     "með eigin rafrænum skilríkjum. Við getum ekki metið barn eða annan "
-     "einstakling út frá lýsingu þinni.\n\n"
+     "Til að læknir geti metið erindi þarf sá sem það snýst um að senda það "
+     "sjálfur, í eigin nafni og með eigin rafrænum skilríkjum. Þannig er "
+     "tryggt að upplýsingarnar séu réttar og að svarið berist réttum aðila.\n\n"
      "• Fullorðnir geta sent eigið erindi hingað.\n"
-     "• Vegna barna: hafðu samband við heilsugæslu barnsins, eða hringdu í "
-     "1700 til að fá ráðgjöf.\n"
-     "• Veikist barn skyndilega eða alvarlega: farðu á næstu bráðamóttöku "
-     "eða hringdu í 112."),
+     "• Heilsugæsla barnsins getur aðstoðað vegna barna, og í síma 1700 "
+     "færðu ráðgjöf allan sólarhringinn.\n"
+     "• Ef barn veikist skyndilega eða alvarlega skaltu fara á næstu "
+     "bráðamóttöku eða hringja í 112."),
     ("scope-labs",
      "Viltu fá beiðni um blóðprufu eða aðra rannsókn, til dæmis þvag- eða "
      "hormónamælingu?",
      "Viltu aðeins fá útskýringu á niðurstöðum sem þú hefur þegar fengið? "
      "Það getum við gert. Svaraðu þá „Nei“.",
-     "Við biðjum ekki um rannsóknir í fjarþjónustu. Læknirinn sem biður um "
-     "rannsókn ber ábyrgð á að fylgja niðurstöðunum eftir og það er best gert "
-     "þar sem þú ert í reglulegri eftirfylgd.\n\n"
-     "• Hafðu samband við heilsugæsluna þína eða heimilislækni."),
+     "Læknirinn sem biður um rannsókn fylgir líka niðurstöðunum eftir, og það "
+     "fer best á því að sá læknir þekki þig og sjái um eftirfylgdina.\n\n"
+     "• Heilsugæslan þín eða heimilislæknirinn getur metið hvort rannsókn á "
+     "við og fylgt niðurstöðunum eftir."),
     ("scope-imaging",
      "Viltu fá beiðni um myndgreiningu (röntgen, tölvusneiðmynd, segulómun "
      "eða ómun) eða speglun (til dæmis maga- eða ristilspeglun)?",
      None,
-     "Beiðni um myndgreiningu eða speglun þarf að byggja á viðtali og "
-     "skoðun, og niðurstöðunum þarf að fylgja eftir. Það er ekki hægt í "
-     "skriflegri fjarþjónustu.\n\n"
-     "• Hafðu samband við heilsugæsluna þína eða heimilislækni.\n"
-     "• Eftir slys eða áverka: farðu á slysa- og bráðamóttöku."),
+     "Myndgreining og speglanir eru pantaðar í framhaldi af viðtali og "
+     "skoðun, og niðurstöðunum þarf svo að fylgja eftir. Það er best gert þar "
+     "sem læknir getur hitt þig.\n\n"
+     "• Heilsugæslan þín eða heimilislæknirinn getur metið hvort rannsóknin "
+     "á við.\n"
+     "• Eftir slys eða áverka er best að leita á slysa- og bráðamóttöku."),
     ("scope-referral",
      "Viltu fá tilvísun til sérfræðings vegna vandamáls sem þarf nánari sögu "
      "og skoðun?",
      None,
-     "Góð tilvísun byggir á ítarlegri sögu og skoðun svo sérfræðingurinn fái "
-     "þær upplýsingar sem hann þarf. Það getum við ekki veitt skriflega.\n\n"
-     "• Hafðu samband við heilsugæsluna þína eða heimilislækni.\n"
-     "• Fullorðnir geta oft bókað tíma beint hjá sérfræðilækni án "
+     "Tilvísun nýtist sérfræðingnum best þegar henni fylgja góð saga og "
+     "niðurstöður skoðunar. Þess vegna er best að hún komi frá lækni sem "
+     "hefur hitt þig.\n\n"
+     "• Heilsugæslan þín eða heimilislæknirinn getur skrifað tilvísunina.\n"
+     "• Hjá mörgum sérfræðilæknum geta fullorðnir líka bókað tíma beint, án "
      "tilvísunar."),
     ("scope-exam",
      "Þarf að skoða vandamálið, til dæmis að hlusta á hjarta eða lungu, "
      "skoða eyru eða háls, þreifa á kvið eða meta áverka, hnút eða "
      "fyrirferð?",
      None,
-     "Læknirinn getur ekki hlustað, þreifað eða horft í eyru og háls í "
-     "gegnum skriflegt erindi. Þegar skoðun ræður greiningunni er ekki "
-     "öruggt að meta vandamálið hér.\n\n"
-     "• Hafðu samband við heilsugæsluna þína.\n"
-     "• Utan opnunartíma heilsugæslunnar: Læknavaktin, sími 1700.\n"
-     "• Eftir slys eða áverka: farðu á slysa- og bráðamóttöku."),
+     "Sum einkenni þarf að skoða til að hægt sé að meta þau örugglega. Þá er "
+     "best að hitta lækni, svo þú fáir rétta greiningu og meðferð.\n\n"
+     "• Heilsugæslan þín tekur á móti þér á dagtíma.\n"
+     "• Utan opnunartíma heilsugæslunnar færðu ráð og leiðbeiningar í síma "
+     "1700.\n"
+     "• Eftir slys eða áverka er best að leita á slysa- og bráðamóttöku."),
     ("scope-dose",
      "Viltu fá lyfseðil fyrir lyf sem þú færð skömmtuð í lyfjarúllu frá "
      "apóteki, eða breytingu á skömmtuninni?",
      "Endurnýjun á lyfi sem þú sækir í apótek getum við afgreitt. "
      "Svaraðu þá „Nei“.",
-     "Skömmtuð lyf eru afgreidd eftir skömmtunarkorti sem læknirinn þinn "
-     "heldur utan um. Til að öll lyfin skili sér rétt í rúlluna þarf sá "
-     "læknir að gera breytingarnar.\n\n"
-     "• Hafðu samband við heilsugæsluna þína eða heimilislækni.\n"
-     "• Apótekið sem skammtar lyfin getur leiðbeint þér um næstu skref."),
+     "Lyfjarúllan er sett saman eftir skömmtunarkorti sem læknirinn þinn "
+     "heldur utan um. Til að öll lyfin skili sér rétt í rúlluna er öruggast "
+     "að sá læknir geri breytingarnar.\n\n"
+     "• Heilsugæslan þín eða heimilislæknirinn sér um breytingar á "
+     "skömmtuninni.\n"
+     "• Apótekið sem skammtar lyfin getur líka leiðbeint þér um næstu skref."),
 ]
 
 # The six questions form a chain: each appears only after "Nei" to the one

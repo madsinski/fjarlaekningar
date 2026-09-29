@@ -204,15 +204,15 @@ Einn valkostur — radio · **SKYLDA**
 
 Skýringartexti
 
-> ⛔ Við getum ekki afgreitt þetta erindi í fjarþjónustu.
+> Þetta erindi er betur leyst hjá annarri þjónustu.
 >
-> Læknir getur aðeins metið þann sem sendir erindið sjálfur, skráður inn með eigin rafrænum skilríkjum. Við getum ekki metið barn eða annan einstakling út frá lýsingu þinni.
+> Til að læknir geti metið erindi þarf sá sem það snýst um að senda það sjálfur, í eigin nafni og með eigin rafrænum skilríkjum. Þannig er tryggt að upplýsingarnar séu réttar og að svarið berist réttum aðila.
 >
 > • Fullorðnir geta sent eigið erindi hingað.
-> • Vegna barna: hafðu samband við heilsugæslu barnsins, eða hringdu í 1700 til að fá ráðgjöf.
-> • Veikist barn skyndilega eða alvarlega: farðu á næstu bráðamóttöku eða hringdu í 112.
+> • Heilsugæsla barnsins getur aðstoðað vegna barna, og í síma 1700 færðu ráðgjöf allan sólarhringinn.
+> • Ef barn veikist skyndilega eða alvarlega skaltu fara á næstu bráðamóttöku eða hringja í 112.
 >
-> Þú þarft ekki að senda erindið. Ef þú svaraðir þessu fyrir mistök, breyttu svarinu í „Nei“ til að halda áfram.
+> Þú þarft því ekki að senda erindið hingað. Ef þú svaraðir þessu fyrir mistök getur þú breytt svarinu í „Nei“ og haldið áfram.
 
 **Birtist ef:** `scope-other` = `yes`
 
@@ -235,13 +235,13 @@ Einn valkostur — radio · **SKYLDA**
 
 Skýringartexti
 
-> ⛔ Við getum ekki afgreitt þetta erindi í fjarþjónustu.
+> Þetta erindi er betur leyst hjá annarri þjónustu.
 >
-> Við biðjum ekki um rannsóknir í fjarþjónustu. Læknirinn sem biður um rannsókn ber ábyrgð á að fylgja niðurstöðunum eftir og það er best gert þar sem þú ert í reglulegri eftirfylgd.
+> Læknirinn sem biður um rannsókn fylgir líka niðurstöðunum eftir, og það fer best á því að sá læknir þekki þig og sjái um eftirfylgdina.
 >
-> • Hafðu samband við heilsugæsluna þína eða heimilislækni.
+> • Heilsugæslan þín eða heimilislæknirinn getur metið hvort rannsókn á við og fylgt niðurstöðunum eftir.
 >
-> Þú þarft ekki að senda erindið. Ef þú svaraðir þessu fyrir mistök, breyttu svarinu í „Nei“ til að halda áfram.
+> Þú þarft því ekki að senda erindið hingað. Ef þú svaraðir þessu fyrir mistök getur þú breytt svarinu í „Nei“ og haldið áfram.
 
 **Birtist ef:** `scope-labs` = `yes`
 
@@ -262,14 +262,14 @@ Einn valkostur — radio · **SKYLDA**
 
 Skýringartexti
 
-> ⛔ Við getum ekki afgreitt þetta erindi í fjarþjónustu.
+> Þetta erindi er betur leyst hjá annarri þjónustu.
 >
-> Beiðni um myndgreiningu eða speglun þarf að byggja á viðtali og skoðun, og niðurstöðunum þarf að fylgja eftir. Það er ekki hægt í skriflegri fjarþjónustu.
+> Myndgreining og speglanir eru pantaðar í framhaldi af viðtali og skoðun, og niðurstöðunum þarf svo að fylgja eftir. Það er best gert þar sem læknir getur hitt þig.
 >
-> • Hafðu samband við heilsugæsluna þína eða heimilislækni.
-> • Eftir slys eða áverka: farðu á slysa- og bráðamóttöku.
+> • Heilsugæslan þín eða heimilislæknirinn getur metið hvort rannsóknin á við.
+> • Eftir slys eða áverka er best að leita á slysa- og bráðamóttöku.
 >
-> Þú þarft ekki að senda erindið. Ef þú svaraðir þessu fyrir mistök, breyttu svarinu í „Nei“ til að halda áfram.
+> Þú þarft því ekki að senda erindið hingað. Ef þú svaraðir þessu fyrir mistök getur þú breytt svarinu í „Nei“ og haldið áfram.
 
 **Birtist ef:** `scope-imaging` = `yes`
 
@@ -290,14 +290,14 @@ Einn valkostur — radio · **SKYLDA**
 
 Skýringartexti
 
-> ⛔ Við getum ekki afgreitt þetta erindi í fjarþjónustu.
+> Þetta erindi er betur leyst hjá annarri þjónustu.
 >
-> Góð tilvísun byggir á ítarlegri sögu og skoðun svo sérfræðingurinn fái þær upplýsingar sem hann þarf. Það getum við ekki veitt skriflega.
+> Tilvísun nýtist sérfræðingnum best þegar henni fylgja góð saga og niðurstöður skoðunar. Þess vegna er best að hún komi frá lækni sem hefur hitt þig.
 >
-> • Hafðu samband við heilsugæsluna þína eða heimilislækni.
-> • Fullorðnir geta oft bókað tíma beint hjá sérfræðilækni án tilvísunar.
+> • Heilsugæslan þín eða heimilislæknirinn getur skrifað tilvísunina.
+> • Hjá mörgum sérfræðilæknum geta fullorðnir líka bókað tíma beint, án tilvísunar.
 >
-> Þú þarft ekki að senda erindið. Ef þú svaraðir þessu fyrir mistök, breyttu svarinu í „Nei“ til að halda áfram.
+> Þú þarft því ekki að senda erindið hingað. Ef þú svaraðir þessu fyrir mistök getur þú breytt svarinu í „Nei“ og haldið áfram.
 
 **Birtist ef:** `scope-referral` = `yes`
 
@@ -318,15 +318,15 @@ Einn valkostur — radio · **SKYLDA**
 
 Skýringartexti
 
-> ⛔ Við getum ekki afgreitt þetta erindi í fjarþjónustu.
+> Þetta erindi er betur leyst hjá annarri þjónustu.
 >
-> Læknirinn getur ekki hlustað, þreifað eða horft í eyru og háls í gegnum skriflegt erindi. Þegar skoðun ræður greiningunni er ekki öruggt að meta vandamálið hér.
+> Sum einkenni þarf að skoða til að hægt sé að meta þau örugglega. Þá er best að hitta lækni, svo þú fáir rétta greiningu og meðferð.
 >
-> • Hafðu samband við heilsugæsluna þína.
-> • Utan opnunartíma heilsugæslunnar: Læknavaktin, sími 1700.
-> • Eftir slys eða áverka: farðu á slysa- og bráðamóttöku.
+> • Heilsugæslan þín tekur á móti þér á dagtíma.
+> • Utan opnunartíma heilsugæslunnar færðu ráð og leiðbeiningar í síma 1700.
+> • Eftir slys eða áverka er best að leita á slysa- og bráðamóttöku.
 >
-> Þú þarft ekki að senda erindið. Ef þú svaraðir þessu fyrir mistök, breyttu svarinu í „Nei“ til að halda áfram.
+> Þú þarft því ekki að senda erindið hingað. Ef þú svaraðir þessu fyrir mistök getur þú breytt svarinu í „Nei“ og haldið áfram.
 
 **Birtist ef:** `scope-exam` = `yes`
 
@@ -349,14 +349,14 @@ Einn valkostur — radio · **SKYLDA**
 
 Skýringartexti
 
-> ⛔ Við getum ekki afgreitt þetta erindi í fjarþjónustu.
+> Þetta erindi er betur leyst hjá annarri þjónustu.
 >
-> Skömmtuð lyf eru afgreidd eftir skömmtunarkorti sem læknirinn þinn heldur utan um. Til að öll lyfin skili sér rétt í rúlluna þarf sá læknir að gera breytingarnar.
+> Lyfjarúllan er sett saman eftir skömmtunarkorti sem læknirinn þinn heldur utan um. Til að öll lyfin skili sér rétt í rúlluna er öruggast að sá læknir geri breytingarnar.
 >
-> • Hafðu samband við heilsugæsluna þína eða heimilislækni.
-> • Apótekið sem skammtar lyfin getur leiðbeint þér um næstu skref.
+> • Heilsugæslan þín eða heimilislæknirinn sér um breytingar á skömmtuninni.
+> • Apótekið sem skammtar lyfin getur líka leiðbeint þér um næstu skref.
 >
-> Þú þarft ekki að senda erindið. Ef þú svaraðir þessu fyrir mistök, breyttu svarinu í „Nei“ til að halda áfram.
+> Þú þarft því ekki að senda erindið hingað. Ef þú svaraðir þessu fyrir mistök getur þú breytt svarinu í „Nei“ og haldið áfram.
 
 **Birtist ef:** `scope-dose` = `yes`
 
