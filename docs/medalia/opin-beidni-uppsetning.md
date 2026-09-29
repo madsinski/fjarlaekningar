@@ -206,7 +206,7 @@ Skýringartexti
 
 > Þetta erindi er betur leyst hjá annarri þjónustu.
 >
-> Þessi þjónusta er ætluð fyrir erindi sem fólk sendir vegna sjálfs sín. Læknirinn þarf að geta spurt þann sem erindið snýst um nánar, og svar, lyfseðill eða vottorð þarf að skrást á réttan einstakling.
+> Fjarlækningar geta aðeins metið erindi sem varða þína eigin heilsu.
 >
 > • Fullorðnir geta sent eigið erindi hér, með eigin rafrænum skilríkjum.
 > • Vegna barna er best að hafa samband við heilsugæslu barnsins. Í síma 1700 færðu líka ráðgjöf allan sólarhringinn.

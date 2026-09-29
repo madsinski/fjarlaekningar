@@ -207,9 +207,8 @@ SCOPE_REASONS = [
      "Snýst erindið um einhvern annan en þig, til dæmis barnið þitt, maka "
      "eða foreldri?",
      None,
-     "Þessi þjónusta er ætluð fyrir erindi sem fólk sendir vegna sjálfs "
-     "sín. Læknirinn þarf að geta spurt þann sem erindið snýst um nánar, og "
-     "svar, lyfseðill eða vottorð þarf að skrást á réttan einstakling.\n\n"
+     "Fjarlækningar geta aðeins metið erindi sem varða þína eigin "
+     "heilsu.\n\n"
      "• Fullorðnir geta sent eigið erindi hér, með eigin rafrænum "
      "skilríkjum.\n"
      "• Vegna barna er best að hafa samband við heilsugæslu barnsins. Í síma "
