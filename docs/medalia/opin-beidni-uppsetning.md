@@ -158,14 +158,14 @@ Gátreitur — já/nei · **SKYLDA**
 
 Einn valkostur — radio · **SKYLDA**
 
-**Spurning:** Ertu skráð eða skráður á heilsugæslu þar sem þjónustan er í boði?
+**Spurning:** Ertu með skráningu á heilsugæslu þar sem þjónustan er í boði?
 
 | kóði | það sem sjúklingurinn sér |
 |---|---|
 | `yes` | Já |
 | `no` | Nei |
 
-*Hjálpartexti:* Þjónustan er enn sem komið er aðeins í boði fyrir fólk sem er skráð á: Heilsugæslan í Vestmannaeyjum. Ertu ekki viss? Þú sérð á hvaða heilsugæslu þú ert skráð eða skráður á Mínum síðum á island.is.
+*Hjálpartexti:* Þjónustan er enn sem komið er aðeins í boði fyrir fólk sem er skráð á: Heilsugæslan í Vestmannaeyjum. Ertu ekki viss? Þú sérð skráninguna þína á Mínum síðum á island.is.
 
 ### 3.2 · `reg-stop`
 
@@ -207,7 +207,7 @@ Einn valkostur — radio · **SKYLDA**
 | `yes` | Já |
 | `no` | Nei |
 
-*Hjálpartexti:* Viltu aðeins fá útskýringu á niðurstöðum sem þú hefur þegar fengið, eða endurnýjun á lyfi sem þú sækir sjálf eða sjálfur í apótek? Það getum við gert. Svaraðu þá „Nei“.
+*Hjálpartexti:* Viltu aðeins fá útskýringu á niðurstöðum sem þú hefur þegar fengið, eða endurnýjun á lyfi sem þú sækir í apótek? Það getum við gert. Svaraðu þá „Nei“.
 
 ### 3.5 · `scope-stop`
 

@@ -283,12 +283,11 @@ def scope_page():
         # a "yes" here, and every later page hangs on the scope answer — so a
         # "no" here hides the rest of the questionnaire with single conditions.
         q("reg-gate",
-          "Ertu skráð eða skráður á heilsugæslu þar sem þjónustan er í boði?",
+          "Ertu með skráningu á heilsugæslu þar sem þjónustan er í boði?",
           "choice", required=True, options=YES_NO, ext=RADIO,
           help_text="Þjónustan er enn sem komið er aðeins í boði fyrir fólk sem "
                     "er skráð á: " + ", ".join(ACTIVE_CLINICS) + ". Ertu ekki "
-                    "viss? Þú sérð á hvaða heilsugæslu þú ert skráð eða skráður "
-                    "á Mínum síðum á island.is."),
+                    "viss? Þú sérð skráninguna þína á Mínum síðum á island.is."),
         gated(display("reg-stop",
                       "⛔ Þjónustan er ekki enn opin á þinni heilsugæslu.\n\n"
                       "Fjarlækningar opna fyrir þjónustuna eina heilsugæslu í "
@@ -308,8 +307,8 @@ def scope_page():
         gated(q("scope-gate", "Á eitthvað af ofangreindu við um erindið þitt?",
           "choice", required=True, options=YES_NO, ext=RADIO,
           help_text="Viltu aðeins fá útskýringu á niðurstöðum sem þú hefur "
-                    "þegar fengið, eða endurnýjun á lyfi sem þú sækir sjálf "
-                    "eða sjálfur í apótek? Það getum við gert. Svaraðu þá "
+                    "þegar fengið, eða endurnýjun á lyfi sem þú sækir í "
+                    "apótek? Það getum við gert. Svaraðu þá "
                     "„Nei“."), "reg-gate", "yes"),
         gated(display("scope-stop",
                       "⛔ Við getum ekki afgreitt þetta erindi í "
