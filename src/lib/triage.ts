@@ -40,6 +40,9 @@ export type TriageOption = {
   /** Step "Hvað þarftu": 1 = the problems Fjarlækningar handles (the
    *  gallery answer becomes one button per service), 2 = everything else. */
   section?: 1 | 2;
+  /** Where to continue AFTER the next step, for a shared step whose answers
+   *  say `next: THEN` ("Fyrir hvern?" → "Hvar ertu?" → back on this branch). */
+  then?: string;
   /** On the location step: the region this answer stands for. */
   region?: RegionId;
   /** On a medication-search step: only offered after a search that came out
@@ -104,6 +107,11 @@ const OPEN_PORTAL: TriageAction = {
 
 export const TRIAGE_START = "emergency";
 
+/** `next` value meaning "continue where the answer that led here said to"
+ *  (see TriageOption.then). Used by the location step, which sits between
+ *  "Fyrir hvern?" and each branch. */
+export const THEN = "$then";
+
 export const TRIAGE: Record<string, TriageNode> = {
   // ------------------------------------------------------------ questions
   emergency: {
@@ -122,7 +130,7 @@ export const TRIAGE: Record<string, TriageNode> = {
     ],
     options: [
       { label: { is: "Já, eitthvað af þessu á við", en: "Yes, something here applies" }, next: "r-112" },
-      { label: { is: "Nei", en: "No" }, next: "location" },
+      { label: { is: "Nei", en: "No" }, next: "who" },
     ],
   },
 
@@ -131,16 +139,16 @@ export const TRIAGE: Record<string, TriageNode> = {
   location: {
     kind: "question",
     question: { is: "Hvar ertu núna?", en: "Where are you right now?" },
-    hint: { is: "Það sem er í boði fer eftir því hvar á landinu þú ert. Skrifaðu nafn staðarins eða veldu svæði.",
-            en: "What is available depends on where in Iceland you are. Type the name of the place or pick an area." },
+    hint: { is: "Það sem er í boði fer eftir því hvar á landinu þú ert. Veldu svæði eða skrifaðu nafn staðarins.",
+            en: "What is available depends on where in Iceland you are. Pick an area or type the name of the place." },
     search: "places",
     options: [
-      { label: { is: "Höfuðborgarsvæðið", en: "The capital area" }, next: "who", region: "capital" },
-      { label: { is: "Akureyri og nágrenni", en: "Akureyri and around" }, next: "who", region: "akureyri" },
-      { label: { is: "Selfoss og nágrenni", en: "Selfoss and around" }, next: "who", region: "selfoss" },
-      { label: { is: "Annars staðar á landinu", en: "Elsewhere in Iceland" }, next: "who", region: "rural" },
+      { label: { is: "Höfuðborgarsvæðið", en: "The capital area" }, next: THEN, region: "capital" },
+      { label: { is: "Akureyri og nágrenni", en: "Akureyri and around" }, next: THEN, region: "akureyri" },
+      { label: { is: "Selfoss og nágrenni", en: "Selfoss and around" }, next: THEN, region: "selfoss" },
+      { label: { is: "Annars staðar á landinu", en: "Elsewhere in Iceland" }, next: THEN, region: "rural" },
       // Appended (CMS keys are by position); shown before "Annars staðar".
-      { label: { is: "Reykjanesbær og Suðurnes", en: "Reykjanesbær and Suðurnes" }, next: "who", region: "reykjanesbaer" },
+      { label: { is: "Reykjanesbær og Suðurnes", en: "Reykjanesbær and Suðurnes" }, next: THEN, region: "reykjanesbaer" },
     ],
   },
 
@@ -148,10 +156,11 @@ export const TRIAGE: Record<string, TriageNode> = {
     kind: "question",
     question: { is: "Fyrir hvern er erindið?", en: "Who is this for?" },
     options: [
-      { label: { is: "Fyrir mig", en: "For me" }, next: "registered" },
-      { label: { is: "Fyrir barn", en: "For a child" }, next: "child-when" },
+      // Location comes next for everyone; `then` is where each branch resumes.
+      { label: { is: "Fyrir mig", en: "For me" }, next: "location", then: "registered" },
+      { label: { is: "Fyrir barn", en: "For a child" }, next: "location", then: "child-when" },
       { label: { is: "Fyrir annan fullorðinn, til dæmis maka eða foreldri", en: "For another adult, e.g. a partner or parent" },
-        next: "other-self" },
+        next: "location", then: "other-self" },
     ],
   },
 
@@ -241,7 +250,7 @@ export const TRIAGE: Record<string, TriageNode> = {
             en: "Search for the name of the medicine or its active ingredient to see whether it is on the list of medicines that are not renewed remotely." },
     search: "meds",
     options: [
-      { label: { is: "Lyfið er ekki á listanum — halda áfram", en: "It is not on the list — continue" }, next: "r-fjar", when: "not-red" },
+      { label: { is: "Halda áfram með endurnýjun", en: "Continue with the renewal" }, next: "r-fjar", when: "not-red" },
       { label: { is: "Sjá hvert ég á að leita með þetta lyf", en: "See where to go with this medicine" }, next: "r-controlled", when: "red" },
       { label: { is: "Ég finn ekki lyfið eða er ekki viss", en: "I can't find it or I'm not sure" }, next: "r-fjar",
         why: { is: "Listinn er ekki tæmandi. Læknir metur alltaf hvort lyfið er endurnýjað og lætur þig vita ef þú þarft að leita annað.",
@@ -257,7 +266,7 @@ export const TRIAGE: Record<string, TriageNode> = {
     search: "meds",
     options: [
       { label: { is: "Sjá hvert ég á að leita", en: "See where to go" }, next: "r-controlled" },
-      { label: { is: "Lyfið er ekki á listanum — halda áfram", en: "It is not on the list — continue" }, next: "r-fjar", when: "not-red" },
+      { label: { is: "Halda áfram með endurnýjun", en: "Continue with the renewal" }, next: "r-fjar", when: "not-red" },
     ],
   },
 
@@ -606,14 +615,22 @@ const UI_TEXT: Record<string, L> = {
   med_red_title: { is: "Þetta lyf endurnýjum við ekki", en: "We do not renew this medicine" },
   med_red_body: { is: "Það er á lista yfir lyf sem eru ekki endurnýjuð í fjarþjónustu.",
                   en: "It is on the list of medicines that are not renewed remotely." },
-  med_green_title: { is: "Ekki á listanum — getur hentað lyfjaendurnýjun", en: "Not on the list — may suit a renewal" },
-  med_green_body: { is: "Á við lyf sem þú tekur að staðaldri, og aðeins einfaldan lyfseðil. Listinn er ekki tæmandi og læknir metur alltaf hvort lyfið er endurnýjað.",
-                    en: "For medicines you take regularly, and a single prescription only. The list is not exhaustive and a doctor always decides." },
+  med_green_title: { is: "Já, þetta lyf er hægt að endurnýja hér", en: "Yes, this medicine can be renewed here" },
+  med_green_body: { is: "Lyfið er ekki á lista yfir lyf sem eru undanskilin og læknir getur því endurnýjað það. Læknirinn fer þó alltaf yfir beiðnina og getur vísað þér annað ef endurnýjun er ekki örugg fyrir þig.",
+                    en: "It isn't on the list of excluded medicines, so a doctor can renew it. The doctor always reviews the request, though, and may refer you elsewhere if a renewal isn't safe for you." },
   step: { is: "Skref", en: "Step" },
   back: { is: "Til baka", en: "Back" },
   restart: { is: "Byrja aftur", en: "Start again" },
   close: { is: "Loka", en: "Close" },
-  skip: { is: "Ég veit hvað ég þarf — beint í sjúklingagátt", en: "I know what I need — straight to the portal" },
+  skip: { is: "Beint í sjúklingagátt", en: "Straight to the patient portal" },
+  skip_prompt: { is: "Veistu nú þegar hvað þú þarft?", en: "Already know what you need?" },
+  skip_confirm_title: { is: "Ertu viss um að þú þurfir ekki aðstoð?", en: "Sure you don't need help?" },
+  skip_confirm_body: { is: "Leiðarvísirinn hjálpar þér að finna rétta þjónustu á innan við mínútu. Ef þú veist nú þegar að erindið hentar fjarþjónustu getur þú farið beint í sjúklingagáttina.",
+                       en: "The guide helps you find the right service in less than a minute. If you already know your request suits remote care, you can go straight to the patient portal." },
+  skip_confirm_note: { is: "Í bráðatilvikum skaltu hringja í 112.", en: "In an emergency, call 112." },
+  skip_confirm_yes: { is: "Já, opna sjúklingagátt", en: "Yes, open the patient portal" },
+  skip_confirm_no: { is: "Nei, hjálpaðu mér að finna rétta leið", en: "No, help me find the right way" },
+  place_search_label: { is: "Eða leitaðu að staðnum", en: "Or search for the place" },
   why: { is: "Hvers vegna?", en: "Why?" },
   disclaimer: { is: "Leiðbeining um þjónustuleiðir, ekki læknisfræðilegt mat.",
                 en: "Guidance on where to go, not a medical assessment." },
@@ -631,13 +648,17 @@ const UI_LABELS: Record<string, string> = {
   med_red_body: "Lyfjaleit — á listanum: texti", med_green_title: "Lyfjaleit — ekki á listanum: fyrirsögn",
   med_green_body: "Lyfjaleit — ekki á listanum: texti", step: "Orðið „Skref“ (númer bætist við)",
   back: "Hnappur: til baka", restart: "Hnappur: byrja aftur", close: "Hnappur: loka (skjálesari)",
-  skip: "Tengill: beint í sjúklingagátt", why: "Merki við skýringu", disclaimer: "Fyrirvari neðst",
+  skip: "Hnappur: beint í sjúklingagátt", why: "Merki við skýringu", disclaimer: "Fyrirvari neðst",
+  skip_prompt: "Spurning við hnappinn „beint í sjúklingagátt“ (fyrsta skref)",
+  skip_confirm_title: "Staðfesting á að sleppa — fyrirsögn", skip_confirm_body: "Staðfesting á að sleppa — texti",
+  skip_confirm_note: "Staðfesting á að sleppa — bráðatilvik", skip_confirm_yes: "Staðfesting — hnappur: já, opna gátt",
+  skip_confirm_no: "Staðfesting — hnappur: nei, hjálpa mér", place_search_label: "Staðarleit — fyrirsögn fyrir ofan leitarreitinn",
 };
 
 const NODE_NAMES: Record<string, string> = {
   emergency: "Skref 1 · Bráð einkenni",
-  location: "Skref 2 · Hvar ertu",
-  who: "Skref 3 · Fyrir hvern",
+  who: "Skref 2 · Fyrir hvern",
+  location: "Skref 3 · Hvar ertu",
   need: "Skref 4 · Hvað þarftu",
   meds: "Lyf · Hvað á við",
   "meds-check": "Lyf · Lyfjaleit",
@@ -771,12 +792,31 @@ export function triageText(c: LocaleContent): LocaleContent {
  *  `pick` = the service button pressed on "Hvað þarftu" (named on the result). */
 export type TriageStep = { id: string; via?: { from: string; index: number }; place?: string; pick?: string };
 
+/** The `then` still waiting to be used on this path: the most recent answer
+ *  that carried one. */
+function pendingThen(steps: TriageStep[]): string | undefined {
+  for (let i = steps.length - 1; i >= 0; i--) {
+    const via = steps[i].via;
+    if (!via) continue;
+    const node = TRIAGE[via.from];
+    const opt = node?.kind === "question" ? node.options[via.index] : undefined;
+    if (opt?.next === THEN) return undefined; // already used on the way here
+    if (opt?.then) return opt.then;
+  }
+  return undefined;
+}
+
+/** Where an answer leads, given the path so far (resolves THEN). */
+export function nextOf(steps: TriageStep[], opt: TriageOption): string {
+  return opt.next === THEN ? pendingThen(steps) ?? TRIAGE_START : opt.next;
+}
+
 /** Shortest click path from the start to `target` — used by the CMS preview to
  *  jump straight to any screen while still showing the note that leads there.
  *  `regionIndex` picks the answer on the location step (default: first). */
 export function triagePath(target: string, regionIndex = 0): TriageStep[] {
   const queue: TriageStep[][] = [[{ id: TRIAGE_START }]];
-  const seen = new Set([TRIAGE_START]);
+  const seen = new Set([TRIAGE_START + "|"]);
   while (queue.length) {
     const path = queue.shift()!;
     const last = path[path.length - 1];
@@ -786,9 +826,12 @@ export function triagePath(target: string, regionIndex = 0): TriageStep[] {
     const node = TRIAGE[last.id];
     if (node?.kind !== "question") continue;
     node.options.forEach((o, index) => {
-      if (seen.has(o.next)) return;
-      seen.add(o.next);
-      queue.push([...path, { id: o.next, via: { from: last.id, index } }]);
+      const next = { id: nextOf(path, o), via: { from: last.id, index } };
+      // The same screen on another branch is a different state.
+      const key = `${next.id}|${pendingThen([...path, next]) ?? ""}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      queue.push([...path, next]);
     });
   }
   return [{ id: TRIAGE_START }];
@@ -802,12 +845,16 @@ export function triageWhere(steps: TriageStep[]): { region?: RegionId; label?: s
   return { region: node.options[st.via.index]?.region, place: st.place };
 }
 
-/** Longest number of further answers from `id` to a result — for the
- *  progress bar, so it never runs backwards. */
-export function triageRemaining(id: string): number {
+/** Longest number of further answers from the current screen to a result —
+ *  for the progress bar, so it never runs backwards. Pass the path so a shared
+ *  step (THEN) is measured along the branch actually taken. */
+export function triageRemaining(id: string, steps: TriageStep[] = []): number {
   const node = TRIAGE[id];
   if (!node || node.kind === "result") return 0;
-  return 1 + Math.max(...node.options.map((o) => triageRemaining(o.next)));
+  return 1 + Math.max(...node.options.map((o) => {
+    const next = o.next === THEN ? pendingThen(steps) : o.next;
+    return next ? triageRemaining(next, [...steps, { id: next, via: { from: id, index: node.options.indexOf(o) } }]) : 0;
+  }));
 }
 
 /** Human names of every screen, in tree order (CMS editor labels + preview). */

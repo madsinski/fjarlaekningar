@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowLeft, ChevronRight, ExternalLink, MapPin, Phone, RotateCcw, Search, X } from "lucide-react";
 import {
-  PORTAL_URL, TK, TRIAGE, TRIAGE_START, triageRemaining, triageWhere,
+  PORTAL_URL, TK, TRIAGE, TRIAGE_START, nextOf, triageRemaining, triageWhere,
   type ServiceKey, type TriageExample, type TriageOption, type TriageQuestion, type TriageResult, type TriageStep,
 } from "@/lib/triage";
 import { searchPlaces } from "@/lib/triage-places";
@@ -132,6 +132,8 @@ export function TriagePanel({
   const ui = (name: string) => text[TK.ui(name)] ?? "";
   const [steps, setSteps] = useState<TriageStep[]>(initial ?? [{ id: TRIAGE_START }]);
   const [medStatus, setMedStatus] = useState<MedStatus>("idle");
+  // "Beint í sjúklingagátt" asks once more before leaving the guide.
+  const [confirmSkip, setConfirmSkip] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const mounted = useRef(false);
 
@@ -141,7 +143,7 @@ export function TriagePanel({
   useEffect(() => {
     if (mounted.current || focusOnMount) headingRef.current?.focus({ preventScroll: !focusOnMount });
     mounted.current = true;
-  }, [steps, focusOnMount]);
+  }, [steps, confirmSkip, focusOnMount]);
 
   const current = steps[steps.length - 1];
   const node = TRIAGE[current.id];
@@ -151,9 +153,10 @@ export function TriagePanel({
 
   const go = (opt: TriageOption, index: number, place?: string, pick?: string) => {
     setMedStatus("idle");
-    setSteps((s) => [...s, { id: opt.next, via: { from: current.id, index }, place, pick }]);
+    setSteps((s) => [...s, { id: nextOf(s, opt), via: { from: current.id, index }, place, pick }]);
   };
   const back = () => {
+    if (confirmSkip) return setConfirmSkip(false);
     setMedStatus("idle");
     setSteps((s) => (s.length > 1 ? s.slice(0, -1) : s));
   };
@@ -165,7 +168,7 @@ export function TriagePanel({
 
   // Never runs backwards: answered / (answered + longest way left).
   const done = steps.length - 1;
-  const left = triageRemaining(current.id);
+  const left = triageRemaining(current.id, steps);
   const progress = node.kind === "result" ? 100 : Math.round((done / (done + left)) * 100);
   const title = ui(variant === "check" ? "title_check" : "title_portal") || ui("title");
 
@@ -206,12 +209,28 @@ export function TriagePanel({
       </div>
 
       <div className="overflow-y-auto px-5 py-6 sm:px-6">
-        {node.kind === "question" ? (
+        {confirmSkip ? (
+          <SkipConfirm ui={ui} clinics={clinics} headingRef={headingRef} onBack={() => setConfirmSkip(false)} />
+        ) : node.kind === "question" ? (
           <>
             {steps.length === 1 && (ui("intro_heading") || ui("intro")) && (
               <div className="mb-5 rounded-2xl bg-brand-cyan-subtle p-4">
                 {ui("intro_heading") && <p className="text-sm font-semibold text-[var(--primary-dark)]">{ui("intro_heading")}</p>}
                 {ui("intro") && <p className="mt-1 text-sm leading-relaxed text-slate-700">{ui("intro")}</p>}
+              </div>
+            )}
+            {steps.length === 1 && (
+              // Up front, for returning patients who know what they need.
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-2xl border border-slate-200 px-4 py-3">
+                <span className="text-sm text-slate-600">{ui("skip_prompt")}</span>
+                <button
+                  type="button"
+                  onClick={() => setConfirmSkip(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--primary-dark)] px-4 py-1.5 text-sm font-semibold text-[var(--primary-dark)] transition-colors hover:bg-[var(--primary-dark)] hover:text-white"
+                >
+                  {ui("skip")}
+                  <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                </button>
               </div>
             )}
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">{`${ui("step")} ${steps.length}`}</p>
@@ -260,29 +279,82 @@ export function TriagePanel({
 
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50 px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] text-xs text-slate-500 sm:px-6 sm:pb-3">
         <span>{ui("disclaimer")}</span>
-        {node.kind === "result" ? (
+        {confirmSkip ? null : node.kind === "result" ? (
           <button type="button" onClick={restart} className="inline-flex items-center gap-1 font-medium text-slate-600 hover:text-slate-900">
             <RotateCcw className="h-3.5 w-3.5" aria-hidden />
             {ui("restart")}
           </button>
-        ) : (
-          <a
-            href={PORTAL_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 font-medium text-[var(--primary-dark)] hover:underline"
+        ) : steps.length > 1 ? (
+          <button
+            type="button"
+            onClick={() => setConfirmSkip(true)}
+            className="inline-flex items-center gap-1 font-semibold text-[var(--primary-dark)] hover:underline"
           >
             {ui("skip")}
             <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-          </a>
-        )}
+          </button>
+        ) : null}
       </div>
     </>
   );
 }
 
+// Answer buttons — the way forward — carry a light brand tint so they stand
+// apart from the neutral back/restart controls.
 const CARD =
-  "group rounded-2xl border border-slate-200 text-left transition-colors hover:border-[var(--primary)] hover:bg-brand-cyan-subtle/60 focus-visible:border-[var(--primary)] focus-visible:outline-none";
+  "group rounded-2xl border border-brand-cyan-muted bg-brand-cyan-subtle/50 text-left transition-colors hover:border-[var(--primary)] hover:bg-brand-cyan-subtle focus-visible:border-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/30";
+
+/** Filled arrow chip on answer buttons: reads as "this takes you on". */
+function Forward() {
+  return (
+    <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--primary-dark)] text-white transition-transform group-hover:translate-x-0.5">
+      <ChevronRight className="h-4 w-4" />
+    </span>
+  );
+}
+
+/** "Are you sure?" before leaving the guide for the portal: who the service is
+ *  for, and 112 for emergencies — then either open the portal or go back. */
+function SkipConfirm({
+  ui,
+  clinics,
+  headingRef,
+  onBack,
+}: {
+  ui: (name: string) => string;
+  clinics: string[];
+  headingRef: React.RefObject<HTMLHeadingElement | null>;
+  onBack: () => void;
+}) {
+  return (
+    <div>
+      <h2 id="triage-heading" ref={headingRef} tabIndex={-1} className="text-xl font-bold text-slate-900 outline-none">
+        {ui("skip_confirm_title")}
+      </h2>
+      <p className="mt-2 text-[15px] leading-relaxed text-slate-700">{ui("skip_confirm_body")}</p>
+      <ClinicList title={ui("clinics")} clinics={clinics} />
+      <p className="mt-4 text-sm font-medium text-red-700">{ui("skip_confirm_note")}</p>
+      <div className="mt-6 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
+        <a
+          href={PORTAL_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--primary-dark)] px-6 py-3 text-sm font-semibold text-white hover:brightness-110"
+        >
+          <ExternalLink className="h-4 w-4" aria-hidden />
+          {ui("skip_confirm_yes")}
+        </a>
+        <button
+          type="button"
+          onClick={onBack}
+          className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 hover:border-slate-400"
+        >
+          {ui("skip_confirm_no")}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 /** The answers of a question: picture cards when the answers carry a
  *  `visual`, otherwise a plain list. Medication-search answers are filtered
@@ -369,7 +441,7 @@ function Options({
           className={`${CARD} flex w-full items-center justify-between gap-3 px-4 py-3.5 text-[15px] font-medium text-slate-800`}
         >
           {label(i)}
-          <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-[var(--primary-dark)]" aria-hidden />
+          <Forward />
         </button>
       ))}
     </div>
@@ -438,7 +510,28 @@ function PlaceStep({
   };
   return (
     <div className="mt-5">
-      <label className="relative block">
+      <div className="grid grid-cols-2 gap-2.5">
+        {/* "Annars staðar á landinu" always last, whatever order the areas
+            were added in (their CMS keys follow the array order). */}
+        {node.options
+          .map((opt, i) => ({ opt, i }))
+          .sort((a, b) => Number(a.opt.region === "rural") - Number(b.opt.region === "rural"))
+          .map(({ opt, i }) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onPick(opt, i)}
+            className={`${CARD} flex items-center gap-2 px-3.5 py-3 text-sm font-medium text-slate-800`}
+          >
+            <MapPin className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-[var(--primary-dark)]" aria-hidden />
+            {text[TK.option(id, i)]}
+          </button>
+        ))}
+      </div>
+      {/* The areas first: most people just press one. The search is for anyone
+          unsure which area their town belongs to. */}
+      <p className="mt-5 text-sm font-medium text-slate-600">{ui("place_search_label")}</p>
+      <label className="relative mt-2 block">
         <span className="sr-only">{ui("place_placeholder")}</span>
         <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden />
         <input
@@ -473,24 +566,6 @@ function PlaceStep({
         {q.trim().length >= 2 && hits.length === 0 && ui("place_nomatch") && (
           <p className="mt-2 text-sm text-slate-500">{ui("place_nomatch")}</p>
         )}
-      </div>
-      <div className="mt-4 grid grid-cols-2 gap-2.5">
-        {/* "Annars staðar á landinu" always last, whatever order the areas
-            were added in (their CMS keys follow the array order). */}
-        {node.options
-          .map((opt, i) => ({ opt, i }))
-          .sort((a, b) => Number(a.opt.region === "rural") - Number(b.opt.region === "rural"))
-          .map(({ opt, i }) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => onPick(opt, i)}
-            className={`${CARD} flex items-center gap-2 px-3.5 py-3 text-sm font-medium text-slate-800`}
-          >
-            <MapPin className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-[var(--primary-dark)]" aria-hidden />
-            {text[TK.option(id, i)]}
-          </button>
-        ))}
       </div>
     </div>
   );
