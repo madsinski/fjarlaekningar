@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft, ChevronRight, ExternalLink, MapPin, Phone, RotateCcw, Search, X } from "lucide-react";
+import { ArrowLeft, ChevronRight, CircleCheck, ExternalLink, MapPin, Phone, RotateCcw, Search, X } from "lucide-react";
 import {
   PORTAL_URL, TK, TRIAGE, TRIAGE_START, nextOf, triageRemaining, triageWhere,
   type ServiceKey, type TriageExample, type TriageOption, type TriageQuestion, type TriageResult, type TriageStep,
@@ -31,27 +31,24 @@ const TONE: Record<ServiceKey, { badge: string; ring: string }> = {
   "1700": { badge: "bg-amber-500 text-white", ring: "border-amber-200 bg-amber-50" },
   heilsugaesla: { badge: "bg-[var(--slate-deep)] text-white", ring: "border-slate-200 bg-slate-50" },
   heilsuvera: { badge: "bg-[var(--slate-deep)] text-white", ring: "border-slate-200 bg-slate-50" },
-  "other-adult": { badge: "bg-[var(--slate-deep)] text-white", ring: "border-slate-200 bg-slate-50" },
-  fjar: { badge: "bg-[var(--primary-dark)] text-white", ring: "border-brand-cyan-muted bg-brand-cyan-subtle" },
+  // Green = "go ahead, the portal is open to you" — the same emerald the site
+  // uses for "Virk þjónusta". Only the results that lead into the portal.
+  "other-adult": { badge: "bg-emerald-600 text-white", ring: "border-emerald-200 bg-emerald-50" },
+  fjar: { badge: "bg-emerald-600 text-white", ring: "border-emerald-200 bg-emerald-50" },
 };
+
+/** Results that send people on into the patient portal. */
+const GO = new Set<ServiceKey>(["fjar", "other-adult"]);
 
 type MedStatus = "idle" | "red" | "green";
 
-// Browsers can't hyphenate Icelandic, so long compounds in the narrow service
-// buttons either overflow or get cut anywhere ("Getnaðarvör-n"). Soft hyphens
-// at the compound joints make the break land in the right place, with a hyphen.
-const JOINTS: [RegExp, string][] = [
-  [/leggangasýkingar/g, "leggangas\u00ADýkingar"],
-  [/Þvagfæra/g, "Þvag\u00ADfæra"],
-  [/Frjókornaofnæmi/g, "Frjókorna\u00ADofnæmi"],
-  [/Getnaðarvörn/g, "Getnaðar\u00ADvörn"],
-  [/Læknisvottorð/g, "Læknis\u00ADvottorð"],
-  [/Risvandamál/g, "Ris\u00ADvandamál"],
-  [/Endurnýjun/g, "Endur\u00ADnýjun"],
-  [/augnlokavandamál/g, "augnloka\u00ADvandamál"],
-  [/Augnsýkingar/g, "Augn\u00ADsýkingar"],
-];
-const soft = (s: string) => JOINTS.reduce((acc, [re, to]) => acc.replace(re, to), s);
+/** Picture buttons on "Hvað þarftu": icon above the name on phones (the whole
+ *  width for the word, so nothing is split), beside it on wider screens. */
+const SERVICE_BTN = "flex flex-col items-start gap-1.5 p-2.5 sm:flex-row sm:items-center sm:gap-2.5";
+
+/** Screens shown in the wide popup on computers (and wide in the CMS preview). */
+export const WIDE_SCREENS = ["need"];
+
 
 const lines = (v: string | undefined) => (v ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
 const paragraphs = (v: string | undefined) => (v ?? "").split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
@@ -71,6 +68,9 @@ export default function TriageDialog({
   clinics?: string[];
   variant?: TriageVariant;
 }) {
+  // Which screen is showing — the picture-heavy step gets a wider popup.
+  const [screen, setScreen] = useState(TRIAGE_START);
+
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
     const onKey = (e: KeyboardEvent) => {
@@ -96,9 +96,11 @@ export default function TriageDialog({
         aria-modal="true"
         aria-labelledby="triage-title"
         onClick={(e) => e.stopPropagation()}
-        className="flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-w-lg sm:rounded-3xl"
+        className={`flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl transition-[max-width] duration-200 sm:rounded-3xl ${
+          WIDE_SCREENS.includes(screen) ? "sm:max-w-4xl" : "sm:max-w-lg"
+        }`}
       >
-        <TriagePanel text={text} examples={examples} clinics={clinics} onClose={onClose} variant={variant} />
+        <TriagePanel text={text} examples={examples} clinics={clinics} onClose={onClose} variant={variant} onScreen={setScreen} />
       </div>
     </div>,
     document.body,
@@ -208,7 +210,7 @@ export function TriagePanel({
         </div>
       </div>
 
-      <div className="overflow-y-auto px-5 py-6 sm:px-6">
+      <div className="overflow-y-auto px-5 py-5 sm:px-6">
         {confirmSkip ? (
           <SkipConfirm ui={ui} clinics={clinics} headingRef={headingRef} onBack={() => setConfirmSkip(false)} />
         ) : node.kind === "question" ? (
@@ -350,7 +352,7 @@ function SkipConfirm({
           href={PORTAL_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--primary-dark)] px-6 py-3 text-sm font-semibold text-white hover:brightness-110"
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700"
         >
           <ExternalLink className="h-4 w-4" aria-hidden />
           {ui("skip_confirm_yes")}
@@ -400,18 +402,20 @@ function Options({
     return (
       <>
         <h3 className="mt-5 text-sm font-semibold text-slate-900">{gallery ? label(gallery.i) : ""}</h3>
-        <div className="mt-2.5 grid grid-cols-2 gap-2">
+        {/* Four columns in the wide popup (computers), so the step fits without
+            scrolling; two on phones, icon above the name so long words stay whole. */}
+        <div className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           {gallery &&
             examples.map((ex) => (
               <button
                 key={ex.slug}
                 type="button"
                 onClick={() => onPick(gallery.opt, gallery.i, undefined, ex.title)}
-                className={`${CARD} flex items-center gap-2.5 p-2.5`}
+                className={`${CARD} ${SERVICE_BTN}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/erindi-icons/${ex.slug}.webp`} alt="" width={36} height={36} loading="lazy" className="h-9 w-9 shrink-0 object-contain" />
-                <span className="min-w-0 hyphens-manual text-[13px] font-medium leading-tight text-slate-800">{soft(ex.title)}</span>
+                <img src={`/erindi-icons/${ex.slug}.webp`} alt="" width={36} height={36} loading="lazy" className="h-8 w-8 shrink-0 object-contain sm:h-9 sm:w-9" />
+                <span className="min-w-0 text-[13px] font-medium leading-tight text-slate-800">{ex.title}</span>
               </button>
             ))}
           {one.map(({ opt, i }) => (
@@ -426,9 +430,9 @@ function Options({
               <span className="text-lg font-bold uppercase tracking-[0.2em] text-slate-500">{text[TK.ui("need_more")]}</span>
               <span aria-hidden className="h-px flex-1 bg-slate-200" />
             </div>
-            <div className="mt-2.5 grid grid-cols-2 gap-2.5">
+            <div className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {two.map(({ opt, i }) => (
-                <PictureButton key={i} img={opt.visual?.img} label={label(i)} onClick={() => onPick(opt, i)} />
+                <PictureButton key={i} img={opt.visual?.img} label={label(i)} onClick={() => onPick(opt, i)} compact />
               ))}
             </div>
           </>
@@ -484,12 +488,12 @@ function ClinicList({ title, clinics }: { title: string; clinics: string[] }) {
 
 function PictureButton({ img, label, onClick, compact }: { img?: string; label: string; onClick: () => void; compact?: boolean }) {
   return compact ? (
-    <button type="button" onClick={onClick} className={`${CARD} flex items-center gap-2.5 p-2.5`}>
+    <button type="button" onClick={onClick} className={`${CARD} ${SERVICE_BTN}`}>
       {img && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={img} alt="" width={36} height={36} loading="lazy" className="h-9 w-9 shrink-0 object-contain" />
+        <img src={img} alt="" width={36} height={36} loading="lazy" className="h-8 w-8 shrink-0 object-contain sm:h-9 sm:w-9" />
       )}
-      <span className="min-w-0 hyphens-manual text-[13px] font-medium leading-tight text-slate-800">{soft(label)}</span>
+      <span className="min-w-0 text-[13px] font-medium leading-tight text-slate-800">{label}</span>
     </button>
   ) : (
     <button type="button" onClick={onClick} className={`${CARD} flex flex-col gap-2.5 p-3.5`}>
@@ -664,6 +668,7 @@ function Result({
   const location = TRIAGE.location;
   const locIndex = location.kind === "question" ? location.options.findIndex((o) => o.region === where.region) : -1;
   const whereName = where.place || (locIndex >= 0 ? text[TK.option("location", locIndex)] : "");
+  const go = GO.has(node.service);
   return (
     <div>
       <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${tone.badge}`}>
@@ -673,8 +678,9 @@ function Result({
         id="triage-heading"
         ref={headingRef}
         tabIndex={-1}
-        className="mt-3 text-2xl font-bold text-slate-900 outline-none"
+        className="mt-3 flex items-center gap-2.5 text-2xl font-bold text-slate-900 outline-none"
       >
+        {go && <CircleCheck className="h-7 w-7 shrink-0 text-emerald-600" aria-hidden />}
         {text[TK.title(id)]}
       </h2>
       {why && (
@@ -685,9 +691,9 @@ function Result({
       )}
       {node.clinics && <ClinicList title={text[TK.ui("clinics")]} clinics={clinics} />}
       {pick && node.service === "fjar" && (
-        <div className="mt-4 flex items-center gap-3 rounded-2xl border border-brand-cyan-muted bg-brand-cyan-subtle p-3.5">
+        <div className="mt-4 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3.5">
           <p className="text-[15px] text-slate-800">
-            {text[TK.ui("pick_hint")]}: <span className="font-semibold text-[var(--primary-dark)]">„{pick}“</span>
+            {text[TK.ui("pick_hint")]}: <span className="font-semibold text-emerald-800">„{pick}“</span>
           </p>
         </div>
       )}
@@ -720,7 +726,9 @@ function Result({
                 a.primary
                   ? node.service === "112" || node.service === "brada"
                     ? "bg-red-600 text-white hover:bg-red-700"
-                    : "bg-[var(--primary-dark)] text-white hover:brightness-110"
+                    : go
+                      ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700"
+                      : "bg-[var(--primary-dark)] text-white hover:brightness-110"
                   : "border-2 border-slate-300 text-slate-700 hover:border-slate-400"
               }`}
             >

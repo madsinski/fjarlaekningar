@@ -464,7 +464,7 @@ export const TRIAGE: Record<string, TriageNode> = {
       { is: "Læknir svarar innan tveggja klukkustunda á opnunartíma, alla daga milli 10 og 22.",
         en: "A doctor replies within two hours during opening hours, daily 10–22." },
     ],
-    actions: [OPEN_PORTAL, CALL_1700],
+    actions: [{ ...OPEN_PORTAL, primary: true }, CALL_1700],
   },
 
   "r-other-er": {

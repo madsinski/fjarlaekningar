@@ -7,7 +7,7 @@ import { ArrowLeft, Eye, EyeOff, Globe2, Languages, Send, Check, ExternalLink, A
 import { supabase } from "@/lib/supabase";
 import HomeView from "@/app/(site)/HomeView";
 import { TriageProvider } from "@/app/components/TriageTrigger";
-import { TriagePanel } from "@/app/components/TriageDialog";
+import { TriagePanel, WIDE_SCREENS } from "@/app/components/TriageDialog";
 import { TK, TRIAGE, TRIAGE_SCREENS, TRIAGE_START, triageExamples, triagePath, triageText } from "@/lib/triage";
 import ThjonustaView from "@/app/(site)/(is)/thjonusta/ThjonustaView";
 import UmOkkurView from "@/app/(site)/(is)/um-okkur/UmOkkurView";
@@ -192,7 +192,7 @@ function TriagePreview({
         </div>
       </div>
       <div className="flex justify-center bg-slate-900/40 p-6">
-        <div className="flex w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+        <div className={`flex w-full flex-col overflow-hidden rounded-3xl bg-white shadow-2xl ${WIDE_SCREENS.includes(at) ? "max-w-4xl" : "max-w-lg"}`}>
           <TriagePanel
             key={`${jump.id}-${jump.n}-${region}`}
             text={triageText(c)}
