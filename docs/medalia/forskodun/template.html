@@ -1,0 +1,340 @@
+<title>Opin beiðni – forskoðun</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@500;600;700&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a single form column like the Medalia patient view, with a slim
+   tester bar on top (version switch + show-logic toggle). */
+:root {
+  --bg: #f3f6f8;
+  --surface: #ffffff;
+  --ink: #16222e;
+  --muted: #5b6b7a;
+  --line: #d9e1e8;
+  --accent: #0b7f93;
+  --accent-soft: #e3f4f7;
+  --warn: #b42318;
+  --warn-soft: #fdecea;
+  --stop: #8a2c0d;
+  --stop-soft: #fff4e5;
+  --logic: #6a4ea0;
+  --logic-soft: #f1ecfa;
+  --ok: #067647;
+  --display: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f161c; --surface: #17212a; --ink: #e6edf3; --muted: #9aa9b7; --line: #2a3845;
+    --accent: #4cc3d6; --accent-soft: #123039; --warn: #ff8a80; --warn-soft: #3a1a18;
+    --stop: #ffb86b; --stop-soft: #33240f; --logic: #b9a2ef; --logic-soft: #251d38; --ok: #5dd39e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f161c; --surface: #17212a; --ink: #e6edf3; --muted: #9aa9b7; --line: #2a3845;
+  --accent: #4cc3d6; --accent-soft: #123039; --warn: #ff8a80; --warn-soft: #3a1a18;
+  --stop: #ffb86b; --stop-soft: #33240f; --logic: #b9a2ef; --logic-soft: #251d38; --ok: #5dd39e;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--body); padding-inline: 16px; padding-block: 0 48px; }
+.wrap { max-width: 720px; margin: 0 auto; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 12px; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+.bar h1 { font: 600 15px/1.2 var(--display); margin: 0; letter-spacing: .01em; }
+.bar h1 span { color: var(--muted); font-weight: 500; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--surface); }
+.seg button { font: 500 13px var(--body); color: var(--muted); background: none; border: 0; padding: 6px 12px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+.toggle { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); cursor: pointer; }
+.toggle input { accent-color: var(--logic); width: 16px; height: 16px; }
+.note { margin-top: 14px; font-size: 13px; color: var(--muted); }
+.card { margin-top: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.card-head { padding: 18px 22px 14px; border-bottom: 1px solid var(--line); }
+.progress { height: 4px; background: var(--line); border-radius: 4px; overflow: hidden; margin-bottom: 14px; }
+.progress i { display: block; height: 100%; background: var(--accent); transition: width .25s; }
+.eyebrow { font: 500 12px var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.card-head h2 { font: 700 22px/1.25 var(--display); margin: 4px 0 0; text-wrap: balance; }
+.items { padding: 8px 22px 22px; display: grid; gap: 22px; }
+.q label.qt, .q .qt { display: block; font-weight: 600; margin-bottom: 8px; }
+.req { color: var(--warn); margin-left: 3px; }
+.help { font-size: 13.5px; color: var(--muted); margin: -2px 0 10px; }
+.display { white-space: pre-line; }
+.display.warn { background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 30%, transparent); border-radius: 10px; padding: 14px 16px; }
+.display.stop { background: var(--stop-soft); border: 1px solid color-mix(in srgb, var(--stop) 30%, transparent); border-radius: 10px; padding: 14px 16px; }
+.opts { display: grid; gap: 8px; }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; background: var(--surface); }
+.opt:hover { border-color: var(--accent); }
+.opt input { margin-top: 3px; accent-color: var(--accent); width: 17px; height: 17px; flex: none; }
+.opt:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.opt span { min-width: 0; }
+input[type=text], input[type=number], textarea, select { width: 100%; font: 15px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+textarea { min-height: 96px; resize: vertical; }
+input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible, .opt:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.unit { display: flex; gap: 8px; align-items: center; max-width: 220px; }
+.unit span { color: var(--muted); font-variant-numeric: tabular-nums; }
+.scale { display: flex; flex-wrap: wrap; gap: 6px; }
+.scale button { width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: 600 14px var(--display); cursor: pointer; font-variant-numeric: tabular-nums; }
+.scale button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.q.err .qt { color: var(--warn); }
+.q.err .opts, .q.err input, .q.err textarea, .q.err select, .q.err .scale { box-shadow: 0 0 0 2px var(--warn-soft); }
+.errmsg { color: var(--warn); font-size: 13px; margin-top: 6px; }
+.logic { display: none; font: 12px/1.5 var(--mono); color: var(--logic); background: var(--logic-soft); border-radius: 6px; padding: 4px 8px; margin-bottom: 8px; overflow-wrap: anywhere; }
+.show-logic .logic { display: block; }
+.logic b { font-weight: 500; }
+.nav { display: flex; justify-content: space-between; gap: 10px; padding: 16px 22px; border-top: 1px solid var(--line); background: color-mix(in srgb, var(--bg) 60%, var(--surface)); }
+.btn { font: 600 14px var(--display); border-radius: 999px; padding: 10px 20px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.btn[disabled] { opacity: .45; cursor: default; }
+.summary { padding: 8px 22px 22px; }
+.summary h3 { font: 600 15px var(--display); margin: 18px 0 8px; }
+.summary dl { margin: 0; display: grid; gap: 8px; }
+.summary dt { font-size: 13px; color: var(--muted); }
+.summary dd { margin: 0 0 6px; white-space: pre-line; }
+.pill { display: inline-block; font: 500 12px var(--display); padding: 2px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.pill.stop { background: var(--stop-soft); color: var(--stop); }
+@media (prefers-reduced-motion: reduce) { .progress i { transition: none; } }
+@media (max-width: 480px) { .items, .summary { padding-inline: 16px; } .card-head, .nav { padding-inline: 16px; } }
+</style>
+
+<div class="wrap" id="app">
+  <div class="bar">
+    <h1>Opin beiðni <span>· forskoðun fyrir Medalia</span></h1>
+    <div class="seg" role="group" aria-label="Útgáfa">
+      <button type="button" id="v-long" aria-pressed="true">Langa útgáfan</button>
+      <button type="button" id="v-short" aria-pressed="false">Stutta útgáfan</button>
+    </div>
+    <label class="toggle"><input type="checkbox" id="show-logic"> Sýna linkId og skilyrði</label>
+  </div>
+  <p class="note">Prufuútgáfa til að skoða spurningalistann og greininguna áður en hann er settur upp í Medalia. Ekkert er sent eða vistað. Byggt á sömu gögnum og Word-skjalið <b>opin-beidni-medalia.docx</b>.</p>
+  <div class="card" id="card"></div>
+</div>
+
+<script type="application/json" id="q-long">__LONG__</script>
+<script type="application/json" id="q-short">__SHORT__</script>
+<script>
+(function () {
+  const Q = {
+    long: JSON.parse(document.getElementById("q-long").textContent),
+    short: JSON.parse(document.getElementById("q-short").textContent),
+  };
+  const CTRL = "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl";
+  const ENTRY = "http://hl7.org/fhir/StructureDefinition/entryFormat";
+  const UNIT = "http://hl7.org/fhir/StructureDefinition/questionnaire-unit";
+  const MIN = "http://hl7.org/fhir/StructureDefinition/minValue";
+  const MAX = "http://hl7.org/fhir/StructureDefinition/maxValue";
+
+  let version = "long";
+  let answers = {};     // linkId -> string | string[] | boolean | number
+  let pageIdx = 0;
+  let done = false;
+  const card = document.getElementById("card");
+
+  const ext = (it, url) => (it.extension || []).find((e) => e.url === url);
+  const ctrl = (it) => { const e = ext(it, CTRL); return e ? e.valueCodeableConcept.coding[0].code : null; };
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  function index(q) {
+    const all = {};
+    (function walk(items, parent) { for (const it of items || []) { all[it.linkId] = { it, parent }; walk(it.item, it.linkId); } })(q.item);
+    return all;
+  }
+  let ALL = index(Q[version]);
+
+  // FHIR: a disabled item counts as unanswered, so a condition on it is false.
+  function enabled(linkId, seen = new Set()) {
+    const node = ALL[linkId];
+    if (!node) return false;
+    if (seen.has(linkId)) return true;
+    seen.add(linkId);
+    if (node.parent && !enabled(node.parent, seen)) return false;
+    const ew = node.it.enableWhen || [];
+    if (!ew.length) return true;
+    const test = (e) => {
+      if (!enabled(e.question, new Set(seen))) return false;
+      const a = answers[e.question];
+      const code = e.answerCoding && e.answerCoding.code;
+      if (Array.isArray(a)) return a.includes(code);
+      return a === code;
+    };
+    return node.it.enableBehavior === "any" ? ew.some(test) : ew.every(test);
+  }
+
+  const pages = () => Q[version].item.filter((p) => p.type === "group");
+  const livePages = () => pages().filter((p) => enabled(p.linkId));
+
+  function condText(it) {
+    const ew = it.enableWhen || [];
+    if (!ew.length) return "";
+    const join = it.enableBehavior === "any" ? " EÐA " : " OG ";
+    return ew.map((e) => {
+      const target = ALL[e.question] && ALL[e.question].it;
+      const opt = target && (target.answerOption || []).find((o) => o.valueCoding.code === e.answerCoding.code);
+      return `${e.question} = „${opt ? opt.valueCoding.display : e.answerCoding.code}“`;
+    }).join(join);
+  }
+  function logicLine(it) {
+    const c = condText(it);
+    return `<div class="logic"><b>${esc(it.linkId)}</b> · ${esc(it.type)}${it.repeats ? " · fjölval" : ""}${c ? " · birtist ef " + esc(c) : ""}</div>`;
+  }
+
+  function isAnswered(it) {
+    const a = answers[it.linkId];
+    if (it.type === "boolean") return a === true;
+    if (Array.isArray(a)) return a.length > 0;
+    return a !== undefined && a !== null && String(a).trim() !== "";
+  }
+
+  function renderItem(it) {
+    if (!enabled(it.linkId)) return "";
+    if (ctrl(it) === "help") return "";
+    const help = (it.item || []).filter((c) => ctrl(c) === "help").map((c) => `<p class="help">${esc(c.text)}</p>`).join("");
+    if (it.type === "display") {
+      const t = it.text || "";
+      const cls = t.startsWith("⛔") ? "stop" : t.startsWith("⚠️") ? "warn" : "";
+      return `<div class="q">${logicLine(it)}<div class="display ${cls}">${esc(t)}</div></div>`;
+    }
+    const req = it.required ? '<span class="req" aria-hidden="true">*</span>' : "";
+    const id = "f-" + it.linkId;
+    let field = "";
+    const a = answers[it.linkId];
+    const ph = ext(it, ENTRY) ? ` placeholder="${esc(ext(it, ENTRY).valueString)}"` : "";
+    if (it.type === "choice") {
+      const opts = it.answerOption || [];
+      if (ctrl(it) === "drop-down" && !it.repeats) {
+        field = `<select id="${id}" data-l="${esc(it.linkId)}" data-k="select"><option value="">Veldu…</option>${opts.map((o) => `<option value="${esc(o.valueCoding.code)}"${a === o.valueCoding.code ? " selected" : ""}>${esc(o.valueCoding.display)}</option>`).join("")}</select>`;
+      } else {
+        const multi = !!it.repeats;
+        field = `<div class="opts" role="${multi ? "group" : "radiogroup"}" aria-labelledby="${id}-l">${opts.map((o, i) => {
+          const c = o.valueCoding.code;
+          const on = multi ? Array.isArray(a) && a.includes(c) : a === c;
+          return `<label class="opt"><input type="${multi ? "checkbox" : "radio"}" id="${id}-${i}" name="${id}" value="${esc(c)}" data-l="${esc(it.linkId)}" data-k="${multi ? "multi" : "single"}"${on ? " checked" : ""}><span>${esc(o.valueCoding.display)}</span></label>`;
+        }).join("")}</div>`;
+      }
+    } else if (it.type === "boolean") {
+      return `<div class="q" data-q="${esc(it.linkId)}">${logicLine(it)}<label class="opt"><input type="checkbox" id="${id}" data-l="${esc(it.linkId)}" data-k="bool"${a === true ? " checked" : ""}><span>${esc(it.text)}${req}</span></label>${help}</div>`;
+    } else if (it.type === "text") {
+      field = `<textarea id="${id}" data-l="${esc(it.linkId)}" data-k="text"${ph}>${esc(a || "")}</textarea>`;
+    } else if (it.type === "string") {
+      field = `<input type="text" id="${id}" data-l="${esc(it.linkId)}" data-k="text" value="${esc(a || "")}"${ph}>`;
+    } else if (it.type === "quantity") {
+      const u = ext(it, UNIT);
+      field = `<div class="unit"><input type="number" inputmode="decimal" step="any" id="${id}" data-l="${esc(it.linkId)}" data-k="text" value="${esc(a || "")}"><span>${esc(u ? u.valueCoding.display : "")}</span></div>`;
+    } else if (it.type === "integer") {
+      const lo = ext(it, MIN) ? ext(it, MIN).valueInteger : 0, hi = ext(it, MAX) ? ext(it, MAX).valueInteger : 10;
+      let b = ""; for (let n = lo; n <= hi; n++) b += `<button type="button" data-l="${esc(it.linkId)}" data-k="int" data-v="${n}" aria-pressed="${a === n}">${n}</button>`;
+      field = `<div class="scale" role="group" aria-labelledby="${id}-l">${b}</div>`;
+    } else if (it.type === "attachment") {
+      field = `<input type="file" id="${id}" data-l="${esc(it.linkId)}" data-k="file" accept="image/*" multiple>${a ? `<p class="help">${esc(a)}</p>` : ""}`;
+    }
+    return `<div class="q" data-q="${esc(it.linkId)}">${logicLine(it)}<label class="qt" id="${id}-l" for="${id}">${esc(it.text)}${req}</label>${help}${field}</div>`;
+  }
+
+  function render() {
+    ALL = index(Q[version]);
+    const live = livePages();
+    if (done) return renderSummary(live);
+    if (pageIdx >= live.length) pageIdx = live.length - 1;
+    const p = live[pageIdx];
+    // Position among ALL pages (as numbered in the Word file); hidden pages are skipped.
+    const allPages = pages(); const pos = allPages.indexOf(p) + 1;
+    const pct = Math.round((pos / allPages.length) * 100);
+    card.innerHTML = `
+      <div class="card-head">
+        <div class="progress" aria-hidden="true"><i style="width:${pct}%"></i></div>
+        <div class="eyebrow">Síða ${pos} af ${allPages.length}</div>
+        ${logicLine(p)}
+        <h2>${esc(p.text)}</h2>
+      </div>
+      <div class="items">${(p.item || []).map(renderItem).join("")}</div>
+      <div class="nav">
+        <button type="button" class="btn" id="back"${pageIdx === 0 ? " disabled" : ""}>Til baka</button>
+        <button type="button" class="btn primary" id="next">${pageIdx === live.length - 1 ? "Senda erindi" : "Áfram"}</button>
+      </div>`;
+  }
+
+  function missing(p) {
+    const miss = [];
+    (function walk(items) { for (const it of items || []) {
+      if (!enabled(it.linkId) || ctrl(it) === "help") continue;
+      if (it.required && it.type !== "display" && it.type !== "group" && !isAnswered(it)) miss.push(it.linkId);
+      walk(it.item);
+    } })(p.item);
+    return miss;
+  }
+
+  function renderSummary(live) {
+    const rows = [];
+    for (const p of live) {
+      const items = [];
+      (function walk(list) { for (const it of list || []) {
+        if (!enabled(it.linkId) || it.type === "display" || ctrl(it) === "help") continue;
+        if (it.type !== "group" && isAnswered(it)) {
+          let v = answers[it.linkId];
+          const byCode = (c) => { const o = (it.answerOption || []).find((x) => x.valueCoding.code === c); return o ? o.valueCoding.display : c; };
+          if (it.type === "choice") v = Array.isArray(v) ? v.map(byCode).join("\n") : byCode(v);
+          if (it.type === "boolean") v = "Já";
+          const u = ext(it, UNIT); if (u) v = v + " " + u.valueCoding.display;
+          items.push(`<dt>${esc(it.text)}</dt><dd>${esc(v)}</dd>`);
+        }
+        walk(it.item);
+      } })(p.item);
+      if (items.length) rows.push(`<h3>${esc(p.text)}</h3><dl>${items.join("")}</dl>`);
+    }
+    const stopped = enabled("reg-stop") || enabled("scope-stop");
+    card.innerHTML = `
+      <div class="card-head"><div class="eyebrow">Svona berst erindið lækninum</div><h2>Samantekt svara</h2></div>
+      <div class="summary">
+        <p>${stopped ? '<span class="pill stop">Stöðvað á skimun</span> Erindið færi til læknis með aðeins skimunarsvörunum, og þær síður sem á eftir koma voru faldar.' : '<span class="pill">Tilbúið til sendingar</span> Í raunverulegri gátt færi þetta til læknis.'}</p>
+        ${rows.join("") || "<p>Engin svör.</p>"}
+      </div>
+      <div class="nav"><button type="button" class="btn" id="edit">Breyta svörum</button><button type="button" class="btn primary" id="restart">Byrja upp á nýtt</button></div>`;
+  }
+
+  // Answers — re-render so conditions apply immediately, keeping focus sane.
+  card.addEventListener("change", (e) => {
+    const el = e.target, l = el.dataset.l, k = el.dataset.k;
+    if (!l) return;
+    if (k === "single" || k === "select") answers[l] = el.value || undefined;
+    else if (k === "multi") { const cur = new Set(answers[l] || []); el.checked ? cur.add(el.value) : cur.delete(el.value); answers[l] = [...cur]; }
+    else if (k === "bool") answers[l] = el.checked;
+    else if (k === "file") answers[l] = [...el.files].map((f) => f.name).join(", ");
+    else return;
+    const keep = el.id; render(); const again = document.getElementById(keep); if (again) again.focus({ preventScroll: true });
+  });
+  card.addEventListener("input", (e) => {
+    const el = e.target; if (el.dataset.k === "text") answers[el.dataset.l] = el.value;
+  });
+  card.addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.k === "int") { answers[b.dataset.l] = Number(b.dataset.v); render(); return; }
+    if (b.id === "back") { pageIdx = Math.max(0, pageIdx - 1); render(); scrollTo(0, 0); }
+    if (b.id === "next") {
+      const live = livePages(); const miss = missing(live[pageIdx]);
+      document.querySelectorAll(".q.err").forEach((n) => { n.classList.remove("err"); n.querySelector(".errmsg")?.remove(); });
+      if (miss.length) {
+        miss.forEach((id) => { const n = card.querySelector(`[data-q="${CSS.escape(id)}"]`); if (n) { n.classList.add("err"); n.insertAdjacentHTML("beforeend", '<div class="errmsg">Þessu þarf að svara.</div>'); } });
+        card.querySelector(".q.err")?.scrollIntoView({ block: "center", behavior: "smooth" });
+        return;
+      }
+      if (pageIdx === live.length - 1) done = true; else pageIdx++;
+      render(); scrollTo(0, 0);
+    }
+    if (b.id === "edit") { done = false; render(); }
+    if (b.id === "restart") { answers = {}; pageIdx = 0; done = false; render(); scrollTo(0, 0); }
+  });
+
+  function setVersion(v) {
+    version = v; answers = {}; pageIdx = 0; done = false;
+    document.getElementById("v-long").setAttribute("aria-pressed", v === "long");
+    document.getElementById("v-short").setAttribute("aria-pressed", v === "short");
+    render();
+  }
+  document.getElementById("v-long").onclick = () => setVersion("long");
+  document.getElementById("v-short").onclick = () => setVersion("short");
+  const logic = document.getElementById("show-logic");
+  logic.onchange = () => document.getElementById("app").classList.toggle("show-logic", logic.checked);
+
+  render();
+})();
+</script>
