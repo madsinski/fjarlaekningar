@@ -21,6 +21,8 @@ import DataEntry from "./_components/DataEntry";
 import ResultsView from "./_components/Results";
 import Library from "./_components/Library";
 import DesignStep from "./_components/DesignStep";
+import NewStation from "./_components/NewStation";
+import { EMPTY_IMPORT_CONFIG, type ImportConfig } from "@/lib/evaluation/medalia";
 import { ACCENT, Chip, ProgressBars, card, input } from "./_components/ui";
 import {
   enabledModules, headlines, progress, readiness, requiredDocuments, timeCriticalOutstanding,
@@ -34,7 +36,7 @@ import {
   type MonthRow, type RosterMonth,
 } from "@/lib/evaluation/totals";
 import { toCSV, toReport } from "@/lib/evaluation/export";
-import { DEFAULT_DESIGN_STATE, codesFor, type DesignState } from "@/lib/evaluation/design";
+import { DEFAULT_DESIGN_STATE, codesFor, isPilotRow, type DesignState } from "@/lib/evaluation/design";
 
 type Step = "overview" | "library" | "design" | "modules" | "setup" | "data" | "results";
 
@@ -42,20 +44,33 @@ type Step = "overview" | "library" | "design" | "modules" | "setup" | "data" | "
  *  to each option, because that is where they are needed — not on a summary
  *  card somebody glances at. */
 const DESIGN_LABEL: Record<DesignState["design"], string> = {
-  "before-after": "Comparing with how things were before",
-  its: "Watching the monthly trend for a step",
-  controlled: "Comparing against a station that has not started",
-  "stepped-wedge": "Starting stations one at a time",
+  "before-after": "Borið saman við stöðuna áður",
+  its: "Fylgst með þróun mánuð fyrir mánuð",
+  controlled: "Borið saman við stöð sem er ekki byrjuð",
+  "stepped-wedge": "Stöðvar byrja hver á eftir annarri",
 };
 
+/** Icelandic singular after numbers ending in 1, except 11. */
+const pl = (n: number, one: string, many: string) => (n % 10 === 1 && n % 100 !== 11 ? one : many);
+
 const STEPS: { id: Step; label: string; icon: typeof LayoutGrid; n?: number }[] = [
-  { id: "overview", label: "Overview", icon: LayoutGrid },
-  { id: "library", label: "Library", icon: BookOpen },
-  { id: "design", label: "Study design", icon: Microscope, n: 1 },
-  { id: "modules", label: "Choose modules", icon: FlaskConical, n: 2 },
-  { id: "setup", label: "Set up", icon: ClipboardList, n: 3 },
-  { id: "data", label: "Enter data", icon: Table2, n: 4 },
-  { id: "results", label: "Results", icon: BarChart3, n: 5 },
+  { id: "overview", label: "Yfirlit", icon: LayoutGrid },
+  { id: "library", label: "Safn", icon: BookOpen },
+  { id: "design", label: "Rannsóknarsnið", icon: Microscope, n: 1 },
+  { id: "modules", label: "Rannsóknarþættir", icon: FlaskConical, n: 2 },
+  { id: "setup", label: "Undirbúningur", icon: ClipboardList, n: 3 },
+  { id: "data", label: "Gögn", icon: Table2, n: 4 },
+  { id: "results", label: "Niðurstöður", icon: BarChart3, n: 5 },
+];
+
+/** The process in one line per step — shown in the header so a first-time
+ *  reader knows what the five tabs are for before opening any of them. */
+const HOW: { id: Step; text: string }[] = [
+  { id: "design", text: "Ákveða við hvað er borið saman" },
+  { id: "modules", text: "Velja hvað er mælt" },
+  { id: "setup", text: "Gera allt klárt fyrir fyrsta dag" },
+  { id: "data", text: "Skrá tölur úr könnun, Sögu og Medalia" },
+  { id: "results", text: "Skýrslur eftir 6 og 12 mánuði" },
 ];
 
 export default function EvaluationPage() {
@@ -65,6 +80,7 @@ export default function EvaluationPage() {
   const [assumptions, setAssumptions] = useState<Assumptions>(DEFAULT_ASSUMPTIONS);
   const [documents, setDocuments] = useState<UploadedDoc[]>([]);
   const [design, setDesign] = useState<DesignState>(DEFAULT_DESIGN_STATE);
+  const [importConfig, setImportConfig] = useState<ImportConfig>(EMPTY_IMPORT_CONFIG);
   const [stations, setStations] = useState<{ institution: string; short: string; stations: string[] }[]>([]);
   const [rosterRaw, setRosterRaw] = useState<{ months: RosterMonth[]; activeDoctors: number }>({ months: [], activeDoctors: 0 });
   const [loading, setLoading] = useState(true);
@@ -99,6 +115,7 @@ export default function EvaluationPage() {
         setAssumptions({ ...DEFAULT_ASSUMPTIONS, ...(j.assumptions ?? {}) });
         setDocuments(j.documents ?? []);
         setDesign({ ...DEFAULT_DESIGN_STATE, ...(j.design ?? {}) });
+        setImportConfig({ ...EMPTY_IMPORT_CONFIG, ...(j.importConfig ?? {}) });
         setStations(j.stations ?? []);
         setRosterRaw(j.roster ?? { months: [], activeDoctors: 0 });
         setUnavailable(!!j.unavailable);
@@ -123,8 +140,9 @@ export default function EvaluationPage() {
 
   const windowIso = useMemo(() => lastMonths(windowMonths), [windowMonths]);
   const selected = useMemo(
-    () => months.filter((m) => (station === "__all" || m.station === station) && windowIso.includes(m.month.slice(0, 10))),
-    [months, station, windowIso],
+    () => months.filter((m) =>
+      (station === "__all" || m.station === station) && windowIso.includes(m.month.slice(0, 10)) && isPilotRow(m, design)),
+    [months, station, windowIso, design],
   );
   const totals = useMemo(() => total(selected), [selected]);
   // Staffing is service-wide: filtered by period only, never by station,
@@ -152,7 +170,7 @@ export default function EvaluationPage() {
     try {
       const res = await fetch("/api/admin/evaluation", { method: "POST", headers: await headers(), body: JSON.stringify(body) });
       const j = await res.json();
-      setToast(j.ok ? { kind: "ok", text: ok } : { kind: "err", text: j.error ?? "Failed" });
+      setToast(j.ok ? { kind: "ok", text: ok } : { kind: "err", text: j.error ?? "Mistókst" });
       if (j.ok) await load();
       return !!j.ok;
     } finally {
@@ -182,7 +200,7 @@ export default function EvaluationPage() {
     fd.append("doc_id", docId);
     const res = await fetch("/api/admin/evaluation/documents", { method: "POST", headers: await authOnly(), body: fd });
     const j = await res.json();
-    setToast(j.ok ? { kind: "ok", text: `${file.name} uploaded.` } : { kind: "err", text: j.error ?? "Upload failed" });
+    setToast(j.ok ? { kind: "ok", text: `${file.name} hlaðið upp.` } : { kind: "err", text: j.error ?? "Ekki tókst að hlaða upp" });
     if (j.ok) await load();
   };
 
@@ -190,13 +208,13 @@ export default function EvaluationPage() {
     const res = await fetch(`/api/admin/evaluation/documents?path=${encodeURIComponent(path)}`, { headers: await authOnly() });
     const j = await res.json();
     if (j.ok) window.open(j.url, "_blank", "noopener");
-    else setToast({ kind: "err", text: j.error ?? "Could not open" });
+    else setToast({ kind: "err", text: j.error ?? "Ekki tókst að opna skjalið" });
   };
 
   const deleteDoc = async (id: string) => {
     const res = await fetch(`/api/admin/evaluation/documents?id=${id}`, { method: "DELETE", headers: await authOnly() });
     const j = await res.json();
-    setToast(j.ok ? { kind: "ok", text: "Document removed." } : { kind: "err", text: j.error ?? "Failed" });
+    setToast(j.ok ? { kind: "ok", text: "Skjali eytt." } : { kind: "err", text: j.error ?? "Mistókst" });
     if (j.ok) await load();
   };
 
@@ -209,8 +227,8 @@ export default function EvaluationPage() {
     URL.revokeObjectURL(a.href);
   };
 
-  const periodLabel = `Last ${windowMonths} months`;
-  const stationLabel = station === "__all" ? "all stations" : station;
+  const periodLabel = `Síðustu ${windowMonths} mánuðir`;
+  const stationLabel = station === "__all" ? "allar stöðvar" : station;
 
   const makeDeck = async () => {
     setSaving(true);
@@ -222,10 +240,10 @@ export default function EvaluationPage() {
       });
       const j = await res.json();
       if (j.ok) {
-        setToast({ kind: "ok", text: `Deck created with ${j.deck.slides} slides.` });
+        setToast({ kind: "ok", text: `Kynning búin til, ${j.deck.slides} glærur.` });
         window.open(`/admin/presentations/${j.deck.id}`, "_blank", "noopener");
       } else {
-        setToast({ kind: "err", text: j.error ?? "Could not create the deck" });
+        setToast({ kind: "err", text: j.error ?? "Ekki tókst að búa til kynninguna" });
       }
     } finally {
       setSaving(false);
@@ -235,27 +253,43 @@ export default function EvaluationPage() {
   if (loading) {
     return (
       <div className="flex items-center gap-2 p-8 text-sm text-slate-500">
-        <Loader2 className="h-4 w-4 animate-spin" /> Loading the evaluation…
+        <Loader2 className="h-4 w-4 animate-spin" /> Hleð inn matinu…
       </div>
     );
   }
 
   const modules = enabledModules(programme);
+  const timeStudyOn = modules.some((m) => m.id === "time-study");
   const docsNeeded = requiredDocuments(programme).filter((d) => d.doc.required).length;
   const docsHave = documents.length;
 
   return (
     <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6">
       <header className="overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-900 p-6 text-white shadow-lg">
-        <h1 className="text-2xl font-bold tracking-tight">Service evaluation</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Mat á þjónustunni</h1>
         <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-200">
-          What we want to be able to say about the HSU partnership — and the evidence for it. The programme is
-          assembled from modules rather than fixed, because what to measure is a clinical decision, not an
-          engineering one.
+          Mat á fjarlækningum HSU áður en þjónustan nær til næstu stöðvar. Matið svarar þremur spurningum
+          læknisfræðilegs ráðgjafa: Virkar þjónustan fyrir sjúklinginn? Virkar hún fyrir heilbrigðiskerfið? Er hún örugg?
         </p>
+        <ol className="mt-4 grid gap-2 sm:grid-cols-5">
+          {HOW.map((h, i) => (
+            <li key={h.id}>
+              <button
+                onClick={() => setStep(h.id)}
+                className="flex h-full w-full items-start gap-2 rounded-lg bg-white/10 p-2.5 text-left text-xs leading-snug text-slate-100 transition hover:bg-white/20"
+              >
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/20 text-[11px] font-bold">{i + 1}</span>
+                <span>
+                  <span className="block font-semibold text-white">{STEPS.find((x) => x.id === h.id)!.label}</span>
+                  {h.text}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ol>
         <p className="mt-3 max-w-3xl text-xs leading-relaxed text-slate-400">
-          Every figure here is an aggregate. One row is a count, never a person — which is what keeps this quality
-          assurance rather than research, and why no patient consent is required.
+          Allar tölur hér eru samantektartölur: hver lína er fjöldi, aldrei einstaklingur. Þess vegna er matið
+          gæðaverkefni en ekki vísindarannsókn og ekki þarf upplýst samþykki sjúklinga.
         </p>
       </header>
 
@@ -263,8 +297,8 @@ export default function EvaluationPage() {
         <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
-            The tables do not exist yet. Run <code className="rounded bg-amber-100 px-1">supabase/evaluation-schema.sql</code>{" "}
-            in the Supabase SQL editor — nothing can be saved until then.
+            Töflurnar eru ekki til enn. Keyrðu <code className="rounded bg-amber-100 px-1">supabase/evaluation-schema.sql</code>{" "}
+            í SQL-ritli Supabase. Ekkert vistast fyrr en það hefur verið gert.
           </span>
         </div>
       )}
@@ -306,10 +340,11 @@ export default function EvaluationPage() {
         <div className="space-y-4">
           <div className="grid gap-4 lg:grid-cols-[1fr_minmax(0,320px)]">
             <div className={`${card} p-4`}>
-              <h2 className="text-base font-bold text-slate-900">Where the programme stands</h2>
+              <h2 className="text-base font-bold text-slate-900">Staðan</h2>
               <p className="mt-1 text-sm text-slate-600">
-                {modules.length} module{modules.length === 1 ? "" : "s"} selected · {docsHave} of {docsNeeded} required
-                documents uploaded · {months.length} station-month{months.length === 1 ? "" : "s"} of data
+                {modules.length} {pl(modules.length, "rannsóknarþáttur valinn", "rannsóknarþættir valdir")} · {docsHave} af{" "}
+                {docsNeeded} nauðsynlegum skjölum komin · gögn fyrir {months.length}{" "}
+                {pl(months.length, "mánuð", "mánuði")} (stöð × mánuður)
               </p>
               <div className="mt-3">
                 <ProgressBars {...prog} />
@@ -319,26 +354,25 @@ export default function EvaluationPage() {
             {urgent.length > 0 ? (
               <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
                 <p className="flex items-center gap-2 text-sm font-semibold text-rose-900">
-                  <Clock className="h-4 w-4" /> {urgent.length} time-critical step{urgent.length === 1 ? "" : "s"} outstanding
+                  <Clock className="h-4 w-4" /> {urgent.length} {pl(urgent.length, "verkþáttur þolir", "verkþættir þola")} ekki bið
                 </p>
                 <p className="mt-1 text-xs leading-relaxed text-rose-800">
-                  These cannot be recovered later. A baseline not collected while goodwill is fresh is not collected
-                  at all, and a study that starts after people have got used to the service no longer measures what
-                  it was meant to.
+                  Þetta verður að gera áður en þjónustan hefst. Það sem ekki er skráð frá fyrsta degi er ekki hægt
+                  að sækja eftir á.
                 </p>
                 <ul className="mt-2 space-y-0.5 text-xs text-rose-800">
                   {urgent.slice(0, 4).map((t) => <li key={t.key}>· {t.step.text}</li>)}
-                  {urgent.length > 4 && <li className="text-rose-600">· and {urgent.length - 4} more</li>}
+                  {urgent.length > 4 && <li className="text-rose-600">· og {urgent.length - 4} í viðbót</li>}
                 </ul>
                 <button onClick={() => setStep("setup")} className="mt-2 text-xs font-semibold text-rose-900 underline">
-                  Open setup
+                  Opna undirbúning
                 </button>
               </div>
             ) : (
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                <p className="text-sm font-semibold text-emerald-900">Nothing time-critical outstanding</p>
+                <p className="text-sm font-semibold text-emerald-900">Ekkert sem þolir ekki bið</p>
                 <p className="mt-1 text-xs leading-relaxed text-emerald-800">
-                  Everything still to do can wait a week without costing you data.
+                  Það sem er eftir má bíða í viku án þess að gögn glatist.
                 </p>
               </div>
             )}
@@ -352,16 +386,18 @@ export default function EvaluationPage() {
                   <div className={`absolute inset-x-0 top-0 h-1 ${a.bar}`} />
                   <div className="flex items-baseline justify-between gap-2">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{category.name}</p>
-                    {category.gate && <Chip className="bg-slate-800 text-white">Gate</Chip>}
+                    {category.gate && <Chip className="bg-slate-800 text-white">Skilyrði</Chip>}
                   </div>
                   <p className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
-                    {top?.value.value ?? <span className="text-base font-medium text-slate-400">Pending</span>}
+                    {top?.value.value ?? <span className="text-base font-medium text-slate-400">Bíður gagna</span>}
                   </p>
                   <p className="text-xs text-slate-500">{top?.metric.name ?? category.question}</p>
                 </div>
               );
             })}
           </div>
+
+          <NewStation programme={programme} onOpenSetup={() => setStep("setup")} />
 
           <button
             onClick={() => setStep("design")}
@@ -370,23 +406,23 @@ export default function EvaluationPage() {
             <Microscope className="h-5 w-5 shrink-0 text-slate-400" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-slate-900">
-                Study design: {DESIGN_LABEL[design.design]}
+                Rannsóknarsnið: {DESIGN_LABEL[design.design]}
               </p>
               <p className="text-xs leading-relaxed text-slate-500">
-                {design.baselineMonths} months of monthly baseline ·{" "}
-                {Object.values(design.sites).filter((x) => x.role === "pre-live").length} pre-live control sites ·{" "}
-                {Object.keys(design.decisions).filter((k) => design.decisions[k]?.text).length} of 6 decisions recorded
+                {design.baselineMonths} mánaða baseline ·{" "}
+                {Object.values(design.sites).filter((x) => x.role === "pre-live").length} samanburðarstöðvar ·{" "}
+                {Object.keys(design.decisions).filter((k) => design.decisions[k]?.text).length} af 6 ákvörðunum skráðar
               </p>
             </div>
-            <span className="shrink-0 text-xs font-medium text-cyan-700">Review →</span>
+            <span className="shrink-0 text-xs font-medium text-cyan-700">Skoða →</span>
           </button>
 
           <div className={`${card} p-4`}>
             <h2 className="flex items-center gap-2 text-base font-bold text-slate-900">
-              <Settings2 className="h-4 w-4 text-slate-400" /> Module readiness
+              <Settings2 className="h-4 w-4 text-slate-400" /> Staða rannsóknarþátta
             </h2>
             <p className="mt-1 max-w-3xl text-sm text-slate-600">
-              Which claims you could actually make today, and what is missing from the rest.
+              Hvað er hægt að fullyrða í dag og hvað vantar upp á hitt.
             </p>
             <div className="mt-3 space-y-1.5">
               {ready.map((r) => (
@@ -394,30 +430,32 @@ export default function EvaluationPage() {
                   <span className={`h-2 w-2 shrink-0 rounded-full ${r.ready ? "bg-emerald-500" : r.blocked ? "bg-slate-300" : "bg-amber-400"}`} />
                   <span className="min-w-0 flex-1 truncate text-sm text-slate-800">{r.module.name}</span>
                   <span className="shrink-0 text-xs tabular-nums text-slate-500">
-                    {r.steps.done}/{r.steps.total} steps
-                    {r.docs.total > 0 && ` · ${r.docs.done}/${r.docs.total} docs`}
-                    {` · ${r.metrics.live}/${r.metrics.total} reporting`}
+                    {r.steps.done}/{r.steps.total} verkþættir
+                    {r.docs.total > 0 && ` · ${r.docs.done}/${r.docs.total} skjöl`}
+                    {` · ${r.metrics.live}/${r.metrics.total} mælikvarðar með gögn`}
                   </span>
                 </div>
               ))}
-              {!ready.length && <p className="py-4 text-center text-sm text-slate-400">No modules selected yet.</p>}
+              {!ready.length && <p className="py-4 text-center text-sm text-slate-400">Engir rannsóknarþættir valdir enn.</p>}
             </div>
           </div>
 
           <div className={`${card} p-4`}>
-            <h2 className="text-base font-bold text-slate-900">Assumptions</h2>
+            <h2 className="text-base font-bold text-slate-900">Forsendur</h2>
             <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-600">
-              Workload relief is resolved cases times minutes, so the assumption is part of the claim. It is the
-              first thing that will be questioned, so it has to be visible and easy to defend — never buried in
-              code.
+              {timeStudyOn
+                ? "Vinnuléttir er reiknaður sem afgreidd erindi sinnum mínútur, svo forsendan er hluti af fullyrðingunni. Hún verður að vera sýnileg og auðvelt að verja hana."
+                : "Viðmiðið sem svartími er borinn saman við."}
             </p>
             <div className="mt-3 grid gap-3 sm:grid-cols-4">
-              {([
-                ["minutesSaved", "Minutes saved per case"],
-                ["minutesSpent", "Minutes spent routing"],
-                ["hoursPerClinicDay", "Hours in a clinic day"],
-                ["responseTargetMinutes", "Response promise (min)"],
-              ] as [keyof Assumptions, string][]).map(([key, label]) => (
+              {(([
+                ["responseTargetMinutes", "Loforð um svartíma (mín.)"],
+                ...(timeStudyOn ? [
+                  ["minutesSaved", "Mínútur sparaðar á erindi"],
+                  ["minutesSpent", "Mínútur í að beina erindi til okkar"],
+                  ["hoursPerClinicDay", "Klukkustundir í vinnudegi"],
+                ] : []),
+              ]) as [keyof Assumptions, string][]).map(([key, label]) => (
                 <label key={key} className="block">
                   <span className="mb-1 block text-xs font-medium text-slate-700">{label}</span>
                   <input
@@ -431,21 +469,23 @@ export default function EvaluationPage() {
                 </label>
               ))}
             </div>
-            <label className="mt-3 flex items-start gap-2.5">
-              <input
-                type="checkbox"
-                checked={assumptions.studyDone}
-                disabled={!admin}
-                onChange={(e) => void saveAssumptions({ ...assumptions, studyDone: e.target.checked })}
-                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
-              />
-              <span className="text-sm text-slate-700">
-                The time-and-motion study has been run
-                <span className="mt-0.5 block text-xs text-slate-500">
-                  Until this is ticked, workload relief is labelled an estimate and does not belong in a presentation.
+            {timeStudyOn && (
+              <label className="mt-3 flex items-start gap-2.5">
+                <input
+                  type="checkbox"
+                  checked={assumptions.studyDone}
+                  disabled={!admin}
+                  onChange={(e) => void saveAssumptions({ ...assumptions, studyDone: e.target.checked })}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+                />
+                <span className="text-sm text-slate-700">
+                  Tímamælingin hefur farið fram
+                  <span className="mt-0.5 block text-xs text-slate-500">
+                    Þar til hakað er hér er vinnuléttir merktur sem ágiskun og á ekki heima í kynningu.
+                  </span>
                 </span>
-              </span>
-            </label>
+              </label>
+            )}
           </div>
         </div>
       )}
@@ -490,9 +530,13 @@ export default function EvaluationPage() {
           institution={institutionOf(entryStation)}
           saving={saving}
           canEdit={admin && !unavailable}
-          onSave={async () => { if (draft) await post({ month: draft }, "Saved."); }}
-          onImport={async (rows) => { await post({ action: "import", months: rows }, `${rows.length} station-months imported.`); }}
-          onImportReasons={async (rows) => { await post({ action: "reasons", reasons: rows }, `${rows.length} exclusion reasons imported.`); }}
+          onSave={async () => { if (draft) await post({ month: draft }, "Vistað."); }}
+          onImport={async (rows) => { await post({ action: "import", months: rows }, `${rows.length} ${pl(rows.length, "mánuður fluttur", "mánuðir fluttir")} inn.`); }}
+          importConfig={importConfig}
+          onSaveImportConfig={async (c) => { setImportConfig(c); await post({ action: "import-config", importConfig: c }, "Stillingar vistaðar."); }}
+          onSaveSaga={async (rows) => { await post({ action: "saga", months: rows }, `Tölur úr Sögu vistaðar fyrir ${rows.length} ${pl(rows.length, "mánuð", "mánuði")}.`); }}
+          onSaveMedalia={async (rows) => { await post({ action: "import", months: rows }, `Tölur úr Medalia vistaðar fyrir ${rows.length} ${pl(rows.length, "mánuð", "mánuði")}.`); }}
+          onImportReasons={async (rows) => { await post({ action: "reasons", reasons: rows }, `${rows.length} ${pl(rows.length, "ástæða frávísunar flutt", "ástæður frávísunar fluttar")} inn.`); }}
         />
       )}
 
@@ -500,50 +544,48 @@ export default function EvaluationPage() {
         <div className="space-y-4">
           <div className="flex flex-wrap items-end gap-3">
             <label className="block">
-              <span className="mb-1 block text-xs font-medium text-slate-700">Station</span>
+              <span className="mb-1 block text-xs font-medium text-slate-700">Stöð</span>
               <select className={input} value={station} onChange={(e) => setStation(e.target.value)}>
-                <option value="__all">All stations</option>
+                <option value="__all">Allar stöðvar</option>
                 {allStations.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </label>
             <label className="block">
-              <span className="mb-1 block text-xs font-medium text-slate-700">Period</span>
+              <span className="mb-1 block text-xs font-medium text-slate-700">Tímabil</span>
               <select className={input} value={windowMonths} onChange={(e) => setWindowMonths(Number(e.target.value))}>
-                {[3, 6, 12, 24].map((n) => <option key={n} value={n}>Last {n} months</option>)}
+                {[3, 6, 12, 24].map((n) => <option key={n} value={n}>Síðustu {n} mánuðir</option>)}
               </select>
             </label>
             <p className="pb-2 text-xs text-slate-500">
-              {totals.months} month{totals.months === 1 ? "" : "s"} with data.{" "}
-              <span className="text-slate-400">Staffing figures are service-wide and do not change with station.</span>
+              Gögn fyrir {totals.months} {pl(totals.months, "mánuð", "mánuði")}.{" "}
+              <span className="text-slate-400">Mönnunartölur eiga við alla þjónustuna og breytast ekki eftir stöð.</span>
             </p>
           </div>
-          <ResultsView programme={programme} t={totals} roster={roster} a={assumptions} />
+          <ResultsView programme={programme} ctx={ctx} />
 
           <section className={`${card} p-4`}>
-            <h2 className="text-base font-bold text-slate-900">Take it out of here</h2>
+            <h2 className="text-base font-bold text-slate-900">Skýrslur og útdráttur</h2>
             <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-600">
-              Write the quarterly report as you go rather than saving twelve months and then writing one. Four
-              quarterly reports plus a summary <em>are</em> the annual report, and each is a rehearsal at defending
-              the figures in front of people who know the service. The one written in a single sitting at the end
-              is always worse.
+              Áfangaskýrsla eftir 6 mánuði og lokaskýrsla eftir 12 mánuði. Veldu tímabilið hér að ofan og sæktu
+              skýrsluna, hráu gögnin eða kynningu fyrir HSU.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
-                onClick={() => download(`evaluation-${stationLabel.replace(/\W+/g, "-")}.csv`, toCSV(selected), "text/csv")}
+                onClick={() => download(`mat-${stationLabel.replace(/\W+/g, "-")}.csv`, toCSV(selected), "text/csv")}
                 disabled={!selected.length}
                 className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
               >
-                <Download className="h-4 w-4" /> Raw data (CSV)
+                <Download className="h-4 w-4" /> Hrá gögn (CSV)
               </button>
               <button
                 onClick={() => download(
-                  `evaluation-report-${stationLabel.replace(/\W+/g, "-")}.md`,
+                  `matsskyrsla-${stationLabel.replace(/\W+/g, "-")}.md`,
                   toReport(programme, ctx, { station: stationLabel, period: periodLabel, documents }),
                   "text/markdown",
                 )}
                 className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
               >
-                <FileText className="h-4 w-4" /> Quarterly report (Markdown)
+                <FileText className="h-4 w-4" /> Skýrsla (Markdown)
               </button>
               <button
                 onClick={makeDeck}
@@ -551,15 +593,15 @@ export default function EvaluationPage() {
                 className="flex items-center gap-1.5 rounded-lg bg-cyan-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:opacity-50"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Presentation className="h-4 w-4" />}
-                Create presentation
+                Búa til kynningu
                 <ExternalLink className="h-3 w-3 opacity-70" />
               </button>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-slate-500">
-              The presentation lands in{" "}
-              <Link href="/admin/presentations" className="font-medium text-cyan-700 hover:underline">Presentations</Link>{" "}
-              as an ordinary editable deck, charts included. It opens on a limitations slide before the closing one
-              — stated by you rather than spotted by the audience.
+              Kynningin birtist í{" "}
+              <Link href="/admin/presentations" className="font-medium text-cyan-700 hover:underline">Kynningum</Link>{" "}
+              sem venjuleg glærusýning sem má breyta, með gröfum. Á undan lokaglærunni er glæra um takmarkanir, svo
+              þær komi frá okkur en ekki áheyrendum.
             </p>
           </section>
         </div>

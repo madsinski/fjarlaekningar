@@ -215,6 +215,42 @@ Three data sources:
 | Antibiotics vs the traditional service | `stewardship` | Medalia + Saga |
 | Doctor confirms or changes the decision tree | `decision-tree` | Medalia |
 
+**Language (2026-09-30).** The whole module is in Icelandic; code comments
+stay English. Research terms follow Læknablaðið: *framskyggn / afturskyggn*
+(not "afturvirk"), *rofin tímaröð (interrupted time series)*, *valskekkja*,
+*aðalendapunktur*; "baseline" is kept as a loanword by the owner's choice and
+phrased so nothing has to agree with it. The glossary (`glossary.ts`) matches
+with Unicode-aware boundaries and lists inflected forms in `also`.
+
+**Data in — three pipes, all aggregates.**
+
+- *Saga CSV* (`saga.ts`, Data → 1): date + ICD-10 per contact, optional
+  patient/station/ATC columns (Icelandic or English headers). Parsed in the
+  browser; filtered to the agreed code set (prefixes, stored in
+  `site_settings.evaluation_import.codeSet`), once per patient per day, and
+  only monthly counts are saved via action `saga`, which may write
+  `institution_contacts` and `institution_antibiotics` and nothing else. One
+  file can span baseline and pilot; re-imports are idempotent.
+- *Medalia JSON* (`medalia.ts`, Data → 2): the export is patient-centred with
+  no case object, so a case = one response to a questionnaire mapped as an
+  erindi, plus the patient's other responses within 7 days (the doctor's
+  outcome, ICD-10, prescription, tree, reply time). The mapping is set once and
+  frozen in `evaluation_import.medalia`. Unmapped items are left out of the row
+  rather than written as 0.
+- *Surveys* (`surveys.ts`): `thjonustukonnun-dagur-0`, `eftirfylgd-dagur-7`
+  and `starfsfolk-hsu-lok-timabils` in /admin/surveys. Figures are computed on
+  every load from `survey_responses` per station × month (link carries
+  `?stod=`, stored in `survey_responses.station`) and merged into the rows;
+  those fields are read-only in data entry. Sent = the month's case count.
+  The older `thjonustukonnun` / `konnun-laeknisthjonusta` surveys are kept
+  as history and not read.
+
+**"After" means after go-live.** `isPilotRow()` keeps baseline months out of
+the service's own totals; only `codeVolume()` reads them. The antibiotic
+comparator is HSU's rate over the baseline months, and "share handled
+remotely" falls back to Medalia cases in the code set against the
+baseline-predicted volume when HSU has not yet sent pilot-period counts.
+
 **Diagnosis codes against trend.** `codeVolume()` in `totals.ts` works on
 every month of the station, not the selected window: baseline = the months
 before go-live (up to `baselineMonths`), pilot = months from go-live. The

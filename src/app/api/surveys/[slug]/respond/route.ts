@@ -4,6 +4,13 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { validateAnswers, type SurveyQuestion } from "@/lib/survey-types";
+import { HSU_STATIONS } from "@/lib/station-onboarding";
+
+/** "vestmannaeyjar", "Höfn í Hornafirði" and "hofn-i-hornafirdi" all name the
+ *  same station — links are typed by hand into Medalia templates. */
+const fold = (s: string) =>
+  s.toLowerCase().replace(/ð/g, "d").replace(/þ/g, "th").replace(/æ/g, "ae").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "");
+const STATION_BY_KEY = new Map(HSU_STATIONS.map((s) => [fold(s), s]));
 
 export const runtime = "nodejs";
 
@@ -45,10 +52,14 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
   }
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+  // Only a known station is stored; anything else is dropped rather than
+  // trusted, since the value comes from a URL.
+  const station = typeof body.station === "string" ? STATION_BY_KEY.get(fold(body.station)) ?? null : null;
   const { error } = await supabaseAdmin.from("survey_responses").insert({
     survey_id: survey.id,
     answers: clean,
     ip,
+    station,
   });
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });

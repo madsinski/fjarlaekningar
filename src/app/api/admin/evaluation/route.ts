@@ -8,12 +8,14 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
 import { DEFAULT_ASSUMPTIONS, EMPTY_PROGRAMME, type Assumptions, type Programme } from "@/lib/evaluation/types";
-import { DEFAULT_DESIGN_STATE, codesFor, type DesignState } from "@/lib/evaluation/design";
+import { DEFAULT_DESIGN_STATE, codesFor, isPilotRow, type DesignState } from "@/lib/evaluation/design";
 import type { MonthRow, RosterMonth } from "@/lib/evaluation/totals";
-import { MEDALIA_COLUMNS } from "@/lib/evaluation/import";
+import { MEDALIA_COLUMNS, SAGA_COLUMNS } from "@/lib/evaluation/import";
+import { EMPTY_IMPORT_CONFIG, type ImportConfig } from "@/lib/evaluation/medalia";
 import { caseTypeChart, entryChart, toSlides, volumeChart } from "@/lib/evaluation/export";
 import type { ExclusionRow } from "@/lib/evaluation/exclusions";
-import { total, totalRoster, type RosterMonth as RM } from "@/lib/evaluation/totals";
+import { emptyMonth, total, totalRoster, type RosterMonth as RM } from "@/lib/evaluation/totals";
+import { SURVEYS, mergeSurveys, surveyFigures, type SurveyKind, type SurveyResponse } from "@/lib/evaluation/surveys";
 import { HSU_STATIONS, mergeOnboarding } from "@/lib/station-onboarding";
 
 export const runtime = "nodejs";
@@ -21,6 +23,8 @@ export const runtime = "nodejs";
 const PROGRAMME_KEY = "evaluation_programme";
 const ASSUMPTIONS_KEY = "evaluation_assumptions";
 const DESIGN_KEY = "evaluation_design";
+/** Code set and the frozen Medalia mapping — see src/lib/evaluation/medalia.ts. */
+const IMPORT_KEY = "evaluation_import";
 
 async function readSetting<T>(key: string, fallback: T): Promise<T> {
   const { data } = await supabaseAdmin.from("site_settings").select("value").eq("key", key).maybeSingle();
@@ -91,9 +95,33 @@ async function readRoster(): Promise<{ months: RosterMonth[]; activeDoctors: num
   };
 }
 
+/** The monthly rows with the survey figures merged in. Survey answers are
+ *  never typed into the evaluation; they are read from /admin/surveys here,
+ *  so the dashboard, the report and the deck all see the same numbers. */
+async function monthsWithSurveys(rows: MonthRow[]): Promise<MonthRow[]> {
+  const { data: surveys } = await supabaseAdmin.from("surveys").select("id, slug").in("slug", Object.values(SURVEYS));
+  const kindOf = new Map<string, SurveyKind>();
+  for (const sv of surveys ?? []) {
+    const kind = (Object.keys(SURVEYS) as SurveyKind[]).find((k) => SURVEYS[k] === sv.slug);
+    if (kind) kindOf.set(sv.id as string, kind);
+  }
+  if (!kindOf.size) return rows;
+  const { data } = await supabaseAdmin
+    .from("survey_responses")
+    .select("survey_id, station, submitted_at, answers")
+    .in("survey_id", [...kindOf.keys()]);
+  const responses: SurveyResponse[] = (data ?? []).map((r) => ({
+    kind: kindOf.get(r.survey_id as string)!,
+    station: (r.station as string | null) ?? null,
+    submitted_at: r.submitted_at as string,
+    answers: (r.answers ?? {}) as Record<string, unknown>,
+  }));
+  return mergeSurveys(rows, surveyFigures(responses), (station, month) => emptyMonth("hsu", station, month));
+}
+
 export async function GET(req: Request) {
   const caller = await getCallerStaff(req);
-  if (!caller) return NextResponse.json({ ok: false, error: "Sign-in required" }, { status: 401 });
+  if (!caller) return NextResponse.json({ ok: false, error: "Þú þarft að skrá þig inn" }, { status: 401 });
 
   try {
     const [monthsRes, programme, assumptions, stations, roster, docsRes, design] = await Promise.all([
@@ -106,16 +134,18 @@ export async function GET(req: Request) {
       readSetting<DesignState>(DESIGN_KEY, DEFAULT_DESIGN_STATE),
     ]);
     if (monthsRes.error) throw monthsRes.error;
+    const importConfig = await readSetting<ImportConfig>(IMPORT_KEY, EMPTY_IMPORT_CONFIG);
 
     return NextResponse.json({
       ok: true,
-      months: monthsRes.data ?? [],
+      months: await monthsWithSurveys((monthsRes.data ?? []) as MonthRow[]),
       programme,
       assumptions,
       stations,
       roster,
       documents: docsRes.data ?? [],
       design,
+      importConfig,
       admin: isAdmin(caller),
     });
   } catch {
@@ -243,7 +273,7 @@ function clean(row: Partial<MonthRow>, caller: { id: string; name: string }, all
 
 export async function POST(req: Request) {
   const caller = await getCallerStaff(req);
-  if (!isAdmin(caller)) return NextResponse.json({ ok: false, error: "Admin role required" }, { status: 403 });
+  if (!isAdmin(caller)) return NextResponse.json({ ok: false, error: "Aðeins stjórnendur hafa aðgang að þessu" }, { status: 403 });
 
   let body: {
     action?: string;
@@ -254,31 +284,32 @@ export async function POST(req: Request) {
     design?: DesignState;
     reasons?: { station: string; month: string; gate: string; reason: string; count: number }[];
     deck?: { station: string; period: string; monthsIso: string[] };
+    importConfig?: ImportConfig;
   } = {};
-  try { body = await req.json(); } catch { return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 }); }
+  try { body = await req.json(); } catch { return NextResponse.json({ ok: false, error: "Ógild beiðni" }, { status: 400 }); }
 
   try {
     switch (body.action) {
       case "programme": {
-        if (!body.programme) return NextResponse.json({ ok: false, error: "Programme missing" }, { status: 400 });
+        if (!body.programme) return NextResponse.json({ ok: false, error: "Rannsóknaráætlun vantar" }, { status: 400 });
         await writeSetting(PROGRAMME_KEY, body.programme, caller!.id);
         return NextResponse.json({ ok: true });
       }
 
       case "assumptions": {
-        if (!body.assumptions) return NextResponse.json({ ok: false, error: "Assumptions missing" }, { status: 400 });
+        if (!body.assumptions) return NextResponse.json({ ok: false, error: "Forsendur vantar" }, { status: 400 });
         await writeSetting(ASSUMPTIONS_KEY, body.assumptions, caller!.id);
         return NextResponse.json({ ok: true });
       }
 
       case "design": {
-        if (!body.design) return NextResponse.json({ ok: false, error: "Design missing" }, { status: 400 });
+        if (!body.design) return NextResponse.json({ ok: false, error: "Rannsóknarsnið vantar" }, { status: 400 });
         await writeSetting(DESIGN_KEY, body.design, caller!.id);
         return NextResponse.json({ ok: true });
       }
 
       case "deck": {
-        if (!body.deck?.station) return NextResponse.json({ ok: false, error: "Station required" }, { status: 400 });
+        if (!body.deck?.station) return NextResponse.json({ ok: false, error: "Veldu stöð" }, { status: 400 });
         const [rowsRes, programme, assumptions, roster] = await Promise.all([
           supabaseAdmin.from("evaluation_months").select("*").order("month", { ascending: true }),
           readSetting<Programme>(PROGRAMME_KEY, EMPTY_PROGRAMME),
@@ -286,16 +317,17 @@ export async function POST(req: Request) {
           readRoster().catch(() => ({ months: [], activeDoctors: 0 })),
         ]);
         const design = { ...DEFAULT_DESIGN_STATE, ...(await readSetting<DesignState>(DESIGN_KEY, DEFAULT_DESIGN_STATE)) };
-        const codes = codesFor((rowsRes.data ?? []) as MonthRow[], body.deck.station, design);
+        const all = await monthsWithSurveys((rowsRes.data ?? []) as MonthRow[]);
+        const codes = codesFor(all, body.deck.station, design);
         const want = new Set(body.deck.monthsIso ?? []);
-        const rows = ((rowsRes.data ?? []) as MonthRow[]).filter(
-          (r) => (body.deck!.station === "__all" || r.station === body.deck!.station) && (!want.size || want.has(r.month.slice(0, 10))),
+        const rows = all.filter(
+          (r) => (body.deck!.station === "__all" || r.station === body.deck!.station) && (!want.size || want.has(r.month.slice(0, 10))) && isPilotRow(r, design),
         );
         const deck = await buildDeck(
           programme, assumptions, rows,
           roster.months.filter((m) => !want.size || want.has(m.month)),
           roster.activeDoctors,
-          body.deck.station === "__all" ? "all stations" : body.deck.station,
+          body.deck.station === "__all" ? "allar stöðvar" : body.deck.station,
           body.deck.period,
           caller!.id,
           design,
@@ -306,7 +338,7 @@ export async function POST(req: Request) {
 
       case "reasons": {
         const rows = body.reasons ?? [];
-        if (!rows.length) return NextResponse.json({ ok: false, error: "No rows" }, { status: 400 });
+        if (!rows.length) return NextResponse.json({ ok: false, error: "Engar línur til að vista" }, { status: 400 });
         // Grouped to one jsonb array per station-month, and written on its own
         // so it never disturbs figures that arrived from anywhere else.
         const byKey = new Map<string, { station: string; month: string; list: ExclusionRow[] }>();
@@ -329,9 +361,27 @@ export async function POST(req: Request) {
         return NextResponse.json({ ok: true, count: byKey.size });
       }
 
+      case "saga": {
+        // Monthly counts only — the Saga file itself never leaves the browser.
+        const rows = (body.months ?? []).filter((m) => m.station && m.month);
+        if (!rows.length) return NextResponse.json({ ok: false, error: "Engar línur til að vista" }, { status: 400 });
+        const allowed = new Set<string>(SAGA_COLUMNS as string[]);
+        const { error } = await supabaseAdmin
+          .from("evaluation_months")
+          .upsert(rows.map((m) => clean(m, caller!, allowed)), { onConflict: "institution,station,month" });
+        if (error) throw error;
+        return NextResponse.json({ ok: true, count: rows.length });
+      }
+
+      case "import-config": {
+        if (!body.importConfig) return NextResponse.json({ ok: false, error: "Stillingar vantar" }, { status: 400 });
+        await writeSetting(IMPORT_KEY, body.importConfig, caller!.id);
+        return NextResponse.json({ ok: true });
+      }
+
       case "import": {
         const rows = (body.months ?? []).filter((m) => m.station && m.month);
-        if (!rows.length) return NextResponse.json({ ok: false, error: "No rows" }, { status: 400 });
+        if (!rows.length) return NextResponse.json({ ok: false, error: "Engar línur til að vista" }, { status: 400 });
         // Only the Medalia columns. Figures that come from elsewhere — the
         // contact register, surveys — are entered by hand and must not be
         // wiped by re-importing a month, with nobody able to see it happen.
@@ -345,7 +395,7 @@ export async function POST(req: Request) {
 
       default: {
         if (!body.month?.station || !body.month?.month) {
-          return NextResponse.json({ ok: false, error: "Station and month required" }, { status: 400 });
+          return NextResponse.json({ ok: false, error: "Veldu stöð og mánuð" }, { status: 400 });
         }
         const { error } = await supabaseAdmin
           .from("evaluation_months")
@@ -355,6 +405,6 @@ export async function POST(req: Request) {
       }
     }
   } catch (e) {
-    return NextResponse.json({ ok: false, error: e instanceof Error ? e.message : "Failed" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: e instanceof Error ? e.message : "Aðgerðin mistókst" }, { status: 500 });
   }
 }

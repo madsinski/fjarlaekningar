@@ -69,91 +69,94 @@ export type Design = {
   decideBy: string;
 };
 
+// Icelandic takes the singular after numbers ending in 1 (except 11).
+const pl = (v: number, one: string, many: string) => (v % 10 === 1 && v % 100 !== 11 ? one : many);
+
 export const DESIGNS: Design[] = [
   {
     id: "before-after",
-    name: "Uncontrolled before-and-after",
-    plainName: "Compare with how things were before",
+    name: "Samanburður fyrir og eftir (án samanburðarhóps)",
+    plainName: "Bera saman við hvernig staðan var áður",
     whatYouDo:
-      "Take the twelve months before the service started at this station, take the twelve months after, and compare the two. Nothing else is measured and no other station is involved.",
-    summary: "Compare the twelve months before the service with the twelve months after, at the same site.",
-    claim: "Activity changed after we arrived — with no way to show that we were the cause.",
-    requires: ["A baseline figure for the period before", "Twelve months of operation"],
+      "Taktu baseline úr Sögu, allt að 36 mánuði áður en þjónustan hófst á stöðinni, og berðu saman við fyrstu 6 og 12 mánuðina á eftir úr Medalia. Engin önnur stöð kemur við sögu.",
+    summary: "Samanburður á baseline úr Sögu fyrir upphaf þjónustu og fyrstu 6 og 12 mánuðunum eftir, á sömu stöð.",
+    claim: "Starfsemin breyttist eftir að við komum. En það er engin leið að sýna að það hafi verið okkar vegna.",
+    requires: ["Baseline úr Sögu fyrir tímabilið á undan", "6 og 12 mánaða gögn úr Medalia"],
     threats: [
-      "Things were already changing anyway. Icelandic primary care did not stand still that year, and whatever shifted nationally gets credited to you (secular trend).",
-      "Winter does the work for you. Four of your case types swing hard with the season — an autumn start compared against a spring baseline can show a big effect that is entirely the calendar.",
-      "Bad patches get better on their own. Services get introduced where things were unusually bad, and unusually bad periods improve without anyone doing anything (regression to the mean).",
-      "People try harder when watched. A station that knows it is being evaluated behaves differently, and that goes into your result too (Hawthorne effect).",
+      "Hlutirnir voru hvort eð er að breytast. Heilsugæslan á Íslandi stóð ekki í stað þetta ár, og það sem breyttist á landsvísu er þakkað þjónustunni (undirliggjandi þróun).",
+      "Veturinn vinnur verkið fyrir þig. Fjórir erindaflokkar sveiflast mikið eftir árstíðum. Ef upphaf að hausti er borið saman við baseline að vori geta komið fram mikil áhrif sem eru eingöngu dagatalið (árstíðasveiflur).",
+      "Slæm tímabil lagast af sjálfu sér. Þjónusta er gjarnan sett á fót þar sem ástandið var óvenju slæmt, og óvenju slæm tímabil batna án þess að nokkur geri neitt (aðhvarf að meðaltali).",
+      "Fólk leggur sig meira fram þegar fylgst er með því. Stöð sem veit að verið er að meta hana hegðar sér öðruvísi, og það rennur líka inn í niðurstöðuna (Hawthorne-áhrif).",
     ],
-    cost: "None. This is what you get by default if you decide nothing.",
+    cost: "Enginn. Þetta færðu sjálfkrafa ef þú ákveður ekkert.",
     strength: 1,
-    decideBy: "Always available — it is the fallback, not a choice.",
+    decideBy: "Alltaf í boði. Þetta er þrautalendingin, ekki val.",
   },
   {
     id: "its",
-    name: "Interrupted time series",
-    plainName: "Watch the monthly trend and look for a step",
+    name: "Rofin tímaröð (interrupted time series)",
+    plainName: "Fylgjast með þróun milli mánaða og leita að þrepi",
     whatYouDo:
-      "Instead of two big totals, you plot the number for every single month — before and after. Then you look for a step up or down at the exact month the service started, and for a change in the direction of travel.",
-    summary: "Model the monthly series before and after go-live, and test for a change in level and in slope at that point.",
-    claim: "Activity changed by X beyond the trend that was already running — which is a causal claim the before-and-after cannot make.",
+      "Í stað tveggja stórra heildartalna skoðarðu töluna fyrir hvern einasta mánuð, fyrir og eftir. Síðan leitarðu að þrepi upp eða niður í nákvæmlega þeim mánuði sem þjónustan hófst, og að breyttri stefnu.",
+    summary: "Mánaðarleg tímaröð fyrir og eftir upphaf þjónustu er greind. Prófað er hvort bæði stig og leitni breytist á þeim tímapunkti.",
+    claim: "Starfsemin breyttist um X umfram þá þróun sem þegar var í gangi. Það er fullyrðing um orsök sem samanburður fyrir og eftir getur ekki staðið undir.",
     requires: [
-      "Monthly counts for the period before go-live — twelve is comfortable, eight is the practical minimum. Already sitting in Saga; somebody just has to run the query.",
-      "Monthly counts after too, not one lump sum",
-      "The exact date the service started",
+      "Mánaðartölur fyrir tímabilið áður en þjónustan hófst. Tólf mánuðir eru þægilegt, átta eru raunhæft lágmark. Gögnin eru þegar í Sögu, það þarf bara einhver að keyra fyrirspurnina.",
+      "Mánaðartölur eftir upphaf líka, ekki eina heildartölu",
+      "Nákvæmur dagur sem þjónustan hófst",
     ],
     threats: [
-      "Anything else that changed the same month. If the health centre also reorganised its phone triage when you launched, there is no way to tell the two apart.",
-      "Still one station, so anything peculiar to Vestmannaeyjar looks exactly like the service working.",
+      "Allt annað sem breyttist í sama mánuði. Ef heilsugæslan endurskipulagði líka símaráðgjöfina þegar þjónustan hófst er engin leið að greina þetta tvennt í sundur.",
+      "Enn er bara um eina stöð að ræða. Allt sem er sérstakt við Vestmannaeyjar lítur nákvæmlega út eins og þjónustan sé að virka.",
     ],
-    cost: "One sentence in the request to HSU: monthly figures rather than an annual total. The data already exists.",
+    cost: "Ein setning í beiðninni til HSU: mánaðartölur í stað heildartölu fyrir árið. Gögnin eru þegar til.",
     strength: 2,
-    decideBy: "Whenever you ask — the history does not go anywhere. But ask for months, not a year: a single total cannot be broken back down.",
+    decideBy: "Hvenær sem þú biður um gögnin. Eldri gögn hverfa ekki. En biddu um mánuði, ekki ár: eina heildartölu er ekki hægt að brjóta aftur niður.",
   },
   {
     id: "controlled",
-    name: "Controlled before-and-after",
-    plainName: "Compare against a station that hasn't started yet",
+    name: "Samanburður fyrir og eftir, með samanburðarstöð",
+    plainName: "Bera saman við stöð sem er ekki byrjuð",
     whatYouDo:
-      "You measure the same things at a second health centre that is not running the service. If your numbers move and theirs do not over the same months, the service is the likeliest explanation.",
-    summary: "Run the same measurements at a comparable station that is not receiving the service yet.",
-    claim: "Activity changed at our site and did not change at a comparable one over the same period.",
+      "Þú mælir það sama á annarri heilsugæslustöð sem er ekki með þjónustuna. Ef þínar tölur breytast en þeirra ekki yfir sömu mánuði er þjónustan líklegasta skýringin.",
+    summary: "Sömu mælingar gerðar á sambærilegri stöð sem er ekki enn komin með þjónustuna.",
+    claim: "Starfsemin breyttist á okkar stöð en ekki á sambærilegri stöð yfir sama tímabil.",
     requires: [
-      "A comparable station with no service",
-      "The same monthly figures collected there throughout",
-      "Agreement from the institution to supply both",
+      "Sambærileg stöð án þjónustunnar",
+      "Sömu mánaðartölum safnað þar allan tímann",
+      "Samþykki stofnunarinnar fyrir að afhenda hvort tveggja",
     ],
     threats: [
-      "No two health centres are really alike — size, staffing and the mix of patients all differ.",
-      "Word travels. In a country this small, patients at the comparison station may hear about the service and use it anyway, which blurs the comparison.",
+      "Engar tvær heilsugæslustöðvar eru í raun eins. Stærð, mönnun og samsetning sjúklinga eru ólík.",
+      "Fréttir berast. Í svona litlu landi geta sjúklingar á samanburðarstöðinni frétt af þjónustunni og notað hana samt. Það gerir samanburðinn óskýrari.",
     ],
-    cost: "The institution supplies the same monthly figures for one more station. No work at the control site itself.",
+    cost: "Stofnunin afhendir sömu mánaðartölur fyrir eina stöð í viðbót. Engin vinna á samanburðarstöðinni sjálfri.",
     strength: 3,
-    decideBy: "Before that station goes live. The day it gets the service it stops being a comparison — that is the clock that is actually running.",
+    decideBy: "Áður en sú stöð fær þjónustuna. Daginn sem hún fær hana hættir hún að vera samanburðarstöð. Það er klukkan sem raunverulega tifar.",
   },
   {
     id: "stepped-wedge",
-    name: "Stepped wedge",
-    plainName: "Start stations one at a time, each checks the others",
+    name: "Þrepaskipt innleiðing (stepped wedge)",
+    plainName: "Opna eina stöð í einu, hver ber sig saman við hinar",
     whatYouDo:
-      "Stations go live in a planned order. Until its own turn comes, every station that has not started yet is a comparison for the ones already running — so the same change has to show up at each site, at a different time of year.",
-    summary: "Stations go live one at a time in a planned order; each acts as a control for the others until its own turn.",
-    claim: "The same change followed the service at each site in turn, at different calendar times — which rules out anything that happened nationally.",
+      "Stöðvarnar hefja þjónustu í fyrir fram ákveðinni röð. Þar til röðin kemur að henni er hver stöð sem ekki er byrjuð samanburður fyrir þær sem eru byrjaðar. Sama breytingin þarf því að koma fram á hverri stöð, á ólíkum árstíma.",
+    summary: "Stöðvar hefja þjónustu ein í einu í fyrir fram ákveðinni röð. Hver þeirra er samanburðarstöð fyrir hinar þar til röðin kemur að henni.",
+    claim: "Sama breyting fylgdi þjónustunni á hverri stöð fyrir sig, á ólíkum tímum árs. Það útilokar allt sem gerðist á landsvísu.",
     requires: [
-      "A staged rollout with more than two sites — which is already the plan",
-      "Monthly figures collected at every station from before the first go-live",
-      "Go-live dates recorded accurately",
+      "Innleiðing í áföngum á fleiri en tveimur stöðvum. Það er þegar áætlunin.",
+      "Mánaðartölum safnað á öllum stöðvum frá því áður en fyrsta stöðin hóf þjónustu",
+      "Upphafsdagar skráðir nákvæmlega",
     ],
     threats: [
-      "Needs more than two stations and enough months. With two it is simply the option above.",
-      "Word travels between stations in the same institution.",
-      "Later stations get a better version of the service, because you learned from the earlier ones — so the effect may grow as you go. Worth reporting rather than hiding: it is an argument for rolling out, not against.",
+      "Þarf fleiri en tvær stöðvar og nógu marga mánuði. Með tveimur er þetta einfaldlega kosturinn hér á undan.",
+      "Fréttir berast milli stöðva innan sömu stofnunar.",
+      "Síðari stöðvar fá betri útgáfu af þjónustunni, því þú lærðir af þeim fyrri. Áhrifin geta því vaxið eftir því sem á líður. Það er rétt að segja frá þessu frekar en fela það: þetta eru rök með innleiðingu, ekki á móti.",
     ],
     cost:
-      "Collecting the same monthly figures at stations before they go live. One line in the request you are already making, and the rollout is staged regardless.",
+      "Að safna sömu mánaðartölum á stöðvum áður en þær fá þjónustuna. Það er ein lína í beiðni sem þú sendir hvort eð er, og innleiðingin er í áföngum hvort sem er.",
     strength: 4,
     decideBy:
-      "Before the second station goes live. Vestmannaeyjar started on 17 August 2026 and nothing else has yet, so this is still fully available — but each station that opens removes one comparison.",
+      "Áður en önnur stöðin hefur þjónustu. Þjónustan hófst í Vestmannaeyjum 17. ágúst 2026 og engin önnur stöð er byrjuð, svo þetta er enn að fullu í boði. En hver stöð sem opnar tekur burt einn samanburð.",
   },
 ];
 
@@ -181,32 +184,32 @@ export type Cohort = {
 export const COHORTS: Cohort[] = [
   {
     id: "offered",
-    name: "Everyone offered the service",
-    definition: "Every patient a member of staff considered routing to us, whether or not they arrived.",
+    name: "Allir sem var boðin þjónustan",
+    definition: "Allir sjúklingar sem starfsmaður íhugaði að vísa til okkar, hvort sem þeir skiluðu sér eða ekki.",
     argument:
-      "The only denominator that answers the question an institution actually asks: of the cases that come to us, how many could you take?",
+      "Eini nefnarinn sem svarar spurningunni sem stofnun spyr í raun: af erindunum sem koma til okkar, hve mörgum gætuð þið sinnt?",
     problem:
-      "Not measurable. Patients reach the service through four routes — direct, nurse, reception and records staff — and nobody counts the ones turned away at the door. Any attempt to count it produces a biased number with false precision, which is worse than no number.",
+      "Ekki mælanlegt. Sjúklingar koma í þjónustuna eftir fjórum leiðum: beint, gegnum hjúkrunarfræðing, móttöku eða ritara. Enginn telur þá sem er vísað frá strax í upphafi. Tilraun til að telja þá gefur skekkta tölu sem sýnist nákvæm, og það er verra en engin tala.",
     measurable: false,
   },
   {
     id: "entered",
-    name: "Everyone who started a questionnaire",
-    definition: "Every patient who opened the portal and submitted, including those the red-flag screen stopped.",
+    name: "Allir sem hófu spurningalista",
+    definition: "Allir sjúklingar sem opnuðu gáttina og sendu inn, líka þeir sem skimun fyrir rauðum flöggum stöðvaði.",
     argument:
-      "The closest thing to an intention-to-treat population: it includes the people the service could not help, which is the honest denominator for a safety claim.",
+      "Kemst næst því að vera þýði samkvæmt upphaflegri ætlan (intention-to-treat). Það tekur með fólkið sem þjónustan gat ekki hjálpað, og það er heiðarlegi nefnarinn fyrir fullyrðingu um öryggi.",
     problem:
-      "Dilutes the resolution rate with cases that were never eligible, so the headline figure understates how the service performs on the work it is designed for.",
+      "Þynnir hlutfall afgreiddra erinda út með erindum sem áttu aldrei heima í þjónustunni. Lykiltalan vanmetur því árangurinn í því starfi sem þjónustan er hönnuð fyrir.",
     measurable: true,
   },
   {
     id: "reached-clinician",
-    name: "Everyone who reached a clinician",
-    definition: "Patients who passed the questionnaire screen and were seen by a doctor.",
+    name: "Allir sem komust til læknis",
+    definition: "Sjúklingar sem komust í gegnum skimun spurningalistans og fengu þjónustu læknis.",
     argument:
-      "Measures the service on the work it is actually designed to do, and matches how a clinical audience will read a resolution rate.",
+      "Mælir þjónustuna á því starfi sem hún er hönnuð fyrir. Passar við hvernig klínískir lesendur lesa hlutfall afgreiddra erinda.",
     problem:
-      "Excludes the screened-out, so it must always be reported alongside the stop rate. On its own it is the more flattering number and will be read as such.",
+      "Sleppir þeim sem skimunin stöðvaði, svo alltaf verður að birta hlutfall stöðvaðra erinda með. Ein og sér er þetta hagstæðari talan og verður lesin þannig.",
     measurable: true,
   },
 ];
@@ -234,72 +237,72 @@ export type Decision = {
 export const DECISIONS: Decision[] = [
   {
     id: "primary-outcome",
-    name: "The one number this stands or falls on",
-    question: "If you could only report a single figure, which would it be?",
+    name: "Talan sem allt stendur og fellur með",
+    question: "Ef þú mættir aðeins birta eina tölu, hver væri hún?",
     why:
-      "This is called the primary outcome. The programme can produce over forty figures, and reporting all of them while pointing at whichever came out best is how an evaluation turns into a fishing expedition — anyone who knows the field will spot it. Naming one in advance, in writing, is the cheapest credibility you will ever buy.",
+      "Þetta kallast aðalendapunktur. Kerfið getur framleitt yfir fjörutíu tölur. Ef þú birtir þær allar og bendir á þá sem kom best út er matið orðið að veiðiferð, og allir sem þekkja fagið sjá það. Að nefna eina fyrir fram, skriflega, er ódýrasti trúverðugleiki sem þú færð.",
     ifLate:
-      "Chosen after seeing the data, it is no longer a finding. Everything else becomes secondary and exploratory whether you label it that way or not.",
+      "Ef hún er valin eftir að gögnin liggja fyrir er hún ekki lengur niðurstaða. Allt annað verður aukaendapunktar og könnunargreining, hvort sem þú merkir það svo eða ekki.",
     suggestion:
-      "Resolution rate within the agreed code set. It is the base claim, it is the one an institution asks about first, and it does not depend on anyone else supplying data.",
+      "Hlutfall erinda sem eru afgreidd í fjarþjónustu, innan umsaminna greiningarkóða. Það er grunnfullyrðingin, það er það sem stofnun spyr fyrst um og það er ekki háð því að aðrir afhendi gögn.",
     timeCritical: true,
   },
   {
     id: "run-in",
-    name: "The first few weeks",
-    question: "Do the opening weeks at a station count towards the headline result?",
+    name: "Fyrstu vikurnar",
+    question: "Teljast fyrstu vikurnar á stöð með í aðalniðurstöðunni?",
     why:
-      "The first month at a new site is atypical in both directions: staff are still learning what fits, and patients mostly do not know the service exists. Including it drags the result down; excluding it without having said so in advance looks like cherry-picking.",
+      "Þetta kallast aðlögunartímabil. Fyrsti mánuðurinn á nýrri stöð er óvenjulegur í báðar áttir. Starfsfólk er enn að læra hvaða erindi eiga heima í þjónustunni og flestir sjúklingar vita ekki af henni. Ef hann er tekinn með dregur hann niðurstöðuna niður. Ef honum er sleppt án þess að það hafi verið ákveðið fyrir fram lítur það út eins og valið hafi verið það sem hentaði.",
     ifLate:
-      "Deciding to drop the first six weeks once you have seen that they were bad is indefensible, even when it is the right call analytically.",
+      "Ef þú ákveður að sleppa fyrstu sex vikunum eftir að hafa séð að þær komu illa út er ekki hægt að verja það, jafnvel þótt það sé rétt greiningarlega.",
     suggestion:
-      "Exclude the first four weeks from the primary analysis, report the full series alongside it, and state the rule before the first case.",
+      "Sleppa fyrstu fjórum vikunum í aðalgreiningunni, birta alla tímaröðina með og setja regluna fram áður en fyrsta erindið berst.",
     timeCritical: true,
   },
   {
     id: "season",
-    name: "Stopping winter taking the credit",
-    question: "How do you make sure the season is not doing the work your service was meant to do?",
+    name: "Að veturinn fái ekki heiðurinn",
+    question: "Hvernig tryggir þú að árstíðin vinni ekki verkið sem þjónustan átti að vinna?",
     why:
-      "Four of the eleven case types are respiratory or infectious and swing hard with the season. A pilot that runs August to December compared against a January to May baseline can show a large effect that is entirely the calendar.",
+      "Þetta kallast árstíðasveiflur. Fjórir af ellefu erindaflokkum eru öndunarfærasýkingar eða aðrar sýkingar og sveiflast mikið eftir árstíðum. Tilraunaverkefni sem stendur frá ágúst til desember, borið saman við baseline frá janúar til maí, getur sýnt mikil áhrif sem eru eingöngu dagatalið.",
     ifLate:
-      "Nothing can be done afterwards except caveat the result, and a caveat is not a correction.",
+      "Eftir á er ekkert hægt að gera nema setja fyrirvara við niðurstöðuna. Og fyrirvari er ekki leiðrétting.",
     suggestion:
-      "Compare like-for-like calendar months, which needs at least twelve months of operation, or request twenty-four months of monthly baseline so the seasonal shape itself is known.",
+      "Bera saman sömu almanaksmánuði, sem krefst að minnsta kosti tólf mánaða starfsemi. Eða biðja um tuttugu og fjögurra mánaða baseline, mánuð fyrir mánuð, svo árstíðamynstrið sjálft sé þekkt.",
     timeCritical: true,
   },
   {
     id: "analysis-plan",
-    name: "Writing the plan down first",
-    question: "What exactly will you compare, and how — agreed before anyone sees a number?",
+    name: "Að skrifa áætlunina niður fyrst",
+    question: "Hvað nákvæmlega ætlarðu að bera saman, og hvernig? Ákveðið áður en nokkur sér tölu.",
     why:
-      "A dated document written before the numbers exist is the single thing that separates an evaluation from a story told afterwards. It costs an afternoon and it is what an ethics committee, a journal and a procurement evaluator all look for.",
+      "Þetta kallast greiningaráætlun. Dagsett skjal, skrifað áður en tölurnar eru til, er það eina sem skilur á milli mats og sögu sem er sögð eftir á. Það kostar eitt síðdegi, og það er það sem siðanefnd, fræðitímarit og matsaðili í útboði leita öll eftir.",
     ifLate:
-      "There is no way to demonstrate afterwards that the analysis was not shaped by the result.",
+      "Eftir á er engin leið að sýna að niðurstaðan hafi ekki mótað greininguna.",
     suggestion:
-      "Two pages: design, cohort, primary and secondary outcomes, how the comparison is made, how missing months are handled. Date it and upload it here.",
+      "Tvær síður: rannsóknarsnið, rannsóknarþýði, aðalendapunktur og aukaendapunktar, hvernig samanburðurinn er gerður og hvernig farið er með mánuði sem vantar. Dagsettu skjalið og hladdu því upp hér.",
     timeCritical: true,
   },
   {
     id: "missing-data",
-    name: "When a month goes missing",
-    question: "What do you do when an export fails or HSU does not send its figures?",
+    name: "Þegar mánuð vantar",
+    question: "Hvað gerir þú þegar útdráttur mistekst eða HSU sendir ekki tölurnar sínar?",
     why:
-      "It will happen. If the rule is invented at the time, it will be invented in whichever direction suits the month in question.",
-    ifLate: "A gap filled after the fact is indistinguishable from a gap filled to taste.",
+      "Það mun gerast. Ef reglan er búin til á staðnum verður hún búin til í þá átt sem hentar þeim mánuði.",
+    ifLate: "Ekki er hægt að greina bil sem var fyllt eftir á frá bili sem var fyllt eftir smekk.",
     suggestion:
-      "Leave the month out rather than impute it, state the number of missing months in every report, and never carry a figure forward.",
+      "Sleppa mánuðinum frekar en að áætla gildi fyrir hann, tilgreina fjölda mánaða sem vantar í hverri skýrslu og aldrei flytja tölu áfram úr fyrri mánuði.",
     timeCritical: false,
   },
   {
     id: "small-cells",
-    name: "Numbers too small to publish",
-    question: "What gets held back from anything that leaves the building?",
+    name: "Tölur sem eru of litlar til að birta",
+    question: "Hverju er haldið eftir í öllu sem fer út fyrir stofnunina?",
     why:
-      "A case type with three cases at a station of four thousand people can identify someone, and a rate calculated on three cases means nothing anyway.",
-    ifLate: "Less harmful than the others, but a rule applied inconsistently across reports is its own problem.",
+      "Erindaflokkur með þremur erindum á stöð með fjögur þúsund íbúa getur gert einstakling persónugreinanlegan. Og hlutfall sem er reiknað af þremur erindum segir hvort eð er ekkert.",
+    ifLate: "Minni skaði en af hinum, en regla sem er beitt misjafnlega milli skýrslna er vandamál út af fyrir sig.",
     suggestion:
-      "Suppress or combine anything under five. The dashboard already greys those rates as a reminder.",
+      "Tölur undir fimm eru ekki birtar, eða þeim er slegið saman. Mælaborðið sýnir þau hlutföll nú þegar í gráu til áminningar.",
     timeCritical: false,
   },
 ];
@@ -313,14 +316,14 @@ export const DECISIONS: Decision[] = [
 export type SiteRole = "live" | "pre-live" | "excluded";
 
 export const SITE_ROLES: { id: SiteRole; name: string; note: string }[] = [
-  { id: "live", name: "Live", note: "Running the service. Contributes intervention data." },
+  { id: "live", name: "Þjónusta hafin", note: "Þjónustan er í gangi. Leggur til gögn um áhrif þjónustunnar." },
   {
     id: "pre-live",
-    name: "Pre-live control",
+    name: "Samanburðarstöð (ekki byrjuð)",
     note:
-      "Not yet running the service. Contributes baseline and control data — but only while it stays pre-live, so collection has to start now.",
+      "Þjónustan er ekki hafin. Leggur til baseline og samanburðargögn, en aðeins meðan hún er ekki byrjuð. Þess vegna þarf gagnasöfnun að hefjast núna.",
   },
-  { id: "excluded", name: "Not participating", note: "No data collected." },
+  { id: "excluded", name: "Ekki með", note: "Engum gögnum safnað." },
 ];
 
 export type SiteConfig = { role: SiteRole; goLive?: string; note?: string };
@@ -371,57 +374,57 @@ export function feasibility(state: DesignState, opts: { preLiveWithData: number;
   const checks: DesignCheck[] = [
     {
       ok: state.baselineMonths >= 8,
-      label: `Asking HSU for ${state.baselineMonths} separate months of "before" figures`,
+      label: `HSU beðin um ${state.baselineMonths} ${pl(state.baselineMonths, "mánuð", "mánuði")} af baseline, mánuð fyrir mánuð`,
       detail:
         state.baselineMonths >= 8
-          ? "Enough separate months before you started to see what the trend was already doing, so you can tell your effect apart from a change that was happening anyway."
-          : "Ask for the figures month by month, not as one yearly total. With a year lumped together you can only say \"it was X before and Y after\" — with monthly figures you can see whether numbers were already moving before you arrived. Eight months is the least that works, twelve is comfortable. The data is in Saga either way; this is only about how you ask for it.",
+          ? "Nógu margir stakir mánuðir áður en þjónustan hófst til að sjá hvert þróunin stefndi. Þá geturðu greint áhrif þjónustunnar frá breytingu sem hefði orðið hvort sem er."
+          : "Biddu um tölurnar mánuð fyrir mánuð, ekki sem eina heildartölu fyrir árið. Með árið í einni tölu geturðu bara sagt „þetta var X áður og Y á eftir“. Með mánaðartölum sérðu hvort tölurnar voru þegar á hreyfingu áður en þjónustan kom. Átta mánuðir eru lágmark, tólf eru þægilegt. Gögnin eru í Sögu hvort sem er. Þetta snýst bara um hvernig þú biður um þau.",
     },
     {
       ok: goLives === live && live > 0,
-      label: `${goLives} of ${live} live station${live === 1 ? " has" : "s have"} a start date recorded`,
+      label: `Upphafsdagur skráður fyrir ${goLives} af ${live} ${pl(live, "stöð", "stöðvum")} þar sem þjónusta er hafin`,
       detail:
         goLives === live && live > 0
-          ? "You know exactly when the service started at each station, which is the line everything is measured against."
-          : "Every comparison here is \"before this date\" versus \"after this date\". Without the exact date the service started at a station, there is nothing to compare across.",
+          ? "Þú veist nákvæmlega hvenær þjónustan hófst á hverri stöð. Allt er mælt út frá þeim degi."
+          : "Allur samanburður hér er „fyrir þennan dag“ á móti „eftir þennan dag“. Án nákvæms upphafsdags á stöð er ekkert til að bera saman.",
     },
     {
       ok: preLive > 0,
-      label: `${preLive} station${preLive === 1 ? "" : "s"} marked as not yet started`,
+      label: `${preLive} ${pl(preLive, "stöð merkt sem samanburðarstöð", "stöðvar merktar sem samanburðarstöðvar")}`,
       detail:
         preLive > 0
-          ? "Stations without the service act as a comparison — if your numbers move and theirs do not, the service is the likeliest reason."
-          : "With nothing to compare against, anything that changed across Iceland that year gets credited to your service. Mark the HSU stations that have not started yet — they are your comparison group, and each one stops being available the day it goes live.",
+          ? "Stöðvar án þjónustunnar eru samanburður. Ef þínar tölur breytast en þeirra ekki er þjónustan líklegasta skýringin."
+          : "Án samanburðar er allt sem breyttist á landsvísu á árinu þakkað þjónustunni. Merktu þær stöðvar HSU sem eru ekki byrjaðar. Þær eru samanburðarhópurinn þinn, og hver þeirra dettur út daginn sem hún fær þjónustuna.",
     },
     {
       ok: opts.preLiveWithData > 0,
-      label: `${opts.preLiveWithData} not-yet-started station${opts.preLiveWithData === 1 ? " is" : "s are"} actually sending figures`,
+      label: `${opts.preLiveWithData} ${pl(opts.preLiveWithData, "samanburðarstöð sendir", "samanburðarstöðvar senda")} í raun tölur`,
       detail:
         opts.preLiveWithData > 0
-          ? "Comparison figures are arriving, not merely planned."
-          : "Ticking a station as \"not yet started\" does nothing on its own. HSU has to be sending you its monthly figures for that station too — otherwise there is nothing to compare with.",
+          ? "Samanburðartölur eru að berast, ekki bara á áætlun."
+          : "Það gerir ekkert eitt og sér að merkja stöð sem samanburðarstöð. HSU þarf líka að senda þér mánaðartölur fyrir þá stöð. Annars er ekkert til að bera saman við.",
     },
     {
       ok: opts.monthsOfData >= 12,
-      label: `${opts.monthsOfData} month${opts.monthsOfData === 1 ? "" : "s"} of your own figures so far`,
+      label: `${opts.monthsOfData} ${pl(opts.monthsOfData, "mánuður", "mánuðir")} af eigin tölum hingað til`,
       detail:
         opts.monthsOfData >= 12
-          ? "A full year, so you can compare September with September rather than September with March — which matters, because four of your case types are far commoner in winter."
-          : "Under a year you are comparing different seasons, and winter can do the work your service was supposed to do. Four of the eleven case types swing hard with the calendar.",
+          ? "Heilt ár, svo þú getur borið september saman við september en ekki september við mars. Það skiptir máli, því fjórir erindaflokkar eru miklu algengari á veturna."
+          : "Á styttri tíma en ári berðu saman ólíkar árstíðir, og veturinn getur unnið verkið sem þjónustan átti að vinna. Fjórir af ellefu erindaflokkum sveiflast mikið eftir árstíðum.",
     },
     {
       ok: !!state.decisions["primary-outcome"]?.text,
-      label: "Chosen the one number this stands or falls on",
+      label: "Búið að velja töluna sem allt stendur og fellur með",
       detail: state.decisions["primary-outcome"]?.text
-        ? "Named in advance, so everything else is openly a secondary finding."
-        : "This system can produce over forty figures. If you decide afterwards which one mattered, you will — completely honestly — pick the one that came out well, and anyone who knows the field will see it. Naming one now costs nothing and is the cheapest credibility there is.",
+        ? "Nefnd fyrir fram, svo allt annað er opinberlega aukaniðurstaða."
+        : "Kerfið getur framleitt yfir fjörutíu tölur. Ef þú ákveður eftir á hver þeirra skipti máli velurðu, í fullri einlægni, þá sem kom vel út. Allir sem þekkja fagið sjá það. Að nefna eina núna kostar ekkert og er ódýrasti trúverðugleiki sem til er.",
     },
     {
       ok: !!state.decisions["analysis-plan"]?.text,
-      label: "Written down what you will compare, before looking",
+      label: "Búið að skrifa niður hvað verður borið saman, áður en litið er á tölur",
       detail: state.decisions["analysis-plan"]?.text
-        ? "Written and dated before the numbers came in, so nobody can suggest the comparison was chosen to suit the result."
-        : "About two pages, dated: which figures you will compare with which, over what months, and what you will do if a month goes missing. Writing it before you see any numbers is what stops you picking — quite unconsciously — whichever comparison happens to look best. It is also the first document an ethics committee or a procurement evaluator asks for.",
+        ? "Skrifað og dagsett áður en tölurnar bárust. Enginn getur því haldið fram að samanburðurinn hafi verið valinn til að passa við niðurstöðuna."
+        : "Um tvær síður, dagsettar: hvaða tölur þú berð saman við hverjar, yfir hvaða mánuði, og hvað þú gerir ef mánuð vantar. Ef þú skrifar þetta áður en þú sérð tölur velurðu ekki, alveg ómeðvitað, þann samanburð sem lítur best út. Þetta er líka fyrsta skjalið sem siðanefnd eða matsaðili í útboði biður um.",
     },
   ];
 
@@ -443,56 +446,56 @@ export function supportedDesign(state: DesignState, opts: { preLiveWithData: num
 
 export const DESIGN_MODULE: Module = {
   id: "study-design",
-  name: "Study design",
-  question: "What kind of evidence is this, and what is it allowed to conclude?",
-  claim: "A stepped-wedge evaluation with interrupted time series analysis across the HSU rollout — pre-specified, dated, and controlled for secular trend.",
+  name: "Rannsóknarsnið",
+  question: "Hvers konar gögn eru þetta og hvaða ályktanir má draga af þeim?",
+  claim: "Þrepaskipt innleiðing (stepped wedge) með greiningu á rofinni tímaröð (interrupted time series) yfir innleiðinguna hjá HSU. Ákveðið fyrir fram, dagsett og leiðrétt fyrir undirliggjandi þróun.",
   category: "system",
   // Filed under effectiveness for the library only. `meta` keeps it off the
   // results dashboard: the design is a property of the whole evaluation, not a
   // measure of the service, and as an outcome card it displaced the resolution
   // rate — which is the one claim that category exists to make.
   meta: true,
-  benefit: "Decides in advance what your numbers are allowed to mean, instead of finding out afterwards that they mean less than you hoped.",
+  benefit: "Ákveður fyrir fram hvað tölurnar þínar mega þýða, í stað þess að komast að því eftir á að þær þýða minna en þú vonaðir.",
   horizon: "now",
   core: true,
   effort: "low",
   sources: ["institution", "internal"],
   rationale:
-    "Without a stated design the work defaults to the weakest one — uncontrolled before-and-after at a single site — and silently inherits secular trend, seasonality and regression to the mean. The upgrade is nearly free and comes in two parts, both of which have to happen before the data does. Ask for the baseline month by month rather than as an annual total, and start collecting the same figures at stations that are not live yet. A staged rollout is a stepped wedge waiting to happen: later sites are controls for earlier ones, concurrently, which rules out anything that changed nationally that year. Neither can be done retrospectively.",
+    "Án tilgreinds rannsóknarsniðs lendir verkefnið sjálfkrafa í veikasta sniðinu: samanburði fyrir og eftir á einni stöð, án samanburðarhóps. Þá fylgja með undirliggjandi þróun, árstíðasveiflur og aðhvarf að meðaltali, án þess að nokkur taki eftir því. Úrbótin er nánast ókeypis og er í tveimur hlutum. Báðir þurfa að gerast áður en gögnin berast. Biddu um baseline mánuð fyrir mánuð, ekki sem heildartölu fyrir árið. Og byrjaðu að safna sömu tölum á stöðvum sem eru ekki byrjaðar. Innleiðing í áföngum er í raun þrepaskipt innleiðing sem bíður eftir að verða að veruleika: síðari stöðvar eru samanburður fyrir þær fyrri, á sama tíma. Það útilokar allt sem breyttist á landsvísu á því ári. Hvorugt er hægt að gera eftir á.",
   caveat:
-    "A design chosen in an interface is not a design. It holds only if the data behind it is actually arriving — which is why the feasibility check is blunt about the difference between a site marked pre-live and a site whose figures are turning up.",
+    "Rannsóknarsnið sem er valið í viðmóti er ekki rannsóknarsnið. Það heldur aðeins ef gögnin að baki því berast í raun. Þess vegna gerir raunhæfismatið skýran greinarmun á stöð sem er merkt sem samanburðarstöð og stöð sem sendir í raun tölur.",
   protocol: [
     {
-      text: "Ask the institution for the baseline MONTH BY MONTH, not as an annual total",
+      text: "Biddu stofnunina um baseline MÁNUÐ FYRIR MÁNUÐ, ekki sem heildartölu fyrir árið",
       detail:
-        "Same request, same goodwill, same effort. A monthly series supports interrupted time series, which separates your effect from a trend that was already running; a single total supports nothing beyond a plain before-and-after. Eight months is the practical minimum, twelve is comfortable, twenty-four also gives you the seasonal shape.",
+        "Sama beiðni, sama velvild, sama vinna. Mánaðarleg tímaröð gerir greiningu á rofinni tímaröð mögulega, og hún greinir áhrif þjónustunnar frá þróun sem var þegar í gangi. Ein heildartala leyfir ekkert umfram einfaldan samanburð fyrir og eftir. Átta mánuðir eru raunhæft lágmark, tólf eru þægilegt og tuttugu og fjórir sýna líka árstíðamynstrið.",
       timeCritical: true,
     },
     {
-      text: "Start collecting the same monthly figures at stations that are not live yet",
+      text: "Byrjaðu að safna sömu mánaðartölum á stöðvum sem eru ekki byrjaðar",
       detail:
-        "This is the step that expires. A station is only a control while it has no service, and the rollout is staged anyway — so the stepped wedge costs one extra line in an email today and is unavailable the moment the second site goes live.",
+        "Þetta er skrefið sem rennur út. Stöð er aðeins samanburðarstöð meðan hún er ekki með þjónustuna, og innleiðingin er hvort sem er í áföngum. Þrepaskipt innleiðing kostar því eina línu í tölvupósti í dag. En hún er úr sögunni um leið og önnur stöðin hefur þjónustu.",
       timeCritical: true,
     },
     {
-      text: "Record an accurate go-live date for every station",
-      detail: "Without a dated intervention point there is no interruption to model and no wedge to step.",
+      text: "Skráðu nákvæman upphafsdag fyrir hverja stöð",
+      detail: "Án dagsetts upphafs er ekkert rof til að greina og engin þrep til að bera saman.",
       timeCritical: true,
     },
     {
-      text: "Nominate the primary outcome in writing, before any data arrives",
+      text: "Tilgreindu aðalendapunktinn skriflega, áður en nokkur gögn berast",
       detail:
-        "Forty metrics with no nominated primary is a fishing expedition. Choosing one afterwards is not a finding, however good it looks.",
+        "Fjörutíu mælikvarðar án tilgreinds aðalendapunkts eru veiðiferð. Endapunktur sem er valinn eftir á er ekki niðurstaða, sama hve vel hann lítur út.",
       timeCritical: true,
     },
     {
-      text: "Write the two-page analysis plan and date it",
-      detail: "Design, cohort, primary and secondary outcomes, how comparisons are made, how missing months are handled. Upload it here.",
+      text: "Skrifaðu tveggja síðna greiningaráætlun og dagsettu hana",
+      detail: "Rannsóknarsnið, rannsóknarþýði, aðal- og aukaendapunktar, hvernig samanburður er gerður og hvernig farið er með mánuði sem vantar. Hladdu henni upp hér.",
       timeCritical: true,
     },
     {
-      text: "Decide the run-in rule and the seasonal window in advance",
-      detail: "Dropping a bad first month after seeing it is indefensible even when it is analytically correct.",
+      text: "Ákveddu fyrir fram reglu um aðlögunartímabil og hvaða mánuði á að bera saman vegna árstíðasveiflna",
+      detail: "Ef þú sleppir slæmum fyrsta mánuði eftir að hafa séð hann er ekki hægt að verja það, jafnvel þótt það sé rétt greiningarlega.",
       timeCritical: true,
     },
   ],
@@ -500,27 +503,27 @@ export const DESIGN_MODULE: Module = {
   documents: [
     {
       id: "protocol",
-      name: "Study protocol and analysis plan",
+      name: "Verklýsing og greiningaráætlun",
       why:
-        "Dated before the data exists. This single document is what an ethics committee, a journal and a procurement evaluator all look for, and it is the difference between an evaluation and a story told afterwards.",
+        "Dagsett áður en gögnin eru til. Þetta eina skjal er það sem siðanefnd, fræðitímarit og matsaðili í útboði leita öll eftir. Það skilur á milli mats og sögu sem er sögð eftir á.",
       required: true,
     },
     {
       id: "baseline-series",
-      name: "Monthly baseline series",
-      why: "The institution's monthly figures for the period before go-live, per station. The input that makes interrupted time series possible.",
+      name: "Baseline, mánuð fyrir mánuð",
+      why: "Mánaðartölur stofnunarinnar fyrir tímabilið áður en þjónustan hófst, fyrir hverja stöð. Þær gera greiningu á rofinni tímaröð mögulega.",
       required: true,
     },
   ],
   metrics: [
     {
       id: "design_strength",
-      name: "Design",
+      name: "Rannsóknarsnið",
       headline: true,
       why:
-        "What the evaluation is allowed to conclude. Everything else in this system produces numbers; this decides what they mean.",
+        "Hvaða ályktanir matið má draga. Allt annað í kerfinu framleiðir tölur. Þetta ákveður hvað þær þýða.",
       compute: ({ design }) => {
-        if (!design) return { value: null, detail: "Chosen and checked on the Design step", missing: "Design decisions recorded" };
+        if (!design) return { value: null, detail: "Valið og athugað í skrefinu um rannsóknarsnið", missing: "Ákvarðanir um rannsóknarsnið skráðar" };
         const chosen = DESIGN_BY_ID[design.design];
         const preLive = Object.values(design.sites).filter((x) => x.role === "pre-live").length;
         const best = supportedDesign(design, { preLiveWithData: preLive });
@@ -530,11 +533,11 @@ export const DESIGN_MODULE: Module = {
           // The interesting case is when the chosen design is stronger than the
           // data supports — that is a claim the evaluation cannot back.
           detail: gap
-            ? `Claimed, but the data currently supports only ${DESIGN_BY_ID[best].name.toLowerCase()}`
-            : `${COHORT_BY_ID[design.cohort].name.toLowerCase()} · ${design.baselineMonths} months of monthly baseline`,
+            ? `Valið, en gögnin styðja nú aðeins þetta snið: ${DESIGN_BY_ID[best].name.toLowerCase()}`
+            : `${COHORT_BY_ID[design.cohort].name.toLowerCase()} · ${design.baselineMonths} ${pl(design.baselineMonths, "mánaðar", "mánaða")} baseline, mánuð fyrir mánuð`,
           status: gap ? "poor" : chosen.strength >= 3 ? "good" : chosen.strength === 2 ? "fair" : "poor",
           assumption: gap
-            ? "A design chosen in an interface is not a design. Either collect what it needs or report the weaker one."
+            ? "Rannsóknarsnið sem er valið í viðmóti er ekki rannsóknarsnið. Annaðhvort safnarðu því sem það þarf eða birtir veikara sniðið."
             : undefined,
         };
       },
@@ -554,4 +557,24 @@ export function codesFor(rows: MonthRow[], station: string, state: DesignState):
     ? rows.filter((r) => live.some(([name]) => name === r.station))
     : rows.filter((r) => r.station === station);
   return codeVolume(scoped, goLive, state.baselineMonths);
+}
+
+/**
+ * Whether a monthly row belongs to the service's own figures ("after").
+ *
+ * Baseline months carry only HSU's count from Saga and belong to the
+ * comparison, not to the totals — before this, a twelve-month window that
+ * reached back past go-live mixed "before" rows into "after" figures. A
+ * station that is not live (a control) never counts. Rows for a station the
+ * design does not know (e.g. survey answers without a station) count from
+ * the earliest go-live. With no go-live recorded anywhere nothing is
+ * filtered, so an unconfigured design still shows its data.
+ */
+export function isPilotRow(r: MonthRow, state: DesignState): boolean {
+  const goLives = Object.values(state.sites).filter((s) => s.role === "live" && s.goLive).map((s) => s.goLive!).sort();
+  if (!goLives.length) return true;
+  const month = r.month.slice(0, 7);
+  const own = state.sites[r.station];
+  if (own) return own.role === "live" && !!own.goLive && month >= own.goLive.slice(0, 7);
+  return month >= goLives[0].slice(0, 7);
 }

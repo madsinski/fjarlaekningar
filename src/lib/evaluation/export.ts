@@ -21,6 +21,9 @@ import { results, enabledModules, type UploadedDoc } from "./programme";
 import type { Assumptions, Programme } from "./types";
 import { caseTypeRows, monthName, pct, type MonthRow, type Roster, type Totals } from "./totals";
 
+/** Icelandic plural: singular after numbers ending in 1, except 11. */
+const pl = (n: number, one: string, many: string) => (n % 10 === 1 && n % 100 !== 11 ? one : many);
+
 export type ExportContext = {
   t: Totals; roster: Roster; a: Assumptions;
   design?: import("./design").DesignState;
@@ -56,26 +59,27 @@ export function toReport(
   const rows = caseTypeRows(ctx.t);
   const lines: string[] = [];
 
-  lines.push(`# Service evaluation — ${opts.station}`);
+  lines.push(`# Árangursmat þjónustunnar: ${opts.station}`);
   lines.push("");
-  lines.push(`${opts.period} · ${ctx.t.months} month${ctx.t.months === 1 ? "" : "s"} of data · ${enabledModules(programme).length} modules`);
+  const nMods = enabledModules(programme).length;
+  lines.push(`${opts.period} · gögn úr ${ctx.t.months} ${pl(ctx.t.months, "mánuði", "mánuðum")} · ${nMods} ${pl(nMods, "rannsóknarþáttur", "rannsóknarþættir")}`);
   lines.push("");
   lines.push(
-    "> All figures are aggregates at service level. No row in the underlying data is a person, " +
-    "which is what keeps this quality assurance under the Directorate of Health Act rather than research.",
+    "> Allar tölur eru samantektartölur fyrir þjónustuna í heild. Engin lína í gögnunum á við einstakling. " +
+    "Þess vegna er þetta gæðaverkefni samkvæmt lögum nr. 41/2007 en ekki vísindarannsókn.",
   );
   lines.push("");
 
   for (const { category, modules } of groups) {
     lines.push(`## ${category.name}`);
     lines.push("");
-    lines.push(`*${category.question}*${category.gate ? " — a gate, not a scale." : ""}`);
+    lines.push(`*${category.question}*${category.gate ? " Skilyrði, ekki kvarði." : ""}`);
     lines.push("");
     for (const { module, values } of modules) {
       const head = values.find((v) => v.metric.headline) ?? values[0];
       lines.push(`### ${module.name}`);
       lines.push("");
-      lines.push(`**${head.metric.name}: ${head.value.value ?? "not yet reporting"}** — ${head.value.detail}`);
+      lines.push(`**${head.metric.name}: ${head.value.value ?? "Bíður gagna"}** — ${head.value.detail}`);
       lines.push("");
       if (head.value.assumption) lines.push(`*${head.value.assumption}*`, "");
       const rest = values.filter((v) => v !== head && v.value.value);
@@ -83,35 +87,35 @@ export function toReport(
         for (const r of rest) lines.push(`- ${r.metric.name}: **${r.value.value}** — ${r.value.detail}`);
         lines.push("");
       }
-      lines.push(`*Limitation:* ${module.caveat}`);
+      lines.push(`*Takmörkun:* ${module.caveat}`);
       lines.push("");
     }
   }
 
   const withData = rows.filter((r) => r.c.total);
   if (withData.length) {
-    lines.push("## By case type", "");
-    lines.push("| Case type | Total | Resolved | Referred | Rate |");
+    lines.push("## Eftir tegund erindis", "");
+    lines.push("| Tegund erindis | Alls | Afgreitt | Vísað áfram | Hlutfall |");
     lines.push("|---|---:|---:|---:|---:|");
     for (const r of withData) {
       lines.push(`| ${r.name} | ${r.c.total} | ${r.c.resolved} | ${r.c.referred} | ${r.rate === null ? "—" : `${r.rate}%`}${r.c.total < 5 ? " ⚠︎" : ""} |`);
     }
     lines.push("");
-    lines.push("⚠︎ fewer than five cases — suppress or combine before this leaves the building.");
+    lines.push("⚠︎ Færri en fimm erindi. Tölur undir fimm eru ekki birtar: fella þarf þær út eða sameina áður en skýrslan fer út.");
     lines.push("");
   }
 
-  lines.push("## Limitations", "");
+  lines.push("## Takmarkanir", "");
   lines.push(
-    "This is a feasibility and service evaluation at a small number of sites, not a randomised trial. " +
-    "The population is too small to say anything about rare events, and the strength of the work is that " +
-    "every case is traceable — not the number of them. Self-reported figures are labelled as such wherever " +
-    "they appear.",
+    "Þetta er mat á þjónustu og framkvæmanleika á fáum stöðvum, ekki slembiröðuð rannsókn. " +
+    "Þýðið er of lítið til að segja nokkuð um sjaldgæfa atburði. Styrkur verksins felst í því að hægt er " +
+    "að rekja hvert erindi, ekki í fjölda þeirra. Tölur sem byggja á svörum fólks sjálfs eru merktar sem slíkar " +
+    "hvar sem þær birtast.",
   );
   lines.push("");
 
   if (opts.documents.length) {
-    lines.push("## Supporting documents", "");
+    lines.push("## Fylgiskjöl", "");
     for (const d of opts.documents) lines.push(`- ${d.filename} (${d.module_id}/${d.doc_id})`);
     lines.push("");
   }
@@ -143,79 +147,78 @@ export function baselineRequest(opts: {
 }): string {
   const first = opts.liveStations.map((s) => s.goLive).filter(Boolean).sort()[0];
   const from = (() => {
-    if (!first) return "the 24 months before the service started";
+    if (!first) return "24 mánuðir áður en þjónustan hófst";
     const d = new Date(first);
     d.setUTCMonth(d.getUTCMonth() - opts.monthsBefore);
-    return `${d.toISOString().slice(0, 7)} to ${first.slice(0, 7)}`;
+    return `${d.toISOString().slice(0, 7)} til ${first.slice(0, 7)}`;
   })();
 
   const L: string[] = [];
-  L.push(`# Data request — evaluation of the remote service`);
+  L.push(`# Beiðni um gögn: árangursmat fjarþjónustunnar`);
   L.push("");
-  L.push(`To: ${opts.institution}`);
-  L.push("");
-  L.push(
-    "We are evaluating the remote service as a quality-assurance project and would like to compare it against " +
-    "how things were beforehand. Everything below already exists in Saga — this is a request to run a query " +
-    "over records you already hold, not to collect anything new.",
-  );
-  L.push("");
-  L.push("## What we are asking for");
-  L.push("");
-  L.push(`**Period:** ${from}, and then the same figures each month going forward.`);
+  L.push(`Til: ${opts.institution}`);
   L.push("");
   L.push(
-    "**Monthly, please — not a yearly total.** This is the one thing that matters most in how the request is " +
-    "filled. With a year lumped together we can only say \"it was X before and Y after\". Month by month we can " +
-    "see whether your numbers were already moving before we arrived, and separate the two. A total cannot be " +
-    "broken back down afterwards.",
+    "Við metum fjarþjónustuna sem gæðaverkefni og viljum bera hana saman við stöðuna áður en hún hófst. " +
+    "Allt sem hér er beðið um er þegar til í Sögu. Beiðnin snýst um að keyra fyrirspurn á gögn sem þið hafið " +
+    "nú þegar, ekki að safna neinu nýju.",
   );
   L.push("");
-  L.push("**Stations:**");
-  for (const st of opts.liveStations) L.push(`- ${st.name}${st.goLive ? ` — service started ${st.goLive}` : ""}`);
+  L.push("## Um hvað við biðjum");
+  L.push("");
+  L.push(`**Tímabil:** ${from}. Síðan sömu tölur í hverjum mánuði framvegis.`);
+  L.push("");
+  L.push(
+    "**Eftir mánuðum, ekki samtala fyrir árið.** Þetta skiptir mestu. Með samtölu fyrir árið getum við aðeins " +
+    "sagt „það var X fyrir og Y eftir“. Eftir mánuðum sjáum við hvort tölurnar voru þegar á hreyfingu áður en " +
+    "við komum, og getum greint þar á milli. Samtölu er ekki hægt að brjóta niður eftir á.",
+  );
+  L.push("");
+  L.push("**Stöðvar:**");
+  for (const st of opts.liveStations) L.push(`- ${st.name}${st.goLive ? `: þjónustan hófst ${st.goLive}` : ""}`);
   if (opts.comparisonStations.length) {
     L.push("");
     L.push(
-      "And, importantly, the same figures for stations **not** running the service. They act as a comparison: " +
-      "if our numbers move and theirs do not over the same months, the service is the likeliest explanation. " +
-      "A station stops being useful for this the day it gets the service, so the sooner these start the better:",
+      "Einnig, og það er mikilvægt, sömu tölur fyrir stöðvar sem **ekki** eru með þjónustuna. Þær eru samanburðarstöðvar. " +
+      "Ef tölurnar okkar breytast en þeirra ekki á sömu mánuðum er þjónustan líklegasta skýringin. " +
+      "Stöð nýtist ekki lengur til samanburðar um leið og hún fær þjónustuna. Því fyrr sem þetta byrjar, því betra:",
     );
     for (const st of opts.comparisonStations) L.push(`- ${st}`);
   }
   L.push("");
-  L.push("## The figures, per station per month");
+  L.push("## Tölurnar, fyrir hverja stöð í hverjum mánuði");
   L.push("");
-  L.push("1. **Number of contacts** in the diagnosis codes listed below — the core figure.");
-  L.push("2. **Prescriptions issued** in those same codes, and **how many were antibiotics**. This lets us show our prescribing against yours rather than against nothing.");
-  L.push("3. **Did-not-attend rate** for comparable appointments.");
-  L.push("4. **Telephone contacts** to the station, if that is recorded.");
-  L.push("5. **Spend on locum and temporary cover**, monthly.");
+  L.push("1. **Fjöldi koma** með greiningarkóðana sem taldir eru upp hér að neðan. Þetta er aðaltalan.");
+  L.push("2. **Útgefnir lyfseðlar** með sömu kóðum, og **hve margir voru fyrir sýklalyf**. Þá getum við borið ávísanir okkar saman við ykkar ávísanir.");
+  L.push("3. **Hlutfall bókaðra tíma þar sem sjúklingur mætti ekki**, í sambærilegum tímum.");
+  L.push("4. **Símtöl** til stöðvarinnar, ef þau eru skráð.");
+  L.push("5. **Kostnaður við afleysingar**, eftir mánuðum.");
   L.push("");
-  L.push("## Diagnosis codes");
+  L.push("## Greiningarkóðar");
   L.push("");
   L.push(
-    "The agreed ICD-10 code set for each of our case types is attached separately. If it is easier at your end, " +
-    "a count per individual code is more useful to us than a count per case type — we can group them ourselves, " +
-    "and having the detail means we can answer questions later without coming back to you.",
+    "Umsamdir ICD-10 kóðar fyrir hverja tegund erindis fylgja í sérstöku skjali. Ef það hentar ykkur er " +
+    "fjöldi fyrir hvern kóða gagnlegri fyrir okkur en fjöldi fyrir hverja tegund erindis. Við getum flokkað kóðana sjálf. " +
+    "Með nákvæmari tölum getum við svarað spurningum síðar án þess að leita aftur til ykkar.",
   );
   L.push("");
-  L.push("## What we are not asking for");
+  L.push("## Það sem við biðjum ekki um");
   L.push("");
   L.push(
-    "**Counts only. No patient-level data of any kind** — no ID numbers, no dates of birth, no free text, and " +
-    "nothing finer than a month. A date at a station of a few thousand people can identify someone; a monthly " +
-    "count cannot. That is deliberate: it keeps this within quality assurance under the Directorate of Health " +
-    "Act rather than turning it into research, which is why it needs neither patient consent nor an ethics " +
-    "committee. Please suppress or combine any cell with fewer than five cases.",
+    "**Við biðjum aðeins um fjölda, engin gögn um einstaka sjúklinga.** Engar kennitölur, engir fæðingardagar, " +
+    "enginn frjáls texti og ekkert nákvæmara en mánuður. Á stöð með nokkur þúsund íbúa getur dagsetning bent á einstakling, " +
+    "fjöldi í mánuði ekki. Þetta er með vilja gert. Þannig er verkið gæðaverkefni samkvæmt lögum nr. 41/2007 " +
+    "en ekki vísindarannsókn, og þarf því hvorki upplýst samþykki sjúklinga né leyfi Vísindasiðanefndar. " +
+    "Tölur undir fimm eru ekki birtar: fellið út eða sameinið hvern reit með færri en fimm erindum.",
   );
   L.push("");
-  L.push("## One query we would ask you to run yourselves");
+  L.push("## Ein fyrirspurn sem við biðjum ykkur að keyra sjálf");
   L.push("");
   L.push(
-    "For patients seen by the remote service, how many returned to you within seven days with a related problem. " +
-    "This is the single best safety measure available to us, but matching the two sets of records would mean " +
-    "linking identifiable data across two organisations. If you run the query at your end and send us only the " +
-    "count, nothing identifiable crosses between us and the project stays quality assurance.",
+    "Hve margir sjúklingar fjarþjónustunnar komu til ykkar innan sjö daga með skyldan vanda. " +
+    "Þetta er besti öryggismælikvarðinn sem við höfum. En til að para saman skrárnar tvær þyrfti að tengja " +
+    "persónugreinanleg gögn milli tveggja stofnana. Ef þið keyrið fyrirspurnina hjá ykkur og sendið okkur aðeins " +
+    "fjöldann fer ekkert persónugreinanlegt á milli og verkið helst gæðaverkefni.",
   );
   L.push("");
   return L.join("\n");
@@ -242,7 +245,7 @@ export function volumeChart(rows: MonthRow[]): string {
     byMonth.set(r.month, m);
   }
   const data = [...byMonth.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  if (!data.length) return svgShell(900, 420, `<text x="450" y="210" text-anchor="middle" fill="#94a3b8" font-size="18">No data yet</text>`);
+  if (!data.length) return svgShell(900, 420, `<text x="450" y="210" text-anchor="middle" fill="#94a3b8" font-size="18">Engin gögn enn</text>`);
 
   const W = 900, H = 420, padL = 60, padB = 56, padT = 32, padR = 24;
   const max = Math.max(...data.map(([, v]) => v.total), 1);
@@ -266,8 +269,8 @@ export function volumeChart(rows: MonthRow[]): string {
     body += `<text x="${cx}" y="${H - padB + 20}" text-anchor="middle" fill="#64748b" font-size="12">${esc(monthName(month).slice(0, 3))}</text>`;
     body += `<text x="${cx}" y="${padT + plotH - th - 8}" text-anchor="middle" fill="#334155" font-size="12" font-weight="600">${v.total}</text>`;
   });
-  body += `<rect x="${padL}" y="${H - 22}" width="11" height="11" rx="2" fill="${PALETTE[0]}"/><text x="${padL + 17}" y="${H - 12}" fill="#475569" font-size="12">Resolved remotely</text>`;
-  body += `<rect x="${padL + 150}" y="${H - 22}" width="11" height="11" rx="2" fill="#cbd5e1"/><text x="${padL + 167}" y="${H - 12}" fill="#475569" font-size="12">Referred onward</text>`;
+  body += `<rect x="${padL}" y="${H - 22}" width="11" height="11" rx="2" fill="${PALETTE[0]}"/><text x="${padL + 17}" y="${H - 12}" fill="#475569" font-size="12">Afgreitt í fjarþjónustu</text>`;
+  body += `<rect x="${padL + 190}" y="${H - 22}" width="11" height="11" rx="2" fill="#cbd5e1"/><text x="${padL + 207}" y="${H - 12}" fill="#475569" font-size="12">Vísað áfram</text>`;
   return svgShell(W, H, body);
 }
 
@@ -275,7 +278,7 @@ export function volumeChart(rows: MonthRow[]): string {
  *  aggregate rate means the service works across the board. */
 export function caseTypeChart(t: Totals): string {
   const rows = caseTypeRows(t).filter((r) => r.c.total > 0).sort((a, b) => (b.rate ?? 0) - (a.rate ?? 0));
-  if (!rows.length) return svgShell(900, 420, `<text x="450" y="210" text-anchor="middle" fill="#94a3b8" font-size="18">No case data yet</text>`);
+  if (!rows.length) return svgShell(900, 420, `<text x="450" y="210" text-anchor="middle" fill="#94a3b8" font-size="18">Engin gögn um erindi enn</text>`);
 
   const rowH = 30, padL = 250, padR = 80, padT = 28;
   const H = padT + rows.length * rowH + 24, W = 900;
@@ -299,11 +302,11 @@ export function caseTypeChart(t: Totals): string {
  *  growing left-hand band is the workload story in one picture. */
 export function entryChart(t: Totals): string {
   const parts: [string, number][] = [
-    ["Came directly", t.entry.direct],
-    ["Sent by health centre staff", t.entry.viaStaff],
+    ["Kom beint", t.entry.direct],
+    ["Vísað af starfsfólki heilsugæslu", t.entry.viaStaff],
   ];
   const total = t.entry.total;
-  if (!total) return svgShell(900, 200, `<text x="450" y="100" text-anchor="middle" fill="#94a3b8" font-size="18">No entry-route data yet</text>`);
+  if (!total) return svgShell(900, 200, `<text x="450" y="100" text-anchor="middle" fill="#94a3b8" font-size="18">Engin gögn um leiðir inn enn</text>`);
 
   const W = 900, H = 200, padL = 40, barY = 56, barH = 48;
   const plotW = W - padL * 2;
@@ -343,10 +346,10 @@ export function toSlides(
 
   slides.push({
     id: id("title"), type: "title", theme: "dark", brand: "fjarlaekningar",
-    kicker: "Service evaluation",
-    heading: `Fjarlækningar at ==${opts.station}==`,
-    lead: `${opts.period} · ${ctx.t.months} month${ctx.t.months === 1 ? "" : "s"} of data`,
-    notes: "Every figure is an aggregate at service level. Nothing in the underlying data identifies a patient — that is what keeps this quality assurance rather than research.",
+    kicker: "Árangursmat",
+    heading: `Fjarlækningar: ==${opts.station}==`,
+    lead: `${opts.period} · gögn úr ${ctx.t.months} ${pl(ctx.t.months, "mánuði", "mánuðum")}`,
+    notes: "Allar tölur eru samantektartölur fyrir þjónustuna í heild. Ekkert í gögnunum bendir á sjúkling. Þess vegna er þetta gæðaverkefni en ekki vísindarannsókn.",
   });
 
   const tops = groups
@@ -359,36 +362,36 @@ export function toSlides(
   if (tops.length) {
     slides.push({
       id: id("stats"), type: "stats", theme: "light", brand: "fjarlaekningar",
-      kicker: "Headline", heading: "What we can say today",
+      kicker: "Lykiltölur", heading: "Það sem við getum sagt í dag",
       stats: tops.slice(0, 4),
-      footnote: "One figure per category. Safety and scalability are gates, not scales — they do not average out against a good number elsewhere.",
+      footnote: "Ein tala fyrir hvern flokk. Öryggi er skilyrði, ekki kvarði. Góð tala annars staðar vegur ekki upp á móti því.",
     });
   }
 
   if (opts.charts.volume) {
     slides.push({
       id: id("volume"), type: "hero-image", theme: "light", brand: "fjarlaekningar",
-      kicker: "Volume", heading: "Cases per month, resolved and referred",
+      kicker: "Fjöldi", heading: "Erindi á mánuði, afgreidd og vísað áfram",
       image: opts.charts.volume,
-      lead: "The coloured part of each bar closed entirely in the remote service.",
+      lead: "Litaði hluti hverrar súlu sýnir erindi sem voru afgreidd að fullu í fjarþjónustu.",
     });
   }
 
   if (opts.charts.caseTypes) {
     slides.push({
       id: id("types"), type: "hero-image", theme: "light", brand: "fjarlaekningar",
-      kicker: "By case type", heading: "Resolution rate, case type by case type",
+      kicker: "Eftir tegund erindis", heading: "Hlutfall afgreiddra erinda eftir tegund",
       image: opts.charts.caseTypes,
-      lead: "The aggregate rate hides it when three case types carry the rest. Bars marked n<5 are too thin to read anything into.",
+      lead: "Heildarhlutfallið getur falið það þegar þrjár tegundir erinda bera hinar uppi. Súlur merktar n<5 byggja á of fáum erindum til að lesa í þær.",
     });
   }
 
   if (opts.charts.entry) {
     slides.push({
       id: id("entry"), type: "hero-image", theme: "light", brand: "fjarlaekningar",
-      kicker: "Entry routes", heading: "How patients reached the service",
+      kicker: "Leiðir inn", heading: "Hvernig sjúklingar komu í þjónustuna",
       image: opts.charts.entry,
-      lead: "A patient who arrives directly costs the health centre nothing. A growing direct share is the service becoming self-sufficient.",
+      lead: "Sjúklingur sem kemur beint kostar heilsugæsluna ekkert. Vaxandi hlutfall beinna koma sýnir að þjónustan stendur á eigin fótum.",
     });
   }
 
@@ -408,28 +411,28 @@ export function toSlides(
       kicker: category.name, heading: category.question,
       lead: category.note,
       cards, columns: cards.length > 2 ? 2 : 1,
-      notes: modules.map((m) => `${m.module.name} — limitation: ${m.module.caveat}`).join("\n\n"),
+      notes: modules.map((m) => `${m.module.name}. Takmörkun: ${m.module.caveat}`).join("\n\n"),
     });
   }
 
   slides.push({
     id: id("limits"), type: "checklist", theme: "light", brand: "fjarlaekningar",
-    kicker: "Read this first", heading: "What this evaluation ==cannot== show",
+    kicker: "Lestu þetta fyrst", heading: "Það sem matið getur ==ekki== sýnt",
     items: [
-      "A feasibility and service evaluation at a small number of sites — not a randomised trial.",
-      "The population is too small to say anything about rare events.",
-      "Self-reported figures are what people say they would have done, not what they would have done.",
-      "Its strength is that every case is traceable, not the number of cases.",
+      "Mat á þjónustu og framkvæmanleika á fáum stöðvum, ekki slembiröðuð rannsókn.",
+      "Þýðið er of lítið til að segja nokkuð um sjaldgæfa atburði.",
+      "Svör fólks sýna hvað það telur að það hefði gert, ekki hvað það hefði í raun gert.",
+      "Styrkurinn felst í því að hægt er að rekja hvert erindi, ekki í fjölda erinda.",
     ],
-    footnote: "Stated first, on purpose. Whoever names the limitations owns the discussion that follows.",
+    footnote: "Þetta kemur fyrst, með vilja. Sá sem nefnir takmarkanirnar sjálfur stýrir umræðunni á eftir.",
     columns: 1,
   });
 
   slides.push({
     id: id("closing"), type: "closing", theme: "dark", brand: "fjarlaekningar",
-    heading: "Next",
-    tagline: "The question is not whether it worked here. It is whether it repeats.",
-    notes: "Close on transferability: days to open a site, hours of their staff's time, and what the second site would not have to repeat.",
+    heading: "Næsta skref",
+    tagline: "Spurningin er ekki hvort þetta virkaði hér. Hún er hvort hægt sé að endurtaka það.",
+    notes: "Endaðu á yfirfærslu: hve marga daga tekur að opna stöð, hve margar klukkustundir starfsfólk hennar þarf að leggja til, og hvað næsta stöð þarf ekki að endurtaka.",
   });
 
   return slides;

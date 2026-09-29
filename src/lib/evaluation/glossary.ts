@@ -13,8 +13,9 @@
 // nobody opens; this one covers the words that actually appear.
 
 export type Term = {
-  /** The word as it appears in the text. Matched case-insensitively on word
-   *  boundaries, so "denominator" also catches "denominators". */
+  /** The word as it appears in the text. Matched case-insensitively as a
+   *  whole word. Icelandic inflects, so every form that appears in the text
+   *  has to be listed in `also` — "nefnari" does not catch "nefnaranum". */
   term: string;
   /** Other spellings that should resolve to the same entry. */
   also?: string[];
@@ -26,94 +27,126 @@ export type Term = {
 
 export const GLOSSARY: Term[] = [
   {
-    term: "denominator",
-    plain: "The 'out of how many'. If 44 cases were resolved out of 52, the 52 is the denominator.",
-    soWhat: "Ours only counts patients who reached us. The health centre's contact register counts everyone who came to them, which is why we ask them for it rather than making our own.",
+    term: "baseline",
+    plain: "Staðan áður en þjónustan hófst: sömu tölur fyrir tímabilið á undan.",
+    soWhat: "Án baseline er ekkert að bera saman við. Tölurnar þurfa að vera mánaðarlegar, því eina ársheildartölu er ekki hægt að brjóta niður eftir á.",
   },
   {
-    term: "numerator",
-    plain: "The top half of a fraction — the count of the thing you are measuring.",
+    term: "framskyggn",
+    also: ["framskyggna", "framskyggnri", "framskyggnt", "framskyggnar"],
+    plain: "Gögn skráð jafnóðum, frá fyrsta degi.",
+    soWhat: "Það sem ekki er skráð strax er ekki hægt að sækja eftir á. Þess vegna þarf þjónustukönnunin að vera tilbúin frá fyrsta sjúklingi.",
   },
   {
-    term: "cohort",
-    plain: "The group of patients a figure is about.",
-    soWhat: "Everyone who started the questionnaire, or only those who reached a doctor? The two give different resolution rates, so it has to be stated once and not changed.",
+    term: "afturskyggn",
+    also: ["afturskyggna", "afturskyggnri", "afturskyggnt", "afturskyggnar"],
+    plain: "Gögn sótt eftir á, úr skrám sem eru þegar til, eins og Sögu.",
+    soWhat: "Má gera hvenær sem er, ef skilgreiningin er ákveðin áður en tölurnar eru skoðaðar.",
   },
   {
-    term: "secular trend",
-    plain: "A change that was already happening anyway, for reasons nothing to do with you.",
-    soWhat: "If GP attendance was falling nationally before you started, a simple before-and-after comparison credits that fall to your service.",
+    term: "nefnari",
+    also: ["nefnara", "nefnarann", "nefnaranum", "nefnarinn"],
+    plain: "„Af hve mörgum?“ Ef 44 erindi af 52 voru afgreidd er 52 nefnarinn.",
+    soWhat: "Okkar tölur ná aðeins til þeirra sem komu til okkar. Heilsugæslan telur alla sem komu til hennar, og þess vegna fáum við töluna frá henni.",
   },
   {
-    term: "regression to the mean",
-    plain: "An unusually bad patch tends to get better on its own, whatever you do.",
-    soWhat: "Services get introduced where things were unusually bad. Some of the improvement you measure would have happened without you.",
+    term: "teljari",
+    also: ["teljara", "teljarann", "teljaranum", "teljarinn"],
+    plain: "Efri talan í broti: fjöldi þess sem er mælt.",
   },
   {
-    term: "Hawthorne effect",
-    also: ["Hawthorne"],
-    plain: "People behave differently when they know they are being watched.",
-    soWhat: "A site that knows it is being evaluated works a little harder, and that goes into your result too.",
+    term: "rannsóknarþýði",
+    also: ["rannsóknarþýðið", "rannsóknarþýðinu", "rannsóknarþýðis", "þýði", "þýðið", "þýðinu", "þýðis"],
+    plain: "Hópurinn sem tala á við.",
+    soWhat: "Allir sem byrjuðu spurningalistann, eða aðeins þeir sem komust til læknis? Hlutfall afgreiddra erinda verður ólíkt eftir því, svo það þarf að ákveða einu sinni og halda sig við það.",
   },
   {
-    term: "interrupted time series",
-    plain: "Plot the monthly numbers before and after the service started and look for a step, or a change of direction, at that exact point.",
-    soWhat: "This is what separates your effect from a trend that was already running — and it only works if the baseline arrives month by month rather than as one annual total.",
+    term: "undirliggjandi þróun",
+    also: ["undirliggjandi þróunar", "undirliggjandi þróunina", "undirliggjandi þróuninni"],
+    plain: "Breyting sem var hvort eð er í gangi, af ástæðum sem tengjast þjónustunni ekki.",
+    soWhat: "Ef komum á heilsugæslu fækkaði á landsvísu áður en við byrjuðum, eignar einfaldur samanburður fyrir og eftir þjónustunni þá fækkun.",
   },
   {
-    term: "stepped wedge",
-    plain: "Sites start the service one at a time. Until its turn comes, each site is a comparison for the ones already running.",
-    soWhat: "Your rollout is staged anyway, so this costs nothing extra — but only if you collect figures at a site before it goes live.",
+    term: "aðhvarf að meðaltali",
+    plain: "Óvenju slæmt tímabil lagast oft af sjálfu sér, hvað sem gert er.",
+    soWhat: "Þjónusta er gjarnan sett af stað þar sem staðan var óvenju slæm. Hluti af batanum hefði orðið án hennar.",
   },
   {
-    term: "counterfactual",
-    plain: "What would have happened otherwise.",
-    soWhat: "Usually answered by asking the patient — 'where would you have gone instead?' — which is an opinion, not a fact, and is labelled that way wherever it appears.",
+    term: "Hawthorne-áhrif",
+    also: ["Hawthorne-áhrifin", "Hawthorne-áhrifum", "Hawthorne-áhrifa", "Hawthorne"],
+    plain: "Fólk hegðar sér öðruvísi þegar það veit að fylgst er með því.",
+    soWhat: "Stöð sem veit að hún er metin leggur sig aðeins meira fram, og það skilar sér líka í niðurstöðunni.",
   },
   {
-    term: "selection bias",
-    plain: "The group you can measure is not a fair sample of the group you care about.",
-    soWhat: "Only referred cases can be checked against an in-person assessment, so the straightforward cases never appear in that comparison.",
+    term: "rofin tímaröð",
+    also: ["rofinni tímaröð", "rofna tímaröð", "rofinnar tímaraðar", "interrupted time series"],
+    plain: "Mánaðartölurnar fyrir og eftir upphaf þjónustunnar settar á graf, og leitað að stökki eða stefnubreytingu nákvæmlega þar.",
+    soWhat: "Þetta greinir áhrif þjónustunnar frá þróun sem var þegar í gangi. Það virkar aðeins ef baseline kemur mánuð fyrir mánuð en ekki sem ein ársheildartala.",
   },
   {
-    term: "stewardship",
-    plain: "Prescribing antibiotics carefully — the right one, only when needed, for no longer than necessary.",
-    soWhat: "The first objection to any remote service is that it hands out antibiotics too readily. Having the figures ends that conversation early.",
+    term: "þrepaskipt innleiðing",
+    also: ["þrepaskipta innleiðingu", "þrepaskiptri innleiðingu", "þrepaskiptrar innleiðingar", "stepped wedge"],
+    plain: "Stöðvarnar byrja ein af annarri. Þar til röðin kemur að henni er hver stöð samanburður fyrir þær sem eru byrjaðar.",
+    soWhat: "Innleiðingin er hvort eð er í áföngum, svo þetta kostar ekkert aukalega. En aðeins ef tölum er safnað á stöð áður en hún byrjar.",
   },
   {
-    term: "concordance",
-    plain: "Whether two assessments agreed.",
-    soWhat: "Here: did the remote working diagnosis match what was found when the patient was later seen in person.",
+    term: "samanburðarstöð",
+    also: ["samanburðarstöðvar", "samanburðarstöðina", "samanburðarstöðinni", "samanburðarstöðvum", "samanburðarstöðva"],
+    plain: "Stöð sem er ekki byrjuð með þjónustuna og er notuð til samanburðar.",
+    soWhat: "Ef sama breyting sést á samanburðarstöðinni stafar hún ekki af þjónustunni.",
+  },
+  {
+    term: "valskekkja",
+    also: ["valskekkju", "valskekkjan", "valskekkjuna", "valskekkjunnar"],
+    plain: "Hópurinn sem hægt er að mæla er ekki sanngjarnt úrtak úr hópnum sem skiptir máli.",
+    soWhat: "Aðeins þá sem leituðu aftur er hægt að skoða í Sögu, svo erindin sem gengu vel koma aldrei fram í þeim samanburði.",
+  },
+  {
+    term: "svarhlutfall",
+    also: ["svarhlutfallið", "svarhlutfalli", "svarhlutfalls"],
+    plain: "Hlutfall þeirra sem svöruðu könnuninni af þeim sem fengu hana.",
+    soWhat: "Lágt svarhlutfall þýðir að svörin geta verið jákvæðari en reynsla hópsins alls. Það á alltaf að birta það með niðurstöðunni.",
+  },
+  {
+    term: "skynsamleg notkun sýklalyfja",
+    also: ["skynsamlegrar notkunar sýklalyfja", "skynsamlegri notkun sýklalyfja"],
+    plain: "Sýklalyf gefin af varúð: rétt lyf, aðeins þegar þarf og ekki lengur en nauðsyn krefur.",
+    soWhat: "Fyrsta mótbáran gegn fjarþjónustu er að hún gefi of auðveldlega sýklalyf. Tölurnar svara henni strax.",
+  },
+  {
+    term: "samræmi greininga",
+    also: ["samræmis greininga"],
+    plain: "Hvort tvær greiningar á sama sjúklingi komu heim og saman.",
+    soWhat: "Hér: stóðst greiningin í fjarþjónustu þegar sjúklingurinn var skoðaður aftur.",
   },
   {
     term: "intention-to-treat",
-    plain: "Count everyone who entered, including those it turned out you could not help.",
-    soWhat: "It gives a lower resolution rate and a more honest safety figure, because the people the service turned away are still in the total.",
+    plain: "Allir sem hófu ferlið eru taldir með, líka þeir sem ekki var hægt að hjálpa.",
+    soWhat: "Hlutfall afgreiddra erinda verður lægra en öryggistalan heiðarlegri, því þeir sem var vísað frá eru enn í heildartölunni.",
   },
   {
-    term: "pseudonymisation",
-    also: ["pseudonymised", "pseudonymous"],
-    plain: "Replacing a name or ID number with a code that still lets you recognise the same person again.",
-    soWhat: "It is not anonymity. Data with such a code is still personal data in law, however well the code is scrambled.",
+    term: "dulkóðun",
+    also: ["dulkóðunar", "dulkóðuð", "dulkóðuðu", "dulkóðaðar", "dulkóðuð gögn"],
+    plain: "Nafni eða kennitölu skipt út fyrir kóða sem gerir samt kleift að þekkja sama einstakling aftur.",
+    soWhat: "Það er ekki nafnleysi. Dulkóðuð gögn eru áfram persónuupplýsingar að lögum.",
   },
   {
-    term: "utilisation",
-    plain: "How much of what you have is actually being used.",
+    term: "gæðaverkefni",
+    also: ["gæðaverkefnis", "gæðaverkefnið", "gæðaverkefninu", "innra gæðaeftirlit", "innra gæðaeftirliti", "innra gæðaeftirlits"],
+    plain: "Mat og umbætur á eigin þjónustu. Að lögum allt annað en vísindarannsókn.",
+    soWhat: "Það þarf hvorki upplýst samþykki sjúklinga né leyfi Vísindasiðanefndar. Þess vegna eru hér eingöngu samantektartölur en ekki sjúkraskrár.",
   },
   {
-    term: "quality assurance",
-    plain: "Checking and improving your own service. Legally quite different from research.",
-    soWhat: "It needs no patient consent and no ethics committee. That is why everything here is counts rather than patient records.",
+    term: "aðlögunartímabil",
+    also: ["aðlögunartímabilið", "aðlögunartímabilinu", "aðlögunartímabils"],
+    plain: "Fyrstu vikurnar, meðan starfsfólk er að læra á þjónustuna og fæstir vita að hún er til.",
+    soWhat: "Oft haldið utan við aðalniðurstöðuna, en það þarf að ákveða það áður en tölurnar sjást, ekki eftir á.",
   },
   {
-    term: "run-in",
-    plain: "The first few weeks, when staff are still learning and patients mostly do not know the service exists.",
-    soWhat: "Usually left out of the main result — but you have to say so before you see the numbers, not after.",
-  },
-  {
-    term: "primary outcome",
-    plain: "The one figure you nominate in advance as the thing the evaluation stands or falls on.",
-    soWhat: "Picking it afterwards, once you can see which came out best, is the difference between a finding and a fishing expedition.",
+    term: "aðalendapunktur",
+    also: ["aðalendapunkt", "aðalendapunkti", "aðalendapunkts", "aðalendapunktinn", "aðalendapunkturinn"],
+    plain: "Eina talan sem er valin fyrir fram og matið stendur og fellur með.",
+    soWhat: "Að velja hana eftir á, þegar sést hvað kom best út, er munurinn á niðurstöðu og veiðiferð.",
   },
 ];
 
@@ -126,8 +159,8 @@ for (const t of GLOSSARY) {
 /** Longest first, so "interrupted time series" wins over any single word
  *  inside it. */
 const PATTERN = new RegExp(
-  `\\b(${[...BY_TERM.keys()].sort((a, b) => b.length - a.length).map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})(s?)\\b`,
-  "gi",
+  `(?<!\\p{L})(${[...BY_TERM.keys()].sort((a, b) => b.length - a.length).map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})(?!\\p{L})`,
+  "giu",
 );
 
 export type Segment = { text: string; term?: Term };

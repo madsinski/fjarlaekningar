@@ -367,28 +367,47 @@ export type CodeVolume = {
   pilotPerMonth: number | null;
   /** Our own cases per month over the same pilot months. */
   remotePerMonth: number | null;
+  /** Of those, the cases inside the agreed code set — the like-for-like
+   *  count against Saga. Equals remotePerMonth when codes are not recorded. */
+  remoteInSetPerMonth: number | null;
+  /** HSU's antibiotic share in the same codes over the baseline months — the
+   *  traditional-service comparator. Only months where both were delivered. */
+  baselineAbxPct: number | null;
 };
 
 export function codeVolume(rows: MonthRow[], goLive: string | undefined, baselineMonths: number): CodeVolume {
   const empty: CodeVolume = {
     baselineMonths: 0, baselinePerMonth: null, baselineYears: [], trendPerYear: null,
     expectedPerMonth: null, pilotMonths: 0, pilotPerMonth: null, remotePerMonth: null,
+    remoteInSetPerMonth: null, baselineAbxPct: null,
   };
   if (!goLive) return empty;
   const start = goLive.slice(0, 7);
   // Several stations share a month: add them up first.
-  const byMonth = new Map<string, { hsu: number | null; remote: number }>();
+  type Cell = { hsu: number | null; remote: number; inSet: number; abx: number; abxOf: number };
+  const byMonth = new Map<string, Cell>();
   for (const r of rows) {
     const m = r.month.slice(0, 7);
-    const cur = byMonth.get(m) ?? { hsu: null, remote: 0 };
-    if (r.institution_contacts !== null && r.institution_contacts !== undefined) cur.hsu = (cur.hsu ?? 0) + r.institution_contacts;
+    const cur = byMonth.get(m) ?? { hsu: null, remote: 0, inSet: 0, abx: 0, abxOf: 0 };
+    if (r.institution_contacts !== null && r.institution_contacts !== undefined) {
+      cur.hsu = (cur.hsu ?? 0) + r.institution_contacts;
+      if (r.institution_antibiotics !== null && r.institution_antibiotics !== undefined) {
+        cur.abx += r.institution_antibiotics;
+        cur.abxOf += r.institution_contacts;
+      }
+    }
     cur.remote += r.cases_total || 0;
+    cur.inSet += Math.max(0, (r.cases_total || 0) - (r.codes_outside_set || 0));
     byMonth.set(m, cur);
   }
   const months = [...byMonth.keys()].sort();
   const before = months.filter((m) => m < start).slice(-baselineMonths).filter((m) => byMonth.get(m)!.hsu !== null);
   const after = months.filter((m) => m >= start && byMonth.get(m)!.hsu !== null);
-  const mean = (ms: string[], pick: (v: { hsu: number | null; remote: number }) => number) =>
+  // Our own cases do not depend on Saga: every month from go-live that has
+  // any cases counts, so "before (Saga) vs after (Medalia)" works even before
+  // HSU has sent its own figures for the pilot months.
+  const remoteMonths = months.filter((m) => m >= start && byMonth.get(m)!.remote > 0);
+  const mean = (ms: string[], pick: (v: Cell) => number) =>
     ms.length ? ms.reduce((a, m) => a + pick(byMonth.get(m)!), 0) / ms.length : null;
 
   const years: number[] = [];
@@ -408,7 +427,12 @@ export function codeVolume(rows: MonthRow[], goLive: string | undefined, baselin
     expectedPerMonth: round(lastYear === null ? null : lastYear * (1 + (trend ?? 0))),
     pilotMonths: after.length,
     pilotPerMonth: round(mean(after, (v) => v.hsu ?? 0)),
-    remotePerMonth: round(mean(after, (v) => v.remote)),
+    remotePerMonth: round(mean(remoteMonths, (v) => v.remote)),
+    remoteInSetPerMonth: round(mean(remoteMonths, (v) => v.inSet)),
+    baselineAbxPct: (() => {
+      const b = before.reduce((a, m) => ({ x: a.x + byMonth.get(m)!.abx, of: a.of + byMonth.get(m)!.abxOf }), { x: 0, of: 0 });
+      return b.of ? Math.round((b.x / b.of) * 100) : null;
+    })(),
   };
 }
 
@@ -422,11 +446,11 @@ export const SCOPED_CASE_TYPES = erindi.filter(
 export function caseTypeRows(t: Totals) {
   return SCOPED_CASE_TYPES.map((e) => {
     const c = t.byType[e.slug] ?? { total: 0, resolved: 0, referred: 0 };
-    return { slug: e.slug, name: e.titleEn, c, rate: pct(c.resolved, c.total) };
+    return { slug: e.slug, name: e.title, c, rate: pct(c.resolved, c.total) };
   });
 }
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTHS = ["janúar", "febrúar", "mars", "apríl", "maí", "júní", "júlí", "ágúst", "september", "október", "nóvember", "desember"];
 
 export function monthName(iso: string): string {
   const [y, m] = iso.split("-").map(Number);

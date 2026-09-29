@@ -34,15 +34,15 @@ export type Gate = "form" | "clinician";
 export const GATES: { id: Gate; name: string; note: string }[] = [
   {
     id: "form",
-    name: "Stopped by the questionnaire",
+    name: "Stöðvað af spurningalistanum",
     note:
-      "Systematic and identical every time. This is the evidence that the safety net works — and the only answer to \"who decides the patient is suitable?\" when two of the four entry routes are not clinical staff.",
+      "Kerfisbundið og eins í hvert sinn. Þetta sýnir að öryggisnetið virkar. Það er líka eina svarið við spurningunni „hver metur hvort sjúklingurinn á heima hér?“ þegar tvær af fjórum leiðum inn í þjónustuna liggja ekki í gegnum heilbrigðisstarfsfólk.",
   },
   {
     id: "clinician",
-    name: "Turned away by the doctor",
+    name: "Vísað frá af lækni",
     note:
-      "Got past the form and a clinician stopped it. Expensive — the patient has already waited — and every one is arguably a case the questionnaire should have caught.",
+      "Komst í gegnum spurningalistann en læknir stöðvaði erindið. Þetta er dýrt, því sjúklingurinn hefur þegar beðið. Spurningalistinn hefði líklega átt að grípa hvert og eitt þessara erinda.",
   },
 ];
 
@@ -59,65 +59,65 @@ export type ExclusionReason = {
 export const EXCLUSION_REASONS: ExclusionReason[] = [
   {
     id: "acute",
-    name: "Acute or serious symptoms",
+    name: "Bráð eða alvarleg einkenni",
     expected: "form",
-    note: "The one that matters. Anything caught here by a clinician rather than the form is a near miss of the screen.",
+    note: "Þetta skiptir mestu. Ef læknir grípur erindið hér en ekki spurningalistinn er það næstum-atvik í skimuninni.",
   },
   {
     id: "needs-exam",
-    name: "Needs physical examination",
+    name: "Þarf skoðun",
     expected: "form",
-    note: "The commonest legitimate exclusion, and the boundary of what remote care can do.",
+    note: "Algengasta réttmæta ástæðan fyrir frávísun. Hér liggja mörk þess sem fjarþjónusta getur gert.",
   },
   {
     id: "needs-tests",
-    name: "Needs bloods or imaging",
+    name: "Þarf blóðprufu eða myndgreiningu",
     expected: "form",
-    note: "Distinct from examination: sometimes solvable by ordering the test rather than refusing the case.",
+    note: "Ekki það sama og skoðun. Stundum má leysa þetta með því að panta rannsóknina í stað þess að vísa erindinu frá.",
   },
   {
     id: "under-18",
-    name: "Under 18",
+    name: "Yngri en 18 ára",
     expected: "form",
-    note: "A hard rule, so anything reaching a clinician means the form is not asking or the answer was wrong.",
+    note: "Föst regla. Ef slíkt erindi kemst til læknis spyr spurningalistinn ekki rétt eða svarið var rangt.",
   },
   {
     id: "pregnancy",
-    name: "Pregnancy",
+    name: "Þungun",
     expected: "form",
-    note: "Excluding for some case types only, which makes it easy to get wrong in the form logic.",
+    note: "Útilokar aðeins sumar tegundir erinda. Því er auðvelt að gera villu í rökum spurningalistans.",
   },
   {
     id: "for-another",
-    name: "Case on behalf of another person",
+    name: "Erindi fyrir hönd annars",
     expected: "form",
-    note: "Identity and consent, not clinical risk — but it invalidates the record either way.",
+    note: "Snýst um auðkenni og samþykki, ekki klíníska áhættu. En skráningin verður ógild hvort sem er.",
   },
   {
     id: "medication-excluded",
-    name: "Medication not renewed remotely",
+    name: "Lyf sem er ekki endurnýjað í fjarþjónustu",
     expected: "form",
-    note: "A fixed list. If these reach a clinician the list is not wired into the form.",
+    note: "Fastur listi. Ef slík erindi komast til læknis er listinn ekki tengdur spurningalistanum.",
   },
   {
     id: "out-of-scope",
-    name: "Outside the service's scope",
+    name: "Utan við verksvið þjónustunnar",
     expected: "clinician",
-    note: "Expected here: judging whether a presentation fits eleven case types is exactly what a clinician is for.",
+    note: "Eðlilegt er að læknir grípi þetta. Að meta hvort vandinn passar í einn af ellefu erindaflokkum er einmitt hlutverk læknis.",
   },
   {
     id: "insufficient-info",
-    name: "Not enough information",
+    name: "Ónógar upplýsingar",
     expected: "clinician",
-    note: "A rising share suggests the questionnaire is not asking enough, and each one costs the patient a round trip.",
+    note: "Hækkandi hlutfall bendir til að spurningalistinn spyrji ekki nóg. Hvert slíkt erindi kostar sjúklinginn aukaferð.",
   },
   {
     id: "duplicate",
-    name: "Duplicate or already in hand",
+    name: "Tvískráð eða þegar í vinnslu",
     expected: "clinician",
-    note: "Administrative rather than clinical. Worth separating so it does not inflate the safety figures.",
+    note: "Stjórnsýslulegt, ekki klínískt. Rétt að telja þetta sér svo það blási ekki upp öryggistölurnar.",
   },
-  { id: "other", name: "Other", expected: "clinician", note: "Keep small. A large 'other' means the list needs a new category." },
+  { id: "other", name: "Annað", expected: "clinician", note: "Á að vera lítið. Ef „annað“ er stórt vantar nýjan flokk í listann." },
 ];
 
 export const REASON_BY_ID = Object.fromEntries(EXCLUSION_REASONS.map((r) => [r.id, r])) as Record<string, ExclusionReason>;
@@ -170,11 +170,11 @@ export function summarise(rows: ExclusionRow[]): ExclusionSummary {
 // month for the whole institution, and usually far fewer.
 
 export const REASON_COLUMNS = [
-  { name: "station", description: "Health centre, as the institution writes it." },
-  { name: "month", description: "yyyy-mm." },
-  { name: "gate", description: "form (questionnaire stopped them) or clinician (doctor turned them away)." },
-  { name: "reason", description: `One of: ${EXCLUSION_REASONS.map((r) => r.id).join(", ")}.` },
-  { name: "count", description: "How many, that month, at that gate, for that reason." },
+  { name: "station", description: "Heilsugæslustöð, rituð eins og stofnunin ritar hana." },
+  { name: "month", description: "áááá-mm." },
+  { name: "gate", description: "form (spurningalistinn stöðvaði erindið) eða clinician (læknir vísaði því frá)." },
+  { name: "reason", description: `Eitt af: ${EXCLUSION_REASONS.map((r) => r.id).join(", ")}.` },
+  { name: "count", description: "Fjöldi í þeim mánuði, við þetta skref, af þessari ástæðu." },
 ];
 
 export function reasonTemplate(): string {
@@ -194,12 +194,12 @@ export function parseReasons(text: string): ReasonParse {
   const issues: ReasonParse["issues"] = [];
   const rows: ReasonParse["rows"] = [];
   const lines = text.replace(/^﻿/, "").split(/\r?\n/).filter((l) => l.trim());
-  if (!lines.length) return { rows, issues: [{ line: 0, text: "The file is empty." }] };
+  if (!lines.length) return { rows, issues: [{ line: 0, text: "Skráin er tóm." }] };
 
   const sep = (lines[0].match(/;/g) || []).length > (lines[0].match(/,/g) || []).length ? ";" : ",";
   const header = lines[0].split(sep).map((h) => h.trim().toLowerCase());
   const missing = REASON_COLUMNS.map((c) => c.name).filter((c) => !header.includes(c));
-  if (missing.length) return { rows, issues: [{ line: 1, text: `Missing columns: ${missing.join(", ")}` }] };
+  if (missing.length) return { rows, issues: [{ line: 1, text: `Dálka vantar: ${missing.join(", ")}` }] };
 
   const at = (c: string) => header.indexOf(c);
   for (let i = 1; i < lines.length; i++) {
@@ -210,21 +210,21 @@ export function parseReasons(text: string): ReasonParse {
     const reason = (cells[at("reason")] ?? "").toLowerCase();
     const count = Number(cells[at("count")] ?? "");
 
-    if (!station) { issues.push({ line: i + 1, text: "Station missing." }); continue; }
+    if (!station) { issues.push({ line: i + 1, text: "Stöð vantar." }); continue; }
     const m = rawMonth.match(/^(\d{4})-(\d{2})/);
     if (!m || Number(m[2]) < 1 || Number(m[2]) > 12) {
-      issues.push({ line: i + 1, text: `Invalid month "${rawMonth}" — expected yyyy-mm with month 01–12.` });
+      issues.push({ line: i + 1, text: `Ógildur mánuður „${rawMonth}“. Á að vera áááá-mm, með mánuð 01–12.` });
       continue;
     }
     if (gate !== "form" && gate !== "clinician") {
-      issues.push({ line: i + 1, text: `Gate must be "form" or "clinician", got "${cells[at("gate")]}".` });
+      issues.push({ line: i + 1, text: `gate á að vera „form“ eða „clinician“, en er „${cells[at("gate")]}“.` });
       continue;
     }
     if (!REASON_BY_ID[reason]) {
-      issues.push({ line: i + 1, text: `Unknown reason "${reason}". Allowed: ${EXCLUSION_REASONS.map((r) => r.id).join(", ")}.` });
+      issues.push({ line: i + 1, text: `Óþekkt ástæða „${reason}“. Leyfilegt: ${EXCLUSION_REASONS.map((r) => r.id).join(", ")}.` });
       continue;
     }
-    if (!Number.isFinite(count)) { issues.push({ line: i + 1, text: `"${cells[at("count")]}" is not a number.` }); continue; }
+    if (!Number.isFinite(count)) { issues.push({ line: i + 1, text: `„${cells[at("count")]}“ er ekki tala.` }); continue; }
 
     rows.push({ station, month: `${m[1]}-${m[2]}-01`, gate, reason, count: Math.round(count) });
   }

@@ -6,7 +6,7 @@
 // module off and its fields, its documents, its steps and its numbers all go.
 
 import { ALL_MODULES, MODULE_BY_ID, CORE_MODULE_IDS } from "./modules";
-import type { Assumptions, Category, DocSpec, Field, MetricValue, Module, Programme, Source, Step } from "./types";
+import type { Assumptions, Category, DocSpec, Field, MetricValue, Module, Programme, Source, Step, Timing } from "./types";
 import { CATEGORIES } from "./types";
 import type { Roster, Totals } from "./totals";
 
@@ -73,6 +73,38 @@ export function fieldsBySource(p: Programme): { source: Source; fields: (Field &
   }
   const order: Source[] = ["medalia", "institution", "survey", "internal", "study", "derived"];
   return order.filter((s) => bySource.get(s)?.length).map((s) => ({ source: s, fields: bySource.get(s)! }));
+}
+
+/** Where a field has no explicit timing, its source decides: anything asked
+ *  of a patient or coded in a record system is prospective, anything already
+ *  sitting in Saga can be pulled afterwards. */
+export function fieldTiming(f: Field): Timing {
+  if (f.when) return f.when;
+  if (f.source === "institution" || f.source === "derived") return "later";
+  return "day1";
+}
+
+export type TimingGroup = { when: Timing; modules: { module: Module; fields: Field[] }[] };
+
+/** The enabled fields grouped by when they have to be captured, and inside
+ *  that by module — the "what must be ready on day one" view. */
+export function fieldsByTiming(p: Programme): TimingGroup[] {
+  const order: Timing[] = ["day1", "later", "end"];
+  const seen = new Set<string>();
+  const groups = new Map<Timing, Map<string, { module: Module; fields: Field[] }>>();
+  for (const m of enabledModules(p)) {
+    for (const f of m.fields) {
+      if (seen.has(f.key as string)) continue;
+      seen.add(f.key as string);
+      const w = fieldTiming(f);
+      const g = groups.get(w) ?? new Map();
+      const entry = g.get(m.id) ?? { module: m, fields: [] };
+      entry.fields.push(f);
+      g.set(m.id, entry);
+      groups.set(w, g);
+    }
+  }
+  return order.filter((w) => groups.get(w)?.size).map((w) => ({ when: w, modules: [...groups.get(w)!.values()] }));
 }
 
 export function requiredDocuments(p: Programme): { module: Module; doc: DocSpec }[] {
@@ -171,9 +203,9 @@ export function progress(r: ModuleReadiness[]): Progress {
 }
 
 export const EFFORT_LABEL: Record<Module["effort"], string> = {
-  low: "Low effort",
-  medium: "Some setup",
-  high: "Significant work",
+  low: "Lítil vinna",
+  medium: "Nokkur undirbúningur",
+  high: "Mikil vinna",
 };
 
 export const CATEGORY_BY_ID = Object.fromEntries(CATEGORIES.map((c) => [c.id, c])) as Record<Category, (typeof CATEGORIES)[number]>;

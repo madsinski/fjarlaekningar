@@ -11,33 +11,41 @@
 // A blank field means "not measured" and is stored as null, not zero. "No
 // serious incidents" and "we did not look" are different statements.
 
+import Link from "next/link";
 import { useRef, useState } from "react";
 import { CheckCircle2, Download, Loader2, Save, Upload } from "lucide-react";
 import { fieldsBySource } from "@/lib/evaluation/programme";
+import { SURVEY_FIELDS } from "@/lib/evaluation/surveys";
+import type { ImportConfig } from "@/lib/evaluation/medalia";
+import Importers from "./Importers";
 import { COLUMNS, parse, template, type ImportIssue } from "@/lib/evaluation/import";
 import { EXCLUSION_REASONS, GATES, REASON_COLUMNS, parseReasons, reasonTemplate } from "@/lib/evaluation/exclusions";
 import { SCOPED_CASE_TYPES, monthName, lastMonths, type MonthRow } from "@/lib/evaluation/totals";
 import { SOURCES, type Programme } from "@/lib/evaluation/types";
-import { SOURCE_CHIP, card, input } from "./ui";
+import { SOURCE_CHIP, card, input, pl } from "./ui";
+
+// Display names for field units; the unit values themselves are keys.
+const UNIT_LABEL: Record<string, string> = { percent: "%", minutes: "mínútur", hours: "klst.", isk: "kr." };
 
 function NumberField({
-  label, help, value, onChange, nullable, unit,
+  label, help, value, onChange, nullable, unit, readOnly,
 }: {
   label: string; help?: string; value: number | null;
-  onChange: (v: number | null) => void; nullable?: boolean; unit?: string;
+  onChange: (v: number | null) => void; nullable?: boolean; unit?: string; readOnly?: boolean;
 }) {
   return (
     <label className="block">
       <span className="mb-1 block text-xs font-medium text-slate-700">
         {label}
-        {unit && unit !== "count" && <span className="ml-1 font-normal text-slate-400">({unit})</span>}
+        {unit && unit !== "count" && <span className="ml-1 font-normal text-slate-400">({UNIT_LABEL[unit] ?? unit})</span>}
       </span>
       <input
         type="number"
         min={0}
-        className={input}
+        className={`${input} ${readOnly ? "bg-slate-50 text-slate-500" : ""}`}
+        readOnly={readOnly}
         value={value === null || value === undefined ? "" : value}
-        placeholder={nullable ? "not measured" : "0"}
+        placeholder={readOnly ? "engin svör" : nullable ? "ekki mælt" : "0"}
         onChange={(e) => {
           const raw = e.target.value;
           if (raw === "") return onChange(nullable ? null : 0);
@@ -53,6 +61,7 @@ function NumberField({
 export default function DataEntry({
   programme, draft, setDraft, stations, station, setStation, month, setMonth,
   onSave, onImport, onImportReasons, saving, canEdit, institution,
+  importConfig, onSaveImportConfig, onSaveSaga, onSaveMedalia,
 }: {
   programme: Programme;
   draft: MonthRow | null;
@@ -66,6 +75,10 @@ export default function DataEntry({
   saving: boolean;
   canEdit: boolean;
   institution: string;
+  importConfig: ImportConfig;
+  onSaveImportConfig: (c: ImportConfig) => Promise<void>;
+  onSaveSaga: (rows: Partial<MonthRow>[]) => Promise<void>;
+  onSaveMedalia: (rows: Partial<MonthRow>[]) => Promise<void>;
 }) {
   const [tab, setTab] = useState<"manual" | "import">("import");
   const [rows, setRows] = useState<MonthRow[]>([]);
@@ -82,7 +95,7 @@ export default function DataEntry({
     const blob = new Blob([template()], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "medalia-monthly-export-template.csv";
+    a.download = "snidmat-medalia-manadargogn.csv";
     a.click();
     URL.revokeObjectURL(a.href);
   };
@@ -90,7 +103,7 @@ export default function DataEntry({
   return (
     <div className="space-y-4">
       <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
-        {([["import", "Import from Medalia"], ["manual", "Enter by hand"]] as const).map(([id, label]) => (
+        {([["import", "Sækja úr Medalia"], ["manual", "Skrá handvirkt"]] as const).map(([id, label]) => (
           <button
             key={id}
             onClick={() => setTab(id)}
@@ -105,28 +118,38 @@ export default function DataEntry({
 
       {tab === "import" && (
         <>
+          <Importers
+            config={importConfig}
+            stations={stations}
+            institution={institution}
+            canEdit={canEdit}
+            saving={saving}
+            onSaveConfig={onSaveImportConfig}
+            onSaveSaga={onSaveSaga}
+            onSaveMedalia={onSaveMedalia}
+          />
+          <p className="pt-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Varaleiðir</p>
           <div className={`${card} p-4`}>
-            <h2 className="text-base font-bold text-slate-900">Monthly file from Medalia</h2>
+            <h2 className="text-base font-bold text-slate-900">Mánaðarskrá (CSV)</h2>
             <div className="mt-2 max-w-3xl space-y-2 text-sm leading-relaxed text-slate-600">
               <p>
-                <strong className="text-slate-800">One line per station × month × case type.</strong> The finest
-                grain that is still entirely non-identifying, and it delivers both things in one file: the
-                per-case-type breakdown and the station totals. Nine stations by thirteen case types is 117 lines a
-                month for the whole of HSU.
+                <strong className="text-slate-800">Ein lína fyrir hverja stöð, mánuð og tegund erindis.</strong>{" "}
+                Þannig fást bæði tölur eftir erindaflokkum og heildartölur stöðva úr einni skrá. Fyrir allt HSU
+                eru þetta 117 línur á mánuði (9 stöðvar × 13 erindaflokkar).
               </p>
               <p>
-                <strong className="text-slate-800">No personal data — by design, not by caution.</strong> Every
-                line is a count, not a person. No national ID, no date (a month is precise enough and a date at a
-                small station is identifying), no free text, no age band, no sex. Response time is a duration in
-                minutes, never a timestamp. There is nothing in the file to protect.
+                <strong className="text-slate-800">Engar persónuupplýsingar.</strong> Hver lína er fjöldatala,
+                ekki einstaklingur. Engin kennitala, engin dagsetning, enginn frjáls texti, hvorki aldur né kyn.
+                Mánuður dugar, því dagsetning getur bent á einstakling á lítilli stöð. Svartími er gefinn í
+                mínútum, aldrei sem tímasetning.
               </p>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               <button onClick={downloadTemplate} className="flex items-center gap-1.5 rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-900">
-                <Download className="h-4 w-4" /> Download template
+                <Download className="h-4 w-4" /> Sækja sniðmát
               </button>
               <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
-                <Upload className="h-4 w-4" /> Choose file
+                <Upload className="h-4 w-4" /> Velja skrá
                 <input
                   ref={fileRef}
                   type="file"
@@ -145,13 +168,13 @@ export default function DataEntry({
 
           {(rows.length > 0 || issues.length > 0) && (
             <div className={`${card} p-4`}>
-              <h3 className="font-semibold text-slate-900">{lines} lines read → {rows.length} station-months</h3>
+              <h3 className="font-semibold text-slate-900">{lines} {pl(lines, "lína lesin", "línur lesnar")} → {rows.length} {pl(rows.length, "stöðvarmánuður", "stöðvarmánuðir")}</h3>
               {issues.length > 0 && (
                 <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                  <p className="text-sm font-semibold text-amber-900">{issues.length} issue{issues.length === 1 ? "" : "s"}</p>
+                  <p className="text-sm font-semibold text-amber-900">{issues.length} {pl(issues.length, "athugasemd", "athugasemdir")}</p>
                   <ul className="mt-1 space-y-0.5 text-xs text-amber-800">
-                    {issues.slice(0, 12).map((v, i) => <li key={i}>{v.line ? `Line ${v.line}: ` : ""}{v.text}</li>)}
-                    {issues.length > 12 && <li>… and {issues.length - 12} more</li>}
+                    {issues.slice(0, 12).map((v, i) => <li key={i}>{v.line ? `Lína ${v.line}: ` : ""}{v.text}</li>)}
+                    {issues.length > 12 && <li>… og {issues.length - 12} í viðbót</li>}
                   </ul>
                 </div>
               )}
@@ -161,20 +184,20 @@ export default function DataEntry({
                     {rows.map((r) => (
                       <li key={`${r.station}${r.month}`} className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-1.5">
                         <span className="text-slate-700">{r.station} · {monthName(r.month)}</span>
-                        <span className="tabular-nums text-slate-500">{r.cases_total} cases</span>
+                        <span className="tabular-nums text-slate-500">{r.cases_total} erindi</span>
                       </li>
                     ))}
                   </ul>
                   <p className="mt-2 text-[11px] text-slate-500">
-                    The import writes only the Medalia columns. Figures from the institution and from surveys stay
-                    exactly as they are.
+                    Innlesturinn skrifar aðeins í dálkana frá Medalia. Tölur frá HSU og úr könnunum haldast
+                    óbreyttar.
                   </p>
                   <button
                     onClick={async () => { await onImport(rows); setRows([]); setIssues([]); setLines(0); if (fileRef.current) fileRef.current.value = ""; }}
                     disabled={saving || !canEdit}
                     className="mt-3 flex items-center gap-1.5 rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:opacity-50"
                   >
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Import
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Lesa inn
                   </button>
                 </>
               )}
@@ -182,19 +205,18 @@ export default function DataEntry({
           )}
 
           <div className={`${card} p-4`}>
-            <h3 className="font-semibold text-slate-900">Who was turned away, and why</h3>
+            <h3 className="font-semibold text-slate-900">Hverjum var vísað frá og hvers vegna</h3>
             <div className="mt-2 max-w-3xl space-y-2 text-sm leading-relaxed text-slate-600">
               <p>
-                A second, much smaller file: <strong className="text-slate-800">one line per station × month ×
-                gate × reason</strong>. Kept separate because putting eleven reasons across two gates into the
-                monthly file would add twenty-two columns to every line, and at its own grain this is a couple of
-                hundred lines a month at most.
+                Önnur og mun minni skrá: <strong className="text-slate-800">ein lína fyrir hverja stöð, mánuð,
+                síu og ástæðu</strong>. Hún er höfð sér svo mánaðarskráin fái ekki 22 aukadálka. Þetta eru í
+                mesta lagi nokkur hundruð línur á mánuði.
               </p>
               <p>
-                Two gates say different things. The <strong className="text-slate-800">questionnaire</strong> is
-                cheap and identical every time. A <strong className="text-slate-800">doctor</strong> turning
-                someone away is expensive — the patient has already waited — and each one is arguably a case the
-                form should have caught.
+                Síurnar tvær segja ólíka hluti. <strong className="text-slate-800">Spurningalistinn</strong> kostar
+                lítið og er alltaf eins. Þegar <strong className="text-slate-800">læknir</strong> vísar frá er
+                það dýrt, því sjúklingurinn hefur þegar beðið. Spurningalistinn hefði líklega átt að grípa hvert
+                slíkt erindi.
               </p>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -203,16 +225,16 @@ export default function DataEntry({
                   const blob = new Blob([reasonTemplate()], { type: "text/csv;charset=utf-8" });
                   const a = document.createElement("a");
                   a.href = URL.createObjectURL(blob);
-                  a.download = "exclusion-reasons-template.csv";
+                  a.download = "snidmat-astaedur-fravisunar.csv";
                   a.click();
                   URL.revokeObjectURL(a.href);
                 }}
                 className="flex items-center gap-1.5 rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-900"
               >
-                <Download className="h-4 w-4" /> Reasons template
+                <Download className="h-4 w-4" /> Sniðmát fyrir ástæður
               </button>
               <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
-                <Upload className="h-4 w-4" /> Choose reasons file
+                <Upload className="h-4 w-4" /> Velja skrá með ástæðum
                 <input
                   ref={reasonRef}
                   type="file"
@@ -230,10 +252,10 @@ export default function DataEntry({
 
             {(reasonRows.length > 0 || reasonIssues.length > 0) && (
               <div className="mt-3 rounded-lg border border-slate-200 p-3">
-                <p className="text-sm font-semibold text-slate-800">{reasonRows.length} reason rows read</p>
+                <p className="text-sm font-semibold text-slate-800">{reasonRows.length} {pl(reasonRows.length, "lína með ástæðum lesin", "línur með ástæðum lesnar")}</p>
                 {reasonIssues.length > 0 && (
                   <ul className="mt-1 space-y-0.5 text-xs text-amber-800">
-                    {reasonIssues.slice(0, 8).map((v, i) => <li key={i}>{v.line ? `Line ${v.line}: ` : ""}{v.text}</li>)}
+                    {reasonIssues.slice(0, 8).map((v, i) => <li key={i}>{v.line ? `Lína ${v.line}: ` : ""}{v.text}</li>)}
                   </ul>
                 )}
                 {reasonRows.length > 0 && (
@@ -242,7 +264,7 @@ export default function DataEntry({
                     disabled={saving || !canEdit}
                     className="mt-2 flex items-center gap-1.5 rounded-lg bg-cyan-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:opacity-50"
                   >
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Import reasons
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Lesa inn ástæður
                   </button>
                 )}
               </div>
@@ -262,14 +284,14 @@ export default function DataEntry({
             </div>
 
             <p className="mt-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-              The fixed reason list — taken from the service&rsquo;s own triage rules
+              Fastur listi yfir ástæður, tekinn úr flokkunarreglum þjónustunnar
             </p>
             <ul className="mt-1 grid gap-x-4 gap-y-1 sm:grid-cols-2">
               {EXCLUSION_REASONS.map((r) => (
                 <li key={r.id} className="text-[11px] leading-snug text-slate-600">
                   <span className="font-mono text-cyan-800">{r.id}</span> — {r.name}{" "}
                   <span className="text-slate-400">
-                    (normally {GATES.find((g) => g.id === r.expected)!.name.toLowerCase()})
+                    (yfirleitt: {GATES.find((g) => g.id === r.expected)!.name.toLowerCase()})
                   </span>
                 </li>
               ))}
@@ -277,7 +299,7 @@ export default function DataEntry({
           </div>
 
           <div className={`${card} p-4`}>
-            <h3 className="font-semibold text-slate-900">Columns — this is the specification to send Medalia</h3>
+            <h3 className="font-semibold text-slate-900">Dálkar: forskriftin sem Medalia fær</h3>
             <div className="mt-2 overflow-x-auto">
               <table className="w-full text-sm">
                 <tbody>
@@ -286,7 +308,7 @@ export default function DataEntry({
                       <td className="py-1.5 pr-3 font-mono text-xs text-cyan-800">{c.name}</td>
                       <td className="py-1.5 text-xs leading-snug text-slate-600">
                         {c.description}
-                        {c.optional && <span className="ml-1 text-slate-400">(optional)</span>}
+                        {c.optional && <span className="ml-1 text-slate-400">(valkvætt)</span>}
                       </td>
                     </tr>
                   ))}
@@ -294,7 +316,7 @@ export default function DataEntry({
               </table>
             </div>
             <p className="mt-3 text-xs leading-relaxed text-slate-500">
-              Case-type slugs: {SCOPED_CASE_TYPES.map((e) => e.slug).join(", ")}, almenn-laeknisthjonusta,
+              Auðkenni erindaflokka: {SCOPED_CASE_TYPES.map((e) => e.slug).join(", ")}, almenn-laeknisthjonusta,
               laeknisvottord.
             </p>
           </div>
@@ -305,13 +327,13 @@ export default function DataEntry({
         <>
           <div className="flex flex-wrap items-end gap-3">
             <label className="block">
-              <span className="mb-1 block text-xs font-medium text-slate-700">Station</span>
+              <span className="mb-1 block text-xs font-medium text-slate-700">Stöð</span>
               <select className={input} value={station} onChange={(e) => setStation(e.target.value)}>
                 {stations.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </label>
             <label className="block">
-              <span className="mb-1 block text-xs font-medium text-slate-700">Month</span>
+              <span className="mb-1 block text-xs font-medium text-slate-700">Mánuður</span>
               <select className={input} value={month} onChange={(e) => setMonth(e.target.value)}>
                 {lastMonths(18).slice().reverse().map((m) => <option key={m} value={m}>{monthName(m)}</option>)}
               </select>
@@ -321,13 +343,13 @@ export default function DataEntry({
               disabled={saving || !canEdit}
               className="flex items-center gap-1.5 rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:opacity-50"
             >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Vista
             </button>
           </div>
 
           <p className="max-w-3xl text-sm leading-relaxed text-slate-600">
-            These fields come from the modules you selected — remove a module and its fields go with it. A blank
-            field means <em>not measured</em> and is stored as such, which is not the same as zero.
+            Reitirnir ráðast af rannsóknarþáttunum sem þú valdir. Auður reitur þýðir <em>ekki mælt</em>, sem
+            er ekki það sama og núll.
           </p>
 
           {groups.map(({ source, fields }) => (
@@ -335,10 +357,17 @@ export default function DataEntry({
               <div className="mb-3 flex flex-wrap items-baseline gap-2">
                 <h3 className="font-semibold text-slate-900">{SOURCES[source].name}</h3>
                 <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${SOURCE_CHIP[source]}`}>
-                  {fields.length} field{fields.length === 1 ? "" : "s"}
+                  {fields.length} {pl(fields.length, "reitur", "reitir")}
                 </span>
                 <span className="text-xs text-slate-500">{SOURCES[source].who}</span>
               </div>
+              {fields.some((f) => SURVEY_FIELDS.has(f.key)) && (
+                <p className="-mt-1 mb-3 text-xs leading-relaxed text-slate-500">
+                  Gráu reitirnir eru reiknaðir sjálfkrafa úr svörum í{" "}
+                  <Link href="/admin/surveys" className="font-medium text-cyan-700 hover:underline">könnunum</Link> og
+                  uppfærast um leið og ný svör berast.
+                </p>
+              )}
               <div className="grid gap-3 sm:grid-cols-3">
                 {fields.map((f) => (
                   <NumberField
@@ -347,6 +376,7 @@ export default function DataEntry({
                     help={f.help}
                     unit={f.unit}
                     nullable={f.nullable}
+                    readOnly={SURVEY_FIELDS.has(f.key)}
                     value={(draft[f.key] as number | null) ?? (f.nullable ? null : 0)}
                     onChange={(v) => setDraft({ [f.key]: f.nullable ? v : v ?? 0 } as Partial<MonthRow>)}
                   />
@@ -356,11 +386,11 @@ export default function DataEntry({
           ))}
 
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-slate-700">Note</span>
+            <span className="mb-1 block text-xs font-medium text-slate-700">Athugasemd</span>
             <textarea
               className={`${input} min-h-[70px]`}
               value={draft.note}
-              placeholder="What explains these figures, and would otherwise be forgotten by the next quarterly report."
+              placeholder="Hvað skýrir þessar tölur? Skráðu það sem annars gleymist fyrir næstu skýrslu."
               onChange={(e) => setDraft({ note: e.target.value })}
             />
           </label>

@@ -18,7 +18,7 @@ import { CheckCircle2, Clock, FileText, Gauge } from "lucide-react";
 import { ALL_MODULES } from "@/lib/evaluation/modules";
 import { enabledModules, EFFORT_LABEL } from "@/lib/evaluation/programme";
 import { CATEGORIES, SOURCES, type Category, type Horizon, type Module, type Programme } from "@/lib/evaluation/types";
-import { ACCENT, Chip, SOURCE_CHIP, card, Plain } from "./ui";
+import { ACCENT, Chip, SOURCE_CHIP, card, Plain, pl } from "./ui";
 
 /** One catalogue entry. At module scope rather than inline: a component
  *  created during render is a new type every time, which remounts every card
@@ -33,11 +33,11 @@ function Entry({ m, inProgramme }: { m: Module; inProgramme: boolean }) {
           <h3 className="text-sm font-bold text-slate-900">{m.name}</h3>
           {inProgramme && (
             <Chip className="bg-emerald-100 text-emerald-800">
-              <CheckCircle2 className="mr-0.5 h-2.5 w-2.5" /> In programme
+              <CheckCircle2 className="mr-0.5 h-2.5 w-2.5" /> Í rannsóknaráætlun
             </Chip>
           )}
-          {m.core && <Chip className="bg-slate-800 text-white">Core</Chip>}
-          {m.horizon === "later" && <Chip className="bg-slate-100 text-slate-600">Later</Chip>}
+          {m.core && <Chip className="bg-slate-800 text-white">Kjarni</Chip>}
+          {m.horizon === "later" && <Chip className="bg-slate-100 text-slate-600">Síðar</Chip>}
           <Chip className="bg-slate-100 text-slate-600">
             <Gauge className="mr-0.5 h-2.5 w-2.5" /> {EFFORT_LABEL[m.effort]}
           </Chip>
@@ -47,57 +47,57 @@ function Entry({ m, inProgramme }: { m: Module; inProgramme: boolean }) {
         <p className={`mt-0.5 text-xs font-medium ${a.text}`}><Plain>{m.benefit}</Plain></p>
 
         <div className={`mt-2.5 rounded-lg ${a.soft} px-3 py-2`}>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">The claim it earns</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Hvað má fullyrða</p>
           <p className="mt-0.5 text-xs leading-relaxed text-slate-700"><Plain>{m.claim}</Plain></p>
         </div>
 
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Why it is worth doing</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Hvers vegna þetta skiptir máli</p>
             <p className="mt-0.5 text-xs leading-relaxed text-slate-600"><Plain>{m.rationale}</Plain></p>
           </div>
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">What it cannot show</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Takmörkun</p>
             <p className="mt-0.5 text-xs leading-relaxed text-slate-600"><Plain>{m.caveat}</Plain></p>
           </div>
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-slate-100 pt-2.5 text-[11px] text-slate-500">
           <span className="flex flex-wrap items-center gap-1">
-            Data from:
+            Gögn frá:
             {m.sources.map((s) => (
               <span key={s} className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${SOURCE_CHIP[s]}`}>
                 {SOURCES[s].name}
               </span>
             ))}
           </span>
-          <span><strong className="font-semibold text-slate-700">{m.metrics.length}</strong> metric{m.metrics.length === 1 ? "" : "s"}</span>
-          <span><strong className="font-semibold text-slate-700">{m.fields.length}</strong> field{m.fields.length === 1 ? "" : "s"}</span>
-          <span><strong className="font-semibold text-slate-700">{m.protocol.length}</strong> step{m.protocol.length === 1 ? "" : "s"}</span>
+          <span><strong className="font-semibold text-slate-700">{m.metrics.length}</strong> {pl(m.metrics.length, "mælikvarði", "mælikvarðar")}</span>
+          <span><strong className="font-semibold text-slate-700">{m.fields.length}</strong> {pl(m.fields.length, "reitur", "reitir")}</span>
+          <span><strong className="font-semibold text-slate-700">{m.protocol.length}</strong> skref</span>
           {m.documents.length > 0 && (
             <span className="flex items-center gap-1">
-              <FileText className="h-3 w-3" /> {m.documents.length} document{m.documents.length === 1 ? "" : "s"}
+              <FileText className="h-3 w-3" /> {m.documents.length} {pl(m.documents.length, "skjal", "skjöl")}
             </span>
           )}
           {m.protocol.some((s) => s.timeCritical) && (
             <span className="flex items-center gap-1 font-medium text-rose-600">
-              <Clock className="h-3 w-3" /> has time-critical steps
+              <Clock className="h-3 w-3" /> skref sem mega ekki bíða
             </span>
           )}
           {m.requires?.length && (
             <span className="text-slate-500">
-              needs {m.requires.map((r) => ALL_MODULES.find((x) => x.id === r)?.name ?? r).join(", ")}
+              krefst: {m.requires.map((r) => ALL_MODULES.find((x) => x.id === r)?.name ?? r).join(", ")}
             </span>
           )}
         </div>
 
         <details className="mt-2">
           <summary className="cursor-pointer text-[11px] font-medium text-slate-500 hover:text-slate-800">
-            What it produces and what it asks of you
+            Hvað þátturinn skilar og hvað hann kallar á
           </summary>
           <div className="mt-2 grid gap-3 sm:grid-cols-2">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Metrics</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Mælikvarðar</p>
               <ul className="mt-0.5 space-y-1">
                 {m.metrics.map((x) => (
                   <li key={x.id} className="text-[11px] leading-relaxed text-slate-600">
@@ -107,12 +107,12 @@ function Entry({ m, inProgramme }: { m: Module; inProgramme: boolean }) {
               </ul>
             </div>
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Protocol</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Verklag</p>
               <ol className="mt-0.5 space-y-1">
                 {m.protocol.map((s, i) => (
                   <li key={i} className="text-[11px] leading-relaxed text-slate-600">
                     {i + 1}. {s.text}
-                    {s.timeCritical && <span className="ml-1 font-semibold text-rose-600">time-critical</span>}
+                    {s.timeCritical && <span className="ml-1 font-semibold text-rose-600">má ekki bíða</span>}
                   </li>
                 ))}
               </ol>
@@ -142,20 +142,20 @@ export default function Library({ programme }: { programme: Programme }) {
   return (
     <div className="space-y-4">
       <div className={`${card} p-4`}>
-        <h2 className="text-base font-bold text-slate-900">Module library</h2>
+        <h2 className="text-base font-bold text-slate-900">Safn rannsóknarþátta</h2>
         <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-600">
-          Everything that could be measured, whether or not it is in the programme. {counts.total} modules —{" "}
-          {counts.now} worth doing in the pilot year, {counts.later} that need groundwork first and are better
-          suited to a second site, a publication or a tender.
+          Allt sem hægt væri að mæla, hvort sem það er í rannsóknaráætluninni eða ekki. Rannsóknarþættirnir eru{" "}
+          {counts.total}. {counts.now} henta á fyrsta ári tilraunaverkefnisins. {counts.later} þurfa meiri
+          undirbúning og henta betur á næstu stöð, í grein eða í útboð.
         </p>
         <p className="mt-2 text-xs leading-relaxed text-slate-500">
-          Each entry gives what it measures, what you practically get, the argument for it, and — in the same
-          space — what it cannot show. Print this or send it ahead of the review meeting.
+          Hver færsla segir hvað er mælt, hvað fæst út úr því, hvers vegna það skiptir máli og hvað það getur
+          ekki sýnt. Prentaðu safnið eða sendu það út fyrir yfirferðarfund.
         </p>
 
         <div className="mt-3 flex flex-wrap gap-2">
           <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
-            {([["all", "All"], ["now", "Do now"], ["later", "Later"]] as const).map(([id, label]) => (
+            {([["all", "Allt"], ["now", "Núna"], ["later", "Síðar"]] as const).map(([id, label]) => (
               <button
                 key={id}
                 onClick={() => setHorizon(id)}
@@ -174,7 +174,7 @@ export default function Library({ programme }: { programme: Programme }) {
                 category === "all" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              Every category
+              Allir flokkar
             </button>
             {CATEGORIES.map((c) => (
               <button
@@ -194,13 +194,12 @@ export default function Library({ programme }: { programme: Programme }) {
       {shown.some((m) => m.meta) && (
         <section>
           <div className="mb-2 flex flex-wrap items-baseline gap-2">
-            <h2 className="text-lg font-bold text-slate-900">How the evaluation is run</h2>
-            <span className="text-sm text-slate-500">Not an outcome</span>
+            <h2 className="text-lg font-bold text-slate-900">Framkvæmd matsins</h2>
+            <span className="text-sm text-slate-500">Ekki niðurstaða</span>
           </div>
           <p className="mb-3 max-w-3xl text-xs leading-relaxed text-slate-500">
-            These govern what the figures are allowed to mean rather than measuring the service, so they carry
-            protocol steps and documents like any other module but stay off the results dashboard — where a
-            design would otherwise displace the headline of whatever category it sat under.
+            Þessir þættir mæla ekki þjónustuna heldur ráða því hvað tölurnar mega segja. Þeir hafa verklag og
+            skjöl eins og aðrir rannsóknarþættir en birtast ekki á mælaborðinu.
           </p>
           <div className="space-y-3">
             {shown.filter((m) => m.meta).map((m) => (
@@ -217,7 +216,7 @@ export default function Library({ programme }: { programme: Programme }) {
             <div className="mb-2 flex flex-wrap items-baseline gap-2">
               <h2 className="text-lg font-bold text-slate-900">{cat.name}</h2>
               <span className="text-sm text-slate-500">{cat.question}</span>
-              {cat.gate && <Chip className="bg-slate-800 text-white">Gate</Chip>}
+              {cat.gate && <Chip className="bg-slate-800 text-white">Skilyrði</Chip>}
             </div>
             <p className="mb-3 max-w-3xl text-xs leading-relaxed text-slate-500"><Plain>{cat.note}</Plain></p>
 

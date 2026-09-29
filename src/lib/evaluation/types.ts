@@ -22,28 +22,28 @@ export type Category = "patient" | "system" | "safety" | "scalability";
 export const CATEGORIES: { id: Category; name: string; question: string; gate?: boolean; note: string }[] = [
   {
     id: "patient",
-    name: "For the patient",
-    question: "Does the service work for the patient?",
-    note: "Asked of the patient directly, at day 0 and day 7, alongside what Medalia records by itself. The counterfactual question is the one to watch: it is the first sign of whether the service replaces other care or creates new demand.",
+    name: "Fyrir sjúklinginn",
+    question: "Virkar þjónustan fyrir sjúklinginn?",
+    note: "Sjúklingurinn er spurður beint, á degi 0 og á degi 7. Við það bætist það sem Medalia skráir sjálfkrafa. Fylgstu sérstaklega með spurningunni um hvað sjúklingurinn hefði annars gert. Hún sýnir fyrst hvort þjónustan kemur í stað annarrar þjónustu eða býr til nýja eftirspurn.",
   },
   {
     id: "system",
-    name: "For the health system",
-    question: "Does the service work for the health system?",
-    note: "What HSU is buying. Cases handled in full remotely, fewer diagnosis codes at the health centre against a three-year baseline from Saga, and whether the staff want to keep it.",
+    name: "Fyrir heilbrigðiskerfið",
+    question: "Virkar þjónustan fyrir heilbrigðiskerfið?",
+    note: "Þetta er það sem HSU kaupir. Erindi sem eru afgreidd að fullu í fjarþjónustu og færri greiningarkóðar á heilsugæslunni, borið saman við þriggja ára baseline úr Sögu. Loks hvort starfsfólkið vill halda þjónustunni.",
   },
   {
     id: "safety",
-    name: "Safety",
-    question: "Is the service safe?",
+    name: "Öryggi",
+    question: "Er þjónustan örugg?",
     gate: true,
-    note: "The one thing that cannot be traded off. A great resolution rate alongside one serious incident is a failed project — no good number anywhere else makes up for it. Everything else on this page is better-or-worse; this is pass-or-fail.",
+    note: "Þetta eina má aldrei gefa eftir. Hátt hlutfall afgreiddra erinda dugar ekki ef eitt alvarlegt atvik verður. Þá hefur verkefnið mistekist og engin góð tala annars staðar bætir það upp. Allt annað á síðunni er betra eða verra. Hér er svarið bara já eða nei. Öryggi er skilyrði, ekki kvarði.",
   },
   {
     id: "scalability",
-    name: "Can we repeat it?",
-    question: "Could another health centre run this too?",
-    note: "The reason the pilot exists. This decides whether you go to the next station — not whether this one worked. A service nobody will staff does not transfer, however good the patient numbers are.",
+    name: "Yfirfærsla á aðrar stöðvar",
+    question: "Gæti önnur heilsugæsla gert þetta líka?",
+    note: "Þetta er ástæðan fyrir tilraunaverkefninu. Hér ræðst hvort farið er á næstu stöð, ekki hvort þessi stöð gekk vel. Þjónusta sem enginn vill manna flyst ekki annað, sama hve góðar tölurnar frá sjúklingum eru.",
   },
 ];
 
@@ -51,12 +51,12 @@ export const CATEGORIES: { id: Category; name: string; question: string; gate?: 
 export type Source = "medalia" | "institution" | "survey" | "internal" | "study" | "derived";
 
 export const SOURCES: Record<Source, { name: string; who: string }> = {
-  medalia: { name: "Medalia", who: "JSON export from our record system, at 6 and 12 months" },
-  institution: { name: "HSU (Saga)", who: "CSV export from Saga, HSU's record system — the baseline and the 7-day review" },
-  survey: { name: "Survey", who: "Patient survey at day 0 and day 7, HSU staff survey at the end of the period" },
-  internal: { name: "Our systems", who: "Rota, workstation — automatic" },
-  study: { name: "Field study", who: "A one-off measurement someone has to run" },
-  derived: { name: "Derived", who: "Calculated from other figures plus an assumption" },
+  medalia: { name: "Medalia", who: "Gagnaútdráttur (JSON) úr sjúkraskrárkerfi okkar, eftir 6 og 12 mánuði" },
+  institution: { name: "Saga (HSU)", who: "Gagnaútdráttur (CSV) úr Sögu, sjúkraskrárkerfi HSU: baseline og yfirferð eftir 7 daga" },
+  survey: { name: "Könnun", who: "Þjónustukönnun á degi 0 og á degi 7. Starfsmannakönnun hjá HSU í lok tímabilsins" },
+  internal: { name: "Okkar kerfi", who: "Vaktaplan og vinnustöð. Skráist sjálfkrafa" },
+  study: { name: "Vettvangsmæling", who: "Stök mæling sem einhver þarf að framkvæma" },
+  derived: { name: "Reiknað", who: "Reiknað út frá öðrum tölum og forsendu" },
 };
 
 export type Status = "good" | "fair" | "poor";
@@ -72,7 +72,23 @@ export type Field = {
   /** Blank means "not measured" rather than zero. */
   nullable?: boolean;
   unit?: "count" | "percent" | "minutes" | "hours" | "isk";
+  /** When the figure has to be captured. Defaults from the source — see
+   *  `fieldTiming()` — and is only set here where a field breaks the rule. */
+  when?: Timing;
 };
+
+/**
+ * When a figure has to be captured, which is the question that decides what
+ * must be ready before a new station starts.
+ *
+ *   day1   Prospective: recorded as it happens, from the first patient. A
+ *          survey not sent, or a field not coded in Medalia, cannot be
+ *          reconstructed afterwards.
+ *   later  Retrospective: already stored somewhere (Saga) and can be pulled
+ *          after the fact, as long as the definition is fixed first.
+ *   end    Asked once, at the end of the period.
+ */
+export type Timing = "day1" | "later" | "end";
 
 /** A document that has to exist on paper before the module's numbers mean
  *  anything. These are the things that actually block a programme, and they

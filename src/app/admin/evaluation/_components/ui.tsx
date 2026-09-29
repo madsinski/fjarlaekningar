@@ -32,6 +32,9 @@ export const SOURCE_CHIP: Record<Source, string> = {
   derived: "bg-slate-100 text-slate-500",
 };
 
+/** Icelandic plural: singular after numbers ending in 1, except 11 (21 mánuður, 11 mánuðir). */
+export const pl = (n: number, one: string, many: string) => (n % 10 === 1 && n % 100 !== 11 ? one : many);
+
 export const input =
   "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm transition focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20";
 
@@ -49,15 +52,15 @@ export function Chip({ className = "", children }: { className?: string; childre
  *  glance and needs no legend once you have seen it twice. */
 export function ProgressBars({ steps, docs, metrics }: { steps: number; docs: number; metrics: number }) {
   const rows: [string, number, string][] = [
-    ["Setup", steps, "bg-slate-400"],
-    ["Documents", docs, "bg-violet-400"],
-    ["Reporting", metrics, "bg-emerald-500"],
+    ["Undirbúningur", steps, "bg-slate-400"],
+    ["Skjöl", docs, "bg-violet-400"],
+    ["Niðurstöður", metrics, "bg-emerald-500"],
   ];
   return (
     <div className="space-y-1.5">
       {rows.map(([label, value, colour]) => (
         <div key={label} className="flex items-center gap-2">
-          <span className="w-20 shrink-0 text-[11px] font-medium text-slate-500">{label}</span>
+          <span className="w-24 shrink-0 text-[11px] font-medium text-slate-500">{label}</span>
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
             <div className={`h-full rounded-full transition-all duration-500 ${colour}`} style={{ width: `${value}%` }} />
           </div>
@@ -116,23 +119,23 @@ export function DesignDiagram({ design }: { design: string }) {
   const rows: { label: string; startsAt: number | null }[] =
     design === "stepped-wedge"
       ? [
-          { label: "Station 1", startsAt: 3 },
-          { label: "Station 2", startsAt: 6 },
-          { label: "Station 3", startsAt: 9 },
+          { label: "Stöð 1", startsAt: 3 },
+          { label: "Stöð 2", startsAt: 6 },
+          { label: "Stöð 3", startsAt: 9 },
         ]
       : design === "controlled"
       ? [
-          { label: "Our station", startsAt: 6 },
-          { label: "Comparison", startsAt: null },
+          { label: "Okkar stöð", startsAt: 6 },
+          { label: "Samanburðarstöð", startsAt: null },
         ]
-      : [{ label: "Our station", startsAt: 6 }];
+      : [{ label: "Okkar stöð", startsAt: 6 }];
 
   const months = 12;
   return (
     <div className="space-y-1">
       {rows.map((r) => (
         <div key={r.label} className="flex items-center gap-2">
-          <span className="w-20 shrink-0 text-right text-[10px] text-slate-500">{r.label}</span>
+          <span className="w-24 shrink-0 text-right text-[10px] text-slate-500">{r.label}</span>
           <div className="flex flex-1 gap-[2px]">
             {Array.from({ length: months }, (_, i) => {
               const live = r.startsAt !== null && i >= r.startsAt;
@@ -143,18 +146,18 @@ export function DesignDiagram({ design }: { design: string }) {
                   className={`h-3 flex-1 rounded-[2px] ${live ? "bg-emerald-500" : "bg-slate-200"} ${
                     starts ? "ring-2 ring-emerald-700 ring-offset-1" : ""
                   }`}
-                  title={starts ? "service starts here" : live ? "service running" : "as usual"}
+                  title={starts ? "þjónustan hefst hér" : live ? "þjónustan í gangi" : "óbreytt starfsemi"}
                 />
               );
             })}
           </div>
         </div>
       ))}
-      <div className="flex items-center gap-3 pl-[88px] pt-0.5 text-[10px] text-slate-500">
-        <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-[2px] bg-slate-200" /> as usual</span>
-        <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-[2px] bg-emerald-500" /> service running</span>
-        <span className="text-slate-400">← 12 months →</span>
-        {design === "its" && <span className="text-slate-400">every month counted separately</span>}
+      <div className="flex flex-wrap items-center gap-3 pl-[104px] pt-0.5 text-[10px] text-slate-500">
+        <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-[2px] bg-slate-200" /> óbreytt starfsemi</span>
+        <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-[2px] bg-emerald-500" /> þjónustan í gangi</span>
+        <span className="text-slate-400">← 12 mánuðir →</span>
+        {design === "its" && <span className="text-slate-400">hver mánuður talinn sér</span>}
       </div>
     </div>
   );

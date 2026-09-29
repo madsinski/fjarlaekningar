@@ -18,7 +18,7 @@ import { ALL_MODULES } from "@/lib/evaluation/modules";
 import { availableModules, enabledModules, EFFORT_LABEL, unmetDependencies } from "@/lib/evaluation/programme";
 import type { Module, Programme } from "@/lib/evaluation/types";
 import { CATEGORIES } from "@/lib/evaluation/types";
-import { ACCENT, Chip, card, input, Plain } from "./ui";
+import { ACCENT, Chip, card, input, Plain, pl } from "./ui";
 
 function ModuleCard({
   m, selected, onToggle, onDragStart, onDragOver, onDrop, dragging, note, onNote, canEdit,
@@ -54,7 +54,7 @@ function ModuleCard({
               <h3 className="text-sm font-semibold text-slate-900">{m.name}</h3>
               {m.core && (
                 <Chip className="bg-slate-800 text-white">
-                  <Lock className="mr-0.5 h-2.5 w-2.5" /> Core
+                  <Lock className="mr-0.5 h-2.5 w-2.5" /> Kjarni
                 </Chip>
               )}
               <Chip className={a.chip}>{cat.name}</Chip>
@@ -67,7 +67,7 @@ function ModuleCard({
             <button
               onClick={() => setOpen((v) => !v)}
               className="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-              aria-label={open ? "Collapse" : "Expand"}
+              aria-label={open ? "Fella saman" : "Sýna nánar"}
             >
               <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
             </button>
@@ -77,7 +77,7 @@ function ModuleCard({
                 className={`rounded-md p-1 transition ${
                   selected ? "text-slate-400 hover:bg-rose-50 hover:text-rose-600" : "text-slate-400 hover:bg-cyan-50 hover:text-cyan-700"
                 }`}
-                aria-label={selected ? "Remove" : "Add"}
+                aria-label={selected ? "Fjarlægja" : "Bæta við"}
               >
                 {selected ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
               </button>
@@ -88,36 +88,36 @@ function ModuleCard({
         {open && (
           <div className="mt-3 space-y-3 border-t border-slate-100 pt-3">
             <div className={`rounded-lg ${a.soft} px-3 py-2`}>
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">The claim it earns</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Hvað má fullyrða</p>
               <p className={`mt-0.5 text-xs font-medium leading-relaxed ${a.text}`}><Plain>{m.claim}</Plain></p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Why it is worth doing</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Hvers vegna þetta skiptir máli</p>
                 <p className="mt-0.5 text-xs leading-relaxed text-slate-600"><Plain>{m.rationale}</Plain></p>
               </div>
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">What it cannot show</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Takmörkun</p>
                 <p className="mt-0.5 text-xs leading-relaxed text-slate-600"><Plain>{m.caveat}</Plain></p>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-3 text-[11px] text-slate-500">
-              <span><strong className="font-semibold text-slate-700">{m.metrics.length}</strong> metric{m.metrics.length === 1 ? "" : "s"}</span>
-              <span><strong className="font-semibold text-slate-700">{m.fields.length}</strong> monthly field{m.fields.length === 1 ? "" : "s"}</span>
-              <span><strong className="font-semibold text-slate-700">{m.protocol.length}</strong> setup step{m.protocol.length === 1 ? "" : "s"}</span>
+              <span><strong className="font-semibold text-slate-700">{m.metrics.length}</strong> {pl(m.metrics.length, "mælikvarði", "mælikvarðar")}</span>
+              <span><strong className="font-semibold text-slate-700">{m.fields.length}</strong> {pl(m.fields.length, "mánaðarreitur", "mánaðarreitir")}</span>
+              <span><strong className="font-semibold text-slate-700">{m.protocol.length}</strong> skref í undirbúningi</span>
               {m.documents.length > 0 && (
-                <span><strong className="font-semibold text-slate-700">{m.documents.length}</strong> document{m.documents.length === 1 ? "" : "s"}</span>
+                <span><strong className="font-semibold text-slate-700">{m.documents.length}</strong> {pl(m.documents.length, "skjal", "skjöl")}</span>
               )}
             </div>
 
             {selected && (
               <div>
-                <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Advisor note</label>
+                <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Athugasemd ráðgjafa</label>
                 <textarea
                   className={`${input} mt-1 min-h-[52px] text-xs`}
-                  placeholder="What the medical advisor said about this module."
+                  placeholder="Hvað sagði læknisfræðilegi ráðgjafinn um þennan rannsóknarþátt?"
                   value={note}
                   disabled={!canEdit}
                   onChange={(e) => onNote(e.target.value)}
@@ -234,25 +234,25 @@ export default function ModulePicker({
   return (
     <div className="space-y-4">
       <div className={`${card} p-4`}>
-        <h2 className="text-base font-bold text-slate-900">Choose what to measure</h2>
+        <h2 className="text-base font-bold text-slate-900">Veldu rannsóknarþætti</h2>
         <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-600">
-          Each module is one decision your medical advisor can take on its own. Expand a card to see the claim it
-          earns, the argument for it and — given equal weight — what it cannot show. Drag between the columns, or
-          reorder the selected ones to set the order everything else follows.
+          Hér velur þú hvað verður mælt. Opnaðu spjald til að sjá hvað þátturinn leyfir þér að fullyrða og hvað
+          hann getur ekki sýnt. Dragðu spjöld á milli dálka. Röð valinna þátta gildir svo í öllum hinum
+          skrefunum.
         </p>
         <p className="mt-2 text-xs text-slate-500">
-          Three modules are marked <strong className="font-semibold text-slate-700">Core</strong> and cannot be
-          removed. Without resolution, incidents and response time there is no evaluation, only anecdote.
+          Þrír rannsóknarþættir eru merktir <strong className="font-semibold text-slate-700">Kjarni</strong> og
+          verða ekki fjarlægðir. Án afgreiðsluhlutfalls, atvika og svartíma er ekkert mat, aðeins sögusagnir.
         </p>
       </div>
 
       {unmet.length > 0 && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
-          <p className="text-sm font-semibold text-amber-900">Missing prerequisites</p>
+          <p className="text-sm font-semibold text-amber-900">Forsendur vantar</p>
           <ul className="mt-1 space-y-0.5 text-xs text-amber-800">
             {unmet.map(({ module, missing }) => (
               <li key={module.id}>
-                <strong>{module.name}</strong> needs {missing.map((x) => x.name).join(", ")} — it will report nothing without it.
+                <strong>{module.name}</strong> krefst: {missing.map((x) => x.name).join(", ")}. Án þess skilar hann engu.
               </li>
             ))}
           </ul>
@@ -262,10 +262,10 @@ export default function ModulePicker({
       <div className="grid gap-4 lg:grid-cols-2">
         <Column
           kind="on"
-          title="Selected"
-          blurb="The programme. Order here drives setup, data entry and the dashboard."
+          title="Valið"
+          blurb="Rannsóknaráætlunin. Röðin hér gildir í undirbúningi, gögnum og niðurstöðum."
           items={on}
-          empty="Drag modules here"
+          empty="Dragðu rannsóknarþætti hingað"
           canEdit={canEdit}
           programme={programme}
           overCol={overCol}
@@ -282,10 +282,10 @@ export default function ModulePicker({
         />
         <Column
           kind="off"
-          title="Available"
-          blurb="Not in the programme. Nothing is collected and nothing is reported for these."
+          title="Í boði"
+          blurb="Ekki í rannsóknaráætluninni. Engu er safnað og ekkert birt fyrir þessa þætti."
           items={off}
-          empty="Everything is selected"
+          empty="Allt er valið"
           canEdit={canEdit}
           programme={programme}
           overCol={overCol}
@@ -303,7 +303,7 @@ export default function ModulePicker({
       </div>
 
       <p className="flex items-center justify-center gap-2 text-xs text-slate-400">
-        <ArrowLeft className="h-3 w-3" /> drag to add or remove <ArrowRight className="h-3 w-3" />
+        <ArrowLeft className="h-3 w-3" /> dragðu til að bæta við eða fjarlægja <ArrowRight className="h-3 w-3" />
       </p>
     </div>
   );

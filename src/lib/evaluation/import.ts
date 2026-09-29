@@ -31,63 +31,63 @@ export type Column = { name: string; description: string; numeric?: boolean; opt
 /** The specification, exactly as it should arrive. This is the document that
  *  goes to Medalia — not a description of it, but the list itself. */
 export const COLUMNS: Column[] = [
-  { name: "station", description: "Which health centre. Written the way the institution writes it — \"Vestmannaeyjar\", \"Vík í Mýrdal\"." },
-  { name: "month", description: "Which month, as yyyy-mm. Never an exact date: a date at a station of four thousand people can identify someone, a month cannot." },
-  { name: "case_type", description: "Which of the case types this row is about, using the short name from the list at the bottom of this page." },
-  { name: "cases_total", description: "How many patients came to us with this kind of problem that month.", numeric: true },
-  { name: "cases_resolved", description: "How many were dealt with completely, without sending the patient anywhere else.", numeric: true },
-  { name: "cases_referred", description: "How many were sent on to someone else. Two different things end up here — a patient who genuinely needed a specialist, and a patient who should never have used the service at all. The next column separates them.", numeric: true },
+  { name: "station", description: "Hvaða heilsugæslustöð. Rituð eins og stofnunin ritar hana, t.d. „Vestmannaeyjar“ eða „Vík í Mýrdal“." },
+  { name: "month", description: "Hvaða mánuður, á forminu áááá-mm. Aldrei nákvæm dagsetning. Á stöð með fjögur þúsund íbúa getur dagsetning bent á einstakling, mánuður ekki." },
+  { name: "case_type", description: "Hvaða tegund erindis línan á við. Notaðu stutta heitið úr listanum neðst á síðunni." },
+  { name: "cases_total", description: "Hve margir sjúklingar leituðu til okkar með þennan vanda í mánuðinum.", numeric: true },
+  { name: "cases_resolved", description: "Hve mörg erindi voru afgreidd að fullu, án þess að vísa sjúklingnum annað.", numeric: true },
+  { name: "cases_referred", description: "Hve mörgum var vísað áfram. Hér lenda tveir ólíkir hópar: sjúklingur sem þurfti í raun sérfræðing, og sjúklingur sem hefði aldrei átt að nota þjónustuna. Næsti dálkur skilur þá að.", numeric: true },
   {
     name: "excluded_by_doctor",
     description:
-      "Of those referred, how many were TURNED AWAY rather than passed on. Turned away means the doctor decided the service could not safely handle it — acutely unwell, needs examining, under 18, pregnant, outside what we offer. Only this subset is a safety figure; the rest is the service working normally.",
+      "Af þeim sem var vísað áfram: hve mörgum var VÍSAÐ FRÁ, frekar en vísað áfram. Vísað frá þýðir að læknirinn mat að þjónustan gæti ekki sinnt erindinu á öruggan hátt. Dæmi: bráð veikindi, þörf á skoðun, yngri en 18 ára, þungun eða utan þess sem við bjóðum. Aðeins þessi hluti er öryggistala. Hitt er þjónustan að virka eðlilega.",
     numeric: true,
   },
-  { name: "cases_repeat", description: "Patients who came back that month with the same problem again. A high number means the first answer did not hold.", numeric: true },
+  { name: "cases_repeat", description: "Sjúklingar sem komu aftur í sama mánuði með sama vanda. Há tala þýðir að fyrsta svarið dugði ekki.", numeric: true },
   {
     name: "screening_stops",
     description:
-      "How many were stopped by the questionnaire itself before any doctor saw them — the built-in red flags firing. This is the single most important safety number we have, because two of the four ways patients reach us do not involve clinical staff at all. If Medalia does not currently record this, that is the most urgent thing to fix.",
+      "Hve mörg erindi spurningalistinn stöðvaði áður en læknir sá þau, þ.e. þegar innbyggðu rauðu flöggin gripu. Þetta er mikilvægasta öryggistalan sem við höfum. Tvær af fjórum leiðum sjúklinga til okkar fara ekki í gegnum heilbrigðisstarfsfólk. Ef Medalia skráir þetta ekki núna er brýnast að laga það.",
     numeric: true,
   },
-  { name: "prescriptions", description: "How many of these cases ended with a prescription of any kind.", numeric: true },
+  { name: "prescriptions", description: "Hve mörgum erindum lauk með lyfseðli af einhverju tagi.", numeric: true },
   {
     name: "antibiotics",
     description:
-      "Of those, how many were antibiotics. Expect to be asked about this by every doctor you present to — the standing suspicion about remote services is that they hand out antibiotics too easily, and this is the number that settles it either way.",
+      "Af þeim: hve margir voru fyrir sýklalyf. Allir læknar sem þú kynnir fyrir munu spyrja um þetta. Algengur grunur um fjarþjónustu er að hún ávísi sýklalyfjum of auðveldlega. Þessi tala svarar því, í hvora áttina sem er.",
     numeric: true,
   },
   {
     name: "codes_outside_set",
     description:
-      "An early warning that the service is drifting. You agree in advance which diagnosis codes each case type should normally produce — say three to five ICD-10 codes for \"cold, cough and sore throat\". This counts the cases that came out as something else entirely. A few is normal. A rising number means patients are bringing problems the case type was never designed for, and you want to know that long before anyone notices in the clinic.",
+      "Snemmbúin viðvörun um að þjónustan sé að reka af leið. Ákveðið er fyrir fram hvaða greiningarkóðar hver tegund erindis á venjulega að gefa, t.d. þrír til fimm ICD-10 kóðar fyrir „kvef, hósta og hálsbólgu“. Hér eru talin erindi sem enduðu með allt öðrum kóða. Nokkur eru eðlileg. Hækkandi tala þýðir að sjúklingar koma með vanda sem erindaflokkurinn var aldrei hannaður fyrir. Það viltu vita löngu áður en nokkur tekur eftir því á stöðinni.",
     numeric: true,
   },
   {
     name: "response_median_min",
     description:
-      "The typical wait, in minutes. Half of patients waited less than this, half waited more. Use the middle value rather than the average, because one case that sat overnight would drag an average up and make a good month look bad.",
+      "Venjuleg bið, í mínútum (miðgildi). Helmingur sjúklinga beið skemur, helmingur lengur. Notaðu miðgildi en ekki meðaltal. Eitt erindi sem beið yfir nótt myndi hækka meðaltalið og láta góðan mánuð líta illa út.",
     numeric: true,
     optional: true,
   },
   {
     name: "response_p95_min",
     description:
-      "The bad end of the wait, in minutes. If this reads 95, then 95 out of every 100 patients got an answer within 95 minutes and only the slowest 5 waited longer. It is here because the typical wait can look excellent while a handful of patients wait many hours — and those are the ones who complain, and the ones the two-hour promise is actually tested on.",
+      "Lengsta biðin, í mínútum (95. hundraðsmark). Ef talan er 95 fengu 95 af hverjum 100 sjúklingum svar innan 95 mínútna. Aðeins þau 5 hægustu biðu lengur. Talan er hér af því að venjuleg bið getur litið vel út þótt nokkrir sjúklingar bíði klukkustundum saman. Það eru þeir sem kvarta, og á þeim reynir loforðið um svar innan tveggja klukkustunda.",
     numeric: true,
     optional: true,
   },
   {
     name: "entry_direct",
     description:
-      "How many patients came straight to the service themselves. These cost the health centre nothing at all — no phone call, no explaining, no one routing them — so a growing share here is the clearest sign the service is standing on its own.",
+      "Hve margir sjúklingar komu beint í þjónustuna sjálfir. Þeir kosta heilsugæsluna ekkert: ekkert símtal, engar útskýringar, enginn sem vísar þeim áfram. Vaxandi hlutfall hér er skýrasta merkið um að þjónustan standi á eigin fótum.",
     numeric: true,
     optional: true,
   },
   {
     name: "entry_nurse_other",
     description:
-      "How many were sent to us by someone at the health centre — a nurse, a receptionist or records staff. These do cost the health centre time, which is why they are counted apart from the ones who came directly.",
+      "Hve mörgum starfsmaður heilsugæslunnar vísaði til okkar, t.d. hjúkrunarfræðingur, móttökuritari eða heilbrigðisritari. Þeir kosta heilsugæsluna tíma. Þess vegna eru þeir taldir sér, aðskildir frá þeim sem komu beint.",
     numeric: true,
     optional: true,
   },
@@ -143,14 +143,14 @@ function toNumber(raw: string): number | null {
 export function parse(text: string, institution = "hsu"): ImportResult {
   const issues: ImportIssue[] = [];
   const lines = text.replace(/^﻿/, "").split(/\r?\n/).filter((l) => l.trim());
-  if (!lines.length) return { months: [], issues: [{ line: 0, text: "The file is empty." }], linesRead: 0 };
+  if (!lines.length) return { months: [], issues: [{ line: 0, text: "Skráin er tóm." }], linesRead: 0 };
 
   const sep = (lines[0].match(/;/g) || []).length > (lines[0].match(/,/g) || []).length ? ";" : ",";
   const header = split(lines[0], sep).map((h) => h.toLowerCase());
 
   const missing = REQUIRED_COLUMNS.filter((c) => !header.includes(c));
   if (missing.length) {
-    return { months: [], linesRead: 0, issues: [{ line: 1, text: `Missing columns in the header: ${missing.join(", ")}` }] };
+    return { months: [], linesRead: 0, issues: [{ line: 1, text: `Dálka vantar í hauslínuna: ${missing.join(", ")}` }] };
   }
 
   const at = (c: string) => header.indexOf(c);
@@ -167,17 +167,17 @@ export function parse(text: string, institution = "hsu"): ImportResult {
     const rawMonth = get("month");
     const slug = get("case_type").toLowerCase();
 
-    if (!station) { issues.push({ line: i + 1, text: "Station missing." }); continue; }
+    if (!station) { issues.push({ line: i + 1, text: "Stöð vantar." }); continue; }
     // The month number is checked separately: "2026-13" matches the pattern but
     // is not a month, and if it got through, the insert would fail in the
     // database with an error nobody could trace back to a line in a file.
     const m = rawMonth.match(/^(\d{4})-(\d{2})/);
     if (!m || Number(m[2]) < 1 || Number(m[2]) > 12) {
-      issues.push({ line: i + 1, text: `Invalid month "${rawMonth}" — expected yyyy-mm with month 01–12.` });
+      issues.push({ line: i + 1, text: `Ógildur mánuður „${rawMonth}“. Á að vera áááá-mm, með mánuð 01–12.` });
       continue;
     }
     const month = `${m[1]}-${m[2]}-01`;
-    if (!VALID_TYPES.has(slug)) { issues.push({ line: i + 1, text: `Unknown case type "${slug}".` }); continue; }
+    if (!VALID_TYPES.has(slug)) { issues.push({ line: i + 1, text: `Óþekkt tegund erindis „${slug}“.` }); continue; }
 
     // A value that is not a number is an error, not a zero. A silent zero is
     // worse than a missing line, because it looks like a measurement.
@@ -187,7 +187,7 @@ export function parse(text: string, institution = "hsu"): ImportResult {
       const raw = get(c);
       if (!raw) { nums[c] = null; continue; }
       const v = toNumber(raw);
-      if (v === null) { issues.push({ line: i + 1, text: `"${raw}" in column ${c} is not a number.` }); bad = true; break; }
+      if (v === null) { issues.push({ line: i + 1, text: `„${raw}“ í dálkinum ${c} er ekki tala.` }); bad = true; break; }
       nums[c] = v;
     }
     if (bad) continue;
@@ -250,7 +250,7 @@ export function parse(text: string, institution = "hsu"): ImportResult {
     if (row.cases_total && sum !== row.cases_total) {
       issues.push({
         line: 0,
-        text: `${row.station} ${row.month.slice(0, 7)}: resolved (${row.cases_resolved}) + referred (${row.cases_referred}) = ${sum}, but total cases is ${row.cases_total}. Gap of ${row.cases_total - sum} — probably cases with no recorded outcome.`,
+        text: `${row.station} ${row.month.slice(0, 7)}: afgreidd (${row.cases_resolved}) + vísað áfram (${row.cases_referred}) = ${sum}, en erindi eru alls ${row.cases_total}. Munurinn er ${row.cases_total - sum}. Líklega erindi þar sem niðurstaða var ekki skráð.`,
       });
     }
   }
@@ -268,4 +268,11 @@ export const MEDALIA_COLUMNS: (keyof MonthRow | "institution" | "station" | "mon
   "response_median_min", "response_p95_min", "cases_by_type",
   "entry_direct", "entry_via_staff",
   "general_total", "general_resolved", "sources_present",
+  "tree_cases", "tree_overridden", "home_tests_used",
+];
+
+/** What the Saga import may write: the HSU diagnosis-code count and the
+ *  antibiotic comparator. Nothing else on the row is touched. */
+export const SAGA_COLUMNS: (keyof MonthRow | "institution" | "station" | "month")[] = [
+  "institution", "station", "month", "institution_contacts", "institution_antibiotics",
 ];

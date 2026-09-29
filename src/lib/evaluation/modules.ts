@@ -15,110 +15,121 @@ import { EXTRA_MODULES } from "./modules-extra";
 import { DESIGN_MODULE } from "./design";
 import { pct } from "./totals";
 
-const n = (v: number) => v.toLocaleString("en-GB");
+const n = (v: number) => v.toLocaleString("is-IS");
 const p = (v: number | null) => (v === null ? null : `${v}%`);
+// Icelandic number agreement: singular after numbers ending in 1, except 11.
+const pl = (v: number, one: string, many: string) => (v % 10 === 1 && v % 100 !== 11 ? one : many);
+// One decimal with an Icelandic decimal comma.
+const d1 = (v: number) => v.toLocaleString("is-IS", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 export const MODULES: Module[] = [
   // ── Effectiveness ─────────────────────────────────────────────────────────
   {
     id: "resolution",
-    name: "Case resolution",
-    question: "Do these cases actually get resolved remotely?",
-    claim: "X% of cases were resolved entirely in the remote service, and we can show it case type by case type.",
+    name: "Afgreiðsla erinda",
+    question: "Eru erindin í raun afgreidd í fjarþjónustu?",
+    claim: "X% erinda voru afgreidd að fullu í fjarþjónustu og við getum sýnt það fyrir hverja tegund erindis.",
     category: "system",
     lead: true,
     core: true,
     effort: "low",
     sources: ["medalia"],
     benefit:
-      "Tells you, case type by case type, whether the service does what it claims.",
+      "Sýnir, fyrir hverja tegund erindis, hvort þjónustan gerir það sem hún segist gera.",
     horizon: "now",
     rationale:
-      "The base claim. Everything else is either a gate on it or a consequence of it. The aim is not the highest possible number — eleven green ticks above 95% convinces nobody. A table where nine types are strong, two are marginal and you can say what you changed is far more credible and shows an organisation that learns.",
+      "Þetta er grunnfullyrðingin. Allt annað er annaðhvort skilyrði fyrir henni eða afleiðing af henni. Markmiðið er ekki hæsta mögulega tala. Ellefu græn gátmerki yfir 95% sannfæra engan. Tafla þar sem níu tegundir standa vel, tvær eru á mörkunum og þú getur sagt hverju þú breyttir er mun trúverðugri. Hún sýnir stofnun sem lærir.",
     caveat:
-      "A rate without volume means nothing: 95% of twenty cases is not a result. Always read it next to the case count.",
+      "Hlutfall án fjölda segir ekkert. 95% af tuttugu erindum er ekki niðurstaða. Lestu það alltaf með fjölda erinda.",
     protocol: [
-      { text: "Write down and freeze what 'resolved' means", detail: "Resolved, referred onward, stopped by screening. It must mean exactly the same thing in month one and month twelve — changing definitions mid-stream kills more quality projects than anything else.", timeCritical: true },
-      { text: "Make outcome a mandatory coded field in Medalia", detail: "If outcome sits in free text in the doctor's letter, no export saves you and you will be reading a thousand notes at the end.", timeCritical: true },
-      { text: "Agree the monthly export and check the processing agreement covers it" },
-      { text: "Import the first month and check resolved + referred equals the total", detail: "The importer flags the gap. A mismatch usually means the outcome field is not mandatory yet." },
+      { text: "Skilgreindu hvað „afgreitt“ þýðir og festu skilgreininguna", detail: "Afgreitt, vísað áfram, stöðvað í skimun. Orðin verða að þýða nákvæmlega það sama í fyrsta mánuði og þeim tólfta. Skilgreiningar sem breytast á miðri leið fella fleiri gæðaverkefni en nokkuð annað.", timeCritical: true },
+      { text: "Gerðu niðurstöðu erindis að kóðuðum skyldureit í Medalia", detail: "Ef niðurstaðan er aðeins í frjálsum texta í bréfi læknisins bjargar enginn gagnaútdráttur þér. Þá þarftu að lesa þúsund færslur í lokin.", timeCritical: true },
+      { text: "Semdu um mánaðarlegan gagnaútdrátt og gakktu úr skugga um að vinnslusamningurinn nái yfir hann" },
+      { text: "Lestu inn fyrsta mánuðinn og athugaðu hvort afgreidd og vísað áfram gefi heildina", detail: "Innlesturinn bendir á mismuninn. Ef tölurnar stemma ekki er niðurstöðureiturinn oftast ekki enn orðinn skyldureitur." },
     ],
     fields: [
-      { key: "cases_total", label: "Cases received", source: "medalia" },
-      { key: "cases_resolved", label: "Resolved remotely", source: "medalia" },
-      { key: "cases_referred", label: "Referred onward", source: "medalia" },
-      { key: "cases_repeat", label: "Repeat cases", help: "Same patient, same problem, again.", source: "medalia" },
+      { key: "cases_total", label: "Erindi móttekin", source: "medalia" },
+      { key: "cases_resolved", label: "Afgreidd í fjarþjónustu", source: "medalia" },
+      { key: "cases_referred", label: "Vísað áfram", source: "medalia" },
+      { key: "cases_repeat", label: "Endurtekin erindi", help: "Sami sjúklingur, sami vandi, aftur.", source: "medalia" },
     ],
     documents: [
-      { id: "definitions", name: "Frozen definitions", why: "The one page that says what resolved, referred and stopped mean. Everything downstream depends on it not moving.", required: true },
+      { id: "definitions", name: "Fastar skilgreiningar", why: "Ein síða sem segir hvað afgreitt, vísað áfram og stöðvað þýða. Allt sem á eftir kemur byggir á því að hún haggist ekki.", required: true },
     ],
     metrics: [
       {
-        id: "resolution_rate", name: "Resolved remotely", headline: true,
-        why: "The base claim. Read it next to the case count — a high rate on small volume is not a finding.",
-        compute: ({ t }) => ({
-          value: p(pct(t.cases_resolved, t.cases_total)),
-          detail: `${n(t.cases_resolved)} of ${n(t.cases_total)} cases closed without referral`,
-          missing: t.cases_total ? undefined : "Medalia export",
-          status: !t.cases_total ? undefined : pct(t.cases_resolved, t.cases_total)! >= 80 ? "good" : pct(t.cases_resolved, t.cases_total)! >= 60 ? "fair" : "poor",
-        }),
+        id: "resolution_rate", name: "Afgreitt í fjarþjónustu", headline: true,
+        why: "Grunnfullyrðingin. Lestu hana með fjölda erinda. Hátt hlutfall af fáum erindum er ekki niðurstaða.",
+        compute: ({ t }) => {
+          // Cases with neither outcome recorded mean the outcome field is not
+          // in the export — that is "missing", never "0% resolved".
+          const recorded = t.cases_total > 0 && t.cases_resolved + t.cases_referred > 0;
+          return {
+            value: recorded ? p(pct(t.cases_resolved, t.cases_total)) : null,
+            detail: recorded
+              ? `${n(t.cases_resolved)} af ${n(t.cases_total)} ${pl(t.cases_total, "erindi", "erindum")} lokið án tilvísunar`
+              : t.cases_total ? `${n(t.cases_total)} erindi, en niðurstaða þeirra er ekki skráð` : "Engin erindi enn",
+            missing: !t.cases_total ? "Gagnaútdráttur úr Medalia" : recorded ? undefined : "Niðurstaða erinda í Medalia",
+            status: !recorded ? undefined : pct(t.cases_resolved, t.cases_total)! >= 80 ? "good" : pct(t.cases_resolved, t.cases_total)! >= 60 ? "fair" : "poor",
+          };
+        },
       },
       {
-        id: "volume", name: "Cases received",
-        why: "The denominator for everything above. Small numbers are honest limitations, not failures — but they have to be visible.",
-        compute: ({ t }) => ({ value: n(t.cases_total), detail: `Across ${t.months} ${t.months === 1 ? "month" : "months"}` }),
+        id: "volume", name: "Erindi móttekin",
+        why: "Nefnarinn fyrir allt hér að ofan. Lítill fjöldi er heiðarleg takmörkun, ekki brestur. En hann verður að sjást.",
+        compute: ({ t }) => ({ value: n(t.cases_total), detail: `Á ${t.months} ${pl(t.months, "mánuði", "mánuðum")}` }),
       },
       {
-        id: "referral_mix", name: "Sent on to someone else",
-        why: "Referring is not failure — it is the service knowing where its limits are. Read it next to how many were turned away, because only that part is a safety signal.",
+        id: "referral_mix", name: "Sent annað",
+        why: "Tilvísun er ekki brestur. Hún sýnir að þjónustan þekkir takmörk sín. Lestu hana með fjölda þeirra sem var vísað frá, því aðeins sá hluti er öryggismerki.",
         compute: ({ t }) => ({
           value: n(t.cases_referred),
-          detail: `${n(Math.max(0, t.cases_referred - t.excluded_by_doctor))} passed on to someone who could help, ${n(t.excluded_by_doctor)} turned away as unsuitable`,
+          detail: `${n(Math.max(0, t.cases_referred - t.excluded_by_doctor))} vísað áfram til aðila sem gat hjálpað, ${n(t.excluded_by_doctor)} vísað frá þar sem erindið hentaði ekki`,
         }),
       },
       {
-        id: "repeat", name: "Repeat cases",
-        why: "A resolution that does not hold is not a resolution.",
-        compute: ({ t }) => ({ value: n(t.cases_repeat), detail: "Same patient, same problem, within the period" }),
+        id: "repeat", name: "Endurtekin erindi",
+        why: "Afgreiðsla sem heldur ekki er engin afgreiðsla.",
+        compute: ({ t }) => ({ value: n(t.cases_repeat), detail: "Sami sjúklingur, sami vandi, innan tímabilsins" }),
       },
     ],
   },
 
   {
     id: "response-time",
-    name: "Patient waiting time",
-    question: "How long do patients wait for an answer — and do we keep the two-hour promise?",
-    claim: "Median response was T minutes and 95% were answered within P — against a promise of two hours.",
+    name: "Biðtími sjúklinga",
+    question: "Hve lengi bíða sjúklingar eftir svari, og stöndum við loforðið um svar innan tveggja klukkustunda?",
+    claim: "Miðgildi svartíma var T mínútur og 95% fengu svar innan P. Loforðið er tvær klukkustundir.",
     category: "system",
     core: true,
     effort: "low",
     sources: ["medalia"],
     benefit:
-      "Turns the two-hour promise into a number you can put on a slide.",
+      "Breytir loforðinu um tvær klukkustundir í tölu sem má setja á glæru.",
     horizon: "now",
     rationale:
-      "The promise that gets tested out loud at every single meeting. It comes free from timestamps already in Medalia, which makes it the strongest single figure in the set for the least work.",
+      "Þetta loforð er prófað upphátt á hverjum einasta fundi. Talan fæst ókeypis úr tímastimplum sem eru þegar í Medalia. Hún er því sterkasta einstaka talan í safninu miðað við vinnu.",
     caveat:
-      "It measures our part only. What the patient experiences is the whole wait, which the access module covers.",
+      "Hún mælir aðeins okkar hluta. Sjúklingurinn upplifir alla biðina, og um hana fjallar rannsóknarþátturinn um aðgengi.",
     protocol: [
-      { text: "Confirm Medalia can export response time as a DURATION in minutes", detail: "Never as a timestamp. A timestamp plus a small station is identifying; a duration is not." },
-      { text: "Agree the clock: submission to first clinician response" },
+      { text: "Staðfestu að Medalia geti skilað svartíma sem TÍMALENGD í mínútum", detail: "Aldrei sem tímastimpli. Tímastimpill og lítil stöð geta saman gert sjúkling persónugreinanlegan. Tímalengd gerir það ekki." },
+      { text: "Semdu um hvernig tíminn er mældur: frá innsendingu að fyrsta svari læknis" },
     ],
     fields: [
-      { key: "response_median_min", label: "Median response", unit: "minutes", nullable: true, source: "medalia" },
-      { key: "response_p95_min", label: "95th percentile", unit: "minutes", nullable: true, source: "medalia" },
+      { key: "response_median_min", label: "Miðgildi svartíma", unit: "minutes", nullable: true, source: "medalia" },
+      { key: "response_p95_min", label: "95. hundraðsmark", unit: "minutes", nullable: true, source: "medalia" },
     ],
     documents: [],
     metrics: [
       {
-        id: "response", name: "Median response", headline: true,
-        why: "The promise, tested. Cheap to produce and hard to argue with.",
+        id: "response", name: "Miðgildi svartíma", headline: true,
+        why: "Loforðið, prófað. Ódýrt að fá og erfitt að andmæla.",
         compute: ({ t, a }) => ({
-          value: t.response_median_min === null ? null : `${t.response_median_min} min`,
+          value: t.response_median_min === null ? null : `${t.response_median_min} mín.`,
           detail: t.response_p95_min !== null
-            ? `95% answered within ${t.response_p95_min} min — promise is ${a.responseTargetMinutes} min`
-            : `Promise is ${a.responseTargetMinutes} min`,
-          missing: t.response_median_min === null ? "Medalia export" : undefined,
+            ? `95% fengu svar innan ${t.response_p95_min} mín. Loforðið er ${a.responseTargetMinutes} mín.`
+            : `Loforðið er ${a.responseTargetMinutes} mín.`,
+          missing: t.response_median_min === null ? "Gagnaútdráttur úr Medalia" : undefined,
           status: t.response_median_min === null ? undefined
             : t.response_median_min <= a.responseTargetMinutes / 2 ? "good"
             : t.response_median_min <= a.responseTargetMinutes ? "fair" : "poor",
@@ -129,43 +140,43 @@ export const MODULES: Module[] = [
 
   {
     id: "incidents",
-    name: "Incident reporting",
-    question: "Is anyone being harmed?",
-    claim: "No serious incidents, N deviations logged and closed — and here is the system that would have caught one.",
+    name: "Atvikaskráning",
+    question: "Verður einhver fyrir skaða?",
+    claim: "Engin alvarleg atvik, N frávik skráð og þeim lokað, og hér er kerfið sem hefði gripið alvarlegt atvik.",
     category: "safety",
     lead: true,
     core: true,
     effort: "low",
     sources: ["survey"],
     benefit:
-      "Lets you say 'no serious incidents' and be believed.",
+      "Gerir þér kleift að segja „engin alvarleg atvik“ og að fólk trúi því.",
     horizon: "now",
     rationale:
-      "A gate rather than a scale: an excellent resolution rate alongside one serious incident is a failed project, and no good number elsewhere offsets it. Note that zero is only believable if it is visible that somebody was counting — which is why deviations and near misses sit beside it rather than hidden.",
+      "Þetta er skilyrði, ekki kvarði. Frábært hlutfall afgreiddra erinda ásamt einu alvarlegu atviki er misheppnað verkefni. Engin góð tala annars staðar vegur það upp. Núll er aðeins trúverðugt ef sést að einhver var að telja. Þess vegna eru frávik og næstum-atvik sýnd við hliðina, ekki falin.",
     caveat:
-      "A single site of four thousand people will never have the numbers to say anything about rare events. Say that yourself, on the first slide, before someone in the audience says it for you.",
+      "Ein stöð með fjögur þúsund íbúa fær aldrei nógu háar tölur til að segja neitt um sjaldgæfa atburði. Taktu það fram strax á fyrstu glærunni, áður en einhver í salnum gerir það.",
     protocol: [
-      { text: "Put a deviation form into service", detail: "One form is enough. But 'no serious incidents' is only credible if a system existed that would have caught one.", timeCritical: true },
-      { text: "Agree with HSU what counts as an incident, and how it is recorded", detail: "One written definition both organisations use, so an incident at the health centre and one in the remote service are counted the same way.", timeCritical: true },
-      { text: "Give patients and HSU staff a way to report an incident", detail: "A route for each — a patient should not have to go through the service they are reporting, and HSU staff need one that does not depend on us.", timeCritical: true },
-      { text: "Agree who reviews deviations and how often" },
-      { text: "Agree the escalation route with the institution's clinical lead" },
+      { text: "Taktu frávikseyðublað í notkun", detail: "Eitt eyðublað dugar. En „engin alvarleg atvik“ er aðeins trúverðugt ef til var kerfi sem hefði gripið slíkt atvik.", timeCritical: true },
+      { text: "Semdu við HSU um hvað telst atvik og hvernig það er skráð", detail: "Ein skrifleg skilgreining sem báðar stofnanir nota. Þá er atvik á heilsugæslunni og atvik í fjarþjónustunni talið á sama hátt.", timeCritical: true },
+      { text: "Gefðu sjúklingum og starfsfólki HSU leið til að tilkynna atvik", detail: "Sína leiðina fyrir hvorn hóp. Sjúklingur á ekki að þurfa að fara í gegnum þjónustuna sem hann kvartar undan. Starfsfólk HSU þarf leið sem er óháð okkur.", timeCritical: true },
+      { text: "Semdu um hver fer yfir frávik og hversu oft" },
+      { text: "Ákveddu með yfirlækni stofnunarinnar hvert alvarlegum málum er vísað" },
     ],
     fields: [
-      { key: "deviations", label: "Deviations logged", source: "survey" },
-      { key: "near_misses", label: "of which near misses", source: "survey" },
-      { key: "serious_incidents", label: "Serious incidents", source: "survey" },
+      { key: "deviations", label: "Skráð frávik", source: "survey" },
+      { key: "near_misses", label: "þar af næstum-atvik", source: "survey" },
+      { key: "serious_incidents", label: "Alvarleg atvik", source: "survey" },
     ],
     documents: [
-      { id: "incident-procedure", name: "Incident procedure", why: "What counts as an incident, how patients and HSU staff report one, who reviews it, how it is escalated and closed.", required: true },
+      { id: "incident-procedure", name: "Verklag um atvik", why: "Hvað telst atvik, hvernig sjúklingar og starfsfólk HSU tilkynna það, hver fer yfir það og hvernig því er vísað áfram og lokað.", required: true },
     ],
     metrics: [
       {
-        id: "serious", name: "Serious incidents", headline: true,
-        why: "The gate. Zero is only credible next to evidence that counting took place.",
+        id: "serious", name: "Alvarleg atvik", headline: true,
+        why: "Skilyrðið. Núll er aðeins trúverðugt ef sýnt er að talið var.",
         compute: ({ t }) => ({
           value: n(t.serious_incidents),
-          detail: `${n(t.deviations)} deviations logged, ${n(t.near_misses)} of them near misses`,
+          detail: `${n(t.deviations)} frávik skráð, þar af ${n(t.near_misses)} næstum-atvik`,
           status: t.serious_incidents > 0 ? "poor" : t.deviations > 0 ? "good" : "fair",
         }),
       },
@@ -174,36 +185,36 @@ export const MODULES: Module[] = [
 
   {
     id: "case-mix",
-    name: "Case mix and diagnostic codes",
-    question: "Which of the eleven case types actually work, and are we staying inside our scope?",
-    claim: "Here is the resolution rate for every case type, coded, and comparable with national primary-care statistics.",
+    name: "Samsetning erinda og greiningarkóðar",
+    question: "Hverjar af ellefu tegundum erinda virka í raun, og höldum við okkur innan ramma þjónustunnar?",
+    claim: "Hér er hlutfall afgreiddra erinda fyrir hverja tegund, með kóðum og sambærilegt við landstölur heilsugæslunnar.",
     category: "system",
     effort: "medium",
     sources: ["medalia"],
     benefit:
-      "Makes your numbers comparable with national primary care instead of self-referential.",
+      "Gerir tölurnar sambærilegar við heilsugæsluna á landsvísu, í stað þess að þær séu aðeins bornar saman við sjálfar sig.",
     horizon: "now",
     rationale:
-      "Underrated, and the single highest-value item in the whole programme. Not because of the coding itself but because of comparability: without codes our numbers are self-referential — '400 cases' means nothing to a listener. With ICD-10 codes you can set them against the national contact register and say what share of the expected volume for a population this size you handled. That is a completely different claim, and the codes are the join key to the institution's denominator.",
+      "Vanmetinn, og verðmætasti einstaki þátturinn í allri rannsóknaráætluninni. Ekki vegna kóðunarinnar sjálfrar heldur vegna samanburðarins. Án kóða standa tölurnar okkar einar. „400 erindi“ segja áheyrendum ekkert. Með ICD-10 kóðum má bera þær saman við landsskrá um samskipti við heilsugæslu og segja hve stóran hluta við önnuðumst af þeim fjölda sem búast mátti við í svo stóru þýði. Það er allt önnur fullyrðing. Kóðarnir eru líka lykillinn sem tengir okkar tölur við nefnara stofnunarinnar.",
     caveat:
-      "The aggregate resolution rate hides it when three case types carry the other eight. That is exactly why this module exists — and expect some of the eleven to come out badly. That is a result, not a mistake.",
+      "Heildarhlutfallið felur það þegar þrjár tegundir erinda bera hinar átta uppi. Einmitt þess vegna er þessi rannsóknarþáttur til. Gerðu ráð fyrir að sumar af tegundunum ellefu komi illa út. Það er niðurstaða, ekki mistök.",
     protocol: [
-      { text: "Agree 3–5 ICD-10 codes for each of the eleven case types", detail: "With a clinician. Keep the set tight and written down — drift outside it later becomes an independent signal that the scope is moving.", timeCritical: true },
-      { text: "Check whether Medalia also supports ICPC-2", detail: "The international primary-care classification. If it is available it makes comparison beyond Iceland possible." },
-      { text: "Make the diagnostic code a mandatory field", timeCritical: true },
-      { text: "Ensure referred and stopped cases also get a code", detail: "Otherwise the denominator disappears again." },
+      { text: "Veldu 3–5 ICD-10 kóða fyrir hverja af ellefu tegundum erinda", detail: "Í samráði við lækni. Hafðu safnið þröngt og skriflegt. Ef erindi fara síðar að falla utan þess er það sjálfstætt merki um að rammi þjónustunnar sé að færast.", timeCritical: true },
+      { text: "Athugaðu hvort Medalia styðji líka ICPC-2", detail: "Alþjóðlega flokkunarkerfið fyrir heilsugæslu. Ef það er í boði opnar það fyrir samanburð við önnur lönd." },
+      { text: "Gerðu greiningarkóða að skyldureit", timeCritical: true },
+      { text: "Tryggðu að erindi sem er vísað áfram eða eru stöðvuð fái líka kóða", detail: "Annars hverfur nefnarinn aftur." },
     ],
-    fields: [{ key: "codes_outside_set", label: "Cases outside the agreed code set", source: "medalia" }],
+    fields: [{ key: "codes_outside_set", label: "Erindi utan umsamins kóðasafns", source: "medalia" }],
     documents: [
-      { id: "code-sets", name: "Agreed code sets", why: "Three to five ICD-10 codes per case type, signed off by a clinician. This is the join key to the institution's denominator — the highest-priority document in the programme.", required: true },
+      { id: "code-sets", name: "Umsamin kóðasöfn", why: "Þrír til fimm ICD-10 kóðar fyrir hverja tegund erindis, samþykktir af lækni. Þeir tengja okkar tölur við nefnara stofnunarinnar. Mikilvægasta skjalið í rannsóknaráætluninni.", required: true },
     ],
     metrics: [
       {
-        id: "scope_drift", name: "Outside code set", headline: true,
-        why: "The first sign that scope is drifting, long before anyone notices in the clinic.",
+        id: "scope_drift", name: "Utan kóðasafns", headline: true,
+        why: "Fyrsta merki þess að rammi þjónustunnar sé að færast, löngu áður en nokkur tekur eftir því á stöðinni.",
         compute: ({ t }) => ({
           value: n(t.codes_outside_set),
-          detail: t.cases_total ? `${pct(t.codes_outside_set, t.cases_total)}% of all cases` : "No cases yet",
+          detail: t.cases_total ? `${pct(t.codes_outside_set, t.cases_total)}% allra erinda` : "Engin erindi enn",
           status: !t.cases_total ? undefined : pct(t.codes_outside_set, t.cases_total)! <= 5 ? "good" : "fair",
         }),
       },
@@ -212,37 +223,37 @@ export const MODULES: Module[] = [
 
   {
     id: "scope-discovery",
-    name: "Scope discovery",
-    question: "What are people bringing that we cannot yet handle?",
-    claim: "We started with eleven case types. The data told us what the next three should be.",
+    name: "Nýir erindaflokkar",
+    question: "Með hvað kemur fólk sem við ráðum ekki enn við?",
+    claim: "Við byrjuðum með ellefu tegundir erinda. Gögnin sögðu okkur hverjar næstu þrjár ættu að vera.",
     category: "system",
     effort: "low",
     sources: ["medalia"],
     benefit:
-      "Tells you which case types to build next, from evidence rather than hunch.",
+      "Sýnir hvaða tegundir erinda á að byggja upp næst, út frá gögnum en ekki tilfinningu.",
     horizon: "now",
     rationale:
-      "The catch-all category is where case types twelve, thirteen and fourteen are hiding. Low effort — the volume is small enough to categorise by hand once a month — and it produces the slide that sells itself, because it shows a service that grows with the institution rather than a frozen product.",
+      "Í almenna flokknum leynast tegundir tólf, þrettán og fjórtán. Lítil vinna, því fjöldinn er nógu lítill til að flokka í höndunum einu sinni í mánuði. Út kemur glæran sem selur sig sjálf: hún sýnir þjónustu sem vex með stofnuninni, ekki fullmótaða vöru sem breytist ekki.",
     caveat:
-      "Categorising free text is judgement. Treat the output as a direction to investigate, never as a published figure.",
+      "Að flokka frjálsan texta er matsatriði. Líttu á niðurstöðuna sem vísbendingu til að skoða nánar, aldrei sem tölu til birtingar.",
     protocol: [
-      { text: "Each month, review the general cases that were not resolved" },
-      { text: "Group them by what the request actually was", detail: "By hand. The volume allows it, and an AI suggestion is fine here because being wrong is cheap and nothing is published." },
-      { text: "Every quarter, check whether a group is big enough to become its own case type" },
+      { text: "Farðu mánaðarlega yfir almenn erindi sem voru ekki afgreidd" },
+      { text: "Flokkaðu þau eftir því um hvað erindið snerist í raun", detail: "Í höndunum. Fjöldinn leyfir það. Tillaga frá gervigreind er í lagi hér, því mistök kosta lítið og ekkert er birt." },
+      { text: "Athugaðu ársfjórðungslega hvort einhver flokkur sé orðinn nógu stór til að verða sérstök tegund erindis" },
     ],
     fields: [
-      { key: "general_total", label: "General cases", source: "medalia" },
-      { key: "general_resolved", label: "of which resolved", source: "medalia" },
+      { key: "general_total", label: "Almenn erindi", source: "medalia" },
+      { key: "general_resolved", label: "þar af afgreidd", source: "medalia" },
     ],
     documents: [],
     metrics: [
       {
-        id: "unresolved_general", name: "Unresolved general cases", headline: true,
-        why: "The roadmap to the next case types, and the slide that sells itself.",
+        id: "unresolved_general", name: "Óafgreidd almenn erindi", headline: true,
+        why: "Vegvísirinn að næstu tegundum erinda, og glæran sem selur sig sjálf.",
         compute: ({ t }) => ({
           value: t.general_total ? n(t.general_total - t.general_resolved) : null,
-          detail: t.general_total ? `of ${n(t.general_total)} general cases` : "No general cases recorded",
-          missing: t.general_total ? undefined : "Medalia export",
+          detail: t.general_total ? `af ${n(t.general_total)} ${pl(t.general_total, "almennu erindi", "almennum erindum")}` : "Engin almenn erindi skráð",
+          missing: t.general_total ? undefined : "Gagnaútdráttur úr Medalia",
         }),
       },
     ],
@@ -250,39 +261,39 @@ export const MODULES: Module[] = [
 
   {
     id: "cross-count",
-    name: "Independent count check",
-    question: "Are our case numbers actually right?",
-    claim: "Two independent counters agree within X%, so the case volume is not an artefact of one system.",
+    name: "Óháð talning til samanburðar",
+    question: "Eru tölurnar okkar um fjölda erinda réttar?",
+    claim: "Tvær óháðar talningar stemma innan X%. Fjöldi erinda er því ekki afurð eins kerfis.",
     category: "system",
     effort: "low",
     sources: ["internal"],
     benefit:
-      "Catches a miscount before it reaches a report.",
+      "Grípur ranga talningu áður en hún ratar í skýrslu.",
     // Checks whether our own numbers are right rather than measuring the
     // service, so it stays off the outcome dashboard like the study design.
     meta: true,
     horizon: "now",
     rationale:
-      "Doctors already log patients seen against their own shifts in the rota. That is a second counter on the same thing Medalia counts, from a different system and a different person — and two independent counters that agree are far stronger than one that cannot be checked. If they diverge, one of them is wrong and you need to know before the figure reaches a report.",
+      "Læknar skrá nú þegar fjölda sjúklinga á hverri vakt í vaktaskránni. Það er önnur talning á því sama og Medalia telur, úr öðru kerfi og frá annarri manneskju. Tvær óháðar talningar sem stemma eru mun sterkari en ein sem ekki er hægt að sannreyna. Ef þeim ber ekki saman er önnur röng, og það þarf að koma í ljós áður en talan fer í skýrslu.",
     caveat:
-      "It only works if doctors keep filling the field in. Coverage lapses show up here as a sudden zero, which is itself worth watching.",
+      "Þetta virkar aðeins ef læknar halda áfram að fylla út reitinn. Ef skráning fellur niður sést það hér sem skyndilegt núll, og það er í sjálfu sér vert að fylgjast með.",
     protocol: [
-      { text: "Ask doctors to log patients seen on every shift", detail: "A small discipline on the rota that pays for itself the first time somebody questions the case volume.", link: { href: "/admin/roster", label: "Rota" } },
-      { text: "Compare against the Medalia case count each month" },
-      { text: "Investigate any gap above 10% before the figure goes into a report" },
+      { text: "Biddu lækna að skrá fjölda sjúklinga á hverri vakt", detail: "Smá agi í vaktaskránni sem borgar sig í fyrsta sinn sem einhver efast um fjölda erinda.", link: { href: "/admin/roster", label: "Vaktaskrá" } },
+      { text: "Berðu saman við fjölda erinda í Medalia í hverjum mánuði" },
+      { text: "Kannaðu allan mun yfir 10% áður en talan fer í skýrslu" },
     ],
     fields: [],
     documents: [],
     metrics: [
       {
-        id: "cross_check", name: "Logged by doctors", headline: true,
-        why: "An independent check on the case volume. Divergence means one counter is wrong.",
+        id: "cross_check", name: "Skráð af læknum", headline: true,
+        why: "Óháð athugun á fjölda erinda. Ef tölunum ber ekki saman er önnur talningin röng.",
         compute: ({ t, roster }) => ({
           value: roster.patientsLogged ? n(roster.patientsLogged) : null,
           detail: roster.patientsLogged && t.cases_total
-            ? `Medalia counts ${n(t.cases_total)} — ${Math.abs(Math.round(((roster.patientsLogged - t.cases_total) / t.cases_total) * 100))}% apart`
-            : "Doctors log patients seen against their own shifts",
-          missing: roster.patientsLogged ? undefined : "Doctors logging patients per shift",
+            ? `Medalia telur ${n(t.cases_total)}. Munurinn er ${Math.abs(Math.round(((roster.patientsLogged - t.cases_total) / t.cases_total) * 100))}%`
+            : "Læknar skrá fjölda sjúklinga á eigin vöktum",
+          missing: roster.patientsLogged ? undefined : "Skráning lækna á fjölda sjúklinga á vakt",
           status: roster.patientsLogged && t.cases_total
             ? (Math.abs(roster.patientsLogged - t.cases_total) / t.cases_total <= 0.1 ? "good" : "fair")
             : undefined,
@@ -294,123 +305,123 @@ export const MODULES: Module[] = [
   // ── Safety ────────────────────────────────────────────────────────────────
   {
     id: "screening",
-    name: "Red-flag screening",
-    question: "How many are turned away, at which gate, and for what?",
-    claim: "N patients were excluded on a red flag — M by the questionnaire and K by a clinician — and here is the reason for every one.",
+    name: "Skimun fyrir rauðum flöggum",
+    question: "Hve mörgum er vísað frá, á hvaða stigi og af hvaða ástæðu?",
+    claim: "N sjúklingum var vísað frá vegna rauðs flaggs, M af spurningalistanum og K af lækni, og hér er ástæðan fyrir hverju tilviki.",
     category: "safety",
     benefit:
-      "Answers 'who decides the patient is suitable?' with evidence, and shows exactly what is getting past the form.",
+      "Svarar spurningunni „hver ákveður að sjúklingurinn henti?“ með gögnum, og sýnir nákvæmlega hvað sleppur fram hjá spurningalistanum.",
     horizon: "now",
     effort: "medium",
     sources: ["medalia"],
     rationale:
-      "This question is asked hard at any clinical meeting, because patients arrive by four routes and two of them — reception and records staff — are not clinical. You cannot answer 'an experienced nurse judged it', because that is not true for most arrivals. You do not need to: a systematic screen applied identically every time beats human judgement that varies by shift. But that answer stands or falls on being able to show the stop rate. Two gates matter and they say different things. The questionnaire is cheap and consistent. A clinician turning someone away is expensive — the patient has already waited — and each one is arguably a case the form should have caught. The split, and the reason behind each, is the most actionable safety output in the whole programme.",
+      "Þessi spurning er borin fram af þunga á hverjum klínískum fundi. Sjúklingar koma eftir fjórum leiðum og tvær þeirra, móttaka og ritarar, eru ekki klínískar. Þú getur ekki svarað „reyndur hjúkrunarfræðingur mat það“, því það á ekki við um flesta sem koma. Þess þarf heldur ekki. Kerfisbundin skimun sem er eins í hvert sinn er betri en mannlegt mat sem sveiflast eftir vöktum. En það svar stendur og fellur með því að geta sýnt hve margir stöðvast. Tvö stig skipta máli og þau segja ólíka hluti. Spurningalistinn er ódýr og alltaf eins. Þegar læknir vísar sjúklingi frá er það dýrt, því sjúklingurinn hefur þegar beðið, og hvert slíkt tilvik er líklega erindi sem spurningalistinn hefði átt að grípa. Skiptingin milli stiganna, og ástæðan að baki hverju tilviki, er gagnlegasta öryggisniðurstaðan í allri rannsóknaráætluninni.",
     caveat:
-      "Only counts those who entered. Anyone a nurse or receptionist turned away before they reached the portal is invisible here and always will be — four entry routes and nobody counts the door. And a low total can mean the scope is well communicated upstream or that nobody is checking; the reason breakdown is what distinguishes them.",
+      "Telur aðeins þá sem komust inn. Þeir sem hjúkrunarfræðingur eða móttaka vísaði frá áður en þeir komust í gáttina sjást ekki hér og munu aldrei sjást. Leiðirnar inn eru fjórar og enginn telur við dyrnar. Lág heildartala getur líka þýtt tvennt: að rammi þjónustunnar sé vel kynntur eða að enginn sé að athuga. Skiptingin eftir ástæðum greinir þar á milli.",
     protocol: [
       {
-        text: "Confirm Medalia records stopped questionnaires at all, and that they reach the export",
+        text: "Staðfestu að Medalia skrái stöðvaða spurningalista og að þeir komi með í gagnaútdrættinum",
         detail:
-          "The most urgent question to put to Medalia. If stops are not recorded, this is the fix that has to happen before counting starts — it cannot be reconstructed later.",
+          "Brýnasta spurningin til Medalia. Ef stöðvanir eru ekki skráðar þarf að laga það áður en talning hefst. Það er ekki hægt að endurgera þær eftir á.",
         timeCritical: true,
       },
       {
-        text: "Separate turning away from referring onward in the clinician's outcome field",
+        text: "Aðgreindu „vísað frá“ og „vísað áfram“ í niðurstöðureit læknisins",
         detail:
-          "A patient who needs a dermatologist is the service working correctly. A patient who was pregnant, under 18 or acutely unwell should not have been here. Recorded as one figure, the safety signal disappears into the referral count.",
+          "Sjúklingur sem þarf að hitta húðlækni sýnir að þjónustan virkar rétt. Sjúklingur sem var barnshafandi, yngri en 18 ára eða bráðveikur hefði ekki átt að vera hér. Ef hvort tveggja er skráð sem ein tala hverfur öryggismerkið inn í tilvísanirnar.",
         timeCritical: true,
       },
       {
-        text: "Use the fixed reason list at both gates",
+        text: "Notaðu fastan lista yfir ástæður á báðum stigum",
         detail:
-          "Eleven categories, taken from the service's own triage rules so they match the clinical logic. Free text here means reading a thousand records at the end of the period.",
+          "Ellefu flokkar, teknir úr flokkunarreglum þjónustunnar svo þeir fylgi klínísku rökunum. Frjáls texti hér þýðir að lesa þúsund færslur í lok tímabilsins.",
         timeCritical: true,
       },
       {
-        text: "Review the leaks every month",
+        text: "Farðu yfir götin í hverjum mánuði",
         detail:
-          "A reason the form was meant to catch but a clinician caught instead is a gap in the questionnaire logic. That monthly list is the entire value of this module — fix the form and the next month's leak list is shorter.",
+          "Ástæða sem spurningalistinn átti að grípa en læknir greip í staðinn er gat í rökum spurningalistans. Þessi mánaðarlegi listi er allt gildi rannsóknarþáttarins. Lagaðu spurningalistann og listinn styttist næsta mánuð.",
       },
     ],
     fields: [
-      { key: "screening_stops", label: "Stopped by questionnaire", source: "medalia" },
-      { key: "excluded_by_doctor", label: "Turned away by a doctor", help: "Unsuitable on a red flag — not referred onward as normal care.", source: "medalia" },
+      { key: "screening_stops", label: "Stöðvað af spurningalista", source: "medalia" },
+      { key: "excluded_by_doctor", label: "Vísað frá af lækni", help: "Hentaði ekki vegna rauðs flaggs. Ekki venjuleg tilvísun áfram.", source: "medalia" },
     ],
     documents: [
-      { id: "screen-spec", name: "Screening logic", why: "Which red flags stop a patient and why. This is the document that answers 'who decides they are suitable?'", required: true },
+      { id: "screen-spec", name: "Rök skimunarinnar", why: "Hvaða rauð flögg stöðva sjúkling og hvers vegna. Þetta skjal svarar spurningunni „hver ákveður að sjúklingurinn henti?“", required: true },
     ],
     metrics: [
       {
-        id: "excluded_total", name: "Turned away on a red flag", headline: true,
-        why: "The combined catch across both gates. Without the split below it is just a number; with it, it is evidence the screen works.",
+        id: "excluded_total", name: "Vísað frá vegna rauðs flaggs", headline: true,
+        why: "Samanlagt á báðum stigum. Án skiptingarinnar hér fyrir neðan er þetta bara tala. Með henni sýnir hún að skimunin virkar.",
         compute: ({ t }) => {
           const entered = t.cases_total + t.screening_stops;
           const total = t.screening_stops + t.excluded_by_doctor;
           return {
             value: entered ? `${n(total)}` : null,
             detail: entered
-              ? `${p(pct(total, entered))} of ${n(entered)} who entered — ${n(t.screening_stops)} by the form, ${n(t.excluded_by_doctor)} by a doctor`
-              : "Needs entries and exclusions in the export",
-            missing: entered ? undefined : "Stopped forms and doctor exclusions in the export",
+              ? `${p(pct(total, entered))} af ${n(entered)} sem komu inn: ${n(t.screening_stops)} af spurningalistanum, ${n(t.excluded_by_doctor)} af lækni`
+              : "Þarf innkomur og frávísanir í gagnaútdrættinum",
+            missing: entered ? undefined : "Stöðvaðir spurningalistar og frávísanir lækna í gagnaútdrættinum",
           };
         },
       },
       {
-        id: "stop_rate", name: "Caught by the questionnaire",
-        why: "The only evidence the safety net works. Without it, 'the questionnaire screens them' is an assertion.",
+        id: "stop_rate", name: "Gripið af spurningalistanum",
+        why: "Einu gögnin um að öryggisnetið virki. Án þeirra er „spurningalistinn skimar þá“ bara fullyrðing.",
         compute: ({ t }) => ({
           value: p(pct(t.screening_stops, t.cases_total + t.screening_stops)),
-          detail: `${n(t.screening_stops)} stopped before reaching a clinician — systematic, identical every time`,
-          missing: t.screening_stops || t.cases_total ? undefined : "Stopped forms in the export",
+          detail: `${n(t.screening_stops)} stöðvuð áður en læknir kom að málinu. Kerfisbundið og eins í hvert sinn`,
+          missing: t.screening_stops || t.cases_total ? undefined : "Stöðvaðir spurningalistar í gagnaútdrættinum",
         }),
       },
       {
-        id: "clinician_rate", name: "Caught by a doctor instead",
-        why: "Expensive — the patient has already waited — and every one is arguably a case the form should have caught. Rising share means tighten the form.",
+        id: "clinician_rate", name: "Gripið af lækni í staðinn",
+        why: "Dýrt, því sjúklingurinn hefur þegar beðið, og hvert tilvik er líklega erindi sem spurningalistinn hefði átt að grípa. Ef hlutfallið hækkar þarf að herða spurningalistann.",
         compute: ({ t }) => {
           const total = t.screening_stops + t.excluded_by_doctor;
           return {
             value: total ? p(pct(t.excluded_by_doctor, total)) : null,
-            detail: total ? `${n(t.excluded_by_doctor)} of ${n(total)} exclusions reached a clinician first` : "No exclusions recorded",
+            detail: total ? `${n(t.excluded_by_doctor)} af ${n(total)} ${pl(total, "frávísun", "frávísunum")} komust fyrst til læknis` : "Engar frávísanir skráðar",
             status: !total ? undefined : pct(t.excluded_by_doctor, total)! <= 25 ? "good" : "fair",
           };
         },
       },
       {
-        id: "leaks", name: "Gaps in the form",
-        why: "Reasons the questionnaire was meant to catch but a clinician did. This monthly list is the entire point of the module — each entry is a fix.",
+        id: "leaks", name: "Göt í spurningalistanum",
+        why: "Ástæður sem spurningalistinn átti að grípa en læknir greip. Þessi mánaðarlegi listi er tilgangur rannsóknarþáttarins. Hver færsla er lagfæring.",
         compute: ({ t }) => ({
           value: t.exclusions.leaks.length ? n(t.exclusions.leaks.reduce((a, l) => a + l.count, 0)) : t.exclusions.total ? "0" : null,
           detail: t.exclusions.leaks.length
             ? t.exclusions.leaks.slice(0, 3).map((l) => `${l.reason.name} (${l.count})`).join(", ")
             : t.exclusions.total
-            ? "Nothing the form should have caught got past it"
-            : "Needs the reasons file",
-          missing: t.exclusions.total ? undefined : "Exclusion reasons file",
+            ? "Ekkert sem spurningalistinn átti að grípa slapp fram hjá honum"
+            : "Þarf skrána með ástæðum frávísana",
+          missing: t.exclusions.total ? undefined : "Skrá með ástæðum frávísana",
           status: !t.exclusions.total ? undefined : t.exclusions.leaks.length ? "fair" : "good",
         }),
       },
       {
-        id: "clinical_referral", name: "Referred onward as normal care",
-        why: "The rest of the referrals — the service working correctly. Kept apart so it does not inflate the safety figures.",
+        id: "clinical_referral", name: "Vísað áfram í venjulega þjónustu",
+        why: "Aðrar tilvísanir, þar sem þjónustan virkar rétt. Haldið aðskildum svo þær blási ekki upp öryggistölurnar.",
         compute: ({ t }) => ({
           value: n(Math.max(0, t.cases_referred - t.excluded_by_doctor)),
-          detail: `Of ${n(t.cases_referred)} referrals, ${n(t.excluded_by_doctor)} were exclusions rather than onward care`,
+          detail: `Af ${n(t.cases_referred)} ${pl(t.cases_referred, "tilvísun", "tilvísunum")} ${pl(t.excluded_by_doctor, "var", "voru")} ${n(t.excluded_by_doctor)} ${pl(t.excluded_by_doctor, "frávísun", "frávísanir")}, ekki tilvísun áfram`,
         }),
       },
       {
-        id: "urgent", name: "Acute cases that got past the form",
-        why: "The sharpest safety signal we have: someone acutely unwell answered the questionnaire, it let them through, and a doctor had to catch it. Comes from the reasons file rather than the monthly export, which is better — it is coded as a reason rather than a bare flag.",
+        id: "urgent", name: "Bráð tilvik sem sluppu fram hjá spurningalistanum",
+        why: "Skarpasta öryggismerkið sem við höfum: bráðveikur einstaklingur svaraði spurningalistanum, listinn hleypti honum í gegn og læknir þurfti að grípa inn í. Talan kemur úr skránni með ástæðum frávísana, ekki mánaðarlega gagnaútdrættinum. Það er betra, því þar er tilvikið skráð með ástæðu en ekki bara sem flagg.",
         compute: ({ t }) => {
           const acute = t.exclusions.byReason.find((r) => r.reason.id === "acute");
           return {
             value: acute ? n(acute.clinician) : t.exclusions.total ? "0" : null,
             detail: acute
-              ? `${n(acute.form)} stopped by the form, ${n(acute.clinician)} reached a doctor first`
+              ? `${n(acute.form)} stöðvuð af spurningalistanum, ${n(acute.clinician)} komust fyrst til læknis`
               : t.exclusions.total
-              ? "No acute cases got past the questionnaire"
-              : "Comes from the exclusion reasons file",
-            missing: t.exclusions.total ? undefined : "Exclusion reasons file",
+              ? "Engin bráð tilvik sluppu fram hjá spurningalistanum"
+              : "Kemur úr skránni með ástæðum frávísana",
+            missing: t.exclusions.total ? undefined : "Skrá með ástæðum frávísana",
             status: !t.exclusions.total ? undefined : acute?.clinician ? "fair" : "good",
           };
         },
@@ -420,54 +431,56 @@ export const MODULES: Module[] = [
 
   {
     id: "stewardship",
-    name: "Prescribing and antibiotic use",
-    question: "Is antibiotic prescribing comparable to the traditional service?",
-    claim: "Antibiotics were prescribed in X% of cases, against Y% at HSU for the same diagnosis codes.",
+    name: "Lyfjaávísanir og sýklalyf",
+    question: "Er ávísun sýklalyfja sambærileg við hefðbundna þjónustu?",
+    claim: "Sýklalyfjum var ávísað í X% erinda, á móti Y% hjá HSU fyrir sömu greiningarkóða.",
     category: "safety",
     effort: "medium",
     requires: ["code-volume"],
     sources: ["medalia", "institution"],
     benefit:
-      "Answers the prescription-pipeline objection with HSU's own figures as the comparator.",
+      "Svarar ásökuninni um lyfseðlaverksmiðju, með tölur HSU sjálfrar til samanburðar.",
     horizon: "now",
     rationale:
-      "The first attack on any remote service will always be that it is a prescription pipeline wearing a white coat. The advisor's answer is a baseline from the traditional service: how often HSU prescribes antibiotics for the same diagnosis codes. If the remote rate stands up against that, the discussion is finished before it starts.",
+      "Fyrsta gagnrýnin á fjarþjónustu verður alltaf sú að hún sé lyfseðlaverksmiðja í hvítum slopp. Svar ráðgjafans er baseline úr hefðbundinni þjónustu: hve oft HSU ávísar sýklalyfjum fyrir sömu greiningarkóða. Ef hlutfallið í fjarþjónustunni stenst þann samanburð er umræðunni lokið áður en hún hefst.",
     caveat:
-      "The comparison only holds for like-for-like cases, so it is made within the agreed code set and broken down by case type where the numbers allow. Agree the comparator before seeing our own numbers, not after.",
+      "Samanburðurinn gildir aðeins fyrir sambærileg erindi. Hann er því gerður innan umsamins kóðasafns og skipt eftir tegund erindis þar sem fjöldinn leyfir. Ákveddu samanburðartöluna áður en þú sérð okkar tölur, ekki eftir á.",
     protocol: [
-      { text: "Record prescriptions and antibiotics as coded fields per case in Medalia", timeCritical: true },
-      { text: "Ask for antibiotic prescribing in the same codes in the Saga export", detail: "The same code-days as the diagnosis-code count, with the number where an antibiotic was prescribed. Baseline and pilot months alike." },
-      { text: "Break the rate down by case type, not just overall" },
+      { text: "Skráðu lyfjaávísanir og sýklalyf sem kóðaða reiti á hvert erindi í Medalia", timeCritical: true },
+      { text: "Biddu um sýklalyfjaávísanir í sömu kóðum í gagnaútdrættinum úr Sögu", detail: "Sömu kóðadagar og í talningu greiningarkóða, ásamt fjöldanum þar sem sýklalyfi var ávísað. Bæði fyrir baseline og mánuði tilraunaverkefnisins." },
+      { text: "Skiptu hlutfallinu eftir tegund erindis, ekki bara í heild" },
     ],
     fields: [
-      { key: "prescriptions", label: "Cases with a prescription", source: "medalia" },
-      { key: "antibiotics", label: "of which antibiotics", source: "medalia" },
-      { key: "institution_antibiotics", label: "HSU code-days with an antibiotic (Saga)", help: "In the agreed code set, same counting rule as the diagnosis codes.", nullable: true, source: "institution" },
+      { key: "prescriptions", label: "Erindi með lyfjaávísun", source: "medalia" },
+      { key: "antibiotics", label: "þar af sýklalyf", source: "medalia" },
+      { key: "institution_antibiotics", label: "Kóðadagar hjá HSU með sýklalyfi (Saga)", help: "Innan umsamins kóðasafns, með sömu talningarreglu og greiningarkóðarnir.", nullable: true, source: "institution" },
     ],
     documents: [
-      { id: "comparator", name: "Comparator definition", why: "How the HSU comparison figure is drawn from Saga, agreed before our own numbers were known.", required: true },
+      { id: "comparator", name: "Skilgreining samanburðar", why: "Hvernig samanburðartala HSU er sótt í Sögu. Ákveðin áður en okkar tölur lágu fyrir.", required: true },
     ],
     metrics: [
       {
-        id: "abx", name: "Antibiotic rate", headline: true,
-        why: "The predictable attack, answered with HSU's own figures.",
-        compute: ({ t }) => {
-          const hsu = t.institution_antibiotics !== null && t.institution_contacts ? pct(t.institution_antibiotics, t.institution_contacts) : null;
+        id: "abx", name: "Hlutfall sýklalyfja", headline: true,
+        why: "Fyrirsjáanleg gagnrýni, svarað með tölum HSU sjálfrar.",
+        compute: ({ t, codes }) => {
+          // The comparator is HSU's traditional service before go-live, not
+          // HSU during the pilot, whose case mix the service itself changes.
+          const hsu = codes?.baselineAbxPct ?? null;
           const ours = pct(t.antibiotics, t.cases_resolved);
           return {
             value: p(ours),
-            detail: `${n(t.antibiotics)} of ${n(t.cases_resolved)} resolved cases${hsu !== null ? ` · HSU ${hsu}% in the same codes` : ""}`,
-            missing: t.cases_resolved ? undefined : "Medalia export",
+            detail: `${n(t.antibiotics)} af ${n(t.cases_resolved)} ${pl(t.cases_resolved, "afgreiddu erindi", "afgreiddum erindum")}${hsu !== null ? ` · HSU ${hsu}% í sömu kóðum fyrir upphaf þjónustu` : " · baseline HSU vantar"}`,
+            missing: t.cases_resolved ? undefined : "Gagnaútdráttur úr Medalia",
             status: ours === null || hsu === null ? undefined : ours <= hsu ? "good" : ours <= hsu + 5 ? "fair" : "poor",
           };
         },
       },
       {
-        id: "rx", name: "Any prescription",
-        why: "Wider than antibiotics.",
+        id: "rx", name: "Einhver lyfjaávísun",
+        why: "Víðara en sýklalyf.",
         compute: ({ t }) => ({
           value: p(pct(t.prescriptions, t.cases_resolved)),
-          detail: `${n(t.prescriptions)} of ${n(t.cases_resolved)} resolved cases`,
+          detail: `${n(t.prescriptions)} af ${n(t.cases_resolved)} ${pl(t.cases_resolved, "afgreiddu erindi", "afgreiddum erindum")}`,
         }),
       },
     ],
@@ -475,36 +488,36 @@ export const MODULES: Module[] = [
 
   {
     id: "adverse-reactions",
-    name: "Serious adverse drug reactions",
-    question: "Did anyone have a serious reaction or allergy to a medicine we prescribed?",
-    claim: "N serious adverse reactions or allergies among M patients given a prescription, each one reviewed.",
+    name: "Alvarlegar aukaverkanir lyfja",
+    question: "Fékk einhver alvarlega aukaverkun eða ofnæmi fyrir lyfi sem við ávísuðum?",
+    claim: "N alvarlegar aukaverkanir eða ofnæmi meðal M sjúklinga sem fengu lyfjaávísun. Farið var yfir hvert tilvik.",
     category: "safety",
     effort: "low",
     requires: ["patient-survey"],
     sources: ["survey"],
     benefit:
-      "Shows prescribing without an examination is not causing harm.",
+      "Sýnir að lyfjaávísun án skoðunar veldur ekki skaða.",
     horizon: "now",
     rationale:
-      "Prescribing remotely means prescribing without examining, so the advisor asks directly about harm from the medicine itself. The day-7 survey catches what the patient noticed; the incident route catches what HSU staff saw. Each case is reviewed as an incident, so the count and the review happen together.",
+      "Í fjarþjónustu er ávísað án skoðunar. Ráðgjafinn spyr því beint um skaða af lyfinu sjálfu. Þjónustukönnunin á degi 7 grípur það sem sjúklingurinn tók eftir. Atvikaskráningin grípur það sem starfsfólk HSU sá. Farið er yfir hvert tilvik sem atvik, svo talning og yfirferð fara saman.",
     caveat:
-      "Rare events at a single site. Zero is the expected answer and says little on its own — what makes it credible is that both the survey question and the reporting route existed and were used.",
+      "Sjaldgæfir atburðir á einni stöð. Búast má við núlli og það segir lítið eitt og sér. Það verður trúverðugt af því að bæði spurningin í könnuninni og tilkynningarleiðin voru til og voru notaðar.",
     protocol: [
-      { text: "Ask in the day-7 survey about serious reactions or allergy to a prescribed medicine", timeCritical: true },
-      { text: "Route every reported reaction through the incident procedure", detail: "Reviewed by a doctor, recorded with the medicine and the outcome." },
+      { text: "Spurðu í þjónustukönnuninni á degi 7 um alvarlega aukaverkun eða ofnæmi fyrir ávísuðu lyfi", timeCritical: true },
+      { text: "Sendu hverja tilkynnta aukaverkun í gegnum verklag um atvik", detail: "Læknir fer yfir hana og skráir lyfið og afleiðingarnar." },
     ],
     fields: [
-      { key: "adverse_drug_reactions", label: "Serious adverse reactions or allergy", help: "From the day-7 survey and incident reports, counted once per patient.", nullable: true, source: "survey" },
+      { key: "adverse_drug_reactions", label: "Alvarleg aukaverkun eða ofnæmi", help: "Úr þjónustukönnun á degi 7 og atvikatilkynningum, talið einu sinni á hvern sjúkling.", nullable: true, source: "survey" },
     ],
     documents: [],
     metrics: [
       {
-        id: "adr", name: "Serious drug reactions", headline: true,
-        why: "Harm from the treatment itself — the direct safety question about remote prescribing.",
+        id: "adr", name: "Alvarlegar aukaverkanir lyfja", headline: true,
+        why: "Skaði af meðferðinni sjálfri. Beina öryggisspurningin um lyfjaávísanir í fjarþjónustu.",
         compute: ({ t }) => ({
           value: t.adverse_drug_reactions === null ? null : n(t.adverse_drug_reactions),
-          detail: `Among ${n(t.prescriptions)} cases with a prescription`,
-          missing: t.adverse_drug_reactions === null ? "Day-7 survey and incident reports" : undefined,
+          detail: `Meðal ${n(t.prescriptions)} ${pl(t.prescriptions, "erindis", "erinda")} með lyfjaávísun`,
+          missing: t.adverse_drug_reactions === null ? "Þjónustukönnun á degi 7 og atvikatilkynningar" : undefined,
           status: t.adverse_drug_reactions === null ? undefined : t.adverse_drug_reactions === 0 ? "good" : "poor",
         }),
       },
@@ -513,37 +526,37 @@ export const MODULES: Module[] = [
 
   {
     id: "decision-tree",
-    name: "Decision-tree agreement",
-    question: "Does the doctor confirm the decision tree's outcome, or change it?",
-    claim: "Doctors confirmed the decision tree's outcome in X% of cases, and every change fed back into the clinical protocol.",
+    name: "Samræmi við ákvörðunartré",
+    question: "Staðfestir læknirinn niðurstöðu ákvörðunartrésins, eða breytir hann henni?",
+    claim: "Læknar staðfestu niðurstöðu ákvörðunartrésins í X% erinda, og hver breyting skilaði sér inn í klínískt verklag.",
     category: "safety",
     effort: "low",
     sources: ["medalia"],
     benefit:
-      "Shows how far the decision trees can be trusted, and where they need changing.",
+      "Sýnir hve vel má treysta ákvörðunartrjánum og hvar þarf að breyta þeim.",
     horizon: "now",
     rationale:
-      "Each case type runs through a decision tree before a doctor sees it. Recording whether the doctor confirms its outcome or changes it is almost free, and it is the most direct check on the algorithm itself. A tree the doctors keep overriding for the same reason is a tree to fix — and the fix goes through the clinical change log, so the evidence and the change sit together.",
+      "Hver tegund erindis fer í gegnum ákvörðunartré áður en læknir sér erindið. Það kostar nánast ekkert að skrá hvort læknirinn staðfestir niðurstöðuna eða breytir henni, og það er beinasta athugunin á reikniritinu sjálfu. Tré sem læknar breyta aftur og aftur af sömu ástæðu þarf að laga. Lagfæringin fer í breytingaskrá klínísks verklags, svo rökin og breytingin fylgjast að.",
     caveat:
-      "A high agreement rate can also mean doctors accept the suggestion without looking hard. Read it next to the 7-day returns and the incident log, which catch the cases where agreeing was wrong.",
+      "Hátt samræmi getur líka þýtt að læknar samþykki tillöguna án þess að skoða hana vel. Lestu það með endurkomum innan 7 daga og atvikaskráningunni. Þær grípa tilvikin þar sem rangt var að samþykkja.",
     protocol: [
-      { text: "Make 'confirmed / changed' a coded field on every case in Medalia", timeCritical: true },
-      { text: "Record a reason category when the doctor changes the outcome" },
-      { text: "Review the changes monthly and record any tree change in the clinical log", link: { href: "/admin/clinical", label: "Clinical protocols" } },
+      { text: "Gerðu „staðfest / breytt“ að kóðuðum reit á hverju erindi í Medalia", timeCritical: true },
+      { text: "Skráðu flokk ástæðu þegar læknirinn breytir niðurstöðunni" },
+      { text: "Farðu mánaðarlega yfir breytingarnar og skráðu allar breytingar á trjánum í klínísku breytingaskrána", link: { href: "/admin/clinical", label: "Klínískt verklag" } },
     ],
     fields: [
-      { key: "tree_cases", label: "Cases with a decision-tree outcome", nullable: true, source: "medalia" },
-      { key: "tree_overridden", label: "of which the doctor changed it", nullable: true, source: "medalia" },
+      { key: "tree_cases", label: "Erindi með niðurstöðu úr ákvörðunartré", nullable: true, source: "medalia" },
+      { key: "tree_overridden", label: "þar af breytt af lækni", nullable: true, source: "medalia" },
     ],
     documents: [],
     metrics: [
       {
-        id: "tree_agree", name: "Doctor confirmed the tree", headline: true,
-        why: "The direct check on the algorithm. Falling agreement on one case type is a tree to fix.",
+        id: "tree_agree", name: "Læknir staðfesti tréð", headline: true,
+        why: "Bein athugun á reikniritinu. Ef samræmið fellur í einni tegund erindis þarf að laga það tré.",
         compute: ({ t }) => ({
           value: t.tree_cases ? p(pct(t.tree_cases - (t.tree_overridden ?? 0), t.tree_cases)) : null,
-          detail: t.tree_cases ? `${n(t.tree_overridden ?? 0)} of ${n(t.tree_cases)} changed by the doctor` : "Needs the confirmed/changed field in Medalia",
-          missing: t.tree_cases ? undefined : "Confirmed/changed field in the export",
+          detail: t.tree_cases ? `Læknir breytti ${n(t.tree_overridden ?? 0)} af ${n(t.tree_cases)}` : "Þarf reitinn staðfest/breytt í Medalia",
+          missing: t.tree_cases ? undefined : "Reiturinn staðfest/breytt í gagnaútdrættinum",
           status: !t.tree_cases ? undefined : pct(t.tree_cases - (t.tree_overridden ?? 0), t.tree_cases)! >= 90 ? "good" : "fair",
         }),
       },
@@ -552,57 +565,57 @@ export const MODULES: Module[] = [
 
   {
     id: "revisits",
-    name: "Sought care again within 7 days",
-    question: "Did the patient have to seek health care again for the same problem?",
-    claim: "X% said they sought other care within 7 days, and the review of HSU's records found N returns for the same problem.",
+    name: "Leitaði aftur til heilbrigðisþjónustu innan 7 daga",
+    question: "Þurfti sjúklingurinn að leita aftur til heilbrigðisþjónustu vegna sama vanda?",
+    claim: "X% sögðust hafa leitað annarrar þjónustu innan 7 daga, og yfirferð sjúkraskráa hjá HSU fann N endurkomur vegna sama vanda.",
     category: "safety",
     effort: "high",
     sources: ["survey", "institution"],
     benefit:
-      "Shows the problems stayed solved, not merely closed — asked of the patient and checked in HSU's records.",
+      "Sýnir að vandinn var leystur, ekki bara að erindinu var lokað. Sjúklingurinn er spurður og athugað er í sjúkraskrám HSU.",
     horizon: "now",
     rationale:
-      "The best safety measure there is for a service like this: it catches the cases that looked resolved and were not. The advisor asks it two ways, and they check each other. A: the day-7 survey asks whether the patient had to go to the emergency department, a hospital or the health centre. B: hard numbers — HSU finds the patients who had a contact in Saga within 7 days of a Fjarlækningar case and reviews those records by hand, expected to be 50–100 people. The survey is cheap and covers everyone who answers; the review is small and certain.",
+      "Besti öryggismælikvarði sem til er fyrir þjónustu af þessu tagi. Hann grípur erindin sem virtust afgreidd en voru það ekki. Ráðgjafinn spyr á tvo vegu og hvor aðferð sannreynir hina. A: Þjónustukönnunin á degi 7 spyr hvort sjúklingurinn hafi þurft að fara á bráðamóttöku, sjúkrahús eða heilsugæslu. B: Harðar tölur. HSU finnur sjúklinga sem eiga skráð samskipti í Sögu innan 7 daga frá erindi hjá Fjarlækningum og fer yfir sjúkraskrár þeirra í höndunum. Búist er við 50–100 einstaklingum. Könnunin er ódýr og nær til allra sem svara. Yfirferðin er lítil og áreiðanleg.",
     caveat:
-      "Only contacts at HSU are visible in Saga — a patient who went to Landspítali or a private clinic appears only in the survey. The survey in turn only hears from those who answer. Report both, side by side, and say which is which.",
+      "Aðeins samskipti við HSU sjást í Sögu. Sjúklingur sem fór á Landspítala eða einkastofu sést aðeins í könnuninni. Könnunin heyrir svo aðeins í þeim sem svara. Birtu hvort tveggja hlið við hlið og segðu hvað er hvað.",
     protocol: [
-      { text: "Put the 7-day question in the day-7 survey", detail: "Emergency department, hospital or health centre — fixed options, plus 'no'.", timeCritical: true },
+      { text: "Settu spurninguna um 7 daga í þjónustukönnunina á degi 7", detail: "Bráðamóttaka, sjúkrahús eða heilsugæsla. Fastir svarmöguleikar, auk „nei“.", timeCritical: true },
       {
-        text: "Agree that HSU runs the linkage and the review on its own side",
-        detail: "HSU matches the Fjarlækningar case list against contacts in Saga within 7 days and reviews the records by hand. Only the counts come back. No identifiable linkage leaves HSU, and the project stays quality assurance. How HSU receives the case list is part of the data agreement.",
+        text: "Semdu um að HSU sjái sjálf um samkeyrsluna og yfirferðina",
+        detail: "HSU ber lista yfir erindi Fjarlækninga saman við samskipti í Sögu innan 7 daga og fer yfir sjúkraskrárnar í höndunum. Aðeins fjöldatölur koma til baka. Engin persónugreinanleg gögn fara frá HSU og verkefnið er áfram gæðaverkefni. Hvernig HSU fær listann yfir erindin er hluti af samningnum um miðlun gagna.",
         timeCritical: true,
       },
-      { text: "Agree the definition before the review: same patient, same problem, within 7 days of the case", detail: "Decided before anyone looks at a record." },
-      { text: "Run the review at 6 and 12 months" },
+      { text: "Ákveddu skilgreininguna fyrir yfirferðina: sami sjúklingur, sami vandi, innan 7 daga frá erindinu", detail: "Ákveðið fyrir fram, áður en nokkur skoðar sjúkraskrá." },
+      { text: "Framkvæmdu yfirferðina eftir 6 og 12 mánuði" },
     ],
     fields: [
-      { key: "survey_sought_care_7d_pct", label: "Sought other care within 7 days (survey)", unit: "percent", nullable: true, source: "survey" },
-      { key: "revisits_7d", label: "Patients with an HSU contact within 7 days (Saga)", nullable: true, source: "institution" },
-      { key: "revisits_related", label: "of which about the same problem (manual review)", nullable: true, source: "institution" },
+      { key: "survey_sought_care_7d_pct", label: "Leitaði annarrar þjónustu innan 7 daga (könnun)", unit: "percent", nullable: true, source: "survey" },
+      { key: "revisits_7d", label: "Sjúklingar með samskipti við HSU innan 7 daga (Saga)", nullable: true, source: "institution" },
+      { key: "revisits_related", label: "þar af vegna sama vanda (handvirk yfirferð)", nullable: true, source: "institution" },
     ],
     documents: [
-      { id: "data-agreement", name: "Data-sharing agreement", why: "The written arrangement under which HSU runs the linkage and review and shares the counts. Without it this module cannot run lawfully as quality assurance.", required: true },
+      { id: "data-agreement", name: "Samningur um miðlun gagna", why: "Skriflegt samkomulag um að HSU sjái um samkeyrslu og yfirferð og deili fjöldatölum. Án hans er ekki hægt að framkvæma þennan rannsóknarþátt með lögmætum hætti sem gæðaverkefni.", required: true },
     ],
     metrics: [
       {
-        id: "revisit_rate", name: "Returned for the same problem", headline: true,
-        why: "The hard number, from HSU's own records. The one a clinical audience will ask for first.",
+        id: "revisit_rate", name: "Endurkoma vegna sama vanda", headline: true,
+        why: "Harða talan, úr sjúkraskrám HSU sjálfrar. Sú sem klínískir áheyrendur spyrja fyrst um.",
         compute: ({ t }) => ({
           value: t.revisits_related === null ? null : p(pct(t.revisits_related, t.cases_resolved)),
           detail: t.revisits_related === null
-            ? "HSU reviews the records and shares the count only"
-            : `${n(t.revisits_related)} of ${n(t.cases_resolved)} resolved cases${t.revisits_7d !== null ? ` · ${n(t.revisits_7d)} had any HSU contact within 7 days` : ""}`,
-          missing: t.revisits_related === null ? "Review at HSU" : undefined,
+            ? "HSU fer yfir sjúkraskrárnar og deilir aðeins fjöldanum"
+            : `${n(t.revisits_related)} af ${n(t.cases_resolved)} ${pl(t.cases_resolved, "afgreiddu erindi", "afgreiddum erindum")}${t.revisits_7d !== null ? ` · ${n(t.revisits_7d)} ${pl(t.revisits_7d, "átti", "áttu")} einhver samskipti við HSU innan 7 daga` : ""}`,
+          missing: t.revisits_related === null ? "Yfirferð hjá HSU" : undefined,
           status: t.revisits_related === null || !t.cases_resolved ? undefined : pct(t.revisits_related, t.cases_resolved)! <= 5 ? "good" : pct(t.revisits_related, t.cases_resolved)! <= 10 ? "fair" : "poor",
         }),
       },
       {
-        id: "sought_7d", name: "Said they sought care again",
-        why: "The patient's side of the same question, including care outside HSU that Saga cannot see.",
+        id: "sought_7d", name: "Sögðust hafa leitað aftur",
+        why: "Hlið sjúklingsins á sömu spurningu, þar á meðal þjónusta utan HSU sem sést ekki í Sögu.",
         compute: ({ t }) => ({
           value: p(t.survey_sought_care_7d_pct),
-          detail: t.survey_7d_responses ? `Of ${n(t.survey_7d_responses)} day-7 responses` : "Asked in the day-7 survey",
-          missing: t.survey_sought_care_7d_pct === null ? "Day-7 survey" : undefined,
+          detail: t.survey_7d_responses ? `Af ${n(t.survey_7d_responses)} ${pl(t.survey_7d_responses, "svari", "svörum")} á degi 7` : "Spurt í þjónustukönnun á degi 7",
+          missing: t.survey_sought_care_7d_pct === null ? "Þjónustukönnun á degi 7" : undefined,
         }),
       },
     ],
@@ -611,80 +624,97 @@ export const MODULES: Module[] = [
   // ── Workload ──────────────────────────────────────────────────────────────
   {
     id: "code-volume",
-    name: "Diagnosis codes at HSU",
-    question: "Do fewer of these problems reach HSU than its own trend predicts?",
-    claim: "HSU recorded N diagnosis codes a month in these problems during the pilot, against M expected from its own three-year trend.",
+    name: "Greiningarkóðar hjá HSU",
+    question: "Berast færri slík vandamál til HSU en eigin leitni stofnunarinnar spáir fyrir um?",
+    claim: "HSU skráði N greiningarkóða á mánuði fyrir þessi vandamál á tíma tilraunaverkefnisins, á móti M sem búast mátti við út frá eigin leitni síðustu þriggja ára.",
     category: "system",
     effort: "high",
     requires: ["case-mix"],
     sources: ["institution", "medalia"],
     benefit:
-      "The hard-number test of whether the service takes work off HSU, from HSU's own records.",
+      "Mælir með hörðum tölum hvort þjónustan létti vinnu af HSU, úr gögnum HSU sjálfrar.",
     horizon: "now",
     rationale:
-      "The advisor's main health-system measure. Count the diagnosis codes in the agreed code set in Saga for the three years before go-live, then for the first year alongside the cases in Medalia. If the service is taking the work, HSU's count should fall below where its own trend was heading. Three years of baseline answers the question of how growth between years is judged: the trend is taken from the baseline itself, so the pilot is compared with where HSU was already heading rather than with a flat line. The data are HSU's own, from their own system, which is why nobody argues with them.",
+      "Helsti mælikvarði ráðgjafans fyrir heilbrigðiskerfið. Taldir eru greiningarkóðar úr umsömdu kóðasafni í Sögu síðustu þrjú árin áður en þjónustan hófst, og svo fyrsta árið samhliða erindunum í Medalia. Ef þjónustan tekur verkefnin til sín ætti talan hjá HSU að fara niður fyrir það sem eigin leitni stefndi í. Þriggja ára baseline svarar því hvernig vöxtur milli ára er metinn. Leitnin er reiknuð úr baseline sjálfu. Tilraunatímabilið er því borið saman við þá stefnu sem HSU var þegar á, ekki við flata línu. Gögnin eru HSU sjálfrar, úr þeirra eigin kerfi, og þess vegna deilir enginn um þau.",
     caveat:
-      "A fall is consistent with the service taking the work, but it is not proof on its own: staffing changes at HSU, an epidemic season or a change in coding habits can all move the count. Uptake also depends on people knowing the service exists, so read it next to case volume. A station that is not live yet, counted the same way, is the control that rules most of this out.",
+      "Fækkun samræmist því að þjónustan taki verkefnin til sín, en sannar það ekki ein og sér. Breytt mönnun hjá HSU, farsóttatímabil eða breyttar venjur við kóðun geta allt hreyft töluna. Notkun ræðst líka af því hvort fólk viti af þjónustunni, svo lestu töluna með fjölda erinda. Stöð þar sem þjónustan er ekki enn hafin, talin á sama hátt, er samanburðarstöðin sem útilokar flest af þessu.",
     protocol: [
-      { text: "Agree the code set with the medical advisor", detail: "The case-mix module holds it. It is the join key between Saga and Medalia — without it there is nothing to count.", timeCritical: true },
+      { text: "Semdu um kóðasafnið við læknisfræðilegan ráðgjafa", detail: "Það er geymt í rannsóknarþættinum um samsetningu erinda. Það tengir Sögu og Medalia saman. Án þess er ekkert að telja.", timeCritical: true },
       {
-        text: "Request 36 months of baseline from Saga, month by month, per station",
-        detail: "Each diagnosis code in the set counted once per patient per day. The date is needed to apply that rule and to see several codes inside one visit — HSU applies it in Saga and sends monthly counts, so no dates or ID numbers leave HSU. Monthly, never an annual total: a total cannot be un-aggregated and the trend needs the months.",
+        text: "Biddu um 36 mánaða baseline úr Sögu, mánuð fyrir mánuð, fyrir hverja stöð",
+        detail: "Hver greiningarkóði í safninu talinn einu sinni á sjúkling á dag. Dagsetningin þarf til að beita þeirri reglu og til að sjá marga kóða í einni komu. HSU beitir reglunni í Sögu og sendir mánaðarlegar fjöldatölur, svo engar dagsetningar eða kennitölur fara frá HSU. Mánaðarlega, aldrei sem ársheildartölu. Heildartölu er ekki hægt að brjóta upp aftur og leitnin þarf mánuðina.",
         timeCritical: true,
       },
-      { text: "Get the same count for every pilot month, with the same rule" },
-      { text: "Enter the baseline months as well as the pilot months", detail: "They are the comparison. A pre-go-live month carries the HSU count and nothing else." },
-      { text: "Decide how awareness of the service is followed", detail: "The advisor notes that it matters whether people know about the service. At minimum, read the count next to case volume and any publicity dates." },
+      { text: "Fáðu sömu talningu fyrir hvern mánuð tilraunaverkefnisins, með sömu reglu" },
+      { text: "Skráðu baseline-mánuðina jafnt sem mánuði tilraunaverkefnisins", detail: "Þeir eru samanburðurinn. Mánuður fyrir upphafsdag hefur aðeins tölu HSU og ekkert annað." },
+      { text: "Ákveddu hvernig fylgst er með því hvort fólk viti af þjónustunni", detail: "Ráðgjafinn bendir á að það skipti máli. Lestu töluna að minnsta kosti með fjölda erinda og dagsetningum kynninga." },
     ],
     fields: [
-      { key: "institution_contacts", label: "HSU diagnosis codes in the agreed set (Saga)", help: "Each code counted once per patient per day. Enter the baseline months too.", nullable: true, source: "institution" },
+      { key: "institution_contacts", label: "Greiningarkóðar HSU í umsömdu kóðasafni (Saga)", help: "Hver kóði talinn einu sinni á sjúkling á dag. Skráðu líka baseline-mánuðina.", nullable: true, source: "institution" },
     ],
     documents: [
-      { id: "baseline", name: "Saga baseline request", why: "36 months of monthly counts in the agreed codes, per station, with the counting rule written in. Time-critical — this gets harder to obtain every month.", required: true },
+      { id: "baseline", name: "Beiðni um baseline úr Sögu", why: "36 mánaða fjöldatölur, mánuð fyrir mánuð, í umsömdum kóðum fyrir hverja stöð, með talningarreglunni skrifaðri inn. Tímaháð: það verður erfiðara að fá þetta með hverjum mánuði sem líður.", required: true },
     ],
     metrics: [
       {
-        id: "vs_trend", name: "HSU codes against trend", headline: true,
-        why: "The hard-number answer to whether the service takes work off the health centre.",
+        id: "vs_trend", name: "Kóðar HSU miðað við leitni", headline: true,
+        why: "Svar með hörðum tölum við því hvort þjónustan létti vinnu af heilsugæslunni.",
         compute: ({ codes }) => {
           const c = codes;
           if (!c || c.pilotPerMonth === null || c.expectedPerMonth === null) {
             return {
               value: null,
-              detail: !c || !c.baselineMonths ? "Needs the Saga baseline" : "Needs HSU counts for the pilot months",
-              missing: !c || !c.baselineMonths ? "Saga baseline" : "Saga counts after go-live",
+              detail: !c || !c.baselineMonths ? "Þarf baseline úr Sögu" : "Þarf tölur HSU fyrir mánuði tilraunaverkefnisins",
+              missing: !c || !c.baselineMonths ? "Baseline úr Sögu" : "Tölur úr Sögu eftir upphafsdag",
             };
           }
           const change = c.expectedPerMonth ? Math.round(((c.pilotPerMonth - c.expectedPerMonth) / c.expectedPerMonth) * 100) : 0;
           return {
             value: `${change > 0 ? "+" : ""}${change}%`,
-            detail: `${n(c.pilotPerMonth)} a month over ${c.pilotMonths} pilot months, against ${n(c.expectedPerMonth)} expected`,
+            detail: `${n(c.pilotPerMonth)} á mánuði á ${c.pilotMonths} ${pl(c.pilotMonths, "mánuði", "mánuðum")} tilraunaverkefnisins, á móti ${n(c.expectedPerMonth)} væntum`,
             status: change <= -5 ? "good" : change <= 5 ? "fair" : "poor",
-            assumption: `Expected = the last baseline year's monthly average${c.trendPerYear !== null ? `, grown by the baseline's average year-on-year change (${Math.round(c.trendPerYear * 100)}%)` : ""}. Uncontrolled single-site comparison until a pre-live station is counted the same way.`,
+            assumption: `Vænt tala = mánaðarmeðaltal síðasta baseline-árs${c.trendPerYear !== null ? `, hækkað um meðalbreytingu milli ára í baseline (${Math.round(c.trendPerYear * 100)}%)` : ""}. Samanburður á einni stöð án samanburðarhóps, þar til stöð þar sem þjónustan er ekki hafin er talin á sama hátt.`,
           };
         },
       },
       {
-        id: "baseline_years", name: "Baseline by year",
-        why: "How the count was already moving before the service started — the answer to how growth between years is judged.",
+        id: "baseline_years", name: "Baseline eftir árum",
+        why: "Hvernig talan þróaðist áður en þjónustan hófst. Svarið við því hvernig vöxtur milli ára er metinn.",
         compute: ({ codes }) => ({
-          value: codes?.baselinePerMonth != null ? `${n(codes.baselinePerMonth)}/mo` : null,
+          value: codes?.baselinePerMonth != null ? `${n(codes.baselinePerMonth)} á mán.` : null,
           detail: codes?.baselineYears.length
-            ? `Yearly totals, oldest first: ${codes.baselineYears.map(n).join(" → ")}`
-            : `${codes?.baselineMonths ?? 0} baseline months entered — a trend needs at least two full years`,
-          missing: codes?.baselineMonths ? undefined : "Saga baseline",
+            ? `Ársheildir, elsta ár fyrst: ${codes.baselineYears.map(n).join(" → ")}`
+            : `${codes?.baselineMonths ?? 0} ${pl(codes?.baselineMonths ?? 0, "baseline-mánuður skráður", "baseline-mánuðir skráðir")}. Leitni þarf að minnsta kosti tvö heil ár`,
+          missing: codes?.baselineMonths ? undefined : "Baseline úr Sögu",
         }),
       },
       {
-        id: "share", name: "Share handled remotely",
-        why: "Of all the cases in these codes during the pilot, the part we took.",
+        id: "share", name: "Hlutfall í fjarþjónustu",
+        why: "Af öllum erindum í þessum kóðum á tíma tilraunaverkefnisins, sá hluti sem við tókum.",
         compute: ({ codes }) => {
           const c = codes;
-          const flow = c && c.pilotPerMonth !== null && c.remotePerMonth !== null ? c.pilotPerMonth + c.remotePerMonth : null;
+          const remote = c?.remoteInSetPerMonth ?? null;
+          // With HSU's own count for the pilot months: our share of the whole.
+          if (c && c.pilotPerMonth !== null && remote !== null) {
+            const flow = c.pilotPerMonth + remote;
+            return {
+              value: flow ? p(pct(remote, flow)) : null,
+              detail: `${n(remote)} af ${n(Math.round(flow * 10) / 10)} erindum í sömu kóðum á mánuði`,
+            };
+          }
+          // Baseline from Saga and our cases from Medalia only — the simple
+          // before/after: our monthly volume against what HSU would have seen.
+          if (c && c.expectedPerMonth && remote !== null) {
+            return {
+              value: p(pct(remote, c.expectedPerMonth)),
+              detail: `${n(remote)} erindi á mánuði í fjarþjónustu, borið saman við ${n(c.expectedPerMonth)} sem baseline HSU spáir fyrir`,
+              assumption: "Án talna úr Sögu fyrir sömu mánuði sést ekki hvort komum á HSU fækkaði, aðeins hve stór hluti af væntu magni fór í fjarþjónustu.",
+            };
+          }
           return {
-            value: flow ? p(pct(c!.remotePerMonth!, flow)) : null,
-            detail: flow ? `${n(c!.remotePerMonth!)} of ${n(Math.round(flow * 10) / 10)} a month` : "Needs Saga counts and our case volume for the same months",
-            missing: flow ? undefined : "Saga counts after go-live",
+            value: null,
+            detail: "Þarf baseline úr Sögu og erindi úr Medalia",
+            missing: !c?.baselineMonths ? "Baseline úr Sögu" : "Gagnaútdráttur úr Medalia",
           };
         },
       },
@@ -693,47 +723,47 @@ export const MODULES: Module[] = [
 
   {
     id: "time-study",
-    name: "Staff time and motion",
-    question: "Does this remove work, or just move it?",
-    claim: "Each case routed to us saved the health centre N minutes net, measured twice.",
+    name: "Tímamæling starfsfólks",
+    question: "Léttir þetta vinnu af starfsfólki, eða færist hún bara til?",
+    claim: "Hvert erindi sem var sent til okkar sparaði heilsugæslunni N mínútur nettó, mælt tvisvar.",
     category: "system",
     effort: "high",
     sources: ["study", "derived"],
     benefit:
-      "Tells you whether you are removing work or just moving it — while you can still fix it.",
+      "Sýnir hvort vinnan minnkar eða færist bara til, á meðan enn er hægt að bregðast við.",
     horizon: "now",
     rationale:
-      "The real risk in the whole project, and the one nothing else can see. The nurse now has to assess whether the case fits, explain a service the patient has never heard of, send a link, and take the patient back if anything went wrong. It is entirely possible that each case costs the health centre more minutes than it saves — the service would look excellent on every patient measure and still be adding to the load it was meant to relieve. That is the commonest finding in remote-care research, and it is invisible in every figure that starts after the patient reaches Medalia.",
+      "Raunverulega áhættan í öllu verkefninu, og sú eina sem ekkert annað sér. Hjúkrunarfræðingurinn þarf nú að meta hvort erindið henti, útskýra þjónustu sem sjúklingurinn hefur aldrei heyrt um, senda hlekk og taka við sjúklingnum aftur ef eitthvað fer úrskeiðis. Það er vel mögulegt að hvert erindi kosti heilsugæsluna fleiri mínútur en það sparar. Þá liti þjónustan frábærlega út á öllum mælikvörðum sjúklinga en bætti samt við álagið sem hún átti að létta. Þetta er algengasta niðurstaðan í rannsóknum á fjarþjónustu, og hún sést ekki í neinni tölu sem byrjar eftir að sjúklingurinn er kominn í Medalia.",
     caveat:
-      "Measure it at the start, not the end. A study that begins after people have got used to the service no longer measures what it was meant to measure — and an early result gives you nine months to fix what it shows, instead of a verdict you can do nothing about.",
+      "Mældu í byrjun, ekki í lokin. Mæling sem hefst eftir að fólk hefur vanist þjónustunni mælir ekki lengur það sem hún átti að mæla. Snemmbúin niðurstaða gefur þér níu mánuði til að laga það sem hún sýnir, í stað dóms sem ekkert er hægt að gera við.",
     protocol: [
-      { text: "Two weeks, now: minutes per case routed to us versus a comparable case handled in house", detail: "About 40 cases in each arm is enough to see whether the number is positive or negative. Two weeks of mild inconvenience for the answer to the most important question in the project.", timeCritical: true },
-      { text: "Cover only cases that pass through institution staff", detail: "Direct arrivals cost nothing and do not belong in the net calculation." },
-      { text: "Record the result as the assumption behind workload relief" },
-      { text: "Repeat around month nine", detail: "Two measurements give a trend. One gives a claim nobody can check." },
+      { text: "Tvær vikur, núna: mínútur á hvert erindi sem sent er til okkar, á móti sambærilegu erindi sem er afgreitt á staðnum", detail: "Um 40 erindi í hvorum hópi duga til að sjá hvort talan er jákvæð eða neikvæð. Tveggja vikna ónæði fyrir svarið við mikilvægustu spurningu verkefnisins.", timeCritical: true },
+      { text: "Taktu aðeins með erindi sem fara í gegnum starfsfólk stofnunarinnar", detail: "Þeir sem koma beint kosta ekkert og eiga ekki heima í nettóútreikningnum." },
+      { text: "Skráðu niðurstöðuna sem forsendu fyrir útreikningi á vinnuléttinum" },
+      { text: "Endurtaktu mælinguna í kringum níunda mánuð", detail: "Tvær mælingar sýna þróun. Ein gefur fullyrðingu sem enginn getur sannreynt." },
     ],
     fields: [],
     documents: [
-      { id: "study-protocol", name: "Study protocol", why: "How minutes are counted, by whom, over which cases. Needed for the result to mean anything.", required: true },
-      { id: "study-results", name: "Study results", why: "The measured figure that replaces the default assumption.", required: true },
+      { id: "study-protocol", name: "Verklýsing tímamælingar", why: "Hvernig mínútur eru taldar, af hverjum og fyrir hvaða erindi. Nauðsynlegt til að niðurstaðan segi eitthvað.", required: true },
+      { id: "study-results", name: "Niðurstöður tímamælingar", why: "Mælda talan sem kemur í stað sjálfgefnu forsendunnar.", required: true },
     ],
     metrics: [
       {
-        id: "relief", name: "Workload relief", headline: true,
-        why: "The figure that pays. Institutions are not shopping for better care — they are shopping for a way to staff the rota.",
+        id: "relief", name: "Vinnuléttir", headline: true,
+        why: "Talan sem skiptir máli fyrir kaupandann. Stofnanir eru ekki að leita að betri þjónustu. Þær eru að leita að leið til að manna vaktirnar.",
         compute: ({ t, a }) => {
           const net = a.minutesSaved - a.minutesSpent;
           const hours = (t.cases_resolved * net) / 60;
           const days = a.hoursPerClinicDay > 0 ? hours / a.hoursPerClinicDay : 0;
           return {
-            value: t.cases_resolved ? `${n(Math.round(hours))} h` : null,
+            value: t.cases_resolved ? `${n(Math.round(hours))} klst.` : null,
             detail: t.cases_resolved
-              ? `About ${days.toFixed(1)} clinic days — ${(days / Math.max(t.months, 1)).toFixed(1)} per month`
-              : "Requires resolved cases",
-            missing: t.cases_resolved ? undefined : "Medalia export",
+              ? `Jafngildir um ${d1(days)} starfsdögum, ${d1(days / Math.max(t.months, 1))} á mánuði`
+              : "Þarf afgreidd erindi",
+            missing: t.cases_resolved ? undefined : "Gagnaútdráttur úr Medalia",
             assumption: a.studyDone
-              ? `Net ${net} min per case (${a.minutesSaved} saved − ${a.minutesSpent} spent), from the time study.`
-              : `ESTIMATE: ${a.minutesSaved} min per case with no measured cost against it. This is a gross figure until the time study has run — do not put it in a presentation before then.`,
+              ? `Nettó ${net} mín. á erindi (${a.minutesSaved} sparaðar − ${a.minutesSpent} notaðar), samkvæmt tímamælingunni.`
+              : `ÁÆTLUN: ${a.minutesSaved} mín. á erindi, án mælds kostnaðar á móti. Þetta er brúttótala þar til tímamælingin hefur farið fram. Ekki setja hana í kynningu fyrir þann tíma.`,
             status: a.studyDone ? undefined : "fair",
           };
         },
@@ -743,37 +773,37 @@ export const MODULES: Module[] = [
 
   {
     id: "entry-routes",
-    name: "Entry route attribution",
-    question: "How do patients actually reach us, and is that changing?",
-    claim: "Direct arrivals grew from X% to Y% — the service became self-sufficient and the load on staff fell with it.",
+    name: "Leiðir inn í þjónustuna",
+    question: "Hvernig komast sjúklingar í raun til okkar, og er það að breytast?",
+    claim: "Hlutfall þeirra sem komu beint jókst úr X% í Y%. Þjónustan varð sjálfbær og álagið á starfsfólk minnkaði um leið.",
     category: "system",
     effort: "low",
     sources: ["medalia"],
     benefit:
-      "Shows the service standing on its own as direct arrivals grow.",
+      "Sýnir þjónustuna standa á eigin fótum eftir því sem fleiri koma beint.",
     horizon: "now",
     rationale:
-      "A patient who arrives directly costs the health centre zero minutes. That makes the entry mix a workload measure rather than a marketing one, and a rising direct share is the story itself: the service standing on its own. It also fixes the weighting for the time study, which should only cover cases that pass through staff.",
+      "Sjúklingur sem kemur beint kostar heilsugæsluna núll mínútur. Skipting eftir leiðum inn er því mælikvarði á vinnuálag, ekki markaðsmál. Hækkandi hlutfall þeirra sem koma beint er sagan sjálf: þjónustan stendur á eigin fótum. Skiptingin ákvarðar líka vægið í tímamælingunni, sem á aðeins að ná til erinda sem fara í gegnum starfsfólk.",
     caveat:
-      "It tells you nothing about the people who never arrived. That is the denominator's job, not this module's.",
+      "Hún segir ekkert um þá sem komu aldrei. Það er hlutverk nefnarans, ekki þessa rannsóknarþáttar.",
     protocol: [
-      { text: "Give each route its own portal link", detail: "At minimum one link people use themselves and one the health centre hands out. No question for the patient, nothing anyone has to remember — the route records itself. One change in code: the portal URL is hard-coded in six places.", timeCritical: true },
-      { text: "Confirm with Medalia that the route reaches the export", detail: "Separate portal slugs or a query parameter, whichever they prefer." },
-      { text: "Link the routes to each partner's service URL", link: { href: "/admin/stofnanir", label: "Partner institutions" } },
+      { text: "Gefðu hverri leið sinn eigin hlekk inn í gáttina", detail: "Að lágmarki einn hlekk sem fólk notar sjálft og einn sem heilsugæslan afhendir. Engin spurning fyrir sjúklinginn og ekkert sem neinn þarf að muna. Leiðin skráir sig sjálf. Ein breyting í kóða: slóð gáttarinnar er harðkóðuð á sex stöðum.", timeCritical: true },
+      { text: "Staðfestu við Medalia að leiðin skili sér í gagnaútdráttinn", detail: "Aðskildar slóðir í gáttinni eða færibreyta í slóðinni, hvort sem Medalia kýs." },
+      { text: "Tengdu leiðirnar við þjónustuslóð hvers samstarfsaðila", link: { href: "/admin/stofnanir", label: "Samstarfsstofnanir" } },
     ],
     fields: [
-      { key: "entry_direct", label: "Came directly", source: "medalia" },
-      { key: "entry_via_staff", label: "Sent by health centre staff", help: "Nurse, reception or records — the export cannot separate them.", source: "medalia" },
+      { key: "entry_direct", label: "Kom beint", source: "medalia" },
+      { key: "entry_via_staff", label: "Sent af starfsfólki heilsugæslunnar", help: "Hjúkrunarfræðingur, móttaka eða ritari. Gagnaútdrátturinn greinir ekki þar á milli.", source: "medalia" },
     ],
     documents: [],
     metrics: [
       {
-        id: "direct_share", name: "Arrived directly", headline: true,
-        why: "Zero minutes of institution time. A rising share is the service becoming self-sufficient.",
+        id: "direct_share", name: "Kom beint", headline: true,
+        why: "Núll mínútur af tíma stofnunarinnar. Hækkandi hlutfall sýnir þjónustu sem er að verða sjálfbær.",
         compute: ({ t }) => ({
           value: p(pct(t.entry.direct, t.entry.total)),
-          detail: `${n(t.entry.direct)} of ${n(t.entry.total)} arrivals`,
-          missing: t.entry.total ? undefined : "Per-route portal links",
+          detail: `${n(t.entry.direct)} af ${n(t.entry.total)} sem komu inn`,
+          missing: t.entry.total ? undefined : "Sérstakur hlekkur inn í gáttina fyrir hverja leið",
         }),
       },
     ],
@@ -781,39 +811,39 @@ export const MODULES: Module[] = [
 
   {
     id: "economics",
-    name: "Locum spend it competes with",
-    question: "What is the health centre currently paying to cover this work?",
-    claim: "Locum and temporary cover spend before and after, against the cases we took off them.",
+    name: "Kostnaður við afleysingar",
+    question: "Hvað greiðir heilsugæslan nú fyrir að manna þessa vinnu?",
+    claim: "Kostnaður við afleysingar og tímabundna mönnun fyrir og eftir, á móti erindunum sem við tókum af heilsugæslunni.",
     category: "system",
     effort: "medium",
     sources: ["institution"],
     benefit:
-      "Puts a cost per case against the locum spend it displaces.",
+      "Setur kostnað á erindi við hlið afleysingakostnaðarins sem þjónustan kemur í staðinn fyrir.",
     horizon: "later",
     rationale:
-      "Locum and temporary cover is the budget line we are actually competing with, and the one a buyer looks at first. Note what this does NOT do: it cannot give a cost per case, because that needs our own cost per case as well and we do not collect it here. Put the two side by side and let the reader do the division — a cost-per-case figure we produced ourselves would be argued with anyway.",
+      "Afleysingar og tímabundin mönnun eru útgjaldaliðurinn sem við keppum raunverulega við, og sá sem kaupandi skoðar fyrst. Athugaðu hvað þetta gerir EKKI: það gefur ekki kostnað á erindi. Til þess þarf líka okkar eigin kostnað á erindi og honum er ekki safnað hér. Settu tölurnar hlið við hlið og láttu lesandann deila sjálfan. Kostnaður á erindi sem við reiknuðum sjálf yrði hvort eð er dreginn í efa.",
     caveat:
-      "Never present displacement as fact. Self-reported counterfactuals and cost avoidance are the first things a sceptical reader pulls apart — label them as estimates and they survive.",
+      "Settu það aldrei fram sem staðreynd að þjónustan hafi komið í stað annarrar. Sjálfsmat á því hvað hefði annars gerst og kostnaður sem var forðað eru það fyrsta sem gagnrýninn lesandi rífur í sundur. Merktu þau sem áætlun og þá standast þau.",
     protocol: [
-      { text: "Request locum spend, call volume and opening hours for the 12 months before", timeCritical: true },
-      { text: "Agree monthly delivery of the same figures" },
-      { text: "Present cost per case, not total savings" },
+      { text: "Biddu um afleysingakostnað, fjölda símtala og opnunartíma fyrir 12 mánuðina á undan", timeCritical: true },
+      { text: "Semdu um mánaðarlega afhendingu sömu talna" },
+      { text: "Sýndu kostnað á erindi, ekki heildarsparnað" },
     ],
     fields: [
-      { key: "locum_cost_isk", label: "Locum cost", unit: "isk", nullable: true, source: "institution" },
-      { key: "institution_calls", label: "Calls to the institution", nullable: true, source: "institution" },
+      { key: "locum_cost_isk", label: "Kostnaður við afleysingar", unit: "isk", nullable: true, source: "institution" },
+      { key: "institution_calls", label: "Símtöl til stofnunarinnar", nullable: true, source: "institution" },
     ],
     documents: [
-      { id: "finance-baseline", name: "Finance baseline", why: "Locum spend and call volume for the period before, from the institution.", required: true },
+      { id: "finance-baseline", name: "Baseline fyrir fjármál", why: "Afleysingakostnaður og fjöldi símtala fyrir tímabilið á undan, frá stofnuninni.", required: true },
     ],
     metrics: [
       {
-        id: "locum", name: "Locum cost", headline: true,
-        why: "The budget line we are competing with.",
+        id: "locum", name: "Kostnaður við afleysingar", headline: true,
+        why: "Útgjaldaliðurinn sem við keppum við.",
         compute: ({ t }) => ({
-          value: t.locum_cost_isk === null ? null : `${n(Math.round(t.locum_cost_isk / 1000))}k ISK`,
-          detail: "Requires the same figures for the preceding period to mean anything",
-          missing: t.locum_cost_isk === null ? "Finance figures from the institution" : undefined,
+          value: t.locum_cost_isk === null ? null : `${n(Math.round(t.locum_cost_isk / 1000))} þús. kr.`,
+          detail: "Þarf sömu tölur fyrir tímabilið á undan til að segja eitthvað",
+          missing: t.locum_cost_isk === null ? "Fjárhagstölur frá stofnuninni" : undefined,
         }),
       },
     ],
@@ -822,123 +852,128 @@ export const MODULES: Module[] = [
   // ── Experience ────────────────────────────────────────────────────────────
   {
     id: "patient-survey",
-    name: "Service and follow-up survey",
-    question: "Does the service work for the patient?",
-    claim: "X% were satisfied with the service, Y% said a week later that the problem had been properly resolved, and Z% would use it again.",
+    name: "Þjónustukönnun og eftirfylgd",
+    question: "Virkar þjónustan fyrir sjúklinginn?",
+    claim: "X% voru ánægð með þjónustuna, Y% sögðu viku síðar að vandinn hefði verið leystur og Z% myndu nota hana aftur.",
     category: "patient",
     effort: "medium",
     sources: ["survey"],
     benefit:
-      "The patient's own verdict, asked twice: straight after the case and a week later.",
+      "Mat sjúklingsins sjálfs, spurt tvisvar: strax eftir erindið og viku síðar.",
     lead: true,
     horizon: "now",
     rationale:
-      "The medical advisor's simplest route to the patient's view: a short survey sent automatically after every case. Asking twice separates the experience from the outcome. Straight after, people can rate the service; a week later they can say whether the problem actually went away and whether they had to go somewhere else with it. Keep both waves short — beyond a handful of questions the response rate collapses and you have nothing.",
+      "Einfaldasta leið læknisfræðilegs ráðgjafa að sjónarhorni sjúklingsins: stutt könnun sem er send sjálfkrafa eftir hvert erindi. Með því að spyrja tvisvar má greina upplifunina frá árangrinum. Strax á eftir getur fólk metið þjónustuna. Viku síðar getur það sagt hvort vandinn hvarf í raun og hvort það þurfti að leita annað. Hafðu báðar umferðir stuttar. Ef spurningarnar verða fleiri en örfáar hrynur svarhlutfallið og þú situr uppi með ekkert.",
     caveat:
-      "Response rates on post-consultation surveys are low and skew positive, and the day-7 wave will be smaller than day 0. Report each wave's response rate next to its result, always.",
+      "Svarhlutfall í könnunum eftir viðtal er lágt og svörin hallast í jákvæða átt. Færri svara á degi 7 en á degi 0. Birtu alltaf svarhlutfall hvorrar umferðar við hlið niðurstöðunnar.",
     protocol: [
       {
-        text: "Freeze the two questionnaires",
+        text: "Festu spurningalistana tvo",
         detail:
-          "Day 0: how satisfied were you, would you use the service again for a similar problem, what would you most likely have done without it, and — if a home test was used — how easy it was to get and to carry out. Day 7: was the problem properly resolved, did you have to seek other health care for it within 7 days and where, were you given a different diagnosis there, and did you have a serious reaction or allergy to a medicine you were prescribed.",
+          "Dagur 0: ánægja með þjónustuna, hvort sjúklingurinn myndi nota hana aftur við svipuðum vanda, hvað hann hefði líklegast gert án hennar og, ef heimapróf var notað, hve auðvelt var að nálgast það og framkvæma. Dagur 7: hvort vandinn var leystur, hvort sjúklingurinn þurfti að leita annarrar heilbrigðisþjónustu vegna hans innan 7 daga og þá hvert, hvort hann fékk aðra greiningu þar og hvort hann fékk alvarlega aukaverkun eða ofnæmi fyrir lyfi sem honum var ávísað.",
         timeCritical: true,
-        link: { href: "/admin/surveys", label: "Surveys" },
+        link: { href: "/admin/surveys", label: "Kannanir" },
       },
-      { text: "Send both automatically at fixed points", detail: "Day 0 when the case closes, day 7 a week later. Individual links per patient, never an open survey link. The same points throughout, or the series is worthless." },
-      { text: "Do not change the wording mid-period", detail: "Comparability between the 6- and 12-month reports is half the value." },
-      { text: "Count sent and answered separately for each wave" },
+      {
+        text: "Láttu Medalia senda báðar kannanir sjálfkrafa, með stöðinni í hlekknum",
+        detail: "Dagur 0 þegar erindinu er lokað: fjarlaekningar.is/kannanir/thjonustukonnun-dagur-0?stod=Vestmannaeyjar. Dagur 7 viku síðar: fjarlaekningar.is/kannanir/eftirfylgd-dagur-7?stod=Vestmannaeyjar. Skiptu um nafn stöðvar í hlekknum fyrir hverja stöð. Án hennar er ekki hægt að skipta svörum eftir stöðvum. Sömu tímapunktar allan tímann, annars er tímaröðin einskis virði.",
+        timeCritical: true,
+        link: { href: "/admin/surveys", label: "Kannanir" },
+      },
+      { text: "Ekki breyta orðalaginu á miðju tímabili", detail: "Samanburður milli skýrslnanna eftir 6 og 12 mánuði er helmingurinn af gildinu." },
+      { text: "Birtu kannanirnar tvær í Könnunum", detail: "Svörin reiknast sjálfkrafa inn í matið. Þar sem könnunin er send eftir hvert erindi telst fjöldi sendra kannana sá sami og fjöldi erinda." },
     ],
     fields: [
-      { key: "survey_sent", label: "Day-0 surveys sent", source: "survey" },
-      { key: "survey_responses", label: "Day-0 responses", source: "survey" },
-      { key: "survey_satisfied_pct", label: "Satisfied with the service", unit: "percent", nullable: true, source: "survey" },
-      { key: "survey_reuse_pct", label: "Would use it again for a similar problem", unit: "percent", nullable: true, source: "survey" },
-      { key: "survey_7d_sent", label: "Day-7 surveys sent", source: "survey" },
-      { key: "survey_7d_responses", label: "Day-7 responses", source: "survey" },
-      { key: "survey_resolved_pct", label: "Problem properly resolved (day 7)", unit: "percent", nullable: true, source: "survey" },
+      { key: "survey_sent", label: "Kannanir sendar á degi 0", source: "survey" },
+      { key: "survey_responses", label: "Svör á degi 0", source: "survey" },
+      { key: "survey_satisfied_pct", label: "Ánægð með þjónustuna", unit: "percent", nullable: true, source: "survey" },
+      { key: "survey_reuse_pct", label: "Myndu nota hana aftur við svipuðum vanda", unit: "percent", nullable: true, source: "survey" },
+      { key: "survey_7d_sent", label: "Kannanir sendar á degi 7", source: "survey" },
+      { key: "survey_7d_responses", label: "Svör á degi 7", source: "survey" },
+      { key: "survey_resolved_pct", label: "Vandinn leystur (dagur 7)", unit: "percent", nullable: true, source: "survey" },
     ],
     documents: [
-      { id: "instrument", name: "Survey instrument", why: "The exact wording of both waves, frozen. Changing it mid-period breaks the series.", required: true },
+      { id: "instrument", name: "Spurningalisti könnunarinnar", why: "Nákvæmt orðalag beggja umferða, fest. Ef því er breytt á miðju tímabili rofnar tímaröðin.", required: true },
     ],
     metrics: [
       {
-        id: "satisfied", name: "Satisfied with the service", headline: true,
-        why: "The patient's first verdict, asked the day the case closed.",
+        id: "satisfied", name: "Ánægð með þjónustuna", headline: true,
+        why: "Fyrsta mat sjúklingsins, spurt daginn sem erindinu var lokað.",
         compute: ({ t }) => ({
           value: p(t.survey_satisfied_pct),
           detail: t.survey_responses
-            ? `From ${n(t.survey_responses)} day-0 responses${t.survey_sent ? ` (${pct(t.survey_responses, t.survey_sent)}% response rate)` : ""}`
-            : "No responses yet",
-          missing: t.survey_satisfied_pct === null ? "Day-0 survey" : undefined,
+            ? `Úr ${n(t.survey_responses)} ${pl(t.survey_responses, "svari", "svörum")} á degi 0${t.survey_sent ? ` (svarhlutfall ${pct(t.survey_responses, t.survey_sent)}%)` : ""}`
+            : "Engin svör enn",
+          missing: t.survey_satisfied_pct === null ? "Þjónustukönnun á degi 0" : undefined,
           status: t.survey_satisfied_pct === null ? undefined : t.survey_satisfied_pct >= 85 ? "good" : t.survey_satisfied_pct >= 70 ? "fair" : "poor",
         }),
       },
       {
-        id: "resolved_7d", name: "Resolved, a week later",
-        why: "The outcome as the patient sees it, once there has been time for the problem to come back.",
+        id: "resolved_7d", name: "Leyst, viku síðar",
+        why: "Árangurinn eins og sjúklingurinn sér hann, þegar vandinn hefur haft tíma til að koma aftur.",
         compute: ({ t }) => ({
           value: p(t.survey_resolved_pct),
           detail: t.survey_7d_responses
-            ? `From ${n(t.survey_7d_responses)} day-7 responses${t.survey_7d_sent ? ` (${pct(t.survey_7d_responses, t.survey_7d_sent)}% response rate)` : ""}`
-            : "No day-7 responses yet",
-          missing: t.survey_resolved_pct === null ? "Day-7 survey" : undefined,
+            ? `Úr ${n(t.survey_7d_responses)} ${pl(t.survey_7d_responses, "svari", "svörum")} á degi 7${t.survey_7d_sent ? ` (svarhlutfall ${pct(t.survey_7d_responses, t.survey_7d_sent)}%)` : ""}`
+            : "Engin svör á degi 7 enn",
+          missing: t.survey_resolved_pct === null ? "Þjónustukönnun á degi 7" : undefined,
           status: t.survey_resolved_pct === null ? undefined : t.survey_resolved_pct >= 80 ? "good" : t.survey_resolved_pct >= 65 ? "fair" : "poor",
         }),
       },
       {
-        id: "reuse", name: "Would use it again",
-        why: "The simplest trust measure, and the one that always ends up in the slides.",
-        compute: ({ t }) => ({ value: p(t.survey_reuse_pct), detail: "For a similar problem, of those who responded on day 0", missing: t.survey_reuse_pct === null ? "Day-0 survey" : undefined }),
+        id: "reuse", name: "Myndu nota hana aftur",
+        why: "Einfaldasti mælikvarðinn á traust, og sá sem endar alltaf á glærunum.",
+        compute: ({ t }) => ({ value: p(t.survey_reuse_pct), detail: "Við svipuðum vanda, af þeim sem svöruðu á degi 0", missing: t.survey_reuse_pct === null ? "Þjónustukönnun á degi 0" : undefined }),
       },
     ],
   },
 
   {
     id: "access-gain",
-    name: "Replacing care or creating demand",
-    question: "What would the patient most likely have done if the service had not existed?",
-    claim: "X% would otherwise have gone to the health centre or emergency care — care replaced — and Y% would have done nothing.",
+    name: "Kemur í stað annarrar þjónustu eða ný eftirspurn",
+    question: "Hvað hefði sjúklingurinn líklegast gert ef þjónustan hefði ekki verið til?",
+    claim: "X% hefðu annars farið á heilsugæslu eða bráðaþjónustu, svo þjónustan kom í stað annarrar. Y% hefðu ekkert gert.",
     category: "patient",
     effort: "low",
     requires: ["patient-survey"],
     sources: ["survey"],
     benefit:
-      "The first sign of whether the service replaces other care or creates new demand.",
+      "Fyrsta vísbendingin um hvort þjónustan kemur í stað annarrar þjónustu eða skapar nýja eftirspurn.",
     horizon: "now",
     rationale:
-      "The question the advisor singled out. One survey question splits the patients in two, and the two halves mean different things for HSU. Those who would otherwise have gone to the health centre, the emergency department or out-of-hours are care replaced — that is the workload the service takes off HSU. Those who would have done nothing are new demand. That is access gained for the patient, but it does not relieve the health centre, and it must never be counted as if it did.",
+      "Spurningin sem ráðgjafinn lagði sérstaka áherslu á. Ein spurning í könnuninni skiptir sjúklingunum í tvo hópa, og hóparnir þýða ólíka hluti fyrir HSU. Þeir sem hefðu annars farið á heilsugæsluna, bráðamóttöku eða vaktþjónustu fengu þjónustu í stað annarrar. Það er vinnan sem þjónustan tekur af HSU. Þeir sem hefðu ekkert gert eru ný eftirspurn. Það er betra aðgengi fyrir sjúklinginn, en það léttir ekki á heilsugæslunni og má aldrei telja eins og það geri það.",
     caveat:
-      "Self-reported counterfactuals are what people say they would have done, not what they would have done. Label them as such every time and they hold up; present them as fact and they are the first thing torn down. The diagnosis-code comparison against the Saga baseline is the hard-number check on the same question.",
+      "Svörin sýna hvað fólk segist mundu hafa gert, ekki hvað það hefði gert. Merktu þau þannig í hvert sinn og þá standast þau. Settu þau fram sem staðreynd og þau eru það fyrsta sem er rifið niður. Samanburður greiningarkóða við baseline úr Sögu er prófið með hörðum tölum á sömu spurningu.",
     protocol: [
       {
-        text: "Use fixed answer options, including 'nothing'",
-        detail: "Health centre, emergency department or out-of-hours, pharmacy, private clinic, nothing — I would have waited. Free text here cannot be counted. Worthless if it arrives halfway through the period.",
+        text: "Notaðu fasta svarmöguleika, þar á meðal „ekkert“",
+        detail: "Heilsugæsla, bráðamóttaka eða vaktþjónusta, apótek, einkastofa, ekkert (ég hefði beðið). Frjálsan texta er ekki hægt að telja. Spurningin er einskis virði ef henni er bætt við á miðju tímabili.",
         timeCritical: true,
       },
-      { text: "Label every counterfactual figure as self-reported, in the report template" },
+      { text: "Merktu allar tölur um hvað sjúklingurinn hefði annars gert sem sjálfsmat, í sniðmáti skýrslunnar" },
     ],
     fields: [
-      { key: "survey_substituted_pct", label: "Would otherwise have used other health care", help: "Health centre, emergency department, out-of-hours or another clinic.", unit: "percent", nullable: true, source: "survey" },
-      { key: "survey_would_not_have_sought_pct", label: "Would otherwise have done nothing", unit: "percent", nullable: true, source: "survey" },
+      { key: "survey_substituted_pct", label: "Hefðu annars leitað annarrar heilbrigðisþjónustu", help: "Heilsugæsla, bráðamóttaka, vaktþjónusta eða önnur stofa.", unit: "percent", nullable: true, source: "survey" },
+      { key: "survey_would_not_have_sought_pct", label: "Hefðu annars ekkert gert", unit: "percent", nullable: true, source: "survey" },
     ],
     documents: [],
     metrics: [
       {
-        id: "substituted", name: "Care replaced", headline: true,
-        why: "Would otherwise have used other health care. This half is the workload the service takes off HSU.",
+        id: "substituted", name: "Kom í stað annarrar þjónustu", headline: true,
+        why: "Hefðu annars leitað annarrar heilbrigðisþjónustu. Þessi hópur er vinnan sem þjónustan tekur af HSU.",
         compute: ({ t }) => ({
           value: p(t.survey_substituted_pct),
-          detail: "Self-reported — label it as such wherever it appears",
-          missing: t.survey_substituted_pct === null ? "Day-0 survey" : undefined,
+          detail: "Sjálfsmat. Merktu það þannig hvar sem það birtist",
+          missing: t.survey_substituted_pct === null ? "Þjónustukönnun á degi 0" : undefined,
         }),
       },
       {
-        id: "new_demand", name: "New demand",
-        why: "Would otherwise have done nothing. Access gained for the patient, but no relief for the health centre — keep it apart.",
+        id: "new_demand", name: "Ný eftirspurn",
+        why: "Hefðu annars ekkert gert. Betra aðgengi fyrir sjúklinginn en enginn léttir fyrir heilsugæsluna. Haltu þessu aðskildu.",
         compute: ({ t }) => ({
           value: p(t.survey_would_not_have_sought_pct),
-          detail: "Self-reported",
-          missing: t.survey_would_not_have_sought_pct === null ? "Day-0 survey" : undefined,
+          detail: "Sjálfsmat",
+          missing: t.survey_would_not_have_sought_pct === null ? "Þjónustukönnun á degi 0" : undefined,
         }),
       },
     ],
@@ -947,56 +982,56 @@ export const MODULES: Module[] = [
   // ── Scalability ───────────────────────────────────────────────────────────
   {
     id: "staffing",
-    name: "Service coverage",
-    question: "Can we actually staff this, month after month?",
-    claim: "The service was covered N% of opening hours across twelve months, with M doctors.",
+    name: "Mönnun þjónustunnar",
+    question: "Getum við í raun mannað þetta, mánuð eftir mánuð?",
+    claim: "Þjónustan var mönnuð N% af opnunartíma í tólf mánuði, með M lækna.",
     category: "scalability",
     effort: "low",
     sources: ["internal"],
     benefit:
-      "Proves you can actually run the service month after month.",
+      "Sýnir að hægt er að reka þjónustuna mánuð eftir mánuð.",
     lead: true,
     horizon: "now",
     rationale:
-      "A service nobody will staff does not transfer to the next site, however good the patient numbers are. This is what the next institution is really buying, and it comes free — the rota already holds it, so nothing has to be typed in.",
+      "Þjónusta sem enginn mannar flyst ekki á næstu stöð, sama hve góðar tölur sjúklinga eru. Þetta er það sem næsta stofnun er í raun að kaupa. Og það kostar ekkert: vaktaskráin geymir þetta þegar, svo ekkert þarf að slá inn.",
     caveat:
-      "Staffing is service-wide, not per station: the same doctor covers every site, so these figures do not change when a station is selected. Say so on the page or somebody will read a station tab and believe otherwise.",
+      "Mönnun gildir fyrir alla þjónustuna, ekki einstakar stöðvar. Sami læknir sinnir öllum stöðvum, svo þessar tölur breytast ekki þegar stöð er valin. Taktu það fram á síðunni, annars les einhver flipa einnar stöðvar og heldur annað.",
     protocol: [
-      { text: "Keep the rota current — the figures come from it automatically", link: { href: "/admin/roster", label: "Rota" } },
-      { text: "Record when a doctor leaves", detail: "The rota holds no leaving date, so turnover is the one figure here that is entered by hand." },
+      { text: "Haltu vaktaskránni uppfærðri. Tölurnar koma sjálfkrafa þaðan", link: { href: "/admin/roster", label: "Vaktaskrá" } },
+      { text: "Skráðu þegar læknir hættir", detail: "Vaktaskráin geymir ekki starfslokadag. Starfsmannavelta er því eina talan hér sem er slegin inn í höndunum." },
     ],
     fields: [
-      { key: "doctors_left", label: "Doctors who left", source: "internal" },
-      { key: "uptime_pct", label: "Uptime", unit: "percent", nullable: true, source: "internal" },
+      { key: "doctors_left", label: "Læknar sem hættu", source: "internal" },
+      { key: "uptime_pct", label: "Uppitími kerfis", unit: "percent", nullable: true, source: "internal" },
     ],
     documents: [],
     metrics: [
       {
-        id: "coverage", name: "Shifts covered", headline: true,
-        why: "What the next institution is really buying. Service-wide, not per station.",
+        id: "coverage", name: "Mannaðar vaktir", headline: true,
+        why: "Það sem næsta stofnun er í raun að kaupa. Gildir fyrir alla þjónustuna, ekki einstakar stöðvar.",
         compute: ({ roster }) => ({
           value: roster.shifts ? p(pct(roster.covered, roster.shifts)) : null,
           detail: roster.shifts
-            ? `${n(roster.covered)} of ${n(roster.shifts)} shifts · ${roster.doctors} doctors took a shift`
-            : "No shifts in the period",
-          missing: roster.shifts ? undefined : "Shifts recorded in the Rota",
+            ? `${n(roster.covered)} af ${n(roster.shifts)} ${pl(roster.shifts, "vakt", "vöktum")} · ${roster.doctors} ${pl(roster.doctors, "læknir tók", "læknar tóku")} vakt`
+            : "Engar vaktir á tímabilinu",
+          missing: roster.shifts ? undefined : "Vaktir skráðar í vaktaskrána",
           status: !roster.shifts ? undefined : pct(roster.covered, roster.shifts)! >= 98 ? "good" : pct(roster.covered, roster.shifts)! >= 90 ? "fair" : "poor",
         }),
       },
       {
-        id: "turnover", name: "Doctor turnover",
-        why: "A hard measure of transferability, not a soft one.",
+        id: "turnover", name: "Starfsmannavelta lækna",
+        why: "Harður mælikvarði á hvort þjónustan er yfirfæranleg, ekki mjúkur.",
         compute: ({ t, roster }) => ({
           value: roster.activeDoctors ? p(pct(t.doctors_left, roster.activeDoctors)) : null,
-          detail: `${n(t.doctors_left)} left of ${n(roster.activeDoctors)} on the books`,
+          detail: `${n(t.doctors_left)} ${pl(t.doctors_left, "hætti", "hættu")} af ${n(roster.activeDoctors)} á skrá`,
         }),
       },
       {
-        id: "swaps", name: "Shift swaps",
-        why: "Coverage that is only achieved through constant swapping is not coverage that moves to the next site.",
+        id: "swaps", name: "Vaktaskipti",
+        why: "Mönnun sem næst aðeins með stöðugum vaktaskiptum flyst ekki á næstu stöð.",
         compute: ({ roster }) => ({
           value: roster.shifts ? p(pct(roster.swaps, roster.shifts)) : null,
-          detail: `${n(roster.swaps)} swaps across ${n(roster.shifts)} shifts`,
+          detail: `${n(roster.swaps)} vaktaskipti á ${n(roster.shifts)} ${pl(roster.shifts, "vakt", "vöktum")}`,
           status: !roster.shifts ? undefined : pct(roster.swaps, roster.shifts)! <= 10 ? "good" : "fair",
         }),
       },
@@ -1005,32 +1040,32 @@ export const MODULES: Module[] = [
 
   {
     id: "self-sufficiency",
-    name: "Site self-sufficiency",
-    question: "Did the site stop needing us?",
-    claim: "Support questions fell from N a week to M — the site became self-sufficient in under a quarter.",
+    name: "Sjálfbærni stöðvar",
+    question: "Hætti stöðin að þurfa á okkur að halda?",
+    claim: "Spurningum um aðstoð fækkaði úr N á viku í M. Stöðin varð sjálfbær á innan við ársfjórðungi.",
     category: "scalability",
     effort: "low",
     sources: ["internal"],
     benefit:
-      "Shows a site learning to run the service without you.",
+      "Sýnir stöð sem lærir að reka þjónustuna án okkar.",
     horizon: "now",
     rationale:
-      "A falling support load over the year is a direct measure that the site learned to run the service without us. That is precisely the story the next institution wants to hear, and unlike coverage it is genuinely per-station.",
+      "Ef spurningum um aðstoð fækkar yfir árið sýnir það beint að stöðin lærði að reka þjónustuna án okkar. Það er einmitt sagan sem næsta stofnun vill heyra. Ólíkt mönnun á hún við hverja stöð fyrir sig.",
     caveat:
-      "A low number can also mean nobody is using the service. Read it next to case volume.",
+      "Lág tala getur líka þýtt að enginn noti þjónustuna. Lestu hana með fjölda erinda.",
     protocol: [
-      { text: "Count questions from the site to us each month", link: { href: "/admin/vinnustod", label: "Workstation inbox" } },
-      { text: "Note what the recurring ones are about — they are the gaps in the handover material" },
+      { text: "Teldu spurningar frá stöðinni til okkar í hverjum mánuði", link: { href: "/admin/vinnustod", label: "Innhólf vinnustöðvar" } },
+      { text: "Skráðu um hvað endurteknu spurningarnar snúast. Þær sýna hvað vantar í kennsluefnið við afhendingu" },
     ],
-    fields: [{ key: "support_questions", label: "Support questions from the site", source: "internal" }],
+    fields: [{ key: "support_questions", label: "Spurningar frá stöðinni um aðstoð", source: "internal" }],
     documents: [],
     metrics: [
       {
-        id: "support", name: "Support questions", headline: true,
-        why: "A falling curve is the clearest evidence of transferability there is.",
+        id: "support", name: "Spurningar um aðstoð", headline: true,
+        why: "Lækkandi ferill er skýrasta vísbending um yfirfæranleika sem völ er á.",
         compute: ({ t }) => ({
           value: n(t.support_questions),
-          detail: `Across ${t.months} ${t.months === 1 ? "month" : "months"} — the trend is what matters, not the level`,
+          detail: `Á ${t.months} ${pl(t.months, "mánuði", "mánuðum")}. Það er þróunin sem skiptir máli, ekki fjöldinn`,
         }),
       },
     ],
@@ -1038,52 +1073,52 @@ export const MODULES: Module[] = [
 
   {
     id: "staff-experience",
-    name: "HSU staff survey",
-    question: "Are HSU staff satisfied, does it help them, and should it continue?",
-    claim: "X% of HSU staff were satisfied, Y% said it helps them, and Z% want the service to continue.",
+    name: "Starfsmannakönnun HSU",
+    question: "Er starfsfólk HSU ánægt, hjálpar þjónustan því og á hún að halda áfram?",
+    claim: "X% starfsfólks HSU voru ánægð, Y% sögðu að þjónustan hjálpi þeim og Z% vilja að hún haldi áfram.",
     category: "system",
     effort: "medium",
     sources: ["survey"],
     benefit:
-      "Gives you the sentence a doctor at the next site will ask for.",
+      "Gefur þér setninguna sem læknir á næstu stöð mun biðja um.",
     horizon: "now",
     rationale:
-      "The advisor's three questions for the people at the health centre, asked at the end of the period: are you satisfied, does it help, should it continue. They matter more than they appear to: a doctor at the next station does not ask management how it went — they ask the doctor here. Note that help and workload are not the same thing. Having an answer instead of saying 'I don't know' is real relief that keeps people in post, but it does not show up in minutes, and it must not be sold as workload relief.",
+      "Þrjár spurningar ráðgjafans til starfsfólks heilsugæslunnar, lagðar fyrir í lok tímabilsins: ánægja, gagn og hvort þjónustan eigi að halda áfram. Þær skipta meira máli en virðist. Læknir á næstu stöð spyr ekki stjórnendur hvernig gekk. Hann spyr lækninn hér. Athugaðu að hjálp og vinnuálag er ekki það sama. Að hafa svar í stað þess að segja „ég veit það ekki“ er raunverulegur léttir sem heldur fólki í starfi. En hann sést ekki í mínútum og má ekki selja hann sem vinnuléttir.",
     caveat:
-      "Small numbers of respondents at a single site. Treat it as testimony, not statistics, and report how many answered.",
+      "Fáir svarendur á einni stöð. Líttu á þetta sem vitnisburð, ekki tölfræði, og segðu frá hve margir svöruðu.",
     protocol: [
-      { text: "Freeze the three questions and add one open one", detail: "Satisfied? Does it help you in your work? Should it continue? And: 'If this were taken away tomorrow, what would change?' — the answers to that are what you read out to the next station." },
-      { text: "Send at the end of the period to everyone at HSU who routes or receives cases", detail: "Nurses, doctors and reception. Record the profession so the answers can be read separately." },
-      { text: "Involve one of HSU's doctors in reviewing the safety figures", detail: "Whoever helped look at the data defends it later." },
+      { text: "Festu spurningarnar þrjár og bættu við einni opinni", detail: "Ánægja með þjónustuna, hvort hún hjálpi í starfi og hvort hún eigi að halda áfram. Og sú opna: „Ef þetta yrði tekið af á morgun, hvað myndi breytast?“ Svörin við henni eru það sem þú lest upp fyrir næstu stöð." },
+      { text: "Sendu könnunina í lok tímabilsins til allra hjá HSU sem senda erindi áfram eða taka við þeim", detail: "Hjúkrunarfræðinga, lækna og móttökustarfsfólks: fjarlaekningar.is/kannanir/starfsfolk-hsu-lok-timabils?stod=Vestmannaeyjar. Starfsstétt er spurð í könnuninni og svörin reiknast sjálfkrafa inn í matið.", link: { href: "/admin/surveys", label: "Kannanir" } },
+      { text: "Fáðu einn af læknum HSU til að fara yfir öryggistölurnar", detail: "Sá sem tók þátt í að skoða gögnin ver þau síðar." },
     ],
     fields: [
-      { key: "staff_satisfied_pct", label: "Staff satisfied", unit: "percent", nullable: true, source: "survey" },
-      { key: "staff_helps_pct", label: "Staff say it helps", unit: "percent", nullable: true, source: "survey" },
-      { key: "staff_continue_pct", label: "Staff want it to continue", unit: "percent", nullable: true, source: "survey" },
+      { key: "staff_satisfied_pct", label: "Starfsfólk ánægt", unit: "percent", nullable: true, source: "survey", when: "end" },
+      { key: "staff_helps_pct", label: "Starfsfólk segir þjónustuna hjálpa", unit: "percent", nullable: true, source: "survey", when: "end" },
+      { key: "staff_continue_pct", label: "Starfsfólk vill að hún haldi áfram", unit: "percent", nullable: true, source: "survey", when: "end" },
     ],
     documents: [
-      { id: "staff-survey", name: "Staff survey", why: "The frozen wording of the end-of-period survey.", required: true },
+      { id: "staff-survey", name: "Starfsmannakönnun", why: "Fast orðalag könnunarinnar í lok tímabils.", required: true },
     ],
     metrics: [
       {
-        id: "continue", name: "Want it to continue", headline: true,
-        why: "The verdict of the people who work with it every day.",
+        id: "continue", name: "Vilja að hún haldi áfram", headline: true,
+        why: "Mat þeirra sem vinna með þjónustunni á hverjum degi.",
         compute: ({ t }) => ({
           value: p(t.staff_continue_pct),
-          detail: "End-of-period survey of HSU staff",
-          missing: t.staff_continue_pct === null ? "Staff survey" : undefined,
+          detail: "Starfsmannakönnun HSU í lok tímabils",
+          missing: t.staff_continue_pct === null ? "Starfsmannakönnun" : undefined,
           status: t.staff_continue_pct === null ? undefined : t.staff_continue_pct >= 75 ? "good" : t.staff_continue_pct >= 50 ? "fair" : "poor",
         }),
       },
       {
-        id: "helps", name: "Say it helps",
-        why: "Help is not the same as workload relief — keep the two apart in the report.",
-        compute: ({ t }) => ({ value: p(t.staff_helps_pct), detail: "Of HSU staff who responded", missing: t.staff_helps_pct === null ? "Staff survey" : undefined }),
+        id: "helps", name: "Segja að hún hjálpi",
+        why: "Hjálp er ekki það sama og vinnuléttir. Haltu þessu tvennu aðskildu í skýrslunni.",
+        compute: ({ t }) => ({ value: p(t.staff_helps_pct), detail: "Af starfsfólki HSU sem svaraði", missing: t.staff_helps_pct === null ? "Starfsmannakönnun" : undefined }),
       },
       {
-        id: "staff_satisfied", name: "Satisfied",
-        why: "The general verdict.",
-        compute: ({ t }) => ({ value: p(t.staff_satisfied_pct), detail: "Of HSU staff who responded", missing: t.staff_satisfied_pct === null ? "Staff survey" : undefined }),
+        id: "staff_satisfied", name: "Ánægð",
+        why: "Almenna matið.",
+        compute: ({ t }) => ({ value: p(t.staff_satisfied_pct), detail: "Af starfsfólki HSU sem svaraði", missing: t.staff_satisfied_pct === null ? "Starfsmannakönnun" : undefined }),
       },
     ],
   },

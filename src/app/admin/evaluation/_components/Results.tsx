@@ -12,15 +12,16 @@
 
 import { Info, TriangleAlert } from "lucide-react";
 import { results } from "@/lib/evaluation/programme";
-import type { Assumptions, Programme } from "@/lib/evaluation/types";
-import { caseTypeRows, pct, type Roster, type Totals } from "@/lib/evaluation/totals";
+import type { MetricContext, Programme } from "@/lib/evaluation/types";
+import { caseTypeRows, pct } from "@/lib/evaluation/totals";
 import { GATES } from "@/lib/evaluation/exclusions";
-import { ACCENT, Chip, STATUS_RING, card, Plain } from "./ui";
+import { ACCENT, Chip, STATUS_RING, card, Plain, pl } from "./ui";
 
-export default function Results({
-  programme, t, roster, a,
-}: { programme: Programme; t: Totals; roster: Roster; a: Assumptions }) {
-  const groups = results(programme, { t, roster, a });
+export default function Results({ programme, ctx }: { programme: Programme; ctx: MetricContext }) {
+  // The whole context, not just the totals: diagnosis codes against the Saga
+  // baseline and the design live outside `t`.
+  const { t } = ctx;
+  const groups = results(programme, ctx);
   const showCaseTypes = groups.some((g) => g.modules.some((m) => m.module.id === "case-mix" || m.module.id === "resolution"));
   const showGeneral = groups.some((g) => g.modules.some((m) => m.module.id === "scope-discovery"));
   const rows = caseTypeRows(t);
@@ -34,7 +35,7 @@ export default function Results({
             <div className="mb-2 flex flex-wrap items-baseline gap-2">
               <h2 className="text-lg font-bold text-slate-900">{category.name}</h2>
               <span className="text-sm text-slate-500">{category.question}</span>
-              {category.gate && <Chip className="bg-slate-800 text-white">Gate</Chip>}
+              {category.gate && <Chip className="bg-slate-800 text-white">Skilyrði</Chip>}
             </div>
             <p className="mb-3 max-w-3xl text-xs leading-relaxed text-slate-500"><Plain>{category.note}</Plain></p>
 
@@ -53,12 +54,12 @@ export default function Results({
                         <div className={`rounded-lg border p-3 ${head.value.status ? STATUS_RING[head.value.status] : "border-slate-200 bg-slate-50"}`}>
                           <p className="text-xs font-medium text-slate-600">{head.metric.name}</p>
                           <p className="mt-0.5 text-3xl font-bold tracking-tight text-slate-900">
-                            {head.value.value ?? <span className="text-lg font-medium text-slate-400">Pending</span>}
+                            {head.value.value ?? <span className="text-lg font-medium text-slate-400">Bíður gagna</span>}
                           </p>
                           <p className="mt-1 text-xs leading-snug text-slate-600"><Plain>{head.value.detail}</Plain></p>
                           {head.value.missing && (
                             <p className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-cyan-700">
-                              <Info className="h-3 w-3" /> Needs: {head.value.missing}
+                              <Info className="h-3 w-3" /> Vantar: {head.value.missing}
                             </p>
                           )}
                         </div>
@@ -84,7 +85,7 @@ export default function Results({
                                   {value.value ?? <span className="text-sm font-medium text-slate-400">—</span>}
                                 </p>
                                 <p className="mt-0.5 text-[11px] leading-snug text-slate-500"><Plain>{value.detail}</Plain></p>
-                                {value.missing && <p className="mt-1 text-[11px] font-medium text-cyan-700">Needs: {value.missing}</p>}
+                                {value.missing && <p className="mt-1 text-[11px] font-medium text-cyan-700">Vantar: {value.missing}</p>}
                               </div>
                             ))}
                           </div>
@@ -102,27 +103,27 @@ export default function Results({
       {!groups.length && (
         <div className={`${card} flex items-center gap-3 p-6`}>
           <TriangleAlert className="h-5 w-5 text-amber-500" />
-          <p className="text-sm text-slate-600">No modules selected. Go to <strong>Choose modules</strong> to start.</p>
+          <p className="text-sm text-slate-600">Engir rannsóknarþættir valdir. Byrjaðu í skrefinu <strong>Rannsóknarþættir</strong>.</p>
         </div>
       )}
 
       {showCaseTypes && (
         <section className={`${card} p-4`}>
-          <h2 className="text-lg font-bold text-slate-900">The eleven case types</h2>
+          <h2 className="text-lg font-bold text-slate-900">Erindaflokkarnir ellefu</h2>
           <p className="mb-3 max-w-3xl text-sm leading-relaxed text-slate-600">
-            The aggregate rate hides it when three case types carry the other eight. The aim is not eleven green
-            ticks above 95% — nobody believes that — but a table that survives scrutiny, where the weak types are
-            visible and you can say what you changed.
+            Heildarhlutfallið getur falið veika flokka ef þrír sterkir bera hina átta. Markmiðið er ekki ellefu
+            flokkar yfir 95%, því það trúir enginn. Markmiðið er tafla sem stenst skoðun: veiku flokkarnir sjást og
+            þú getur sagt hvað var gert til að bæta þá.
           </p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-                  <th className="py-2 pr-2 font-semibold">Case type</th>
-                  <th className="px-2 py-2 text-right font-semibold">Total</th>
-                  <th className="px-2 py-2 text-right font-semibold">Resolved</th>
-                  <th className="px-2 py-2 text-right font-semibold">Referred</th>
-                  <th className="py-2 pl-2 text-right font-semibold">Resolution rate</th>
+                  <th className="py-2 pr-2 font-semibold">Erindaflokkur</th>
+                  <th className="px-2 py-2 text-right font-semibold">Alls</th>
+                  <th className="px-2 py-2 text-right font-semibold">Afgreitt</th>
+                  <th className="px-2 py-2 text-right font-semibold">Vísað áfram</th>
+                  <th className="py-2 pl-2 text-right font-semibold">Afgreiðsluhlutfall</th>
                 </tr>
               </thead>
               <tbody>
@@ -142,7 +143,7 @@ export default function Results({
                             : r.rate >= 60 ? "bg-amber-100 text-amber-800"
                             : "bg-rose-100 text-rose-800"
                         }`}>
-                          {r.rate}%{r.c.total < 5 && " · few"}
+                          {r.rate}%{r.c.total < 5 && " · fá"}
                         </span>
                       )}
                     </td>
@@ -152,19 +153,18 @@ export default function Results({
             </table>
           </div>
           <p className="mt-2 text-[11px] text-slate-400">
-            Greyed rates have fewer than five cases. Figures like that should not leave the building — suppress or
-            combine them in anything you publish.
+            Grá hlutföll byggja á færri en fimm erindum. Tölur undir fimm eru ekki birtar: sameinaðu flokka eða
+            slepptu tölunum í öllu sem fer út fyrir stofnunina.
           </p>
         </section>
       )}
 
       {showGeneral && t.generalUnresolved.length > 0 && (
         <section className={`${card} p-4`}>
-          <h2 className="text-lg font-bold text-slate-900">General practice — what did not get resolved</h2>
+          <h2 className="text-lg font-bold text-slate-900">Almenn læknisþjónusta: hvað var ekki afgreitt</h2>
           <p className="mb-3 max-w-3xl text-sm leading-relaxed text-slate-600">
-            The catch-all is where case types twelve, thirteen and fourteen are hiding. This is the roadmap to the
-            next ones — and the slide that sells itself: <em>we started with eleven, and the data told us what the
-            next three should be.</em>
+            Hér leynast næstu erindaflokkar, númer tólf, þrettán og fjórtán. Þessi listi vísar veginn: <em>við
+            byrjuðum með ellefu og gögnin sögðu okkur hverjir næstu þrír ættu að vera.</em>
           </p>
           <ul className="space-y-1">
             {t.generalUnresolved.map((f) => (
@@ -179,11 +179,11 @@ export default function Results({
 
       {t.exclusions.total > 0 && (
         <section className={`${card} p-4`}>
-          <h2 className="text-lg font-bold text-slate-900">Turned away on a red flag</h2>
+          <h2 className="text-lg font-bold text-slate-900">Vísað frá vegna rauðra flagga</h2>
           <p className="mb-3 max-w-3xl text-sm leading-relaxed text-slate-600">
-            Two gates, and they say different things. The questionnaire is cheap and applies identically every
-            time. A doctor turning someone away is expensive — the patient has already waited — and each one is
-            arguably a case the form should have caught.
+            Síurnar tvær segja ólíka hluti. Spurningalistinn kostar lítið og er alltaf eins. Þegar læknir vísar
+            frá er það dýrt, því sjúklingurinn hefur þegar beðið. Spurningalistinn hefði líklega átt að grípa hvert
+            slíkt erindi.
           </p>
 
           <div className="mb-3 grid gap-3 sm:grid-cols-2">
@@ -204,16 +204,16 @@ export default function Results({
           {t.exclusions.leaks.length > 0 && (
             <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
               <p className="text-sm font-semibold text-amber-900">
-                {t.exclusions.leaks.length} reason{t.exclusions.leaks.length === 1 ? "" : "s"} the form should have caught
+                {t.exclusions.leaks.length} {pl(t.exclusions.leaks.length, "ástæða", "ástæður")} sem spurningalistinn hefði átt að grípa
               </p>
               <p className="mt-0.5 text-xs leading-relaxed text-amber-800">
-                Each of these is a gap in the questionnaire logic rather than a judgement call. Fix the form and
-                next month&rsquo;s list is shorter — that is the entire point of collecting reasons.
+                Hver þeirra er gat í spurningalistanum, ekki matsatriði. Lagaðu listann og þá styttist þessi listi
+                í næsta mánuði. Til þess er ástæðunum safnað.
               </p>
               <ul className="mt-1.5 space-y-0.5 text-xs text-amber-900">
                 {t.exclusions.leaks.map((l) => (
                   <li key={l.reason.id}>
-                    <strong>{l.reason.name}</strong> — {l.count} reached a clinician. <Plain>{l.reason.note}</Plain>
+                    <strong>{l.reason.name}</strong> — {l.count} {pl(l.count, "komst", "komust")} alla leið til læknis. <Plain>{l.reason.note}</Plain>
                   </li>
                 ))}
               </ul>
@@ -224,10 +224,10 @@ export default function Results({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-                  <th className="py-2 pr-2 font-semibold">Reason</th>
-                  <th className="px-2 py-2 text-right font-semibold">By form</th>
-                  <th className="px-2 py-2 text-right font-semibold">By doctor</th>
-                  <th className="py-2 pl-2 text-right font-semibold">Total</th>
+                  <th className="py-2 pr-2 font-semibold">Ástæða</th>
+                  <th className="px-2 py-2 text-right font-semibold">Spurningalisti</th>
+                  <th className="px-2 py-2 text-right font-semibold">Læknir</th>
+                  <th className="py-2 pl-2 text-right font-semibold">Alls</th>
                 </tr>
               </thead>
               <tbody>
@@ -237,7 +237,7 @@ export default function Results({
                     <tr key={r.reason.id} className="border-b border-slate-100 last:border-0">
                       <td className="py-1.5 pr-2 text-slate-800">
                         {r.reason.name}
-                        {leaking && <Chip className="ml-1.5 bg-amber-100 text-amber-800">leaking</Chip>}
+                        {leaking && <Chip className="ml-1.5 bg-amber-100 text-amber-800">lekur</Chip>}
                       </td>
                       <td className="px-2 py-1.5 text-right tabular-nums text-slate-600">{r.form || "—"}</td>
                       <td className={`px-2 py-1.5 text-right tabular-nums ${leaking ? "font-semibold text-amber-700" : "text-slate-600"}`}>
@@ -252,19 +252,18 @@ export default function Results({
           </div>
 
           <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
-            Counts only those who entered. Anyone a nurse or receptionist turned away before they reached the
-            portal is invisible here and always will be — four entry routes, and nobody counts the door.
+            Hér teljast aðeins þeir sem komust inn í gáttina. Þeir sem hjúkrunarfræðingur eða móttökuritari vísaði
+            frá áður sjást ekki hér og munu aldrei sjást. Leiðirnar inn eru fjórar og enginn telur við dyrnar.
           </p>
         </section>
       )}
 
       {t.entry.total > 0 && (
         <section className={`${card} p-4`}>
-          <h2 className="text-lg font-bold text-slate-900">How patients reached us</h2>
+          <h2 className="text-lg font-bold text-slate-900">Hvernig sjúklingar komu til okkar</h2>
           <p className="mb-3 max-w-3xl text-sm text-slate-600">
-            A patient who comes straight to the service costs the health centre nothing — no phone call, nobody
-            explaining it, nobody routing them. So a growing left-hand bar is the clearest sign the service is
-            standing on its own.
+            Sjúklingur sem kemur beint í þjónustuna kostar heilsugæsluna ekkert: ekkert símtal, engar útskýringar,
+            engin tilvísun. Því lengri sem græna súlan verður, því betur stendur þjónustan á eigin fótum.
           </p>
           <div className="flex h-4 overflow-hidden rounded-full">
             <div className="bg-emerald-500" style={{ width: `${(t.entry.direct / t.entry.total) * 100}%` }} />
@@ -273,11 +272,11 @@ export default function Results({
           <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-600">
             <span className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              Came directly — {pct(t.entry.direct, t.entry.total)}% ({t.entry.direct})
+              Komu beint: {pct(t.entry.direct, t.entry.total)}% ({t.entry.direct})
             </span>
             <span className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-cyan-500" />
-              Sent by health centre staff — {pct(t.entry.viaStaff, t.entry.total)}% ({t.entry.viaStaff})
+              Vísað af starfsfólki heilsugæslunnar: {pct(t.entry.viaStaff, t.entry.total)}% ({t.entry.viaStaff})
             </span>
           </div>
         </section>

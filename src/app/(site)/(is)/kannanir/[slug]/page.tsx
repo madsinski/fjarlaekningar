@@ -115,7 +115,9 @@ export default function PublicSurveyPage() {
     const res = await fetch(`/api/surveys/${slug}/respond`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ answers: payload }),
+      // ?stod= on the link says which HSU station the case came from, so the
+      // service evaluation can split answers by station.
+      body: JSON.stringify({ answers: payload, station: new URLSearchParams(window.location.search).get("stod") }),
     });
     const j = await res.json().catch(() => ({}));
     setSubmitting(false);
