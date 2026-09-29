@@ -13,33 +13,31 @@
 
 import type { MonthRow } from "./totals";
 
-export type Category = "effectiveness" | "safety" | "workload" | "experience" | "scalability";
+// The three questions the medical advisor set for the Vestmannaeyjar pilot
+// (2026-09-29), plus scalability for the modules a later site will want.
+// Every module files under exactly one of them, and the report follows the
+// same order, so the dashboard reads like the proposal HSU was shown.
+export type Category = "patient" | "system" | "safety" | "scalability";
 
 export const CATEGORIES: { id: Category; name: string; question: string; gate?: boolean; note: string }[] = [
   {
-    id: "effectiveness",
-    name: "Effectiveness",
-    question: "Do the cases get sorted out?",
-    note: "The base claim. If these problems do not get resolved remotely, nothing else here matters.",
+    id: "patient",
+    name: "For the patient",
+    question: "Does the service work for the patient?",
+    note: "Asked of the patient directly, at day 0 and day 7, alongside what Medalia records by itself. The counterfactual question is the one to watch: it is the first sign of whether the service replaces other care or creates new demand.",
+  },
+  {
+    id: "system",
+    name: "For the health system",
+    question: "Does the service work for the health system?",
+    note: "What HSU is buying. Cases handled in full remotely, fewer diagnosis codes at the health centre against a three-year baseline from Saga, and whether the staff want to keep it.",
   },
   {
     id: "safety",
     name: "Safety",
-    question: "Is anyone coming to harm?",
+    question: "Is the service safe?",
     gate: true,
     note: "The one thing that cannot be traded off. A great resolution rate alongside one serious incident is a failed project — no good number anywhere else makes up for it. Everything else on this page is better-or-worse; this is pass-or-fail.",
-  },
-  {
-    id: "workload",
-    name: "Workload relief",
-    question: "Does this actually take work off the health centre?",
-    note: "What the institution is buying. They are not shopping for better care — they are shopping for a way to staff their rota.",
-  },
-  {
-    id: "experience",
-    name: "Patient experience",
-    question: "Was this better for the person?",
-    note: "Not the same as effectiveness. The service can work perfectly and still be unpleasant to use.",
   },
   {
     id: "scalability",
@@ -53,9 +51,9 @@ export const CATEGORIES: { id: Category; name: string; question: string; gate?: 
 export type Source = "medalia" | "institution" | "survey" | "internal" | "study" | "derived";
 
 export const SOURCES: Record<Source, { name: string; who: string }> = {
-  medalia: { name: "Medalia", who: "Monthly export from the record system" },
-  institution: { name: "Institution", who: "Requested from HSU — their contact register and finance" },
-  survey: { name: "Survey", who: "Patient or staff questionnaire" },
+  medalia: { name: "Medalia", who: "JSON export from our record system, at 6 and 12 months" },
+  institution: { name: "HSU (Saga)", who: "CSV export from Saga, HSU's record system — the baseline and the 7-day review" },
+  survey: { name: "Survey", who: "Patient survey at day 0 and day 7, HSU staff survey at the end of the period" },
   internal: { name: "Our systems", who: "Rota, workstation — automatic" },
   study: { name: "Field study", who: "A one-off measurement someone has to run" },
   derived: { name: "Derived", who: "Calculated from other figures plus an assumption" },
@@ -123,6 +121,10 @@ export type MetricContext = {
   /** Present once a design has been chosen. Optional so every other metric
    *  stays independent of it. */
   design?: import("./design").DesignState;
+  /** Diagnosis codes at HSU before and after go-live, from the Saga baseline.
+   *  Computed from every month of the station rather than the selected
+   *  window, because the comparison is the point. */
+  codes?: import("./totals").CodeVolume;
 };
 
 export type Effort = "low" | "medium" | "high";

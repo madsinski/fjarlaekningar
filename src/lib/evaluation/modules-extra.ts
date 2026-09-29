@@ -138,34 +138,34 @@ export const EXTRA_MODULES: Module[] = [
   // ── Workload ──────────────────────────────────────────────────────────────
   {
     id: "clinician-effort",
-    name: "Clinician effort",
-    question: "How much of our own doctors' time does a case take?",
-    claim: "A case takes a median of M minutes of clinician time, so the unit cost is known rather than assumed.",
-    category: "workload",
-    benefit: "Turns your cost per case from a guess into a measured figure.",
+    name: "Doctor handling time",
+    question: "How long does a doctor spend on each case?",
+    claim: "A case takes a median of M minutes of a doctor's time, measured rather than assumed.",
+    category: "system",
+    benefit: "Turns the cost of a case from a guess into a measured figure.",
     horizon: "now",
     effort: "medium",
-    sources: ["medalia"],
+    sources: ["internal", "medalia"],
     rationale:
-      "Everything about unit economics and capacity rests on this one number, and without it both are guesses. It is also the figure that decides whether the service can ever pay for itself: a case that takes forty minutes of clinician time is a different business from one that takes eight.",
+      "An internal study, as the advisor put it. Everything about capacity and unit cost rests on this one number: a case that takes forty minutes of a doctor's time is a different service from one that takes eight. It is also what the next station will want to know before it asks how many doctors it needs.",
     caveat:
-      "Time in the system is not the same as time spent — a doctor may have a record open while doing something else. Treat it as an upper bound unless it is sampled directly.",
+      "Time in the record is not the same as time spent — a doctor may have a record open while doing something else. Treat a system figure as an upper bound, and prefer the sampled one.",
     protocol: [
-      { text: "Ask Medalia whether clinician time per case can be exported", detail: "Active time if they hold it, elapsed time in the record if not — and label which." },
-      { text: "If it cannot, sample it: one week, doctors noting minutes per case", detail: "Twenty cases is enough for a median good enough to plan with." },
+      { text: "Ask Medalia whether time per case can be exported", detail: "Active time if they hold it, elapsed time in the record if not — and label which." },
+      { text: "Run the internal study: doctors note minutes per case for two weeks", detail: "Twenty cases each is enough for a median good enough to plan with. Once early, once around month nine." },
     ],
-    fields: [{ key: "clinician_minutes_median", label: "Median clinician minutes per case", unit: "minutes", nullable: true, source: "medalia" }],
+    fields: [{ key: "clinician_minutes_median", label: "Median doctor minutes per case", unit: "minutes", nullable: true, source: "internal" }],
     documents: [],
     metrics: [
       {
-        id: "minutes_per_case", name: "Clinician minutes per case", headline: true,
+        id: "minutes_per_case", name: "Doctor minutes per case", headline: true,
         why: "The number under every capacity and cost claim you will make.",
         compute: ({ t }) => ({
           value: t.clinician_minutes_median === null ? null : `${t.clinician_minutes_median} min`,
           detail: t.clinician_minutes_median && t.cases_total
-            ? `About ${Math.round((t.clinician_minutes_median * t.cases_total) / 60)} clinician hours over the period`
+            ? `About ${Math.round((t.clinician_minutes_median * t.cases_total) / 60)} doctor hours over the period`
             : "Median across all cases",
-          missing: t.clinician_minutes_median === null ? "Clinician time in the export, or a one-week sample" : undefined,
+          missing: t.clinician_minutes_median === null ? "Internal time study, or time in the export" : undefined,
         }),
       },
     ],
@@ -176,11 +176,11 @@ export const EXTRA_MODULES: Module[] = [
     name: "Did-not-attend avoidance",
     question: "How much wasted capacity does this recover?",
     claim: "A remote case cannot be a no-show. At the institution's own DNA rate that is N appointments recovered.",
-    category: "workload",
+    category: "system",
     benefit: "Converts a structural advantage of remote care into a number.",
     horizon: "now",
     effort: "low",
-    requires: ["denominator"],
+    requires: ["code-volume"],
     sources: ["institution"],
     rationale:
       "One of the few genuinely structural advantages of remote care, and it is almost never quantified. Every case handled remotely is an appointment slot that could not be wasted, and health centres feel DNA acutely because the cost is already sunk when it happens. One figure from the institution turns it into a number.",
@@ -213,7 +213,7 @@ export const EXTRA_MODULES: Module[] = [
     name: "Out-of-hours displacement",
     question: "Are we taking pressure off the out-of-hours service and A&E?",
     claim: "X% said they would otherwise have used the out-of-hours service or called 112.",
-    category: "workload",
+    category: "system",
     benefit: "Extends the displacement argument beyond the health centre to the services that cost most.",
     horizon: "later",
     effort: "low",
@@ -245,41 +245,45 @@ export const EXTRA_MODULES: Module[] = [
   // ── Effectiveness ─────────────────────────────────────────────────────────
   {
     id: "home-tests",
-    name: "Home test utilisation",
-    question: "Are the home tests earning their place?",
-    claim: "Home tests were used in N cases and changed the decision in M of them.",
-    category: "effectiveness",
-    benefit: "Tells you whether to keep stocking the tests, or which ones to drop.",
+    name: "Home tests",
+    question: "Could the patient get hold of the test, and carry it out?",
+    claim: "Home tests were used in N cases; X% found it easy to get the test and Y% easy to carry it out.",
+    category: "patient",
+    benefit: "Tells you whether the home tests work in the patient's hands, and where they fall down.",
     horizon: "now",
     effort: "low",
-    sources: ["medalia"],
+    requires: ["patient-survey"],
+    sources: ["medalia", "survey"],
     rationale:
-      "You already ship CRP and urine dipstick tests to every site and carry the stock. The useful split is between a test being used and a test changing the decision — a test that never changes anything is inventory with a story attached. This is also the most concrete answer to 'how can you diagnose without examining the patient?', which is the other question that always comes up.",
+      "A home test only helps if the patient can get it and do it. The advisor asks both in the day-0 survey: how well did it go getting the test in hand, and how well did it go carrying it out. The two fail in different places — getting it is about stock and distribution at the station, doing it is about the instructions — so they are kept apart.",
     caveat:
-      "'Changed the decision' is a clinician's judgement recorded after the fact, so it will run optimistic. Treat the direction as reliable and the exact figure as soft.",
+      "Only the patients who used a test can answer, so the numbers are small. Treat the direction as reliable and the exact figure as soft.",
     protocol: [
-      { text: "Record test used as a coded field, separately from the result" },
-      { text: "Record whether the result changed the management decision", detail: "A single yes/no from the clinician. This is the field that makes the module worth having." },
+      { text: "Record 'home test used' as a coded field in Medalia" },
+      { text: "Ask the two test questions in the day-0 survey, only of those who used a test" },
       { text: "Reconcile against stock held at each site", link: { href: "/admin/onboarding", label: "Site rollout" } },
     ],
     fields: [
       { key: "home_tests_used", label: "Cases using a home test", nullable: true, source: "medalia" },
-      { key: "home_tests_changed_decision", label: "of which it changed the decision", nullable: true, source: "medalia" },
+      { key: "survey_test_obtain_pct", label: "Easy to get the test", unit: "percent", nullable: true, source: "survey" },
+      { key: "survey_test_perform_pct", label: "Easy to carry out the test", unit: "percent", nullable: true, source: "survey" },
     ],
     documents: [],
     metrics: [
       {
-        id: "test_value", name: "Tests that changed the decision", headline: true,
-        why: "A test that never changes anything is inventory. This is also the best answer to 'how can you diagnose without examining?'",
+        id: "test_perform", name: "Easy to carry out", headline: true,
+        why: "A test the patient cannot do is no test at all.",
         compute: ({ t }) => ({
-          value: t.home_tests_changed_decision === null || !t.home_tests_used
-            ? null
-            : p(pct(t.home_tests_changed_decision, t.home_tests_used)),
-          detail: t.home_tests_used
-            ? `${n(t.home_tests_changed_decision ?? 0)} of ${n(t.home_tests_used)} cases where a test was used`
-            : "Needs test use recorded per case",
-          missing: t.home_tests_used === null ? "Test fields in the export" : undefined,
+          value: p(t.survey_test_perform_pct),
+          detail: t.home_tests_used ? `${n(t.home_tests_used)} cases used a home test` : "Of those who used a test",
+          missing: t.survey_test_perform_pct === null ? "Day-0 survey" : undefined,
+          status: t.survey_test_perform_pct === null ? undefined : t.survey_test_perform_pct >= 80 ? "good" : "fair",
         }),
+      },
+      {
+        id: "test_obtain", name: "Easy to get",
+        why: "Stock and distribution at the station.",
+        compute: ({ t }) => ({ value: p(t.survey_test_obtain_pct), detail: "Of those who used a test", missing: t.survey_test_obtain_pct === null ? "Day-0 survey" : undefined }),
       },
     ],
   },
@@ -289,7 +293,7 @@ export const EXTRA_MODULES: Module[] = [
     name: "Image adequacy",
     question: "Can patients actually take a usable photograph?",
     claim: "X% of submitted images were adequate to reach a decision without a second request.",
-    category: "effectiveness",
+    category: "patient",
     benefit: "Tells you whether the skin and eye case types are viable as designed.",
     horizon: "later",
     effort: "medium",
@@ -328,7 +332,7 @@ export const EXTRA_MODULES: Module[] = [
     name: "Reach and equity",
     question: "Are we only serving the digitally confident?",
     claim: "The service reached the over-70s and non-Icelandic speakers in proportion to the population it serves.",
-    category: "experience",
+    category: "patient",
     benefit: "Answers the fairness question before a regulator or a journalist asks it.",
     horizon: "now",
     effort: "medium",
@@ -377,44 +381,55 @@ export const EXTRA_MODULES: Module[] = [
   // ── Safety ────────────────────────────────────────────────────────────────
   {
     id: "diagnostic-concordance",
-    name: "Diagnostic concordance",
-    question: "When a case was later seen in person, was the remote assessment right?",
-    claim: "The remote working diagnosis agreed with the in-person assessment in X% of cases that were later examined.",
+    name: "Correct diagnosis",
+    question: "For those who sought care elsewhere within 7 days, was the diagnosis right?",
+    claim: "Of N patients whose records were reviewed after a return within 7 days, the remote diagnosis held in X%.",
     category: "safety",
-    benefit: "The strongest clinical validation available, and the one that gets published.",
-    horizon: "later",
+    benefit: "The most direct check on the clinical judgement itself.",
+    horizon: "now",
     effort: "high",
     requires: ["revisits"],
-    sources: ["institution", "study"],
+    sources: ["survey", "institution"],
     rationale:
-      "Every other safety measure here is indirect: no incidents, few returns, the screen fired. This is the only one that checks the clinical judgement itself against a reference standard. It is also the module that turns a service evaluation into something publishable, and the one a clinical audience will find most persuasive.",
+      "Every other safety measure here is indirect: no incidents, few returns, the screen fired. This one checks the diagnosis against what was found when the patient was seen again. The advisor asks it both ways: the day-7 survey asks whether the patient was given a different diagnosis elsewhere, and the same manual review of HSU records that counts the 7-day returns records whether the diagnosis held.",
     caveat:
-      "Only cases referred onward and then examined can be checked, which is a biased sample by construction — the easy cases never appear in it. That bias has to be stated in the same breath as the result, every time. High effort, and it needs the data agreement in place first.",
+      "Only patients who were seen again can be checked, which is a biased sample by construction — the cases that went well never appear in it. That bias has to be stated in the same breath as the result, every time.",
     protocol: [
-      { text: "Agree a definition of agreement with a clinician", detail: "Same condition, or same management? These give different numbers and the choice must be made before seeing any." },
-      { text: "Have the institution match referred cases to their in-person assessment", detail: "Their side, aggregate counts back. Same arrangement as return visits." },
-      { text: "Report the selection bias alongside the figure, always", detail: "Only referred cases can be checked, so the easy ones are absent by construction." },
+      { text: "Agree what counts as the diagnosis holding, with a clinician", detail: "Same condition, or same management? These give different numbers, and the choice must be made before any record is reviewed." },
+      { text: "Record it in the same HSU review as the 7-day returns", detail: "HSU's side, counts back. One review, two answers." },
+      { text: "Ask in the day-7 survey whether a different diagnosis was given elsewhere" },
+      { text: "Report the selection bias alongside the figure, always" },
     ],
     fields: [
-      { key: "concordance_checked", label: "Cases checked against in-person assessment", nullable: true, source: "institution" },
-      { key: "concordance_agreed", label: "of which agreed", nullable: true, source: "institution" },
+      { key: "survey_other_diagnosis_pct", label: "Given a different diagnosis elsewhere (survey)", unit: "percent", nullable: true, source: "survey" },
+      { key: "concordance_checked", label: "Returns reviewed for the diagnosis", nullable: true, source: "institution" },
+      { key: "concordance_agreed", label: "of which the diagnosis held", nullable: true, source: "institution" },
     ],
     documents: [
-      { id: "concordance-protocol", name: "Concordance protocol", why: "The agreed definition of agreement, written before any case was reviewed.", required: true },
+      { id: "concordance-protocol", name: "Review protocol", why: "The agreed definition of a correct diagnosis, written before any record was reviewed.", required: true },
     ],
     metrics: [
       {
-        id: "concordance", name: "Diagnostic agreement", headline: true,
-        why: "The only measure here that checks the clinical judgement against a reference standard.",
+        id: "concordance", name: "Diagnosis held", headline: true,
+        why: "The only measure here that checks the clinical judgement against what was found later.",
         compute: ({ t }) => ({
           value: t.concordance_checked && t.concordance_agreed !== null
             ? p(pct(t.concordance_agreed, t.concordance_checked))
             : null,
           detail: t.concordance_checked
-            ? `${n(t.concordance_agreed ?? 0)} of ${n(t.concordance_checked)} checked — referred cases only, so the easy ones are absent`
-            : "Needs matched in-person assessments from the institution",
-          missing: t.concordance_checked === null ? "Matching run at the institution" : undefined,
-          assumption: "Selection bias by construction: only cases referred onward can be checked. State this with the figure every time.",
+            ? `${n(t.concordance_agreed ?? 0)} of ${n(t.concordance_checked)} reviewed — only those seen again can be checked`
+            : "Needs the review of HSU records",
+          missing: t.concordance_checked === null ? "Review at HSU" : undefined,
+          assumption: "Selection bias by construction: only patients who were seen again can be checked. State this with the figure every time.",
+        }),
+      },
+      {
+        id: "other_diagnosis", name: "Told something different elsewhere",
+        why: "The patient's side, including care outside HSU.",
+        compute: ({ t }) => ({
+          value: p(t.survey_other_diagnosis_pct),
+          detail: "Of day-7 respondents",
+          missing: t.survey_other_diagnosis_pct === null ? "Day-7 survey" : undefined,
         }),
       },
     ],

@@ -33,6 +33,7 @@
 // answer.
 
 import type { Module } from "./types";
+import { codeVolume, type CodeVolume, type MonthRow } from "./totals";
 
 // ── Designs ─────────────────────────────────────────────────────────────────
 
@@ -445,7 +446,7 @@ export const DESIGN_MODULE: Module = {
   name: "Study design",
   question: "What kind of evidence is this, and what is it allowed to conclude?",
   claim: "A stepped-wedge evaluation with interrupted time series analysis across the HSU rollout — pre-specified, dated, and controlled for secular trend.",
-  category: "effectiveness",
+  category: "system",
   // Filed under effectiveness for the library only. `meta` keeps it off the
   // results dashboard: the design is a property of the whole evaluation, not a
   // measure of the service, and as an outcome card it displaced the resolution
@@ -540,3 +541,17 @@ export const DESIGN_MODULE: Module = {
     },
   ],
 };
+
+/** Diagnosis codes before and after go-live for one station, or for every
+ *  live station from the earliest go-live. Takes every month, not the
+ *  selected window — the baseline is the point of the comparison. */
+export function codesFor(rows: MonthRow[], station: string, state: DesignState): CodeVolume {
+  const live = Object.entries(state.sites).filter(([, x]) => x.role === "live" && x.goLive);
+  const goLive = station === "__all"
+    ? live.map(([, x]) => x.goLive!).sort()[0]
+    : state.sites[station]?.goLive;
+  const scoped = station === "__all"
+    ? rows.filter((r) => live.some(([name]) => name === r.station))
+    : rows.filter((r) => r.station === station);
+  return codeVolume(scoped, goLive, state.baselineMonths);
+}

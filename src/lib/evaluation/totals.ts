@@ -94,6 +94,35 @@ export type MonthRow = {
   implementation_days: number | null;
   training_hours: number | null;
 
+  // The advisor's programme (2026-09-29). Patient survey in two waves — day 0
+  // and day 7 — each with its own response count, because a rate is weighted
+  // by the wave it was asked in.
+  survey_7d_sent: number;
+  survey_7d_responses: number;
+  survey_satisfied_pct: number | null;
+  survey_substituted_pct: number | null;
+  survey_test_obtain_pct: number | null;
+  survey_test_perform_pct: number | null;
+  survey_resolved_pct: number | null;
+  survey_sought_care_7d_pct: number | null;
+  survey_other_diagnosis_pct: number | null;
+  /** Serious adverse reaction or allergy to a prescribed drug — from the day-7
+   *  survey and incident reports together. */
+  adverse_drug_reactions: number | null;
+  /** Cases where the decision tree produced an outcome, and how many of those
+   *  the doctor changed rather than confirmed. */
+  tree_cases: number | null;
+  tree_overridden: number | null;
+  /** Of `revisits_7d`, those the manual review in Saga found were about the
+   *  same problem. */
+  revisits_related: number | null;
+  /** HSU contacts in the same codes where an antibiotic was prescribed — the
+   *  traditional-service comparator, from Saga. */
+  institution_antibiotics: number | null;
+  staff_satisfied_pct: number | null;
+  staff_helps_pct: number | null;
+  staff_continue_pct: number | null;
+
   note: string;
   sources_present: string[];
   entered_by_name?: string;
@@ -107,6 +136,7 @@ const COUNT_KEYS = [
   "general_total", "general_resolved", "survey_sent", "survey_responses",
   "deviations", "near_misses", "serious_incidents",
   "doctors_left", "support_questions",
+  "survey_7d_sent", "survey_7d_responses",
 ] as const;
 
 const NULLABLE_KEYS = [
@@ -120,6 +150,10 @@ const NULLABLE_KEYS = [
   "demand_evening_pct", "demand_weekend_pct", "ooh_alternative_pct", "institution_dna_pct",
   "concordance_checked", "concordance_agreed", "followup_contacted", "followup_adhered",
   "implementation_days", "training_hours",
+  "survey_satisfied_pct", "survey_substituted_pct", "survey_test_obtain_pct", "survey_test_perform_pct",
+  "survey_resolved_pct", "survey_sought_care_7d_pct", "survey_other_diagnosis_pct",
+  "adverse_drug_reactions", "tree_cases", "tree_overridden", "revisits_related", "institution_antibiotics",
+  "staff_satisfied_pct", "staff_helps_pct", "staff_continue_pct",
 ] as const;
 
 export function emptyMonth(institution: string, station: string, month: string): MonthRow {
@@ -286,6 +320,95 @@ export function total(rows: MonthRow[]) {
     demand_weekend_pct: weighted(rows, (r) => r.demand_weekend_pct, (r) => r.cases_total),
     ooh_alternative_pct: weighted(rows, (r) => r.ooh_alternative_pct, (r) => r.survey_responses),
     institution_dna_pct: weighted(rows, (r) => r.institution_dna_pct, () => 1),
+
+    // Day-0 questions weigh by day-0 responses, day-7 by day-7 responses.
+    survey_satisfied_pct: weighted(rows, (r) => r.survey_satisfied_pct, (r) => r.survey_responses),
+    survey_substituted_pct: weighted(rows, (r) => r.survey_substituted_pct, (r) => r.survey_responses),
+    survey_test_obtain_pct: weighted(rows, (r) => r.survey_test_obtain_pct, (r) => r.survey_responses),
+    survey_test_perform_pct: weighted(rows, (r) => r.survey_test_perform_pct, (r) => r.survey_responses),
+    survey_resolved_pct: weighted(rows, (r) => r.survey_resolved_pct, (r) => r.survey_7d_responses),
+    survey_sought_care_7d_pct: weighted(rows, (r) => r.survey_sought_care_7d_pct, (r) => r.survey_7d_responses),
+    survey_other_diagnosis_pct: weighted(rows, (r) => r.survey_other_diagnosis_pct, (r) => r.survey_7d_responses),
+    adverse_drug_reactions: sumMeasured(rows, (r) => r.adverse_drug_reactions),
+    tree_cases: sumMeasured(rows, (r) => r.tree_cases),
+    tree_overridden: sumMeasured(rows, (r) => r.tree_overridden),
+    revisits_related: sumMeasured(rows, (r) => r.revisits_related),
+    institution_antibiotics: sumMeasured(rows, (r) => r.institution_antibiotics),
+    // The staff survey runs once, at the end of the period.
+    staff_satisfied_pct: weighted(rows, (r) => r.staff_satisfied_pct, () => 1),
+    staff_helps_pct: weighted(rows, (r) => r.staff_helps_pct, () => 1),
+    staff_continue_pct: weighted(rows, (r) => r.staff_continue_pct, () => 1),
+  };
+}
+
+/**
+ * Diagnosis codes at HSU in the agreed code set, before and after go-live.
+ *
+ * The baseline is Saga's monthly count over the months before go-live (three
+ * years, per the advisor), with each code counted once per patient per day.
+ * Year-on-year growth is taken from the baseline itself: the average change
+ * between its twelve-month blocks, projected forward. That is the answer to
+ * "how is the increase between years judged?" — the pilot is compared with
+ * where the trend was already heading, not with a flat line.
+ *
+ * Works on monthly means, so a pilot window of five months and a baseline of
+ * thirty-six compare fairly.
+ */
+export type CodeVolume = {
+  baselineMonths: number;
+  baselinePerMonth: number | null;
+  /** Twelve-month blocks, oldest first. Only complete blocks. */
+  baselineYears: number[];
+  /** Average change between consecutive baseline years, as a fraction. */
+  trendPerYear: number | null;
+  /** What the trend predicts per month for the pilot period. */
+  expectedPerMonth: number | null;
+  pilotMonths: number;
+  pilotPerMonth: number | null;
+  /** Our own cases per month over the same pilot months. */
+  remotePerMonth: number | null;
+};
+
+export function codeVolume(rows: MonthRow[], goLive: string | undefined, baselineMonths: number): CodeVolume {
+  const empty: CodeVolume = {
+    baselineMonths: 0, baselinePerMonth: null, baselineYears: [], trendPerYear: null,
+    expectedPerMonth: null, pilotMonths: 0, pilotPerMonth: null, remotePerMonth: null,
+  };
+  if (!goLive) return empty;
+  const start = goLive.slice(0, 7);
+  // Several stations share a month: add them up first.
+  const byMonth = new Map<string, { hsu: number | null; remote: number }>();
+  for (const r of rows) {
+    const m = r.month.slice(0, 7);
+    const cur = byMonth.get(m) ?? { hsu: null, remote: 0 };
+    if (r.institution_contacts !== null && r.institution_contacts !== undefined) cur.hsu = (cur.hsu ?? 0) + r.institution_contacts;
+    cur.remote += r.cases_total || 0;
+    byMonth.set(m, cur);
+  }
+  const months = [...byMonth.keys()].sort();
+  const before = months.filter((m) => m < start).slice(-baselineMonths).filter((m) => byMonth.get(m)!.hsu !== null);
+  const after = months.filter((m) => m >= start && byMonth.get(m)!.hsu !== null);
+  const mean = (ms: string[], pick: (v: { hsu: number | null; remote: number }) => number) =>
+    ms.length ? ms.reduce((a, m) => a + pick(byMonth.get(m)!), 0) / ms.length : null;
+
+  const years: number[] = [];
+  for (let end = before.length; end - 12 >= 0; end -= 12) {
+    years.unshift(before.slice(end - 12, end).reduce((a, m) => a + (byMonth.get(m)!.hsu ?? 0), 0));
+  }
+  const changes = years.slice(1).map((y, i) => (years[i] ? (y - years[i]) / years[i] : 0));
+  const trend = changes.length ? changes.reduce((a, c) => a + c, 0) / changes.length : null;
+  const lastYear = years.length ? years[years.length - 1] / 12 : mean(before, (v) => v.hsu ?? 0);
+  const round = (v: number | null) => (v === null ? null : Math.round(v * 10) / 10);
+
+  return {
+    baselineMonths: before.length,
+    baselinePerMonth: round(mean(before, (v) => v.hsu ?? 0)),
+    baselineYears: years,
+    trendPerYear: trend,
+    expectedPerMonth: round(lastYear === null ? null : lastYear * (1 + (trend ?? 0))),
+    pilotMonths: after.length,
+    pilotPerMonth: round(mean(after, (v) => v.hsu ?? 0)),
+    remotePerMonth: round(mean(after, (v) => v.remote)),
   };
 }
 

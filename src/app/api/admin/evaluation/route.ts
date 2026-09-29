@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getCallerStaff, isAdmin } from "@/lib/admin-auth";
 import { DEFAULT_ASSUMPTIONS, EMPTY_PROGRAMME, type Assumptions, type Programme } from "@/lib/evaluation/types";
-import { DEFAULT_DESIGN_STATE, type DesignState } from "@/lib/evaluation/design";
+import { DEFAULT_DESIGN_STATE, codesFor, type DesignState } from "@/lib/evaluation/design";
 import type { MonthRow, RosterMonth } from "@/lib/evaluation/totals";
 import { MEDALIA_COLUMNS } from "@/lib/evaluation/import";
 import { caseTypeChart, entryChart, toSlides, volumeChart } from "@/lib/evaluation/export";
@@ -155,6 +155,8 @@ async function buildDeck(
   station: string,
   period: string,
   staffId: string,
+  design: DesignState,
+  codes: ReturnType<typeof codesFor>,
 ) {
   const t = total(rows);
   const roster = totalRoster(rosterMonths, activeDoctors);
@@ -175,7 +177,7 @@ async function buildDeck(
     entry: await upload("entry-routes", entryChart(t)),
   };
 
-  const slides = toSlides(programme, { t, roster, a: assumptions }, { station, period, charts });
+  const slides = toSlides(programme, { t, roster, a: assumptions, design, codes }, { station, period, charts });
 
   // A slug that is stable per station and date but cannot collide with a deck
   // someone made by hand.
@@ -224,6 +226,10 @@ const WRITABLE = new Set<string>([
   "demand_evening_pct", "demand_weekend_pct", "ooh_alternative_pct", "institution_dna_pct",
   "concordance_checked", "concordance_agreed", "followup_contacted", "followup_adhered",
   "implementation_days", "training_hours",
+  "survey_7d_sent", "survey_7d_responses", "survey_satisfied_pct", "survey_substituted_pct",
+  "survey_test_obtain_pct", "survey_test_perform_pct", "survey_resolved_pct", "survey_sought_care_7d_pct",
+  "survey_other_diagnosis_pct", "adverse_drug_reactions", "tree_cases", "tree_overridden",
+  "revisits_related", "institution_antibiotics", "staff_satisfied_pct", "staff_helps_pct", "staff_continue_pct",
   "note", "sources_present",
 ]);
 
@@ -279,6 +285,8 @@ export async function POST(req: Request) {
           readSetting<Assumptions>(ASSUMPTIONS_KEY, DEFAULT_ASSUMPTIONS),
           readRoster().catch(() => ({ months: [], activeDoctors: 0 })),
         ]);
+        const design = { ...DEFAULT_DESIGN_STATE, ...(await readSetting<DesignState>(DESIGN_KEY, DEFAULT_DESIGN_STATE)) };
+        const codes = codesFor((rowsRes.data ?? []) as MonthRow[], body.deck.station, design);
         const want = new Set(body.deck.monthsIso ?? []);
         const rows = ((rowsRes.data ?? []) as MonthRow[]).filter(
           (r) => (body.deck!.station === "__all" || r.station === body.deck!.station) && (!want.size || want.has(r.month.slice(0, 10))),
@@ -290,6 +298,8 @@ export async function POST(req: Request) {
           body.deck.station === "__all" ? "all stations" : body.deck.station,
           body.deck.period,
           caller!.id,
+          design,
+          codes,
         );
         return NextResponse.json({ ok: true, deck });
       }

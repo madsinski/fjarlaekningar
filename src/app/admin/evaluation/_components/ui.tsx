@@ -11,10 +11,9 @@ import type { Category, Source, Status } from "@/lib/evaluation/types";
 import { gloss } from "@/lib/evaluation/glossary";
 
 export const ACCENT: Record<Category, { bar: string; chip: string; ring: string; soft: string; text: string }> = {
-  effectiveness: { bar: "bg-cyan-500", chip: "bg-cyan-100 text-cyan-900", ring: "ring-cyan-400", soft: "bg-cyan-50", text: "text-cyan-700" },
+  patient: { bar: "bg-cyan-500", chip: "bg-cyan-100 text-cyan-900", ring: "ring-cyan-400", soft: "bg-cyan-50", text: "text-cyan-700" },
+  system: { bar: "bg-violet-500", chip: "bg-violet-100 text-violet-900", ring: "ring-violet-400", soft: "bg-violet-50", text: "text-violet-700" },
   safety: { bar: "bg-rose-500", chip: "bg-rose-100 text-rose-900", ring: "ring-rose-400", soft: "bg-rose-50", text: "text-rose-700" },
-  workload: { bar: "bg-violet-500", chip: "bg-violet-100 text-violet-900", ring: "ring-violet-400", soft: "bg-violet-50", text: "text-violet-700" },
-  experience: { bar: "bg-amber-500", chip: "bg-amber-100 text-amber-900", ring: "ring-amber-400", soft: "bg-amber-50", text: "text-amber-700" },
   scalability: { bar: "bg-emerald-500", chip: "bg-emerald-100 text-emerald-900", ring: "ring-emerald-400", soft: "bg-emerald-50", text: "text-emerald-700" },
 };
 

@@ -157,20 +157,78 @@ before they reached the portal is invisible here and always will be — four
 entry routes, and nobody counts the door. That is the cohort question, and it
 is answered on the Study design step.
 
-## The five categories
+## The categories — the advisor's three questions
+
+Since 2026-09-29 the categories are the three questions the medical advisor set
+for the Vestmannaeyjar pilot, in the same order as the proposal HSU was shown
+(`docs/kynningar/hsu-rannsoknarsnid.pdf`). Scalability stays for the modules a
+later site will want; none of them is switched on for the pilot.
 
 | Category | Question | Headline |
 |---|---|---|
-| **Effectiveness** | Do the cases get resolved? | Resolution rate |
-| **Safety** *(gate)* | Is anyone harmed? | Serious incidents |
-| **Workload relief** | Does this take work off the health centre? | Workload relief, net |
-| **Patient experience** | Was this better for the person? | Said it was simple |
-| **Scalability** *(gate)* | Can this be repeated at the next site? | Shift coverage |
+| **For the patient** | Does the service work for the patient? | Satisfied with the service |
+| **For the health system** | Does the service work for the health system? | Resolved remotely |
+| **Safety** *(gate)* | Is the service safe? | Serious incidents |
+| **Scalability** | Could another health centre run this too? | Shift coverage |
 
-Safety and scalability are **gates rather than scales**: an excellent
-resolution rate alongside one serious incident is a failed project, and no good
-number elsewhere offsets it. The dashboard says so rather than leaving it to be
+Safety is a **gate rather than a scale**: an excellent resolution rate
+alongside one serious incident is a failed project, and no good number
+elsewhere offsets it. The dashboard says so rather than leaving it to be
 inferred from a colour.
+
+## The advisor's programme (2026-09-29)
+
+Three data sources:
+
+- **Patient survey** at **day 0** (satisfaction, would use again, what you would
+  otherwise have done, home-test ease) and **day 7** (properly resolved,
+  sought other care within 7 days and where, different diagnosis elsewhere,
+  serious drug reaction). Each wave has its own sent/response counts and its
+  rates are weighted by that wave. Individual links only.
+- **Saga (HSU), CSV** — the baseline: diagnosis codes in the agreed set for the
+  **36 months** before go-live, month by month per station, each code counted
+  **once per patient per day**. HSU applies the rule on its side and sends
+  monthly counts, so no dates or ID numbers leave HSU. The same count continues
+  through the pilot, plus antibiotic code-days as the prescribing comparator,
+  and the 7-day review.
+- **Medalia, JSON** at **6 and 12 months** — cases, outcome, prescriptions,
+  response time, decision-tree confirmed/changed. The importer still reads the
+  monthly CSV contract below; a JSON reader waits for a real export to build
+  against, and it must aggregate to the same monthly rows before anything is
+  stored.
+
+| Question | Module | Source |
+|---|---|---|
+| Satisfied, resolved, would use again | `patient-survey` | Survey d0/d7 |
+| What would you otherwise have done? | `access-gain` — care replaced vs new demand | Survey d0 |
+| Home tests: get it, carry it out | `home-tests` | Survey d0 + Medalia |
+| Handled in full remotely | `resolution` *(core)* | Medalia |
+| Diagnosis codes vs the 3-year baseline | `code-volume` (+ `case-mix` for the code set) | Saga + Medalia |
+| Patient waiting time | `response-time` *(core)* | Medalia |
+| Doctor handling time | `clinician-effort` | Internal study |
+| HSU staff: satisfied, helps, continue | `staff-experience` | Staff survey |
+| Incidents: definition, route for patients and staff | `incidents` *(core)* | Reports |
+| Red flags | `screening` | Medalia |
+| Sought care within 7 days — A survey, B Saga review | `revisits` | Survey d7 + Saga |
+| Was the diagnosis right? | `diagnostic-concordance` | Survey d7 + Saga review |
+| Serious drug reactions or allergy | `adverse-reactions` | Survey d7 + reports |
+| Antibiotics vs the traditional service | `stewardship` | Medalia + Saga |
+| Doctor confirms or changes the decision tree | `decision-tree` | Medalia |
+
+**Diagnosis codes against trend.** `codeVolume()` in `totals.ts` works on
+every month of the station, not the selected window: baseline = the months
+before go-live (up to `baselineMonths`), pilot = months from go-live. The
+expected pilot level is the last baseline year's monthly mean grown by the
+baseline's average year-on-year change — that is the answer to "how is growth
+between years judged?". The figure carries that assumption with it, and it is
+an uncontrolled single-site comparison until a pre-live station is counted the
+same way.
+
+**The 7-day review.** HSU matches the case list against Saga contacts within 7
+days (expected 50–100 people), reviews the records by hand for same problem and
+whether the diagnosis held, and sends counts only (`revisits_7d`,
+`revisits_related`, `concordance_checked`, `concordance_agreed`). Only
+patients who were resolved remotely count in the denominator.
 
 ## Three conventions worth knowing
 

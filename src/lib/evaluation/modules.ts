@@ -25,7 +25,7 @@ export const MODULES: Module[] = [
     name: "Case resolution",
     question: "Do these cases actually get resolved remotely?",
     claim: "X% of cases were resolved entirely in the remote service, and we can show it case type by case type.",
-    category: "effectiveness",
+    category: "system",
     lead: true,
     core: true,
     effort: "low",
@@ -86,10 +86,10 @@ export const MODULES: Module[] = [
 
   {
     id: "response-time",
-    name: "Response time",
-    question: "Do we keep the two-hour promise?",
+    name: "Patient waiting time",
+    question: "How long do patients wait for an answer — and do we keep the two-hour promise?",
     claim: "Median response was T minutes and 95% were answered within P — against a promise of two hours.",
-    category: "experience",
+    category: "system",
     core: true,
     effort: "low",
     sources: ["medalia"],
@@ -146,6 +146,8 @@ export const MODULES: Module[] = [
       "A single site of four thousand people will never have the numbers to say anything about rare events. Say that yourself, on the first slide, before someone in the audience says it for you.",
     protocol: [
       { text: "Put a deviation form into service", detail: "One form is enough. But 'no serious incidents' is only credible if a system existed that would have caught one.", timeCritical: true },
+      { text: "Agree with HSU what counts as an incident, and how it is recorded", detail: "One written definition both organisations use, so an incident at the health centre and one in the remote service are counted the same way.", timeCritical: true },
+      { text: "Give patients and HSU staff a way to report an incident", detail: "A route for each — a patient should not have to go through the service they are reporting, and HSU staff need one that does not depend on us.", timeCritical: true },
       { text: "Agree who reviews deviations and how often" },
       { text: "Agree the escalation route with the institution's clinical lead" },
     ],
@@ -155,7 +157,7 @@ export const MODULES: Module[] = [
       { key: "serious_incidents", label: "Serious incidents", source: "survey" },
     ],
     documents: [
-      { id: "incident-procedure", name: "Incident procedure", why: "What counts as a deviation, who reviews it, how it is escalated and closed.", required: true },
+      { id: "incident-procedure", name: "Incident procedure", why: "What counts as an incident, how patients and HSU staff report one, who reviews it, how it is escalated and closed.", required: true },
     ],
     metrics: [
       {
@@ -175,7 +177,7 @@ export const MODULES: Module[] = [
     name: "Case mix and diagnostic codes",
     question: "Which of the eleven case types actually work, and are we staying inside our scope?",
     claim: "Here is the resolution rate for every case type, coded, and comparable with national primary-care statistics.",
-    category: "effectiveness",
+    category: "system",
     effort: "medium",
     sources: ["medalia"],
     benefit:
@@ -213,7 +215,7 @@ export const MODULES: Module[] = [
     name: "Scope discovery",
     question: "What are people bringing that we cannot yet handle?",
     claim: "We started with eleven case types. The data told us what the next three should be.",
-    category: "effectiveness",
+    category: "system",
     effort: "low",
     sources: ["medalia"],
     benefit:
@@ -251,7 +253,7 @@ export const MODULES: Module[] = [
     name: "Independent count check",
     question: "Are our case numbers actually right?",
     claim: "Two independent counters agree within X%, so the case volume is not an artefact of one system.",
-    category: "effectiveness",
+    category: "system",
     effort: "low",
     sources: ["internal"],
     benefit:
@@ -418,44 +420,51 @@ export const MODULES: Module[] = [
 
   {
     id: "stewardship",
-    name: "Prescribing and stewardship",
-    question: "Is this a prescription pipeline in disguise?",
-    claim: "Antibiotic prescribing was comparable to or lower than local primary care, by case type.",
+    name: "Prescribing and antibiotic use",
+    question: "Is antibiotic prescribing comparable to the traditional service?",
+    claim: "Antibiotics were prescribed in X% of cases, against Y% at HSU for the same diagnosis codes.",
     category: "safety",
     effort: "medium",
+    requires: ["code-volume"],
     sources: ["medalia", "institution"],
     benefit:
-      "Kills the prescription-pipeline objection before it is raised.",
+      "Answers the prescription-pipeline objection with HSU's own figures as the comparator.",
     horizon: "now",
     rationale:
-      "The first attack on any remote service will always be that it is a prescription pipeline wearing a white coat. If you arrive with stewardship figures that stand up against local primary care, that discussion is finished before it starts. Arrive without them and somebody else runs it.",
+      "The first attack on any remote service will always be that it is a prescription pipeline wearing a white coat. The advisor's answer is a baseline from the traditional service: how often HSU prescribes antibiotics for the same diagnosis codes. If the remote rate stands up against that, the discussion is finished before it starts.",
     caveat:
-      "The comparison only means something against a like-for-like comparator. Agree the source of the comparison figures in advance, not after seeing your own.",
+      "The comparison only holds for like-for-like cases, so it is made within the agreed code set and broken down by case type where the numbers allow. Agree the comparator before seeing our own numbers, not after.",
     protocol: [
-      { text: "Record prescriptions and antibiotics as coded fields per case", timeCritical: true },
-      { text: "Agree the comparator with the institution", detail: "Their own prescribing in the same codes, or national figures. Decide before you see your own numbers." },
+      { text: "Record prescriptions and antibiotics as coded fields per case in Medalia", timeCritical: true },
+      { text: "Ask for antibiotic prescribing in the same codes in the Saga export", detail: "The same code-days as the diagnosis-code count, with the number where an antibiotic was prescribed. Baseline and pilot months alike." },
       { text: "Break the rate down by case type, not just overall" },
     ],
     fields: [
       { key: "prescriptions", label: "Cases with a prescription", source: "medalia" },
       { key: "antibiotics", label: "of which antibiotics", source: "medalia" },
+      { key: "institution_antibiotics", label: "HSU code-days with an antibiotic (Saga)", help: "In the agreed code set, same counting rule as the diagnosis codes.", nullable: true, source: "institution" },
     ],
     documents: [
-      { id: "comparator", name: "Comparator source", why: "Where the primary-care comparison figures come from, agreed before our own numbers were known.", required: true },
+      { id: "comparator", name: "Comparator definition", why: "How the HSU comparison figure is drawn from Saga, agreed before our own numbers were known.", required: true },
     ],
     metrics: [
       {
         id: "abx", name: "Antibiotic rate", headline: true,
-        why: "The predictable attack, answered in advance.",
-        compute: ({ t }) => ({
-          value: p(pct(t.antibiotics, t.cases_resolved)),
-          detail: `${n(t.antibiotics)} of ${n(t.cases_resolved)} resolved cases`,
-          missing: t.cases_resolved ? undefined : "Medalia export",
-        }),
+        why: "The predictable attack, answered with HSU's own figures.",
+        compute: ({ t }) => {
+          const hsu = t.institution_antibiotics !== null && t.institution_contacts ? pct(t.institution_antibiotics, t.institution_contacts) : null;
+          const ours = pct(t.antibiotics, t.cases_resolved);
+          return {
+            value: p(ours),
+            detail: `${n(t.antibiotics)} of ${n(t.cases_resolved)} resolved cases${hsu !== null ? ` · HSU ${hsu}% in the same codes` : ""}`,
+            missing: t.cases_resolved ? undefined : "Medalia export",
+            status: ours === null || hsu === null ? undefined : ours <= hsu ? "good" : ours <= hsu + 5 ? "fair" : "poor",
+          };
+        },
       },
       {
         id: "rx", name: "Any prescription",
-        why: "Wider than antibiotics, and the comparison primary care already holds for itself.",
+        why: "Wider than antibiotics.",
         compute: ({ t }) => ({
           value: p(pct(t.prescriptions, t.cases_resolved)),
           detail: `${n(t.prescriptions)} of ${n(t.cases_resolved)} resolved cases`,
@@ -465,39 +474,135 @@ export const MODULES: Module[] = [
   },
 
   {
+    id: "adverse-reactions",
+    name: "Serious adverse drug reactions",
+    question: "Did anyone have a serious reaction or allergy to a medicine we prescribed?",
+    claim: "N serious adverse reactions or allergies among M patients given a prescription, each one reviewed.",
+    category: "safety",
+    effort: "low",
+    requires: ["patient-survey"],
+    sources: ["survey"],
+    benefit:
+      "Shows prescribing without an examination is not causing harm.",
+    horizon: "now",
+    rationale:
+      "Prescribing remotely means prescribing without examining, so the advisor asks directly about harm from the medicine itself. The day-7 survey catches what the patient noticed; the incident route catches what HSU staff saw. Each case is reviewed as an incident, so the count and the review happen together.",
+    caveat:
+      "Rare events at a single site. Zero is the expected answer and says little on its own — what makes it credible is that both the survey question and the reporting route existed and were used.",
+    protocol: [
+      { text: "Ask in the day-7 survey about serious reactions or allergy to a prescribed medicine", timeCritical: true },
+      { text: "Route every reported reaction through the incident procedure", detail: "Reviewed by a doctor, recorded with the medicine and the outcome." },
+    ],
+    fields: [
+      { key: "adverse_drug_reactions", label: "Serious adverse reactions or allergy", help: "From the day-7 survey and incident reports, counted once per patient.", nullable: true, source: "survey" },
+    ],
+    documents: [],
+    metrics: [
+      {
+        id: "adr", name: "Serious drug reactions", headline: true,
+        why: "Harm from the treatment itself — the direct safety question about remote prescribing.",
+        compute: ({ t }) => ({
+          value: t.adverse_drug_reactions === null ? null : n(t.adverse_drug_reactions),
+          detail: `Among ${n(t.prescriptions)} cases with a prescription`,
+          missing: t.adverse_drug_reactions === null ? "Day-7 survey and incident reports" : undefined,
+          status: t.adverse_drug_reactions === null ? undefined : t.adverse_drug_reactions === 0 ? "good" : "poor",
+        }),
+      },
+    ],
+  },
+
+  {
+    id: "decision-tree",
+    name: "Decision-tree agreement",
+    question: "Does the doctor confirm the decision tree's outcome, or change it?",
+    claim: "Doctors confirmed the decision tree's outcome in X% of cases, and every change fed back into the clinical protocol.",
+    category: "safety",
+    effort: "low",
+    sources: ["medalia"],
+    benefit:
+      "Shows how far the decision trees can be trusted, and where they need changing.",
+    horizon: "now",
+    rationale:
+      "Each case type runs through a decision tree before a doctor sees it. Recording whether the doctor confirms its outcome or changes it is almost free, and it is the most direct check on the algorithm itself. A tree the doctors keep overriding for the same reason is a tree to fix — and the fix goes through the clinical change log, so the evidence and the change sit together.",
+    caveat:
+      "A high agreement rate can also mean doctors accept the suggestion without looking hard. Read it next to the 7-day returns and the incident log, which catch the cases where agreeing was wrong.",
+    protocol: [
+      { text: "Make 'confirmed / changed' a coded field on every case in Medalia", timeCritical: true },
+      { text: "Record a reason category when the doctor changes the outcome" },
+      { text: "Review the changes monthly and record any tree change in the clinical log", link: { href: "/admin/clinical", label: "Clinical protocols" } },
+    ],
+    fields: [
+      { key: "tree_cases", label: "Cases with a decision-tree outcome", nullable: true, source: "medalia" },
+      { key: "tree_overridden", label: "of which the doctor changed it", nullable: true, source: "medalia" },
+    ],
+    documents: [],
+    metrics: [
+      {
+        id: "tree_agree", name: "Doctor confirmed the tree", headline: true,
+        why: "The direct check on the algorithm. Falling agreement on one case type is a tree to fix.",
+        compute: ({ t }) => ({
+          value: t.tree_cases ? p(pct(t.tree_cases - (t.tree_overridden ?? 0), t.tree_cases)) : null,
+          detail: t.tree_cases ? `${n(t.tree_overridden ?? 0)} of ${n(t.tree_cases)} changed by the doctor` : "Needs the confirmed/changed field in Medalia",
+          missing: t.tree_cases ? undefined : "Confirmed/changed field in the export",
+          status: !t.tree_cases ? undefined : pct(t.tree_cases - (t.tree_overridden ?? 0), t.tree_cases)! >= 90 ? "good" : "fair",
+        }),
+      },
+    ],
+  },
+
+  {
     id: "revisits",
-    name: "Return visits within 7 days",
-    question: "Did the problem actually stay solved?",
-    claim: "R% returned to primary care within seven days — the strongest safety measure available.",
+    name: "Sought care again within 7 days",
+    question: "Did the patient have to seek health care again for the same problem?",
+    claim: "X% said they sought other care within 7 days, and the review of HSU's records found N returns for the same problem.",
     category: "safety",
     effort: "high",
-    sources: ["institution"],
+    sources: ["survey", "institution"],
     benefit:
-      "Shows the problems stayed solved, not merely closed.",
-    horizon: "later",
+      "Shows the problems stayed solved, not merely closed — asked of the patient and checked in HSU's records.",
+    horizon: "now",
     rationale:
-      "The best safety measure there is for a service like this: it catches the cases that looked resolved and were not. Nothing else in the set covers that.",
+      "The best safety measure there is for a service like this: it catches the cases that looked resolved and were not. The advisor asks it two ways, and they check each other. A: the day-7 survey asks whether the patient had to go to the emergency department, a hospital or the health centre. B: hard numbers — HSU finds the patients who had a contact in Saga within 7 days of a Fjarlækningar case and reviews those records by hand, expected to be 50–100 people. The survey is cheap and covers everyone who answers; the review is small and certain.",
     caveat:
-      "It requires linking two patient records, which is research processing and does not pass as quality assurance. The way through is for the institution to run the query at their end and hand over the count only — then each party works in its own data and nothing crosses but a number. Build it that way from the start or it will not happen at all.",
+      "Only contacts at HSU are visible in Saga — a patient who went to Landspítali or a private clinic appears only in the survey. The survey in turn only hears from those who answer. Report both, side by side, and say which is which.",
     protocol: [
-      { text: "Agree that the institution runs the query at their end", detail: "They query, they count, they send the number. No identifiable linkage takes place and the project stays quality assurance.", timeCritical: true },
-      { text: "Agree the definition: same patient, related presentation, within 7 days" },
-      { text: "Put the arrangement in writing as part of the data agreement" },
+      { text: "Put the 7-day question in the day-7 survey", detail: "Emergency department, hospital or health centre — fixed options, plus 'no'.", timeCritical: true },
+      {
+        text: "Agree that HSU runs the linkage and the review on its own side",
+        detail: "HSU matches the Fjarlækningar case list against contacts in Saga within 7 days and reviews the records by hand. Only the counts come back. No identifiable linkage leaves HSU, and the project stays quality assurance. How HSU receives the case list is part of the data agreement.",
+        timeCritical: true,
+      },
+      { text: "Agree the definition before the review: same patient, same problem, within 7 days of the case", detail: "Decided before anyone looks at a record." },
+      { text: "Run the review at 6 and 12 months" },
     ],
-    fields: [{ key: "revisits_7d", label: "Return visits within 7 days", nullable: true, source: "institution" }],
+    fields: [
+      { key: "survey_sought_care_7d_pct", label: "Sought other care within 7 days (survey)", unit: "percent", nullable: true, source: "survey" },
+      { key: "revisits_7d", label: "Patients with an HSU contact within 7 days (Saga)", nullable: true, source: "institution" },
+      { key: "revisits_related", label: "of which about the same problem (manual review)", nullable: true, source: "institution" },
+    ],
     documents: [
-      { id: "data-agreement", name: "Data-sharing agreement", why: "The written arrangement under which the institution runs the query and shares the count. Without it this module cannot run lawfully as quality assurance.", required: true },
+      { id: "data-agreement", name: "Data-sharing agreement", why: "The written arrangement under which HSU runs the linkage and review and shares the counts. Without it this module cannot run lawfully as quality assurance.", required: true },
     ],
     metrics: [
       {
-        id: "revisit_rate", name: "Return within 7 days", headline: true,
-        why: "The best safety measure available, and the one a clinical audience will ask for first.",
+        id: "revisit_rate", name: "Returned for the same problem", headline: true,
+        why: "The hard number, from HSU's own records. The one a clinical audience will ask for first.",
         compute: ({ t }) => ({
-          value: t.revisits_7d === null ? null : p(pct(t.revisits_7d, t.cases_resolved)),
-          detail: t.revisits_7d === null
-            ? "The institution runs the query and shares the count only"
-            : `${n(t.revisits_7d)} returns from ${n(t.cases_resolved)} resolved cases`,
-          missing: t.revisits_7d === null ? "Query run at the institution" : undefined,
+          value: t.revisits_related === null ? null : p(pct(t.revisits_related, t.cases_resolved)),
+          detail: t.revisits_related === null
+            ? "HSU reviews the records and shares the count only"
+            : `${n(t.revisits_related)} of ${n(t.cases_resolved)} resolved cases${t.revisits_7d !== null ? ` · ${n(t.revisits_7d)} had any HSU contact within 7 days` : ""}`,
+          missing: t.revisits_related === null ? "Review at HSU" : undefined,
+          status: t.revisits_related === null || !t.cases_resolved ? undefined : pct(t.revisits_related, t.cases_resolved)! <= 5 ? "good" : pct(t.revisits_related, t.cases_resolved)! <= 10 ? "fair" : "poor",
+        }),
+      },
+      {
+        id: "sought_7d", name: "Said they sought care again",
+        why: "The patient's side of the same question, including care outside HSU that Saga cannot see.",
+        compute: ({ t }) => ({
+          value: p(t.survey_sought_care_7d_pct),
+          detail: t.survey_7d_responses ? `Of ${n(t.survey_7d_responses)} day-7 responses` : "Asked in the day-7 survey",
+          missing: t.survey_sought_care_7d_pct === null ? "Day-7 survey" : undefined,
         }),
       },
     ],
@@ -505,42 +610,81 @@ export const MODULES: Module[] = [
 
   // ── Workload ──────────────────────────────────────────────────────────────
   {
-    id: "denominator",
-    name: "Share of contact volume",
-    question: "Of all the cases like this the health centre sees, how many do we take?",
-    claim: "We handled X% of all contacts in these diagnostic codes at this site.",
-    category: "workload",
-    effort: "medium",
+    id: "code-volume",
+    name: "Diagnosis codes at HSU",
+    question: "Do fewer of these problems reach HSU than its own trend predicts?",
+    claim: "HSU recorded N diagnosis codes a month in these problems during the pilot, against M expected from its own three-year trend.",
+    category: "system",
+    effort: "high",
     requires: ["case-mix"],
-    sources: ["institution"],
+    sources: ["institution", "medalia"],
     benefit:
-      "Lets you say what share of the health centre's relevant workload you took.",
+      "The hard-number test of whether the service takes work off HSU, from HSU's own records.",
     horizon: "now",
     rationale:
-      "The figure that makes every other figure comparable. The denominator is not in our systems and never will be — patients reach us through four different routes, so we cannot count what did not arrive. It is in the institution's contact register, joined by diagnostic code. That is better than anything we could have counted ourselves: their data, their system, nationally standardised. Nobody argues with a contact register; everybody argues with a number we produced.",
+      "The advisor's main health-system measure. Count the diagnosis codes in the agreed code set in Saga for the three years before go-live, then for the first year alongside the cases in Medalia. If the service is taking the work, HSU's count should fall below where its own trend was heading. Three years of baseline answers the question of how growth between years is judged: the trend is taken from the baseline itself, so the pilot is compared with where HSU was already heading rather than with a flat line. The data are HSU's own, from their own system, which is why nobody argues with them.",
     caveat:
-      "Depends entirely on the code sets being agreed first. Without them there is nothing to join on.",
+      "A fall is consistent with the service taking the work, but it is not proof on its own: staffing changes at HSU, an epidemic season or a change in coding habits can all move the count. Uptake also depends on people knowing the service exists, so read it next to case volume. A station that is not live yet, counted the same way, is the control that rules most of this out.",
     protocol: [
-      { text: "Request 12 months of baseline contacts in the agreed codes, per station", detail: "Without a before figure, the after figure is just a figure. You get this while goodwill is fresh and the project is exciting — a year from now, when somebody is asking what it costs, you will not get it as easily.", timeCritical: true },
-      { text: "Agree monthly delivery of the same figures going forward" },
-      { text: "Pull national rates per code from the Directorate of Health", detail: "Gives the expected volume for a population this size without having to ask anyone." },
+      { text: "Agree the code set with the medical advisor", detail: "The case-mix module holds it. It is the join key between Saga and Medalia — without it there is nothing to count.", timeCritical: true },
+      {
+        text: "Request 36 months of baseline from Saga, month by month, per station",
+        detail: "Each diagnosis code in the set counted once per patient per day. The date is needed to apply that rule and to see several codes inside one visit — HSU applies it in Saga and sends monthly counts, so no dates or ID numbers leave HSU. Monthly, never an annual total: a total cannot be un-aggregated and the trend needs the months.",
+        timeCritical: true,
+      },
+      { text: "Get the same count for every pilot month, with the same rule" },
+      { text: "Enter the baseline months as well as the pilot months", detail: "They are the comparison. A pre-go-live month carries the HSU count and nothing else." },
+      { text: "Decide how awareness of the service is followed", detail: "The advisor notes that it matters whether people know about the service. At minimum, read the count next to case volume and any publicity dates." },
     ],
-    fields: [{ key: "institution_contacts", label: "Institution contacts in the same codes", nullable: true, source: "institution" }],
+    fields: [
+      { key: "institution_contacts", label: "HSU diagnosis codes in the agreed set (Saga)", help: "Each code counted once per patient per day. Enter the baseline months too.", nullable: true, source: "institution" },
+    ],
     documents: [
-      { id: "baseline", name: "Baseline data request", why: "Twelve months of contacts in the agreed codes, per station, before we started. Time-critical — this gets harder to obtain every month.", required: true },
+      { id: "baseline", name: "Saga baseline request", why: "36 months of monthly counts in the agreed codes, per station, with the counting rule written in. Time-critical — this gets harder to obtain every month.", required: true },
     ],
     metrics: [
       {
-        id: "share", name: "Share of contact volume", headline: true,
-        why: "Makes every other figure comparable. The denominator comes from the institution, which is exactly why nobody disputes it.",
-        compute: ({ t }) => {
-          const flow = t.institution_contacts !== null ? t.institution_contacts + t.cases_total : null;
+        id: "vs_trend", name: "HSU codes against trend", headline: true,
+        why: "The hard-number answer to whether the service takes work off the health centre.",
+        compute: ({ codes }) => {
+          const c = codes;
+          if (!c || c.pilotPerMonth === null || c.expectedPerMonth === null) {
+            return {
+              value: null,
+              detail: !c || !c.baselineMonths ? "Needs the Saga baseline" : "Needs HSU counts for the pilot months",
+              missing: !c || !c.baselineMonths ? "Saga baseline" : "Saga counts after go-live",
+            };
+          }
+          const change = c.expectedPerMonth ? Math.round(((c.pilotPerMonth - c.expectedPerMonth) / c.expectedPerMonth) * 100) : 0;
           return {
-            value: flow ? p(pct(t.cases_total, flow)) : null,
-            detail: flow === null
-              ? "Requires the contact figure from the institution"
-              : `${n(t.cases_total)} of ${n(flow)} contacts in the same diagnostic codes`,
-            missing: flow === null ? "Contact figures from the institution" : undefined,
+            value: `${change > 0 ? "+" : ""}${change}%`,
+            detail: `${n(c.pilotPerMonth)} a month over ${c.pilotMonths} pilot months, against ${n(c.expectedPerMonth)} expected`,
+            status: change <= -5 ? "good" : change <= 5 ? "fair" : "poor",
+            assumption: `Expected = the last baseline year's monthly average${c.trendPerYear !== null ? `, grown by the baseline's average year-on-year change (${Math.round(c.trendPerYear * 100)}%)` : ""}. Uncontrolled single-site comparison until a pre-live station is counted the same way.`,
+          };
+        },
+      },
+      {
+        id: "baseline_years", name: "Baseline by year",
+        why: "How the count was already moving before the service started — the answer to how growth between years is judged.",
+        compute: ({ codes }) => ({
+          value: codes?.baselinePerMonth != null ? `${n(codes.baselinePerMonth)}/mo` : null,
+          detail: codes?.baselineYears.length
+            ? `Yearly totals, oldest first: ${codes.baselineYears.map(n).join(" → ")}`
+            : `${codes?.baselineMonths ?? 0} baseline months entered — a trend needs at least two full years`,
+          missing: codes?.baselineMonths ? undefined : "Saga baseline",
+        }),
+      },
+      {
+        id: "share", name: "Share handled remotely",
+        why: "Of all the cases in these codes during the pilot, the part we took.",
+        compute: ({ codes }) => {
+          const c = codes;
+          const flow = c && c.pilotPerMonth !== null && c.remotePerMonth !== null ? c.pilotPerMonth + c.remotePerMonth : null;
+          return {
+            value: flow ? p(pct(c!.remotePerMonth!, flow)) : null,
+            detail: flow ? `${n(c!.remotePerMonth!)} of ${n(Math.round(flow * 10) / 10)} a month` : "Needs Saga counts and our case volume for the same months",
+            missing: flow ? undefined : "Saga counts after go-live",
           };
         },
       },
@@ -552,12 +696,11 @@ export const MODULES: Module[] = [
     name: "Staff time and motion",
     question: "Does this remove work, or just move it?",
     claim: "Each case routed to us saved the health centre N minutes net, measured twice.",
-    category: "workload",
+    category: "system",
     effort: "high",
     sources: ["study", "derived"],
     benefit:
       "Tells you whether you are removing work or just moving it — while you can still fix it.",
-    lead: true,
     horizon: "now",
     rationale:
       "The real risk in the whole project, and the one nothing else can see. The nurse now has to assess whether the case fits, explain a service the patient has never heard of, send a link, and take the patient back if anything went wrong. It is entirely possible that each case costs the health centre more minutes than it saves — the service would look excellent on every patient measure and still be adding to the load it was meant to relieve. That is the commonest finding in remote-care research, and it is invisible in every figure that starts after the patient reaches Medalia.",
@@ -603,7 +746,7 @@ export const MODULES: Module[] = [
     name: "Entry route attribution",
     question: "How do patients actually reach us, and is that changing?",
     claim: "Direct arrivals grew from X% to Y% — the service became self-sufficient and the load on staff fell with it.",
-    category: "workload",
+    category: "system",
     effort: "low",
     sources: ["medalia"],
     benefit:
@@ -641,7 +784,7 @@ export const MODULES: Module[] = [
     name: "Locum spend it competes with",
     question: "What is the health centre currently paying to cover this work?",
     claim: "Locum and temporary cover spend before and after, against the cases we took off them.",
-    category: "workload",
+    category: "system",
     effort: "medium",
     sources: ["institution"],
     benefit:
@@ -679,108 +822,123 @@ export const MODULES: Module[] = [
   // ── Experience ────────────────────────────────────────────────────────────
   {
     id: "patient-survey",
-    name: "Patient-reported experience",
-    question: "Was this easy to use?",
-    claim: "X% said the process was simple and Y% would use it again.",
-    category: "experience",
+    name: "Service and follow-up survey",
+    question: "Does the service work for the patient?",
+    claim: "X% were satisfied with the service, Y% said a week later that the problem had been properly resolved, and Z% would use it again.",
+    category: "patient",
     effort: "medium",
     sources: ["survey"],
     benefit:
-      "Gives you the patient's voice in a form a buyer takes seriously.",
+      "The patient's own verdict, asked twice: straight after the case and a week later.",
     lead: true,
     horizon: "now",
     rationale:
-      "Effort is a better-validated instrument than general satisfaction and it is more interesting to a buyer — nobody purchases on 'people found it fine'. Keep it to three questions; beyond that the response rate collapses and you have nothing.",
+      "The medical advisor's simplest route to the patient's view: a short survey sent automatically after every case. Asking twice separates the experience from the outcome. Straight after, people can rate the service; a week later they can say whether the problem actually went away and whether they had to go somewhere else with it. Keep both waves short — beyond a handful of questions the response rate collapses and you have nothing.",
     caveat:
-      "Response rates on post-consultation surveys are low and skew positive. Report the response rate next to the result, always.",
+      "Response rates on post-consultation surveys are low and skew positive, and the day-7 wave will be smaller than day 0. Report each wave's response rate next to its result, always.",
     protocol: [
-      { text: "Freeze a three-question survey", detail: "Effort, would-use-again, and the counterfactual. More than three and the response rate collapses.", timeCritical: true, link: { href: "/admin/surveys", label: "Surveys" } },
-      { text: "Send automatically at a fixed point after the case", detail: "The same point throughout, or the series is worthless." },
-      { text: "Do not change the wording mid-period", detail: "Comparability between quarters is half the value." },
+      {
+        text: "Freeze the two questionnaires",
+        detail:
+          "Day 0: how satisfied were you, would you use the service again for a similar problem, what would you most likely have done without it, and — if a home test was used — how easy it was to get and to carry out. Day 7: was the problem properly resolved, did you have to seek other health care for it within 7 days and where, were you given a different diagnosis there, and did you have a serious reaction or allergy to a medicine you were prescribed.",
+        timeCritical: true,
+        link: { href: "/admin/surveys", label: "Surveys" },
+      },
+      { text: "Send both automatically at fixed points", detail: "Day 0 when the case closes, day 7 a week later. Individual links per patient, never an open survey link. The same points throughout, or the series is worthless." },
+      { text: "Do not change the wording mid-period", detail: "Comparability between the 6- and 12-month reports is half the value." },
+      { text: "Count sent and answered separately for each wave" },
     ],
     fields: [
-      { key: "survey_sent", label: "Surveys sent", source: "survey" },
-      { key: "survey_responses", label: "Responses", source: "survey" },
-      { key: "survey_easy_pct", label: "Said it was simple", unit: "percent", nullable: true, source: "survey" },
-      { key: "survey_reuse_pct", label: "Would use again", unit: "percent", nullable: true, source: "survey" },
+      { key: "survey_sent", label: "Day-0 surveys sent", source: "survey" },
+      { key: "survey_responses", label: "Day-0 responses", source: "survey" },
+      { key: "survey_satisfied_pct", label: "Satisfied with the service", unit: "percent", nullable: true, source: "survey" },
+      { key: "survey_reuse_pct", label: "Would use it again for a similar problem", unit: "percent", nullable: true, source: "survey" },
+      { key: "survey_7d_sent", label: "Day-7 surveys sent", source: "survey" },
+      { key: "survey_7d_responses", label: "Day-7 responses", source: "survey" },
+      { key: "survey_resolved_pct", label: "Problem properly resolved (day 7)", unit: "percent", nullable: true, source: "survey" },
     ],
     documents: [
-      { id: "instrument", name: "Survey instrument", why: "The exact wording, frozen. Changing it mid-period breaks the series.", required: true },
+      { id: "instrument", name: "Survey instrument", why: "The exact wording of both waves, frozen. Changing it mid-period breaks the series.", required: true },
     ],
     metrics: [
       {
-        id: "ease", name: "Said it was simple", headline: true,
-        why: "Effort is better validated than satisfaction and more interesting to a buyer.",
+        id: "satisfied", name: "Satisfied with the service", headline: true,
+        why: "The patient's first verdict, asked the day the case closed.",
         compute: ({ t }) => ({
-          value: p(t.survey_easy_pct),
+          value: p(t.survey_satisfied_pct),
           detail: t.survey_responses
-            ? `From ${n(t.survey_responses)} responses${t.survey_sent ? ` (${pct(t.survey_responses, t.survey_sent)}% response rate)` : ""}`
+            ? `From ${n(t.survey_responses)} day-0 responses${t.survey_sent ? ` (${pct(t.survey_responses, t.survey_sent)}% response rate)` : ""}`
             : "No responses yet",
-          missing: t.survey_easy_pct === null ? "Patient survey" : undefined,
-          status: t.survey_easy_pct === null ? undefined : t.survey_easy_pct >= 85 ? "good" : t.survey_easy_pct >= 70 ? "fair" : "poor",
+          missing: t.survey_satisfied_pct === null ? "Day-0 survey" : undefined,
+          status: t.survey_satisfied_pct === null ? undefined : t.survey_satisfied_pct >= 85 ? "good" : t.survey_satisfied_pct >= 70 ? "fair" : "poor",
         }),
       },
       {
-        id: "reuse", name: "Would use again",
+        id: "resolved_7d", name: "Resolved, a week later",
+        why: "The outcome as the patient sees it, once there has been time for the problem to come back.",
+        compute: ({ t }) => ({
+          value: p(t.survey_resolved_pct),
+          detail: t.survey_7d_responses
+            ? `From ${n(t.survey_7d_responses)} day-7 responses${t.survey_7d_sent ? ` (${pct(t.survey_7d_responses, t.survey_7d_sent)}% response rate)` : ""}`
+            : "No day-7 responses yet",
+          missing: t.survey_resolved_pct === null ? "Day-7 survey" : undefined,
+          status: t.survey_resolved_pct === null ? undefined : t.survey_resolved_pct >= 80 ? "good" : t.survey_resolved_pct >= 65 ? "fair" : "poor",
+        }),
+      },
+      {
+        id: "reuse", name: "Would use it again",
         why: "The simplest trust measure, and the one that always ends up in the slides.",
-        compute: ({ t }) => ({ value: p(t.survey_reuse_pct), detail: "Of those who responded", missing: t.survey_reuse_pct === null ? "Patient survey" : undefined }),
+        compute: ({ t }) => ({ value: p(t.survey_reuse_pct), detail: "For a similar problem, of those who responded on day 0", missing: t.survey_reuse_pct === null ? "Day-0 survey" : undefined }),
       },
     ],
   },
 
   {
     id: "access-gain",
-    name: "Access gain and counterfactual",
-    question: "Did this reach people who would otherwise have gone without?",
-    claim: "Y% said they would otherwise have left the problem alone — and the wait they actually experienced fell from days to hours.",
-    category: "experience",
+    name: "Replacing care or creating demand",
+    question: "What would the patient most likely have done if the service had not existed?",
+    claim: "X% would otherwise have gone to the health centre or emergency care — care replaced — and Y% would have done nothing.",
+    category: "patient",
     effort: "low",
     requires: ["patient-survey"],
     sources: ["survey"],
     benefit:
-      "Quantifies the people who would otherwise have gone without care.",
+      "The first sign of whether the service replaces other care or creates new demand.",
     horizon: "now",
     rationale:
-      "Two things that cost one extra question each and that almost nobody measures. 'Where would you have gone otherwise?' is the cheapest possible route to the displacement figure, and institutions understand displacement. Make 'nowhere — I would have left it' a fixed option: those answers are pure access gain and the strongest argument the patient side has. Second, the time the patient actually experienced runs from their first attempt to get help, not from submission — it includes the phone queue and the days until an appointment, and that is where the real gain sits, not in our two hours.",
+      "The question the advisor singled out. One survey question splits the patients in two, and the two halves mean different things for HSU. Those who would otherwise have gone to the health centre, the emergency department or out-of-hours are care replaced — that is the workload the service takes off HSU. Those who would have done nothing are new demand. That is access gained for the patient, but it does not relieve the health centre, and it must never be counted as if it did.",
     caveat:
-      "Self-reported counterfactuals are what people say they would have done, not what they would have done. Label them as such every time and they hold up; present them as fact and they are the first thing torn down.",
+      "Self-reported counterfactuals are what people say they would have done, not what they would have done. Label them as such every time and they hold up; present them as fact and they are the first thing torn down. The diagnosis-code comparison against the Saga baseline is the hard-number check on the same question.",
     protocol: [
-      { text: "Add 'Where would you otherwise have gone?' with a fixed 'nowhere' option", detail: "Worthless if it arrives halfway through the period — put it in before counting starts.", timeCritical: true },
-      { text: "Add 'When did you first try to get help with this?'" },
+      {
+        text: "Use fixed answer options, including 'nothing'",
+        detail: "Health centre, emergency department or out-of-hours, pharmacy, private clinic, nothing — I would have waited. Free text here cannot be counted. Worthless if it arrives halfway through the period.",
+        timeCritical: true,
+      },
       { text: "Label every counterfactual figure as self-reported, in the report template" },
     ],
     fields: [
-      { key: "survey_would_not_have_sought_pct", label: "Would otherwise have gone nowhere", unit: "percent", nullable: true, source: "survey" },
-      { key: "time_to_resolution_median_h", label: "Time to resolution", help: "From the patient's first attempt to get help.", unit: "hours", nullable: true, source: "survey" },
-      { key: "trips_avoided", label: "Trips avoided", nullable: true, source: "survey" },
+      { key: "survey_substituted_pct", label: "Would otherwise have used other health care", help: "Health centre, emergency department, out-of-hours or another clinic.", unit: "percent", nullable: true, source: "survey" },
+      { key: "survey_would_not_have_sought_pct", label: "Would otherwise have done nothing", unit: "percent", nullable: true, source: "survey" },
     ],
     documents: [],
     metrics: [
       {
-        id: "access", name: "Would otherwise have gone nowhere", headline: true,
-        why: "Pure access gain, and the strongest argument on the patient side. Must be a fixed option, never free text.",
+        id: "substituted", name: "Care replaced", headline: true,
+        why: "Would otherwise have used other health care. This half is the workload the service takes off HSU.",
+        compute: ({ t }) => ({
+          value: p(t.survey_substituted_pct),
+          detail: "Self-reported — label it as such wherever it appears",
+          missing: t.survey_substituted_pct === null ? "Day-0 survey" : undefined,
+        }),
+      },
+      {
+        id: "new_demand", name: "New demand",
+        why: "Would otherwise have done nothing. Access gained for the patient, but no relief for the health centre — keep it apart.",
         compute: ({ t }) => ({
           value: p(t.survey_would_not_have_sought_pct),
-          detail: "Self-reported — label it as such wherever it appears",
-          missing: t.survey_would_not_have_sought_pct === null ? "Survey question" : undefined,
-        }),
-      },
-      {
-        id: "total_wait", name: "Time to resolution",
-        why: "What the patient actually experienced, including the phone queue. Much larger than our response time and where the real gain sits.",
-        compute: ({ t }) => ({
-          value: t.time_to_resolution_median_h === null ? null : `${t.time_to_resolution_median_h} h`,
-          detail: "From the patient's first attempt to get help",
-          missing: t.time_to_resolution_median_h === null ? "Survey question" : undefined,
-        }),
-      },
-      {
-        id: "trips", name: "Trips avoided",
-        why: "In an island community this is a concrete number that stays in people's heads.",
-        compute: ({ t }) => ({
-          value: t.trips_avoided === null ? null : n(t.trips_avoided),
           detail: "Self-reported",
-          missing: t.trips_avoided === null ? "Survey question" : undefined,
+          missing: t.survey_would_not_have_sought_pct === null ? "Day-0 survey" : undefined,
         }),
       },
     ],
@@ -880,49 +1038,52 @@ export const MODULES: Module[] = [
 
   {
     id: "staff-experience",
-    name: "Institution staff acceptance",
-    question: "Do the people at the site want to keep it?",
-    claim: "Staff would not want the service withdrawn, and here is why in their own words.",
-    category: "scalability",
+    name: "HSU staff survey",
+    question: "Are HSU staff satisfied, does it help them, and should it continue?",
+    claim: "X% of HSU staff were satisfied, Y% said it helps them, and Z% want the service to continue.",
+    category: "system",
     effort: "medium",
     sources: ["survey"],
     benefit:
       "Gives you the sentence a doctor at the next site will ask for.",
     horizon: "now",
     rationale:
-      "Survey nurses and doctors separately. The doctors matter more than they appear to: a doctor at the next institution does not ask management how it went — they ask the doctor on site. Note also that convenience and workload are not the same thing. Having an answer instead of saying 'I don't know', not being the one who turns someone away empty-handed — that is real relief and it keeps people in post, but it does not show up in minutes. A service can improve convenience and increase workload at the same time, and staff will still want it. That is a good outcome, but it must not be sold as workload relief.",
+      "The advisor's three questions for the people at the health centre, asked at the end of the period: are you satisfied, does it help, should it continue. They matter more than they appear to: a doctor at the next station does not ask management how it went — they ask the doctor here. Note that help and workload are not the same thing. Having an answer instead of saying 'I don't know' is real relief that keeps people in post, but it does not show up in minutes, and it must not be sold as workload relief.",
     caveat:
-      "Small numbers of respondents at a single site. Treat it as testimony, not statistics.",
+      "Small numbers of respondents at a single site. Treat it as testimony, not statistics, and report how many answered.",
     protocol: [
-      { text: "Survey nurses and doctors separately, with different questions", timeCritical: true },
-      { text: "Include: 'If this were taken away tomorrow, what would change?'", detail: "The answers to this are what you read out at a meeting with the next institution." },
-      { text: "Involve one of the institution's doctors in reviewing the safety figures", detail: "Whoever helped look at the data defends it later." },
+      { text: "Freeze the three questions and add one open one", detail: "Satisfied? Does it help you in your work? Should it continue? And: 'If this were taken away tomorrow, what would change?' — the answers to that are what you read out to the next station." },
+      { text: "Send at the end of the period to everyone at HSU who routes or receives cases", detail: "Nurses, doctors and reception. Record the profession so the answers can be read separately." },
+      { text: "Involve one of HSU's doctors in reviewing the safety figures", detail: "Whoever helped look at the data defends it later." },
     ],
     fields: [
-      { key: "staff_nurses_positive_pct", label: "Nurses positive", unit: "percent", nullable: true, source: "survey" },
-      { key: "staff_doctors_positive_pct", label: "Institution doctors positive", unit: "percent", nullable: true, source: "survey" },
+      { key: "staff_satisfied_pct", label: "Staff satisfied", unit: "percent", nullable: true, source: "survey" },
+      { key: "staff_helps_pct", label: "Staff say it helps", unit: "percent", nullable: true, source: "survey" },
+      { key: "staff_continue_pct", label: "Staff want it to continue", unit: "percent", nullable: true, source: "survey" },
     ],
     documents: [
-      { id: "staff-survey", name: "Staff survey", why: "Separate instruments for nurses and doctors.", required: true },
+      { id: "staff-survey", name: "Staff survey", why: "The frozen wording of the end-of-period survey.", required: true },
     ],
     metrics: [
       {
-        id: "nurses", name: "Nurses positive", headline: true,
-        why: "The people who carry the routing work day to day.",
+        id: "continue", name: "Want it to continue", headline: true,
+        why: "The verdict of the people who work with it every day.",
         compute: ({ t }) => ({
-          value: p(t.staff_nurses_positive_pct),
-          detail: "Convenience and workload are different things — this measures the first",
-          missing: t.staff_nurses_positive_pct === null ? "Staff survey" : undefined,
+          value: p(t.staff_continue_pct),
+          detail: "End-of-period survey of HSU staff",
+          missing: t.staff_continue_pct === null ? "Staff survey" : undefined,
+          status: t.staff_continue_pct === null ? undefined : t.staff_continue_pct >= 75 ? "good" : t.staff_continue_pct >= 50 ? "fair" : "poor",
         }),
       },
       {
-        id: "doctors", name: "Institution doctors positive",
-        why: "They matter more than they appear to: a doctor at the next site asks the doctor here, not management.",
-        compute: ({ t }) => ({
-          value: p(t.staff_doctors_positive_pct),
-          detail: "Surveyed separately from nurses, with different questions",
-          missing: t.staff_doctors_positive_pct === null ? "Staff survey" : undefined,
-        }),
+        id: "helps", name: "Say it helps",
+        why: "Help is not the same as workload relief — keep the two apart in the report.",
+        compute: ({ t }) => ({ value: p(t.staff_helps_pct), detail: "Of HSU staff who responded", missing: t.staff_helps_pct === null ? "Staff survey" : undefined }),
+      },
+      {
+        id: "staff_satisfied", name: "Satisfied",
+        why: "The general verdict.",
+        compute: ({ t }) => ({ value: p(t.staff_satisfied_pct), detail: "Of HSU staff who responded", missing: t.staff_satisfied_pct === null ? "Staff survey" : undefined }),
       },
     ],
   },

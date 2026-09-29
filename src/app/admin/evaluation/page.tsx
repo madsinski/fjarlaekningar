@@ -34,7 +34,7 @@ import {
   type MonthRow, type RosterMonth,
 } from "@/lib/evaluation/totals";
 import { toCSV, toReport } from "@/lib/evaluation/export";
-import { DEFAULT_DESIGN_STATE, type DesignState } from "@/lib/evaluation/design";
+import { DEFAULT_DESIGN_STATE, codesFor, type DesignState } from "@/lib/evaluation/design";
 
 type Step = "overview" | "library" | "design" | "modules" | "setup" | "data" | "results";
 
@@ -133,7 +133,8 @@ export default function EvaluationPage() {
     () => (rosterRaw.months.length ? totalRoster(rosterRaw.months.filter((r) => windowIso.includes(r.month)), rosterRaw.activeDoctors) : EMPTY_ROSTER),
     [rosterRaw, windowIso],
   );
-  const ctx = useMemo(() => ({ t: totals, roster, a: assumptions, design }), [totals, roster, assumptions, design]);
+  const codes = useMemo(() => codesFor(months, station, design), [months, station, design]);
+  const ctx = useMemo(() => ({ t: totals, roster, a: assumptions, design, codes }), [totals, roster, assumptions, design, codes]);
 
   const ready = useMemo(() => readiness(programme, documents, ctx), [programme, documents, ctx]);
   const prog = useMemo(() => progress(ready), [ready]);
@@ -537,7 +538,7 @@ export default function EvaluationPage() {
               <button
                 onClick={() => download(
                   `evaluation-report-${stationLabel.replace(/\W+/g, "-")}.md`,
-                  toReport(programme, { t: totals, roster, a: assumptions }, { station: stationLabel, period: periodLabel, documents }),
+                  toReport(programme, ctx, { station: stationLabel, period: periodLabel, documents }),
                   "text/markdown",
                 )}
                 className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"

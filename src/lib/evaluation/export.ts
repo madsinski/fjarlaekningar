@@ -21,7 +21,11 @@ import { results, enabledModules, type UploadedDoc } from "./programme";
 import type { Assumptions, Programme } from "./types";
 import { caseTypeRows, monthName, pct, type MonthRow, type Roster, type Totals } from "./totals";
 
-export type ExportContext = { t: Totals; roster: Roster; a: Assumptions };
+export type ExportContext = {
+  t: Totals; roster: Roster; a: Assumptions;
+  design?: import("./design").DesignState;
+  codes?: import("./totals").CodeVolume;
+};
 
 // ── CSV ─────────────────────────────────────────────────────────────────────
 
