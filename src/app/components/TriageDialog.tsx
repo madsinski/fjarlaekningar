@@ -251,26 +251,28 @@ export function TriagePanel({
                 />
               </>
             )}
-            {/* First screen: the question comes first; then the way out for people
-                who know what they need; the "why" last, for whoever wonders. */}
+            {/* First screen: the question comes first. Below a clear divider, as an
+                aside rather than another answer: the way out for people who know
+                what they need, then the "why" for whoever wonders. */}
             {steps.length === 1 && (
-              // Right under the question, for returning patients who know what they need.
-              <div className="mt-6 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-2xl border border-slate-200 px-4 py-3">
-                <span className="text-sm text-slate-600">{ui("skip_prompt")}</span>
-                <button
-                  type="button"
-                  onClick={() => setConfirmSkip(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--primary-dark)] px-4 py-1.5 text-sm font-semibold text-[var(--primary-dark)] transition-colors hover:bg-[var(--primary-dark)] hover:text-white"
-                >
-                  {ui("skip")}
-                  <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-                </button>
-              </div>
-            )}
-            {steps.length === 1 && (ui("intro_heading") || ui("intro")) && (
-              <div className="mt-4 rounded-2xl bg-brand-cyan-subtle p-4">
-                {ui("intro_heading") && <p className="text-sm font-semibold text-[var(--primary-dark)]">{ui("intro_heading")}</p>}
-                {ui("intro") && <p className="mt-1 text-sm leading-relaxed text-slate-700">{ui("intro")}</p>}
+              <div className="mt-10 space-y-3 border-t border-slate-200 pt-6">
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-2xl border border-slate-200 px-4 py-3">
+                  <span className="text-sm text-slate-600">{ui("skip_prompt")}</span>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmSkip(true)}
+                    className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--primary-dark)] px-4 py-1.5 text-sm font-semibold text-[var(--primary-dark)] transition-colors hover:bg-[var(--primary-dark)] hover:text-white"
+                  >
+                    {ui("skip")}
+                    <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                  </button>
+                </div>
+                {(ui("intro_heading") || ui("intro")) && (
+                  <div className="rounded-2xl bg-brand-cyan-subtle p-4">
+                    {ui("intro_heading") && <p className="text-sm font-semibold text-[var(--primary-dark)]">{ui("intro_heading")}</p>}
+                    {ui("intro") && <p className="mt-1 text-sm leading-relaxed text-slate-700">{ui("intro")}</p>}
+                  </div>
+                )}
               </div>
             )}
           </>
