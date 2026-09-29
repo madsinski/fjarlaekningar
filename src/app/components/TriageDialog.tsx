@@ -420,7 +420,12 @@ function Options({
         </div>
         {two.length > 0 && (
           <>
-            <h3 className="mt-6 text-sm font-semibold text-slate-900">{text[TK.ui("need_more")]}</h3>
+            {/* A divider, not a heading: "EÐA" between the two groups. */}
+            <div className="mt-6 flex items-center gap-3" role="separator" aria-label={text[TK.ui("need_more")]}>
+              <span aria-hidden className="h-px flex-1 bg-slate-200" />
+              <span className="text-lg font-bold uppercase tracking-[0.2em] text-slate-500">{text[TK.ui("need_more")]}</span>
+              <span aria-hidden className="h-px flex-1 bg-slate-200" />
+            </div>
             <div className="mt-2.5 grid grid-cols-2 gap-2.5">
               {two.map(({ opt, i }) => (
                 <PictureButton key={i} img={opt.visual?.img} label={label(i)} onClick={() => onPick(opt, i)} />
