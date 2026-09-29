@@ -207,12 +207,13 @@ SCOPE_REASONS = [
      "Snýst erindið um einhvern annan en þig, til dæmis barnið þitt, maka "
      "eða foreldri?",
      None,
-     "Til að læknir geti metið erindi þarf sá sem það snýst um að senda það "
-     "sjálfur, í eigin nafni og með eigin rafrænum skilríkjum. Þannig er "
-     "tryggt að upplýsingarnar séu réttar og að svarið berist réttum aðila.\n\n"
-     "• Fullorðnir geta sent eigið erindi hingað.\n"
-     "• Heilsugæsla barnsins getur aðstoðað vegna barna, og í síma 1700 "
-     "færðu ráðgjöf allan sólarhringinn.\n"
+     "Þessi þjónusta er ætluð fyrir erindi sem fólk sendir vegna sjálfs "
+     "sín. Læknirinn þarf að geta spurt þann sem erindið snýst um nánar, og "
+     "svar, lyfseðill eða vottorð þarf að skrást á réttan einstakling.\n\n"
+     "• Fullorðnir geta sent eigið erindi hér, með eigin rafrænum "
+     "skilríkjum.\n"
+     "• Vegna barna er best að hafa samband við heilsugæslu barnsins. Í síma "
+     "1700 færðu líka ráðgjöf allan sólarhringinn.\n"
      "• Ef barn veikist skyndilega eða alvarlega skaltu fara á næstu "
      "bráðamóttöku eða hringja í 112."),
     ("scope-labs",

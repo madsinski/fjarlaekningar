@@ -177,10 +177,10 @@ Skýringartexti
 
 > Þetta erindi er betur leyst hjá annarri þjónustu.
 >
-> Til að læknir geti metið erindi þarf sá sem það snýst um að senda það sjálfur, í eigin nafni og með eigin rafrænum skilríkjum. Þannig er tryggt að upplýsingarnar séu réttar og að svarið berist réttum aðila.
+> Þessi þjónusta er ætluð fyrir erindi sem fólk sendir vegna sjálfs sín. Læknirinn þarf að geta spurt þann sem erindið snýst um nánar, og svar, lyfseðill eða vottorð þarf að skrást á réttan einstakling.
 >
-> • Fullorðnir geta sent eigið erindi hingað.
-> • Heilsugæsla barnsins getur aðstoðað vegna barna, og í síma 1700 færðu ráðgjöf allan sólarhringinn.
+> • Fullorðnir geta sent eigið erindi hér, með eigin rafrænum skilríkjum.
+> • Vegna barna er best að hafa samband við heilsugæslu barnsins. Í síma 1700 færðu líka ráðgjöf allan sólarhringinn.
 > • Ef barn veikist skyndilega eða alvarlega skaltu fara á næstu bráðamóttöku eða hringja í 112.
 >
 > Þú þarft því ekki að senda erindið hingað. Ef þú svaraðir þessu fyrir mistök getur þú breytt svarinu í „Nei“ og haldið áfram.
