@@ -251,26 +251,26 @@ export function TriagePanel({
                 />
               </>
             )}
-            {/* First screen: the question comes first. Below a clear divider, as an
-                aside rather than another answer: the way out for people who know
-                what they need, then the "why" for whoever wonders. */}
+            {/* First screen: the question comes first. Below it, one quiet card —
+                muted greys so it never competes with the question: the way out
+                for people who know what they need, then the "why". */}
             {steps.length === 1 && (
-              <div className="mt-10 space-y-3 border-t border-slate-200 pt-6">
-                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-2xl border border-slate-200 px-4 py-3">
-                  <span className="text-sm text-slate-600">{ui("skip_prompt")}</span>
+              <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                  <span>{ui("skip_prompt")}</span>
                   <button
                     type="button"
                     onClick={() => setConfirmSkip(true)}
-                    className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--primary-dark)] px-4 py-1.5 text-sm font-semibold text-[var(--primary-dark)] transition-colors hover:bg-[var(--primary-dark)] hover:text-white"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-400 hover:text-slate-900"
                   >
                     {ui("skip")}
                     <ExternalLink className="h-3.5 w-3.5" aria-hidden />
                   </button>
                 </div>
                 {(ui("intro_heading") || ui("intro")) && (
-                  <div className="rounded-2xl bg-brand-cyan-subtle p-4">
-                    {ui("intro_heading") && <p className="text-sm font-semibold text-[var(--primary-dark)]">{ui("intro_heading")}</p>}
-                    {ui("intro") && <p className="mt-1 text-sm leading-relaxed text-slate-700">{ui("intro")}</p>}
+                  <div className="mt-4 border-t border-slate-200 pt-4">
+                    {ui("intro_heading") && <p className="font-medium text-slate-700">{ui("intro_heading")}</p>}
+                    {ui("intro") && <p className="mt-1 leading-relaxed text-slate-500">{ui("intro")}</p>}
                   </div>
                 )}
               </div>
