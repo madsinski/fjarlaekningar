@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<title>Mat á fjarlækningum í Vestmannaeyjum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cyan: #00d6ff;
+    --cyan-subtle: #e6fbff;
+    --primary: #00a8cc;
+    --primary-dark: #0488a4;
+    --accent: #cf147b;
+    --ink: #1f2937;
+    --muted: #5b6574;
+    --line: #e3e8ee;
+    --slate: #304e71;
+    --paper: #ffffff;
+  }
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #eef1f5; }
+  body {
+    font-family: Inter, system-ui, sans-serif;
+    color: var(--ink);
+    font-size: 7.9pt;
+    line-height: 1.36;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .page {
+    width: 210mm;
+    height: 297mm;
+    margin: 0 auto;
+    background: var(--paper);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  @media screen { .page { margin: 24px auto; box-shadow: 0 8px 40px rgba(16,40,70,.14); } }
+
+  /* ── Header ─────────────────────────────────────────── */
+  header {
+    padding: 8mm 14mm 5.5mm;
+    background:
+      radial-gradient(120% 140% at 100% 0%, rgba(0,214,255,.22) 0%, rgba(0,214,255,0) 55%),
+      linear-gradient(135deg, #0b2a47 0%, #173f66 55%, #0c5b78 100%);
+    color: #fff;
+    position: relative;
+  }
+  .logos { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5mm; }
+  .logos .fj { height: 8mm; }
+  .logos .partner { display: flex; align-items: center; gap: 3mm; font-size: 7pt; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.7); }
+  .logos .hsu { height: 8.5mm; background: #fff; border-radius: 2mm; padding: 1.4mm 2.4mm; }
+  .eyebrow { font-size: 7.4pt; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--cyan); margin-bottom: 2mm; }
+  h1 { font-size: 19pt; line-height: 1.12; font-weight: 800; letter-spacing: -.02em; margin-bottom: 2mm; }
+  .lead { font-size: 8.9pt; line-height: 1.5; color: rgba(255,255,255,.86); max-width: 158mm; }
+  .lead strong { color: #fff; font-weight: 600; }
+
+  main { padding: 4.5mm 14mm 0; flex: 1; display: flex; flex-direction: column; gap: 3.6mm; }
+
+  /* ── Three questions ────────────────────────────────── */
+  .questions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+  .q {
+    border: 1px solid var(--line);
+    border-radius: 3mm;
+    padding: 3.6mm 3.6mm 3.2mm;
+    position: relative;
+    display: flex; flex-direction: column;
+  }
+  .q::before {
+    content: ""; position: absolute; left: -1px; right: -1px; top: -1px; height: 1.4mm;
+    border-radius: 3mm 3mm 0 0; background: var(--bar);
+  }
+  .q.p { --bar: var(--primary); --tint: var(--primary-dark); }
+  .q.k { --bar: var(--slate); --tint: var(--slate); }
+  .q.o { --bar: var(--accent); --tint: var(--accent); }
+  .num { font-size: 7pt; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--tint); margin-bottom: 1mm; }
+  .q h2 { font-size: 10.6pt; line-height: 1.2; font-weight: 700; letter-spacing: -.01em; margin-bottom: 2mm; }
+  .q h3 { font-size: 7pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 2mm 0 1mm; }
+  .q h3:first-of-type { margin-top: 0; }
+  ul { list-style: none; }
+  li { position: relative; padding-left: 3.4mm; margin-bottom: .8mm; }
+  li::before { content: ""; position: absolute; left: 0; top: .62em; width: 1.4mm; height: 1.4mm; border-radius: 50%; background: var(--tint, var(--primary)); opacity: .85; }
+  .callout {
+    margin-top: 1.2mm; padding: 1.8mm 2.4mm; border-radius: 2mm;
+    background: var(--cyan-subtle); color: #0a4d5e; font-size: 7.3pt; line-height: 1.35;
+  }
+  .callout strong { font-weight: 600; }
+  .rule { margin-top: auto; padding-top: 2mm; font-size: 7.1pt; color: var(--muted); border-top: 1px dashed var(--line); }
+  .rule b { color: var(--ink); font-weight: 600; }
+  .tag { display: inline-block; font-size: 6.6pt; font-weight: 600; padding: .3mm 1.6mm; border-radius: 99px; background: #f1f4f8; color: var(--slate); margin-left: .6mm; vertical-align: 1px; white-space: nowrap; }
+
+  /* ── Data sources + timeline ────────────────────────── */
+  .band { background: #f6f8fb; border-radius: 3mm; padding: 3.4mm 4mm; display: grid; gap: 3mm; }
+  .band h4 { font-size: 6.8pt; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--slate); margin-bottom: 1.8mm; }
+  .sources { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+  .src { display: grid; grid-template-columns: 7mm 1fr; gap: 2.2mm; align-items: center; }
+  .ico { width: 7mm; height: 7mm; border-radius: 2mm; display: grid; place-items: center; color: #fff; }
+  .ico svg { width: 3.9mm; height: 3.9mm; }
+  .src b { display: block; font-size: 8pt; font-weight: 600; }
+  .src span { color: var(--muted); font-size: 7.1pt; line-height: 1.3; display: block; }
+
+  .timeline { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; padding-top: 4.2mm; }
+  .timeline::before { content: ""; position: absolute; left: 1.5mm; right: 12%; top: 1.3mm; height: .5mm; background: linear-gradient(90deg, var(--primary), var(--slate)); border-radius: 1mm; }
+  .step { position: relative; }
+  .step::before { content: ""; position: absolute; left: 0; top: -4.2mm; width: 3.1mm; height: 3.1mm; border-radius: 50%; background: #fff; border: .6mm solid var(--primary); }
+  .step.end::before { background: var(--slate); border-color: var(--slate); }
+  .step b { font-size: 7.9pt; font-weight: 600; }
+  .step span { display: block; color: var(--muted); font-size: 7.1pt; line-height: 1.3; }
+
+  /* ── Bottom row ─────────────────────────────────────── */
+  .bottom { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4mm; }
+  .box { border-radius: 3mm; padding: 3.2mm 3.6mm; border: 1px solid var(--line); }
+  .box h4 { font-size: 8.8pt; font-weight: 700; margin-bottom: 2mm; display: flex; align-items: center; gap: 1.8mm; }
+  .box h4 svg { width: 3.8mm; height: 3.8mm; flex: none; }
+  .box p { font-size: 7.3pt; color: #374151; margin-bottom: 1.4mm; }
+  .box ol { padding-left: 4mm; font-size: 7.3pt; }
+  .box ol li { padding-left: .6mm; margin-bottom: 1mm; }
+  .box ol li::before { display: none; }
+  .box.priv { background: linear-gradient(160deg, #f2fcff, #ffffff 70%); border-color: #cdeef7; }
+  .box.priv h4 { color: var(--primary-dark); }
+  .box.need h4 { color: var(--slate); }
+  .box.open { background: #fff7fb; border-color: #f6d3e5; }
+  .box.open h4 { color: var(--accent); }
+  .box.open ul li { font-size: 7.3pt; --tint: var(--accent); }
+
+  footer {
+    margin: 4mm 14mm 0; padding: 2.6mm 0 6mm; border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; font-size: 7pt; color: var(--muted);
+  }
+  footer b { color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="logos">
+      <img class="fj" src="../../public/fjarlaekningar-logo-white.svg" alt="Fjarlækningar">
+      <div class="partner">Í samstarfi við <img class="hsu" src="../../public/hsu-logo.webp" alt="Heilbrigðisstofnun Suðurlands"></div>
+    </div>
+    <div class="eyebrow">Tillaga að rannsóknarsniði · Drög til umræðu</div>
+    <h1>Mat á fjarlækningum í Vestmannaeyjum</h1>
+    <p class="lead">Áður en þjónustan nær til næstu starfsstöðvar HSU viljum við svara <strong>þremur spurningum</strong> með gögnum sem safnað er á sama hátt allt tímabilið. Sniðið er unnið með læknisfræðilegum ráðgjafa Fjarlækninga.</p>
+  </header>
+
+  <main>
+    <section class="questions">
+
+      <article class="q p">
+        <div class="num">Spurning 1</div>
+        <h2>Virkar þjónustan fyrir sjúklinginn?</h2>
+        <h3>Þjónustukönnun, 0 og 7 dögum eftir</h3>
+        <ul>
+          <li>Hversu ánægð(ur) varstu með þjónustuna?</li>
+          <li>Var vandamálið leyst með fullnægjandi hætti?</li>
+          <li>Myndir þú nota þjónustuna aftur vegna sambærilegs vandamáls?</li>
+          <li>Þurftir þú að leita annarrar heilbrigðisþjónustu vegna sama vandamáls? Ef já, hvert?</li>
+          <li>Hvað hefðir þú líklegast gert ef þjónustan hefði ekki verið í boði?</li>
+        </ul>
+        <div class="callout"><strong>Lykilspurning:</strong> kemur þjónustan í stað annarrar heilbrigðisþjónustu eða skapar hún nýja eftirspurn?</div>
+        <h3>Heimapróf</h3>
+        <ul>
+          <li>Hversu vel gekk að fá prófið í hendur og að framkvæma það?</li>
+        </ul>
+        <div class="rule"><b>Skráð sjálfkrafa:</b> afgreiðslutími, niðurstaða, lyfjaávísanir, hvort læknir staðfestir eða breytir niðurstöðu ákvörðunartrés og tími læknis í hverju máli.</div>
+      </article>
+
+      <article class="q k">
+        <div class="num">Spurning 2</div>
+        <h2>Virkar þjónustan fyrir heilbrigðiskerfið?</h2>
+        <h3>Afgreiðsla og álag</h3>
+        <ul>
+          <li>Hlutfall erinda sem afgreidd eru að fullu í fjarþjónustu</li>
+          <li><b>Fjöldi greiningarkóða:</b> þriggja ára grunnlína úr Sögu borin saman við fyrsta árið. Fækkar komum á HSU vegna sömu vandamála?</li>
+          <li>Meðalafgreiðslutími lækna og meðalbiðtími sjúklinga</li>
+        </ul>
+        <h3>Þurfti viðkomandi að leita annað?</h3>
+        <ul>
+          <li><b>A · Könnun:</b> leitað á bráðamóttöku, sjúkrahús eða heilsugæslu innan 7 daga?</li>
+          <li><b>B · Harðar tölur:</b> úrtak 50–100 þeirra sem leituðu á HSU innan 7 daga, yfirfarið handvirkt í Sögu.</li>
+        </ul>
+        <h3>Starfsfólk HSU, í lok tímabils</h3>
+        <ul>
+          <li>Ánægja, hvort þjónustan hjálpar og hvort halda eigi henni áfram</li>
+        </ul>
+        <div class="rule"><b>Talningarregla:</b> hver greiningarkóði er talinn einu sinni á sólarhring. Dagsetning fylgir svo greina megi marga kóða innan sama erindis.</div>
+      </article>
+
+      <article class="q o">
+        <div class="num">Spurning 3</div>
+        <h2>Er þjónustan örugg?</h2>
+        <h3>Atvik og skimun</h3>
+        <ul>
+          <li>Sameiginleg skilgreining á atviki og skráningarleið fyrir bæði sjúklinga og heilbrigðisstarfsfólk</li>
+          <li>Fjöldi rauðra flagga sem stöðva erindi í skimun</li>
+        </ul>
+        <h3>Eftir afgreiðslu</h3>
+        <ul>
+          <li>Leitað aftur í heilbrigðisþjónustu innan 7 daga (könnun og úrtak)</li>
+          <li>Alvarlegar aukaverkanir eða ofnæmi vegna veittrar lyfjameðferðar</li>
+          <li><b>Rétt greining?</b> Stóðst greiningin hjá þeim sem leituðu annað innan 7 daga?</li>
+        </ul>
+        <h3>Lyfjanotkun</h3>
+        <ul>
+          <li>Sýklalyfjaávísanir bornar saman við grunnlínu úr hefðbundinni þjónustu. Er fjarþjónustan sambærileg?</li>
+        </ul>
+        <div class="rule"><b>Öryggi er skilyrði, ekki kvarði:</b> gott afgreiðsluhlutfall bætir ekki upp alvarlegt atvik.</div>
+      </article>
+
+    </section>
+
+    <section class="band">
+      <div>
+        <h4>Gagnalindir</h4>
+        <div class="sources">
+          <div class="src">
+            <div class="ico" style="background:var(--primary)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+            <div><b>Þjónustukönnun</b><span>Send sjálfkrafa 0 og 7 dögum eftir afgreiðslu</span></div>
+          </div>
+          <div class="src">
+            <div class="ico" style="background:var(--slate)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></div>
+            <div><b>Saga (HSU)</b><span>Grunnlína síðustu þriggja ára, CSV-útdráttur</span></div>
+          </div>
+          <div class="src">
+            <div class="ico" style="background:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+            <div><b>Medalia (Fjarlækningar)</b><span>Gögn eftir 6 og 12 mánuði, JSON-útdráttur</span></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h4>Tímalína</h4>
+        <div class="timeline">
+          <div class="step"><b>Undirbúningur</b><span>Skilgreiningar, kóðalisti, könnun og atvikaskráning</span></div>
+          <div class="step"><b>Grunnlína úr Sögu</b><span>Þrjú ár aftur í tímann, með dagsetningum</span></div>
+          <div class="step"><b>6 mánuðir</b><span>Áfangaskýrsla til HSU</span></div>
+          <div class="step end"><b>12 mánuðir</b><span>Lokaskýrsla og ákvörðun um næstu starfsstöð</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="bottom">
+      <div class="box priv">
+        <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Persónuvernd</h4>
+        <p>Mat á eigin þjónustu er innra gæðaeftirlit samkvæmt lögum nr. 41/2007.</p>
+        <p>Kennitölur fara ekki á milli stofnana. HSU yfirfer úrtakið í Sögu og skilar aðeins fjölda. Úr Medalia berast eingöngu samantektartölur.</p>
+        <p>Komi til birtingar sækjum við um heimild Vísindasiðanefndar (lög nr. 44/2014).</p>
+      </div>
+      <div class="box need">
+        <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>Það sem við þurfum frá HSU</h4>
+        <ol>
+          <li>Útdrátt úr Sögu: greiningarkóða síðustu þriggja ára með dagsetningu</li>
+          <li>Grunnlínu sýklalyfjaávísana úr hefðbundinni þjónustu</li>
+          <li>Tengilið sem yfirfer 7 daga úrtakið</li>
+          <li>Sameiginlega skilgreiningu og skráningarleið atvika</li>
+          <li>Dreifingu starfsmannakönnunar í lok tímabils</li>
+        </ol>
+      </div>
+      <div class="box open">
+        <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>Til umræðu</h4>
+        <ul>
+          <li>Hvernig metum við eðlilega aukningu milli ára? Þriggja ára grunnlína sýnir leitnina sem bera má saman við.</li>
+          <li>Vitund íbúa um þjónustuna hefur áhrif á notkun. Hvernig mælum við hana?</li>
+          <li>Eigum við að sækja sömu grunnlínu fyrir næstu stöð strax, svo samanburður verði mögulegur?</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span><b>Fjarlækningar ehf.</b> · fjarlaekningar.is</span>
+    <span>Drög til umræðu · 30. september 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>
