@@ -40,6 +40,9 @@ export type TriageOption = {
   /** Step "Hvað þarftu": 1 = the problems Fjarlækningar handles (the
    *  gallery answer becomes one button per service), 2 = everything else. */
   section?: 1 | 2;
+  /** The one answer on a step that carries you on through the flow — drawn
+   *  in colour; every other answer is neutral. At most one per step. */
+  lead?: boolean;
   /** Where to continue AFTER the next step, for a shared step whose answers
    *  say `next: THEN` ("Fyrir hvern?" → "Hvar ertu?" → back on this branch). */
   then?: string;
@@ -130,7 +133,7 @@ export const TRIAGE: Record<string, TriageNode> = {
     ],
     options: [
       { label: { is: "Já, eitthvað af þessu á við", en: "Yes, something here applies" }, next: "r-112" },
-      { label: { is: "Nei", en: "No" }, next: "who" },
+      { label: { is: "Nei", en: "No" }, next: "who", lead: true },
     ],
   },
 
@@ -157,7 +160,7 @@ export const TRIAGE: Record<string, TriageNode> = {
     question: { is: "Fyrir hvern er erindið?", en: "Who is this for?" },
     options: [
       // Location comes next for everyone; `then` is where each branch resumes.
-      { label: { is: "Fyrir mig", en: "For me" }, next: "location", then: "registered" },
+      { label: { is: "Fyrir mig", en: "For me" }, next: "location", then: "registered", lead: true },
       { label: { is: "Fyrir barn", en: "For a child" }, next: "location", then: "child-when" },
       { label: { is: "Fyrir annan fullorðinn, til dæmis maka eða foreldri", en: "For another adult, e.g. a partner or parent" },
         next: "location", then: "other-self" },
@@ -169,13 +172,13 @@ export const TRIAGE: Record<string, TriageNode> = {
   // Þjónusta page in the CMS, so opening Selfoss there opens it here too.
   registered: {
     kind: "question",
-    question: { is: "Ertu skráð eða skráður á heilsugæslu þar sem þjónustan er í boði?",
+    question: { is: "Ertu með skráningu á heilsugæslu þar sem þjónustan er í boði?",
                 en: "Are you registered at a health centre where the service is available?" },
-    hint: { is: "Ertu ekki viss? Þú sérð á hvaða heilsugæslu þú ert skráð eða skráður á Mínum síðum á island.is.",
+    hint: { is: "Ertu ekki viss? Þú sérð skráninguna þína á Mínum síðum á island.is.",
             en: "Not sure? You can see which health centre you are registered at under My pages on island.is." },
     clinics: true,
     options: [
-      { label: { is: "Já", en: "Yes" }, next: "need" },
+      { label: { is: "Já", en: "Yes" }, next: "need", lead: true },
       { label: { is: "Nei", en: "No" }, next: "r-not-registered" },
     ],
   },
@@ -186,7 +189,7 @@ export const TRIAGE: Record<string, TriageNode> = {
                 en: "Are they registered at a health centre where the service is available?" },
     clinics: true,
     options: [
-      { label: { is: "Já", en: "Yes" }, next: "r-other-adult" },
+      { label: { is: "Já", en: "Yes" }, next: "r-other-adult", lead: true },
       { label: { is: "Nei", en: "No" }, next: "r-not-registered" },
     ],
   },
@@ -225,8 +228,8 @@ export const TRIAGE: Record<string, TriageNode> = {
     kind: "question",
     question: { is: "Hvað á við um lyfið?", en: "Which applies to the medicine?" },
     options: [
-      { label: { is: "Lyf sem ég tek að staðaldri og sæki sjálf eða sjálfur í apótek",
-                 en: "A medicine I take regularly and collect from the pharmacy myself" }, next: "meds-check" },
+      { label: { is: "Lyf sem ég tek að staðaldri og sæki í apótek",
+                 en: "A medicine I take regularly and collect from the pharmacy myself" }, next: "meds-check", lead: true },
       { label: { is: "Skammtað í lyfjarúllu frá apóteki", en: "Dose-dispensed in a pharmacy roll (lyfjarúlla)" },
         next: "r-heilsugaesla",
         why: { is: "Skömmtuð lyf eru afgreidd eftir skömmtunarkorti sem læknirinn þinn heldur utan um. Til að öll lyfin skili sér rétt í rúlluna þarf sá læknir að gera breytingarnar.",
@@ -250,7 +253,7 @@ export const TRIAGE: Record<string, TriageNode> = {
             en: "Search for the name of the medicine or its active ingredient to see whether it is on the list of medicines that are not renewed remotely." },
     search: "meds",
     options: [
-      { label: { is: "Halda áfram með endurnýjun", en: "Continue with the renewal" }, next: "r-fjar", when: "not-red" },
+      { label: { is: "Halda áfram með endurnýjun", en: "Continue with the renewal" }, next: "r-fjar", when: "not-red", lead: true },
       { label: { is: "Sjá hvert ég á að leita með þetta lyf", en: "See where to go with this medicine" }, next: "r-controlled", when: "red" },
       { label: { is: "Ég finn ekki lyfið eða er ekki viss", en: "I can't find it or I'm not sure" }, next: "r-fjar",
         why: { is: "Listinn er ekki tæmandi. Læknir metur alltaf hvort lyfið er endurnýjað og lætur þig vita ef þú þarft að leita annað.",
@@ -266,7 +269,7 @@ export const TRIAGE: Record<string, TriageNode> = {
     search: "meds",
     options: [
       { label: { is: "Sjá hvert ég á að leita", en: "See where to go" }, next: "r-controlled" },
-      { label: { is: "Halda áfram með endurnýjun", en: "Continue with the renewal" }, next: "r-fjar", when: "not-red" },
+      { label: { is: "Halda áfram með endurnýjun", en: "Continue with the renewal" }, next: "r-fjar", when: "not-red", lead: true },
     ],
   },
 
@@ -277,7 +280,7 @@ export const TRIAGE: Record<string, TriageNode> = {
             en: "Ill right now and need a certificate? Go back and choose your problem. The doctor can issue a certificate with the request." },
     options: [
       { label: { is: "Veikindavottorð fyrir vinnu eða skóla, vegna erindis sem Fjarlækningar hafa afgreitt",
-                 en: "A sick note for work or school, for a request Fjarlækningar has handled" }, next: "r-fjar" },
+                 en: "A sick note for work or school, for a request Fjarlækningar has handled" }, next: "r-fjar", lead: true },
       { label: { is: "Veikindavottorð vegna veikinda sem Fjarlækningar hafa ekki metið",
                  en: "A sick note for an illness Fjarlækningar has not assessed" },
         next: "r-heilsugaesla",
@@ -318,7 +321,7 @@ export const TRIAGE: Record<string, TriageNode> = {
 
   "other-self": {
     kind: "question",
-    question: { is: "Getur viðkomandi sent erindið sjálf eða sjálfur?", en: "Can they send the request themselves?" },
+    question: { is: "Getur viðkomandi sent erindið sjálfur?", en: "Can they send the request themselves?" },
     hint: { is: "Til þess þarf viðkomandi að skrá sig inn með eigin rafrænum skilríkjum. Þú mátt aðstoða við að fylla út.",
             en: "They need to sign in with their own electronic ID. You are welcome to help fill it in." },
     options: [

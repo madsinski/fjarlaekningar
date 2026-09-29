@@ -213,26 +213,6 @@ export function TriagePanel({
           <SkipConfirm ui={ui} clinics={clinics} headingRef={headingRef} onBack={() => setConfirmSkip(false)} />
         ) : node.kind === "question" ? (
           <>
-            {steps.length === 1 && (ui("intro_heading") || ui("intro")) && (
-              <div className="mb-5 rounded-2xl bg-brand-cyan-subtle p-4">
-                {ui("intro_heading") && <p className="text-sm font-semibold text-[var(--primary-dark)]">{ui("intro_heading")}</p>}
-                {ui("intro") && <p className="mt-1 text-sm leading-relaxed text-slate-700">{ui("intro")}</p>}
-              </div>
-            )}
-            {steps.length === 1 && (
-              // Up front, for returning patients who know what they need.
-              <div className="mb-6 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-2xl border border-slate-200 px-4 py-3">
-                <span className="text-sm text-slate-600">{ui("skip_prompt")}</span>
-                <button
-                  type="button"
-                  onClick={() => setConfirmSkip(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--primary-dark)] px-4 py-1.5 text-sm font-semibold text-[var(--primary-dark)] transition-colors hover:bg-[var(--primary-dark)] hover:text-white"
-                >
-                  {ui("skip")}
-                  <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-                </button>
-              </div>
-            )}
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">{`${ui("step")} ${steps.length}`}</p>
             <h2
               id="triage-heading"
@@ -271,6 +251,28 @@ export function TriagePanel({
                 />
               </>
             )}
+            {/* First screen: the question comes first; then the way out for people
+                who know what they need; the "why" last, for whoever wonders. */}
+            {steps.length === 1 && (
+              // Right under the question, for returning patients who know what they need.
+              <div className="mt-6 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-2xl border border-slate-200 px-4 py-3">
+                <span className="text-sm text-slate-600">{ui("skip_prompt")}</span>
+                <button
+                  type="button"
+                  onClick={() => setConfirmSkip(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--primary-dark)] px-4 py-1.5 text-sm font-semibold text-[var(--primary-dark)] transition-colors hover:bg-[var(--primary-dark)] hover:text-white"
+                >
+                  {ui("skip")}
+                  <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                </button>
+              </div>
+            )}
+            {steps.length === 1 && (ui("intro_heading") || ui("intro")) && (
+              <div className="mt-4 rounded-2xl bg-brand-cyan-subtle p-4">
+                {ui("intro_heading") && <p className="text-sm font-semibold text-[var(--primary-dark)]">{ui("intro_heading")}</p>}
+                {ui("intro") && <p className="mt-1 text-sm leading-relaxed text-slate-700">{ui("intro")}</p>}
+              </div>
+            )}
           </>
         ) : (
           <Result id={current.id} node={node} why={why} text={text} steps={steps} clinics={clinics} headingRef={headingRef} />
@@ -299,15 +301,22 @@ export function TriagePanel({
   );
 }
 
-// Answer buttons — the way forward — carry a light brand tint so they stand
-// apart from the neutral back/restart controls.
+// Answers are neutral; the ONE answer per step that carries you on through the
+// flow (TriageOption.lead) is tinted, so the way forward is obvious.
 const CARD =
-  "group rounded-2xl border border-brand-cyan-muted bg-brand-cyan-subtle/50 text-left transition-colors hover:border-[var(--primary)] hover:bg-brand-cyan-subtle focus-visible:border-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/30";
+  "group rounded-2xl border border-slate-200 bg-white text-left transition-colors hover:border-[var(--primary)] hover:bg-slate-50 focus-visible:border-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/30";
+const CARD_LEAD =
+  "group rounded-2xl border border-brand-cyan-muted bg-brand-cyan-subtle/60 text-left transition-colors hover:border-[var(--primary)] hover:bg-brand-cyan-subtle focus-visible:border-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/30";
 
-/** Filled arrow chip on answer buttons: reads as "this takes you on". */
-function Forward() {
+/** Arrow chip on answer buttons: filled for the way forward, quiet otherwise. */
+function Forward({ lead }: { lead?: boolean }) {
   return (
-    <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--primary-dark)] text-white transition-transform group-hover:translate-x-0.5">
+    <span
+      aria-hidden
+      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-transform group-hover:translate-x-0.5 ${
+        lead ? "bg-[var(--primary-dark)] text-white" : "bg-slate-100 text-slate-500"
+      }`}
+    >
       <ChevronRight className="h-4 w-4" />
     </span>
   );
@@ -438,10 +447,10 @@ function Options({
           key={i}
           type="button"
           onClick={() => onPick(opt, i)}
-          className={`${CARD} flex w-full items-center justify-between gap-3 px-4 py-3.5 text-[15px] font-medium text-slate-800`}
+          className={`${opt.lead ? CARD_LEAD : CARD} flex w-full items-center justify-between gap-3 px-4 py-3.5 text-[15px] font-medium text-slate-800`}
         >
           {label(i)}
-          <Forward />
+          <Forward lead={opt.lead} />
         </button>
       ))}
     </div>
