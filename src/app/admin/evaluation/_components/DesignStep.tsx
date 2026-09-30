@@ -192,8 +192,8 @@ export default function DesignStep({
           <p className="text-sm font-semibold text-slate-900">Tölurnar frá því fyrir upphaf þjónustu eru ekki glataðar</p>
           <p className="mt-1 text-xs leading-relaxed text-slate-600">
             Öll samskipti sem HSU skráði eru í Sögu, kóðuð, mörg ár aftur í tímann. Það má sækja þau afturskyggnt
-            hvenær sem er. Það sem rennur út er velviljinn til að keyra fyrirspurnina, og samanburðarstöðvarnar:
-            stöð hættir að nýtast til samanburðar daginn sem þjónustan hefst þar.
+            hvenær sem er, líka fyrir stöðvar sem eru ekki byrjaðar. Þess vegna er ekkert safnað fyrr en tímabilinu
+            lýkur. Samanburðarstöð nýtist þó aðeins fyrir tímann áður en þjónustan hefst þar.
           </p>
           <button
             onClick={() => {
@@ -279,8 +279,8 @@ export default function DesignStep({
                 )}
 
                 {cfg.role === "pre-live" && (
-                  <Chip className={hasData ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}>
-                    {hasData ? "gögn berast" : "engin gögn enn"}
+                  <Chip className={hasData ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"}>
+                    {hasData ? "gögn komin" : "sótt úr Sögu síðar"}
                   </Chip>
                 )}
                 {cfg.role === "live" && !cfg.goLive && (

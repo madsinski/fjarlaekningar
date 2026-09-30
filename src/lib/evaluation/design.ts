@@ -321,7 +321,7 @@ export const SITE_ROLES: { id: SiteRole; name: string; note: string }[] = [
     id: "pre-live",
     name: "Samanburðarstöð (ekki byrjuð)",
     note:
-      "Þjónustan er ekki hafin. Leggur til baseline og samanburðargögn, en aðeins meðan hún er ekki byrjuð. Þess vegna þarf gagnasöfnun að hefjast núna.",
+      "Þjónustan er ekki hafin. Tölur stöðvarinnar eru sóttar afturskyggnt úr Sögu þegar tímabilinu lýkur, fyrir sömu mánuði, og nýtast sem samanburður fyrir tímann áður en þjónustan hefst þar. Ekkert þarf að safna núna.",
   },
   { id: "excluded", name: "Ekki með", note: "Engum gögnum safnað." },
 ];
@@ -402,7 +402,7 @@ export function feasibility(state: DesignState, opts: { preLiveWithData: number;
       detail:
         opts.preLiveWithData > 0
           ? "Samanburðartölur eru að berast, ekki bara á áætlun."
-          : "Það gerir ekkert eitt og sér að merkja stöð sem samanburðarstöð. HSU þarf líka að senda þér mánaðartölur fyrir þá stöð. Annars er ekkert til að bera saman við.",
+          : "Tölur samanburðarstöðva eru sóttar úr Sögu þegar tímabilinu lýkur. Þangað til er ekkert til að bera saman við, og matið styðst við samanburð fyrir og eftir.",
     },
     {
       ok: opts.monthsOfData >= 12,
@@ -472,10 +472,9 @@ export const DESIGN_MODULE: Module = {
       timeCritical: true,
     },
     {
-      text: "Byrjaðu að safna sömu mánaðartölum á stöðvum sem eru ekki byrjaðar",
+      text: "Skráðu hvaða stöðvar eru samanburðarstöðvar og í hvaða röð stöðvarnar byrja",
       detail:
-        "Þetta er skrefið sem rennur út. Stöð er aðeins samanburðarstöð meðan hún er ekki með þjónustuna, og innleiðingin er hvort sem er í áföngum. Þrepaskipt innleiðing kostar því eina línu í tölvupósti í dag. En hún er úr sögunni um leið og önnur stöðin hefur þjónustu.",
-      timeCritical: true,
+        "Tölur samanburðarstöðva þarf ekki að safna jafnóðum. Þær eru í Sögu og eru sóttar afturskyggnt þegar tímabilinu lýkur, fyrir sömu mánuði og með sama kóðalista. Það sem þarf að gera fyrir fram er aðeins að ákveða hvaða stöðvar eru samanburður og skrá upphafsdag hverrar stöðvar. Stöð nýtist sem samanburður aðeins fyrir tímann áður en þjónustan hefst þar.",
     },
     {
       text: "Skráðu nákvæman upphafsdag fyrir hverja stöð",

@@ -69,7 +69,7 @@ data can carry it. Four options, in ascending strength:
 | Controlled before-and-after | …and did not change at a comparable site | one more station's figures | before the control site goes live |
 | Stepped wedge | The same change followed the service at **each** site in turn | one line in an email | **before the second site goes live** |
 
-**Two upgrades are nearly free and both expire.**
+**Two upgrades are nearly free. Neither needs data collected in advance — only decisions.**
 
 1. **Ask for the baseline month by month, not as an annual total.** Same
    request, same goodwill, same effort — but a monthly series supports
@@ -78,11 +78,10 @@ data can carry it. Four options, in ascending strength:
    comfortable, twenty-four also gives the seasonal shape. A single total
    cannot be un-aggregated afterwards.
 
-2. **Start collecting the same monthly figures at stations that are not live
-   yet.** A staged rollout is a stepped wedge waiting to happen: later sites
-   are controls for earlier ones, concurrently, which rules out anything that
-   changed nationally that year. A station is only a control while it has no
-   service.
+2. **Record which stations are controls and when each goes live.** Their
+   figures are in Saga and are pulled retrospectively after the period, for
+   the same months and with the same code set — nothing is collected now. A
+   station is only a control for the months before its own go-live.
 
 The page is deliberately blunt about the difference between the design you have
 chosen and the design your data supports, because a design that exists only in

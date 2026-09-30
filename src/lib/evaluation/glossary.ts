@@ -87,7 +87,7 @@ export const GLOSSARY: Term[] = [
     term: "þrepaskipt innleiðing",
     also: ["þrepaskipta innleiðingu", "þrepaskiptri innleiðingu", "þrepaskiptrar innleiðingar", "stepped wedge"],
     plain: "Stöðvarnar byrja ein af annarri. Þar til röðin kemur að henni er hver stöð samanburður fyrir þær sem eru byrjaðar.",
-    soWhat: "Innleiðingin er hvort eð er í áföngum, svo þetta kostar ekkert aukalega. En aðeins ef tölum er safnað á stöð áður en hún byrjar.",
+    soWhat: "Innleiðingin er hvort eð er í áföngum, svo þetta kostar ekkert aukalega. Tölur stöðvanna eru sóttar afturskyggnt úr Sögu; það sem þarf að ákveða fyrir fram er röðin og upphafsdagarnir.",
   },
   {
     term: "samanburðarstöð",
