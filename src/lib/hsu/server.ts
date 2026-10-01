@@ -9,7 +9,6 @@ import { holidayL, monthLabelL } from "./i18n/format";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendEmail, escapeHtml, type EmailAttachment } from "@/lib/email";
-import { DEFAULT_PDF_STYLE, isPdfStyle, type PdfStyle } from "./shift-pdf";
 import { getHsuActor, sameOrigin, type HsuActor } from "./auth";
 import {
   datesInMonth, dayPartFor, isOvernight, markFor, minutesOf, monthRange, splitTimeOf, typeAppliesOn, holidayName, weekdayOf,
@@ -324,13 +323,10 @@ ${opts.foot ? `<p style="margin:22px 0 0;font-size:12px;color:#94a3b8;">${escape
 </table></td></tr></table></body></html>`;
 }
 
-/** Snið prentskjalsins og heiti stöðvarinnar (hsu_settings). */
-export async function pdfSettings(): Promise<{ style: PdfStyle; unitName: string }> {
-  const { data } = await supabaseAdmin.from("hsu_settings").select("pdf_style, unit_name").eq("id", 1).maybeSingle();
-  return {
-    style: isPdfStyle(data?.pdf_style) ? data.pdf_style : DEFAULT_PDF_STYLE,
-    unitName: (data?.unit_name as string) || "",
-  };
+/** Heiti stöðvarinnar í haus prentskjalsins (hsu_settings.unit_name). */
+export async function pdfUnitName(): Promise<string> {
+  const { data } = await supabaseAdmin.from("hsu_settings").select("unit_name").eq("id", 1).maybeSingle();
+  return (data?.unit_name as string) || "";
 }
 
 export async function sendHsuEmail(to: string, subject: string, html: string, text: string, attachments?: EmailAttachment[]) {

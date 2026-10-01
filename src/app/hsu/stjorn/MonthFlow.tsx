@@ -631,26 +631,14 @@ function AuditLog({ ctx }: { ctx: PlannerCtx }) {
 function PdfPreview({ month, doctors, label }: { month: string; doctors: HsuDoctor[]; label: string }) {
   const t = useT(stjorn);
   const [open, setOpen] = useState(false);
-  const [style, setStyle] = useState<"classic" | "system" | "bold">("system");
-  const url = (doctorId?: string) => `/api/hsu/admin/months/${month}/pdf?style=${style}${doctorId ? `&doctorId=${doctorId}` : ""}`;
+  const url = (doctorId?: string) => `/api/hsu/admin/months/${month}/pdf${doctorId ? `?doctorId=${doctorId}` : ""}`;
   return (
     <div className="relative">
       <Button variant="ghost" onClick={() => setOpen((v) => !v)}><Printer className="h-4 w-4" /> {label}</Button>
       {open && (
         <div className="absolute right-0 z-20 mt-1 w-80 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
-          {/* Útlitið fyrst — skjalið opnast í því sniði sem er valið hér. */}
-          <div className="px-4 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">{t("publish.pdf.style")}</div>
-          <div className="flex gap-1 px-3 pb-2">
-            {(["classic", "system", "bold"] as const).map((k) => (
-              <button key={k} type="button" onClick={() => setStyle(k)} aria-pressed={style === k}
-                className={cx("flex-1 rounded-lg px-2 py-1.5 text-xs font-semibold transition",
-                  style === k ? "bg-[var(--hsu)] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200")}>
-                {t.dyn(`publish.pdf.${k}`)}
-              </button>
-            ))}
-          </div>
           <a href={url()} target="_blank" rel="noopener" onClick={() => setOpen(false)}
-            className="block border-t border-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">{t("publish.pdf.month")}</a>
+            className="block px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">{t("publish.pdf.month")}</a>
           <div className="border-t border-slate-100 px-4 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">{t("publish.pdf.asDoctor")}</div>
           <div className="max-h-52 overflow-y-auto">
             {doctors.filter((d) => d.active).map((d) => (

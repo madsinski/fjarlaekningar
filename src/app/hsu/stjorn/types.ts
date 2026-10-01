@@ -10,8 +10,6 @@ export interface Overview {
   settings: {
     unit_name: string;
     market_requires_approval: boolean;
-    /** Útlit prentskjalsins: classic | system | bold. */
-    pdf_style: string;
   };
   /** Tengiliður Fjarlækninga fyrir spurningar. */
   support: { name: string; phone: string } | null;

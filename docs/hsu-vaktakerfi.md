@@ -330,45 +330,42 @@ Cron: `/api/cron/hsu-tasks` einu sinni á dag kl. 07 (`vercel.json`). `?dry=1` s
 stöðuna án þess að senda eða skrifa, `?today=2026-10-18` prófar tiltekinn dag.
 Kóði: `src/lib/hsu/tasks.ts`, textar í `i18n/messages/tasks.ts`.
 
-## Vaktaplanið á PDF — þrjú snið (2026-10-01)
+## Vaktaplanið á PDF (2026-10-01)
 
 Þegar vaktaplan er birt fylgir **PDF með birtingarpóstinum** (`vaktir-2026-10.pdf`):
-**ein síða, A4 á langsnið**. Þrjú snið eru í boði og yfirlæknir velur sjálfgefna
-sniðið í *Stillingum* (`hsu_settings.pdf_style`).
+**ein síða, A4 á langsnið, í útliti vaktakerfisins** — blaðið lítur eins út og
+mánaðarplanið á skjánum.
 
-| Snið | Lykill | Útlit |
-| --- | --- | --- |
-| **Dagatal** | `classic` | Hlutlaust og rólegt: hvítt dagatalsblað, grá net og lágstemmdir tónar. |
-| **Vaktakerfi** | `system` | Eins og mánaðarplanið á skjánum: hvít rúnnuð spjöld, merking vaktategundar til vinstri og „pillur“ með nafni — fylltar fyrir eigin vaktir, ljósgráar fyrir aða og **rauð strikuð „vantar“** þegar enginn er á vaktinni. *Sjálfgefið.* |
-| **Djarft** | `bold` | Dökkur haus með mánuðinum í stóru, **stóru tölunni** (fjöldi eigin vakta) og **taktborða** — 31 strik þar sem þínir dagar rísa upp í þínum lit. Netið fyrir neðan er viljandi hljóðlátt: engir rammar, aðrir læknar draugagráir og aðeins þínar vaktir bera lit. |
-
-**Sameiginlegt öllum sniðunum**
-
-* **Vika í hverri röð**, mánudagur fyrstur; dagar utan mánaðarins eru auðir/gráir.
-* **Hver dagur tvískiptur:** dagvinna (flýtimóttaka) að ofan, forvakt og bakvakt að
-  neðan — forvaktin ofan við bakvaktina.
-* **Vaktir viðtakandans eru í hans eigin lit** (`hsu_doctors.color`); aðrir eru gráir.
-* Vaktategund er sýnd með stutta kóðanum (FV1, BV1 …) þegar fleiri en ein tegund er í
-  hlutanum. Vakt sem hefur verið tekin í tvennt sýnir tímann (`08:00–12:00`).
-* Helgar og almennir frídagar eru auðkenndir og frídagsheitið skrifað við dagsetninguna.
+* **Vika í hverri röð**, mánudagur fyrstur; dagar utan mánaðarins eru auðir.
+* **Hver dagur er hvítt rúnnað spjald** með slate-ramma og dagsetningu í HSU-bláu.
+* Innan dagsins: **merking vaktategundar til vinstri** (FM, FV1, BV1 …) og **„pilla“
+  með nafni til hægri** — fyllt í lit læknisins fyrir **hans eigin vaktir**, ljósgrá
+  fyrir aðra lækna og **rauð strikuð „vantar“** þegar enginn er á vaktinni.
+* **Tvískipting dagsins:** dagvinna (flýtimóttaka) efst, strikuð lína, svo forvakt og
+  bakvakt — forvaktin ofan við bakvaktina.
+* Vakt sem hefur verið tekin í tvennt sýnir tímann (`08:00–12:00`). Helgar og almennir
+  frídagar eru auðkenndir og frídagsheitið skrifað við dagsetninguna.
+* Hausinn ber heiti stöðvarinnar (`hsu_settings.unit_name`), „VAKTASKIPULAG“, mánuðinn
+  og merki læknisins með upphafsstöfum í hans lit. Hlutlaust mánaðarblað (án læknis)
+  ber þess í stað titilinn „Vaktaplan mánaðarins“.
+* Fótur: litur viðtakandans og fjöldi vakta hans, skýring á gráu og rauðu, og
+  skýringar á vaktategundunum.
 * Nöfn eru stytt (`Áslaug B.`); færu tveir að heita sama stutta nafninu er eftirnafn
   ÞEIRRA lengt þar til þau skiljast að (á listanum eru tveir Áslaugar).
 
-**Hvar sniðið er valið og skoðað**
+**Hvar skjalið fæst**
 
-* *Stillingar* → „Útlit vaktaplans í pósti og prentun“ ræður því sem fylgir
-  birtingarpóstinum og því sem læknar prenta.
-* **Forskoða PDF** í birtingarskrefinu: efst er útlitsval (öll þrjú), svo má opna
-  mánaðarblaðið eða skjalið *eins og tiltekinn læknir fær það*.
-  `/api/hsu/admin/months/2026-10/pdf?style=bold[&doctorId=…]` — virkar fyrir mánuð í
-  hvaða stöðu sem er, krefst yfirlæknis eða staff-aðgangs, 404 ef ekkert plan er til.
-* Læknir prentar af *Mínar vaktir* (`/api/hsu/me/shifts-pdf?m=2026-10[&style=…]`).
-  Aðeins **birtir** mánuðir — óbirt plan svarar 404. Skjalið er á tungumáli læknisins.
+* Læknir prentar af *Mínar vaktir* (`/api/hsu/me/shifts-pdf?m=2026-10`). Aðeins
+  **birtir** mánuðir — óbirt plan svarar 404. Skjalið er á tungumáli læknisins.
+* **Forskoða PDF** í birtingarskrefinu (og eftir birtingu) opnar skjalið fyrir mánuð í
+  hvaða stöðu sem er — annaðhvort hlutlaust mánaðarblað eða *eins og tiltekinn læknir
+  fær það*: `/api/hsu/admin/months/2026-10/pdf[?doctorId=…]`, krefst yfirlæknis eða
+  staff-aðgangs, 404 ef ekkert plan er til.
 
-Kóði: `src/lib/hsu/shift-pdf.ts` (velur snið) og `src/lib/hsu/pdf/` —
-`shared.ts` (vikur, dagar, nöfn, litir, rúnnaðir fletir) og eitt skjal á hvert snið.
-pdf-lib; Helvetica/WinAnsi nær yfir íslensku stafina, sama aðferð og
-`src/lib/contract-pdf.ts`. Viðhengi í pósti: `sendHsuEmail(..., attachments)`.
+Kóði: `src/lib/hsu/shift-pdf.ts` og `src/lib/hsu/pdf/` — `shared.ts` (vikur, dagar,
+nöfn, litir, rúnnaðir fletir) og `system.ts` (teikningin). pdf-lib;
+Helvetica/WinAnsi nær yfir íslensku stafina, sama aðferð og `src/lib/contract-pdf.ts`.
+Viðhengi í pósti: `sendHsuEmail(..., attachments)`.
 
 ## Útköll í Vinnustund
 

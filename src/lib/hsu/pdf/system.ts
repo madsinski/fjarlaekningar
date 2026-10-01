@@ -33,7 +33,11 @@ export async function renderSystem(i: ShiftPdfInput): Promise<Uint8Array> {
   const mLabel = safe(monthLabel);
   const mW = bold.widthOfTextAtSize(mLabel, 14);
   page.drawText(mLabel, { x: W - M - mW, y: y - 14, size: 14, font: bold, color: HSU });
-  if (i.doctor) {
+  if (!i.doctor) {
+    // Hlutlaust mánaðarblað: titillinn segir hvað skjalið er.
+    const lbl = safe(t("all.title"));
+    page.drawText(lbl, { x: W - M - font.widthOfTextAtSize(lbl, 8.5), y: y - 30.5, size: 8.5, font, color: SLATE500 });
+  } else {
     const nm = safe(i.doctor.name);
     const nmW = font.widthOfTextAtSize(nm, 8.5);
     const chipW = nmW + 30;

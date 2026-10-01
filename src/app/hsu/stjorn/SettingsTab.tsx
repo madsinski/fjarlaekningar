@@ -23,13 +23,12 @@ export default function SettingsTab({ ctx }: { ctx: PlannerCtx }) {
   const c = useCommon();
   const [unit, setUnit] = useState(data.settings.unit_name);
   const [approval, setApproval] = useState(data.settings.market_requires_approval);
-  const [pdfStyle, setPdfStyle] = useState(data.settings.pdf_style || "system");
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
 
   const saveSettings = async () => {
     setBusy("s"); setMsg(null);
-    const r = await hsuApi("/api/hsu/admin/settings", { method: "PUT", body: { unit_name: unit, market_requires_approval: approval, pdf_style: pdfStyle }, staff: true });
+    const r = await hsuApi("/api/hsu/admin/settings", { method: "PUT", body: { unit_name: unit, market_requires_approval: approval }, staff: true });
     setBusy(null);
     setMsg(r.ok ? { tone: "ok", text: t("settings.saved") } : { tone: "err", text: r.error ?? t("doctors.failed") });
     if (r.ok) await ctx.reload();
@@ -48,21 +47,6 @@ export default function SettingsTab({ ctx }: { ctx: PlannerCtx }) {
             <span className="block text-xs text-slate-500">{t("settings.approvalHint")}</span>
           </span>
         </label>
-        {/* Útlit vaktaplansins sem fylgir birtingarpóstinum og prentast. */}
-        <div>
-          <div className="text-sm font-semibold">{t("settings.pdf")}</div>
-          <div className="text-xs text-slate-500">{t("settings.pdfHint")}</div>
-          <div className="mt-2 grid gap-2 sm:grid-cols-3">
-            {(["classic", "system", "bold"] as const).map((k) => (
-              <button key={k} type="button" onClick={() => setPdfStyle(k)} aria-pressed={pdfStyle === k}
-                className={cx("rounded-xl border p-3 text-left transition",
-                  pdfStyle === k ? "border-[var(--hsu)] bg-[var(--hsu-soft)]" : "border-slate-200 bg-white hover:bg-slate-50")}>
-                <div className="text-sm font-semibold text-slate-900">{t.dyn(`settings.pdf.${k}`)}</div>
-                <div className="mt-0.5 text-xs text-slate-500">{t.dyn(`settings.pdf.${k}.hint`)}</div>
-              </button>
-            ))}
-          </div>
-        </div>
         {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
         <Button onClick={saveSettings} busy={busy === "s"}><Save className="h-4 w-4" /> {c("action.save")}</Button>
       </Card>

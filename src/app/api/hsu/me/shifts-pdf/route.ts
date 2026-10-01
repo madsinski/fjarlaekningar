@@ -2,8 +2,8 @@
 // birtingarpóstinum. Aðeins birtir mánuðir: óbirt plan má læknir ekki sjá.
 //   GET /api/hsu/me/shifts-pdf?m=2026-10
 
-import { listDoctors, loadMonth, loadMonthShifts, loadShiftTypes, pdfSettings, requireDoctor } from "@/lib/hsu/server";
-import { buildShiftPdf, isPdfStyle, shiftPdfName } from "@/lib/hsu/shift-pdf";
+import { listDoctors, loadMonth, loadMonthShifts, loadShiftTypes, pdfUnitName, requireDoctor } from "@/lib/hsu/server";
+import { buildShiftPdf, shiftPdfName } from "@/lib/hsu/shift-pdf";
 import { MONTH_RE, fail } from "@/lib/hsu/server";
 import { doctorLang, tr } from "@/lib/hsu/i18n/server";
 import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
@@ -24,16 +24,13 @@ export async function GET(req: Request) {
   const [shifts, types, doctors] = await Promise.all([loadMonthShifts(month), loadShiftTypes(), listDoctors(false)]);
   const lang = await doctorLang(auth.doctor.id);
   const people = doctors.map((d) => ({ id: d.id, name: d.name, color: d.color }));
-  const opts = await pdfSettings();
-  const want = u.searchParams.get("style");
   const pdf = await buildShiftPdf({
     month, lang,
     doctor: people.find((d) => d.id === auth.doctor.id) ?? { id: auth.doctor.id, name: auth.doctor.name },
     shifts, types,
     doctors: people,
     publishedAt: m.published_at,
-    style: isPdfStyle(want) ? want : opts.style,
-    unitName: opts.unitName,
+    unitName: await pdfUnitName(),
   });
   return new Response(Buffer.from(pdf), {
     headers: {

@@ -1,19 +1,12 @@
-// Sameiginlegt fyrir prentsniðin þrjú (classic / system / bold).
-//
-// Hér er ALLT sem er óháð útliti: hvað er á hverjum degi, hvernig nöfn eru stytt,
-// litir, textaklipping og rúnnaðir fletir. Hvert snið sér aðeins um teikninguna.
+// Grunnur prentskjalsins: ALLT sem er óháð teikningunni — hvað er á hverjum degi,
+// hvernig nöfn eru stytt, litir, textaklipping og rúnnaðir fletir.
+// Teikningin sjálf er í system.ts.
 
 import { rgb, type Color, type PDFFont, type PDFPage } from "pdf-lib";
 import { translator, type Lang } from "../i18n/core";
 import { holidayL, weekdayOfDate } from "../i18n/format";
 import { shiftPdf } from "../i18n/messages/shift-pdf";
 import { datesInMonth, hhmm, holidayName, type HsuShift, type HsuShiftType } from "../types";
-
-/** Prentsnið vaktaplansins. Yfirlæknir velur sjálfgefna sniðið í Stillingum. */
-export const PDF_STYLES = ["classic", "system", "bold"] as const;
-export type PdfStyle = (typeof PDF_STYLES)[number];
-export const DEFAULT_PDF_STYLE: PdfStyle = "system";
-export const isPdfStyle = (v: unknown): v is PdfStyle => typeof v === "string" && (PDF_STYLES as readonly string[]).includes(v);
 
 export interface ShiftPdfDoctor {
   id: string;
@@ -34,7 +27,6 @@ export interface ShiftPdfInput {
   publishedAt?: string | null;
   /** Heiti stöðvarinnar í hausnum (hsu_settings.unit_name). */
   unitName?: string;
-  style?: PdfStyle;
 }
 
 // ── Stafir ──────────────────────────────────────────────────────────────────
@@ -125,12 +117,6 @@ export const SLATE50 = rgb(0.973, 0.980, 0.988);
 export const RED = rgb(0.773, 0.149, 0.149);        // vantar
 export const WHITE = rgb(1, 1, 1);
 
-/** Tónar „Dagatals"-sniðsins (classic) — haldið óbreyttum frá fyrri útgáfu. */
-export const GREY = rgb(0.52, 0.56, 0.62);
-export const FAINT = rgb(0.74, 0.77, 0.81);
-export const RULE = rgb(0.84, 0.87, 0.91);
-export const BAND_WEEKEND = rgb(0.96, 0.97, 0.985);
-export const OUTSIDE = rgb(0.975, 0.98, 0.985);
 
 // ── Rúnnaðir fletir ─────────────────────────────────────────────────────────
 
