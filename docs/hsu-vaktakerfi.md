@@ -283,7 +283,8 @@ Yfirlæknir stillir ekki póst annarra lækna (fyrri almenna stillingin,
 | `market` | ný vakt á vaktamarkaði | slökkt |
 | `marketMine` | vaktaskipti sem snerta lækninn sjálfan (tekin, hafnað, dregin til baka) | strax |
 | `prefs` | óskir samþykktar, breytinga óskað | strax |
-| `publish` | vaktaplan birt — aðeins til þeirra sem eiga vakt í mánuðinum | strax |
+| `publish` | vaktaplan birt — aðeins til þeirra sem eiga vakt í mánuðinum; **vaktaplanið fylgir á PDF** | strax |
+| `deadline` | sjálfvirk áminning um það sem er ógert fyrir skilafrest mánaðarins | strax |
 | `head` | til yfirlæknis: svör við beiðnum, vaktaskipti í bið, breyttir dagvinnudagar | samantekt |
 
 **Alltaf sent, óháð stillingum:** boð um aðgang, nýtt lykilorð, tilkynning um breytt
@@ -295,6 +296,56 @@ vali; flokkurinn er skráður á tilkynninguna (`hsu_notifications.category`) og
 kerfinu. Beinir póstar (birt, markaðurinn, óskir) spyrja `emailModesFor(viðtakendur, flokkur)`
 og senda aðeins þeim sem völdu „Strax“. Áminning um óskir er skráð í `hsu_audit` (`month.remind`) og síðustu
 fimm sjást í skrefi 1; sami læknir fær ekki tvær áminningar innan mínútu.
+
+## Sjálfvirkar áminningar um skilafrest (2026-10-01)
+
+Kerfið minnir sjálft á það sem er ógert — yfirlæknir þarf ekki að ýta á hnapp.
+
+**Skilafrestur er 25. í mánuðinum á undan**: vaktaplan nóvember á að vera frágengið
+25. október (`DEADLINE_DAY` og `defaultDeadline()` í `src/lib/hsu/types.ts`). Setji
+yfirlæknir aðra dagsetningu á mánuðinn (`hsu_months.prefs_deadline`) gildir hún — hann
+er eini sem stýrir frestinum, og textinn í skrefi 1 segir hvenær áminningarnar fara.
+
+**Þrep:** viku, þrem dögum og einum degi fyrir frestinn, og á frestdeginum sjálfum.
+Þrepin eru bil (6–7 dagar, 2–3 dagar) svo áminning falli ekki niður þótt cron sleppi
+degi. Hvert þrep fer **aðeins einu sinni** á hvern mann og mánuð — einkvæmni
+`(doctor_id, month, stage)` á `hsu_task_reminders`, svo cron má keyra eins oft sem er.
+
+**Hvað telst ógert**
+
+| Hver | Ógert |
+|---|---|
+| Læknir | óskir vantar (`prefs`), óskir í vinnslu (`draft`), yfirlæknir bað um breytingar (`changes`) |
+| Yfirlæknir | yfirferð (`review`), vaktaplan ógert (`build`), ómannaðar vaktir (`gaps`), ekki birt (`publish`), og hve margir hafa ekki sent (`missing`) |
+
+Yfirlæknir er líka læknir: vanti hans eigin óskir fær hann **eina** áminningu með
+bæði sínu og yfirlæknisverkunum. Sá sem er búinn með sitt fær ekkert.
+
+**Þrjár leiðir:** tilkynning í kerfinu fer **alltaf**; tölvupóstur fer ef flokkurinn
+`deadline` er á „Strax“; **SMS** fer ef læknirinn hefur símanúmer og `sms_reminders` er
+kveikt (*Mín síða → Stillingar → Áminningar í SMS*). Skeytið inniheldur **enga vefslóð**
+— íslensk símafyrirtæki sía slíkt þar til Twilio hefur sett slóðina á hvítlista.
+
+Cron: `/api/cron/hsu-tasks` einu sinni á dag kl. 07 (`vercel.json`). `?dry=1` sýnir
+stöðuna án þess að senda eða skrifa, `?today=2026-10-18` prófar tiltekinn dag.
+Kóði: `src/lib/hsu/tasks.ts`, textar í `i18n/messages/tasks.ts`.
+
+## Vaktaplanið á PDF (2026-10-01)
+
+Þegar vaktaplan er birt fylgir **PDF með birtingarpóstinum** (`vaktir-2026-10.pdf`):
+
+1. **Vaktir — _nafn læknisins_** — hans eigin vaktir í dagsröð: dagur, vaktategund,
+   tími, hverjir aðrir eru á vakt sama dag, athugasemd og fjöldi vakta.
+2. **Vaktaplan mánaðarins** — allir dagar, dálkur á hverja vaktategund (dagvaktir
+   fremst), eigin vaktir merktar `>`, ómannaðar vaktir merktar „ómannað“, frídagar og
+   helgar skyggðir, og skýringar á vaktategundunum neðst.
+
+Sama skjal má prenta hvenær sem er úr kerfinu: hnappurinn **Prenta** við hvern mánuð á
+*Mínar vaktir* (`/api/hsu/me/shifts-pdf?m=2026-10`). Aðeins **birtir** mánuðir — óbirt
+plan svarar 404. Skjalið er á tungumáli læknisins.
+
+Kóði: `src/lib/hsu/shift-pdf.ts` (pdf-lib, Helvetica/WinAnsi nær yfir íslensku stafina;
+sama aðferð og `src/lib/contract-pdf.ts`). Viðhengi í pósti: `sendHsuEmail(..., attachments)`.
 
 ## Útköll í Vinnustund
 

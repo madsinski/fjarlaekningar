@@ -399,3 +399,34 @@ alter table public.hsu_notifications add column if not exists category text;
 -- Flokkur → "now" | "digest" | "off"; ósett = sjálfgefið (src/lib/hsu/email-prefs.ts).
 -- hsu_settings.email_prefs er ekki lengur notað.
 alter table public.hsu_doctors add column if not exists email_prefs jsonb not null default '{}'::jsonb;
+
+-- ── Sjálfvirkar áminningar um skilafrest (2026-10-01) ──────────────────────
+-- Kerfið minnir sjálft á það sem er ógert fyrir skilafrest mánaðarins (25. í
+-- mánuði, eða dagsetningin sem yfirlæknir setti á hsu_months.prefs_deadline):
+-- lækna á óskir sem vantar, yfirlækni á yfirferð/plan/birtingu.
+-- Cron: /api/cron/hsu-tasks, einu sinni á dag (sjá vercel.json).
+--
+-- sms_reminders: læknirinn fær áminninguna líka í SMS (þarf símanúmer).
+alter table public.hsu_doctors add column if not exists sms_reminders boolean not null default true;
+
+-- Ein röð á lækni, mánuð og þrep — einkvæmnin gerir cron-ið óhætt að keyra
+-- oft á dag: sama áminningin fer aðeins út einu sinni.
+create table if not exists public.hsu_task_reminders (
+  id         bigserial primary key,
+  doctor_id  uuid not null references public.hsu_doctors (id) on delete cascade,
+  month      text not null,
+  -- 'doctor' = óskir vantar, 'head' = mánuðurinn ekki kominn í birtingu
+  role       text not null,
+  -- dagar í skilafrest þegar áminningin fór: '7' | '3' | '1' | '0'
+  stage      text not null,
+  tasks      text[] not null default '{}',
+  email_sent boolean not null default false,
+  sms_sent   boolean not null default false,
+  sms_status text not null default '',
+  created_at timestamptz not null default now(),
+  unique (doctor_id, month, stage)
+);
+create index if not exists hsu_task_reminders_month_idx on public.hsu_task_reminders (month, created_at desc);
+alter table public.hsu_task_reminders enable row level security;
+drop policy if exists hsu_task_reminders_none on public.hsu_task_reminders;
+create policy hsu_task_reminders_none on public.hsu_task_reminders for all using (false) with check (false);

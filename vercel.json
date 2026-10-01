@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/hsu-digest",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/hsu-tasks",
+      "schedule": "0 7 * * *"
     }
   ]
 }

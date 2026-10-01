@@ -71,6 +71,7 @@ export const portal = defineMessages(
     // ── Mínar vaktir ──
     "shifts.title": "Mínar vaktir",
     "shifts.intro": "Birtar vaktir frá byrjun þessa mánaðar. Viltu losna við vakt? Settu hana á vaktamarkað. Útköll af forvakt og bakvakt skráir þú í Vinnustund og merkir hér við.",
+    "shifts.print": "Prenta",
     "shifts.empty": "Engar birtar vaktir.",
     "shifts.monthCount_one": "{month} · {n} vakt",
     "shifts.monthCount_other": "{month} · {n} vaktir",
@@ -189,6 +190,7 @@ export const portal = defineMessages(
 
       "shifts.title": "My shifts",
       "shifts.intro": "Published shifts from the start of this month. Want to give a shift away? Put it on the shift market. Log call-outs from first and second on call in Vinnustund and tick them off here.",
+      "shifts.print": "Print",
       "shifts.empty": "No published shifts.",
       "shifts.monthCount_one": "{month} · {n} shift",
       "shifts.monthCount_other": "{month} · {n} shifts",

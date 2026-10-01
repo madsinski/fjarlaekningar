@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import PrefsEditor, { PREF_TONE, PrefsMini, draftFrom, type PrefDraft } from "../_components/PrefsEditor";
 import { Badge, Button, Card, Field, Modal, Notice, cx, hsuApi, inputCls } from "../_components/ui";
-import { datesInMonth, effectiveStatus, inOpenWindow, markFor, openWindow, opensOn, type HsuDoctor, type HsuPreference, type MonthStatus } from "@/lib/hsu/types";
+import { datesInMonth, defaultDeadline, effectiveStatus, inOpenWindow, markFor, openWindow, opensOn, type HsuDoctor, type HsuPreference, type MonthStatus } from "@/lib/hsu/types";
 import { useCommon, useT } from "@/lib/hsu/i18n/client";
 import { LANG_LOCALE, type Translator } from "@/lib/hsu/i18n/core";
 import { dateTimeL, dayLabelL, dayPartL, monthLabelL, prefStatusL, weekdayShortL } from "@/lib/hsu/i18n/format";
@@ -161,6 +161,9 @@ function StepCollect({ ctx, setStatus, goNext }: { ctx: PlannerCtx; setStatus: S
   const sent = doctors.filter((d) => ["submitted", "approved"].includes(byDoc[d.id]?.status ?? "")).length;
 
   const [deadline, setDeadline] = useState(m?.prefs_deadline ?? "");
+  // Sjálfgefinn frestur er 25. í mánuðinum á undan — það er hann sem sjálfvirku
+  // áminningarnar miða við þegar yfirlæknir setur ekki annan.
+  const deadlineLabel = dayLabelL(deadline || defaultDeadline(month), t.lang);
   const [note, setNote] = useState(m?.note ?? "");
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
@@ -257,6 +260,10 @@ function StepCollect({ ctx, setStatus, goNext }: { ctx: PlannerCtx; setStatus: S
           <Field label={t("collect.deadline.short")}>
             <input type="date" className={inputCls} value={deadline} onChange={(e) => setDeadline(e.target.value)} />
           </Field>
+          {/* Kerfið minnir sjálft á frestinn; hnapparnir hér eru til viðbótar. */}
+          <p className="rounded-lg bg-slate-50 px-3 py-2 text-[11px] leading-relaxed text-slate-600">
+            {t("collect.auto.reminders", { date: deadlineLabel })}
+          </p>
           <Field label={t("collect.note.label")}>
             <textarea rows={2} className={inputCls} value={note} onChange={(e) => setNote(e.target.value)} />
           </Field>

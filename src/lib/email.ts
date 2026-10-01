@@ -10,6 +10,13 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_ADDRESS =
   process.env.OUTREACH_FROM_EMAIL || "Fjarlækningar <frettir@fjarlaekningar.is>";
 
+/** Viðhengi. `content` er base64 — Resend tekur ekki við tvíundargögnum í JSON. */
+export interface EmailAttachment {
+  filename: string;
+  content: string;
+  contentType?: string;
+}
+
 export interface SendEmailOptions {
   to: string;
   subject: string;
@@ -18,6 +25,7 @@ export interface SendEmailOptions {
   replyTo?: string;
   /** Sendandi, ef annar en sjálfgefinn (t.d. vaktakerfi HSU). */
   from?: string;
+  attachments?: EmailAttachment[];
 }
 
 export interface SendEmailResult {
@@ -35,7 +43,10 @@ export interface SendEmailResult {
 export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult> {
   if (!RESEND_API_KEY) {
     console.warn("[email] RESEND_API_KEY not set — logging instead of sending");
-    console.log("[email] TO:", opts.to, "SUBJECT:", opts.subject);
+    const att = opts.attachments?.length
+      ? ` ATTACH: ${opts.attachments.map((a) => `${a.filename} (${Math.round((a.content.length * 3) / 4096)} kB)`).join(", ")}`
+      : "";
+    console.log("[email] TO:", opts.to, "SUBJECT:", opts.subject + att);
     return { ok: true, id: "dev-log" };
   }
   try {
@@ -47,6 +58,9 @@ export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult
     };
     if (opts.text) payload.text = opts.text;
     if (opts.replyTo) payload.reply_to = opts.replyTo;
+    if (opts.attachments?.length) {
+      payload.attachments = opts.attachments.map((a) => ({ filename: a.filename, content: a.content, content_type: a.contentType }));
+    }
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",

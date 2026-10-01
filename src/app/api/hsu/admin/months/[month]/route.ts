@@ -17,6 +17,8 @@ import { dayLabelL, monthLabelL } from "@/lib/hsu/i18n/format";
 import { tr } from "@/lib/hsu/i18n/server";
 import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
 import { emailModesFor } from "@/lib/hsu/email-prefs";
+import { buildShiftPdf, shiftPdfName } from "@/lib/hsu/shift-pdf";
+import { tasks as hsuTasks } from "@/lib/hsu/i18n/messages/tasks";
 
 export const runtime = "nodejs";
 
@@ -113,21 +115,48 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
   }
   if (notify && publishing) {
     after(async () => {
-      const shifts = await loadMonthShifts(month);
+      const [shifts, types, allDocs] = await Promise.all([loadMonthShifts(month), loadShiftTypes(), listDoctors(false)]);
       const docs = await activeDoctors();
       const modes = await emailModesFor(docs.map((d) => d.id), "publish");
-      for (const d of docs) {
+      const names = allDocs.map((d) => ({ id: d.id, name: d.name }));
+      // Tilkynning í kerfinu fer til allra sem eru á vakt, óháð póststillingu.
+      const withShifts = docs.filter((d) => shifts.some((s) => s.doctor_id === d.id));
+      if (withShifts.length) {
+        await supabaseAdmin.from("hsu_notifications").insert(withShifts.map((d) => {
+          const tt = translator(hsuTasks, d.lang);
+          const n = shifts.filter((s) => s.doctor_id === d.id).length;
+          return {
+            doctor_id: d.id,
+            title: tt("pub.note.title", { month: monthLabelL(month, d.lang) }),
+            lines: [tt.n("pub.note.line", n, { month: monthLabelL(month, d.lang) })],
+            link: "/hsu/min-sida?t=vaktir",
+            category: "publish",
+          };
+        }));
+      }
+      for (const d of withShifts) {
         if (modes.get(d.id) !== "now") continue;
         const n = shifts.filter((s) => s.doctor_id === d.id).length;
-        // Læknir án vaktar í mánuðinum fær ekki póst um birtinguna.
-        if (n === 0) continue;
         const tl = translator(apiAdmin, d.lang);
+        const tt = translator(hsuTasks, d.lang);
         const vars = { month: monthLabelL(month, d.lang), url: `${origin}/hsu/min-sida` };
+        // Vaktaplanið á PDF: vaktir læknisins og allur mánuðurinn, til að prenta.
+        let attachments;
+        try {
+          const pdf = await buildShiftPdf({
+            month, lang: d.lang, doctor: { id: d.id, name: d.name }, shifts, types, doctors: names,
+            publishedAt: saved.published_at,
+          });
+          attachments = [{ filename: shiftPdfName(month), content: Buffer.from(pdf).toString("base64"), contentType: "application/pdf" }];
+        } catch (e) {
+          // Pósturinn á að fara þótt skjalið mistakist.
+          console.error("[hsu] vaktaplan PDF mistókst", e);
+        }
         await sendHsuEmail(d.email, tl("published.subject", vars), hsuEmailHtml({
           origin, lang: d.lang, heading: tl("published.heading", vars),
-          paragraphs: [tl("email.hello", { name: d.name }), tl.n("published.body", n, vars), tl("published.calendar")],
+          paragraphs: [tl("email.hello", { name: d.name }), tl.n("published.body", n, vars), tl("published.calendar"), ...(attachments ? [tt("pub.attach")] : [])],
           cta: { label: tl("published.cta"), url: vars.url },
-        }), tl.n("published.text", n, vars));
+        }), tl.n("published.text", n, vars), attachments);
       }
     });
   }

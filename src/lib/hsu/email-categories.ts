@@ -10,6 +10,7 @@ export const EMAIL_CATEGORIES = [
   "marketMine", // vaktaskipti sem snerta lækninn sjálfan (tekin, hafnað, dregin til baka)
   "prefs",      // vaktaóskir: opnað, áminning, samþykkt, breytinga óskað
   "publish",    // vaktaplan birt
+  "deadline",   // sjálfvirk áminning um það sem er ógert fyrir skilafrest mánaðarins
   "head",       // til yfirlæknis: svör við beiðnum, vaktaskipti, dagvinnudagar
 ] as const;
 export type EmailCategory = (typeof EMAIL_CATEGORIES)[number];
@@ -19,7 +20,7 @@ export type EmailCategory = (typeof EMAIL_CATEGORIES)[number];
  * Samantekt nær aðeins til tilkynninga sem fara um notifyDoctors.
  */
 const DIGESTABLE: Record<EmailCategory, boolean> = {
-  shifts: true, requests: true, market: false, marketMine: false, prefs: false, publish: false, head: true,
+  shifts: true, requests: true, market: false, marketMine: false, prefs: false, publish: false, deadline: false, head: true,
 };
 
 /** Flokkar sem læknir sér í stillingum sínum („head“ aðeins yfirlæknar). */
@@ -39,6 +40,7 @@ export const DEFAULT_EMAIL_PREFS: Record<EmailCategory, EmailMode> = {
   marketMine: "now",
   prefs: "now",
   publish: "now",
+  deadline: "now",
   head: "digest",
 };
 

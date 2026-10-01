@@ -168,6 +168,40 @@ export function openWindow(now: string = monthKeyOf(new Date())): string[] {
   return Array.from({ length: OPEN_MONTHS_AHEAD + 1 }, (_, i) => shiftMonthOf(now, i));
 }
 
+// ── Skilafrestur ────────────────────────────────────────────────────────────
+// Fastur frestur: 25. í mánuðinum á undan — vaktaplan nóvember á að vera
+// frágengið 25. október. Yfirlæknir má setja annan dag á mánuðinn
+// (hsu_months.prefs_deadline) og þá gildir hann. Sjálfvirku áminningarnar
+// miða við þennan dag (src/lib/hsu/tasks.ts).
+
+export const DEADLINE_DAY = 25;
+
+/** Sjálfgefinn skilafrestur mánaðarins: "2026-11" → "2026-10-25". */
+export function defaultDeadline(month: string): string {
+  return `${shiftMonthOf(month, -1)}-${String(DEADLINE_DAY).padStart(2, "0")}`;
+}
+
+/** Þrepin sem áminning fer á: 6–7 dagar, 2–3 dagar, 1 dagur og frestdagurinn. */
+export type ReminderStage = "7" | "3" | "1" | "0";
+
+const dayNumOf = (date: string) => {
+  const [y, m, d] = date.split("-").map(Number);
+  return Math.floor(Date.UTC(y, m - 1, d) / 86400000);
+};
+
+/**
+ * Hve langt er í frestinn, í þrepum. Þrepin eru bil svo áminning falli ekki
+ * niður þótt cron sleppi einum degi. Utan bilanna: null (engin áminning).
+ */
+export function reminderStage(deadline: string, today: string): ReminderStage | null {
+  const days = dayNumOf(deadline) - dayNumOf(today);
+  if (days === 0) return "0";
+  if (days === 1) return "1";
+  if (days >= 2 && days <= 3) return "3";
+  if (days >= 6 && days <= 7) return "7";
+  return null;
+}
+
 export function inOpenWindow(month: string, now?: string): boolean {
   return openWindow(now).includes(month);
 }

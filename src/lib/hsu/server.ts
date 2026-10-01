@@ -8,7 +8,7 @@ import { tr } from "./i18n/server";
 import { holidayL, monthLabelL } from "./i18n/format";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { sendEmail, escapeHtml } from "@/lib/email";
+import { sendEmail, escapeHtml, type EmailAttachment } from "@/lib/email";
 import { getHsuActor, sameOrigin, type HsuActor } from "./auth";
 import {
   datesInMonth, dayPartFor, isOvernight, markFor, minutesOf, monthRange, splitTimeOf, typeAppliesOn, holidayName, weekdayOf,
@@ -323,8 +323,8 @@ ${opts.foot ? `<p style="margin:22px 0 0;font-size:12px;color:#94a3b8;">${escape
 </table></td></tr></table></body></html>`;
 }
 
-export async function sendHsuEmail(to: string, subject: string, html: string, text: string) {
-  return sendEmail({ to, subject, html, text, from: HSU_FROM });
+export async function sendHsuEmail(to: string, subject: string, html: string, text: string, attachments?: EmailAttachment[]) {
+  return sendEmail({ to, subject, html, text, from: HSU_FROM, attachments });
 }
 
 /**

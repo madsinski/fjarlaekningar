@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  AlertTriangle, ArrowLeftRight, Bell, CalendarCheck, CalendarRange, Check, CheckCircle2, ClipboardList, ExternalLink, Home, Settings, Store,
+  AlertTriangle, ArrowLeftRight, Bell, CalendarCheck, CalendarRange, Check, CheckCircle2, ClipboardList, ExternalLink, Home, Printer, Settings, Store,
 } from "lucide-react";
 import Tour, { markOnboarding, type TourStep } from "../_components/Tour";
 import { useCommon, useT } from "@/lib/hsu/i18n/client";
@@ -176,7 +176,7 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
           <div className="space-y-8">
             <h1 className="text-xl font-bold">{t("settings.title")}</h1>
             <CalendarTab hasToken={me.hasCalendarToken} />
-            <EmailPrefsCard initial={me.emailPrefs} role={me.role} />
+            <EmailPrefsCard initial={me.emailPrefs} role={me.role} sms={me.smsReminders} phone={me.phone} />
             <AccountTab me={me} refresh={refresh} />
           </div>
         )}
@@ -428,7 +428,14 @@ function ShiftsTab({ data, swaps, refresh, onLog }: { data: PortalData; swaps: H
       {byMonth.length === 0 && <Card className="p-8 text-center text-sm text-slate-500">{t("shifts.empty")}</Card>}
       {byMonth.map(([m, rows]) => (
         <section key={m}>
-          <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-500">{t.n("shifts.monthCount", rows.length, { month: monthLabelL(m, t.lang) })}</h2>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">{t.n("shifts.monthCount", rows.length, { month: monthLabelL(m, t.lang) })}</h2>
+            {/* Sama skjal og fylgir birtingarpóstinum: vaktirnar þínar og allur mánuðurinn. */}
+            <a href={`/api/hsu/me/shifts-pdf?m=${m}`} target="_blank" rel="noopener"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-[var(--hsu-dark)] ring-1 ring-slate-200 transition hover:bg-slate-50">
+              <Printer className="h-3.5 w-3.5" /> {t("shifts.print")}
+            </a>
+          </div>
           <Card className="divide-y divide-slate-100">
             {rows.map((s) => {
               const past = s.shift_date < data.today;

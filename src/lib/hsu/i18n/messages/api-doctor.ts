@@ -13,6 +13,7 @@ export const apiDoctor = defineMessages(
     "req.unknownKey": "Óþekktur lykill",
     "req.unknownLang": "Óþekkt tungumál",
     "req.invalidMonth": "Ógildur mánuður",
+    "pdf.notPublished": "Vaktaplan mánaðarins hefur ekki verið birt",
 
     "password.tooShort": "Lykilorð þarf að vera minnst 10 stafir.",
     "password.tooLong": "Lykilorð er of langt.",
@@ -73,6 +74,7 @@ export const apiDoctor = defineMessages(
       "req.unknownKey": "Unknown key",
       "req.unknownLang": "Unknown language",
       "req.invalidMonth": "Invalid month",
+      "pdf.notPublished": "The schedule for this month has not been published",
 
       "password.tooShort": "Your password must be at least 10 characters long.",
       "password.tooLong": "Your password is too long.",
