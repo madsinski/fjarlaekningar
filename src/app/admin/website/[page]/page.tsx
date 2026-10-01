@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 import HomeView from "@/app/(site)/HomeView";
 import { TriageProvider } from "@/app/components/TriageTrigger";
 import { TriagePanel, WIDE_SCREENS } from "@/app/components/TriageDialog";
-import { TK, TRIAGE, TRIAGE_SCREENS, TRIAGE_START, triageExamples, triagePath, triageText } from "@/lib/triage";
+import { TK, TRIAGE, TRIAGE_GATE, TRIAGE_SCREENS, TRIAGE_START, triageExamples, triagePath, triageText } from "@/lib/triage";
 import ThjonustaView from "@/app/(site)/(is)/thjonusta/ThjonustaView";
 import UmOkkurView from "@/app/(site)/(is)/um-okkur/UmOkkurView";
 import HafaSambandView from "@/app/(site)/(is)/hafa-samband/HafaSambandView";
@@ -174,7 +174,7 @@ function TriagePreview({
           ))}
         </div>
         <div className="flex flex-wrap gap-1.5">
-          {TRIAGE_SCREENS.map((sc) => (
+          {[{ id: TRIAGE_GATE, name: "Valskjár" }, ...TRIAGE_SCREENS].map((sc) => (
             <button
               key={sc.id}
               type="button"
@@ -192,13 +192,14 @@ function TriagePreview({
         </div>
       </div>
       <div className="flex justify-center bg-slate-900/40 p-6">
-        <div className={`flex w-full flex-col overflow-hidden rounded-3xl bg-white shadow-2xl ${WIDE_SCREENS.includes(at) ? "max-w-4xl" : "max-w-lg"}`}>
+        <div className={`flex w-full flex-col overflow-hidden rounded-3xl bg-white shadow-2xl ${WIDE_SCREENS.includes(at) ? "max-w-4xl" : at === TRIAGE_GATE ? "max-w-2xl" : "max-w-lg"}`}>
           <TriagePanel
             key={`${jump.id}-${jump.n}-${region}`}
             text={triageText(c)}
             examples={triageExamples(localizeErindi(locale))}
             clinics={PREVIEW_CLINICS}
-            initial={triagePath(jump.id, region)}
+            gate={jump.id === TRIAGE_GATE}
+            initial={jump.id === TRIAGE_GATE ? undefined : triagePath(jump.id, region)}
             focusOnMount={false}
             onScreen={setAt}
           />
@@ -328,7 +329,7 @@ function Preview({
       // The preview follows the DRAFT triage switch, so the popup can be
       // tried here before "Birta" puts it on the live site.
       return (
-        <TriageProvider on={c.triage_on === "on"} text={triageText(c)} examples={triageExamples(localizeErindi(locale))} clinics={PREVIEW_CLINICS}>
+        <TriageProvider on={c.triage_on === "on"} gate={c.triage_gate === "on"} text={triageText(c)} examples={triageExamples(localizeErindi(locale))} clinics={PREVIEW_CLINICS}>
           <HomeView
             c={c}
             order={order}
@@ -1013,6 +1014,10 @@ export default function SiteContentEditor() {
     // The switch and the hero button live on the page itself, not in the popup.
     if (pageKey !== "home" || !fieldKey?.startsWith("triage_") || fieldKey === "triage_on" || fieldKey.startsWith("triage_hero")) return;
     setPreviewTab("triage");
+    // The choice screen: its switch and its words (triage_ui_gate_…).
+    if (fieldKey === "triage_gate" || fieldKey.startsWith("triage_ui_gate_")) {
+      return setTriageJump((j) => (j.id === TRIAGE_GATE ? j : { id: TRIAGE_GATE, n: j.n + 1 }));
+    }
     const screen = TRIAGE_SCREENS.find((sc) => fieldKey.startsWith(`triage_${sc.id.replace(/-/g, "_")}_`));
     if (screen) setTriageJump((j) => (j.id === screen.id ? j : { id: screen.id, n: j.n + 1 }));
   };

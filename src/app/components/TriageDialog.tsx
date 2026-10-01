@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft, ChevronRight, CircleCheck, ExternalLink, MapPin, Phone, RotateCcw, Search, X } from "lucide-react";
+import { ArrowLeft, ChevronRight, CircleCheck, ExternalLink, LogIn, MapPin, Phone, RotateCcw, Search, Signpost, X } from "lucide-react";
 import {
-  PORTAL_URL, TK, TRIAGE, TRIAGE_START, nextOf, triageRemaining, triageWhere,
+  PORTAL_URL, TK, TRIAGE, TRIAGE_GATE, TRIAGE_START, nextOf, triageRemaining, triageWhere,
   type ServiceKey, type TriageExample, type TriageOption, type TriageQuestion, type TriageResult, type TriageStep,
 } from "@/lib/triage";
 import { searchPlaces } from "@/lib/triage-places";
@@ -61,15 +61,18 @@ export default function TriageDialog({
   examples,
   clinics,
   variant = "portal",
+  gate = false,
 }: {
   onClose: () => void;
   text: LocaleContent;
   examples?: TriageExample[];
   clinics?: string[];
   variant?: TriageVariant;
+  /** Start on the two-choice screen (portal directly, or the guide). */
+  gate?: boolean;
 }) {
   // Which screen is showing — the picture-heavy step gets a wider popup.
-  const [screen, setScreen] = useState(TRIAGE_START);
+  const [screen, setScreen] = useState(gate ? TRIAGE_GATE : TRIAGE_START);
 
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
@@ -97,10 +100,10 @@ export default function TriageDialog({
         aria-labelledby="triage-title"
         onClick={(e) => e.stopPropagation()}
         className={`flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl transition-[max-width] duration-200 sm:rounded-3xl ${
-          WIDE_SCREENS.includes(screen) ? "sm:max-w-4xl" : "sm:max-w-lg"
+          WIDE_SCREENS.includes(screen) ? "sm:max-w-4xl" : screen === TRIAGE_GATE ? "sm:max-w-2xl" : "sm:max-w-lg"
         }`}
       >
-        <TriagePanel text={text} examples={examples} clinics={clinics} onClose={onClose} variant={variant} onScreen={setScreen} />
+        <TriagePanel text={text} examples={examples} clinics={clinics} onClose={onClose} variant={variant} gate={gate} onScreen={setScreen} />
       </div>
     </div>,
     document.body,
@@ -117,6 +120,7 @@ export function TriagePanel({
   focusOnMount = true,
   onScreen,
   variant = "portal",
+  gate = false,
 }: {
   text: LocaleContent;
   /** Services pictured under "Algengt vandamál" (see triageExamples). */
@@ -130,8 +134,12 @@ export function TriagePanel({
   /** Reports the screen now showing (the CMS preview highlights it). */
   onScreen?: (id: string) => void;
   variant?: TriageVariant;
+  /** Open on the choice screen: the portal directly, or through the guide.
+   *  Back from the first question returns to it. */
+  gate?: boolean;
 }) {
   const ui = (name: string) => text[TK.ui(name)] ?? "";
+  const [atGate, setAtGate] = useState(gate && !initial);
   const [steps, setSteps] = useState<TriageStep[]>(initial ?? [{ id: TRIAGE_START }]);
   const [medStatus, setMedStatus] = useState<MedStatus>("idle");
   // "Beint í sjúklingagátt" asks once more before leaving the guide.
@@ -145,13 +153,13 @@ export function TriagePanel({
   useEffect(() => {
     if (mounted.current || focusOnMount) headingRef.current?.focus({ preventScroll: !focusOnMount });
     mounted.current = true;
-  }, [steps, confirmSkip, focusOnMount]);
+  }, [steps, confirmSkip, atGate, focusOnMount]);
 
   const current = steps[steps.length - 1];
   const node = TRIAGE[current.id];
   useEffect(() => {
-    onScreen?.(current.id);
-  }, [current.id, onScreen]);
+    onScreen?.(atGate ? TRIAGE_GATE : current.id);
+  }, [atGate, current.id, onScreen]);
 
   const go = (opt: TriageOption, index: number, place?: string, pick?: string) => {
     setMedStatus("idle");
@@ -159,6 +167,7 @@ export function TriagePanel({
   };
   const back = () => {
     if (confirmSkip) return setConfirmSkip(false);
+    if (gate && steps.length === 1) return setAtGate(true);
     setMedStatus("idle");
     setSteps((s) => (s.length > 1 ? s.slice(0, -1) : s));
   };
@@ -172,14 +181,18 @@ export function TriagePanel({
   const done = steps.length - 1;
   const left = triageRemaining(current.id, steps);
   const progress = node.kind === "result" ? 100 : Math.round((done / (done + left)) * 100);
-  const title = ui(variant === "check" ? "title_check" : "title_portal") || ui("title");
+  // Through the choice screen people picked "Hentar fjarlækningaþjónusta
+  // mér?", so the guide carries that name.
+  const title = atGate
+    ? ui("gate_title") || ui("title")
+    : ui(variant === "check" || gate ? "title_check" : "title_portal") || ui("title");
 
   return (
     <>
       <div className="border-b border-slate-100">
         <div className="flex items-center justify-between gap-3 px-5 py-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-2">
-            {steps.length > 1 ? (
+            {!atGate && (steps.length > 1 || gate) ? (
               <button
                 type="button"
                 onClick={back}
@@ -205,13 +218,17 @@ export function TriagePanel({
             </button>
           )}
         </div>
-        <div className="h-1 bg-slate-100" aria-hidden>
-          <div className="h-full bg-[var(--primary)] transition-[width] duration-300" style={{ width: `${Math.max(progress, 6)}%` }} />
-        </div>
+        {!atGate && (
+          <div className="h-1 bg-slate-100" aria-hidden>
+            <div className="h-full bg-[var(--primary)] transition-[width] duration-300" style={{ width: `${Math.max(progress, 6)}%` }} />
+          </div>
+        )}
       </div>
 
       <div className="overflow-y-auto px-5 py-5 sm:px-6">
-        {confirmSkip ? (
+        {atGate ? (
+          <Gate ui={ui} clinics={clinics} headingRef={headingRef} onPortal={onClose} onCheck={() => setAtGate(false)} />
+        ) : confirmSkip ? (
           <SkipConfirm ui={ui} clinics={clinics} headingRef={headingRef} onBack={() => setConfirmSkip(false)} />
         ) : node.kind === "question" ? (
           <>
@@ -256,21 +273,25 @@ export function TriagePanel({
             {/* First screen: the question comes first. Below it, one quiet card —
                 muted greys so it never competes with the question: the way out
                 for people who know what they need, then the "why". */}
-            {steps.length === 1 && (
+            {/* Through the choice screen the way out was already offered, so
+                only the "why" is left. */}
+            {steps.length === 1 && (!gate || ui("intro_heading") || ui("intro")) && (
               <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-                  <span>{ui("skip_prompt")}</span>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmSkip(true)}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-400 hover:text-slate-900"
-                  >
-                    {ui("skip")}
-                    <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-                  </button>
-                </div>
+                {!gate && (
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                    <span>{ui("skip_prompt")}</span>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmSkip(true)}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-400 hover:text-slate-900"
+                    >
+                      {ui("skip")}
+                      <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                    </button>
+                  </div>
+                )}
                 {(ui("intro_heading") || ui("intro")) && (
-                  <div className="mt-4 border-t border-slate-200 pt-4">
+                  <div className={gate ? "" : "mt-4 border-t border-slate-200 pt-4"}>
                     {ui("intro_heading") && <p className="font-medium text-slate-700">{ui("intro_heading")}</p>}
                     {ui("intro") && <p className="mt-1 leading-relaxed text-slate-500">{ui("intro")}</p>}
                   </div>
@@ -284,8 +305,8 @@ export function TriagePanel({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50 px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] text-xs text-slate-500 sm:px-6 sm:pb-3">
-        <span>{ui("disclaimer")}</span>
-        {confirmSkip ? null : node.kind === "result" ? (
+        {atGate ? <span className="font-medium text-red-700">{ui("skip_confirm_note")}</span> : <span>{ui("disclaimer")}</span>}
+        {atGate || confirmSkip ? null : node.kind === "result" ? (
           <button type="button" onClick={restart} className="inline-flex items-center gap-1 font-medium text-slate-600 hover:text-slate-900">
             <RotateCcw className="h-3.5 w-3.5" aria-hidden />
             {ui("restart")}
@@ -323,6 +344,68 @@ function Forward({ lead }: { lead?: boolean }) {
     >
       <ChevronRight className="h-4 w-4" />
     </span>
+  );
+}
+
+/** The screen in front of the guide on "Opna sjúklingagátt": two doors of
+ *  equal size — the portal itself for people who know what they need (a real
+ *  link, so it opens in a new tab like every portal link), and the guide. */
+function Gate({
+  ui,
+  clinics,
+  headingRef,
+  onPortal,
+  onCheck,
+}: {
+  ui: (name: string) => string;
+  clinics: string[];
+  headingRef: React.RefObject<HTMLHeadingElement | null>;
+  onPortal?: () => void;
+  onCheck: () => void;
+}) {
+  const door = "group flex flex-col rounded-3xl p-5 text-left transition-all hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 sm:p-6";
+  const tile = "flex h-12 w-12 items-center justify-center rounded-2xl";
+  return (
+    <div>
+      <h2 id="triage-heading" ref={headingRef} tabIndex={-1} className="text-xl font-bold text-slate-900 outline-none sm:text-2xl">
+        {ui("gate_heading")}
+      </h2>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 sm:gap-4">
+        <a
+          href={PORTAL_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={onPortal}
+          className={`${door} bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] text-white shadow-lg shadow-[var(--primary-dark)]/25 hover:shadow-xl hover:shadow-[var(--primary-dark)]/30 focus-visible:ring-[var(--primary)]/40`}
+        >
+          <span className={`${tile} bg-white/15 ring-1 ring-white/25`}>
+            <LogIn className="h-6 w-6" aria-hidden />
+          </span>
+          <span className="mt-4 text-lg font-bold leading-snug">{ui("gate_portal_title")}</span>
+          <span className="mt-1.5 text-sm leading-relaxed text-white/90">{ui("gate_portal_body")}</span>
+          <span className="mt-auto inline-flex items-center gap-1.5 pt-5 text-sm font-semibold">
+            {ui("gate_portal_cta")}
+            <ExternalLink className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
+          </span>
+        </a>
+        <button
+          type="button"
+          onClick={onCheck}
+          className={`${door} border-2 border-brand-cyan-muted bg-brand-cyan-subtle/50 hover:border-[var(--primary)] hover:bg-brand-cyan-subtle hover:shadow-lg hover:shadow-[var(--primary-dark)]/10 focus-visible:ring-[var(--primary)]/30`}
+        >
+          <span className={`${tile} bg-white text-[var(--primary-dark)] shadow-sm ring-1 ring-brand-cyan-muted`}>
+            <Signpost className="h-6 w-6" aria-hidden />
+          </span>
+          <span className="mt-4 text-lg font-bold leading-snug text-slate-900">{ui("gate_check_title")}</span>
+          <span className="mt-1.5 text-sm leading-relaxed text-slate-600">{ui("gate_check_body")}</span>
+          <span className="mt-auto inline-flex items-center gap-1.5 pt-5 text-sm font-semibold text-[var(--primary-dark)]">
+            {ui("gate_check_cta")}
+            <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
+          </span>
+        </button>
+      </div>
+      <ClinicList title={ui("clinics")} clinics={clinics} />
+    </div>
   );
 }
 

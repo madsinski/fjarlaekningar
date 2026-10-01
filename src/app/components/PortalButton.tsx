@@ -8,7 +8,9 @@ interface PortalButtonProps {
 }
 
 // Sjúklingagátt Fjarlækninga. Every "Opna sjúklingagátt" button opens the
-// "Hvert á ég að leita?" triage first (src/lib/triage.ts), which routes
+// "Hvert á ég að leita?" triage first (src/lib/triage.ts) — behind a
+// two-choice screen (portal directly, or the guide) when the CMS switch
+// `triage_gate` is on. The triage routes
 // requests the doctors cannot resolve in writing to 112, 1700, Heilsuvera or
 // the health centre before the patient signs in. The portal URL itself lives
 // in triage.ts; it is the vendor-provisioned instance for the HSU pilot.

@@ -15,16 +15,24 @@ import type { LocaleContent } from "@/lib/site-content/types";
 // place search, which no visitor needs until they open the popup.
 const TriageDialog = dynamic(() => import("./TriageDialog"), { ssr: false });
 
-type TriageState = { on: boolean; text: LocaleContent; examples: TriageExample[]; clinics: string[] };
+type TriageState = {
+  on: boolean;
+  /** "Opna sjúklingagátt" shows the two-choice screen before the guide. */
+  gate?: boolean;
+  text: LocaleContent;
+  examples: TriageExample[];
+  clinics: string[];
+};
 const Triage = createContext<TriageState>({ on: false, text: {}, examples: [], clinics: [] });
 
-export function TriageProvider({ on, text, examples, clinics, children }: TriageState & { children: ReactNode }) {
-  return <Triage.Provider value={{ on, text, examples, clinics }}>{children}</Triage.Provider>;
+export function TriageProvider({ on, gate, text, examples, clinics, children }: TriageState & { children: ReactNode }) {
+  return <Triage.Provider value={{ on, gate, text, examples, clinics }}>{children}</Triage.Provider>;
 }
 
 /**
  * A real link to the patient portal that opens the "Hvert á ég að leita?"
- * popup on a plain click. Without JavaScript, or with a modifier key
+ * popup on a plain click — behind the two-choice screen (portal directly, or
+ * the guide) when that is switched on and this is a portal button. Without JavaScript, or with a modifier key
  * (ctrl/cmd/shift/middle click), it behaves as the ordinary portal link, so
  * nobody is ever locked out of the portal by the triage.
  */
@@ -38,7 +46,7 @@ export default function TriageTrigger({
   /** "check" = the "Hentar fjarlækningaþjónusta mér?" button: other title. */
   variant?: TriageVariant;
 }) {
-  const { on: live, text, examples, clinics } = useContext(Triage);
+  const { on: live, gate, text, examples, clinics } = useContext(Triage);
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
 
@@ -59,7 +67,7 @@ export default function TriageTrigger({
       >
         {children}
       </a>
-      {open && <TriageDialog onClose={close} text={text} examples={examples} clinics={clinics} variant={variant} />}
+      {open && <TriageDialog onClose={close} text={text} examples={examples} clinics={clinics} variant={variant} gate={gate && variant === "portal"} />}
     </>
   );
 }

@@ -110,6 +110,11 @@ const OPEN_PORTAL: TriageAction = {
 
 export const TRIAGE_START = "emergency";
 
+/** The choice screen in front of the guide on "Opna sjúklingagátt" (straight
+ *  to the portal, or through the guide). Not a node of the tree: a screen id
+ *  for the popup's width and the CMS preview. */
+export const TRIAGE_GATE = "gate";
+
 /** `next` value meaning "continue where the answer that led here said to"
  *  (see TriageOption.then). Used by the location step, which sits between
  *  "Fyrir hvern?" and each branch. */
@@ -637,6 +642,16 @@ const UI_TEXT: Record<string, L> = {
   why: { is: "Hvers vegna?", en: "Why?" },
   disclaimer: { is: "Leiðbeining um þjónustuleiðir, ekki læknisfræðilegt mat.",
                 en: "Guidance on where to go, not a medical assessment." },
+  gate_title: { is: "Sjúklingagátt Fjarlækninga", en: "Fjarlækningar patient portal" },
+  gate_heading: { is: "Hvernig viltu halda áfram?", en: "How would you like to continue?" },
+  gate_portal_title: { is: "Opna sjúklingagátt beint", en: "Open the patient portal directly" },
+  gate_portal_body: { is: "Ég veit hvað ég þarf og vil fara beint í sjúklingagáttina.",
+                      en: "I know what I need and want to go straight to the patient portal." },
+  gate_portal_cta: { is: "Opna sjúklingagátt", en: "Open the portal" },
+  gate_check_title: { is: "Hentar fjarlækningaþjónusta mér?", en: "Is remote care right for me?" },
+  gate_check_body: { is: "Svaraðu nokkrum spurningum og við vísum þér á réttan stað. Það tekur innan við mínútu.",
+                     en: "Answer a few questions and we will point you to the right place. It takes less than a minute." },
+  gate_check_cta: { is: "Byrja", en: "Start" },
 };
 
 const UI_LABELS: Record<string, string> = {
@@ -656,6 +671,10 @@ const UI_LABELS: Record<string, string> = {
   skip_confirm_title: "Staðfesting á að sleppa — fyrirsögn", skip_confirm_body: "Staðfesting á að sleppa — texti",
   skip_confirm_note: "Staðfesting á að sleppa — bráðatilvik", skip_confirm_yes: "Staðfesting — hnappur: já, opna gátt",
   skip_confirm_no: "Staðfesting — hnappur: nei, hjálpa mér", place_search_label: "Staðarleit — fyrirsögn fyrir ofan leitarreitinn",
+  gate_title: "Valskjár — titill efst", gate_heading: "Valskjár — fyrirsögn",
+  gate_portal_title: "Valskjár — beint í gátt: fyrirsögn", gate_portal_body: "Valskjár — beint í gátt: texti",
+  gate_portal_cta: "Valskjár — beint í gátt: hnappur", gate_check_title: "Valskjár — leiðarvísir: fyrirsögn",
+  gate_check_body: "Valskjár — leiðarvísir: texti", gate_check_cta: "Valskjár — leiðarvísir: hnappur",
 };
 
 const NODE_NAMES: Record<string, string> = {
