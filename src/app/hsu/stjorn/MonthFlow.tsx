@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle, ArrowRight, Ban, BellRing, Check, CheckCheck, ClipboardList, Eye, Heart, History, Megaphone, MessageSquareWarning,
-  Pencil, RotateCcw, Sparkles, Undo2,
+  Pencil, Printer, RotateCcw, Sparkles, Undo2,
 } from "lucide-react";
 import PrefsEditor, { PREF_TONE, PrefsMini, draftFrom, type PrefDraft } from "../_components/PrefsEditor";
 import { Badge, Button, Card, Field, Modal, Notice, cx, hsuApi, inputCls } from "../_components/ui";
@@ -524,6 +524,7 @@ function StepPublish({ ctx, setStatus, goPlan }: { ctx: PlannerCtx; setStatus: S
             </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="ghost" onClick={goPlan}><Eye className="h-4 w-4" /> {t("publish.openPlan")}</Button>
+              <PdfPreview month={month} doctors={data.doctors} label={t("publish.pdf")} />
               <Button variant="ghost" busy={busy === "unpub"} onClick={async () => {
                 if (!confirm(t("publish.unpublish.confirm"))) return;
                 setBusy("unpub"); await setStatus("planning"); setBusy(null);
@@ -558,6 +559,7 @@ function StepPublish({ ctx, setStatus, goPlan }: { ctx: PlannerCtx; setStatus: S
           <div className="mt-5 flex flex-wrap gap-2">
             <Button size="lg" onClick={() => publish()} busy={busy === "pub"} disabled={data.shifts.length === 0}><Megaphone className="h-4 w-4" /> {t("publish.publish")}</Button>
             <Button size="lg" variant="ghost" onClick={goPlan}>{t("publish.backToPlan")}</Button>
+            {data.shifts.length > 0 && <PdfPreview month={month} doctors={data.doctors} label={t("publish.pdf")} />}
           </div>
         </Card>
       )}
@@ -618,5 +620,34 @@ function AuditLog({ ctx }: { ctx: PlannerCtx }) {
         ))}
       </ul>
     </details>
+  );
+}
+
+/**
+ * Forskoðun vaktaplansins á PDF — sama skjal og fylgir birtingarpóstinum.
+ * Opnast í nýjum flipa; valið „eins og læknir X fær það" setur hans eigin
+ * vaktir á fyrstu síðuna.
+ */
+function PdfPreview({ month, doctors, label }: { month: string; doctors: HsuDoctor[]; label: string }) {
+  const t = useT(stjorn);
+  const [open, setOpen] = useState(false);
+  const url = (doctorId?: string) => `/api/hsu/admin/months/${month}/pdf${doctorId ? `?doctorId=${doctorId}` : ""}`;
+  return (
+    <div className="relative">
+      <Button variant="ghost" onClick={() => setOpen((v) => !v)}><Printer className="h-4 w-4" /> {label}</Button>
+      {open && (
+        <div className="absolute right-0 z-20 mt-1 w-72 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+          <a href={url()} target="_blank" rel="noopener" onClick={() => setOpen(false)}
+            className="block px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">{t("publish.pdf.month")}</a>
+          <div className="border-t border-slate-100 px-4 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">{t("publish.pdf.asDoctor")}</div>
+          <div className="max-h-56 overflow-y-auto">
+            {doctors.filter((d) => d.active).map((d) => (
+              <a key={d.id} href={url(d.id)} target="_blank" rel="noopener" onClick={() => setOpen(false)}
+                className="block px-4 py-1.5 text-sm text-slate-700 hover:bg-slate-50">{d.name}</a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

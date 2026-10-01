@@ -344,6 +344,12 @@ Sama skjal má prenta hvenær sem er úr kerfinu: hnappurinn **Prenta** við hve
 *Mínar vaktir* (`/api/hsu/me/shifts-pdf?m=2026-10`). Aðeins **birtir** mánuðir — óbirt
 plan svarar 404. Skjalið er á tungumáli læknisins.
 
+**Yfirlæknir getur forskoðað áður en birt er:** hnappurinn **Forskoða PDF** í
+birtingarskrefinu (og eftir birtingu) opnar skjalið fyrir mánuð í hvaða stöðu sem er —
+annaðhvort mánaðarplanið eitt, eða *eins og tiltekinn læknir fær það* (hans vaktir á
+fyrstu síðunni). `/api/hsu/admin/months/2026-10/pdf[?doctorId=…]`, krefst yfirlæknis eða
+staff-aðgangs; 404 ef ekkert plan er til.
+
 Kóði: `src/lib/hsu/shift-pdf.ts` (pdf-lib, Helvetica/WinAnsi nær yfir íslensku stafina;
 sama aðferð og `src/lib/contract-pdf.ts`). Viðhengi í pósti: `sendHsuEmail(..., attachments)`.
 
