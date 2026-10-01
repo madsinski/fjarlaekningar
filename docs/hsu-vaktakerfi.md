@@ -183,14 +183,15 @@ læknar séu á flýtimóttöku eða vakt sé skipt um hádegi — hann þéttis
 
 Vakt má líka draga ofan á aðra vakt: læknarnir skipta þá á dögum.
 
-## Opinn gluggi: þrír mánuðir fram í tímann (2026-09-18)
+## Opinn gluggi: þessi mánuður og næstu þrír (2026-09-18, breytt 2026-10-01)
 
-Óskir og vaktaskipulag eru **opin næstu þrjá mánuði** án þess að yfirlæknir opni
-mánuðinn. Mánuður í glugganum án raðar í `hsu_months` telst „collecting“
+Óskir og vaktaskipulag eru **opin fyrir yfirstandandi mánuð og næstu þrjá** án
+þess að yfirlæknir opni mánuðinn. Mánuðurinn sem er hafinn er hafður með því
+vaktir hans geta enn verið óskráðar (t.d. við upptöku kerfisins um mánaðamót). Mánuður í glugganum án raðar í `hsu_months` telst „collecting“
 (`effectiveStatus`, `openWindow`, `inOpenWindow` í `src/lib/hsu/types.ts`); röðin
 verður til þegar yfirlæknir vistar skilafrest eða færir mánuðinn áfram.
 
-- **Læknar:** skrá óskir fyrir næstu þrjá mánuði hvenær sem er; læst þegar mánuður
+- **Læknar:** skrá óskir fyrir þessa fjóra mánuði hvenær sem er; læst þegar mánuður
   fer í yfirferð (nema breytinga sé óskað), vaktaplan eða birtingu. Þjónninn hafnar
   mánuðum utan gluggans (409).
 - **Yfirlæknir:** skref 1 sýnir strax óskir lækna, skilafrest og áminningar — enginn

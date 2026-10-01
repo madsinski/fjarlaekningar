@@ -153,15 +153,19 @@ export interface HsuSwap {
 export const MONTH_STATUS_ORDER: MonthStatus[] = ["collecting", "review", "planning", "published"];
 
 // ── Opinn gluggi ────────────────────────────────────────────────────────────
-// Óskir og vaktaskipulag eru opin þrjá mánuði fram í tímann án þess að
+// Óskir og vaktaskipulag eru opin fyrir þennan mánuð og næstu þrjá án þess að
 // yfirlæknir þurfi að opna mánuðinn; hann setur skilafrest og sendir áminningu.
 // Mánuður í glugganum án raðar í hsu_months telst því „collecting“.
 
 export const OPEN_MONTHS_AHEAD = 3;
 
-/** Næstu þrír mánuðir á eftir þessum: ["2026-10", "2026-11", "2026-12"]. */
+/**
+ * Yfirstandandi mánuður og næstu þrír: 1. okt. 2026 → ["2026-10", "2026-11",
+ * "2026-12", "2027-01"]. Mánuðurinn sem er hafinn er hafður með því vaktir hans
+ * geta enn verið óskráðar (t.d. þegar kerfið er tekið í notkun um mánaðamót).
+ */
 export function openWindow(now: string = monthKeyOf(new Date())): string[] {
-  return Array.from({ length: OPEN_MONTHS_AHEAD }, (_, i) => shiftMonthOf(now, i + 1));
+  return Array.from({ length: OPEN_MONTHS_AHEAD + 1 }, (_, i) => shiftMonthOf(now, i));
 }
 
 export function inOpenWindow(month: string, now?: string): boolean {
