@@ -1,27 +1,37 @@
-// Vaktaplan mánaðarins á PDF — til að prenta og hengja á birtingarpóstinn.
+// Vaktaplan mánaðarins á EINNI SÍÐU, eins og dagatalsblað — til að prenta og
+// hengja á birtingarpóstinn.
 //
-// Tvennt í skjalinu:
-//   1. „Vaktirnar þínar“ — aðeins vaktir viðtakandans, í dagsröð.
-//   2. „Vaktaplan mánaðarins“ — allir dagar og allir læknar, ein lína á dag.
+//   • vika í hverri röð, mánudagur fyrstur
+//   • hver dagur tvískiptur: EFRI hlutinn er dagvinna (flýtimóttaka),
+//     NEÐRI hlutinn er forvakt/bakvakt
+//   • vaktir viðtakandans eru í HANS lit, feitar og með ljósum fleti
+//   • aðrir læknar eru gráir og hógværir — þeir eiga ekki að stela myndinni
 //
-// Helvetica/WinAnsi nær yfir íslensku stafina (þ æ ö á é í ó ú ý ð); stafir
-// utan CP1252 eru skipt út svo drawText geti ekki kastað. Sama aðferð og í
+// Helvetica/WinAnsi nær yfir íslensku stafina (þ æ ö á é í ó ú ý ð); stöfum
+// utan CP1252 er skipt út svo drawText geti ekki kastað. Sama aðferð og í
 // src/lib/contract-pdf.ts.
 
-import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb, type Color, type PDFFont, type PDFPage } from "pdf-lib";
 import { translator, type Lang } from "./i18n/core";
 import { dayLabelL, holidayL, monthLabelL, weekdayShortL, weekdayOfDate } from "./i18n/format";
 import { shiftPdf } from "./i18n/messages/shift-pdf";
 import { datesInMonth, hhmm, holidayName, type HsuShift, type HsuShiftType } from "./types";
 
+export interface ShiftPdfDoctor {
+  id: string;
+  name: string;
+  /** Litur læknisins í kerfinu (#rrggbb) — notaður á hans eigin vaktir. */
+  color?: string;
+}
+
 export interface ShiftPdfInput {
   month: string;
   lang: Lang;
-  /** Viðtakandinn — vaktir hans eru taldar fyrst. Sleppt: aðeins mánaðarplanið. */
-  doctor?: { id: string; name: string };
+  /** Viðtakandinn: hans vaktir eru dregnar fram. Sleppt: hlutlaust mánaðarblað. */
+  doctor?: ShiftPdfDoctor;
   shifts: HsuShift[];
   types: HsuShiftType[];
-  doctors: { id: string; name: string }[];
+  doctors: ShiftPdfDoctor[];
   /** Hvenær planið var birt (fótur skjalsins). */
   publishedAt?: string | null;
 }
@@ -40,186 +50,54 @@ function safe(s: string): string {
   return out;
 }
 
-/** Fornafn + fyrsti stafur eftirnafns: „Áslaug D.“ — nöfnin verða að komast í dálk. */
-function shortName(name: string): string {
+/** Fornafn + n fyrstu stafir eftirnafns: „Áslaug D." — nafnið verður að komast í hólfið. */
+function shortName(name: string, keep = 1): string {
   const parts = safe(name).trim().split(/\s+/);
   if (parts.length < 2) return parts[0] ?? "";
-  return `${parts[0]} ${parts[1][0]}.`;
+  // Síðasta nafnið er kenni-/eftirnafnið: „Mads Christian Aanesen" → „Mads A."
+  return `${parts[0]} ${parts[parts.length - 1].slice(0, keep)}.`;
+}
+
+/**
+ * Stytt nöfn sem eru ÖLL ólík. Á listanum eru tveir Áslaugar, og „Áslaug B."
+ * og „Áslaug H." nægja þeim — en færu tveir að heita sama stutta nafninu er
+ * eftirnafn ÞEIRRA lengt (og aðeins þeirra) þar til þau skiljast að.
+ */
+function shortNames(doctors: ShiftPdfDoctor[]): Map<string, string> {
+  const out = new Map<string, string>(doctors.map((d) => [d.id, shortName(d.name)]));
+  for (let keep = 2; keep <= 14; keep++) {
+    const groups = new Map<string, string[]>();
+    for (const [id, s] of out) (groups.get(s) ?? groups.set(s, []).get(s)!).push(id);
+    const clash = [...groups.values()].filter((ids) => ids.length > 1);
+    if (!clash.length) break;
+    for (const ids of clash) {
+      for (const id of ids) {
+        const d = doctors.find((x) => x.id === id)!;
+        out.set(id, shortName(d.name, keep));
+      }
+    }
+  }
+  return out;
+}
+
+/** #1d4f91 → rgb(). Ógilt eða ósett: grunnlitur kerfisins. */
+function hex(c: string | undefined, fallback: Color): Color {
+  const m = /^#?([0-9a-f]{6})$/i.exec((c ?? "").trim());
+  if (!m) return fallback;
+  const n = parseInt(m[1], 16);
+  return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
 }
 
 const INK = rgb(0.06, 0.09, 0.16);
-const MUTED = rgb(0.42, 0.47, 0.55);
-const RULE = rgb(0.85, 0.88, 0.92);
-const BAND = rgb(0.95, 0.965, 0.98);
+const GREY = rgb(0.52, 0.56, 0.62);
+const FAINT = rgb(0.74, 0.77, 0.81);
+const RULE = rgb(0.84, 0.87, 0.91);
+const BAND = rgb(0.96, 0.97, 0.985);
+const OUTSIDE = rgb(0.975, 0.98, 0.985);
 const BRAND = rgb(0.11, 0.31, 0.57);
+const OPEN = rgb(0.72, 0.25, 0.25);
 
-export async function buildShiftPdf(i: ShiftPdfInput): Promise<Uint8Array> {
-  const t = translator(shiftPdf, i.lang);
-  const doc = await PDFDocument.create();
-  const font = await doc.embedFont(StandardFonts.Helvetica);
-  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-
-  // A4 á langsnið fyrir mánaðartöfluna; fyrsta síðan er líka langsnið svo
-  // skjalið sé eitt samfellt prentverk.
-  const W = 841.89, H = 595.28, M = 40;
-  let page: PDFPage = doc.addPage([W, H]);
-  let y = H - M;
-
-  const monthLabel = monthLabelL(i.month, i.lang);
-  const nameOf = new Map(i.doctors.map((d) => [d.id, d.name]));
-  const typeOf = new Map(i.types.map((x) => [x.id, x]));
-  const dates = datesInMonth(i.month);
-
-  const newPage = () => { page = doc.addPage([W, H]); y = H - M; };
-  const ensure = (h: number) => { if (y - h < M + 24) { newPage(); return true; } return false; };
-  const text = (s: string, x: number, size: number, f: PDFFont = font, color = INK) =>
-    page.drawText(safe(s), { x, y: y - size, size, font: f, color });
-
-  const heading = (title: string, sub?: string) => {
-    text(title, M, 16, bold, INK);
-    if (sub) {
-      const w = bold.widthOfTextAtSize(safe(title), 16);
-      text(sub, M + w + 10, 10.5, font, MUTED);
-    }
-    y -= 26;
-    page.drawLine({ start: { x: M, y: y + 6 }, end: { x: W - M, y: y + 6 }, thickness: 1.2, color: BRAND });
-    y -= 10;
-  };
-
-  // ── 1. Vaktirnar þínar ────────────────────────────────────────────────────
-  const mine = i.doctor
-    ? i.shifts.filter((s) => s.doctor_id === i.doctor!.id).sort((a, b) => a.shift_date.localeCompare(b.shift_date) || a.starts.localeCompare(b.starts))
-    : [];
-
-  if (i.doctor) {
-    heading(t("mine.title", { name: safe(i.doctor.name) }), monthLabel);
-    if (!mine.length) {
-      text(t("mine.none", { month: monthLabel }), M, 11, font, MUTED);
-      y -= 24;
-    } else {
-      const cols = [M, M + 150, M + 330, M + 470, M + 600];
-      const labels = [t("col.day"), t("col.shift"), t("col.time"), t("col.with"), t("col.note")];
-      const row = (vals: string[], f: PDFFont, color = INK) => {
-        vals.forEach((v, n) => {
-          const maxW = (cols[n + 1] ?? W - M) - cols[n] - 8;
-          page.drawText(clip(safe(v), f, 10, maxW), { x: cols[n], y: y - 10, size: 10, font: f, color });
-        });
-      };
-      row(labels, bold, MUTED);
-      y -= 16;
-      page.drawLine({ start: { x: M, y: y + 4 }, end: { x: W - M, y: y + 4 }, thickness: 0.8, color: RULE });
-      y -= 6;
-      let shaded = false;
-      for (const s of mine) {
-        if (ensure(20)) { row(labels, bold, MUTED); y -= 20; }
-        shaded = !shaded;
-        if (shaded) page.drawRectangle({ x: M - 4, y: y - 14, width: W - M * 2 + 8, height: 18, color: BAND });
-        const ty = s.shift_type_id ? typeOf.get(s.shift_type_id) : undefined;
-        const hol = holidayL(holidayName(s.shift_date), i.lang);
-        const day = `${weekdayShortL(weekdayOfDate(s.shift_date), i.lang)} ${dayLabelL(s.shift_date, i.lang)}`;
-        // Hverjir eru á sömu vakt sama dag (t.d. tveir á flýtimóttöku, bakvakt á bak við forvakt).
-        const with_ = i.shifts
-          .filter((o) => o.shift_date === s.shift_date && o.doctor_id && o.doctor_id !== i.doctor!.id && o.id !== s.id)
-          .map((o) => `${shortName(nameOf.get(o.doctor_id!) ?? "")} (${(o.shift_type_id ? typeOf.get(o.shift_type_id)?.short : "") || "?"})`)
-          .join(", ");
-        row([
-          hol ? `${day} — ${hol}` : day,
-          ty ? `${ty.name} (${ty.short})` : s.label || t("shift.extra"),
-          `${hhmm(s.starts)}–${hhmm(s.ends)}`,
-          with_,
-          s.note ?? "",
-        ], font);
-        y -= 18;
-      }
-      y -= 6;
-      text(t.n("mine.count", mine.length), M, 10, bold, BRAND);
-      y -= 22;
-    }
-  }
-
-  // ── 2. Vaktaplan mánaðarins ───────────────────────────────────────────────
-  // Dálkur á hverja vaktategund sem er notuð í mánuðinum, í þeirra röð.
-  const used = i.types
-    .filter((ty) => i.shifts.some((s) => s.shift_type_id === ty.id))
-    .sort((a, b) => (a.period === b.period ? 0 : a.period === "day" ? -1 : 1) || a.sort - b.sort || a.short.localeCompare(b.short));
-  const extras = i.shifts.filter((s) => !s.shift_type_id);
-
-  if (i.doctor) newPage();
-  heading(t("all.title"), monthLabel);
-
-  const dayW = 112;
-  const colW = Math.max(60, Math.floor((W - M * 2 - dayW - (extras.length ? 90 : 0)) / Math.max(1, used.length)));
-  const xOf = (n: number) => M + dayW + n * colW;
-  const header = () => {
-    text(t("col.day"), M, 9.5, bold, MUTED);
-    used.forEach((ty, n) => page.drawText(safe(ty.short), { x: xOf(n), y: y - 9.5, size: 9.5, font: bold, color: MUTED }));
-    if (extras.length) page.drawText(safe(t("col.extra")), { x: xOf(used.length), y: y - 9.5, size: 9.5, font: bold, color: MUTED });
-    y -= 15;
-    page.drawLine({ start: { x: M, y: y + 4 }, end: { x: W - M, y: y + 4 }, thickness: 0.8, color: RULE });
-    y -= 4;
-  };
-  header();
-
-  const cell = (v: string, x: number, maxW: number, f: PDFFont, color = INK) => {
-    const s = clip(safe(v), f, 8.6, maxW);
-    if (s) page.drawText(s, { x, y: y - 10, size: 8.6, font: f, color });
-  };
-
-  for (const date of dates) {
-    const wd = weekdayOfDate(date);
-    const hol = holidayL(holidayName(date), i.lang);
-    const weekend = wd === 0 || wd === 6;
-    const onDay = i.shifts.filter((s) => s.shift_date === date);
-    // Hæð línunnar fer eftir flestu sem þarf að stafla í einn dálk.
-    const stack = Math.max(1, ...used.map((ty) => onDay.filter((s) => s.shift_type_id === ty.id).length), extras.filter((s) => s.shift_date === date).length || 1);
-    const h = 4 + stack * 11;
-    if (ensure(h + 6)) header();
-    if (weekend || hol) page.drawRectangle({ x: M - 4, y: y - h + 6, width: W - M * 2 + 8, height: h, color: BAND });
-    const dayTxt = `${weekdayShortL(wd, i.lang)} ${date.slice(8)}. ${hol ? `• ${hol}` : ""}`.trim();
-    cell(dayTxt, M, dayW - 6, weekend || hol ? bold : font, weekend || hol ? BRAND : INK);
-    used.forEach((ty, n) => {
-      const list = onDay.filter((s) => s.shift_type_id === ty.id).sort((a, b) => (a.slot_index ?? 0) - (b.slot_index ?? 0) || a.starts.localeCompare(b.starts));
-      list.forEach((s, k) => {
-        const who = s.doctor_id ? shortName(nameOf.get(s.doctor_id) ?? "") : t("all.open");
-        const mineMark = i.doctor && s.doctor_id === i.doctor.id;
-        const saveY = y; y -= k * 11;
-        cell(mineMark ? `> ${who}` : who, xOf(n), colW - 6, mineMark ? bold : font, s.doctor_id ? (mineMark ? BRAND : INK) : MUTED);
-        y = saveY;
-      });
-    });
-    const ex = extras.filter((s) => s.shift_date === date);
-    ex.forEach((s, k) => {
-      const saveY = y; y -= k * 11;
-      cell(`${s.label || t("shift.extra")}: ${s.doctor_id ? shortName(nameOf.get(s.doctor_id) ?? "") : t("all.open")}`, xOf(used.length), 86, font);
-      y = saveY;
-    });
-    y -= h;
-  }
-
-  // Skýringar: vaktategundirnar skrifaðar út, og örin fyrir eigin vaktir.
-  y -= 8;
-  if (ensure(40)) { /* ný síða fyrir skýringarnar */ }
-  page.drawLine({ start: { x: M, y: y + 8 }, end: { x: W - M, y: y + 8 }, thickness: 0.8, color: RULE });
-  const legend = used.map((ty) => `${ty.short} = ${ty.name} ${hhmm(ty.starts)}–${hhmm(ty.ends)}`).join("   ");
-  for (const line of wrapTo(legend, font, 8.4, W - M * 2)) { text(line, M, 8.4, font, MUTED); y -= 11; }
-  if (i.doctor) { text(t("all.youMark"), M, 8.4, font, MUTED); y -= 11; }
-
-  // Fótur á allar síður.
-  const pages = doc.getPages();
-  const foot = t("foot", {
-    month: monthLabel,
-    at: i.publishedAt ? new Date(i.publishedAt).toLocaleString(i.lang === "is" ? "is-IS" : "en-GB", { timeZone: "Atlantic/Reykjavik", dateStyle: "short", timeStyle: "short" }) : "",
-  });
-  pages.forEach((p, n) => {
-    p.drawText(safe(foot), { x: M, y: 22, size: 8, font, color: MUTED });
-    const label = t("page", { n: String(n + 1), of: String(pages.length) });
-    p.drawText(safe(label), { x: W - M - font.widthOfTextAtSize(safe(label), 8), y: 22, size: 8, font, color: MUTED });
-  });
-
-  return doc.save();
-}
-
-/** Klippa texta við orðaskil og setja úrfellingarmerki — aldrei inni í sviga. */
+/** Klippa texta við orðaskil og setja úrfellingarmerki. */
 function clip(s: string, f: PDFFont, size: number, maxW: number): string {
   if (!s || f.widthOfTextAtSize(s, size) <= maxW) return s;
   let out = s;
@@ -230,16 +108,194 @@ function clip(s: string, f: PDFFont, size: number, maxW: number): string {
   return out ? `${out.replace(/[,\s]+$/, "")}…` : "";
 }
 
-function wrapTo(s: string, f: PDFFont, size: number, maxW: number): string[] {
-  const out: string[] = [];
-  let line = "";
-  for (const word of safe(s).split(/\s+/)) {
-    const next = line ? `${line} ${word}` : word;
-    if (f.widthOfTextAtSize(next, size) > maxW && line) { out.push(line); line = word; }
-    else line = next;
+/** Mánudagur = 0 … sunnudagur = 6. */
+const mondayIndex = (date: string) => (weekdayOfDate(date) + 6) % 7;
+
+interface Entry {
+  own: boolean;
+  /** Stuttur kóði vaktategundar — sýndur þegar fleiri en ein tegund er í hlutanum. */
+  short: string;
+  /** Tími, aðeins þegar vaktinni hefur verið skipt (hálfur dagur). */
+  time: string;
+  who: string;
+  open: boolean;
+}
+
+export async function buildShiftPdf(i: ShiftPdfInput): Promise<Uint8Array> {
+  const t = translator(shiftPdf, i.lang);
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+
+  // A4 á langsnið — eitt blað, eins og dagatalsblað.
+  const W = 841.89, H = 595.28, M = 26;
+  const page: PDFPage = doc.addPage([W, H]);
+
+  const mineColor = hex(i.doctor?.color, BRAND);
+  const monthLabel = monthLabelL(i.month, i.lang);
+  const nameOf = shortNames(i.doctors);
+  const typeOf = new Map(i.types.map((x) => [x.id, x]));
+  const dates = datesInMonth(i.month);
+
+  // ── Hvað fer í hvorn hluta dagsins ────────────────────────────────────────
+  const isDay = (s: HsuShift) => {
+    const ty = s.shift_type_id ? typeOf.get(s.shift_type_id) : undefined;
+    // Aukavakt án tegundar: dagvakt ef hún hefst fyrir kl. 15.
+    return ty ? ty.period === "day" : s.starts.slice(0, 5) < "15:00";
+  };
+  const usedDay = new Set<string>(), usedEve = new Set<string>();
+  for (const s of i.shifts) {
+    const ty = s.shift_type_id ? typeOf.get(s.shift_type_id) : undefined;
+    (isDay(s) ? usedDay : usedEve).add(ty?.short ?? "");
   }
-  if (line) out.push(line);
-  return out;
+
+  const entryOf = (s: HsuShift, multi: boolean): Entry => {
+    const ty = s.shift_type_id ? typeOf.get(s.shift_type_id) : undefined;
+    // Vakt sem hefur verið tekin í tvennt fær tímann með — annars er hann óþarfi.
+    const split = Boolean(ty && (hhmm(s.starts) !== hhmm(ty.starts) || hhmm(s.ends) !== hhmm(ty.ends)));
+    return {
+      own: Boolean(i.doctor && s.doctor_id === i.doctor.id),
+      short: multi ? (ty?.short ?? "") : "",
+      time: split ? `${hhmm(s.starts)}–${hhmm(s.ends)}` : "",
+      who: s.doctor_id ? (nameOf.get(s.doctor_id) ?? "") : t("all.open"),
+      open: !s.doctor_id,
+    };
+  };
+  // Forvakt fyrst, svo bakvakt — forvaktin er sú sem gildir, bakvaktin bakland.
+  const KIND_ORDER = { forvakt: 0, other: 1, bakvakt: 2 } as const;
+  const rank = (s: HsuShift) => {
+    const ty = s.shift_type_id ? typeOf.get(s.shift_type_id) : undefined;
+    return [ty ? KIND_ORDER[ty.kind] : 1, ty?.sort ?? 0, ty?.short ?? ""] as const;
+  };
+  const sortShifts = (a: HsuShift, b: HsuShift) => {
+    const [ka, sa, ha] = rank(a), [kb, sb, hb] = rank(b);
+    return ka - kb || sa - sb || ha.localeCompare(hb)
+      || (a.slot_index ?? 0) - (b.slot_index ?? 0)
+      || a.starts.localeCompare(b.starts);
+  };
+
+  // ── Haus ──────────────────────────────────────────────────────────────────
+  let y = H - M;
+  const title = i.doctor ? t("mine.title", { name: safe(i.doctor.name) }) : t("all.title");
+  page.drawText(safe(title), { x: M, y: y - 14, size: 14, font: bold, color: INK });
+  const right = safe(monthLabel);
+  page.drawText(right, { x: W - M - bold.widthOfTextAtSize(right, 14), y: y - 14, size: 14, font: bold, color: BRAND });
+  y -= 22;
+  page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: 1.2, color: BRAND });
+  y -= 14;
+
+  // ── Vikudagahaus (mánudagur fyrstur) ──────────────────────────────────────
+  const colW = (W - M * 2) / 7;
+  for (let c = 0; c < 7; c++) {
+    // weekdayShortL: 0=sun … 6=lau.
+    const label = safe(weekdayShortL((c + 1) % 7, i.lang));
+    page.drawText(label, { x: M + c * colW + (colW - bold.widthOfTextAtSize(label, 9)) / 2, y: y - 9, size: 9, font: bold, color: GREY });
+  }
+  y -= 13;
+
+  // ── Netið: vika í hverri röð ──────────────────────────────────────────────
+  const offset = mondayIndex(dates[0]);
+  const weeks = Math.ceil((offset + dates.length) / 7);
+  const footH = i.doctor ? 42 : 32;
+  const gridTop = y;
+  const rowH = (gridTop - M - footH) / weeks;
+
+  const byDate = new Map<string, HsuShift[]>();
+  for (const s of i.shifts) (byDate.get(s.shift_date) ?? byDate.set(s.shift_date, []).get(s.shift_date)!).push(s);
+
+  const LINE = 7.6;  // línuhæð nafnalínu
+  const SZ = 6.6;    // stærð nafnatexta
+  let ownCount = 0;
+
+  for (let w = 0; w < weeks; w++) {
+    for (let c = 0; c < 7; c++) {
+      const dayNo = w * 7 + c - offset + 1;
+      const x = M + c * colW;
+      const top = gridTop - w * rowH;
+
+      if (dayNo < 1 || dayNo > dates.length) {
+        page.drawRectangle({ x, y: top - rowH, width: colW, height: rowH, color: OUTSIDE, borderColor: RULE, borderWidth: 0.6 });
+        continue;
+      }
+      const date = dates[dayNo - 1];
+      const hol = holidayL(holidayName(date), i.lang);
+      const weekend = c >= 5;
+      page.drawRectangle({
+        x, y: top - rowH, width: colW, height: rowH,
+        color: weekend || hol ? BAND : rgb(1, 1, 1),
+        borderColor: RULE, borderWidth: 0.6,
+      });
+
+      // Dagsetning og frídagsheiti.
+      page.drawText(String(dayNo), { x: x + 4, y: top - 10.5, size: 9, font: bold, color: weekend || hol ? BRAND : INK });
+      if (hol) {
+        const w0 = bold.widthOfTextAtSize(String(dayNo), 9) + 7;
+        page.drawText(clip(safe(hol), font, 5.8, colW - w0 - 5), { x: x + w0, y: top - 10, size: 5.8, font, color: BRAND });
+      }
+
+      const all = byDate.get(date) ?? [];
+      const dayPart = all.filter(isDay).sort(sortShifts).map((s) => entryOf(s, usedDay.size > 1));
+      const evePart = all.filter((s) => !isDay(s)).sort(sortShifts).map((s) => entryOf(s, usedEve.size > 1));
+      ownCount += [...dayPart, ...evePart].filter((e) => e.own).length;
+
+      // Tvískipting hólfsins: efri hlutinn dagvinna, neðri forvakt/bakvakt.
+      const bodyTop = top - 13;
+      const bodyH = rowH - 15;
+      const mid = bodyTop - bodyH * 0.42;
+      page.drawLine({ start: { x: x + 3, y: mid }, end: { x: x + colW - 3, y: mid }, thickness: 0.4, color: RULE });
+
+      const drawPart = (list: Entry[], from: number, to: number) => {
+        const room = Math.max(0, Math.floor((from - to) / LINE));
+        const show = list.slice(0, room);
+        let ly = from;
+        for (const e of show) {
+          ly -= LINE;
+          const tag = [e.short, e.time].filter(Boolean).join(" ");
+          const f = e.own ? bold : font;
+          const color = e.own ? mineColor : e.open ? OPEN : GREY;
+          // Ljós flötur í lit læknisins svo hans vakt sjáist í fljótu bragði.
+          if (e.own) page.drawRectangle({ x: x + 2.5, y: ly - 1.4, width: colW - 5, height: LINE - 0.6, color: mineColor, opacity: 0.13 });
+          let tx = x + 4.5;
+          if (tag) {
+            page.drawText(tag, { x: tx, y: ly + 0.4, size: 5.6, font, color: e.own ? mineColor : FAINT });
+            tx += font.widthOfTextAtSize(tag, 5.6) + 3;
+          }
+          page.drawText(clip(e.who, f, SZ, x + colW - 4 - tx), { x: tx, y: ly, size: SZ, font: f, color });
+        }
+        if (list.length > show.length) {
+          page.drawText(`+${list.length - show.length}`, { x: x + colW - 14, y: to + 1.5, size: 5.4, font, color: FAINT });
+        }
+      };
+      drawPart(dayPart, bodyTop, mid + 1);
+      drawPart(evePart, mid - 1.5, bodyTop - bodyH);
+    }
+  }
+
+  // ── Fótur: eigin litur, skýringar og dagsetning ───────────────────────────
+  let fy = M + footH - 12;
+  if (i.doctor) {
+    page.drawRectangle({ x: M, y: fy - 1.5, width: 16, height: 7.5, color: mineColor, opacity: 0.13 });
+    page.drawRectangle({ x: M, y: fy - 1.5, width: 16, height: 7.5, borderColor: mineColor, borderWidth: 0.6 });
+    page.drawText(safe(`${t("all.youMark")} — ${t.n("mine.count", ownCount)}`), { x: M + 21, y: fy, size: 7.4, font: bold, color: mineColor });
+    fy -= 11;
+  }
+  const legend = i.types
+    .filter((ty) => i.shifts.some((s) => s.shift_type_id === ty.id))
+    .sort((a, b) => (a.period === b.period ? 0 : a.period === "day" ? -1 : 1) || a.sort - b.sort || a.short.localeCompare(b.short))
+    .map((ty) => `${ty.short} = ${ty.name} ${hhmm(ty.starts)}–${hhmm(ty.ends)}`)
+    .join("   ·   ");
+  page.drawText(clip(safe(legend), font, 6.6, W - M * 2), { x: M, y: fy, size: 6.6, font, color: GREY });
+  fy -= 10;
+  page.drawText(clip(safe(t("parts")), font, 6.6, W - M * 2 - 190), { x: M, y: fy, size: 6.6, font, color: FAINT });
+  const foot = safe(t("foot", {
+    month: monthLabel,
+    at: i.publishedAt
+      ? new Date(i.publishedAt).toLocaleString(i.lang === "is" ? "is-IS" : "en-GB", { timeZone: "Atlantic/Reykjavik", dateStyle: "short", timeStyle: "short" })
+      : dayLabelL(new Date().toISOString().slice(0, 10), i.lang),
+  }));
+  page.drawText(foot, { x: W - M - font.widthOfTextAtSize(foot, 6.6), y: fy, size: 6.6, font, color: FAINT });
+
+  return doc.save();
 }
 
 /** Skráarnafn viðhengisins: vaktir-2026-10.pdf */

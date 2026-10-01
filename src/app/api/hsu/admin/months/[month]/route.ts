@@ -118,7 +118,7 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
       const [shifts, types, allDocs] = await Promise.all([loadMonthShifts(month), loadShiftTypes(), listDoctors(false)]);
       const docs = await activeDoctors();
       const modes = await emailModesFor(docs.map((d) => d.id), "publish");
-      const names = allDocs.map((d) => ({ id: d.id, name: d.name }));
+      const names = allDocs.map((d) => ({ id: d.id, name: d.name, color: d.color }));
       // Tilkynning í kerfinu fer til allra sem eru á vakt, óháð póststillingu.
       const withShifts = docs.filter((d) => shifts.some((s) => s.doctor_id === d.id));
       if (withShifts.length) {
@@ -144,7 +144,7 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
         let attachments;
         try {
           const pdf = await buildShiftPdf({
-            month, lang: d.lang, doctor: { id: d.id, name: d.name }, shifts, types, doctors: names,
+            month, lang: d.lang, doctor: names.find((x) => x.id === d.id) ?? { id: d.id, name: d.name }, shifts, types, doctors: names,
             publishedAt: saved.published_at,
           });
           attachments = [{ filename: shiftPdfName(month), content: Buffer.from(pdf).toString("base64"), contentType: "application/pdf" }];

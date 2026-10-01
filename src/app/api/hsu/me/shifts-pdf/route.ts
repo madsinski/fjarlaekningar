@@ -22,11 +22,12 @@ export async function GET(req: Request) {
 
   const [shifts, types, doctors] = await Promise.all([loadMonthShifts(month), loadShiftTypes(), listDoctors(false)]);
   const lang = await doctorLang(auth.doctor.id);
+  const people = doctors.map((d) => ({ id: d.id, name: d.name, color: d.color }));
   const pdf = await buildShiftPdf({
     month, lang,
-    doctor: { id: auth.doctor.id, name: auth.doctor.name },
+    doctor: people.find((d) => d.id === auth.doctor.id) ?? { id: auth.doctor.id, name: auth.doctor.name },
     shifts, types,
-    doctors: doctors.map((d) => ({ id: d.id, name: d.name })),
+    doctors: people,
     publishedAt: m.published_at,
   });
   return new Response(Buffer.from(pdf), {

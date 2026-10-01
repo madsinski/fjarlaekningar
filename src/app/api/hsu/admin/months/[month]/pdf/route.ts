@@ -26,15 +26,16 @@ export async function GET(req: Request, ctx: { params: Promise<{ month: string }
   ]);
   if (!shifts.length) return fail(t("err.noPlan"), 404);
 
-  const who = doctorId ? doctors.find((d) => d.id === doctorId) : undefined;
+  const people = doctors.map((d) => ({ id: d.id, name: d.name, color: d.color }));
+  const who = doctorId ? people.find((d) => d.id === doctorId) : undefined;
   if (doctorId && !who) return fail(t("err.theDoctorNotFound"), 404);
 
   const pdf = await buildShiftPdf({
     month,
     lang: await getHsuLang(),
-    doctor: who ? { id: who.id, name: who.name } : undefined,
+    doctor: who,
     shifts, types,
-    doctors: doctors.map((d) => ({ id: d.id, name: d.name })),
+    doctors: people,
     publishedAt: m?.published_at ?? null,
   });
   return new Response(Buffer.from(pdf), {
