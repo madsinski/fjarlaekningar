@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit, throttle } from "@/lib/hsu/auth";
 import { hsuSync } from "@/lib/hsu/calendar";
 import {
-  DATE_RE, MONTH_RE, fail, hsuEmailHtml, json, listDoctors, loadMonth, loadMonthShifts, loadPreferences, loadShiftTypes, originOf, readJson, requireManager, sendHsuEmail,
+  DATE_RE, MONTH_RE, fail, hsuEmailHtml, json, listDoctors, loadMonth, loadMonthShifts, loadPreferences, loadShiftTypes, originOf, pdfSettings, readJson, requireManager, sendHsuEmail,
 } from "@/lib/hsu/server";
 import { requiredSlots, toPlanDoctors, toPlanSlots } from "@/lib/hsu/plan";
 import { notifyDoctors } from "@/lib/hsu/notify";
@@ -119,6 +119,7 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
       const docs = await activeDoctors();
       const modes = await emailModesFor(docs.map((d) => d.id), "publish");
       const names = allDocs.map((d) => ({ id: d.id, name: d.name, color: d.color }));
+      const pdfOpts = await pdfSettings();
       // Tilkynning í kerfinu fer til allra sem eru á vakt, óháð póststillingu.
       const withShifts = docs.filter((d) => shifts.some((s) => s.doctor_id === d.id));
       if (withShifts.length) {
@@ -145,7 +146,7 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
         try {
           const pdf = await buildShiftPdf({
             month, lang: d.lang, doctor: names.find((x) => x.id === d.id) ?? { id: d.id, name: d.name }, shifts, types, doctors: names,
-            publishedAt: saved.published_at,
+            publishedAt: saved.published_at, style: pdfOpts.style, unitName: pdfOpts.unitName,
           });
           attachments = [{ filename: shiftPdfName(month), content: Buffer.from(pdf).toString("base64"), contentType: "application/pdf" }];
         } catch (e) {

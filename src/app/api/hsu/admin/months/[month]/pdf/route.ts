@@ -3,8 +3,8 @@
 //   GET /api/hsu/admin/months/2026-10/pdf              → mánaðarplanið
 //   GET /api/hsu/admin/months/2026-10/pdf?doctorId=…   → eins og sá læknir fær það
 
-import { MONTH_RE, UUID_RE, fail, listDoctors, loadMonth, loadMonthShifts, loadShiftTypes, requireManager } from "@/lib/hsu/server";
-import { buildShiftPdf, shiftPdfName } from "@/lib/hsu/shift-pdf";
+import { MONTH_RE, UUID_RE, fail, listDoctors, loadMonth, loadMonthShifts, loadShiftTypes, pdfSettings, requireManager } from "@/lib/hsu/server";
+import { buildShiftPdf, isPdfStyle, shiftPdfName } from "@/lib/hsu/shift-pdf";
 import { getHsuLang } from "@/lib/hsu/i18n/server";
 import { tr } from "@/lib/hsu/i18n/server";
 import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
@@ -18,7 +18,8 @@ export async function GET(req: Request, ctx: { params: Promise<{ month: string }
   const { month } = await ctx.params;
   if (!MONTH_RE.test(month)) return fail(t("err.badMonth"));
 
-  const doctorId = new URL(req.url).searchParams.get("doctorId");
+  const u = new URL(req.url);
+  const doctorId = u.searchParams.get("doctorId");
   if (doctorId && !UUID_RE.test(doctorId)) return fail(t("err.badRequest"));
 
   const [m, shifts, types, doctors] = await Promise.all([
@@ -30,9 +31,13 @@ export async function GET(req: Request, ctx: { params: Promise<{ month: string }
   const who = doctorId ? people.find((d) => d.id === doctorId) : undefined;
   if (doctorId && !who) return fail(t("err.theDoctorNotFound"), 404);
 
+  const opts = await pdfSettings();
+  const want = u.searchParams.get("style");
   const pdf = await buildShiftPdf({
     month,
     lang: await getHsuLang(),
+    style: isPdfStyle(want) ? want : opts.style,
+    unitName: opts.unitName,
     doctor: who,
     shifts, types,
     doctors: people,

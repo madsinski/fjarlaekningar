@@ -18,7 +18,7 @@ export async function GET(req: Request) {
   try {
     const today = new Date().toISOString().slice(0, 10);
     const [settings, shiftTypes, doctors, m, prefs, shifts, swaps, auditRows, months] = await Promise.all([
-      supabaseAdmin.from("hsu_settings").select("unit_name, market_requires_approval").eq("id", 1).maybeSingle().then((r) => r.data),
+      supabaseAdmin.from("hsu_settings").select("unit_name, market_requires_approval, pdf_style").eq("id", 1).maybeSingle().then((r) => r.data),
       loadShiftTypes(),
       listDoctors(),
       loadMonth(month),

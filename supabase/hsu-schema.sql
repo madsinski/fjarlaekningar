@@ -430,3 +430,11 @@ create index if not exists hsu_task_reminders_month_idx on public.hsu_task_remin
 alter table public.hsu_task_reminders enable row level security;
 drop policy if exists hsu_task_reminders_none on public.hsu_task_reminders;
 create policy hsu_task_reminders_none on public.hsu_task_reminders for all using (false) with check (false);
+
+-- ── Snið prentskjalsins (2026-10-01) ───────────────────────────────────────
+-- Hvaða útlit vaktaplanið hefur í birtingarpóstinum og við prentun:
+--   'classic' dagatalsblað · 'system' eins og viðmótið · 'bold' djarft
+-- Yfirlæknir velur í Stillingum; sjá src/lib/hsu/pdf/.
+alter table public.hsu_settings add column if not exists pdf_style text not null default 'system';
+alter table public.hsu_settings drop constraint if exists hsu_settings_pdf_style_check;
+alter table public.hsu_settings add constraint hsu_settings_pdf_style_check check (pdf_style in ('classic','system','bold'));
