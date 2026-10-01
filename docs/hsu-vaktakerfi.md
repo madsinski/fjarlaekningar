@@ -355,6 +355,11 @@ mánaðarplanið á skjánum.
 
 **Hvar skjalið fæst**
 
+* **Sýnidæmi hvenær sem er:** *Stillingar* → „Skoða sýnidæmi“
+  (`/api/hsu/admin/pdf-preview[?m=2026-10][&doctorId=…]`). Mánuðurinn er búinn til í
+  minni úr RAUNVERULEGUM vaktategundum og læknum stöðvarinnar — sömu nöfn, sömu litir,
+  og sjötta hver vakt skilin eftir ómönnuð svo „vantar“ sjáist. **Ekkert er vistað** og
+  ekkert vaktaplan þarf að vera til. Kóði: `src/lib/hsu/pdf/demo.ts`.
 * Læknir prentar af *Mínar vaktir* (`/api/hsu/me/shifts-pdf?m=2026-10`). Aðeins
   **birtir** mánuðir — óbirt plan svarar 404. Skjalið er á tungumáli læknisins.
 * **Forskoða PDF** í birtingarskrefinu (og eftir birtingu) opnar skjalið fyrir mánuð í

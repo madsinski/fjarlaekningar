@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useState, type ReactNode } from "react";
-import { Plus, RotateCcw, Save, Trash2 } from "lucide-react";
+import { Plus, Printer, RotateCcw, Save, Trash2 } from "lucide-react";
 import { Button, Card, Field, Notice, cx, hsuApi, inputCls } from "../_components/ui";
 import {
   SHIFT_KIND_IS, SHIFT_PERIOD_IS, WEEKDAY_ORDER, icelandicHolidays, isOvernight, typeAppliesOn,
@@ -49,6 +49,18 @@ export default function SettingsTab({ ctx }: { ctx: PlannerCtx }) {
         </label>
         {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
         <Button onClick={saveSettings} busy={busy === "s"}><Save className="h-4 w-4" /> {c("action.save")}</Button>
+      </Card>
+
+      {/* Sýnidæmi af prentskjalinu — ekkert vaktaplan þarf að vera til. */}
+      <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
+        <div className="min-w-64 flex-1">
+          <div className="text-sm font-semibold">{t("settings.pdf")}</div>
+          <div className="text-xs text-slate-500">{t("settings.pdfHint")}</div>
+        </div>
+        <a href="/api/hsu/admin/pdf-preview" target="_blank" rel="noopener"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+          <Printer className="h-4 w-4" /> {t("settings.pdfOpen")}
+        </a>
       </Card>
 
       <div>
