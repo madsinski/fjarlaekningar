@@ -17,7 +17,7 @@ const KINDS: { kind: PdfKind; emoji: string; title: "pdf.read" | "pdf.print" | "
 ];
 
 export default function PdfDialog({ book, load, onClose }: {
-  book: { title: I18nText; subtitle: I18nText; color: string; emoji: string; cover: boolean };
+  book: { title: I18nText; subtitle: I18nText; color: string; emoji: string; cover: boolean; coverSvg?: string | null; coverImage?: string | null };
   /** Stories with their pages; fetched when the export starts. */
   load: () => Promise<StoryView[]>;
   onClose: () => void;
@@ -39,7 +39,7 @@ export default function PdfDialog({ book, load, onClose }: {
       const bytes = await buildPdf({
         kind,
         color: book.color,
-        cover: book.cover ? { title: pick(book.title, pdfLang), subtitle: pick(book.subtitle, pdfLang), emoji: book.emoji } : null,
+        cover: book.cover ? { title: pick(book.title, pdfLang), subtitle: pick(book.subtitle, pdfLang), emoji: book.emoji, svg: book.coverSvg ?? null, image: book.coverImage ?? null } : null,
         fonts: { display: css.getPropertyValue("--font-bk-display") || "sans-serif", body: css.getPropertyValue("--font-bk-body") || "sans-serif" },
         stories: stories.map((s) => ({
           title: text(s.title, s),

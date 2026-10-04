@@ -14,7 +14,7 @@ import { BigButton, LangSwitch, TopBar, call, cx } from "./ui";
 
 type Mode = "choose" | "prompt" | "wizard";
 
-export default function IdeaMaker({ book }: { book: { id: string; title: I18nText } | null }) {
+export default function IdeaMaker({ book }: { book: { id: string; title: I18nText } }) {
   const { lang, t } = useBk();
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("choose");
@@ -36,7 +36,7 @@ export default function IdeaMaker({ book }: { book: { id: string; title: I18nTex
     setBusy(true);
     setError("");
     const idea = mode === "prompt" ? { kind: "prompt", text } : { kind: "wizard", answers, heroName, extra };
-    const res = await call("POST", "/api/bokasmidja/stories", { bookId: book?.id, lang: storyLang, idea });
+    const res = await call("POST", "/api/bokasmidja/stories", { bookId: book.id, lang: storyLang, idea });
     if (res.ok) { router.push(`/bokasmidja/story/${res.storyId}`); return; }
     setError(errorText(t, res.error));
     setBusy(false);
@@ -65,8 +65,8 @@ export default function IdeaMaker({ book }: { book: { id: string; title: I18nTex
     <>
       <TopBar />
       <main className="mx-auto w-full max-w-3xl px-4 pb-16 pt-6">
-        <h1 className="bk-display text-4xl font-extrabold text-slate-900">{t("new.title")}</h1>
-        {book && <p className="mt-1 text-lg font-bold text-indigo-700">🌙 {t("new.into", { book: pick(book.title, lang) })}</p>}
+        <h1 className="bk-display text-4xl font-extrabold text-slate-900">{t("book.addStory")}</h1>
+        {pick(book.title, lang) && <p className="mt-1 text-lg font-bold text-indigo-700">📖 {t("new.into", { book: pick(book.title, lang) })}</p>}
 
         {mode === "choose" && (
           <section className="mt-6">

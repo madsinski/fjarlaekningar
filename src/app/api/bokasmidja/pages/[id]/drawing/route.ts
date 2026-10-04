@@ -7,20 +7,12 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { AgentError, agentsConfigured, illustratePage } from "@/lib/bokasmidja/agents";
 import { throttle } from "@/lib/bokasmidja/auth";
-import { AUDIO_BUCKET, UUID_RE, editablePage, fail, json, readJson, refreshStoryStatus, requireViewer, unlock, viewerId } from "@/lib/bokasmidja/server";
+import { AUDIO_BUCKET, UUID_RE, editablePage, fail, json, readImage, readJson, refreshStoryStatus, requireViewer, unlock, viewerId } from "@/lib/bokasmidja/server";
+
+const REFERENCE_MAX = 60_000;
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
-
-const MAX_BYTES = 3_000_000;
-const REFERENCE_MAX = 60_000;
-
-/** Raunveruleg myndtegund eftir fyrstu bætum, óháð því sem vafrinn segir. */
-function sniff(buf: Buffer): "image/jpeg" | "image/png" | null {
-  if (buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "image/jpeg";
-  if (buf.length > 8 && buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return "image/png";
-  return null;
-}
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requireViewer(req);
@@ -32,11 +24,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (!agentsConfigured()) return fail("not_configured", 503);
 
   const body = await readJson(req);
-  const b64 = typeof body.image === "string" ? body.image : "";
-  if (!b64 || b64.length > MAX_BYTES * 1.4 || !/^[A-Za-z0-9+/=]+$/.test(b64)) return fail("bad_image");
-  const bytes = Buffer.from(b64, "base64");
-  const mediaType = sniff(bytes);
-  if (!mediaType || bytes.length > MAX_BYTES) return fail("bad_image");
+  const image = readImage(body.image);
+  if (!image) return fail("bad_image");
+  const { b64, bytes, mediaType } = image;
 
   if (!(await throttle(`art:${viewerId(auth.viewer) ?? "parent"}`, auth.viewer.role === "parent" ? 400 : 80, 86400))) return fail("daily_limit", 429);
   const lock = `art:${id}`;

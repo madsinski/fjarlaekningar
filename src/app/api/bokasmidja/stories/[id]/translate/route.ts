@@ -40,13 +40,15 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     }, from, lang);
     const rows = todo.map((p, i) => ({ page_id: p.id, lang, text: out.pages[i].trim() })).filter((r) => r.text);
     if (rows.length) await supabaseAdmin.from("bk_page_texts").upsert(rows);
+    // Nýr íslenskur texti þarf yfirlestur (sjá /polish).
+    if (lang === "is" && rows.length && !needTitle) await supabaseAdmin.from("bk_story_texts").update({ polished_at: null }).eq("story_id", id).eq("lang", "is");
     if (needTitle) {
       await supabaseAdmin.from("bk_story_texts")
         .upsert({ story_id: id, lang, title: out.title.trim(), summary: out.summary.trim() });
     }
-    // Bók utan um eina sögu fær titilinn líka á þessu máli.
-    const { data: book } = await supabaseAdmin.from("bk_books").select("id, slug, title, planned_stories").eq("id", story.bookId).maybeSingle();
-    if (needTitle && book && !book.slug && book.planned_stories === 1) {
+    // Nafnlaus bók fylgir nafni fyrstu sögunnar, líka á þessu máli.
+    const { data: book } = await supabaseAdmin.from("bk_books").select("id, title, title_auto").eq("id", story.bookId).maybeSingle();
+    if (needTitle && book?.title_auto && !(book.title as I18nText)[lang] && (book.title as I18nText)[from] === story.title[from]) {
       await supabaseAdmin.from("bk_books").update({ title: { ...(book.title as I18nText), [lang]: out.title.trim() } }).eq("id", book.id);
     }
     return json({ ok: true });

@@ -120,3 +120,30 @@ export function Art({ svg, className, children }: { svg: string | null; classNam
   if (!svg) return <div className={cx("bk-art flex items-center justify-center", className)}>{children}</div>;
   return <div className={cx("bk-art", className)} dangerouslySetInnerHTML={{ __html: svg }} />;
 }
+
+/** Minnkar ljósmynd (teikningu eða kápu) í JPEG sem þjónninn og myndskreytirinn ráða við. Skilar base64. */
+export async function shrinkImage(file: File, maxSide = 1568): Promise<string | null> {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = reject;
+      i.src = url;
+    });
+    const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.85).split(",")[1] || null;
+  } catch {
+    return null;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}

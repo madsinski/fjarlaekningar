@@ -31,7 +31,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   try {
     const lang = story.source_lang as Lang;
     const [{ data: book }, { data: siblings }, { data: child }] = await Promise.all([
-      supabaseAdmin.from("bk_books").select("id, slug, title, concept, planned_stories").eq("id", story.book_id).single(),
+      supabaseAdmin.from("bk_books").select("id, title, title_auto, concept").eq("id", story.book_id).single(),
       supabaseAdmin.from("bk_stories").select("id, bk_story_texts(lang, title, summary)").eq("book_id", story.book_id).neq("id", id),
       story.created_by
         ? supabaseAdmin.from("bk_children").select("name, age").eq("id", story.created_by).maybeSingle()
@@ -69,8 +69,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       status: "written", updated_at: new Date().toISOString(),
       art: { characters: written.characters, setting: written.setting, palette: written.palette },
     }).eq("id", id);
-    // Bók sem varð til utan um söguna ber nafn hennar.
-    if (book && !book.slug && !bookTitle) {
+    // Nafnlaus bók tekur nafn fyrstu sögunnar sem skrifuð er í hana.
+    if (book?.title_auto && !bookTitle) {
       await supabaseAdmin.from("bk_books").update({ title: { [lang]: written.title.trim() } }).eq("id", book.id);
     }
     return json({ ok: true });

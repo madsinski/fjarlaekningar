@@ -4,21 +4,38 @@ import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { pick, type BookView } from "@/lib/bokasmidja/types";
 import { useBk } from "./Provider";
-import { TopBar } from "./ui";
+import { Art, TopBar } from "./ui";
 
-/** Hlekkur á bók: bók utan um eina tilbúna sögu opnast beint í lesaranum. */
-export function bookHref(b: BookView): string {
-  return b.plannedStories === 1 && b.stories.length === 1 ? `/bokasmidja/story/${b.stories[0].id}` : `/bokasmidja/book/${b.id}`;
-}
-
+/** Kápa bókar: tilbúin mynd, kápumynd málarans með titli, eða litur og tákn. */
 export function BookCover({ book, className }: { book: BookView; className?: string }) {
   const { lang, t } = useBk();
+  const title = pick(book.title, lang) || t("shelf.newBook");
+  const shell = `relative aspect-[3/4] overflow-hidden rounded-r-3xl rounded-l-lg text-white shadow-[0_8px_0_rgba(0,0,0,0.18)] ${className || ""}`;
+  const spine = <span aria-hidden className="absolute inset-y-0 left-0 z-10 w-3 bg-black/20" />;
+  if (book.coverImage) {
+    return (
+      <div className={shell} style={{ background: book.color }}>
+        {spine}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={book.coverImage} alt={title} className="h-full w-full object-cover" />
+      </div>
+    );
+  }
+  const background = `linear-gradient(160deg, ${book.color}, color-mix(in srgb, ${book.color} 62%, #0f172a))`;
+  if (book.coverSvg) {
+    return (
+      <div className={`${shell} flex flex-col`} style={{ background }}>
+        {spine}
+        <Art svg={book.coverSvg} className="w-full shrink-0" />
+        <span className="bk-display flex flex-1 items-center px-4 py-2 text-lg font-extrabold leading-tight [text-wrap:balance]">{title}</span>
+      </div>
+    );
+  }
   return (
-    <div className={`relative flex aspect-[3/4] flex-col justify-between overflow-hidden rounded-r-3xl rounded-l-lg p-4 text-white shadow-[0_8px_0_rgba(0,0,0,0.18)] ${className || ""}`}
-      style={{ background: `linear-gradient(160deg, ${book.color}, color-mix(in srgb, ${book.color} 62%, #0f172a))` }}>
-      <span aria-hidden className="absolute inset-y-0 left-0 w-3 bg-black/20" />
+    <div className={`${shell} flex flex-col justify-between p-4`} style={{ background }}>
+      {spine}
       <span aria-hidden className="pl-2 text-5xl drop-shadow">{book.emoji}</span>
-      <span className="bk-display pl-2 text-xl font-extrabold leading-tight [text-wrap:balance]">{pick(book.title, lang) || t("shelf.newBook")}</span>
+      <span className="bk-display pl-2 text-xl font-extrabold leading-tight [text-wrap:balance]">{title}</span>
     </div>
   );
 }
@@ -50,11 +67,11 @@ export default function Shelf({ books }: { books: BookView[] }) {
             const done = b.stories.filter((s) => s.status !== "idea").length;
             return (
               <li key={b.id}>
-                <Link href={bookHref(b)} className="bk-press block rounded-3xl" aria-label={pick(b.title, lang) || t("shelf.newBook")}>
+                <Link href={`/bokasmidja/book/${b.id}`} className="bk-press block rounded-3xl" aria-label={pick(b.title, lang) || t("shelf.newBook")}>
                   <BookCover book={b} />
-                  {b.plannedStories > 1 && (
-                    <span className="mt-3 block text-center font-bold text-slate-600">{t("shelf.stories", { done, total: b.plannedStories })}</span>
-                  )}
+                  <span className="mt-3 block text-center font-bold text-slate-600">
+                    {b.plannedStories > done ? t("shelf.stories", { done, total: b.plannedStories }) : t("shelf.count", { n: done })}
+                  </span>
                 </Link>
               </li>
             );

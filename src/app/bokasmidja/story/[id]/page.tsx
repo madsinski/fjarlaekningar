@@ -17,7 +17,7 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
     <StoryRoom
       initial={story}
       editable={canEdit(viewer, story.createdBy)}
-      book={{ id: book.id, title: book.title, subtitle: book.subtitle, color: book.color, emoji: book.emoji, collection: book.plannedStories > 1 }}
+      book={{ id: book.id, title: book.title, subtitle: book.subtitle, color: book.color, emoji: book.emoji, collection: true }}
     />
   );
 }

@@ -20,14 +20,17 @@ export type Phase =
   | { kind: "writing" }
   | { kind: "painting"; n: number; total: number }
   | { kind: "translating" }
+  | { kind: "polishing" }
   | { kind: "done" }
   | { kind: "error"; code: string };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** Síðu vantar texta á þessu máli en á hann á öðru. */
 const lacks = (s: Story, l: Lang) => !s.title[l] || s.pages.some((p) => !p.text[l] && LANGS.some((x) => p.text[x]));
+/** Íslenski textinn er til en hefur ekki farið í yfirlestur. */
+const needsPolish = (s: Story) => !!s.title.is && !s.polishedIs && s.pages.some((p) => p.text.is);
 const needsWork = (s: Story) =>
-  s.status === "idea" || s.pages.some((p) => !p.svg && p.autoArt) || LANGS.some((l) => lacks(s, l));
+  s.status === "idea" || needsPolish(s) || s.pages.some((p) => !p.svg && p.autoArt) || LANGS.some((l) => lacks(s, l));
 
 export default function StoryRoom({ initial, book, editable }: { initial: Story; book: BookInfo; editable: boolean }) {
   const { t } = useBk();
@@ -58,6 +61,20 @@ export default function StoryRoom({ initial, book, editable }: { initial: Story;
         await reload();
         if (tries > 45) return show({ kind: "error", code: "agent_failed" });
       }
+
+      // Íslenskur texti fer í yfirlestur áður en lesið er. Mistakist það stöðvar
+      // það ekki smíðina: reynt er aftur næst þegar sagan er opnuð.
+      const polish = async () => {
+        if (!needsPolish(s) || !alive.current) return;
+        show({ kind: "polishing" });
+        for (let tries = 0; tries < 30 && alive.current; tries++) {
+          const res = await call("POST", `${url}/polish`, {});
+          if (!res.ok || !res.busy) break;
+          await sleep(8000);
+        }
+        await reload();
+      };
+      await polish();
 
       // 2. Málarinn málar síðu fyrir síðu.
       for (const page of s.pages) {
@@ -96,6 +113,7 @@ export default function StoryRoom({ initial, book, editable }: { initial: Story;
         }
       }
       await reload();
+      await polish();
       show({ kind: "done" });
     } finally {
       running.current = false;
@@ -125,7 +143,7 @@ export default function StoryRoom({ initial, book, editable }: { initial: Story;
               <BigButton className="mt-4" onClick={retry}>{t("studio.retry")}</BigButton>
             </>
           ) : (
-            <p role="status" className="mt-6 text-xl font-bold text-slate-600">{t("studio.writing")}<br />{t("studio.writeWait")}</p>
+            <p role="status" className="mt-6 text-xl font-bold text-slate-600">{phase.kind === "polishing" ? t("studio.polishing") : t("studio.writing")}<br />{t("studio.writeWait")}</p>
           )}
         </main>
       </>
@@ -137,7 +155,7 @@ export default function StoryRoom({ initial, book, editable }: { initial: Story;
 
 function Steps({ phase }: { phase: Phase }) {
   const { t } = useBk();
-  const at = phase.kind === "writing" ? 0 : phase.kind === "painting" ? 1 : phase.kind === "translating" ? 2 : phase.kind === "done" ? 3 : -1;
+  const at = phase.kind === "writing" || phase.kind === "polishing" ? 0 : phase.kind === "painting" ? 1 : phase.kind === "translating" ? 2 : phase.kind === "done" ? 3 : -1;
   const steps = [t("studio.step1"), t("studio.step2"), t("studio.step3")];
   return (
     <ol className="mt-8 w-full space-y-3 text-left">

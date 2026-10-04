@@ -28,7 +28,7 @@ export interface PdfStory { title: string; credit: string; pages: { text: string
 export interface PdfInput {
   kind: PdfKind;
   /** Set for a collection: adds a book cover page before the stories. */
-  cover: { title: string; subtitle: string; emoji: string } | null;
+  cover: { title: string; subtitle: string; emoji: string; svg?: string | null; image?: string | null } | null;
   color: string;
   stories: PdfStory[];
   fonts: { display: string; body: string };
@@ -143,7 +143,37 @@ export async function buildPdf(input: PdfInput): Promise<Uint8Array> {
     return h;
   };
 
-  if (input.cover) {
+  // A finished cover image fills the whole page (cropped to fit, like the bookshelf).
+  const finished = input.cover?.image
+    ? await new Promise<HTMLImageElement | null>((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = input.cover!.image!;
+      })
+    : null;
+  if (input.cover && finished) {
+    const scale = Math.max(W / finished.naturalWidth, H / finished.naturalHeight);
+    const w = finished.naturalWidth * scale;
+    const h = finished.naturalHeight * scale;
+    ctx.fillStyle = input.color;
+    ctx.fillRect(0, 0, W, H);
+    ctx.drawImage(finished, (W - w) / 2, (H - h) / 2, w, h);
+    await flush();
+  } else if (input.cover?.svg) {
+    // The illustrator's cover picture in a frame, with the title above and the subtitle below.
+    colourPage();
+    ctx.fillStyle = "#ffffff";
+    fitText(ctx, input.cover.title, display, { x: safe, y: safe, w: W - 2 * safe, h: H * 0.26 }, H * 0.08, H * 0.035, 1.15);
+    const frameW = W - 2 * safe;
+    const frameY = safe + H * 0.29;
+    const frameH = await picture(input.cover.svg, safe, frameY, frameW, frameW * 0.04);
+    ctx.fillStyle = "#ffffff";
+    ctx.globalAlpha = 0.92;
+    fitText(ctx, input.cover.subtitle, body, { x: safe, y: frameY + frameH, w: frameW, h: H - safe - (frameY + frameH) }, H * 0.03, H * 0.018);
+    ctx.globalAlpha = 1;
+    await flush();
+  } else if (input.cover) {
     colourPage();
     ctx.fillStyle = "#ffffff";
     ctx.textAlign = "center";

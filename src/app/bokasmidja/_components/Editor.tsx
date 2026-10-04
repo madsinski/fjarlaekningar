@@ -13,44 +13,15 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowLeftRight, ArrowUp, Camera, Check, Hand, Paintbrush, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowLeftRight, ArrowUp, Camera, Check, Hand, Paintbrush, Plus, SpellCheck, Trash2 } from "lucide-react";
 import { errorText } from "@/lib/bokasmidja/i18n";
 import { LANGS, MAX_PAGES, type Lang, type PageView } from "@/lib/bokasmidja/types";
 import { useBk } from "./Provider";
 import type { Story } from "./StoryRoom";
-import { Art, LangSwitch, TopBar, call, cx } from "./ui";
+import { Art, LangSwitch, TopBar, call, cx, shrinkImage } from "./ui";
 
 type Kind = "page" | "art" | "text";
 interface Drag { kind: Kind; id: string; x: number; y: number; over: string | null }
-
-const DRAWING_MAX_SIDE = 1568;
-
-/** Minnkar ljósmynd af teikningu í JPEG sem þjónninn og myndskreytirinn ráða við. */
-async function shrink(file: File): Promise<string | null> {
-  const url = URL.createObjectURL(file);
-  try {
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const i = new Image();
-      i.onload = () => resolve(i);
-      i.onerror = reject;
-      i.src = url;
-    });
-    const scale = Math.min(1, DRAWING_MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
-    canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL("image/jpeg", 0.85).split(",")[1] || null;
-  } catch {
-    return null;
-  } finally {
-    URL.revokeObjectURL(url);
-  }
-}
 
 export default function Editor({ initial }: { initial: Story }) {
   const { lang: uiLang, t } = useBk();
@@ -61,6 +32,7 @@ export default function Editor({ initial }: { initial: Story }) {
   const [saving, setSaving] = useState(0);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [checking, setChecking] = useState(false);
   const [stamp, setStamp] = useState(0); // busts the cache of "your drawing" thumbnails
   const live = useRef(story);
   useEffect(() => { live.current = story; });
@@ -109,6 +81,24 @@ export default function Editor({ initial }: { initial: Story }) {
     if (!dirty.current.delete(`story:${l}`)) return;
     const title = (live.current.title[l] || "").trim();
     if (title) void send("PATCH", url, { lang: l, title, summary: live.current.summary[l] || "" });
+  };
+
+  /** Yfirlestur íslenskunnar eftir breytingar: bíður eftir vistun, les yfir og sækir leiðréttan texta. */
+  const proofread = async () => {
+    (document.activeElement as HTMLElement | null)?.blur?.();
+    setChecking(true);
+    setError("");
+    await queue.current;
+    let res = await call("POST", `${url}/polish`, { force: true });
+    for (let tries = 0; res.ok && res.busy && tries < 30; tries++) {
+      await new Promise((r) => setTimeout(r, 8000));
+      res = await call("POST", `${url}/polish`, {});
+    }
+    if (res.ok) {
+      const fresh = await call("GET", url);
+      if (fresh.ok) { live.current = fresh.story; setStory(fresh.story); setSaved(true); }
+    } else setError(errorText(t, res.error));
+    setChecking(false);
   };
 
   // ── Færslur ──────────────────────────────────────────────────────────────
@@ -160,7 +150,7 @@ export default function Editor({ initial }: { initial: Story }) {
     if (!file) return;
     setError("");
     setBusyFor(id, "drawing");
-    const image = await shrink(file);
+    const image = await shrinkImage(file);
     const res = image ? await call("POST", `/api/bokasmidja/pages/${id}/drawing`, { image }) : { ok: false, error: "bad_image" };
     setBusyFor(id, null);
     if (!res.ok) { setError(errorText(t, res.error)); return; }
@@ -246,6 +236,15 @@ export default function Editor({ initial }: { initial: Story }) {
         <section className="mt-5 rounded-[2rem] bg-white p-5 shadow-lg ring-2 ring-slate-100">
           <p className="bk-display text-xl font-extrabold">{t("edit.textLang")}</p>
           <div className="mt-2"><LangSwitch big value={lang} onPick={(l) => { saveStory(lang); setLang(l); }} /></div>
+          {lang === "is" && (
+            <div className="mt-4">
+              <button type="button" onClick={proofread} disabled={checking}
+                className="bk-press bk-display inline-flex min-h-12 items-center gap-2 rounded-2xl bg-white px-4 text-lg font-extrabold text-slate-800 shadow-[0_5px_0_#cbd5e1] ring-2 ring-slate-200">
+                <SpellCheck className="h-6 w-6 text-emerald-600" aria-hidden />{t("edit.checkIcelandic")}
+              </button>
+              {checking && <p role="status" className="mt-2 font-bold text-sky-700">{t("edit.checkingIcelandic")}</p>}
+            </div>
+          )}
           <label className="mt-5 block font-extrabold text-slate-600">{t("edit.storyTitle")}
             <input lang={lang} className={cx(field, "bk-display mt-1 font-extrabold")} maxLength={120} value={story.title[lang] || ""}
               onChange={(e) => typeStory("title", e.target.value)} onBlur={() => saveStory(lang)} />

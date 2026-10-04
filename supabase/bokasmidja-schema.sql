@@ -170,3 +170,22 @@ end $$;
 -- Síðum er endurraðað í ritlinum; röðin þarf því ekki að vera einkvæm á miðri leið.
 alter table public.bk_pages drop constraint if exists bk_pages_story_id_position_key;
 create index if not exists bk_pages_story_idx on public.bk_pages (story_id, position);
+
+-- ── Bók búin til fyrst, nafnið valið strax eða síðar (2026-10-04) ───────────
+-- title_auto: bókin fékk ekki nafn við stofnun; hún tekur nafn fyrstu sögunnar
+--   (á öllum málum) þar til einhver gefur henni nafn sjálfur.
+alter table public.bk_books add column if not exists title_auto boolean not null default false;
+-- Bækur sem urðu til utan um eina sögu áður en þetta kom fylgja áfram sögunni.
+update public.bk_books set title_auto = true where slug is null and created_at < '2026-10-05' and title_auto = false and planned_stories = 1;
+
+-- ── Yfirlestur íslensku (2026-10-04) ────────────────────────────────────────
+-- polished_at: hvenær íslenski textinn fór síðast í gegnum yfirlestur
+--   (GreynirCorrect + ritstjórn með netleit í barnaefni). Aðeins notað á 'is'.
+alter table public.bk_story_texts add column if not exists polished_at timestamptz;
+
+-- ── Bókarkápur (2026-10-04) ─────────────────────────────────────────────────
+-- cover_svg: kápumynd teiknuð af myndskreytinum (úr efni bókarinnar eða
+--   teikningu barns). cover_image_path: tilbúin kápa sem hlaðið var upp, í
+--   lokuðu geymslunni. Sé hvorugt til sýnir hillan lit og tákn bókarinnar.
+alter table public.bk_books add column if not exists cover_svg text;
+alter table public.bk_books add column if not exists cover_image_path text;

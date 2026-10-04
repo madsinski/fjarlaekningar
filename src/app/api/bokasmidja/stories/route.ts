@@ -1,18 +1,16 @@
-// Ný saga úr hugmynd barns. Sagan er aðeins skráð hér; höfundurinn (Claude)
+// Ný saga í bók, úr hugmynd barns. Sagan er aðeins skráð hér; höfundurinn
 // skrifar hana í /stories/:id/write, svo viðmótið geti sýnt framvinduna.
-//   POST /api/bokasmidja/stories  { bookId?, lang, idea }
+//   POST /api/bokasmidja/stories  { bookId, lang, idea }
 //     idea: { kind: "prompt", text } | { kind: "wizard", answers, heroName, extra }
-// Án bookId verður til ný bók sem fær nafn sögunnar þegar hún er skrifuð.
+// Sagan fer aftast í bókina; bók tekur við sögum þar til hún er full (MAX_STORIES).
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { throttle } from "@/lib/bokasmidja/auth";
 import { UUID_RE, cleanLine, cleanText, fail, json, readJson, requireViewer, viewerId } from "@/lib/bokasmidja/server";
-import { COLORS, isLang, type Idea } from "@/lib/bokasmidja/types";
+import { MAX_STORIES, isLang, type Idea } from "@/lib/bokasmidja/types";
 import { IDEA_MAX, cleanAnswers } from "@/lib/bokasmidja/wizard";
 
 export const runtime = "nodejs";
-
-const BOOK_EMOJI = ["📕", "📗", "📘", "📙", "📔", "📒"];
 
 export async function POST(req: Request) {
   const auth = await requireViewer(req);
@@ -36,25 +34,16 @@ export async function POST(req: Request) {
     idea = { kind: "wizard", answers, heroName: cleanLine(raw.heroName, 40), extra: cleanText(raw.extra, 400) };
   } else return fail("bad_request");
 
-  let bookId = typeof body.bookId === "string" && UUID_RE.test(body.bookId) ? body.bookId : null;
-  let position = 1;
-  if (bookId) {
-    const [{ data: book }, { data: last }] = await Promise.all([
-      supabaseAdmin.from("bk_books").select("id, planned_stories").eq("id", bookId).maybeSingle(),
-      supabaseAdmin.from("bk_stories").select("position").eq("book_id", bookId).order("position", { ascending: false }).limit(1),
-    ]);
-    if (!book) return fail("not_found", 404);
-    position = (last?.[0]?.position ?? 0) + 1;
-    if (position > book.planned_stories) return fail("book_full");
-  } else {
-    const { count } = await supabaseAdmin.from("bk_books").select("id", { count: "exact", head: true });
-    const n = count ?? 0;
-    const { data: book, error } = await supabaseAdmin.from("bk_books").insert({
-      color: COLORS[n % COLORS.length], emoji: BOOK_EMOJI[n % BOOK_EMOJI.length], planned_stories: 1, created_by: viewerId(viewer),
-    }).select("id").single();
-    if (error || !book) return fail("failed", 500);
-    bookId = book.id;
-  }
+  const bookId = typeof body.bookId === "string" && UUID_RE.test(body.bookId) ? body.bookId : null;
+  if (!bookId) return fail("bad_request");
+  const [{ data: book }, { data: last }, { count }] = await Promise.all([
+    supabaseAdmin.from("bk_books").select("id").eq("id", bookId).maybeSingle(),
+    supabaseAdmin.from("bk_stories").select("position").eq("book_id", bookId).order("position", { ascending: false }).limit(1),
+    supabaseAdmin.from("bk_stories").select("id", { count: "exact", head: true }).eq("book_id", bookId),
+  ]);
+  if (!book) return fail("not_found", 404);
+  if ((count ?? 0) >= MAX_STORIES) return fail("book_full");
+  const position = (last?.[0]?.position ?? 0) + 1;
 
   const { data: story, error } = await supabaseAdmin.from("bk_stories").insert({
     book_id: bookId, position, status: "idea", source_lang: body.lang, idea, created_by: viewerId(viewer),

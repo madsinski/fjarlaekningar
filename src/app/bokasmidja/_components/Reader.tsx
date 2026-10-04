@@ -201,12 +201,12 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
     setBusy(true);
     const res = await call("DELETE", `/api/bokasmidja/stories/${story.id}`);
     if (!res.ok) { setBusy(false); setNote(errorText(t, res.error)); return; }
-    router.push(res.bookGone ? "/bokasmidja/books" : backHref);
+    router.push(backHref);
     router.refresh();
   };
 
   const status = phase.kind === "painting" && phase.n ? t("studio.painting", { n: phase.n, total: phase.total })
-    : phase.kind === "translating" ? t("studio.translating") : "";
+    : phase.kind === "translating" ? t("studio.translating") : phase.kind === "polishing" ? t("studio.polishing") : "";
 
   return (
     <div ref={root} className="bk-root flex min-h-screen flex-col">

@@ -87,7 +87,46 @@ const M = {
   "shelf.stories": ["{done} of {total} stories", "{done} af {total} sögum", "{done} av {total} historier", "{done} / {total} mese"],
   "shelf.newBook": ["New book", "Ný bók", "Ny bok", "Új könyv"],
 
+  // New book
+  "newbook.question": ["What is your book called?", "Hvað heitir bókin þín?", "Hva heter boken din?", "Mi a könyved címe?"],
+  "newbook.placeholder": ["The name of the book", "Nafn bókarinnar", "Navnet på boken", "A könyv címe"],
+  "newbook.create": ["Create the book", "Búa bókina til", "Lag boken", "Könyv létrehozása"],
+  "newbook.later": ["Choose the name later", "Velja nafnið seinna", "Velg navnet senere", "Később választok címet"],
+  "newbook.laterSub": [
+    "The book borrows the name of your first story. You can change it any time.",
+    "Bókin fær nafn fyrstu sögunnar þinnar að láni. Þú getur breytt því hvenær sem er.",
+    "Boken låner navnet til den første historien din. Du kan endre det når som helst.",
+    "A könyv az első meséd címét kapja kölcsön. Bármikor megváltoztathatod.",
+  ],
+  "newbook.or": ["or", "eða", "eller", "vagy"],
+
+  // Cover and moving stories
+  "cover.button": ["Cover", "Kápa", "Omslag", "Borító"],
+  "cover.title": ["The cover of the book", "Kápa bókarinnar", "Omslaget til boken", "A könyv borítója"],
+  "cover.ai": ["Paint a cover", "Mála kápu", "Mal et omslag", "Borító festése"],
+  "cover.aiSub": ["The painter makes one from the stories in the book", "Málarinn býr hana til úr sögunum í bókinni", "Maleren lager det ut fra historiene i boken", "A festő a könyv meséiből készíti el"],
+  "cover.drawing": ["Use my drawing", "Nota teikninguna mína", "Bruk tegningen min", "A rajzomat használom"],
+  "cover.drawingSub": ["The painter turns your drawing into a cover", "Málarinn breytir teikningunni þinni í kápu", "Maleren gjør tegningen din om til et omslag", "A festő borítót készít a rajzodból"],
+  "cover.image": ["Use a finished picture", "Nota tilbúna mynd", "Bruk et ferdig bilde", "Kész kép használata"],
+  "cover.imageSub": ["It is shown exactly as it is", "Hún er sýnd nákvæmlega eins og hún er", "Det vises akkurat som det er", "Pontosan úgy jelenik meg, ahogy van"],
+  "cover.remove": ["Remove the cover", "Fjarlægja kápuna", "Fjern omslaget", "Borító eltávolítása"],
+  "cover.working": [
+    "The painter is making the cover… This takes a minute or two.",
+    "Málarinn er að búa til kápuna… Þetta tekur eina til tvær mínútur.",
+    "Maleren lager omslaget… Det tar et minutt eller to.",
+    "A festő készíti a borítót… Ez egy-két percig tart.",
+  ],
+  "move.button": ["Move to another book", "Færa í aðra bók", "Flytt til en annen bok", "Áthelyezés másik könyvbe"],
+  "move.title": ["Which book should “{title}” go in?", "Í hvaða bók á sagan „{title}“ að fara?", "Hvilken bok skal «{title}» inn i?", "Melyik könyvbe kerüljön: „{title}”?"],
+  "move.none": ["There is no other book yet. Make one first.", "Það er engin önnur bók til enn. Búðu fyrst til nýja.", "Det finnes ingen annen bok ennå. Lag en først.", "Még nincs másik könyv. Előbb készíts egyet."],
+
   // Book
+  "book.rename": ["Change the name", "Breyta nafninu", "Endre navnet", "Cím módosítása"],
+  "book.name": ["The name of the book", "Nafn bókarinnar", "Navnet på boken", "A könyv címe"],
+  "book.addStory": ["Add a story", "Bæta við sögu", "Legg til en historie", "Új mese hozzáadása"],
+  "book.nextFirst": ["Make the first story", "Búðu til fyrstu söguna", "Lag den første historien", "Készítsd el az első mesét"],
+  "book.delete": ["Delete the book", "Eyða bókinni", "Slett boken", "Könyv törlése"],
+  "shelf.count": ["Stories: {n}", "Sögur: {n}", "Historier: {n}", "Mesék: {n}"],
   "book.story": ["Story {n}", "Saga {n}", "Historie {n}", "{n}. mese"],
   "book.make": ["Make this story", "Búa þessa sögu til", "Lag denne historien", "Készítsd el ezt a mesét"],
   "book.next": ["Next step", "Næsta skref", "Neste steg", "Következő lépés"],
@@ -136,6 +175,19 @@ const M = {
   "studio.writing": ["The writer is inventing your story…", "Höfundurinn er að semja söguna þína…", "Forfatteren dikter historien din…", "Az író éppen kitalálja a mesédet…"],
   "studio.painting": ["Painting picture {n} of {total}…", "Mála mynd {n} af {total}…", "Maler bilde {n} av {total}…", "Készül a(z) {n}. kép a(z) {total}-ból…"],
   "studio.translating": ["Telling the story in the other languages…", "Segi söguna á hinum tungumálunum…", "Forteller historien på de andre språkene…", "A mese elmesélése a többi nyelven…"],
+  "studio.polishing": [
+    "Proofreading the Icelandic, word by word…",
+    "Les yfir íslenskuna, orð fyrir orð…",
+    "Leser korrektur på islandsken, ord for ord…",
+    "Az izlandi szöveg ellenőrzése, szóról szóra…",
+  ],
+  "edit.checkIcelandic": ["Proofread the Icelandic", "Lesa yfir íslenskuna", "Les korrektur på islandsken", "Izlandi szöveg ellenőrzése"],
+  "edit.checkingIcelandic": [
+    "Proofreading the Icelandic… This takes a minute or two.",
+    "Les yfir íslenskuna… Þetta tekur eina til tvær mínútur.",
+    "Leser korrektur på islandsken… Det tar et minutt eller to.",
+    "Az izlandi szöveg ellenőrzése… Ez egy-két percig tart.",
+  ],
   "studio.wait": [
     "This takes a few minutes. You can start reading while the pictures are painted!",
     "Þetta tekur nokkrar mínútur. Þú mátt byrja að lesa á meðan myndirnar eru málaðar!",

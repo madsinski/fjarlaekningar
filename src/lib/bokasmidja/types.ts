@@ -62,6 +62,8 @@ export interface StoryView {
   createdBy: string | null;
   authorName: string | null;
   cover: string | null;
+  /** The Icelandic text has been through the proofreading step. */
+  polishedIs?: boolean;
   pages?: PageView[];
 }
 
@@ -73,6 +75,10 @@ export interface BookView {
   emoji: string;
   plannedStories: number;
   createdBy: string | null;
+  /** Cover picture drawn by the illustrator. */
+  coverSvg: string | null;
+  /** A finished cover image was uploaded (served by /api/bokasmidja/books/:id/cover). */
+  coverImage: string | null;
   stories: StoryView[];
 }
 
@@ -81,6 +87,7 @@ export type Idea =
   | { kind: "wizard"; answers: Record<string, string>; heroName: string; extra: string };
 
 export const MAX_PAGES = 20;
+export const MAX_STORIES = 30;
 
 /** Illustration canvas. Every page picture uses this viewBox. */
 export const ART_W = 1200;

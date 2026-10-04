@@ -64,6 +64,7 @@ function toStory(r: any, texts: any[], names: Map<string, string>, cover: string
     id: r.id, bookId: r.book_id, position: r.position, status: r.status,
     sourceLang: isLang(r.source_lang) ? r.source_lang : "is",
     title, summary, createdBy: r.created_by, authorName: r.created_by ? names.get(r.created_by) ?? null : null, cover,
+    polishedIs: texts.some((t) => t.lang === "is" && !!t.polished_at),
   };
 }
 
@@ -74,7 +75,7 @@ async function childNames(): Promise<Map<string, string>> {
 
 /** Allar bækur með sögunum sínum. `covers` sækir fyrstu mynd hverrar sögu. */
 export async function loadBooks(opts: { bookId?: string; covers?: boolean } = {}): Promise<BookView[]> {
-  let q = supabaseAdmin.from("bk_books").select("id, title, subtitle, color, emoji, planned_stories, created_by, created_at").order("created_at");
+  let q = supabaseAdmin.from("bk_books").select("id, title, subtitle, color, emoji, planned_stories, created_by, created_at, cover_svg, cover_image_path").order("created_at");
   if (opts.bookId) q = q.eq("id", opts.bookId);
   const { data: books } = await q;
   if (!books?.length) return [];
@@ -93,6 +94,9 @@ export async function loadBooks(opts: { bookId?: string; covers?: boolean } = {}
   return books.map((b: any) => ({
     id: b.id, title: i18n(b.title), subtitle: i18n(b.subtitle), color: b.color, emoji: b.emoji,
     plannedStories: b.planned_stories, createdBy: b.created_by,
+    coverSvg: b.cover_svg ?? null,
+    // Slóðin breytist með hverri nýrri kápu, svo vafrinn sæki nýju myndina.
+    coverImage: b.cover_image_path ? `/api/bokasmidja/books/${b.id}/cover?v=${encodeURIComponent(String(b.cover_image_path).slice(-12))}` : null,
     stories: (stories || []).filter((s: any) => s.book_id === b.id)
       .map((s: any) => toStory(s, (texts || []).filter((t: any) => t.story_id === s.id), names, coverOf.get(s.id) ?? null)),
   }));
@@ -104,7 +108,7 @@ export async function loadStory(id: string): Promise<(StoryView & { pages: PageV
     .select("id, book_id, position, status, source_lang, created_by").eq("id", id).maybeSingle();
   if (!s) return null;
   const [{ data: texts }, { data: pages }, names] = await Promise.all([
-    supabaseAdmin.from("bk_story_texts").select("lang, title, summary").eq("story_id", id),
+    supabaseAdmin.from("bk_story_texts").select("lang, title, summary, polished_at").eq("story_id", id),
     supabaseAdmin.from("bk_pages").select("id, position, svg, layout, auto_art, drawing_path").eq("story_id", id).order("position").order("created_at"),
     childNames(),
   ]);
@@ -167,7 +171,7 @@ export async function editablePage(viewer: Viewer, pageId: string) {
 export async function editableStory(viewer: Viewer, storyId: string) {
   if (!UUID_RE.test(storyId)) return { res: fail("bad_request") } as const;
   const { data: story } = await supabaseAdmin.from("bk_stories")
-    .select("id, book_id, status, source_lang, created_by").eq("id", storyId).maybeSingle();
+    .select("id, book_id, position, status, source_lang, created_by").eq("id", storyId).maybeSingle();
   if (!story) return { res: fail("not_found", 404) } as const;
   if (!canEdit(viewer, story.created_by)) return { res: fail("not_yours", 403) } as const;
   return { story } as const;
@@ -181,4 +185,22 @@ export async function renumberPages(storyId: string, order?: string[]) {
     ids = (data || []).map((p) => p.id);
   }
   await Promise.all(ids.map((id, i) => supabaseAdmin.from("bk_pages").update({ position: i + 1 }).eq("id", id).eq("story_id", storyId)));
+}
+
+/** Raunveruleg myndtegund eftir fyrstu bætum, óháð því sem vafrinn segir. */
+export function sniffImage(buf: Buffer): "image/jpeg" | "image/png" | null {
+  if (buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "image/jpeg";
+  if (buf.length > 8 && buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return "image/png";
+  return null;
+}
+
+export const IMAGE_MAX_BYTES = 3_000_000;
+
+/** Les base64-mynd úr beiðni. Skilar null ef hún er ekki JPEG/PNG innan marka. */
+export function readImage(raw: unknown): { b64: string; bytes: Buffer; mediaType: "image/jpeg" | "image/png" } | null {
+  const b64 = typeof raw === "string" ? raw : "";
+  if (!b64 || b64.length > IMAGE_MAX_BYTES * 1.4 || !/^[A-Za-z0-9+/=]+$/.test(b64)) return null;
+  const bytes = Buffer.from(b64, "base64");
+  const mediaType = sniffImage(bytes);
+  return mediaType && bytes.length <= IMAGE_MAX_BYTES ? { b64, bytes, mediaType } : null;
 }

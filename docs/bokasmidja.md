@@ -72,10 +72,47 @@ Every step is safe to repeat. If the page is closed, opening the story again
 continues where it stopped. Two devices opening the same story do not paint the
 same page twice.
 
-Limits per day: a child can start 5 stories; a grown-up 30.
+Limits per day: a child can start 5 stories and 10 books; a grown-up 30 and 40.
 
 In the reader, the "…" menu has: make a PDF, full screen, change the book,
 fix the text of a page, paint a picture again, and delete the story.
+
+## Books, stories and covers
+
+- **A book comes first.** "Make a new book" asks for the book's name. It can be
+  named straight away, or "Choose the name later": the book then borrows the
+  name of its first story (in every language) until someone names it.
+- **Renaming** — "Change the name" on the book page, in the language you are
+  using. Open to the child who made the book and to grown-ups.
+- **Adding stories** — every book has an "Add a story" card; a book holds up to
+  30 stories. Deleting a story never deletes the book.
+- **Moving a story** — "Move to another book" under a story card. The story
+  goes to the end of the other book.
+- **Cover** — the "Cover" button offers three ways: the painter makes one from
+  the stories in the book; a child's drawing is redrawn as a cover; or a
+  finished picture is uploaded and shown exactly as it is. The cover appears
+  on the shelf and as the first page of the book's PDF.
+
+## Icelandic
+
+Every Icelandic story text is proofread before it counts as finished
+(`src/lib/bokasmidja/icelandic.ts`), whether it was written in Icelandic or
+re-told into it:
+
+1. **GreynirCorrect** (Miðeind, the engine behind yfirlestur.is) parses the
+   text and marks grammar and spelling errors. It understands Icelandic case
+   and agreement, which general language models do not do reliably.
+2. **An editor pass** corrects what is wrong and checks doubtful inflections
+   and phrasing with web search. The search is limited to children's material
+   and language authorities — BÍN and málið.is (Árnastofnun), folk tales and
+   fairy tales (Netútgáfan, Wikisource), KrakkaRÚV, school reading material and
+   children's publishers. It cannot reach medical, legal or technical writing.
+3. **A second, narrow pass** fixes whatever GreynirCorrect still reports,
+   changing nothing else.
+
+The story itself is not rewritten: same pages, names, sound words and jokes.
+In the editor, "Proofread the Icelandic" runs it again after manual changes.
+It adds about one to two minutes per story.
 
 ## Changing a book
 
@@ -123,6 +160,7 @@ shows as a text-only page.
 |---|---|
 | `src/lib/bokasmidja/auth.ts` | Device trust, sessions, PIN rules |
 | `src/lib/bokasmidja/agents.ts` | The writer, translator and illustrator prompts and calls (OpenAI or Claude) |
+| `src/lib/bokasmidja/icelandic.ts` | Icelandic proofreading: GreynirCorrect + editor with source-limited web search |
 | `src/lib/bokasmidja/svg.ts` | SVG sanitizer |
 | `src/lib/bokasmidja/wizard.ts` | The questionnaire, in four languages |
 | `src/lib/bokasmidja/i18n.ts` | Interface strings, in four languages |
