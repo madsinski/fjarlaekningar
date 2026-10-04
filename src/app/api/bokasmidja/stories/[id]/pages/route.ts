@@ -23,7 +23,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const { data, error } = await supabaseAdmin.from("bk_pages")
     .insert({ story_id: id, position, auto_art: false }).select("id, position").single();
   if (error || !data) return fail("failed", 500);
-  return json({ ok: true, page: { id: data.id, position: data.position, text: {}, level: 1, svg: null, layout: "art-first", autoArt: false, hasDrawing: false } });
+  return json({ ok: true, page: { id: data.id, position: data.position, text: {}, level: 1, svg: null, layout: "art-first", autoArt: false, hasDrawing: false, reviewed: true } });
 }
 
 export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }) {

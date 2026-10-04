@@ -226,7 +226,8 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
   };
 
   const status = phase.kind === "painting" && phase.n ? t("studio.painting", { n: phase.n, total: phase.total })
-    : phase.kind === "translating" ? t("studio.translating") : phase.kind === "polishing" ? t("studio.polishing") : "";
+    : phase.kind === "translating" ? t("studio.translating") : phase.kind === "polishing" ? t("studio.polishing")
+    : phase.kind === "sheet" ? t("studio.sheet") : phase.kind === "refining" ? t("studio.refining", { n: phase.n, total: phase.total }) : "";
 
   return (
     <div ref={root} className="bk-root flex min-h-screen flex-col">

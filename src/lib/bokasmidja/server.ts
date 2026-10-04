@@ -106,11 +106,11 @@ export async function loadBooks(opts: { bookId?: string; covers?: boolean } = {}
 /** Ein saga með síðum og textum á öllum málum. */
 export async function loadStory(id: string): Promise<(StoryView & { pages: PageView[] }) | null> {
   const { data: s } = await supabaseAdmin.from("bk_stories")
-    .select("id, book_id, position, status, source_lang, created_by, lengths").eq("id", id).maybeSingle();
+    .select("id, book_id, position, status, source_lang, created_by, lengths, art").eq("id", id).maybeSingle();
   if (!s) return null;
   const [{ data: texts }, { data: pages }, names] = await Promise.all([
     supabaseAdmin.from("bk_story_texts").select("lang, title, summary, polished_at").eq("story_id", id),
-    supabaseAdmin.from("bk_pages").select("id, position, svg, layout, auto_art, drawing_path, level").eq("story_id", id).order("position").order("created_at"),
+    supabaseAdmin.from("bk_pages").select("id, position, svg, layout, auto_art, drawing_path, level, reviewed").eq("story_id", id).order("position").order("created_at"),
     childNames(),
   ]);
   const pageIds = (pages || []).map((p: any) => p.id);
@@ -125,9 +125,9 @@ export async function loadStory(id: string): Promise<(StoryView & { pages: PageV
       if (t.page_id !== p.id || !isLang(t.lang)) continue;
       (t.length === 3 ? textL : t.length === 2 ? textM : text)[t.lang as Lang] = t.text;
     }
-    return { id: p.id, position: p.position, svg: p.svg, text, textM, textL, level: p.level === 3 ? 3 : p.level === 2 ? 2 : 1, layout: p.layout === "text-first" ? "text-first" : "art-first", autoArt: p.auto_art !== false, hasDrawing: !!p.drawing_path };
+    return { id: p.id, position: p.position, svg: p.svg, text, textM, textL, level: p.level === 3 ? 3 : p.level === 2 ? 2 : 1, layout: p.layout === "text-first" ? "text-first" : "art-first", autoArt: p.auto_art !== false, hasDrawing: !!p.drawing_path, reviewed: p.reviewed === true };
   });
-  return { ...toStory(s, texts || [], names, views[0]?.svg ?? null), pages: views };
+  return { ...toStory(s, texts || [], names, views[0]?.svg ?? null), hasSheet: !!s.art?.sheetSvg, pages: views };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 

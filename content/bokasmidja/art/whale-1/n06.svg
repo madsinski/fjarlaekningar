@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900">
+  <defs>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a8fd0"/><stop offset="0.5" stop-color="#1f66a8"/><stop offset="1" stop-color="#0f3d74"/></linearGradient>
+    <radialGradient id="warm" gradientUnits="userSpaceOnUse" cx="880" cy="480" r="760"><stop offset="0" stop-color="#ffd27a"/><stop offset="0.3" stop-color="#ff9a3c" stop-opacity="0.95"/><stop offset="0.55" stop-color="#f0703a" stop-opacity="0.65"/><stop offset="0.8" stop-color="#c0607a" stop-opacity="0.25"/><stop offset="1" stop-color="#c0607a" stop-opacity="0"/></radialGradient>
+    <linearGradient id="rock" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6a4a5a"/><stop offset="1" stop-color="#2c1f2c"/></linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1c3a70"/><stop offset="0.5" stop-color="#5a3558"/><stop offset="1" stop-color="#7a3a2c"/></linearGradient>
+    <radialGradient id="hole" cx="0.6" cy="0.5" r="0.6"><stop offset="0" stop-color="#ffe08a"/><stop offset="0.3" stop-color="#ff9a3c"/><stop offset="0.7" stop-color="#e03a20"/><stop offset="1" stop-color="#8a1a14"/></radialGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffb347" stop-opacity="0.75"/><stop offset="0.5" stop-color="#ff5a2a" stop-opacity="0.3"/><stop offset="1" stop-color="#ff5a2a" stop-opacity="0"/></radialGradient>
+    <linearGradient id="whaleBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.6" stop-color="#f1f7fc"/><stop offset="1" stop-color="#c9dcec"/></linearGradient>
+    <linearGradient id="whaleFin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef5fb"/><stop offset="1" stop-color="#bcd2e6"/></linearGradient>
+    <clipPath id="in"><rect x="0" y="0" width="906" height="900"/><ellipse cx="906" cy="480" rx="118" ry="140"/></clipPath>
+  </defs>
+<rect width="1200" height="900" fill="url(#sea)"/>
+<rect width="1200" height="900" fill="url(#warm)"/>
+<path d="M440 900 C570 810 650 650 706 490 C746 376 806 226 884 116 L922 90 L952 108 L992 82 L1040 100 L1200 70 L1200 900 Z" fill="url(#rock)"/>
+<path d="M440 900 C570 810 650 650 706 490 C746 376 806 226 884 116 L906 101 C840 220 790 360 750 480 C700 640 620 800 500 900 Z" fill="#9a6468" opacity="0.7"/>
+<path d="M960 240 L1040 210 L1100 260 L1010 300 Z" fill="#7a5568" opacity="0.3"/>
+<path d="M1030 620 L1130 590 L1180 660 L1080 700 Z" fill="#7a5568" opacity="0.25"/>
+<path d="M700 760 L790 730 L850 790 L740 830 Z" fill="#7a5568" opacity="0.25"/>
+<ellipse cx="900" cy="480" rx="330" ry="330" fill="url(#halo)"/>
+<ellipse cx="896" cy="480" rx="142" ry="162" fill="#4a3344"/>
+<ellipse cx="902" cy="480" rx="134" ry="154" fill="#2c1f2c"/>
+<ellipse cx="906" cy="480" rx="118" ry="140" fill="#7a1414"/>
+<g data-anim="pulse">
+<ellipse cx="908" cy="480" rx="112" ry="134" fill="url(#hole)"/>
+</g>
+<g clip-path="url(#in)">
+<g transform="translate(492 134) scale(0.69)">
+<g data-anim="wiggle" data-tap="wiggle">
+<g transform="rotate(-48 312 468)"><path d="M300 470 C250 455 205 420 170 365 C150 335 150 300 170 285 C205 300 245 335 275 385 C270 330 280 285 305 255 C330 250 350 275 352 315 C356 375 345 430 330 470 Z" fill="url(#whaleFin)"/></g>
+<path d="M300 468 C330 400 430 318 600 300 C790 280 965 350 1010 470 C1045 565 965 660 790 680 C610 700 420 650 330 540 C310 515 298 492 300 468 Z" fill="url(#whaleBody)"/>
+<path d="M350 560 C450 640 620 680 790 664 C900 652 975 610 1000 555 C985 640 900 690 780 700 C610 714 430 660 350 560 Z" fill="#b9cfe3" opacity="0.75"/>
+<path d="M520 648 C600 668 700 672 790 660" fill="none" stroke="#a9c2d9" stroke-width="5" stroke-linecap="round"/>
+<path d="M560 622 C640 640 730 642 815 630" fill="none" stroke="#a9c2d9" stroke-width="5" stroke-linecap="round"/>
+
+</g>
+</g>
+</g>
+<path d="M930 346 C1056 372 1056 588 930 614 C1004 566 1004 394 930 346 Z" fill="#c8301e" opacity="0.28"/>
+<path d="M968 362 C1040 400 1040 560 968 598 C1012 550 1012 410 968 362 Z" fill="#7a1414" opacity="0.3"/>
+<!-- rumble lines shaking the rock -->
+<g data-anim="pulse">
+<path d="M800 286 C860 262 950 262 1010 288 M780 250 C860 216 960 216 1040 254 M1062 380 C1086 440 1086 520 1062 580 M1100 350 C1134 440 1134 520 1100 610 M800 676 C860 700 950 700 1010 674" fill="none" stroke="#ff9a3c" stroke-width="9" stroke-linecap="round"/>
+<path d="M1050 268 L1066 284 L1050 300 L1066 316 M1090 250 L1106 266 L1090 282 L1106 298 M1046 640 L1062 656 L1046 672 L1062 688 M720 222 L736 238 L720 254 L736 270" fill="none" stroke="#f0703a" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<path d="M800 300 L776 268 M846 286 L838 250 M800 664 L778 696 M846 678 L840 712" fill="none" stroke="#fff0a0" stroke-width="7" stroke-linecap="round"/>
+<!-- tail stiff as a board -->
+<path d="M530 404 L500 396 M524 440 L490 440 M534 476 L504 486" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+<!-- the snail, listening -->
+<path d="M800 340 C808 332 810 322 806 312 M818 350 C830 338 832 322 826 306" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.7"/>
+<g transform="translate(744 354) rotate(-36) scale(1.3)">
+<g data-anim="wiggle" data-tap="hide">
+
+<path d="M-30 22 C-30 12 -16 8 26 10 C40 10 46 18 40 24 Z" fill="#f2c9a0"/>
+<circle cx="0" cy="0" r="22" fill="#6fb0c9"/>
+<path d="M0 0 C8 -8 16 2 8 8 C-2 14 -12 4 -6 -8 C2 -20 20 -12 20 2" fill="none" stroke="#3f7f99" stroke-width="4" stroke-linecap="round"/>
+<path d="M36 16 C46 14 54 16 62 20 M34 20 C42 22 48 24 54 26" fill="none" stroke="#f2c9a0" stroke-width="4" stroke-linecap="round"/>
+<ellipse cx="66" cy="20" rx="6" ry="4" fill="#ffffff"/><ellipse cx="58" cy="27" rx="6" ry="4" fill="#ffffff"/>
+<circle cx="67" cy="20" r="2" fill="#1d2b3a"/><circle cx="59" cy="27" r="2" fill="#1d2b3a"/>
+
+</g>
+</g>
+<g data-anim="sway">
+<path d="M70 860 C40 780 100 740 66 650 C120 730 84 790 104 860 Z" fill="#2fae7d"/>
+<path d="M120 860 C100 800 150 770 128 710 C168 770 140 810 152 860 Z" fill="#48c78f"/>
+<path d="M30 860 C16 810 50 790 34 740 C66 790 46 820 58 860 Z" fill="#1f9468"/>
+</g>
+<path d="M0 836 C250 806 500 850 760 826 C900 814 1040 836 1200 816 L1200 900 L0 900 Z" fill="url(#floor)"/>
+<g data-anim="float">
+<circle cx="560" cy="200" r="16" fill="#ffffff" opacity="0.28"/><circle cx="555" cy="195" r="5" fill="#ffffff" opacity="0.7"/><circle cx="610" cy="150" r="9" fill="#ffffff" opacity="0.28"/><circle cx="520" cy="130" r="7" fill="#ffffff" opacity="0.28"/>
+</g>
+<!-- pebbles hopping -->
+<path d="M700 800 C692 790 692 778 700 768 M742 800 C750 790 750 778 742 768 M800 812 C794 804 794 796 800 788 M836 812 C842 804 842 796 836 788 M640 824 C636 818 636 812 640 806 M668 824 C672 818 672 812 668 806" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.6"/>
+<ellipse cx="721" cy="826" rx="20" ry="5" fill="#1e1420" opacity="0.35"/><ellipse cx="818" cy="830" rx="14" ry="4" fill="#1e1420" opacity="0.35"/><ellipse cx="654" cy="836" rx="10" ry="3" fill="#1e1420" opacity="0.35"/>
+<g data-anim="bob" data-tap="jump">
+<circle cx="721" cy="772" r="17" fill="#8a6474"/><circle cx="715" cy="766" r="6" fill="#b08a98"/>
+<circle cx="818" cy="792" r="12" fill="#8a6474"/><circle cx="814" cy="788" r="4" fill="#b08a98"/>
+<circle cx="654" cy="812" r="9" fill="#8a6474"/><circle cx="880" cy="820" r="7" fill="#8a6474"/><circle cx="600" cy="826" r="6" fill="#8a6474"/>
+</g>
+<!-- the little fish looks for thunder -->
+<g transform="translate(214 318) rotate(-38) scale(1.15)">
+<g data-anim="swim" data-tap="hide">
+
+<polygon points="-39,0 -84,-30 -76,0 -84,30" fill="#259c8f"/>
+<ellipse cx="0" cy="0" rx="50" ry="31" fill="#3fc1b0"/>
+<path d="M6 -28 C-8 -52 -30 -48 -34 -24 Z" fill="#259c8f"/>
+<path d="M8 14 C-4 28 -18 26 -20 14 Z" fill="#259c8f"/>
+
+<circle cx="24" cy="-8" r="13" fill="#ffffff"/><circle cx="29" cy="-12" r="6" fill="#1d2b3a"/><path d="M10 -28 C18 -34 30 -34 38 -28" fill="none" stroke="#17695f" stroke-width="4" stroke-linecap="round"/>
+<ellipse cx="42" cy="16" rx="6" ry="7" fill="#17695f"/>
+</g>
+</g>
+<path d="M300 196 L316 164 M330 222 L362 204 M266 190 L262 156" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+<path d="M250 900 C262 846 310 812 372 812 C420 790 500 792 546 820 C596 826 632 860 640 900 Z" fill="#3a2a3a"/>
+<path d="M300 838 C330 814 372 812 372 812 C420 790 500 792 546 820 C500 812 430 812 390 826 C356 824 326 830 300 838 Z" fill="#6a4a5a"/>
+<!-- the crab: behind the rock, NOW -->
+<path d="M330 812 C324 820 324 830 330 838 M532 812 C538 820 538 830 532 838 M258 760 L226 762 M262 782 L236 794" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.65"/>
+<g transform="translate(430 780) scale(1.15)">
+<g data-anim="wiggle" data-tap="jump">
+
+<path d="M-40 14 L-72 26 L-80 44 M-46 4 L-84 8 L-96 26 M-34 24 L-58 40 L-62 54 M40 14 L72 26 L80 44 M46 4 L84 8 L96 26 M34 24 L58 40 L62 54" fill="none" stroke="#c8402c" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M-46 -8 C-70 -12 -96 -6 -118 6 M46 -8 C74 -14 90 -30 90 -48" fill="none" stroke="#c8402c" stroke-width="12" stroke-linecap="round"/>
+<path d="M-130 12 L-152 10 A22 22 0 1 1 -143 30 Z" fill="#f06a4c"/><path d="M90 -62 L101 -81 A22 22 0 1 1 79 -81 Z" fill="#f06a4c"/>
+<path d="M-18 -28 L-22 -56 M18 -28 L22 -56" fill="none" stroke="#e8553d" stroke-width="8" stroke-linecap="round"/>
+<ellipse cx="0" cy="0" rx="58" ry="40" fill="#e8553d"/>
+<ellipse cx="-14" cy="-18" rx="28" ry="9" fill="#f47a5e" opacity="0.8"/>
+<circle cx="-22" cy="-66" r="18" fill="#ffffff"/><circle cx="22" cy="-66" r="18" fill="#ffffff"/><circle cx="-16" cy="-70" r="6" fill="#2b1d14"/><circle cx="28" cy="-70" r="6" fill="#2b1d14"/>
+<ellipse cx="0" cy="12" rx="13" ry="12" fill="#7a2318"/>
+
+</g>
+</g>
+</svg>

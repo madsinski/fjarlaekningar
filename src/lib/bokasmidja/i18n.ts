@@ -188,6 +188,18 @@ const M = {
     "Leser korrektur på islandsken… Det tar et minutt eller to.",
     "Az izlandi szöveg ellenőrzése… Ez egy-két percig tart.",
   ],
+  "studio.sheet": [
+    "The painter is designing the heroes of your story…",
+    "Málarinn er að hanna hetjurnar í sögunni þinni…",
+    "Maleren tegner heltene i historien din…",
+    "A festő megtervezi a meséd hőseit…",
+  ],
+  "studio.refining": [
+    "The painter is looking over picture {n} of {total} and touching it up…",
+    "Málarinn fer yfir mynd {n} af {total} og lagar hana til…",
+    "Maleren ser over bilde {n} av {total} og pusser på det…",
+    "A festő átnézi és csinosítja a(z) {n}. képet a(z) {total}-ból…",
+  ],
   "studio.wait": [
     "This takes a few minutes. You can start reading while the pictures are painted!",
     "Þetta tekur nokkrar mínútur. Þú mátt byrja að lesa á meðan myndirnar eru málaðar!",

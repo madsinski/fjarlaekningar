@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900">
+  <defs>
+    <linearGradient id="hot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a1626"/><stop offset="0.3" stop-color="#8a2c2a"/><stop offset="0.65" stop-color="#d8552a"/><stop offset="0.9" stop-color="#ff9a3c"/><stop offset="1" stop-color="#ffd27a"/></linearGradient>
+    <linearGradient id="wallL" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1e1420"/><stop offset="1" stop-color="#4a2a38"/></linearGradient>
+    <linearGradient id="wallR" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#1e1420"/><stop offset="1" stop-color="#4a2a38"/></linearGradient>
+    <linearGradient id="lava" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8a24"/><stop offset="0.5" stop-color="#e8481e"/><stop offset="1" stop-color="#b01c14"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff0a0" stop-opacity="0.9"/><stop offset="0.5" stop-color="#ffb347" stop-opacity="0.45"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe0ff" stop-opacity="0.34"/><stop offset="1" stop-color="#cfe0ff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="whaleBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.6" stop-color="#f1f7fc"/><stop offset="1" stop-color="#c9dcec"/></linearGradient>
+    <linearGradient id="whaleFin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef5fb"/><stop offset="1" stop-color="#bcd2e6"/></linearGradient>
+  </defs>
+<rect width="1200" height="900" fill="url(#hot)"/>
+<!-- the chimney, far walls closing in -->
+<path d="M452 0 C462 150 440 330 380 520 C450 330 520 150 524 0 Z" fill="#5a2230" opacity="0.55"/>
+<path d="M748 0 C738 150 760 330 820 520 C750 330 680 150 676 0 Z" fill="#5a2230" opacity="0.55"/>
+<path d="M524 70 C560 84 640 84 676 70 M508 170 C560 192 640 192 692 170 M486 290 C550 320 650 320 714 290 M452 430 C540 470 660 470 748 430" fill="none" stroke="#7a1414" stroke-width="12" stroke-linecap="round" opacity="0.22"/>
+<!-- starlight falling a long, long way -->
+<polygon points="566,20 634,20 800,760 400,760" fill="url(#beam)"/>
+<!-- the tiny way out -->
+<ellipse cx="600" cy="26" rx="76" ry="34" fill="#143f78" opacity="0.4"/>
+<ellipse cx="600" cy="22" rx="56" ry="24" fill="#143f78"/>
+<g data-anim="twinkle" data-tap="grow">
+<polygon points="588,8 591,17 600,20 591,23 588,32 585,23 576,20 585,17" fill="#fff6c8"/>
+<circle cx="622" cy="26" r="4" fill="#fff6c8"/><circle cx="566" cy="28" r="3" fill="#fff6c8"/><circle cx="608" cy="10" r="2" fill="#fff6c8"/>
+</g>
+<g data-anim="pulse">
+<ellipse cx="600" cy="880" rx="640" ry="300" fill="url(#glow)"/>
+</g>
+<!-- near walls, leaning in -->
+<path d="M0 0 L470 0 C470 130 440 290 390 440 C340 590 250 730 0 850 Z" fill="url(#wallL)"/>
+<path d="M470 0 C470 130 440 290 390 440 C340 590 250 730 0 850 L0 830 C236 716 322 582 370 436 C420 288 450 130 450 0 Z" fill="#e0502a" opacity="0.6"/>
+<path d="M1200 0 L730 0 C730 130 760 290 810 440 C860 590 950 730 1200 850 Z" fill="url(#wallR)"/>
+<path d="M730 0 C730 130 760 290 810 440 C860 590 950 730 1200 850 L1200 830 C964 716 878 582 830 436 C780 288 750 130 750 0 Z" fill="#e0502a" opacity="0.6"/>
+<path d="M70 180 L170 150 L220 230 L110 270 Z M250 60 L330 40 L360 110 L280 130 Z M1010 120 L1110 90 L1150 180 L1050 210 Z M900 30 L960 16 L984 70 L920 86 Z M1070 500 L1150 480 L1180 550 L1100 580 Z M300 330 L350 316 L366 366 L314 380 Z" fill="#5a3444" opacity="0.4"/>
+<!-- the tunnel he came through, a last wisp of green -->
+<ellipse cx="170" cy="610" rx="62" ry="92" fill="#e0502a" opacity="0.6"/>
+<ellipse cx="166" cy="610" rx="54" ry="84" fill="#120b14"/>
+<g data-anim="float">
+<circle cx="216" cy="580" r="24" fill="#b5d943"/><circle cx="210" cy="573" r="8" fill="#e6f07a"/>
+<circle cx="262" cy="540" r="14" fill="#b5d943"/><circle cx="296" cy="500" r="9" fill="#b5d943"/><circle cx="316" cy="462" r="5" fill="#b5d943"/>
+</g>
+<!-- two shy eyes in a crack -->
+<path d="M924 380 C940 350 1040 338 1070 362 C1060 396 960 410 924 380 Z" fill="#120b14"/>
+<g data-anim="blink" data-tap="hide">
+<circle cx="974" cy="376" r="13" fill="#fff6c8"/><circle cx="1010" cy="372" r="13" fill="#fff6c8"/>
+<circle cx="969" cy="380" r="5" fill="#1d2b3a"/><circle cx="1005" cy="376" r="5" fill="#1d2b3a"/>
+</g>
+<!-- smoke -->
+<g data-anim="drift">
+<path d="M770 770 C810 710 740 660 770 600 C790 560 760 530 740 510" fill="none" stroke="#fff0dc" stroke-width="14" stroke-linecap="round" opacity="0.35"/>
+<path d="M430 760 C400 720 440 690 420 650" fill="none" stroke="#fff0dc" stroke-width="12" stroke-linecap="round" opacity="0.3"/>
+</g>
+<!-- hero, looking up -->
+<path d="M640 300 L650 262 M690 316 L716 284 M596 308 L586 272" fill="none" stroke="#fff0a0" stroke-width="6" stroke-linecap="round" opacity="0.8"/>
+<g transform="translate(238 512) rotate(-33) scale(0.44)">
+<g data-anim="float" data-tap="wiggle">
+<path d="M300 470 C250 455 205 420 170 365 C150 335 150 300 170 285 C205 300 245 335 275 385 C270 330 280 285 305 255 C330 250 350 275 352 315 C356 375 345 430 330 470 Z" fill="url(#whaleFin)"/>
+<path d="M300 468 C330 400 430 318 600 300 C790 280 965 350 1010 470 C1045 565 965 660 790 680 C610 700 420 650 330 540 C310 515 298 492 300 468 Z" fill="url(#whaleBody)"/>
+<path d="M350 560 C450 640 620 680 790 664 C900 652 975 610 1000 555 C985 640 900 690 780 700 C610 714 430 660 350 560 Z" fill="#b9cfe3" opacity="0.75"/>
+<path d="M520 648 C600 668 700 672 790 660" fill="none" stroke="#a9c2d9" stroke-width="5" stroke-linecap="round"/>
+<path d="M560 622 C640 640 730 642 815 630" fill="none" stroke="#a9c2d9" stroke-width="5" stroke-linecap="round"/>
+<path d="M640 590 C620 650 580 700 520 725 C505 700 520 650 560 610 C585 588 615 580 640 590 Z" fill="url(#whaleFin)"/>
+<ellipse cx="700" cy="298" rx="16" ry="6" fill="#9db7cf"/>
+<ellipse cx="896" cy="522" rx="38" ry="24" fill="#f8b9c6" opacity="0.85"/><g data-anim="blink"><circle cx="880" cy="432" r="40" fill="#e3edf6"/><circle cx="882" cy="430" r="37" fill="#ffffff"/><circle cx="892" cy="420" r="22" fill="#1d2b3a"/><circle cx="900" cy="410" r="7" fill="#ffffff"/></g><path d="M840 366 C864 344 900 342 926 358" fill="none" stroke="#7d97b0" stroke-width="7" stroke-linecap="round"/><ellipse cx="972" cy="572" rx="15" ry="13" fill="#3a5068"/>
+
+</g>
+</g>
+<!-- lava, far below -->
+<g transform="translate(0 50)">
+<path d="M-40 800 C80 770 180 812 300 790 C420 768 520 812 640 792 C760 772 880 812 1000 790 C1100 774 1180 800 1240 786 L1240 900 L-40 900 Z" fill="url(#lava)"/>
+<path d="M-40 800 C80 770 180 812 300 790 C420 768 520 812 640 792 C760 772 880 812 1000 790 C1100 774 1180 800 1240 786" fill="none" stroke="#ffe98a" stroke-width="10" stroke-linecap="round"/>
+<path d="M120 830 C200 818 260 840 340 828 M520 846 C600 834 680 852 760 840 M900 826 C960 818 1020 834 1080 824" fill="none" stroke="#ffc85a" stroke-width="8" stroke-linecap="round" opacity="0.8"/>
+</g>
+<g data-anim="bob" data-tap="jump">
+<circle cx="470" cy="838" r="30" fill="#ffb347"/><circle cx="461" cy="829" r="10" fill="#fff6c8"/>
+<circle cx="463" cy="845" r="4" fill="#7a2318"/><circle cx="481" cy="845" r="4" fill="#7a2318"/>
+<path d="M465 854 C470 859 476 859 481 854" fill="none" stroke="#7a2318" stroke-width="3" stroke-linecap="round"/>
+</g>
+<g data-anim="bob" data-tap="splash">
+<circle cx="760" cy="840" r="20" fill="#ffb347"/><circle cx="754" cy="834" r="7" fill="#fff6c8"/><circle cx="810" cy="806" r="8" fill="#ff9a2e"/><circle cx="716" cy="812" r="6" fill="#ff9a2e"/>
+</g>
+<path d="M0 900 L0 846 C60 838 120 852 150 876 C164 886 170 894 172 900 Z" fill="#1e1420"/>
+<path d="M1200 900 L1200 840 C1140 832 1080 850 1050 876 C1038 886 1032 894 1030 900 Z" fill="#1e1420"/>
+</svg>

@@ -59,7 +59,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     const path = `drawings/${id}-${Date.now().toString(36)}.${mediaType === "image/png" ? "png" : "jpg"}`;
     const { error } = await supabaseAdmin.storage.from(AUDIO_BUCKET).upload(path, bytes, { contentType: mediaType, upsert: true });
     if (!error && page.drawing_path) await supabaseAdmin.storage.from(AUDIO_BUCKET).remove([page.drawing_path]);
-    await supabaseAdmin.from("bk_pages").update({ svg, auto_art: false, ...(error ? {} : { drawing_path: path }) }).eq("id", id);
+    await supabaseAdmin.from("bk_pages").update({ svg, auto_art: false, reviewed: false, ...(error ? {} : { drawing_path: path }) }).eq("id", id);
     await refreshStoryStatus(story.id);
     await unlock(lock);
     return json({ ok: true, svg, hasDrawing: !error || !!page.drawing_path });

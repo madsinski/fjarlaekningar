@@ -59,6 +59,8 @@ export interface PageView {
   autoArt: boolean;
   /** The child uploaded a drawing for this page. */
   hasDrawing: boolean;
+  /** The illustrator has looked at this picture and corrected it (or it is hand-made). */
+  reviewed: boolean;
 }
 
 export interface StoryView {
@@ -76,6 +78,8 @@ export interface StoryView {
   polishedIs?: boolean;
   /** Longest version the story has: 1 (one length only) or 3 (short, medium and long). */
   lengths: number;
+  /** The characters have been designed (a character sheet exists). */
+  hasSheet?: boolean;
   pages?: PageView[];
 }
 

@@ -220,3 +220,10 @@ begin
     alter table public.bk_audio add primary key (page_id, lang, length);
   end if;
 end $$;
+
+-- ── Yfirferð mynda (2026-10-04) ─────────────────────────────────────────────
+-- reviewed: myndskreytirinn hefur séð myndina teiknaða og lagað hana (eða hún
+-- er handgerð). Smiðjan fer yfir þær myndir sem hún málaði og eru óyfirfarnar.
+alter table public.bk_pages add column if not exists reviewed boolean not null default false;
+-- Myndir sem voru til áður en yfirferðin kom eru látnar eiga sig.
+update public.bk_pages set reviewed = true where reviewed = false and svg is not null and created_at < '2026-10-05';

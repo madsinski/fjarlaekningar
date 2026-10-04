@@ -98,7 +98,7 @@ for (const book of en.books) {
       polished_at: l === "is" ? new Date().toISOString() : null,
     }))));
     const pages = await must(db.from("bk_pages").insert(story.pages.map((p, i) => ({
-      story_id: row.id, position: i + 1, scene: p.scene, svg: pictures[i], auto_art: false, art_key: `p${String(i + 1).padStart(2, "0")}`,
+      story_id: row.id, position: i + 1, scene: p.scene, svg: pictures[i], auto_art: false, reviewed: true, art_key: `p${String(i + 1).padStart(2, "0")}`,
     }))).select("id, position"));
     const idAt = new Map(pages.map((p) => [p.position, p.id]));
     await must(db.from("bk_page_texts").insert(LANGS.flatMap((l) => texts[l].pages.map((p, i) => ({ page_id: idAt.get(i + 1), lang: l, text: pageText(p) })))));
@@ -144,7 +144,7 @@ for (const book of en.books) {
         await must(db.from("bk_pages").update(p.short ? fields : { ...fields, svg: pictures[p.art], scene: p.scene || "" }).eq("id", idOf.get(p.art)));
       } else {
         if (p.short) throw new Error(`${story.key}: existing page ${p.art} not found in the database`);
-        const made = await must(db.from("bk_pages").insert({ story_id: target.id, art_key: p.art, svg: pictures[p.art], scene: p.scene || "", auto_art: false, ...fields }).select("id").single());
+        const made = await must(db.from("bk_pages").insert({ story_id: target.id, art_key: p.art, svg: pictures[p.art], scene: p.scene || "", auto_art: false, reviewed: true, ...fields }).select("id").single());
         idOf.set(p.art, made.id);
       }
     }

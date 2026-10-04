@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900">
+  <defs>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a8fd0"/><stop offset="0.5" stop-color="#1f66a8"/><stop offset="1" stop-color="#0f3d74"/></linearGradient>
+    <radialGradient id="warm" gradientUnits="userSpaceOnUse" cx="1080" cy="330" r="900"><stop offset="0" stop-color="#ffd27a"/><stop offset="0.3" stop-color="#ff9a3c" stop-opacity="0.95"/><stop offset="0.55" stop-color="#f0703a" stop-opacity="0.65"/><stop offset="0.8" stop-color="#c0607a" stop-opacity="0.25"/><stop offset="1" stop-color="#c0607a" stop-opacity="0"/></radialGradient>
+    <linearGradient id="rock" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6a4a5a"/><stop offset="1" stop-color="#2c1f2c"/></linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1c3a70"/><stop offset="0.5" stop-color="#5a3558"/><stop offset="1" stop-color="#7a3a2c"/></linearGradient>
+    <radialGradient id="hole" cx="0.6" cy="0.5" r="0.6"><stop offset="0" stop-color="#ffe08a"/><stop offset="0.3" stop-color="#ff9a3c"/><stop offset="0.7" stop-color="#e03a20"/><stop offset="1" stop-color="#8a1a14"/></radialGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffb347" stop-opacity="0.75"/><stop offset="0.5" stop-color="#ff5a2a" stop-opacity="0.3"/><stop offset="1" stop-color="#ff5a2a" stop-opacity="0"/></radialGradient>
+    <linearGradient id="whaleBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.6" stop-color="#f1f7fc"/><stop offset="1" stop-color="#c9dcec"/></linearGradient>
+    <linearGradient id="whaleFin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef5fb"/><stop offset="1" stop-color="#bcd2e6"/></linearGradient>
+  </defs>
+<rect width="1200" height="900" fill="url(#sea)"/>
+<rect width="1200" height="900" fill="url(#warm)"/>
+<!-- the mountain, right above them now -->
+<path d="M560 900 C720 800 830 620 890 440 C930 320 990 170 1066 40 L1100 0 L1200 0 L1200 900 Z" fill="url(#rock)"/>
+<path d="M560 900 C720 800 830 620 890 440 C930 320 990 170 1066 40 L1100 0 L1126 0 C1050 130 990 300 940 450 C880 640 780 800 640 900 Z" fill="#9a6468" opacity="0.7"/>
+<path d="M1010 470 L1090 440 L1150 490 L1060 530 Z" fill="#7a5568" opacity="0.3"/>
+<path d="M880 760 L970 730 L1030 790 L920 830 Z" fill="#7a5568" opacity="0.25"/>
+<!-- a peek of the glowing hole, higher up -->
+<ellipse cx="1150" cy="210" rx="300" ry="300" fill="url(#halo)"/>
+<ellipse cx="1176" cy="210" rx="132" ry="152" fill="#4a3344"/>
+<ellipse cx="1182" cy="210" rx="124" ry="144" fill="#2c1f2c"/>
+<ellipse cx="1186" cy="210" rx="108" ry="130" fill="#7a1414"/>
+<g data-anim="pulse">
+<ellipse cx="1188" cy="210" rx="102" ry="124" fill="url(#hole)"/>
+</g>
+<!-- seaweed: cool on the left, cooked on the right -->
+<g data-anim="sway">
+<path d="M70 860 C40 780 100 740 66 650 C120 730 84 790 104 860 Z" fill="#2fae7d"/>
+<path d="M120 860 C100 800 150 770 128 710 C168 770 140 810 152 860 Z" fill="#48c78f"/>
+<path d="M30 860 C16 810 50 790 34 740 C66 790 46 820 58 860 Z" fill="#1f9468"/>
+</g>
+<g transform="translate(-338 -2)">
+<g data-anim="sway" data-tap="wiggle">
+<path d="M770 850 C760 780 770 730 800 706 C830 690 852 716 846 746 C836 726 816 724 806 744 C794 770 800 810 804 850 Z" fill="#b5a64a"/>
+<path d="M826 850 C822 800 830 770 852 760 C872 754 884 772 878 790 C870 778 858 778 852 792 C848 810 852 830 854 850 Z" fill="#d1bd58"/>
+</g>
+</g>
+<path d="M0 836 C250 806 500 850 760 826 C900 814 1040 836 1200 816 L1200 900 L0 900 Z" fill="url(#floor)"/>
+<!-- warm bubbles -->
+<g data-anim="bob">
+<circle cx="700" cy="250" r="12" fill="#ffe2a8" opacity="0.5"/><circle cx="696" cy="246" r="4" fill="#ffffff" opacity="0.7"/><circle cx="664" cy="196" r="8" fill="#ffe2a8" opacity="0.5"/><circle cx="1010" cy="600" r="10" fill="#ffe2a8" opacity="0.5"/><circle cx="660" cy="760" r="7" fill="#ffe2a8" opacity="0.5"/>
+</g>
+<g data-anim="float">
+<circle cx="180" cy="250" r="15" fill="#ffffff" opacity="0.28"/><circle cx="176" cy="246" r="4" fill="#ffffff" opacity="0.7"/><circle cx="140" cy="200" r="9" fill="#ffffff" opacity="0.28"/><circle cx="230" cy="180" r="6" fill="#ffffff" opacity="0.28"/>
+</g>
+<!-- hero, leaning in -->
+<g transform="translate(-34 44) rotate(8) scale(0.64)">
+<g data-anim="swim" data-tap="jump">
+<path d="M300 470 C250 455 205 420 170 365 C150 335 150 300 170 285 C205 300 245 335 275 385 C270 330 280 285 305 255 C330 250 350 275 352 315 C356 375 345 430 330 470 Z" fill="url(#whaleFin)"/>
+<path d="M300 468 C330 400 430 318 600 300 C790 280 965 350 1010 470 C1045 565 965 660 790 680 C610 700 420 650 330 540 C310 515 298 492 300 468 Z" fill="url(#whaleBody)"/>
+<path d="M350 560 C450 640 620 680 790 664 C900 652 975 610 1000 555 C985 640 900 690 780 700 C610 714 430 660 350 560 Z" fill="#b9cfe3" opacity="0.75"/>
+<path d="M520 648 C600 668 700 672 790 660" fill="none" stroke="#a9c2d9" stroke-width="5" stroke-linecap="round"/>
+<path d="M560 622 C640 640 730 642 815 630" fill="none" stroke="#a9c2d9" stroke-width="5" stroke-linecap="round"/>
+<path d="M640 590 C620 650 580 700 520 725 C505 700 520 650 560 610 C585 588 615 580 640 590 Z" fill="url(#whaleFin)"/>
+<ellipse cx="700" cy="298" rx="16" ry="6" fill="#9db7cf"/>
+<ellipse cx="892" cy="516" rx="38" ry="24" fill="#f8b9c6" opacity="0.85"/><g data-anim="blink"><circle cx="880" cy="436" r="38" fill="#e3edf6"/><circle cx="882" cy="434" r="35" fill="#ffffff"/><circle cx="896" cy="446" r="24" fill="#1d2b3a"/><circle cx="904" cy="436" r="8" fill="#ffffff"/></g><path d="M842 372 C866 350 900 348 924 364" fill="none" stroke="#7d97b0" stroke-width="7" stroke-linecap="round"/><path d="M892 566 C930 590 985 582 1012 540 C1012 610 920 650 892 566 Z" fill="#3a5068" stroke="#3a5068" stroke-width="8" stroke-linejoin="round"/>
+<path d="M918 598 C940 590 970 592 986 580 C972 610 940 622 918 598 Z" fill="#f08aa0"/>
+
+</g>
+</g>
+<!-- the crab's rock -->
+<path d="M560 900 C576 808 650 754 752 756 C830 716 950 722 1010 766 C1086 780 1136 840 1146 900 Z" fill="#3a2a3a"/>
+<path d="M630 800 C680 760 752 756 752 756 C830 716 950 722 1010 766 C940 746 840 748 782 774 C720 770 670 782 630 800 Z" fill="#6a4a5a"/>
+<g transform="translate(300 28)">
+<path d="M770 850 C760 780 770 730 800 706 C830 690 852 716 846 746 C836 726 816 724 806 744 C794 770 800 810 804 850 Z" fill="#b5a64a"/>
+<path d="M826 850 C822 800 830 770 852 760 C872 754 884 772 878 790 C870 778 858 778 852 792 C848 810 852 830 854 850 Z" fill="#d1bd58"/>
+</g>
+<!-- the crab: one claw up like a stop sign, one fanning -->
+<g transform="translate(846 676) scale(1.62)">
+<g data-anim="wiggle" data-tap="jump">
+
+<path d="M-40 14 L-72 26 L-80 44 M-46 4 L-84 8 L-96 26 M-34 24 L-58 40 L-62 54 M40 14 L72 26 L80 44 M46 4 L84 8 L96 26 M34 24 L58 40 L62 54" fill="none" stroke="#c8402c" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M-46 -8 C-78 -6 -102 -22 -106 -50 M46 -8 C74 -10 88 -24 84 -46" fill="none" stroke="#c8402c" stroke-width="12" stroke-linecap="round"/>
+<path d="M-108 -68 L-108 -94 A26 26 0 1 1 -131 -81 Z" fill="#f06a4c"/><path d="M86 -60 L90 -81 A21 21 0 1 1 70 -73 Z" fill="#f06a4c"/>
+<path d="M-18 -28 L-22 -56 M18 -28 L22 -56" fill="none" stroke="#e8553d" stroke-width="8" stroke-linecap="round"/>
+<ellipse cx="0" cy="0" rx="58" ry="40" fill="#e8553d"/>
+<ellipse cx="-14" cy="-18" rx="28" ry="9" fill="#f47a5e" opacity="0.8"/>
+<circle cx="-22" cy="-62" r="14" fill="#ffffff"/><circle cx="22" cy="-62" r="14" fill="#ffffff"/><circle cx="-26" cy="-57" r="6" fill="#2b1d14"/><circle cx="18" cy="-57" r="6" fill="#2b1d14"/><path d="M-36 -62 A14 14 0 0 1 -8 -62 Z" fill="#c8402c"/><path d="M8 -62 A14 14 0 0 1 36 -62 Z" fill="#c8402c"/>
+<path d="M-14 14 C-6 8 6 8 14 14" fill="none" stroke="#7a2318" stroke-width="4" stroke-linecap="round"/>
+<path d="M-56 -103 C-61 -113 -54 -119 -51 -124 C-46 -118 -43 -110 -48 -103 C-50 -100 -54 -100 -56 -103 Z" fill="#cfefff"/><path d="M-6 -92 C-10 -101 -4 -106 -1 -110 C3 -105 6 -98 2 -92 C0 -90 -4 -90 -6 -92 Z" fill="#cfefff"/><path d="M40 -103 C35 -113 42 -119 45 -124 C50 -118 53 -110 48 -103 C46 -100 42 -100 40 -103 Z" fill="#cfefff"/><path d="M-77 -11 C-81 -19 -76 -23 -73 -27 C-70 -22 -67 -16 -71 -11 C-72 -9 -76 -9 -77 -11 Z" fill="#cfefff"/><path d="M106 -84 C116 -72 118 -56 112 -44 M124 -90 C138 -72 140 -52 132 -36 M62 -88 C66 -96 74 -100 82 -98" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.6"/>
+</g>
+</g>
+<!-- the snail, too warm -->
+<g transform="translate(330 806) scale(1.5)">
+<g data-anim="wiggle" data-tap="hide">
+
+<path d="M-30 22 C-30 12 -16 8 26 10 C40 10 46 18 40 24 Z" fill="#f2c9a0"/>
+<circle cx="0" cy="0" r="22" fill="#6fb0c9"/>
+<path d="M0 0 C8 -8 16 2 8 8 C-2 14 -12 4 -6 -8 C2 -20 20 -12 20 2" fill="none" stroke="#3f7f99" stroke-width="4" stroke-linecap="round"/>
+<path d="M34 12 L42 -10 M28 12 L30 -10" fill="none" stroke="#f2c9a0" stroke-width="4" stroke-linecap="round"/>
+<circle cx="43" cy="-12" r="5" fill="#ffffff"/><circle cx="30" cy="-12" r="5" fill="#ffffff"/>
+<circle cx="42" cy="-12" r="2" fill="#1d2b3a"/><circle cx="29" cy="-12" r="2" fill="#1d2b3a"/>
+<path d="M13 -16 C10 -23 14 -27 17 -30 C20 -26 22 -20 19 -16 C18 -14 14 -14 13 -16 Z" fill="#cfefff"/>
+</g>
+</g>
+</svg>

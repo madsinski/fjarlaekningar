@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900">
+  <defs>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#143f78"/><stop offset="0.55" stop-color="#0b2750"/><stop offset="1" stop-color="#05122b"/></linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d2c58"/><stop offset="1" stop-color="#061633"/></linearGradient>
+    <linearGradient id="whaleBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.6" stop-color="#f1f7fc"/><stop offset="1" stop-color="#c9dcec"/></linearGradient>
+    <linearGradient id="whaleFin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef5fb"/><stop offset="1" stop-color="#bcd2e6"/></linearGradient>
+    <radialGradient id="red" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ff7a3c" stop-opacity="0.95"/><stop offset="0.35" stop-color="#ff3d2e" stop-opacity="0.5"/><stop offset="1" stop-color="#ff3d2e" stop-opacity="0"/></radialGradient>
+    <radialGradient id="moon" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#9cc8ff" stop-opacity="0.35"/><stop offset="1" stop-color="#9cc8ff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="rust" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c2703f"/><stop offset="1" stop-color="#6e3a22"/></linearGradient>
+  </defs>
+<rect width="1200" height="900" fill="url(#sea)"/>
+<ellipse cx="420" cy="0" rx="640" ry="560" fill="url(#moon)"/>
+<polygon points="300,0 420,0 300,700 100,700" fill="#bcdcff" opacity="0.05"/>
+<polygon points="560,0 640,0 760,700 600,700" fill="#bcdcff" opacity="0.04"/>
+<!-- far ridges and the mountain, nearer now -->
+<path d="M0 690 C100 640 200 655 300 680 C420 630 520 650 640 685 C720 660 800 670 860 688 L1200 688 L1200 740 L0 740 Z" fill="#0a2349"/>
+<g transform="translate(-340 -288) scale(1.5)">
+<path d="M836 652 C880 610 925 530 956 470 L972 460 L986 471 L1002 462 C1040 525 1090 606 1150 652 Z" fill="#06142e"/>
+<path d="M956 470 L972 460 L986 471 L1002 462 C1010 476 1016 486 1022 496 C1000 486 975 484 950 482 Z" fill="#0a1d3d"/>
+</g>
+<path d="M0 708 C260 680 560 704 820 690 C960 684 1100 694 1200 686 L1200 900 L0 900 Z" fill="url(#floor)"/>
+<!-- the red light, a little bigger -->
+<g data-anim="pulse" data-tap="grow">
+<circle cx="1030" cy="648" r="200" fill="url(#red)"/>
+<ellipse cx="1030" cy="690" rx="180" ry="20" fill="#ff5a2a" opacity="0.25"/>
+<ellipse cx="1030" cy="646" rx="19" ry="23" fill="#ff5a2a"/>
+<ellipse cx="1030" cy="648" rx="11" ry="15" fill="#ffd27a"/>
+</g>
+<!-- glowing plankton -->
+<g data-anim="twinkle">
+<circle cx="130" cy="330" r="5" fill="#c9f7ff"/><circle cx="960" cy="110" r="4" fill="#9ff3e6"/><circle cx="1090" cy="300" r="6" fill="#c9f7ff"/>
+<circle cx="880" cy="330" r="4" fill="#9ff3e6"/><circle cx="210" cy="70" r="3" fill="#c9f7ff"/><circle cx="1130" cy="480" r="4" fill="#9ff3e6"/><circle cx="60" cy="560" r="4" fill="#9ff3e6"/>
+</g>
+<!-- the school of tiny fish, lined up as an arrow -->
+<g transform="translate(-70 -84) scale(1.42)">
+<g data-anim="swim" data-tap="hide">
+<polygon points="311,172 327,163 323,172 327,181" fill="#9fbcd6"/><ellipse cx="300" cy="172" rx="16" ry="9" fill="#e6f1fa"/><circle cx="292" cy="170" r="2" fill="#1d2b3a"/><polygon points="355,146 371,137 367,146 371,155" fill="#9fbcd6"/><ellipse cx="344" cy="146" rx="16" ry="9" fill="#c4d9ea"/><circle cx="336" cy="144" r="2" fill="#1d2b3a"/><polygon points="399,120 415,111 411,120 415,129" fill="#9fbcd6"/><ellipse cx="388" cy="120" rx="16" ry="9" fill="#e6f1fa"/><circle cx="380" cy="118" r="2" fill="#1d2b3a"/><polygon points="355,198 371,189 367,198 371,207" fill="#9fbcd6"/><ellipse cx="344" cy="198" rx="16" ry="9" fill="#c4d9ea"/><circle cx="336" cy="196" r="2" fill="#1d2b3a"/><polygon points="399,224 415,215 411,224 415,233" fill="#9fbcd6"/><ellipse cx="388" cy="224" rx="16" ry="9" fill="#e6f1fa"/><circle cx="380" cy="222" r="2" fill="#1d2b3a"/><polygon points="361,172 377,163 373,172 377,181" fill="#9fbcd6"/><ellipse cx="350" cy="172" rx="16" ry="9" fill="#c4d9ea"/><circle cx="342" cy="170" r="2" fill="#1d2b3a"/><polygon points="408,172 424,163 420,172 424,181" fill="#9fbcd6"/><ellipse cx="397" cy="172" rx="16" ry="9" fill="#e6f1fa"/><circle cx="389" cy="170" r="2" fill="#1d2b3a"/><polygon points="455,172 471,163 467,172 471,181" fill="#9fbcd6"/><ellipse cx="444" cy="172" rx="16" ry="9" fill="#c4d9ea"/><circle cx="436" cy="170" r="2" fill="#1d2b3a"/><polygon points="502,172 518,163 514,172 518,181" fill="#9fbcd6"/><ellipse cx="491" cy="172" rx="16" ry="9" fill="#e6f1fa"/><circle cx="483" cy="170" r="2" fill="#1d2b3a"/><polygon points="549,172 565,163 561,172 565,181" fill="#9fbcd6"/><ellipse cx="538" cy="172" rx="16" ry="9" fill="#c4d9ea"/><circle cx="530" cy="170" r="2" fill="#1d2b3a"/><polygon points="596,172 612,163 608,172 612,181" fill="#9fbcd6"/><ellipse cx="585" cy="172" rx="16" ry="9" fill="#e6f1fa"/><circle cx="577" cy="170" r="2" fill="#1d2b3a"/><polygon points="643,172 659,163 655,172 659,181" fill="#9fbcd6"/><ellipse cx="632" cy="172" rx="16" ry="9" fill="#c4d9ea"/><circle cx="624" cy="170" r="2" fill="#1d2b3a"/><polygon points="690,172 706,163 702,172 706,181" fill="#9fbcd6"/><ellipse cx="679" cy="172" rx="16" ry="9" fill="#e6f1fa"/><circle cx="671" cy="170" r="2" fill="#1d2b3a"/><polygon points="737,172 753,163 749,172 753,181" fill="#9fbcd6"/><ellipse cx="726" cy="172" rx="16" ry="9" fill="#c4d9ea"/><circle cx="718" cy="170" r="2" fill="#1d2b3a"/><polygon points="784,172 800,163 796,172 800,181" fill="#9fbcd6"/><ellipse cx="773" cy="172" rx="16" ry="9" fill="#e6f1fa"/><circle cx="765" cy="170" r="2" fill="#1d2b3a"/>
+</g>
+</g>
+<!-- the bucket he poked a moment ago, still rolling -->
+<path d="M70 742 C52 760 52 790 70 808 M36 730 C10 760 10 800 36 830" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity="0.35"/>
+<g transform="translate(196 778) rotate(-24)">
+<g data-anim="wiggle" data-tap="spin">
+<path d="M-56 -24 C-70 -70 -30 -96 22 -84" fill="none" stroke="#7f8ea3" stroke-width="7" stroke-linecap="round"/>
+<path d="M-58 -42 L58 -56 L58 56 L-58 42 Z" fill="url(#rust)"/>
+<path d="M-58 -42 L-30 -45 L-30 45 L-58 42 Z" fill="#6e3a22" opacity="0.5"/>
+<path d="M-8 -48 L4 -49 L4 49 L-8 48 Z" fill="#e09a62" opacity="0.5"/>
+<ellipse cx="58" cy="0" rx="18" ry="56" fill="#3a1f16"/>
+<ellipse cx="58" cy="0" rx="18" ry="56" fill="none" stroke="#d98a55" stroke-width="6"/>
+<path d="M10 -51 L28 -36 L44 -54 Z" fill="#05122b" opacity="0.55"/>
+<circle cx="-34" cy="14" r="7" fill="#e3b089"/><circle cx="24" cy="26" r="5" fill="#e3b089"/><circle cx="-14" cy="-22" r="4" fill="#e3b089"/>
+</g>
+</g>
+<!-- the anchor, half buried -->
+<g transform="translate(812 410) rotate(8)">
+<g data-anim="wiggle" data-tap="wiggle">
+<circle cx="0" cy="0" r="27" fill="none" stroke="#b5653a" stroke-width="15"/>
+<path d="M0 28 L0 310" fill="none" stroke="#a8552f" stroke-width="30" stroke-linecap="round"/>
+<path d="M-86 76 L86 76" fill="none" stroke="#a8552f" stroke-width="22" stroke-linecap="round"/>
+<path d="M-140 226 C-130 320 -60 352 0 326 C60 352 130 320 140 226" fill="none" stroke="#a8552f" stroke-width="30" stroke-linecap="round"/>
+<polygon points="-182,250 -142,178 -106,252" fill="#b5653a"/>
+<polygon points="182,250 142,178 106,252" fill="#8a4628"/>
+<path d="M-7 40 L-7 250" fill="none" stroke="#e09a62" stroke-width="6" stroke-linecap="round" opacity="0.6"/>
+<circle cx="8" cy="130" r="8" fill="#e3b089"/><circle cx="-6" cy="196" r="6" fill="#e3b089"/><circle cx="50" cy="76" r="6" fill="#e3b089"/><circle cx="-112" cy="268" r="6" fill="#e3b089"/>
+</g>
+</g>
+<!-- sand heaped over the anchor's foot -->
+<path d="M470 900 C520 800 660 748 800 742 C940 748 1080 800 1130 900 Z" fill="#0b2a56"/>
+<path d="M610 790 C670 760 730 746 800 742 C870 746 930 760 990 790" fill="none" stroke="#1a4682" stroke-width="7" stroke-linecap="round"/>
+<!-- BONG: wobble lines ringing out -->
+<path d="M896 362 C918 388 918 428 896 454 M934 340 C966 382 966 436 934 478 M752 356 C736 372 732 392 740 412 M724 326 C698 358 694 398 710 432" fill="none" stroke="#ffe9a8" stroke-width="7" stroke-linecap="round" opacity="0.85"/>
+<path d="M766 440 L752 416 M786 428 L784 400 M768 566 L756 590" fill="none" stroke="#fff6b0" stroke-width="6" stroke-linecap="round"/>
+<!-- hero -->
+<g transform="translate(118 196) scale(0.64)">
+<g data-anim="swim" data-tap="jump">
+<path d="M300 470 C250 455 205 420 170 365 C150 335 150 300 170 285 C205 300 245 335 275 385 C270 330 280 285 305 255 C330 250 350 275 352 315 C356 375 345 430 330 470 Z" fill="url(#whaleFin)"/>
+<path d="M300 468 C330 400 430 318 600 300 C790 280 965 350 1010 470 C1045 565 965 660 790 680 C610 700 420 650 330 540 C310 515 298 492 300 468 Z" fill="url(#whaleBody)"/>
+<path d="M350 560 C450 640 620 680 790 664 C900 652 975 610 1000 555 C985 640 900 690 780 700 C610 714 430 660 350 560 Z" fill="#b9cfe3" opacity="0.75"/>
+<path d="M520 648 C600 668 700 672 790 660" fill="none" stroke="#a9c2d9" stroke-width="5" stroke-linecap="round"/>
+<path d="M560 622 C640 640 730 642 815 630" fill="none" stroke="#a9c2d9" stroke-width="5" stroke-linecap="round"/>
+<path d="M640 590 C620 650 580 700 520 725 C505 700 520 650 560 610 C585 588 615 580 640 590 Z" fill="url(#whaleFin)"/>
+<ellipse cx="700" cy="298" rx="16" ry="6" fill="#9db7cf"/>
+<ellipse cx="900" cy="524" rx="38" ry="24" fill="#f8b9c6" opacity="0.85"/><g data-anim="blink"><circle cx="880" cy="438" r="38" fill="#e3edf6"/><circle cx="882" cy="436" r="35" fill="#ffffff"/><circle cx="896" cy="442" r="23" fill="#1d2b3a"/><circle cx="904" cy="432" r="7" fill="#ffffff"/></g><path d="M842 378 C866 358 900 356 924 372" fill="none" stroke="#7d97b0" stroke-width="7" stroke-linecap="round"/><path d="M900 580 C940 602 987 587 1010 548" fill="none" stroke="#3a5068" stroke-width="8" stroke-linecap="round"/>
+
+</g>
+</g>
+<!-- bubbles -->
+<g data-anim="float">
+<circle cx="650" cy="330" r="13" fill="#ffffff" opacity="0.22"/><circle cx="646" cy="326" r="4" fill="#ffffff" opacity="0.7"/><circle cx="680" cy="296" r="8" fill="#ffffff" opacity="0.22"/><circle cx="120" cy="430" r="10" fill="#ffffff" opacity="0.2"/><circle cx="150" cy="396" r="6" fill="#ffffff" opacity="0.2"/>
+</g>
+<!-- foreground weed and rock -->
+<g data-anim="sway">
+<path d="M1100 870 C1080 800 1130 770 1104 700 C1150 770 1118 810 1134 870 Z" fill="#0e3a5e"/>
+<path d="M1150 870 C1138 820 1174 800 1158 750 C1190 800 1168 830 1178 870 Z" fill="#124a70"/>
+</g>
+<path d="M940 900 C960 860 1010 840 1060 848 C1110 838 1170 856 1200 880 L1200 900 Z" fill="#040e22"/>
+<path d="M0 900 L0 856 C50 842 110 856 150 900 Z" fill="#040e22"/>
+</svg>

@@ -51,6 +51,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Native SVG renderer used by the Bókasmiðja illustrator to look at its own pictures.
+  serverExternalPackages: ["@resvg/resvg-js"],
   turbopack: {
     root: path.resolve(__dirname),
   },

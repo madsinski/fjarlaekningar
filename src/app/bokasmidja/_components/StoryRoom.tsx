@@ -18,7 +18,9 @@ export type Story = StoryView & { pages: PageView[] };
 export interface BookInfo { id: string; title: I18nText; subtitle: I18nText; color: string; emoji: string; collection: boolean }
 export type Phase =
   | { kind: "writing" }
+  | { kind: "sheet" }
   | { kind: "painting"; n: number; total: number }
+  | { kind: "refining"; n: number; total: number }
   | { kind: "translating" }
   | { kind: "polishing" }
   | { kind: "done" }
@@ -30,7 +32,7 @@ const lacks = (s: Story, l: Lang) => !s.title[l] || s.pages.some((p) => !p.text[
 /** Íslenski textinn er til en hefur ekki farið í yfirlestur. */
 const needsPolish = (s: Story) => !!s.title.is && !s.polishedIs && s.pages.some((p) => p.text.is);
 const needsWork = (s: Story) =>
-  s.status === "idea" || needsPolish(s) || s.pages.some((p) => !p.svg && p.autoArt) || LANGS.some((l) => lacks(s, l));
+  s.status === "idea" || needsPolish(s) || s.pages.some((p) => p.svg && !p.reviewed) || s.pages.some((p) => !p.svg && p.autoArt) || LANGS.some((l) => lacks(s, l));
 
 export default function StoryRoom({ initial, book, editable }: { initial: Story; book: BookInfo; editable: boolean }) {
   const { t } = useBk();
@@ -76,6 +78,18 @@ export default function StoryRoom({ initial, book, editable }: { initial: Story;
       };
       await polish();
 
+      // Persónublað: hetjurnar hannaðar einu sinni, áður en fyrsta síðan er máluð.
+      // Mistakist það er málað án þess.
+      if (!s.hasSheet && s.pages.some((p) => !p.svg && p.autoArt)) {
+        show({ kind: "sheet" });
+        for (let tries = 0; tries < 30 && alive.current; tries++) {
+          const res = await call("POST", `${url}/sheet`, {});
+          if (!res.ok || !res.busy) break;
+          await sleep(8000);
+        }
+        await reload();
+      }
+
       // 2. Málarinn málar síðu fyrir síðu.
       for (const page of s.pages) {
         if (page.svg || !page.autoArt) continue;
@@ -98,6 +112,22 @@ export default function StoryRoom({ initial, book, editable }: { initial: Story;
           if (tries >= 1 || res.error !== "agent_failed") return show({ kind: "error", code: res.error });
         }
         if (!alive.current) return;
+      }
+
+      // Yfirferð: málarinn skoðar hverja mynd sína teiknaða og lagar það sem er að.
+      // Sagan er þegar lesanleg; villa hér stöðvar ekki smíðina.
+      const unreviewed = s.pages.filter((p) => p.svg && !p.reviewed);
+      for (const [i, page] of unreviewed.entries()) {
+        if (!alive.current) return;
+        show({ kind: "refining", n: i + 1, total: unreviewed.length });
+        let res = await call("POST", `/api/bokasmidja/pages/${page.id}/illustrate`, { review: true });
+        for (let tries = 0; res.ok && res.busy && tries < 30 && alive.current; tries++) {
+          await sleep(10000);
+          res = await call("POST", `/api/bokasmidja/pages/${page.id}/illustrate`, { review: true });
+        }
+        if (!res.ok) break;
+        s = { ...s, pages: s.pages.map((p) => (p.id === page.id ? { ...p, svg: res.svg || p.svg, reviewed: true } : p)) };
+        if (alive.current) setStory(s);
       }
 
       // 3. Sagan endursögð á hinum málunum.
@@ -155,7 +185,7 @@ export default function StoryRoom({ initial, book, editable }: { initial: Story;
 
 function Steps({ phase }: { phase: Phase }) {
   const { t } = useBk();
-  const at = phase.kind === "writing" || phase.kind === "polishing" ? 0 : phase.kind === "painting" ? 1 : phase.kind === "translating" ? 2 : phase.kind === "done" ? 3 : -1;
+  const at = phase.kind === "writing" || phase.kind === "polishing" ? 0 : phase.kind === "painting" || phase.kind === "sheet" || phase.kind === "refining" ? 1 : phase.kind === "translating" ? 2 : phase.kind === "done" ? 3 : -1;
   const steps = [t("studio.step1"), t("studio.step2"), t("studio.step3")];
   return (
     <ol className="mt-8 w-full space-y-3 text-left">
