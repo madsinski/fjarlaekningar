@@ -189,14 +189,33 @@ export default function Editor({ initial }: { initial: Story }) {
     const first: Drag = { kind, id, x: e.clientX, y: e.clientY, over: null };
     dragRef.current = first;
     setDrag(first);
-    const move = (ev: PointerEvent) => {
-      const next: Drag = { kind, id, x: ev.clientX, y: ev.clientY, over: targetAt(kind, id, ev.clientX, ev.clientY) };
+    // Síðasta staða bendilsins; skrunlykkjan hér að neðan notar hana.
+    const at = { x: e.clientX, y: e.clientY };
+    const update = () => {
+      const next: Drag = { kind, id, x: at.x, y: at.y, over: targetAt(kind, id, at.x, at.y) };
+      const prev = dragRef.current;
       dragRef.current = next;
-      setDrag(next);
-      if (ev.clientY < 90) window.scrollBy(0, -16);
-      else if (ev.clientY > window.innerHeight - 90) window.scrollBy(0, 16);
+      if (!prev || prev.x !== next.x || prev.y !== next.y || prev.over !== next.over) setDrag(next);
     };
+    const move = (ev: PointerEvent) => { at.x = ev.clientX; at.y = ev.clientY; update(); };
+    // Sjálfvirkt skrun: á meðan bendlinum er haldið við efri eða neðri brún
+    // skjásins skrunar síðan áfram, líka þótt hann sé kyrr, svo hægt sé að
+    // draga á síðu sem er utan skjás. Hraðinn vex eftir því sem nær dregur brúninni.
+    const EDGE = 110;
+    let frame = 0;
+    const tick = () => {
+      const fromBottom = window.innerHeight - at.y;
+      const speed = at.y < EDGE ? -Math.ceil((EDGE - at.y) / 6) : fromBottom < EDGE ? Math.ceil((EDGE - fromBottom) / 6) : 0;
+      if (speed) {
+        const before = window.scrollY;
+        window.scrollBy(0, speed);
+        if (window.scrollY !== before) update();
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
     const end = (ev: PointerEvent) => {
+      cancelAnimationFrame(frame);
       el.removeEventListener("pointermove", move);
       el.removeEventListener("pointerup", end);
       el.removeEventListener("pointercancel", end);
