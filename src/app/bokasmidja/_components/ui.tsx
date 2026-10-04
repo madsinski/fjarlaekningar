@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Home, LogOut, Settings } from "lucide-react";
-import { AVATARS, LANGS, LANG_FLAGS, LANG_NAMES, type Lang } from "@/lib/bokasmidja/types";
+import { AVATARS, LANGS, LANG_NAMES, type Lang } from "@/lib/bokasmidja/types";
 import { useBk } from "./Provider";
 
 export const cx = (...parts: (string | false | null | undefined)[]) => parts.filter(Boolean).join(" ");
@@ -54,7 +54,48 @@ export function Avatar({ avatar, color, size = 64 }: { avatar: string; color: st
   );
 }
 
-/** Fánar til að skipta um mál. `onPick` yfirskrifar sjálfgefnu hegðunina (að skipta um mál viðmótsins). */
+/** Þjóðfáni málsins, teiknaður sem SVG (fánatákn sjást ekki á Windows). */
+export function Flag({ lang, className }: { lang: Lang; className?: string }) {
+  const common = { className: cx("block rounded-[5px] ring-1 ring-black/15", className), "aria-hidden": true, preserveAspectRatio: "none" as const };
+  if (lang === "is") {
+    return (
+      <svg viewBox="0 0 25 18" {...common}>
+        <rect width="25" height="18" fill="#02529c" />
+        <path d="M0 9h25M9 0v18" stroke="#fff" strokeWidth="4" />
+        <path d="M0 9h25M9 0v18" stroke="#dc1e35" strokeWidth="2" />
+      </svg>
+    );
+  }
+  if (lang === "nb") {
+    return (
+      <svg viewBox="0 0 22 16" {...common}>
+        <rect width="22" height="16" fill="#ba0c2f" />
+        <path d="M0 8h22M8 0v16" stroke="#fff" strokeWidth="4" />
+        <path d="M0 8h22M8 0v16" stroke="#00205b" strokeWidth="2" />
+      </svg>
+    );
+  }
+  if (lang === "hu") {
+    return (
+      <svg viewBox="0 0 6 4" {...common}>
+        <rect width="6" height="4" fill="#fff" />
+        <rect width="6" height="1.3334" fill="#ce2939" />
+        <rect y="2.6667" width="6" height="1.3334" fill="#477050" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 60 36" {...common}>
+      <rect width="60" height="36" fill="#012169" />
+      <path d="M0 0 60 36M60 0 0 36" stroke="#fff" strokeWidth="7" />
+      <path d="M0 0 60 36M60 0 0 36" stroke="#c8102e" strokeWidth="2.6" />
+      <path d="M30 0v36M0 18h60" stroke="#fff" strokeWidth="12" />
+      <path d="M30 0v36M0 18h60" stroke="#c8102e" strokeWidth="7" />
+    </svg>
+  );
+}
+
+/** Fánahnappar til að skipta um mál. `onPick` yfirskrifar sjálfgefnu hegðunina (að skipta um mál viðmótsins). */
 export function LangSwitch({ value, onPick, big }: { value?: Lang; onPick?: (l: Lang) => void; big?: boolean }) {
   const { lang } = useBk();
   const router = useRouter();
@@ -67,14 +108,15 @@ export function LangSwitch({ value, onPick, big }: { value?: Lang; onPick?: (l: 
   return (
     <div className="flex flex-wrap items-center gap-2" role="group">
       {LANGS.map((l) => (
-        <button key={l} type="button" onClick={() => pick(l)} aria-pressed={l === current} title={LANG_NAMES[l]}
+        <button key={l} type="button" onClick={() => pick(l)} aria-pressed={l === current} aria-label={LANG_NAMES[l]} title={LANG_NAMES[l]}
           className={cx(
-            "bk-press flex items-center gap-2 rounded-2xl font-bold",
-            big ? "px-4 py-3 text-lg" : "px-2.5 py-1.5 text-sm",
-            l === current ? "bg-slate-800 text-white" : "bg-white text-slate-700 ring-2 ring-slate-200",
+            "bk-press flex flex-col items-center gap-1 rounded-2xl bg-white font-bold text-slate-700",
+            big ? "px-3 pb-1.5 pt-3 text-base" : "p-1.5",
+            // Valið mál: þykkur dökkur rammi, svo það sjáist án þess að treysta á lit eingöngu.
+            l === current ? "ring-4 ring-slate-900" : "opacity-80 ring-2 ring-slate-200",
           )}>
-          <span aria-hidden className={big ? "text-2xl" : "text-lg"}>{LANG_FLAGS[l]}</span>
-          <span className={big ? "" : "hidden sm:inline"}>{LANG_NAMES[l]}</span>
+          <Flag lang={l} className={big ? "h-12 w-[4.5rem]" : "h-7 w-10"} />
+          {big && <span>{LANG_NAMES[l]}</span>}
         </button>
       ))}
     </div>

@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900">
+  <defs>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a8fd0"/><stop offset="0.5" stop-color="#1f66a8"/><stop offset="1" stop-color="#0f3d74"/></linearGradient>
+    <radialGradient id="warm" gradientUnits="userSpaceOnUse" cx="1120" cy="560" r="860"><stop offset="0" stop-color="#ffd27a"/><stop offset="0.25" stop-color="#ff9a3c" stop-opacity="0.95"/><stop offset="0.5" stop-color="#f0703a" stop-opacity="0.7"/><stop offset="0.75" stop-color="#c0607a" stop-opacity="0.3"/><stop offset="1" stop-color="#c0607a" stop-opacity="0"/></radialGradient>
+    <linearGradient id="deep" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.12"/><stop offset="0.5" stop-color="#000000" stop-opacity="0"/><stop offset="1" stop-color="#0a1230" stop-opacity="0.45"/></linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0d3566"/><stop offset="0.5" stop-color="#4a3560"/><stop offset="1" stop-color="#8a3f2c"/></linearGradient>
+    <linearGradient id="rock" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5e4353"/><stop offset="1" stop-color="#2c1f2c"/></linearGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff0a0" stop-opacity="0.95"/><stop offset="0.3" stop-color="#ffb347" stop-opacity="0.7"/><stop offset="0.65" stop-color="#ff5a2a" stop-opacity="0.3"/><stop offset="1" stop-color="#ff5a2a" stop-opacity="0"/></radialGradient>
+    <linearGradient id="whaleBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.6" stop-color="#f1f7fc"/><stop offset="1" stop-color="#c9dcec"/></linearGradient>
+    <linearGradient id="whaleFin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef5fb"/><stop offset="1" stop-color="#bcd2e6"/></linearGradient>
+  </defs>
+  <rect width="1200" height="900" fill="url(#sea)"/>
+  <rect width="1200" height="900" fill="url(#warm)"/>
+  <path d="M0 790 C120 740 230 760 340 785 C470 745 590 760 700 790 C800 760 900 770 1000 790 L1200 790 L1200 900 L0 900 Z" fill="url(#floor)" opacity="0.6"/>
+  <!-- the mountain -->
+  <path d="M800 900 C880 810 940 660 990 530 C1020 450 1060 330 1110 240 L1140 222 L1162 238 L1200 215 L1200 900 Z" fill="url(#rock)"/>
+  <path d="M800 900 C880 810 940 660 990 530 C1020 450 1060 330 1110 240 L1126 231 C1080 330 1046 440 1014 540 C970 670 910 810 836 900 Z" fill="#8a5a5e" opacity="0.7"/>
+  <!-- the red light, bigger now -->
+  <g data-anim="pulse" data-tap="grow">
+    <circle cx="1068" cy="560" r="330" fill="url(#halo)"/>
+    <ellipse cx="1068" cy="560" rx="40" ry="56" fill="#ff5a2a"/>
+    <ellipse cx="1072" cy="562" rx="26" ry="40" fill="#ffd27a"/>
+  </g>
+  <!-- far ridges -->
+  <!-- cool seaweed, left -->
+  <g data-anim="sway">
+    <path d="M70 850 C40 770 100 730 66 640 C120 720 84 780 104 850 Z" fill="#2fae7d"/>
+    <path d="M120 850 C100 790 150 760 128 700 C168 760 140 800 152 850 Z" fill="#48c78f"/>
+    <path d="M30 850 C16 800 50 780 34 730 C66 780 46 810 58 850 Z" fill="#1f9468"/>
+  </g>
+  <!-- wilted warm seaweed, right -->
+  <g data-anim="sway" data-tap="wiggle">
+    <path d="M770 850 C760 780 770 730 800 706 C830 690 852 716 846 746 C836 726 816 724 806 744 C794 770 800 810 804 850 Z" fill="#b5a64a"/>
+    <path d="M826 850 C822 800 830 770 852 760 C872 754 884 772 878 790 C870 778 858 778 852 792 C848 810 852 830 854 850 Z" fill="#d1bd58"/>
+  </g>
+  <!-- sea floor -->
+  <path d="M0 826 C250 796 500 840 760 816 C900 804 1040 826 1200 806 L1200 900 L0 900 Z" fill="url(#floor)"/>
+  <!-- soup bubbles from the warm floor -->
+  <g data-anim="bob">
+    <circle cx="930" cy="790" r="14" fill="#ffe2a8" opacity="0.5"/>
+    <circle cx="926" cy="786" r="4" fill="#ffffff" opacity="0.8"/>
+    <circle cx="968" cy="740" r="9" fill="#ffe2a8" opacity="0.5"/>
+    <circle cx="902" cy="716" r="6" fill="#ffe2a8" opacity="0.5"/>
+    <circle cx="1010" cy="800" r="8" fill="#ffe2a8" opacity="0.5"/>
+  </g>
+  <!-- speed lines -->
+  <path d="M40 330 L150 322" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" opacity="0.45"/>
+  <path d="M20 420 L120 414" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" opacity="0.35"/>
+  <path d="M60 520 L210 508" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" opacity="0.45"/>
+  <path d="M110 590 L250 578" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity="0.3"/>
+  <!-- bubble trail -->
+  <g data-anim="float">
+    <circle cx="150" cy="450" r="16" fill="#ffffff" opacity="0.28"/>
+    <circle cx="145" cy="445" r="5" fill="#ffffff" opacity="0.7"/>
+    <circle cx="96" cy="480" r="10" fill="#ffffff" opacity="0.28"/>
+    <circle cx="200" cy="270" r="9" fill="#ffffff" opacity="0.28"/>
+    <circle cx="60" cy="380" r="6" fill="#ffffff" opacity="0.3"/>
+  </g>
+  <!-- hero -->
+  <g transform="translate(60 200) rotate(-6) scale(0.62)">
+    <g data-anim="swim" data-tap="jump">
+      <path d="M300 470 C250 455 205 420 170 365 C150 335 150 300 170 285 C205 300 245 335 275 385 C270 330 280 285 305 255 C330 250 350 275 352 315 C356 375 345 430 330 470 Z" fill="url(#whaleFin)"/>
+      <path d="M300 468 C330 400 430 318 600 300 C790 280 965 350 1010 470 C1045 565 965 660 790 680 C610 700 420 650 330 540 C310 515 298 492 300 468 Z" fill="url(#whaleBody)"/>
+      <path d="M350 560 C450 640 620 680 790 664 C900 652 975 610 1000 555 C985 640 900 690 780 700 C610 714 430 660 350 560 Z" fill="#b9cfe3" opacity="0.75"/>
+      <path d="M520 648 C600 668 700 672 790 660" fill="none" stroke="#a9c2d9" stroke-width="5" stroke-linecap="round"/>
+      <path d="M560 622 C640 640 730 642 815 630" fill="none" stroke="#a9c2d9" stroke-width="5" stroke-linecap="round"/>
+      <path d="M620 596 C580 640 520 668 450 672 C446 646 480 612 530 598 C562 588 596 586 620 596 Z" fill="url(#whaleFin)"/>
+      <ellipse cx="700" cy="298" rx="16" ry="6" fill="#9db7cf"/>
+      <ellipse cx="900" cy="520" rx="38" ry="24" fill="#f8b9c6" opacity="0.85"/>
+      <g data-anim="blink">
+        <circle cx="880" cy="440" r="36" fill="#e3edf6"/>
+        <circle cx="882" cy="438" r="33" fill="#ffffff"/>
+        <circle cx="892" cy="442" r="23" fill="#1d2b3a"/>
+        <circle cx="900" cy="432" r="8" fill="#ffffff"/>
+      </g>
+      <path d="M848 390 C870 374 900 374 920 388" fill="none" stroke="#7d97b0" stroke-width="7" stroke-linecap="round"/>
+      <path d="M888 572 C930 612 992 596 1012 540" fill="none" stroke="#3a5068" stroke-width="8" stroke-linecap="round"/>
+    </g>
+  </g>
+  <!-- sweating fish, going the other way -->
+  <g data-anim="swim" data-tap="hide">
+    <polygon points="905,226 950,196 942,226 950,256" fill="#259c8f"/>
+    <ellipse cx="866" cy="226" rx="50" ry="31" fill="#3fc1b0"/>
+    <path d="M860 198 C874 174 896 178 900 202 Z" fill="#259c8f"/>
+    <path d="M858 240 C870 254 884 252 886 240 Z" fill="#259c8f"/>
+    <circle cx="842" cy="218" r="12" fill="#ffffff"/>
+    <circle cx="838" cy="220" r="6" fill="#1d2b3a"/>
+    <path d="M826 204 L850 196" fill="none" stroke="#17695f" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="826" cy="240" rx="7" ry="8" fill="#17695f"/>
+    <path d="M880 176 C874 164 882 156 886 150 C892 158 896 168 890 176 C888 180 882 180 880 176 Z" fill="#cfefff"/>
+    <path d="M916 180 C912 170 918 164 922 158 C926 166 930 174 926 180 C924 184 918 184 916 180 Z" fill="#cfefff"/>
+    <path d="M846 172 C842 162 848 156 852 150 C856 158 860 166 856 172 C854 176 848 176 846 172 Z" fill="#cfefff"/>
+  </g>
+</svg>

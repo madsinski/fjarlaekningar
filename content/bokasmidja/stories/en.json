@@ -1,0 +1,300 @@
+{
+  "books": [
+    {
+      "key": "tough-kids",
+      "color": "#4338ca",
+      "emoji": "🌙",
+      "title": "Bedtime Stories for Tough Kids",
+      "subtitle": "Seven brave tales for the end of the day",
+      "concept": "A collection of bedtime stories for kids who think they are too tough for bedtime stories. Each one is a real adventure, told in a cool, funny, slightly cheeky voice, starring a tough hero who is brave and stubborn and a softie underneath. Every story ends with the same line: even the toughest hero has to sleep sometime.",
+      "stories": [
+        {
+          "key": "whale-1",
+          "title": "The Lava Tornado",
+          "summary": "The toughest whale in the ocean sees a red light far away and just has to take a quick look. It is never a quick look.",
+          "pages": [
+            {
+              "text": "Far out in the deep blue sea lived the White Whale. He was the toughest whale in the whole ocean. He wasn't scared of sharks. He wasn't scared of storms.\n\nHe had only one problem: he was curious. Way too curious. If something went blip, he had to go and poke it with his nose.",
+              "scene": "The White Whale in the open blue sea, happily poking a small glowing jellyfish with his nose. A few fish and bubbles around. Bright, friendly daytime sea."
+            },
+            {
+              "text": "One night he spotted a red light, far, far away. It glowed at the bottom of the sea like a tiny campfire.\n\n\"What is THAT?\" said the White Whale. \"I'll just take a quick look.\"\n\nRemember that. A quick look. Ha.",
+              "scene": "Night sea, dark blue. The White Whale in the foreground, wide-eyed, looking toward a small red glow far away on the horizon of the sea floor, at the foot of a distant mountain."
+            },
+            {
+              "text": "He swam and he swam. The red light got bigger. The water got warmer. First it was warm like a bath. Then it was warm like soup.\n\nA little fish zoomed past the other way, shouting, \"Wrong way, big guy!\"\n\nThe White Whale did not listen. Tough whales never do.",
+              "scene": "The White Whale swimming fast toward a much bigger red-orange glow. The water shifts from blue on the left to warm orange on the right. He looks pleased. A small fish swims the other way, sweating."
+            },
+            {
+              "text": "The light came out of a hole in the side of a mountain. A round, dark hole, exactly one whale wide.\n\nWould you swim into a hole like that? No. You're smart.\n\n\"Perfect fit,\" said the White Whale. And in he went, nose first.",
+              "scene": "An underwater mountain of dark rock with a round hole glowing red from inside. The White Whale approaches the hole nose first, delighted. A crab on a rock shakes its head."
+            },
+            {
+              "text": "In went his nose. No problem. In went his flippers. No problem. In went his big round belly — problem.\n\nHe wiggled. He waggled. He pushed and he puffed. Nothing. The toughest whale in the ocean was stuck like a cork in a bottle.",
+              "scene": "Seen from outside the mountain: only the back half of the White Whale sticks out of the hole, tail waving, belly squeezed tight by the rock. The crab and two small fish watch."
+            },
+            {
+              "text": "The rock squeezed his belly. Squeeeeze. And deep down inside, something started to rumble. Grumble-bumble.\n\n\"Oh no,\" whispered the White Whale. \"Not now. Please not now.\"\n\nBut it was now.",
+              "scene": "Close on the stuck White Whale from the front, inside the red-lit tunnel: his face worried, cheeks puffed, eyes looking sideways. The rock presses his belly. Little rumble lines around his tummy."
+            },
+            {
+              "text": "PRRRRRRRT!\n\nIt was the biggest fart in the history of the sea. It roared like a rocket engine. WHOOSH! The White Whale shot through the hole like a white torpedo and popped out on the other side.\n\nStuck? Not anymore.",
+              "scene": "The White Whale rocketing forward through the tunnel, eyes huge, a giant cloud of green-yellow bubbles blasting out behind him like a rocket flame. Speed lines. Outside, the crab is blown head over heels."
+            },
+            {
+              "text": "And where was he? Inside a volcano. A real one. Far below, lava glowed and bubbled. Blop. Blop. The water was hot. And the smell! Smoke and burnt toast.\n\nIt crept up his nose. It tickled. Tickle, tickle, tickle...",
+              "scene": "Inside the volcano: a tall rocky chamber, glowing lava bubbling at the bottom, hot orange water, wisps of smoke curling. The White Whale floats in the middle, nose wrinkled, one eye squeezed, about to sneeze."
+            },
+            {
+              "text": "\"Ah... ah... AH-CHOOOO!\"\n\nThe sneeze spun the water round and round, faster and faster, until it was a whirling, twirling, red-hot LAVA TORNADO. Up went the tornado. Up went the White Whale, right in the middle of it.\n\nWas he scared? \"WHEEEEE!\" Nope.",
+              "scene": "A huge spinning tornado of red and orange lava and water rising up the volcano. The White Whale rides near the top of the swirl, upside down and thrilled, mouth wide open in a happy shout."
+            },
+            {
+              "text": "POP! Out of the top of the mountain he flew, high over the waves, past one very surprised seagull — and SPLASH, back into the cool, dark sea.\n\nHe floated on his back and looked at the stars. \"Just a quick look,\" he yawned.\n\nAnd then he fell asleep. Because even the toughest whale in the ocean has to sleep sometime.",
+              "scene": "Calm night. The White Whale floats on his back on a quiet dark sea, eyes half closed, smiling. Stars and a moon above. In the distance the volcano island gives off one last small puff of smoke. A seagull sits on his belly."
+            }
+          ]
+        },
+        {
+          "key": "whale-2",
+          "title": "The Poop Tornado in the Troll Cave",
+          "summary": "The White Whale is hungry enough to eat a ship, and something smells delicious inside a dark cave. Something else does not smell delicious at all.",
+          "pages": [
+            {
+              "text": "The White Whale was hungry. Not snack hungry. Not dinner hungry. Eat-a-whole-ship hungry. His belly growled so loudly that a crab ran off to hide.\n\nHe had hunted for food all day, and all he had found was one old boot. He tried it. It tasted like boot.",
+              "scene": "The White Whale looking sad and hungry, holding an old boot on his nose or looking at it. A crab scuttles away behind a rock. Rumble lines at his tummy. Blue-green sea, seaweed."
+            },
+            {
+              "text": "Then his nose caught something. Sniff. Something warm. Sniff, sniff. Something DELICIOUS.\n\nThe smell curled through the water like a golden ribbon. The White Whale followed it, all the way into a dark, dark sea cave.\n\nWas he scared of the dark? Maybe a tiny bit. But hungry beats scared.",
+              "scene": "A golden ribbon of smell curling through the water into the mouth of a dark sea cave. The White Whale follows it with eyes closed in bliss, nose up."
+            },
+            {
+              "text": "In the roof of the cave was a hole, and the smell poured out of it. The White Whale pressed his eye to the hole.\n\nTrolls! A whole family! Papa Troll stirred a pot as big as a bathtub. Mama Troll chopped onions as big as footballs.",
+              "scene": "View into the troll kitchen: a cosy cave lit by a fire. Papa Troll (huge, mossy green-grey, big nose, tuft of hair) stirs a giant steaming pot. Mama Troll (same family look, hair in a bun with a bone) chops giant onions. In the floor, a small round hole with the White Whale's big eye peeking up through it."
+            },
+            {
+              "text": "\"Fish stew,\" whispered the White Whale. His belly growled again.\n\nBut the hole was only as big as his eye, and you can't eat stew with your eye. He needed another way in. He swam round and round the cave, searching.",
+              "scene": "Back in the dark sea cave below: the White Whale swimming in a circle, searching the rocky roof, looking determined. The small hole above glows warm yellow with steam drifting down. A curious little fish follows him."
+            },
+            {
+              "text": "He found one more hole. Just one. He stuck his nose in... and yanked it right back out.\n\n\"EW!\"\n\nThis hole did NOT smell like fish stew. This hole led straight up to the troll bathroom. Right under the troll toilet. Yep.",
+              "scene": "The White Whale recoiling from a second hole in the cave roof, eyes watering, a few green stink wisps drifting out of the hole. Through the hole, a glimpse of the underside of a wooden troll toilet."
+            },
+            {
+              "text": "Up above, Little Troll came stomping in. \"Nobody come in!\" he shouted. \"I need to concentrate!\"\n\nHe sat down. He scrunched up his face. He went as red as a tomato. And then —\n\nPLOP. PLOP. PLOP-PLOP.",
+              "scene": "The troll bathroom: Little Troll (small, round, mossy green-grey, big ears, one tooth) sitting on a big wooden toilet, face scrunched and red with effort, feet dangling. A candle, a stack of toilet rolls, a rubber duck. Decent and funny: nothing rude is shown."
+            },
+            {
+              "text": "The smell rolled down the hole like green fog. It was the worst smell in the history of smells. The White Whale crossed his eyes. He stuck out his tongue.\n\n\"Blearrgh! Ooof! Hnnngh!\"\n\nHe made faces nobody had ever made before. And deep in his nose, a tickle began.",
+              "scene": "Close on the White Whale in the sea cave, surrounded by green fog rolling down from the hole: eyes crossed, tongue out, a hilarious disgusted face. The little fish holds its nose with a fin."
+            },
+            {
+              "text": "\"Ah... ah... AH-CHOOOO!\"\n\nThe sneeze shot straight up the hole. WHOOSH went the toilet! Little Troll flew off his seat, and a brown, whirling, twirling POOP TORNADO went spinning through the whole troll cave.",
+              "scene": "The troll bathroom exploding with wind: a cheerful brown cartoon tornado swirl rising out of the toilet, toilet rolls and the rubber duck flying, Little Troll blown up into the air with a shocked face and arms out."
+            },
+            {
+              "text": "\"RUN!\" yelled Papa Troll. \"MY HAIR!\" yelled Mama Troll.\n\nThe tornado spun through the kitchen, grabbed the giant pot of fish stew, and tipped it down the hole in the floor — SPLOSH — straight into the wide-open mouth of the White Whale.",
+              "scene": "Split view: above, the troll kitchen in chaos with the brown tornado, Papa and Mama Troll running with hair standing on end, the giant pot tipping over the floor hole. Below, in the sea cave, the White Whale with his mouth wide open catching a waterfall of fish stew."
+            },
+            {
+              "text": "Gulp. \"Delicious,\" said the White Whale.\n\nUp in the cave, the trolls got out their mops. \"It wasn't me,\" said Little Troll. Nobody believed him.\n\nFar away, the White Whale drifted home with a full, warm belly. He burped one small, happy burp, and fell asleep. Because even the toughest whale in the ocean has to sleep sometime.",
+              "scene": "Calm night sea. The White Whale floats away asleep with a round full belly and a tiny burp bubble, smiling. In the distance behind him, the cave mouth glows warm and three tiny troll silhouettes are mopping."
+            }
+          ]
+        },
+        {
+          "key": "bear-1",
+          "title": "The Fish Tornado",
+          "summary": "Teddy the bear wants fish for dinner. The fish think that is very funny — until a dandelion gets involved.",
+          "pages": [
+            {
+              "text": "Teddy was a bear. A big, tough forest bear. (Do not call him cute. He hates that.)\n\nHe had eaten honey for breakfast. He had eaten blueberries for lunch. His paws were sticky and his tongue was blue.\n\n\"Enough,\" said Teddy. \"Today I want FISH.\"",
+              "scene": "Teddy sitting in a sunny forest clearing beside an empty honey pot and a blueberry bush, paws sticky with honey, tongue blue, dreaming of a fish (shown as a little thought cloud with a fish in it). A bee buzzes by."
+            },
+            {
+              "text": "So Teddy stomped down to the river. And the river was packed with fish! Silver ones, spotty ones, fat ones, fast ones. They shot past his toes like little rockets.\n\n\"Easy,\" said Teddy, and licked his lips.\n\nIt was not easy.",
+              "scene": "Teddy standing at the edge of a clear forest river, licking his lips, paws on hips. Many fish of different kinds zip through the water at his feet. Green banks with dandelions, birch trees, blue sky."
+            },
+            {
+              "text": "He grabbed with his left paw. SPLASH! Nothing. He grabbed with his right paw. SPLASH! Nothing.\n\nHe jumped in with all four paws at once. SPLOOSH! He got a wet nose, a wet bottom, and one old stick.",
+              "scene": "Teddy belly-flopping into the river with a giant splash, all four paws out, holding an old stick. Fish dart away in all directions, clearly amused."
+            },
+            {
+              "text": "The fish laughed at him. Blub-blub-blub. One cheeky fish swam right up, slapped him on the nose with its tail, and zipped away.\n\nTeddy tried a hundred times. Do you know how many fish he caught? Zero. A big, fat zero.",
+              "scene": "Teddy standing soaked in the river, cross-eyed, as one cheeky spotted fish slaps his nose with its tail. Other fish laugh with bubbles coming from their mouths."
+            },
+            {
+              "text": "Teddy sat down on a rock. His belly growled. His lip wobbled. And then — don't tell anyone — big, fat tears rolled down his furry cheeks.\n\n\"I'm the worst fisher-bear in the whole forest,\" he sniffed.",
+              "scene": "Teddy sitting on a rock by the river, dripping wet, crying big tears, shoulders slumped. A small bird on a branch looks at him kindly. The fish peek out of the water, a little sorry."
+            },
+            {
+              "text": "He wiped his nose with his paw. His sticky, honey paw. (That's going to matter in a minute.)\n\nThen he took a big breath. \"One more time,\" said Teddy. \"A bear doesn't quit.\" And he stood up tall.",
+              "scene": "Teddy standing up tall on the rock, chest out, determined eyebrows, one paw raised. His nose is shiny with honey. Heroic sunlight behind him. The small bird cheers."
+            },
+            {
+              "text": "Just then, a breeze shook the dandelions on the riverbank. A hundred fluffy seeds floated up into the air — and three of them landed right on his sticky, honey nose.\n\nTickle. Tickle. Tickle.",
+              "scene": "Close on Teddy's face: dandelion seeds drifting all around, three stuck on his honey-shiny nose. His eyes cross to look at them, nose twitching, mouth starting to open. Dandelion clocks on the bank."
+            },
+            {
+              "text": "\"Ah... ah... AH-CHOOOO!\"\n\nIt was the biggest sneeze the forest had ever heard. Birds fell off their branches. The sneeze hit the river like a cannonball, and the water spun round and round and up, up, UP!",
+              "scene": "Teddy mid-sneeze, eyes shut, leaning forward, a huge blast of wind from his nose hitting the river and twisting the water up into a spiral. Leaves fly, the small bird tumbles off its branch."
+            },
+            {
+              "text": "A FISH TORNADO! Silver ones, spotty ones, fat ones, fast ones — all whirling through the air. And then they came down.\n\nFlop, flop, flop, flop, all around Teddy, like shiny rain. One landed right on his head, like a hat.\n\nWho's laughing now, fish?",
+              "scene": "A tall spinning water tornado full of whirling fish above the river, and fish raining down around a delighted, amazed Teddy with his arms out. One fish sits on his head like a hat."
+            },
+            {
+              "text": "That night Teddy invited every bear in the forest. Big bears, small bears, even grumpy old Grandpa Bear. They ate fish until their bellies were as round as the moon.\n\nThen they lay down by the fire in one big heap. Teddy fell asleep with a smile on his face and a fishbone for a toothpick. Because even the toughest bear in the forest has to sleep sometime.",
+              "scene": "Night in the forest: a warm campfire, a heap of sleepy bears of different sizes with round tummies (one grey old Grandpa Bear), fishbones on a plate. Teddy in the middle, asleep and smiling, a fishbone in his mouth. Stars and a moon."
+            }
+          ]
+        },
+        {
+          "key": "bear-2",
+          "title": "Teddy Goes Ice Fishing",
+          "summary": "It is winter, the pond is frozen, and Teddy has a genius idea, a piece of rope and far too many blueberries.",
+          "pages": [
+            {
+              "text": "It was winter. Snow lay on the forest like a thick white blanket, and the pond was frozen as hard as a table.\n\nTeddy the bear stood on the ice and looked down. Right under his feet, the fish swam round and round. They looked very relaxed. Too relaxed.",
+              "scene": "A snowy forest with a frozen pond. Teddy stands on the ice looking down between his feet, where fish can be seen swimming under the pale blue ice. Snowy pines, soft winter sky."
+            },
+            {
+              "text": "\"Fish for dinner,\" said Teddy. He scratched and scraped with his claws until there was a round hole in the ice.\n\nNow all he needed was his fishing rod. Small problem. Teddy did not own a fishing rod.",
+              "scene": "Teddy kneeling beside a freshly scraped round hole in the ice, ice chips around, scratching his head and looking puzzled. A fish pokes its head out of the hole behind his back."
+            },
+            {
+              "text": "But Teddy had an idea. A genius idea. He found a piece of rope. He tied one end to his short, stumpy tail. He dropped the other end down the hole.\n\nThen he sat down, right on top of it. \"Genius,\" said Teddy.",
+              "scene": "Teddy seen from the side sitting on the ice over the hole, very pleased with himself, a rope tied in a bow to his short round tail and hanging down into the hole. Under the ice, fish look at the rope end, unimpressed."
+            },
+            {
+              "text": "He waited. And he waited. His bottom got cold. His nose got cold. A snowflake landed on his ear. No fish.\n\nTo pass the time, he ate a few blueberries from his bag. Then a few more. Then all of them.\n\n(This was not a genius idea.)",
+              "scene": "Teddy still sitting on the hole, snow falling, a little pile of snow on his head, nose pink with cold, munching blueberries from a small bag, mouth and paws stained blue. A squirrel watches from a snowy branch."
+            },
+            {
+              "text": "An hour went by. Then Teddy's belly said: blubb.\n\n\"Shh,\" said Teddy.\n\nHis belly said: BLUBB-BLUBB. It rumbled like thunder far away. It was full of blueberries, and the blueberries wanted OUT.",
+              "scene": "Teddy sitting on the ice with both paws on his round, rumbling tummy, eyes wide and worried, rumble lines around the belly. The empty blueberry bag lies beside him. The squirrel leans in, curious."
+            },
+            {
+              "text": "Teddy held on. He squeezed his eyes shut. He crossed his toes.\n\nA squirrel in a tree stopped to watch. \"Don't you dare,\" said the squirrel.\n\n\"I can't hold it!\" squeaked Teddy.",
+              "scene": "Teddy clenching everything: eyes squeezed shut, cheeks puffed, toes curled, shaking. On a branch close by, the squirrel holds up both paws as if to say stop."
+            },
+            {
+              "text": "PRRRRRRRT-BOOM!\n\nIt was the biggest fart the forest had ever heard. Snow fell off every tree. The squirrel fell off its branch. And the ice went CRACK — crick — crack — into a thousand pieces.",
+              "scene": "A big cartoon blast under Teddy: a purple-blue blueberry-coloured cloud bursting out, Teddy lifted off the ice with a shocked face, the ice cracking in jagged lines all across the pond, snow falling off the trees, the squirrel tumbling through the air."
+            },
+            {
+              "text": "Up shot the fish! The blast blew them right out of the pond and high into the sky, like silver fireworks.\n\nAnd down went Teddy. SPLASH! Into the freezing cold water, with the rope still tied to his tail.",
+              "scene": "Fish flying high up into the winter sky like fireworks among broken ice pieces, while Teddy drops into the water between ice floes with a big splash, arms up, rope trailing from his tail."
+            },
+            {
+              "text": "\"B-b-brrr!\" said Teddy.\n\nBut look! All around him, fish were floating, dizzy and very surprised. Teddy paddled round and round and scooped them up — one, two, ten, twenty — until his arms were full.\n\nNot so relaxed now, were they?",
+              "scene": "Teddy paddling in the icy pond between ice floes, shivering but grinning, arms full of dizzy fish (little stars or spirals over their heads). The squirrel sits on an ice floe, covered in snow, still amazed."
+            },
+            {
+              "text": "That evening Teddy sat by his fire, wrapped in a blanket, with his toes in a bucket of warm water. The fish sizzled in the pan.\n\n\"Genius,\" said Teddy, and yawned. \"But next time... fewer blueberries.\"\n\nAnd he was asleep before the last fish was done. Because even the toughest bear in the forest has to sleep sometime.",
+              "scene": "Inside Teddy's cosy den at night: a fireplace with a pan of sizzling fish, Teddy in an armchair wrapped in a blanket, feet in a steaming bucket, eyes closing. The squirrel is asleep on the arm of the chair. Snow falls outside a small window."
+            }
+          ]
+        },
+        {
+          "key": "rabbit-1",
+          "title": "The Biggest Carrot in the World",
+          "summary": "Nana and Nuni see the biggest carrot in the world on TV. Getting it is hard. Getting it home is much, much harder.",
+          "pages": [
+            {
+              "text": "Nana and Nuni were rabbits. Fluffy ones, with long ears that hung all the way down to their knees. (Do not laugh at the ears. The ears are important later.)\n\nOne evening they were watching TV. And then they saw it.\n\nTHE BIGGEST CARROT IN THE WORLD.",
+              "scene": "Nana and Nuni side by side on a sofa in a cosy burrow living room, staring wide-eyed at a TV that shows a gigantic orange carrot on a mountain top. Their long ears hang down. A bowl of small carrots forgotten on the floor."
+            },
+            {
+              "text": "Now, if you know one thing about rabbits, it's this: rabbits love carrots.\n\nNana's mouth fell open. Nuni's nose started to twitch.\n\n\"We're getting that carrot,\" said Nana. \"And we're bringing it home,\" said Nuni.\n\nThey packed two sandwiches and left before the show was even over.",
+              "scene": "The two rabbits marching out of their round burrow door with tiny backpacks, determined faces, pointing ahead. Behind them the TV is still on. Far away on the horizon, a huge mountain with two peaks."
+            },
+            {
+              "text": "The carrot grew on top of a gigantic mountain, in a mysterious land far, far away.\n\nSo they climbed. They climbed past the trees. They climbed past the clouds. They climbed until their legs felt like spaghetti.\n\n\"Almost... there...\" puffed Nuni.",
+              "scene": "Nana and Nuni climbing a steep rocky mountainside above the clouds, tired, tongues out, ears dragging. Nana pulls Nuni up by a paw. A mountain goat watches, chewing. Strange colourful plants of the mysterious land."
+            },
+            {
+              "text": "At last they stood on the very top. And there was the carrot! Huge! Orange! Beautiful!\n\n...on the OTHER mountain top. Right across from them.\n\n\"You have GOT to be kidding,\" said Nana.\n\nClimbing down and up again would take days.",
+              "scene": "The two rabbits on a mountain peak on the left, jaws dropped, looking across a deep misty gap to a second peak on the right where the enormous carrot grows, leaves sticking up into the sky."
+            },
+            {
+              "text": "Then Nuni looked at Nana's ears. Nana looked at Nuni's ears.\n\n\"Are you thinking what I'm thinking?\"\n\nThey started to spin their ears. Round and round, faster and faster — FLAP-FLAP-FLAP-FLAP — until they lifted off the ground like two fluffy helicopters.",
+              "scene": "Nana and Nuni flying across the gap between the two peaks, their long ears spinning above their heads like helicopter rotors (drawn as blurred rotor circles with ear shapes), thrilled and a bit wobbly. A surprised bird flies alongside."
+            },
+            {
+              "text": "They landed right next to the carrot. It was as big as a bus. They hugged it. They danced around it.\n\nThen Nana stopped. \"Um. Nuni? How do we get it home?\"\n\nThey pushed. They pulled. The carrot did not move one tiny bit.",
+              "scene": "The gigantic carrot lying on the mountain top, as big as a bus. Nana pushes against it with all his strength, Nuni pulls its leaves, both straining, sweat drops flying. The carrot does not budge."
+            },
+            {
+              "text": "Then the ground felt warm under their feet. They peeked over the edge.\n\nThis mountain was a volcano!\n\n\"I have an idea,\" said Nuni. \"If we roast the carrot in the volcano, maybe it shrinks. Then we can carry it.\"\n\nIt was a strange idea. But it was the only one they had.",
+              "scene": "The two rabbits lying on their tummies at the rim of a volcano crater, peeking down at glowing lava below, faces lit orange. Nuni holds one finger up with a bright idea (a little lightbulb-like spark, no text). The giant carrot behind them."
+            },
+            {
+              "text": "\"Need a hand? Or a hoof?\"\n\nBehind them stood a horse. A big, friendly horse who had ALSO seen the carrot on TV, and had ALSO climbed all the way up here.\n\n\"Help us push,\" said Nana, \"and we share.\"\n\n\"Deal,\" said the horse.",
+              "scene": "A big friendly brown horse with a white blaze and a tiny backpack stands beside the carrot, smiling, one hoof raised. Nana shakes the hoof with his paw while Nuni looks up, impressed by how big the horse is."
+            },
+            {
+              "text": "One, two, three — PUSH! The carrot rolled over the edge and dropped into the volcano.\n\nThey waited. Nothing.\n\nThen... rumble. Grumble. BRRRUMBLE. The ground shook. The two rabbits and the horse grabbed each other and screamed.\n\n\"AAAAAAH!\" \"EEEEEEK!\" \"NEEEEEIGH!\"",
+              "scene": "The ground shaking with crack lines and wobble marks, smoke puffing from the crater. Nana, Nuni and the horse clinging together in a terrified group hug, mouths wide open screaming, eyes huge, ears and mane standing on end. Very funny, not scary."
+            },
+            {
+              "text": "WHOOOOSH! The carrot shot out of the volcano like a rocket, trailing smoke and sparks.\n\nIt flew over the mountains, over the clouds, over the whole mysterious land — and landed, THUNK, right outside Nana and Nuni's front door.\n\nNot smaller. Just nicely roasted.",
+              "scene": "The giant carrot blasting out of the volcano like a rocket with a trail of fire, smoke and sparks, arcing across the sky. Tiny below at the crater rim, the two rabbits and the horse watch with their heads tilted all the way back."
+            },
+            {
+              "text": "Nana and Nuni flew home with their ears, and the horse hung on underneath. (Barely.)\n\nThat night they ate roasted carrot until they couldn't move, and there was still enough left for a hundred breakfasts.\n\nThen all three fell asleep in a heap. Because even the toughest rabbits in the world have to sleep sometime.",
+              "scene": "Night outside the burrow: the enormous roasted carrot lies in front of the round door with a big bite taken out and a little steam rising. Nana, Nuni and the horse sleep in a heap against it with full round tummies under the stars and moon."
+            }
+          ]
+        },
+        {
+          "key": "rabbit-2",
+          "title": "The Birthday Carrot",
+          "summary": "It is Nana's birthday, and Nuni forgot the present. Luckily he has a banana, a paint box and a plan.",
+          "pages": [
+            {
+              "text": "It was Nana's birthday. There were balloons. There was a cake. There was a party hat that kept slipping down over one ear.\n\nAnd there was one big problem.\n\nNuni had forgotten to get him a present.",
+              "scene": "A birthday room in the burrow: balloons, a cake with candles, Nana happy with a party hat slipping over one ear. In the foreground Nuni, turned toward the viewer, with a face of sudden horror, paws on his cheeks."
+            },
+            {
+              "text": "Now, if you know one thing about birthdays, it's this: the birthday rabbit wants a present he really, really loves.\n\nAnd can you guess what Nana loves most in the whole world?\n\nCorrect. Carrots.",
+              "scene": "Nana daydreaming with heart eyes, hugging an imaginary giant carrot shown in a dream cloud above his head. Carrot pictures on the wall, a carrot-shaped pillow."
+            },
+            {
+              "text": "So Nuni looked for a carrot. He looked in the fridge. He looked in the garden. He looked under the sofa, where he found a sock, a marble and an old cracker.\n\nBut no carrot. Not one.",
+              "scene": "Nuni on his tummy looking under the sofa, bottom in the air, holding up a sock. A marble and a cracker beside him. Behind him the fridge door hangs open and empty, and through the window an empty vegetable patch with holes."
+            },
+            {
+              "text": "\"Think, Nuni, think,\" said Nuni.\n\nHe opened the cupboard one last time. And there, all alone in the fruit bowl, lay a banana. Long. A bit pointy at the end.\n\nNuni looked at the banana. The banana looked back.",
+              "scene": "Close on Nuni at an open kitchen cupboard, nose to nose with a single yellow banana in a fruit bowl. Nuni's eyes narrowed, thinking hard, one eyebrow up. The banana sits there innocently."
+            },
+            {
+              "text": "\"It's ALMOST a carrot,\" whispered Nuni.\n\nHe fetched his paint box. He painted that banana orange from top to bottom. He stuck a little bunch of parsley on the end.\n\nThen he stood back. \"Genius,\" said Nuni.",
+              "scene": "Nuni at a table with a paint box and brushes, proudly holding up a banana painted orange with a sprig of green parsley stuck on top. Orange paint on his paws, nose and the table. He looks extremely pleased."
+            },
+            {
+              "text": "He put the carrot — okay, the banana — into a beautiful box. He tied it with a big red ribbon.\n\nThen he carried it to Nana with his very best nothing-is-wrong face.\n\n\"Happy birthday, Nana!\"",
+              "scene": "Nuni holding out a gift box with a big red ribbon to Nana, wearing an exaggerated innocent grin, eyes looking sideways. Nana's paws reach for it, delighted. Balloons and cake in the background."
+            },
+            {
+              "text": "Nana tore off the ribbon. He opened the box.\n\n\"A CARROT! The biggest one I ever got!\"\n\nHe gave Nuni a hug. Nuni smiled a slightly wobbly smile.\n\nThen Nana opened his mouth wide and took an enormous bite.",
+              "scene": "Nana holding the orange 'carrot' high in one paw, mouth wide open about to bite, thrilled. Beside him Nuni with a wobbly nervous smile and a sweat drop, ribbon and box on the floor."
+            },
+            {
+              "text": "Squish.\n\nNana stopped chewing. His eyes went round. His ears stood straight up.\n\n\"Thith cawwot,\" he said with his mouth full, \"tathtes FUNNY.\"\n\n\"BLEH! PFFFT! PTOOEY!\" Orange bits flew all over the cake.",
+              "scene": "Nana spitting out orange bits in a big comic spray, ears shooting straight up, eyes round, tongue out. Orange blobs land on the birthday cake. Nuni hides his face behind his own ears."
+            },
+            {
+              "text": "Nuni's ears drooped all the way to the floor. \"I forgot your present,\" he said in a very small voice. \"It's a banana. I painted it.\"\n\nNana stared at Nuni. Nana stared at the banana.\n\nAnd then Nana started to laugh. He laughed until he fell off his chair.",
+              "scene": "Nana on the floor on his back beside a tipped chair, laughing so hard he cries, holding the bitten orange banana in the air (the bite shows yellow banana inside). Nuni stands beside him, ears drooping, just starting to smile."
+            },
+            {
+              "text": "\"A painted banana!\" gasped Nana. \"That's the funniest present I ever got!\"\n\nHe put it on the shelf, right next to his best trophy.\n\nThen they ate cake until they were full, and that night two rabbits fell asleep with orange paint on their noses. Because even the toughest rabbits in the world have to sleep sometime.",
+              "scene": "Night in the burrow bedroom: Nana and Nuni asleep in two little beds (or one big one), smiling, each with an orange paint smudge on the nose. On a shelf above, the bitten orange banana stands proudly next to a gold trophy. Moon through the round window."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

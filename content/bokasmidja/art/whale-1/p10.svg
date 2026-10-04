@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#081634"/><stop offset="0.6" stop-color="#14306a"/><stop offset="1" stop-color="#2a4f8c"/></linearGradient>
+    <linearGradient id="farsea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#17386e"/><stop offset="1" stop-color="#0b2147"/></linearGradient>
+    <linearGradient id="nearsea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#143468"/><stop offset="1" stop-color="#06142e"/></linearGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff6d8" stop-opacity="0.55"/><stop offset="0.4" stop-color="#cfe0ff" stop-opacity="0.2"/><stop offset="1" stop-color="#cfe0ff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="whaleBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.6" stop-color="#f1f7fc"/><stop offset="1" stop-color="#c9dcec"/></linearGradient>
+    <linearGradient id="whaleFin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef5fb"/><stop offset="1" stop-color="#bcd2e6"/></linearGradient>
+  </defs>
+  <rect width="1200" height="900" fill="url(#sky)"/>
+  <!-- moon -->
+  <g data-anim="pulse">
+    <circle cx="240" cy="160" r="200" fill="url(#halo)"/>
+    <circle cx="240" cy="160" r="66" fill="#fff6d8"/>
+    <circle cx="218" cy="140" r="12" fill="#f0e2b4"/>
+    <circle cx="262" cy="182" r="16" fill="#f0e2b4"/>
+    <circle cx="266" cy="132" r="7" fill="#f0e2b4"/>
+  </g>
+  <!-- stars -->
+  <g data-anim="twinkle">
+    <polygon points="520,90 526,108 544,114 526,120 520,138 514,120 496,114 514,108" fill="#fff6c8"/>
+    <polygon points="860,170 865,184 879,189 865,194 860,208 855,194 841,189 855,184" fill="#fff6c8"/>
+    <circle cx="700" cy="70" r="4" fill="#fff6c8"/>
+    <circle cx="1090" cy="110" r="5" fill="#fff6c8"/>
+    <circle cx="80" cy="330" r="4" fill="#fff6c8"/>
+    <circle cx="420" cy="260" r="3" fill="#fff6c8"/>
+  </g>
+  <g data-anim="twinkle">
+    <polygon points="1020,250 1025,264 1039,269 1025,274 1020,288 1015,274 1001,269 1015,264" fill="#fff6c8"/>
+    <polygon points="640,220 644,232 656,236 644,240 640,252 636,240 624,236 636,232" fill="#fff6c8"/>
+    <circle cx="400" cy="60" r="4" fill="#fff6c8"/>
+    <circle cx="960" cy="60" r="3" fill="#fff6c8"/>
+    <circle cx="780" cy="300" r="3" fill="#fff6c8"/>
+    <circle cx="60" cy="90" r="5" fill="#fff6c8"/>
+    <circle cx="1150" cy="330" r="4" fill="#fff6c8"/>
+  </g>
+  <!-- the volcano island, far away -->
+  <g data-anim="drift">
+    <circle cx="1052" cy="350" r="20" fill="#8fa0c0" opacity="0.7"/>
+    <circle cx="1074" cy="330" r="15" fill="#a8b8d4" opacity="0.7"/>
+    <circle cx="1090" cy="306" r="10" fill="#a8b8d4" opacity="0.6"/>
+  </g>
+  <path d="M900 530 C950 500 1000 440 1030 396 L1044 388 L1056 398 L1070 390 C1100 440 1140 500 1200 526 L1200 540 L900 540 Z" fill="#06142e"/>
+  <path d="M1030 396 L1044 388 L1056 398 L1070 390 L1076 400 C1060 404 1040 404 1026 402 Z" fill="#ff7a2e" opacity="0.8"/>
+  <!-- far sea -->
+  <path d="M0 524 C300 516 800 530 1200 522 L1200 900 L0 900 Z" fill="url(#farsea)"/>
+  <path d="M150 548 L330 548 M190 570 L300 570 M960 556 L1100 556" fill="none" stroke="#cfe0ff" stroke-width="5" stroke-linecap="round" opacity="0.35"/>
+  <!-- hero, floating on his back, fast asleep -->
+  <g data-anim="bob" data-tap="splash">
+    <g transform="translate(100 840) scale(0.7 -0.7)">
+      <path d="M300 470 C250 455 205 420 170 365 C150 335 150 300 170 285 C205 300 245 335 275 385 C270 330 280 285 305 255 C330 250 350 275 352 315 C356 375 345 430 330 470 Z" fill="url(#whaleFin)"/>
+      <path d="M300 468 C330 400 430 318 600 300 C790 280 965 350 1010 470 C1045 565 965 660 790 680 C610 700 420 650 330 540 C310 515 298 492 300 468 Z" fill="url(#whaleBody)"/>
+      <path d="M350 560 C450 640 620 680 790 664 C900 652 975 610 1000 555 C985 640 900 690 780 700 C610 714 430 660 350 560 Z" fill="#b9cfe3" opacity="0.75"/>
+      <path d="M520 648 C600 668 700 672 790 660" fill="none" stroke="#a9c2d9" stroke-width="5" stroke-linecap="round"/>
+      <path d="M560 622 C640 640 730 642 815 630" fill="none" stroke="#a9c2d9" stroke-width="5" stroke-linecap="round"/>
+      <path d="M640 590 C620 650 580 700 520 725 C505 700 520 650 560 610 C585 588 615 580 640 590 Z" fill="url(#whaleFin)"/>
+    </g>
+    <!-- the sleeping face, drawn the right way up -->
+    <path d="M656 426 C678 410 716 410 738 426" fill="none" stroke="#7d97b0" stroke-width="6" stroke-linecap="round"/>
+    <path d="M652 460 C668 492 728 492 744 460" fill="none" stroke="#1d2b3a" stroke-width="9" stroke-linecap="round"/>
+    <path d="M655 470 L643 480 M667 483 L659 496" fill="none" stroke="#1d2b3a" stroke-width="6" stroke-linecap="round"/>
+    <ellipse cx="712" cy="522" rx="36" ry="22" fill="#f8b9c6" opacity="0.85"/>
+    <path d="M732 550 C750 570 780 565 791 540" fill="none" stroke="#3a5068" stroke-width="7" stroke-linecap="round"/>
+  </g>
+  <!-- sleepy bubbles -->
+  <g data-anim="float">
+    <circle cx="826" cy="506" r="8" fill="#cfe0ff" opacity="0.55"/>
+    <circle cx="848" cy="474" r="12" fill="#cfe0ff" opacity="0.5"/>
+    <circle cx="844" cy="470" r="4" fill="#ffffff" opacity="0.8"/>
+    <circle cx="874" cy="432" r="17" fill="#cfe0ff" opacity="0.45"/>
+    <circle cx="868" cy="426" r="5" fill="#ffffff" opacity="0.8"/>
+  </g>
+  <!-- the seagull on his belly -->
+  <g transform="translate(0 -16)">
+  <g data-anim="bob" data-tap="jump">
+    <path d="M556 372 L556 352 M574 372 L574 352" fill="none" stroke="#f08a24" stroke-width="5" stroke-linecap="round"/>
+    <polygon points="528,330 494,318 500,342" fill="#aeb8c4"/>
+    <ellipse cx="562" cy="328" rx="46" ry="30" fill="#ffffff"/>
+    <path d="M524 322 C540 304 580 306 592 326 C576 344 544 344 524 322 Z" fill="#aeb8c4"/>
+    <circle cx="604" cy="298" r="23" fill="#ffffff"/>
+    <polygon points="624,292 652,300 624,308" fill="#f5b301"/>
+    <path d="M602 296 C606 300 612 300 616 296" fill="none" stroke="#1d2b3a" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  </g>
+  <!-- near water, over his back -->
+  <path d="M0 584 C100 576 200 588 300 582 C420 576 520 588 640 582 C760 576 900 588 1200 580 L1200 900 L0 900 Z" fill="url(#nearsea)" opacity="0.86"/>
+  <path d="M170 596 C220 586 268 586 304 594 M818 592 C866 582 930 582 984 592 M250 624 C330 614 400 618 470 626 M560 626 C650 616 760 616 860 626 M170 652 L300 652 M900 656 L1040 656 M420 690 L640 690 M120 740 L260 740 M820 760 L980 760" fill="none" stroke="#cfe0ff" stroke-width="6" stroke-linecap="round" opacity="0.4"/>
+  <!-- little fish peeking -->
+  <g data-anim="bob" data-tap="hide">
+    <ellipse cx="170" cy="790" rx="46" ry="12" fill="#cfe0ff" opacity="0.3"/>
+    <path d="M132 790 C132 752 208 752 208 790 Z" fill="#3fc1b0"/>
+    <path d="M160 764 C166 746 184 746 188 764 Z" fill="#259c8f"/>
+    <circle cx="188" cy="774" r="9" fill="#ffffff"/>
+    <circle cx="191" cy="772" r="4" fill="#1d2b3a"/>
+  </g>
+  <!-- the crab, asleep on a rock -->
+  <path d="M900 900 C910 850 960 820 1020 824 C1080 812 1150 840 1170 900 Z" fill="#06102a"/>
+  <g transform="translate(1030 792) scale(0.9)">
+    <g data-anim="wiggle" data-tap="hide">
+      <path d="M-40 14 L-72 26 L-80 44 M-46 4 L-84 8 L-96 26 M-34 24 L-58 40 L-62 54 M40 14 L72 26 L80 44 M46 4 L84 8 L96 26 M34 24 L58 40 L62 54" fill="none" stroke="#c8402c" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M-46 -4 C-70 -2 -88 6 -100 20 M46 -4 C70 -2 88 6 100 20" fill="none" stroke="#c8402c" stroke-width="12" stroke-linecap="round"/>
+      <circle cx="-106" cy="32" r="20" fill="#f06a4c"/>
+      <circle cx="106" cy="32" r="20" fill="#f06a4c"/>
+      <path d="M-18 -28 L-22 -50 M18 -28 L22 -50" fill="none" stroke="#e8553d" stroke-width="8" stroke-linecap="round"/>
+      <ellipse cx="0" cy="0" rx="58" ry="40" fill="#e8553d"/>
+      <ellipse cx="-14" cy="-18" rx="28" ry="9" fill="#f47a5e" opacity="0.8"/>
+      <circle cx="-22" cy="-58" r="14" fill="#e8553d"/>
+      <circle cx="22" cy="-58" r="14" fill="#e8553d"/>
+      <path d="M-31 -56 C-26 -50 -18 -50 -13 -56 M13 -56 C18 -50 26 -50 31 -56" fill="none" stroke="#7a2318" stroke-width="4" stroke-linecap="round"/>
+      <path d="M-10 12 C-4 18 4 18 10 12" fill="none" stroke="#7a2318" stroke-width="4" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>

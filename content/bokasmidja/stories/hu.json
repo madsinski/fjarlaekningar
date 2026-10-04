@@ -1,0 +1,128 @@
+{
+  "books": [
+    {
+      "key": "white-whale",
+      "title": "A Fehér Bálna",
+      "subtitle": "Két igen szeles kaland",
+      "stories": [
+        {
+          "key": "whale-1",
+          "title": "A lávatornádó",
+          "summary": "Az óceán legvagányabb bálnája piros fényt lát a messzeségben, és muszáj megnéznie. Csak egy pillantás! Na persze. Sosem az.",
+          "pages": [
+            "Messze kint, a mélykék tengerben élt a Fehér Bálna. Ő volt az egész óceán legvagányabb bálnája. Nem félt a cápáktól. Nem félt a viharoktól.\n\nEgyetlen baj volt csak vele: kíváncsi volt. Túlságosan is kíváncsi. Ha valami azt mondta: blip, neki rögtön oda kellett úsznia, és meg kellett böknie az orrával.",
+            "Egy éjszaka piros fényt pillantott meg messze, nagyon messze. Úgy világított a tenger fenekén, mint egy icipici tábortűz.\n\n„Hát AZ meg mi? – kérdezte a Fehér Bálna. – Megnézem. Csak egy pillantás!”\n\nEzt jegyezd meg. Csak egy pillantás. Na persze.",
+            "Úszott, úszott, egyre csak úszott. A piros fény egyre nagyobb lett. A víz egyre melegebb. Először olyan meleg volt, mint a fürdővíz. Aztán olyan meleg, mint a leves.\n\nEgy kis hal húzott el mellette az ellenkező irányba, és azt kiabálta: „Rossz irány, nagyfiú!”\n\nA Fehér Bálna nem hallgatott rá. A vagány bálnák sosem hallgatnak senkire.",
+            "A fény egy lyukból jött, egy hegy oldalából. Kerek, sötét lyuk volt, éppen egy bálnányi.\n\nTe beúsznál egy ilyen lyukba? Ugye, hogy nem. Neked van eszed.\n\n„Pont jó méret” – mondta a Fehér Bálna. És már úszott is befelé, orral előre.",
+            "Befért az orra. Semmi gond. Befértek az uszonyai. Semmi gond. A nagy, kerek hasa viszont… na, az már gond.\n\nIzgett-mozgott. Tekergett. Nyomta magát, és fújtatott. Semmi. Az óceán legvagányabb bálnája beszorult, mint dugó az üvegbe.",
+            "A szikla szorította a hasát. Szorííította. És odabent, jó mélyen, valami korogni kezdett. Kurr-murr, kurr-murr.\n\n„Jaj, ne! – suttogta a Fehér Bálna. – Ne most. Légyszi, csak most ne!”\n\nDe bizony éppen most.",
+            "PRRRRRÜTTY!\n\nEkkora pukit még nem hallott a tenger, amióta világ a világ. Úgy bömbölt, mint egy rakéta. HUSS! A Fehér Bálna úgy süvített át a lyukon, mint egy fehér torpedó, és kibukkant a túloldalon.\n\nBeszorult? Már nem.",
+            "És hol volt? Egy tűzhányó belsejében. Egy igaziban. Odalent, jó mélyen, izzott és bugyborékolt a láva. Blutty. Blutty. Forró volt a víz. És az a szag! Füst és odaégett pirítós.\n\nBekúszott az orrába. Csiklandozta. Csiki, csiki, csiki…",
+            "„Há… há… HAPCIII!”\n\nA tüsszentéstől forogni kezdett a víz, körbe-körbe, egyre gyorsabban, míg végül pörgő-forgó, tüzes LÁVATORNÁDÓ lett belőle. Szállt fölfelé a tornádó. Szállt vele a Fehér Bálna is, éppen a kellős közepén.\n\nFélt? „JUHÉÉÉ!” Dehogy félt.",
+            "PUKK! Kirepült a hegy tetején, magasan a hullámok fölé, el egy nagyon meglepett sirály mellett – aztán CSOBB, vissza a hűvös, sötét tengerbe.\n\nA hátán lebegett, és nézte a csillagokat. „Csak egy pillantás…” – ásította.\n\nAztán elaludt. Mert néha még az óceán legvagányabb bálnájának is aludnia kell."
+          ]
+        },
+        {
+          "key": "whale-2",
+          "title": "Kakitornádó a trollbarlangban",
+          "summary": "A Fehér Bálna olyan éhes, hogy egy hajót is megenne, és egy sötét barlangból csuda finom illat száll. Valami másnak viszont egyáltalán nincs finom illata.",
+          "pages": [
+            "A Fehér Bálna éhes volt. Nem úgy, hogy jólesne egy kis nasi. Nem is úgy, hogy jöhet a vacsora. Úgy, hogy meg tudna enni egy egész hajót. Akkorát kordult a hasa, hogy egy rák elszaladt, és elbújt.\n\nEgész nap ennivalóra vadászott, és csak egy ócska bakancsot talált. Megkóstolta. Bakancsíze volt.",
+            "Egyszer csak megérzett valamit az orra. Szipp. Valami meleget. Szipp, szipp. Valami NAGYON FINOMAT.\n\nAz illat úgy kanyargott a vízben, mint egy aranyszalag. A Fehér Bálna ment utána, egészen be egy sötét, koromsötét tengeri barlangba.\n\nFélt a sötétben? Talán egy icipicit. De az éhség erősebb, mint a félelem.",
+            "A barlang mennyezetén volt egy lyuk, azon ömlött ki az illat. A Fehér Bálna a lyukra tapasztotta a szemét.\n\nTrollok! Egy egész család! Trollpapa akkora fazekat kavargatott, mint egy fürdőkád. Trollmama akkora hagymákat aprított, mint egy focilabda.",
+            "„Halászlé” – suttogta a Fehér Bálna. Megint megkordult a hasa.\n\nCsakhogy a lyuk éppen akkora volt, mint a szeme, szemmel pedig nem lehet halászlét enni. Másik bejárat kellett. Úszott körbe-körbe a barlangban, és keresett.",
+            "Talált is még egy lyukat. Egyetlenegyet. Bedugta az orrát… és azonnal ki is rántotta.\n\n„PFUJ!”\n\nEbből a lyukból bizony NEM halászlé illata jött. Ez a lyuk egyenesen a trollok fürdőszobájába vezetett. Pontosan a trollvécé alá. Bizony.",
+            "Odafönt betrappolt Kistroll. „Senki ne jöjjön be! – kiabálta. – Koncentrálnom kell!”\n\nLeült. Összeráncolta a képét. Olyan piros lett, mint a paradicsom. És akkor –\n\nPOTTY. POTTY. POTTY-POTTY.",
+            "A szag úgy gomolygott lefelé a lyukon, mint a zöld köd. Ez volt a legrosszabb szag, amióta szagok vannak a világon. A Fehér Bálnának keresztbe állt a szeme. Kilógott a nyelve.\n\n„Blöeee! Jujj! Hnnngh!”\n\nOlyan képeket vágott, amilyeneket még soha senki. És mélyen az orrában csiklandozni kezdte valami.",
+            "„Há… há… HAPCIII!”\n\nA tüsszentés egyenesen fölsüvített a lyukon. HUSS! – szólt a vécé. Kistroll lerepült az ülőkéről, és egy barna, pörgő-forgó KAKITORNÁDÓ söpört végig az egész trollbarlangon.",
+            "„FUSSATOK!” – ordította Trollpapa. „A HAJAM!” – sikította Trollmama.\n\nA tornádó végigpörgött a konyhán, fölkapta az óriási fazék halászlét, és beleborította a padlón tátongó lyukba. LOCCS! Egyenesen a Fehér Bálna nagyra tátott szájába.",
+            "Hamm. „Nagyon finom” – mondta a Fehér Bálna.\n\nOdafönt a barlangban a trollok elővették a felmosórongyot. „Nem én voltam” – mondta Kistroll. Senki sem hitt neki.\n\nA Fehér Bálna addigra messze járt: teli, meleg hassal lebegett hazafelé. Böffentett egy kicsit, elégedetten, aztán elaludt. Mert néha még az óceán legvagányabb bálnájának is aludnia kell."
+          ]
+        }
+      ]
+    },
+    {
+      "key": "teddy-bear",
+      "title": "Maci, a medve",
+      "subtitle": "Két halas mese",
+      "stories": [
+        {
+          "key": "bear-1",
+          "title": "A haltornádó",
+          "summary": "Maci, a medve, halat akar vacsorára. A halak ezen jót nevetnek – amíg közbe nem szól egy pitypang.",
+          "pages": [
+            "Maci medve volt. Nagy, vagány erdei medve. (Nehogy azt mondd rá, hogy cuki. Azt utálja.)\n\nReggelire mézet evett. Ebédre áfonyát evett. Ragadt a mancsa, és kék volt a nyelve.\n\n„Elég! – mondta Maci. – Ma HALAT akarok enni.”",
+            "Le is trappolt a folyóhoz. A folyó pedig tele volt hallal! Ezüstösek, pöttyösek, kövérek, fürgék. Úgy húztak el a lába mellett, mint a kis rakéták.\n\n„Gyerekjáték” – mondta Maci, és megnyalta a szája szélét.\n\nNem volt gyerekjáték.",
+            "Odakapott a bal mancsával. CSOBB! Semmi. Odakapott a jobb mancsával. CSOBB! Semmi.\n\nBeugrott mind a négy mancsával egyszerre. ZSUPSZ! Lett neki vizes orra, vizes feneke meg egy ócska botja.",
+            "A halak kinevették. Blub-blub-blub. Egy szemtelen hal odaúszott hozzá, orron csapta a farkával, és már ott sem volt.\n\nMaci százszor is megpróbálta. Tudod, hány halat fogott? Nullát. Egy nagy, kövér nullát.",
+            "Maci leült egy kőre. Korgott a hasa. Remegett a szája széle. Aztán – el ne mondd senkinek – nagy, kövér könnycseppek gördültek végig a szőrös pofáján.\n\n„Én vagyok a legbénább halász az egész erdőben” – szipogta.",
+            "Megtörölte az orrát a mancsával. A ragacsos, mézes mancsával. (Ez mindjárt fontos lesz.)\n\nAztán vett egy nagy levegőt. „Még egyszer – mondta Maci. – Egy medve nem adja fel.” És kihúzta magát.",
+            "Éppen akkor egy kis szellő megrázta a parton a pitypangokat. Száz meg száz puha bóbita szállt föl a levegőbe – és három éppen Maci ragacsos, mézes orrára ragadt.\n\nCsiki. Csiki. Csiki.",
+            "„Há… há… HAPCIII!”\n\nEkkora tüsszentést még nem hallott az erdő. A madarak lepotyogtak az ágakról. A tüsszentés úgy csapódott a folyóba, mint egy ágyúgolyó, a víz pedig forogni kezdett, körbe-körbe, és föl, föl, FÖL!",
+            "HALTORNÁDÓ! Ezüstösek, pöttyösek, kövérek, fürgék – mind ott kavarogtak a levegőben. Aztán leestek.\n\nPlaccs, placcs, placcs, placcs – potyogtak Maci köré, mint a csillogó eső. Egy éppen a fejére pottyant, mint egy kalap.\n\nNa, halak, most ki nevet?",
+            "Aznap este Maci meghívta az erdő összes medvéjét. Nagy medvéket, kis medvéket, még a morgós öreg Medve nagypapát is. Addig ették a halat, amíg olyan kerek nem lett a hasuk, mint a telihold.\n\nAztán lefeküdtek a tűz mellé, egy nagy kupacba. Maci mosolyogva aludt el, a szájában egy halszálkával fogpiszkáló helyett. Mert néha még az erdő legvagányabb medvéjének is aludnia kell."
+          ]
+        },
+        {
+          "key": "bear-2",
+          "title": "Maci a jégen horgászik",
+          "summary": "Tél van, befagyott a tó, Macinak pedig van egy zseniális ötlete, egy darab kötele és túl sok áfonyája.",
+          "pages": [
+            "Tél volt. A hó vastag, fehér takaróként borult az erdőre, a tó pedig olyan keményre fagyott, mint egy asztal.\n\nMaci a jégen állt, és lenézett. Pontosan a talpa alatt körbe-körbe úszkáltak a halak. Nagyon nyugodtnak látszottak. Túl nyugodtnak.",
+            "„Hal lesz vacsorára” – mondta Maci. Addig kaparta, addig karmolta a jeget, amíg egy kerek lyuk nem lett rajta. Az ilyet úgy hívják: lék.\n\nMost már csak a horgászbotja kellett. Volt egy kis gond. Macinak nem volt horgászbotja.",
+            "De Macinak támadt egy ötlete. Egy zseniális ötlete. Keresett egy darab kötelet. Az egyik végét rákötötte a kurta, tömpe farkára. A másik végét beleengedte a lékbe.\n\nAztán leült, pontosan a lék tetejére. „Zseniális” – mondta Maci.",
+            "Várt. Aztán még várt. Fázott a feneke. Fázott az orra. Egy hópihe szállt a fülére. Hal sehol.\n\nHogy teljen az idő, evett pár szem áfonyát a zacskójából. Aztán még párat. Aztán az összeset.\n\n(Ez viszont nem volt zseniális ötlet.)",
+            "Eltelt egy óra. Akkor megszólalt Maci hasa: kurr.\n\n„Pszt!” – mondta Maci.\n\nA hasa azt felelte: KURR-MURR. Úgy morajlott, mint a távoli mennydörgés. Tele volt áfonyával, és az áfonya KI akart jönni.",
+            "Maci tartotta, ahogy csak bírta. Összeszorította a szemét. Összeszorította még a lábujjait is.\n\nEgy mókus megállt a fán, és nézte. „Meg ne próbáld!” – mondta a mókus.\n\n„Nem bírom tovább!” – nyüszítette Maci.",
+            "PRRRRRÜTTY-BUMM!\n\nEkkora pukit még nem hallott az erdő. Minden fáról lehullott a hó. A mókus lepottyant az ágról. A jég pedig azt mondta: RECCS – ripp – reccs, és ezer darabra tört.",
+            "Fölrepültek a halak! A durranás kirepítette őket a tóból, magasra az égbe, mint az ezüst tűzijátékot.\n\nMaci meg le. CSOBB! Bele a jéghideg vízbe, a farkán a kötéllel.",
+            "„B-b-brrr!” – mondta Maci.\n\nDe nézd csak! Körülötte mindenütt halak lebegtek, szédülten és nagyon meglepetten. Maci körbe-körbe evickélt, és szedte össze őket – egy, kettő, tíz, húsz –, amíg tele nem lett velük a két mancsa.\n\nNa ugye, már nem voltak olyan nyugodtak.",
+            "Aznap este Maci a tűz mellett ült, pokrócba csavarva, a lábát egy vödör meleg vízben áztatta. A serpenyőben sercegett a hal.\n\n„Zseniális – mondta Maci, és ásított egyet. – De legközelebb… kevesebb áfonyát.”\n\nÉs már aludt is, mielőtt az utolsó hal megsült volna. Mert néha még az erdő legvagányabb medvéjének is aludnia kell."
+          ]
+        }
+      ]
+    },
+    {
+      "key": "rabbits",
+      "title": "Nana és Nuni",
+      "subtitle": "Két répás mese",
+      "stories": [
+        {
+          "key": "rabbit-1",
+          "title": "A világ legnagyobb répája",
+          "summary": "Nana és Nuni meglátják a tévében a világ legnagyobb répáját. Megszerezni nehéz. Hazavinni sokkal, de sokkal nehezebb.",
+          "pages": [
+            "Nana és Nuni nyulak voltak. Bolyhos nyulak, olyan hosszú füllel, hogy egészen a térdükig lelógott. (Ne nevess a fülükön. A fülük később még fontos lesz.)\n\nEgy este tévét néztek. És akkor meglátták.\n\nA VILÁG LEGNAGYOBB RÉPÁJÁT.",
+            "Na, ha egyetlen dolgot tudsz a nyulakról, akkor az ez: a nyulak imádják a répát.\n\nNanának leesett az álla. Nuninak mozogni kezdett az orra.\n\n„Megszerezzük azt a répát” – mondta Nana. „És hazahozzuk” – mondta Nuni.\n\nCsomagoltak két szendvicset, és elindultak. Még a műsor végét sem várták meg.",
+            "A répa egy óriási hegy tetején nőtt, egy titokzatos, messzi-messzi országban.\n\nHát másztak. Másztak a fák fölé. Másztak a felhők fölé. Addig másztak, amíg olyan nem lett a lábuk, mint a főtt spagetti.\n\n„Mindjárt… ott… vagyunk…” – lihegte Nuni.",
+            "Végre ott álltak a hegy legtetején. És ott volt a répa! Óriási! Narancssárga! Gyönyörű!\n\n…a MÁSIK hegy tetején. Pont szemben.\n\n„Ez most komoly?” – kérdezte Nana.\n\nLemászni és megint fölmászni napokig tartott volna.",
+            "Akkor Nuni ránézett Nana fülére. Nana ránézett Nuni fülére.\n\n„Te is arra gondolsz, amire én?”\n\nPörgetni kezdték a fülüket. Körbe-körbe, egyre gyorsabban – SURR-SURR-SURR-SURR –, amíg föl nem emelkedtek a földről, mint két bolyhos helikopter.",
+            "Pontosan a répa mellett szálltak le. Akkora volt, mint egy busz. Megölelték. Körbetáncolták.\n\nAkkor Nana megállt. „Öö… Nuni? Hogy visszük ezt haza?”\n\nTolták. Húzták. A répa egy icipicit sem mozdult.",
+            "Egyszer csak meleg lett a föld a talpuk alatt. Áthajoltak a hegy peremén, és lenéztek.\n\nEz a hegy egy tűzhányó volt!\n\n„Van egy ötletem – mondta Nuni. – Ha megsütjük a répát a tűzhányóban, talán összemegy. Akkor el tudjuk vinni.”\n\nFura ötlet volt. De más ötletük nem volt.",
+            "„Kell egy segítő kéz? Vagy egy pata?”\n\nMögöttük egy ló állt. Egy nagy, barátságos ló, aki SZINTÉN látta a répát a tévében, és SZINTÉN fölmászott egészen idáig.\n\n„Segíts tolni – mondta Nana –, és megosztozunk rajta.”\n\n„Áll az alku” – mondta a ló.",
+            "Egy, kettő, három – HÓ-RUKK! A répa átgurult a peremen, és belezuhant a tűzhányóba.\n\nVártak. Semmi.\n\nAztán… brumm. Brrumm. BRRRRUMM! Megremegett a föld. A két nyúl meg a ló egymásba kapaszkodott, és sikított.\n\n„ÁÁÁÁÁÁ!” „JAAAAAJ!” „NYIHAHAAA!”",
+            "HUSSSS! A répa úgy süvített ki a tűzhányóból, mint egy rakéta, füstöt és szikrákat húzva maga után.\n\nÁtrepült a hegyek fölött, a felhők fölött, az egész titokzatos ország fölött – és PUFF, pontosan Nana és Nuni ajtaja előtt ért földet.\n\nNem lett kisebb. Csak szépen megsült.",
+            "Nana és Nuni a fülükkel repültek haza, a ló pedig alattuk lógott, és kapaszkodott. (Éppen hogy.)\n\nAznap este addig ették a sült répát, amíg mozdulni sem bírtak, és még így is maradt belőle száz reggelire való.\n\nAztán mind a hárman elaludtak egy kupacban. Mert néha még a világ legvagányabb nyulainak is aludniuk kell."
+          ]
+        },
+        {
+          "key": "rabbit-2",
+          "title": "A szülinapi répa",
+          "summary": "Nanának szülinapja van, Nuni pedig elfelejtette az ajándékot. Szerencsére van egy banánja, egy festékkészlete és egy terve.",
+          "pages": [
+            "Nanának szülinapja volt. Voltak lufik. Volt torta. Volt egy szülinapi csákó is, ami folyton rácsúszott az egyik fülére.\n\nÉs volt egy nagy gond.\n\nNuni elfelejtett ajándékot szerezni neki.",
+            "Na, ha egyetlen dolgot tudsz a szülinapokról, akkor az ez: a szülinapos nyúl olyan ajándékot akar, amit nagyon, de nagyon szeret.\n\nÉs kitalálod, mit szeret Nana a legeslegjobban az egész világon?\n\nÚgy van. A répát.",
+            "Nuni tehát keresett egy répát. Megnézte a hűtőben. Megnézte a kertben. Megnézte a kanapé alatt is, ahol talált egy zoknit, egy üveggolyót meg egy régi kekszet.\n\nDe répát nem. Egyet sem.",
+            "„Gondolkozz, Nuni, gondolkozz!” – mondta Nuni.\n\nMég egyszer, utoljára kinyitotta a szekrényt. És ott, a gyümölcsöstálban, egyes-egyedül feküdt egy banán. Hosszú. A végén egy kicsit hegyes.\n\nNuni nézte a banánt. A banán visszanézett.",
+            "„Ez MAJDNEM répa” – suttogta Nuni.\n\nElővette a festékkészletét. Tetőtől talpig narancssárgára festette a banánt. A végére ragasztott egy kis csokor petrezselymet.\n\nAztán hátralépett. „Zseniális” – mondta Nuni.",
+            "A répát – jó, a banánt – beletette egy szép dobozba. Átkötötte egy nagy piros szalaggal.\n\nAztán odavitte Nanának, a lehető legjobb „nincs itt semmi gond” arcával.\n\n„Boldog szülinapot, Nana!”",
+            "Nana letépte a szalagot. Kinyitotta a dobozt.\n\n„EGY RÉPA! Ekkorát még soha nem kaptam!”\n\nMegölelte Nunit. Nuni mosolygott, egy kicsit remegősen.\n\nAztán Nana nagyra tátotta a száját, és óriásit harapott a répába.",
+            "Cupp.\n\nNana abbahagyta a rágást. Kikerekedett a szeme. Égnek állt a füle.\n\n„Ennek a lépának – mondta teli szájjal – FULA íve van.”\n\n„BLEE! PFFF! PTÜ!” Narancssárga darabkák repültek szanaszét, rá a tortára.",
+            "Nuni füle egészen a padlóig lekonyult. „Elfelejtettem az ajándékodat – mondta egészen pici hangon. – Ez egy banán. Befestettem.”\n\nNana Nunira meredt. Nana a banánra meredt.\n\nAztán Nana nevetni kezdett. Addig nevetett, amíg le nem esett a székről.",
+            "„Egy festett banán! – kapkodott levegő után Nana. – Ilyen vicces ajándékot még soha nem kaptam!”\n\nFöltette a polcra, a legszebb kupája mellé.\n\nAztán teleették magukat tortával, és aznap este két nyúl aludt el narancssárga festékkel az orrán. Mert néha még a világ legvagányabb nyulainak is aludniuk kell."
+          ]
+        }
+      ]
+    }
+  ]
+}

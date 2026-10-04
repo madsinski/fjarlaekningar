@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe6f5"/><stop offset="1" stop-color="#e9f7e4"/></linearGradient>
+    <radialGradient id="fur" cx="0.45" cy="0.35" r="0.8"><stop offset="0" stop-color="#b9783f"/><stop offset="1" stop-color="#8f5626"/></radialGradient>
+  </defs>
+  <rect width="1200" height="900" fill="url(#sky)"/>
+  <rect y="700" width="1200" height="200" fill="#7fc27a"/>
+  <g data-anim="bob" data-tap="jump">
+    <!-- short stumpy tail -->
+    <circle cx="455" cy="640" r="30" fill="#8f5626"/>
+    <!-- legs -->
+    <ellipse cx="520" cy="745" rx="62" ry="50" fill="#8f5626"/>
+    <ellipse cx="690" cy="745" rx="62" ry="50" fill="#8f5626"/>
+    <ellipse cx="528" cy="762" rx="34" ry="24" fill="#e9c79b"/>
+    <ellipse cx="698" cy="762" rx="34" ry="24" fill="#e9c79b"/>
+    <!-- body -->
+    <ellipse cx="605" cy="590" rx="170" ry="185" fill="url(#fur)"/>
+    <ellipse cx="605" cy="620" rx="105" ry="120" fill="#e9c79b"/>
+    <!-- arms -->
+    <ellipse cx="440" cy="560" rx="48" ry="95" fill="#9c5f2c" transform="rotate(18 440 560)"/>
+    <ellipse cx="770" cy="560" rx="48" ry="95" fill="#9c5f2c" transform="rotate(-18 770 560)"/>
+    <!-- red neckerchief -->
+    <path d="M480 430 C560 470 650 470 730 430 L712 478 C650 500 560 500 498 478 Z" fill="#e63946"/>
+    <path d="M590 482 L640 482 L618 560 Z" fill="#c92a37"/>
+    <!-- ears -->
+    <circle cx="482" cy="212" r="56" fill="#8f5626"/>
+    <circle cx="728" cy="212" r="56" fill="#8f5626"/>
+    <circle cx="482" cy="216" r="30" fill="#e9c79b"/>
+    <circle cx="728" cy="216" r="30" fill="#e9c79b"/>
+    <!-- head -->
+    <ellipse cx="605" cy="320" rx="165" ry="145" fill="url(#fur)"/>
+    <!-- muzzle -->
+    <ellipse cx="605" cy="372" rx="78" ry="60" fill="#e9c79b"/>
+    <ellipse cx="605" cy="346" rx="26" ry="18" fill="#2b1d14"/>
+    <path d="M605 364 L605 388 M605 388 C590 404 570 402 562 390 M605 388 C620 404 640 402 648 390" fill="none" stroke="#2b1d14" stroke-width="6" stroke-linecap="round"/>
+    <!-- cheeks -->
+    <ellipse cx="505" cy="360" rx="26" ry="17" fill="#f2a08a" opacity="0.7"/>
+    <ellipse cx="705" cy="360" rx="26" ry="17" fill="#f2a08a" opacity="0.7"/>
+    <!-- eyes -->
+    <g data-anim="blink">
+      <circle cx="545" cy="300" r="26" fill="#ffffff"/>
+      <circle cx="665" cy="300" r="26" fill="#ffffff"/>
+      <circle cx="550" cy="304" r="16" fill="#2b1d14"/>
+      <circle cx="670" cy="304" r="16" fill="#2b1d14"/>
+      <circle cx="556" cy="297" r="6" fill="#ffffff"/>
+      <circle cx="676" cy="297" r="6" fill="#ffffff"/>
+    </g>
+    <!-- eyebrows -->
+    <path d="M520 262 C536 252 556 252 570 260 M640 260 C654 252 674 252 690 262" fill="none" stroke="#5e3716" stroke-width="7" stroke-linecap="round"/>
+  </g>
+</svg>

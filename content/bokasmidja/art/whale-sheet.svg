@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900">
+  <defs>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a86c4"/><stop offset="1" stop-color="#0d3560"/></linearGradient>
+    <linearGradient id="whaleBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.6" stop-color="#f1f7fc"/><stop offset="1" stop-color="#c9dcec"/></linearGradient>
+    <linearGradient id="whaleFin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef5fb"/><stop offset="1" stop-color="#bcd2e6"/></linearGradient>
+  </defs>
+  <rect width="1200" height="900" fill="url(#sea)"/>
+  <g data-anim="swim" data-tap="jump">
+    <!-- tail fluke -->
+    <path d="M300 470 C250 455 205 420 170 365 C150 335 150 300 170 285 C205 300 245 335 275 385 C270 330 280 285 305 255 C330 250 350 275 352 315 C356 375 345 430 330 470 Z" fill="url(#whaleFin)"/>
+    <!-- body: big round head on the right, tapering to the tail -->
+    <path d="M300 468 C330 400 430 318 600 300 C790 280 965 350 1010 470 C1045 565 965 660 790 680 C610 700 420 650 330 540 C310 515 298 492 300 468 Z" fill="url(#whaleBody)"/>
+    <!-- belly shade -->
+    <path d="M350 560 C450 640 620 680 790 664 C900 652 975 610 1000 555 C985 640 900 690 780 700 C610 714 430 660 350 560 Z" fill="#b9cfe3" opacity="0.75"/>
+    <!-- belly grooves -->
+    <path d="M520 648 C600 668 700 672 790 660" fill="none" stroke="#a9c2d9" stroke-width="5" stroke-linecap="round"/>
+    <path d="M560 622 C640 640 730 642 815 630" fill="none" stroke="#a9c2d9" stroke-width="5" stroke-linecap="round"/>
+    <!-- flipper -->
+    <path d="M640 590 C620 650 580 700 520 725 C505 700 520 650 560 610 C585 588 615 580 640 590 Z" fill="url(#whaleFin)"/>
+    <!-- blowhole -->
+    <ellipse cx="700" cy="298" rx="16" ry="6" fill="#9db7cf"/>
+    <!-- cheek -->
+    <ellipse cx="900" cy="520" rx="38" ry="24" fill="#f8b9c6" opacity="0.85"/>
+    <!-- eye -->
+    <g data-anim="blink">
+      <circle cx="880" cy="440" r="34" fill="#ffffff"/>
+      <circle cx="888" cy="444" r="22" fill="#1d2b3a"/>
+      <circle cx="896" cy="434" r="8" fill="#ffffff"/>
+    </g>
+    <!-- eyebrow -->
+    <path d="M848 392 C870 376 900 376 920 390" fill="none" stroke="#7d97b0" stroke-width="7" stroke-linecap="round"/>
+    <!-- smile -->
+    <path d="M900 580 C940 600 985 585 1008 548" fill="none" stroke="#3a5068" stroke-width="8" stroke-linecap="round"/>
+  </g>
+</svg>

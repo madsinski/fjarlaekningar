@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900">
+  <defs>
+    <linearGradient id="hot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a2a2a"/><stop offset="0.4" stop-color="#d8552a"/><stop offset="0.8" stop-color="#ff9a3c"/><stop offset="1" stop-color="#ffd27a"/></linearGradient>
+    <linearGradient id="wallL" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1e1420"/><stop offset="1" stop-color="#4a2a38"/></linearGradient>
+    <linearGradient id="wallR" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#1e1420"/><stop offset="1" stop-color="#4a2a38"/></linearGradient>
+    <linearGradient id="lava" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8a24"/><stop offset="0.5" stop-color="#e8481e"/><stop offset="1" stop-color="#b01c14"/></linearGradient>
+    <linearGradient id="funnel" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffd24a"/><stop offset="0.35" stop-color="#ff8a24"/><stop offset="1" stop-color="#e8401e"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff0a0" stop-opacity="0.9"/><stop offset="0.5" stop-color="#ffb347" stop-opacity="0.45"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient>
+    <linearGradient id="whaleBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.6" stop-color="#f1f7fc"/><stop offset="1" stop-color="#c9dcec"/></linearGradient>
+    <linearGradient id="whaleFin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef5fb"/><stop offset="1" stop-color="#bcd2e6"/></linearGradient>
+  </defs>
+  <rect width="1200" height="900" fill="url(#hot)"/>
+  <ellipse cx="600" cy="0" rx="210" ry="70" fill="#143f78"/>
+  <ellipse cx="600" cy="0" rx="250" ry="100" fill="#143f78" opacity="0.35"/>
+  <g data-anim="pulse">
+    <ellipse cx="600" cy="840" rx="640" ry="330" fill="url(#glow)"/>
+  </g>
+  <!-- chamber walls -->
+  <path d="M0 0 L400 0 C372 110 300 200 262 340 C236 440 232 540 190 640 C150 730 90 790 0 830 Z" fill="url(#wallL)"/>
+  <path d="M400 0 C372 110 300 200 262 340 C236 440 232 540 190 640 C150 730 90 790 0 830 L0 812 C80 774 132 720 170 632 C210 536 216 436 242 336 C280 198 352 108 380 0 Z" fill="#e0502a" opacity="0.6"/>
+  <path d="M1200 0 L800 0 C828 110 900 200 938 340 C964 440 968 540 1010 640 C1050 730 1110 790 1200 830 Z" fill="url(#wallR)"/>
+  <path d="M800 0 C828 110 900 200 938 340 C964 440 968 540 1010 640 C1050 730 1110 790 1200 830 L1200 812 C1120 774 1068 720 1030 632 C990 536 984 436 958 336 C920 198 848 108 820 0 Z" fill="#e0502a" opacity="0.6"/>
+  <path d="M60 150 L150 120 L200 190 L100 230 Z M1040 240 L1130 210 L1170 290 L1080 320 Z M1090 560 L1160 540 L1190 600 L1120 630 Z" fill="#5a3444" opacity="0.4"/>
+  <ellipse cx="150" cy="500" rx="62" ry="92" fill="#e0502a" opacity="0.6"/>
+  <ellipse cx="146" cy="500" rx="54" ry="84" fill="#120b14"/>
+  <!-- the lava tornado -->
+  <g data-anim="sway" data-tap="wiggle">
+    <path d="M540 830 C540 720 470 610 400 490 C340 384 296 262 326 124 C338 78 420 44 600 44 C780 44 862 78 874 124 C904 262 860 384 800 490 C730 610 660 720 660 830 Z" fill="url(#funnel)"/>
+    <path d="M552 760 C580 786 622 786 648 762" fill="none" stroke="#fff0a0" stroke-width="18" stroke-linecap="round"/>
+    <path d="M526 672 C570 712 640 706 676 666" fill="none" stroke="#d8301e" stroke-width="22" stroke-linecap="round"/>
+    <path d="M478 584 C540 640 672 628 724 570" fill="none" stroke="#ffe08a" stroke-width="26" stroke-linecap="round"/>
+    <path d="M416 490 C500 562 722 542 794 468" fill="none" stroke="#c8281a" stroke-width="30" stroke-linecap="round"/>
+    <path d="M318 262 C440 352 782 322 876 232" fill="none" stroke="#c8281a" stroke-width="34" stroke-linecap="round"/>
+    <path d="M330 150 C440 222 782 198 868 126" fill="none" stroke="#ffb347" stroke-width="34" stroke-linecap="round"/>
+    <path d="M360 96 C460 140 760 130 844 84" fill="none" stroke="#ffe08a" stroke-width="20" stroke-linecap="round"/>
+  </g>
+  <!-- lava -->
+  <path d="M-40 800 C80 770 180 812 300 790 C420 768 520 812 640 792 C760 772 880 812 1000 790 C1100 774 1180 800 1240 786 L1240 900 L-40 900 Z" fill="url(#lava)"/>
+  <path d="M-40 800 C80 770 180 812 300 790 C420 768 520 812 640 792 C760 772 880 812 1000 790 C1100 774 1180 800 1240 786" fill="none" stroke="#ffe98a" stroke-width="10" stroke-linecap="round"/>
+  <path d="M470 800 C500 770 520 800 540 780 M730 800 C700 770 680 800 660 780" fill="none" stroke="#ffe98a" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="500" cy="750" r="9" fill="#ffc85a"/>
+  <circle cx="712" cy="744" r="11" fill="#ffc85a"/>
+  <!-- little swirls -->
+  <g data-anim="spin">
+    <path d="M300 640 C310 630 324 640 316 654 C306 668 282 662 280 642 C278 618 306 604 328 618" fill="none" stroke="#fff0a0" stroke-width="8" stroke-linecap="round"/>
+  </g>
+  <g data-anim="spin">
+    <path d="M900 620 C890 610 876 620 884 634 C894 648 918 642 920 622 C922 598 894 584 872 598" fill="none" stroke="#fff0a0" stroke-width="8" stroke-linecap="round"/>
+  </g>
+  <!-- sparks and drops -->
+  <g data-anim="twinkle">
+    <polygon points="250,400 258,422 280,430 258,438 250,460 242,438 220,430 242,422" fill="#fff06a"/>
+    <polygon points="960,420 966,438 984,444 966,450 960,468 954,450 936,444 954,438" fill="#fff06a"/>
+    <circle cx="330" cy="330" r="10" fill="#ff7a2e"/>
+    <circle cx="930" cy="300" r="12" fill="#ff7a2e"/>
+    <circle cx="380" cy="720" r="9" fill="#ffb347"/>
+    <circle cx="810" cy="700" r="11" fill="#ffb347"/>
+  </g>
+  <!-- the lava bubble, along for the ride -->
+  <g data-anim="bob" data-tap="jump">
+    <circle cx="420" cy="590" r="34" fill="#ffc85a"/>
+    <circle cx="410" cy="580" r="11" fill="#fff6c8"/>
+    <circle cx="412" cy="598" r="4" fill="#7a2318"/>
+    <circle cx="432" cy="598" r="4" fill="#7a2318"/>
+    <ellipse cx="422" cy="610" rx="6" ry="7" fill="#7a2318"/>
+  </g>
+  <!-- the snail, hanging on -->
+  <g transform="translate(790 640) rotate(-40) translate(-1114 -784)">
+    <g data-anim="wiggle" data-tap="spin">
+      <path d="M1076 800 C1076 790 1090 786 1132 788 C1146 788 1152 796 1146 802 Z" fill="#f2c9a0"/>
+      <circle cx="1118" cy="778" r="22" fill="#6fb0c9"/>
+      <path d="M1118 778 C1110 770 1102 780 1110 786 C1120 792 1130 782 1124 770 C1116 758 1098 766 1098 780" fill="none" stroke="#3f7f99" stroke-width="4" stroke-linecap="round"/>
+      <path d="M1084 790 L1076 768 M1090 790 L1088 768" fill="none" stroke="#f2c9a0" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="1075" cy="766" r="6" fill="#ffffff"/>
+      <circle cx="1088" cy="766" r="6" fill="#ffffff"/>
+      <circle cx="1075" cy="766" r="2" fill="#1d2b3a"/>
+      <circle cx="1088" cy="766" r="2" fill="#1d2b3a"/>
+    </g>
+  </g>
+  <!-- hero, upside down and thrilled -->
+  <g transform="translate(995 448) rotate(165) scale(0.56)">
+    <g data-anim="float" data-tap="spin">
+      <path d="M300 470 C250 455 205 420 170 365 C150 335 150 300 170 285 C205 300 245 335 275 385 C270 330 280 285 305 255 C330 250 350 275 352 315 C356 375 345 430 330 470 Z" fill="url(#whaleFin)"/>
+      <path d="M300 468 C330 400 430 318 600 300 C790 280 965 350 1010 470 C1045 565 965 660 790 680 C610 700 420 650 330 540 C310 515 298 492 300 468 Z" fill="url(#whaleBody)"/>
+      <path d="M350 560 C450 640 620 680 790 664 C900 652 975 610 1000 555 C985 640 900 690 780 700 C610 714 430 660 350 560 Z" fill="#b9cfe3" opacity="0.75"/>
+      <path d="M520 648 C600 668 700 672 790 660" fill="none" stroke="#a9c2d9" stroke-width="5" stroke-linecap="round"/>
+      <path d="M560 622 C640 640 730 642 815 630" fill="none" stroke="#a9c2d9" stroke-width="5" stroke-linecap="round"/>
+      <path d="M640 590 C620 650 580 700 520 725 C505 700 520 650 560 610 C585 588 615 580 640 590 Z" fill="url(#whaleFin)"/>
+      <ellipse cx="700" cy="298" rx="16" ry="6" fill="#9db7cf"/>
+      <ellipse cx="872" cy="516" rx="38" ry="24" fill="#f8b9c6" opacity="0.85"/>
+      <g data-anim="blink">
+        <circle cx="868" cy="430" r="42" fill="#e3edf6"/>
+        <circle cx="870" cy="428" r="39" fill="#ffffff"/>
+        <circle cx="878" cy="432" r="27" fill="#1d2b3a"/>
+        <circle cx="868" cy="420" r="10" fill="#ffffff"/>
+        <circle cx="890" cy="444" r="5" fill="#ffffff"/>
+      </g>
+      <path d="M826 370 C850 346 890 342 918 358" fill="none" stroke="#7d97b0" stroke-width="7" stroke-linecap="round"/>
+      <path d="M884 552 C925 566 985 556 1016 510 C1030 610 916 668 884 552 Z" fill="#3a5068" stroke="#3a5068" stroke-width="8" stroke-linejoin="round"/>
+      <path d="M916 600 C940 584 980 584 1000 566 C990 612 944 632 916 600 Z" fill="#f08aa0"/>
+    </g>
+  </g>
+  <!-- a band of the tornado sweeps in front -->
+  <path d="M350 392 C460 474 762 446 846 362" fill="none" stroke="#ffb347" stroke-width="30" stroke-linecap="round"/>
+  <!-- foreground ledges -->
+  <path d="M0 900 L0 800 C60 790 130 810 170 850 C190 870 200 886 204 900 Z" fill="#1e1420"/>
+  <path d="M1200 900 L1200 790 C1140 780 1070 804 1030 846 C1012 866 1004 884 1000 900 Z" fill="#1e1420"/>
+</svg>
