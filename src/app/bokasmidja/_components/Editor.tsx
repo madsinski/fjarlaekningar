@@ -208,7 +208,8 @@ export default function Editor({ initial }: { initial: Story }) {
       const speed = at.y < EDGE ? -Math.ceil((EDGE - at.y) / 6) : fromBottom < EDGE ? Math.ceil((EDGE - fromBottom) / 6) : 0;
       if (speed) {
         const before = window.scrollY;
-        window.scrollBy(0, speed);
+        // "instant": síðan notar annars mjúkt skrun, sem gerir dráttinn seinan.
+        window.scrollBy({ top: speed, behavior: "instant" });
         if (window.scrollY !== before) update();
       }
       frame = requestAnimationFrame(tick);
