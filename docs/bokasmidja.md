@@ -141,6 +141,56 @@ the hero's own turn, climax, warm sleepy landing) are the same ones the app's
 writer is instructed to follow. Every story ends on the book's refrain: even
 the toughest hero has to sleep sometime.
 
+## Short, medium and long
+
+A story can exist in three nested versions: the long one contains every page
+of the medium one, which contains every page of the short one. Each page knows
+the shortest version it belongs to (`bk_pages.level`), and a page may have
+different text per version (`bk_page_texts.length`; a version without its own
+text for a page uses the next shorter one). Read-aloud audio is cached per
+version.
+
+- **Reading:** the cover offers Short / Medium / Long with page counts. The
+  choice is remembered on the device. Text, page turns, audio and PDF follow it.
+- **Making a story:** the idea screen asks how long (about 10, 16 or 22 pages).
+  A story made in the app has one length; the writer deepens the middle of the
+  story for longer ones rather than making pages wordier.
+- **Editing:** the editor shows one version at a time. Text typed there becomes
+  that version's text. Reordering, adding and deleting pages affect the whole
+  story and are only offered in the longest version.
+- **The six hand-made stories** have all three versions: 10–11, 15–16 and
+  20–22 pages. Their longer texts are in `content/bokasmidja/stories/long/`
+  (`<key>.json` in English, `<lang>/<key>.json` for the others) and the extra
+  pictures are `art/<story>/nNN.svg`. Writer's and illustrator's briefs:
+  `LENGTHS.md`, `art/NEWPAGES.md`, `stories/long/TRANSLATE.md`.
+
+## How the app makes a story
+
+The app's own story maker follows the process that produced the hand-made
+stories:
+
+1. **Write** in the child's language, in the tough-kids voice and the classic
+   picture-book arc, at the chosen length.
+2. **Proofread** Icelandic text (see Icelandic above).
+3. **Character sheet** — the illustrator designs the recurring characters once
+   (`POST /stories/:id/sheet`, kept in `bk_stories.art.sheetSvg`). Every page
+   is drawn from this sheet, which is what keeps the hero the same.
+4. **Paint** each page from the sheet and the illustration brief.
+5. **Look and correct** — each picture is rendered to an image, shown back to
+   the illustrator and redrawn if something is off (`POST /pages/:id/illustrate`
+   with `{ review: true }`, once per picture; `bk_pages.reviewed`).
+6. **Re-tell** in the other languages.
+
+The child can read as soon as step 1 is done; pictures appear and improve
+while they read. Rough times on OpenAI: writing 2 min, character sheet 1.5 min,
+each picture 2.5 min plus 1 min of review.
+
+**Which model:** with only `OPENAI_API_KEY` set, all of this runs on OpenAI.
+The process helps, but the drawing and writing quality is noticeably below the
+hand-made stories. Setting `ANTHROPIC_API_KEY` switches the writer, translator
+and illustrator to Claude with no other change; the reading voice and the
+Icelandic proofreading editor stay on OpenAI.
+
 ## Changing a book
 
 `/bokasmidja/story/:id/edit`, open to the child who made the story and to
