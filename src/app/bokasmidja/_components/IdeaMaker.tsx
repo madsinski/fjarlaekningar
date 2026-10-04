@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { errorText } from "@/lib/bokasmidja/i18n";
-import { pick, type I18nText, type Lang } from "@/lib/bokasmidja/types";
+import { LENGTH_KEYS, pick, type I18nText, type Lang, type LengthKey } from "@/lib/bokasmidja/types";
 import { IDEA_MAX, WIZARD } from "@/lib/bokasmidja/wizard";
 import { useBk } from "./Provider";
 import { BigButton, LangSwitch, TopBar, call, cx } from "./ui";
@@ -19,6 +19,7 @@ export default function IdeaMaker({ book }: { book: { id: string; title: I18nTex
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("choose");
   const [storyLang, setStoryLang] = useState<Lang>(lang);
+  const [length, setLength] = useState<LengthKey>("short");
   const [text, setText] = useState("");
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -35,7 +36,7 @@ export default function IdeaMaker({ book }: { book: { id: string; title: I18nTex
   const create = async () => {
     setBusy(true);
     setError("");
-    const idea = mode === "prompt" ? { kind: "prompt", text } : { kind: "wizard", answers, heroName, extra };
+    const idea = mode === "prompt" ? { kind: "prompt", text, length } : { kind: "wizard", answers, heroName, extra, length };
     const res = await call("POST", "/api/bokasmidja/stories", { bookId: book.id, lang: storyLang, idea });
     if (res.ok) { router.push(`/bokasmidja/story/${res.storyId}`); return; }
     setError(errorText(t, res.error));
@@ -53,6 +54,18 @@ export default function IdeaMaker({ book }: { book: { id: string; title: I18nTex
       <p className="bk-display text-xl font-extrabold">{t("new.lang")}</p>
       <p className="mb-3 font-bold text-slate-500">{t("new.langSub")}</p>
       <LangSwitch big value={storyLang} onPick={setStoryLang} />
+      <p className="bk-display mt-6 text-xl font-extrabold">{t("len.title")}</p>
+      <p className="mb-3 font-bold text-slate-500">{t("len.wait")}</p>
+      <div className="flex flex-wrap gap-2" role="group">
+        {LENGTH_KEYS.map((l, i) => (
+          <button key={l} type="button" onClick={() => setLength(l)} aria-pressed={length === l}
+            className={cx("bk-press flex min-w-28 flex-col items-center rounded-2xl bg-white px-4 py-2 font-extrabold", length === l ? "ring-4 ring-slate-900" : "opacity-80 ring-2 ring-slate-200")}>
+            <span aria-hidden className="text-2xl">{["📗", "📘", "📚"][i]}</span>
+            <span className="bk-display text-lg">{t(`len.${l}`)}</span>
+            <span className="text-sm font-bold text-slate-500">{t("len.pages", { n: [10, 16, 22][i] })}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
   const goButton = (disabled: boolean) => (

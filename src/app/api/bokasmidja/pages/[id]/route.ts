@@ -1,5 +1,5 @@
 // Ritstjórn einnar síðu (foreldri, eða barnið sem bjó söguna til).
-//   PATCH  /api/bokasmidja/pages/:id  { lang, text }   texti á einu máli (tómur texti eyðir honum)
+//   PATCH  /api/bokasmidja/pages/:id  { lang, text, length? }   texti á einu máli í einni útgáfu (1 stutt, 2 miðlungs, 3 löng; tómur texti eyðir honum)
 //   PATCH  /api/bokasmidja/pages/:id  { layout }       "art-first" | "text-first"
 //   DELETE /api/bokasmidja/pages/:id                   síðan hverfur og hinar endurnúmerast
 // Upplesturinn endurnýjast sjálfkrafa því hann er lyklaður á textann.
@@ -25,8 +25,9 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   }
   if (!isLang(body.lang) || typeof body.text !== "string") return fail("bad_request");
   const text = cleanText(body.text, 1500);
-  if (text) await supabaseAdmin.from("bk_page_texts").upsert({ page_id: id, lang: body.lang, text });
-  else await supabaseAdmin.from("bk_page_texts").delete().eq("page_id", id).eq("lang", body.lang);
+  const length = body.length === 2 || body.length === 3 ? body.length : 1;
+  if (text) await supabaseAdmin.from("bk_page_texts").upsert({ page_id: id, lang: body.lang, length, text });
+  else await supabaseAdmin.from("bk_page_texts").delete().eq("page_id", id).eq("lang", body.lang).eq("length", length);
   return json({ ok: true });
 }
 

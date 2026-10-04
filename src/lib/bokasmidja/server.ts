@@ -65,6 +65,7 @@ function toStory(r: any, texts: any[], names: Map<string, string>, cover: string
     sourceLang: isLang(r.source_lang) ? r.source_lang : "is",
     title, summary, createdBy: r.created_by, authorName: r.created_by ? names.get(r.created_by) ?? null : null, cover,
     polishedIs: texts.some((t) => t.lang === "is" && !!t.polished_at),
+    lengths: r.lengths ?? 1,
   };
 }
 
@@ -81,7 +82,7 @@ export async function loadBooks(opts: { bookId?: string; covers?: boolean } = {}
   if (!books?.length) return [];
   const bookIds = books.map((b: any) => b.id);
   const { data: stories } = await supabaseAdmin.from("bk_stories")
-    .select("id, book_id, position, status, source_lang, created_by").in("book_id", bookIds).order("position");
+    .select("id, book_id, position, status, source_lang, created_by, lengths").in("book_id", bookIds).order("position");
   const storyIds = (stories || []).map((s: any) => s.id);
   const [{ data: texts }, names, covers] = await Promise.all([
     storyIds.length ? supabaseAdmin.from("bk_story_texts").select("story_id, lang, title, summary").in("story_id", storyIds) : Promise.resolve({ data: [] as any[] }),
@@ -105,21 +106,26 @@ export async function loadBooks(opts: { bookId?: string; covers?: boolean } = {}
 /** Ein saga með síðum og textum á öllum málum. */
 export async function loadStory(id: string): Promise<(StoryView & { pages: PageView[] }) | null> {
   const { data: s } = await supabaseAdmin.from("bk_stories")
-    .select("id, book_id, position, status, source_lang, created_by").eq("id", id).maybeSingle();
+    .select("id, book_id, position, status, source_lang, created_by, lengths").eq("id", id).maybeSingle();
   if (!s) return null;
   const [{ data: texts }, { data: pages }, names] = await Promise.all([
     supabaseAdmin.from("bk_story_texts").select("lang, title, summary, polished_at").eq("story_id", id),
-    supabaseAdmin.from("bk_pages").select("id, position, svg, layout, auto_art, drawing_path").eq("story_id", id).order("position").order("created_at"),
+    supabaseAdmin.from("bk_pages").select("id, position, svg, layout, auto_art, drawing_path, level").eq("story_id", id).order("position").order("created_at"),
     childNames(),
   ]);
   const pageIds = (pages || []).map((p: any) => p.id);
   const { data: pageTexts } = pageIds.length
-    ? await supabaseAdmin.from("bk_page_texts").select("page_id, lang, text").in("page_id", pageIds)
+    ? await supabaseAdmin.from("bk_page_texts").select("page_id, lang, text, length").in("page_id", pageIds)
     : { data: [] as any[] };
   const views: PageView[] = (pages || []).map((p: any) => {
     const text: I18nText = {};
-    for (const t of pageTexts || []) if (t.page_id === p.id && isLang(t.lang)) text[t.lang as Lang] = t.text;
-    return { id: p.id, position: p.position, svg: p.svg, text, layout: p.layout === "text-first" ? "text-first" : "art-first", autoArt: p.auto_art !== false, hasDrawing: !!p.drawing_path };
+    const textM: I18nText = {};
+    const textL: I18nText = {};
+    for (const t of pageTexts || []) {
+      if (t.page_id !== p.id || !isLang(t.lang)) continue;
+      (t.length === 3 ? textL : t.length === 2 ? textM : text)[t.lang as Lang] = t.text;
+    }
+    return { id: p.id, position: p.position, svg: p.svg, text, textM, textL, level: p.level === 3 ? 3 : p.level === 2 ? 2 : 1, layout: p.layout === "text-first" ? "text-first" : "art-first", autoArt: p.auto_art !== false, hasDrawing: !!p.drawing_path };
   });
   return { ...toStory(s, texts || [], names, views[0]?.svg ?? null), pages: views };
 }

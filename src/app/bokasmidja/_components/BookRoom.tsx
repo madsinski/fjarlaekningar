@@ -200,7 +200,7 @@ export default function BookRoom({ book: initial, others }: { book: BookView; ot
         </ol>
       </main>
       {pdf && (
-        <PdfDialog onClose={() => setPdf(false)} load={loadStories}
+        <PdfDialog onClose={() => setPdf(false)} load={loadStories} chooseLength={book.stories.some((s) => s.lengths >= 3)}
           book={{ title: book.title, subtitle: book.subtitle, color: book.color, emoji: book.emoji, cover: !!pick(book.title, lang) || !!book.coverImage, coverSvg: book.coverSvg, coverImage: book.coverImage }} />
       )}
 

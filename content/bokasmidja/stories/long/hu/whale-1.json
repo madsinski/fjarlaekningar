@@ -1,0 +1,104 @@
+{
+  "key": "whale-1",
+  "pages": [
+    {
+      "art": "p01",
+      "textMedium": "Messze kint, a mélykék tengerben élt a Fehér Bálna. Ő volt az egész óceán legvagányabb bálnája. Nem félt a cápáktól. Nem félt a viharoktól.\n\nEgyetlen baj volt csak vele: kíváncsi volt. Túlságosan is kíváncsi. Ha valami azt mondta: blip, neki rögtön oda kellett úsznia, és meg kellett böknie az orrával.",
+      "textLong": "Messze kint, a mélykék tengerben élt a Fehér Bálna. Ő volt az egész óceán legvagányabb bálnája. Nem félt a cápáktól. Nem félt a viharoktól.\n\nEgyetlen baj volt csak vele: kíváncsi volt. Túlságosan is kíváncsi. Ha valami azt mondta: blip, neki rögtön oda kellett úsznia, és meg kellett böknie az orrával."
+    },
+    {
+      "art": "p02",
+      "textMedium": "Egy éjszaka piros fényt pillantott meg messze, nagyon messze. Úgy világított a tenger fenekén, mint egy icipici tábortűz.\n\n„Hát AZ meg mi? – kérdezte a Fehér Bálna. – Megnézem. Csak egy pillantás!”\n\nEzt jegyezd meg. Csak egy pillantás. Na persze.",
+      "textLong": "Egy éjszaka piros fényt pillantott meg messze, nagyon messze. Úgy világított a tenger fenekén, mint egy icipici tábortűz.\n\n„Hát AZ meg mi? – kérdezte a Fehér Bálna. – Megnézem. Csak egy pillantás!”\n\nEzt jegyezd meg. Csak egy pillantás. Na persze."
+    },
+    {
+      "art": "n01",
+      "textLong": "Útközben elúszott egy öreg horgony mellett. Megbökte. BONG. Elúszott egy rozsdás vödör mellett. Megbökte. Klonk.\n\nAztán egy egész raj apró hal jött szembe. Nyíl alakba álltak össze. A nyíl a piros fénnyel ellenkező irányba mutatott.\n\n„Szép nyíl” – mondta a Fehér Bálna, és úszott tovább."
+    },
+    {
+      "art": "p03",
+      "textMedium": "Úszott, úszott, egyre csak úszott. A piros fény egyre nagyobb lett. A víz egyre melegebb. Először olyan meleg volt, mint a fürdővíz. Aztán olyan meleg, mint a leves.\n\nEgy kis hal húzott el mellette az ellenkező irányba, és azt kiabálta: „Rossz irány, nagyfiú!”\n\nA Fehér Bálna nem hallgatott rá. A vagány bálnák sosem hallgatnak senkire.",
+      "textLong": "Úszott, úszott, egyre csak úszott. A piros fény egyre nagyobb lett. A víz egyre melegebb. Először olyan meleg volt, mint a fürdővíz. Aztán olyan meleg, mint a leves.\n\nEgy kis hal húzott el mellette az ellenkező irányba, és azt kiabálta: „Rossz irány, nagyfiú!”\n\nA Fehér Bálna nem hallgatott rá. A vagány bálnák sosem hallgatnak senkire."
+    },
+    {
+      "art": "n02",
+      "textMedium": "Egy hegy lábánál ült egy rák, és az egyik ollójával legyezte magát. Körülötte úgy lógott a hínár, mint a főtt spagetti.\n\n„Ne!” – mondta a rák.\n\n„Mit ne?” – kérdezte a Fehér Bálna.\n\n„Azt, amire készülsz. Akármi is az.”\n\nHallgatott rá? Úgyis tudod. Ez volt a kettes számú figyelmeztetés. Gyűjtötte őket.",
+      "textLong": "Egy hegy lábánál ült egy rák, és az egyik ollójával legyezte magát. Körülötte úgy lógott a hínár, mint a főtt spagetti.\n\n„Ne!” – mondta a rák.\n\n„Mit ne?” – kérdezte a Fehér Bálna.\n\n„Azt, amire készülsz. Akármi is az.”\n\nHallgatott rá? Úgyis tudod. Ez volt a hármas számú figyelmeztetés. Gyűjtötte őket."
+    },
+    {
+      "art": "p04",
+      "textMedium": "A fény egy lyukból jött, egy hegy oldalából. Kerek, sötét lyuk volt, éppen egy bálnányi.\n\nTe beúsznál egy ilyen lyukba? Ugye, hogy nem. Neked van eszed.\n\n„Pont jó méret” – mondta a Fehér Bálna. És már úszott is befelé, orral előre. A rák csak a fejét csóválta.",
+      "textLong": "A fény egy lyukból jött, egy hegy oldalából. Kerek, sötét lyuk volt, éppen egy bálnányi.\n\nTe beúsznál egy ilyen lyukba? Ugye, hogy nem. Neked van eszed.\n\n„Pont jó méret” – mondta a Fehér Bálna. És már úszott is befelé, orral előre. A rák csak a fejét csóválta."
+    },
+    {
+      "art": "p05",
+      "textMedium": "Befért az orra. Semmi gond. Befértek az uszonyai. Semmi gond. A nagy, kerek hasa viszont… na, az már gond.\n\nIzgett-mozgott. Tekergett. Nyomta magát, és fújtatott. Semmi. Az óceán legvagányabb bálnája beszorult, mint dugó az üvegbe.",
+      "textLong": "Befért az orra. Semmi gond. Befértek az uszonyai. Semmi gond. A nagy, kerek hasa viszont… na, az már gond.\n\nIzgett-mozgott. Tekergett. Nyomta magát, és fújtatott. Semmi. Az óceán legvagányabb bálnája beszorult, mint dugó az üvegbe."
+    },
+    {
+      "art": "n03",
+      "textMedium": "„Maradj nyugton” – sóhajtotta a rák. Két ollóval megragadta a bálna farkát. A kis hal megragadta a rákot. A csiga megragadta a kis halat.\n\n„Egy, kettő, három – HÚZD!”\n\nÚgy húzták, hogy a ráknak majd kiugrott a szeme. Megmozdult a bálna? Egy icipicit sem. A csiga viszont egy kicsit hosszabb lett.",
+      "textLong": "„Maradj nyugton” – sóhajtotta a rák. Két ollóval megragadta a bálna farkát. A kis hal megragadta a rákot. A csiga megragadta a kis halat.\n\n„Egy, kettő, három – HÚZD!”\n\nÚgy húzták, hogy a ráknak majd kiugrott a szeme. Megmozdult a bálna? Egy icipicit sem. A csiga viszont egy kicsit hosszabb lett."
+    },
+    {
+      "art": "n04",
+      "textLong": "Ekkor a csigának támadt egy ötlete. A csigák csúszósak. Körbemászta hát a bálna hasát, és fényes nyálkacsíkot húzott maga után.\n\nEgy óráig tartott. És rettenetesen csiklandozott.\n\n„Most próbáld!” – mondta a csiga.\n\nA Fehér Bálna nekifeszült. Előrecsúszott egy csigányit. Aztán megint beszorult. Még jobban."
+    },
+    {
+      "art": "n05",
+      "textMedium": "A rák leült. „Hát – mondta –, mostantól itt laksz. Csütörtökönként hozok neked egy szendvicset.”\n\nBent az alagútban, ahol senki sem látta, megremegett a bálna szája széle. Az óceán legvagányabb bálnája, és a feneke kilóg egy hegyből. Örökre.\n\n„Nem – mondta. – Még egyszer megpróbálom. De most igazán nagyot nyomok.”",
+      "textLong": "A rák leült. „Hát – mondta –, mostantól itt laksz. Csütörtökönként hozok neked egy szendvicset.”\n\nBent az alagútban, ahol senki sem látta, megremegett a bálna szája széle. Az óceán legvagányabb bálnája, és a feneke kilóg egy hegyből. Örökre.\n\n„Nem – mondta. – Még egyszer megpróbálom. De most igazán nagyot nyomok.”"
+    },
+    {
+      "art": "p06",
+      "textMedium": "Vett egy akkora levegőt, amekkorát még soha életében, és nekifeszült. A szikla szorította a hasát. Szorííította. És odabent, jó mélyen, valami korogni kezdett. Kurr-murr, kurr-murr.\n\n„Jaj, ne! – suttogta a Fehér Bálna. – Ne most. Légyszi, csak most ne!”\n\nDe bizony éppen most.",
+      "textLong": "Vett egy akkora levegőt, amekkorát még soha életében, és nekifeszült. A szikla szorította a hasát. Szorííította. És odabent, jó mélyen, valami korogni kezdett. Kurr-murr, kurr-murr.\n\n„Jaj, ne! – suttogta a Fehér Bálna. – Ne most. Légyszi, csak most ne!”"
+    },
+    {
+      "art": "n06",
+      "textLong": "Odakint a rák érezte, hogy remeg a szikla a lába alatt. A csiga az egyik fülét a bálnához szorította. (Van a csigáknak fülük? Ennek volt.)\n\nKurr-murr. KURR-MURR.\n\n„Ez mennydörgés?” – kérdezte a kis hal.\n\n„Ez – mondta a rák – nem mennydörgés. Mindenki a szikla mögé. MOST!”"
+    },
+    {
+      "art": "p07",
+      "textMedium": "PRRRRRÜTTY!\n\nEkkora pukit még nem hallott a tenger, amióta világ a világ. Úgy bömbölt, mint egy rakéta. HUSS! A Fehér Bálna úgy süvített át a lyukon, mint egy fehér torpedó, és kibukkant a túloldalon.\n\nBeszorult? Már nem.",
+      "textLong": "PRRRRRÜTTY!\n\nEkkora pukit még nem hallott a tenger, amióta világ a világ. Úgy bömbölt, mint egy rakéta. HUSS! A Fehér Bálna úgy süvített át a lyukon, mint egy fehér torpedó, és kibukkant a túloldalon.\n\nBeszorult? Már nem."
+    },
+    {
+      "art": "n07",
+      "textMedium": "Odakint nem volt ilyen jó a helyzet. A rák hármat bukfencezett, és fejjel lefelé kötött ki a hínárban. A kis hal elzöldült.\n\nÉs a csiga? Két másodperc alatt messzebbre repült, mint amennyit egész életében megtett.\n\n„Még egyszer!” – mondta a csiga.\n\n„Soha többet” – mondta a rák, és befogta az orrát.",
+      "textLong": "A rák kikukucskált a sziklája mögül. Nem kellett volna kikukucskálnia. Hármat bukfencezett, és fejjel lefelé kötött ki a hínárban. A kis hal elzöldült.\n\nÉs a csiga? Két másodperc alatt messzebbre repült, mint amennyit egész életében megtett.\n\n„Még egyszer!” – mondta a csiga.\n\n„Soha többet” – mondta a rák, és befogta az orrát."
+    },
+    {
+      "art": "n08",
+      "textLong": "És hol volt? Egy tűzhányó belsejében. Egy igaziban, ami olyan magas volt, mint egy torony. Odalent, jó mélyen, izzott és bugyborékolt a láva. Blutty. Blutty. A víz forró volt, mint a tea.\n\nVisszanézett az alagútra. Kösz, nem. Fölnézett. Magasan, nagyon magasan volt egy icipici kerek lyuk, tele csillagokkal.\n\n„Hm” – mondta a Fehér Bálna."
+    },
+    {
+      "art": "n09",
+      "textLong": "A lávából fölszállt egy nagy buborék, pontosan az orra előtt. Kerek volt. Narancssárga volt. És azt mondta: blip.\n\nAzt pedig már tudod, mi történik, ha valami azt mondja: blip.\n\nMegbökte az orrával. PUKK! Egy fekete füstpamacs vágódott egyenesen a képébe. Odaégett pirítós és régi zokni szaga volt."
+    },
+    {
+      "art": "p08",
+      "textMedium": "És hol volt? Egy tűzhányó belsejében. Egy igaziban. Odalent, jó mélyen, izzott és bugyborékolt a láva. Blutty. Blutty. Magasan, nagyon magasan volt egy icipici kerek lyuk, tele csillagokkal. Forró volt a víz. És az a szag! Füst és odaégett pirítós.\n\nBekúszott az orrába. Csiklandozta. Csiki, csiki, csiki…",
+      "textLong": "A füst bekúszott az orrába. Csiklandozta. Csiki, csiki, csiki…\n\n„Csak tüsszentést ne – mondta a Fehér Bálna. – Idebent ne!”\n\nMert egy bálnatüsszentés egy tűzhányó belsejében? Még ő is tudta, hogy ez rossz ötlet.\n\nCsiki. Csiki. CSIKI."
+    },
+    {
+      "art": "n10",
+      "textLong": "Egyik uszonyával befogta az orrát. Visszatartotta a levegőt. Unalmas dolgokra gondolt. Homokra. Hínárra. Még több homokra.\n\nA képe fehérből rózsaszín lett, aztán lila.\n\nAkkor fölnézett a csillagokkal teli icipici lyukra. Lenézett a lávára. És a Fehér Bálnának támadt egy ötlete.\n\nElengedte az orrát."
+    },
+    {
+      "art": "p09",
+      "textMedium": "Fölnézett a csillagokra. Lenézett a lávára. „Na jó – mondta a Fehér Bálna. – Akkor fölfelé.”\n\n„Há… há… HAPCIII!”\n\nA tüsszentéstől forogni kezdett a víz, körbe-körbe, egyre gyorsabban, míg végül pörgő-forgó, tüzes LÁVATORNÁDÓ lett belőle. Szállt fölfelé a tornádó. Szállt vele a Fehér Bálna is, éppen a kellős közepén.\n\nFélt? „JUHÉÉÉ!” Dehogy félt.",
+      "textLong": "„Há… há… HAPCIII!”\n\nA tüsszentéstől forogni kezdett a víz, körbe-körbe, egyre gyorsabban, míg végül pörgő-forgó, tüzes LÁVATORNÁDÓ lett belőle. Szállt fölfelé a tornádó. Szállt vele a Fehér Bálna is, éppen a kellős közepén.\n\nFélt? „JUHÉÉÉ!” Dehogy félt."
+    },
+    {
+      "art": "n11",
+      "textMedium": "PUKK! Kirepült a hegy tetején, mint dugó az üvegből. Magasabbra a hullámoknál. Magasabbra a felhőknél. El egy nagyon meglepett sirály mellett.\n\nMessze lent egy rák, egy csiga meg egy kis hal kidugta a fejét a vízből, és bámult.\n\n„Integet” – mondta a csiga.\n\nTényleg integetett.",
+      "textLong": "PUKK! Kirepült a hegy tetején, mint dugó az üvegből. Magasabbra a hullámoknál. Magasabbra a felhőknél. El egy nagyon meglepett sirály mellett.\n\nMessze lent egy rák, egy csiga meg egy kis hal kidugta a fejét a vízből, és bámult.\n\n„Integet” – mondta a csiga.\n\nTényleg integetett."
+    },
+    {
+      "art": "p10",
+      "textMedium": "CSOBB! Vissza a hűvös, sötét tengerbe.\n\nA hátán lebegett, és nézte a csillagokat. A sirály leszállt a hasára. A Fehér Bálna túl fáradt volt ahhoz, hogy megbökje.\n\n„Csak egy pillantás…” – ásította.\n\nAztán elaludt. Mert néha még az óceán legvagányabb bálnájának is aludnia kell.",
+      "textLong": "CSOBB! Vissza a hűvös, sötét tengerbe.\n\nA hátán lebegett, és nézte a csillagokat. A sirály leszállt a hasára. A Fehér Bálna túl fáradt volt ahhoz, hogy megbökje.\n\n„Csak egy pillantás…” – ásította.\n\nAztán elaludt. Mert néha még az óceán legvagányabb bálnájának is aludnia kell."
+    }
+  ]
+}

@@ -35,7 +35,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
   try {
     const out = await polishIcelandic({ title: story.title.is, summary: story.summary.is || "", pages: pages.map((p) => p.text.is as string) });
-    await supabaseAdmin.from("bk_page_texts").upsert(pages.map((p, i) => ({ page_id: p.id, lang: "is", text: out.pages[i] })));
+    await supabaseAdmin.from("bk_page_texts").upsert(pages.map((p, i) => ({ page_id: p.id, lang: "is", length: 1, text: out.pages[i] })));
     await supabaseAdmin.from("bk_story_texts")
       .upsert({ story_id: id, lang: "is", title: out.title, summary: out.summary, polished_at: new Date().toISOString() });
     // Nafnlaus bók sem ber nafn þessarar sögu fylgir leiðréttum titli.

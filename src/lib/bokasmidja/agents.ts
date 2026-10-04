@@ -75,7 +75,8 @@ The shape. Picture books that children love follow a proven arc, and so does thi
 A phrase or refrain returns two or three times so the child can join in, and the last line gives the story a warm full stop.
 
 On the page:
-- 9 to 11 pages. Each page holds 35 to 65 words and one clear moment that can be drawn.
+- The request says how long the story is. Each page holds 35 to 65 words and one clear moment that can be drawn.
+- A longer story is not wordier pages. It is more story: more attempts, more obstacles, more funny detail, more for the side characters to do. The extra pages deepen the middle — more escalating beats before the low point — and give the climax and the landing a little more room. The opening stays quick and there is still exactly one ending.
 - Feelings are shown through what characters do, never explained. No lecture and no stated moral.
 
 Write the story natively in the requested language, as a skilled children's author who grew up in that language would: natural idiom, natural word order, names and sounds that feel at home in that language, correct grammar and spelling including every diacritic. Do not write it in English and translate.
@@ -216,7 +217,8 @@ export async function writeStory(input: WriteInput): Promise<WrittenStory> {
   const siblings = input.siblings.length
     ? `Stories already in this book (write something clearly different in hero, place and kind of adventure):\n${input.siblings.map((s) => `- ${s.title}: ${s.summary}`).join("\n")}`
     : "This is the first story in the book.";
-  const prompt = `Write the story in ${LANG_ENGLISH[input.lang]}.
+  const pages = input.idea.length === "long" ? "20 to 22 pages" : input.idea.length === "medium" ? "15 to 16 pages" : "9 to 11 pages";
+  const prompt = `Write the story in ${LANG_ENGLISH[input.lang]}, ${pages} long.
 
 The reader is ${input.age ? `${input.age} years old` : "5 to 7 years old"}${input.childName ? ` and is called ${input.childName}. ${input.childName} came up with the idea and will be credited as the inventor of the story — do not make ${input.childName} a character unless the idea asks for it` : ""}.
 ${input.bedtime ? "It is a bedtime story: a real adventure first, then a calm, sleepy landing." : "It does not have to be a bedtime story."}
@@ -237,7 +239,7 @@ The title and summary are in ${LANG_ENGLISH[input.lang]} too; the summary is one
   try {
     const story = await structured(WRITER_SYSTEM, prompt, StorySchema, "high");
     if (!story || story.pages.length < 4 || !story.title.trim()) throw new AgentError("empty");
-    return { ...story, pages: story.pages.slice(0, 14) };
+    return { ...story, pages: story.pages.slice(0, 24) };
   } catch (e) {
     fail(e);
   }

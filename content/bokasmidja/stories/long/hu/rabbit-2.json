@@ -1,0 +1,101 @@
+{
+  "key": "rabbit-2",
+  "pages": [
+    {
+      "art": "p01",
+      "textMedium": "Nanának szülinapja volt. Voltak lufik. Volt torta. Volt egy szülinapi csákó is, ami folyton rácsúszott az egyik fülére.\n\nÉs volt egy nagy gond.\n\nNuni elfelejtett ajándékot szerezni neki.",
+      "textLong": "Nanának szülinapja volt. Voltak lufik. Volt torta. Volt egy szülinapi csákó is, ami folyton rácsúszott az egyik fülére.\n\nÉs volt egy nagy gond.\n\nNuni elfelejtett ajándékot szerezni neki."
+    },
+    {
+      "art": "p02",
+      "textMedium": "Na, ha egyetlen dolgot tudsz a szülinapokról, akkor az ez: a szülinapos nyúl olyan ajándékot akar, amit nagyon, de nagyon szeret.\n\nÉs kitalálod, mit szeret Nana a legeslegjobban az egész világon?\n\nÚgy van. A répát.",
+      "textLong": "Na, ha egyetlen dolgot tudsz a szülinapokról, akkor az ez: a szülinapos nyúl olyan ajándékot akar, amit nagyon, de nagyon szeret.\n\nÉs kitalálod, mit szeret Nana a legeslegjobban az egész világon?\n\nÚgy van. A répát."
+    },
+    {
+      "art": "p03",
+      "textMedium": "Nuni tehát keresett egy répát. Megnézte a hűtőben. Megnézte a kertben. Megnézte a kanapé alatt is, ahol talált egy zoknit, egy üveggolyót meg egy régi kekszet.\n\nDe répát nem. Egyet sem.",
+      "textLong": "Nuni tehát keresett egy répát. Megnézte a hűtőben. Megnézte a kertben. Megnézte a kanapé alatt is, ahol talált egy zoknit, egy üveggolyót meg egy régi kekszet.\n\nDe répát nem. Egyet sem."
+    },
+    {
+      "art": "n01",
+      "textMedium": "Megnézte az előszobaszekrényben. Talált egy trombitát, egy fél pár görkorcsolyát meg egy pókot, aki rászólt, hogy csukja be az ajtót.\n\nMegnézte a zongorában. PLÖNG. Még a saját fülében is megnézte.\n\n„Nuni! – kiáltotta Nana. – Mit csinálsz te ott?”\n\n„Hangolom a zongorát!”\n\nRépa sehol. Egy fél répa se.",
+      "textLong": "Megnézte az előszobaszekrényben. Talált egy trombitát, egy fél pár görkorcsolyát meg egy pókot, aki rászólt, hogy csukja be az ajtót.\n\nMegnézte a fürdőkádban. Megnézte a zongorában. PLÖNG.\n\nMég a saját fülében is megnézte.\n\nRépa sehol. Egy fél répa se."
+    },
+    {
+      "art": "n02",
+      "textLong": "Kiszaladt a ház elé. Egyszer pontosan itt feküdt egy busz nagyságú répa. Most csak egy répa alakú horpadás volt a fűben. Az száz reggelivel ezelőtt volt.\n\n„NUNI! – kiáltotta bentről Nana. – Jössz már?”\n\n„Csak bekötöm a cipőmet!”\n\nA nyulak nem hordanak cipőt."
+    },
+    {
+      "art": "n03",
+      "textMedium": "Kinyitotta a konyhaszekrényt. Egy krumpli. Túl göcsörtös. Egy hagyma. Elképzelte, ahogy Nana kicsomagolja. Elképzelte, ahogy Nana sír.\n\nLeghátul talált egy szem borsót. Egyet.\n\n„Boldog szülinapot, Nana! Tessék, a borsód.”\n\nNem.",
+      "textLong": "Kinyitotta a konyhaszekrényt. Egy krumpli. Túl göcsörtös. Egy hagyma. Elképzelte, ahogy Nana kicsomagolja. Elképzelte, ahogy Nana sír.\n\nLeghátul talált egy szem borsót. Egyet.\n\n„Boldog szülinapot, Nana! Tessék, a borsód.”\n\nNem."
+    },
+    {
+      "art": "p04",
+      "textMedium": "„Gondolkozz, Nuni, gondolkozz!” – mondta Nuni.\n\nMég egyszer, utoljára kinyitotta a szekrényt. És ott, a gyümölcsöstálban, egyes-egyedül feküdt egy banán. Hosszú. A végén egy kicsit hegyes.\n\nNuni nézte a banánt. A banán visszanézett.",
+      "textLong": "„Gondolkozz, Nuni, gondolkozz!” – mondta Nuni.\n\nMég egyszer, utoljára kinyitotta a szekrényt. És ott, a gyümölcsöstálban, egyes-egyedül feküdt egy banán. Hosszú. A végén egy kicsit hegyes.\n\nNuni nézte a banánt. A banán visszanézett."
+    },
+    {
+      "art": "n04",
+      "textMedium": "„Ez MAJDNEM répa” – suttogta Nuni. Elővette a festékkészletét.\n\nVolt egy kis gond. A narancssárga teljesen beszáradt.\n\nMegpróbálta hát pirossal. Úgy nézett ki, mint egy virsli. Megpróbálta zölddel. Úgy nézett ki, mint egy uborka. Megpróbálta lilával, sárga pöttyökkel.\n\nSenki sem tudja, az hogy nézett ki.",
+      "textLong": "„Ez MAJDNEM répa” – suttogta Nuni. Elővette a festékkészletét.\n\nVolt egy kis gond. A narancssárga teljesen beszáradt.\n\nMegpróbálta hát pirossal. Úgy nézett ki, mint egy virsli. Megpróbálta zölddel. Úgy nézett ki, mint egy uborka. Megpróbálta lilával, sárga pöttyökkel.\n\nSenki sem tudja, az hogy nézett ki."
+    },
+    {
+      "art": "n05",
+      "textLong": "Aztán eszébe jutott. A pirosból meg a sárgából narancssárga lesz! Kikeverte. Belemártotta az ecsetet. Jó erősen megszorította a banánt –\n\nSUTTY!\n\nA nedves banán csúszik. Kilőtt a mancsából, lepattant a lámpáról, és odaragadt a plafonra.\n\n„NUNI! Mi volt ez?”\n\n„Csak fogat mosok!”"
+    },
+    {
+      "art": "p05",
+      "textMedium": "Aztán eszébe jutott. A pirosból meg a sárgából narancssárga lesz! Kikeverte, és tetőtől talpig narancssárgára festette a banánt. A végére ragasztott egy kis csokor petrezselymet.\n\nAztán hátralépett. „Zseniális” – mondta Nuni.",
+      "textLong": "Egy seprűvel leszedte. Tetőtől talpig narancssárgára festette a banánt. A végére ragasztott egy kis csokor petrezselymet.\n\nMég mindig görbe volt egy kicsit. „Görbe répa – mondta Nuni. – Nagyon ritka.”\n\nAztán hátralépett. „Zseniális.”"
+    },
+    {
+      "art": "n06",
+      "textMedium": "A festéknek meg kellett száradnia. Nuni addig elment székfoglalót játszani. Hárman játszottak: Nana, Nuni meg a kukac a plafonról.\n\nA kukac nyert. Senki sem tudja, hogyan.\n\n„Nuni – kérdezte Nana –, miért narancssárga az orrod?”\n\n„Leégett a napon” – mondta Nuni, és nagyon gyorsan kiment a szobából.",
+      "textLong": "A festéknek meg kellett száradnia. Nuni addig elment székfoglalót játszani. Hárman játszottak: Nana, Nuni meg a kukac a plafonról.\n\nA kukac nyert. Senki sem tudja, hogyan.\n\n„Nuni – kérdezte Nana –, miért narancssárga az orrod?”\n\n„Leégett a napon” – mondta Nuni, és nagyon gyorsan kiment a szobából."
+    },
+    {
+      "art": "n07",
+      "textLong": "Most jött a neheze. Az arca.\n\nNuni odaállt a tükör elé, és gyakorolt. Első arc: túl bűnbánó. Második arc: mintha vécére kéne mennie. Harmadik arc: túl sok fog.\n\nKipróbált egy negyediket. Azon is sok fog volt.\n\nJó lesz ez is."
+    },
+    {
+      "art": "p06",
+      "textMedium": "A répát – jó, a banánt – beletette egy szép dobozba. Átkötötte egy nagy piros szalaggal.\n\nAztán odavitte Nanának, a lehető legjobb „nincs itt semmi gond” arcával.\n\n„Boldog szülinapot, Nana!”",
+      "textLong": "A répát – jó, a banánt – beletette egy szép dobozba. Átkötötte egy nagy piros szalaggal.\n\nAztán odavitte Nanának, a lehető legjobb „nincs itt semmi gond” arcával.\n\n„Boldog szülinapot, Nana!”"
+    },
+    {
+      "art": "p07",
+      "textMedium": "Nana letépte a szalagot. Kinyitotta a dobozt.\n\n„EGY RÉPA! Ekkorát még soha nem kaptam!”\n\nMegölelte Nunit. Nuni mosolygott, egy kicsit remegősen.\n\nAztán Nana nagyra tátotta a száját, és óriásit harapott a répába.",
+      "textLong": "Nana letépte a szalagot. Kinyitotta a dobozt.\n\n„EGY RÉPA! Ekkorát még soha nem kaptam!”\n\nMegölelte Nunit. Nuni mosolygott, egy kicsit remegősen.\n\nAztán Nana nagyra tátotta a száját, és óriásit harapott a répába."
+    },
+    {
+      "art": "p08",
+      "textMedium": "Cupp.\n\nNana abbahagyta a rágást. Kikerekedett a szeme. Égnek állt a füle.\n\n„Ennek a lépának – mondta teli szájjal – FULA íve van.”\n\n„BLEE! PFFF! PTÜ!” Narancssárga darabkák repültek szanaszét, rá a tortára.",
+      "textLong": "Cupp.\n\nNana abbahagyta a rágást. Kikerekedett a szeme. Égnek állt a füle.\n\n„Ennek a lépának – mondta teli szájjal – FULA íve van.”\n\n„BLEE! PFFF! PTÜ!” Narancssárga darabkák repültek szanaszét, rá a tortára."
+    },
+    {
+      "art": "n08",
+      "textMedium": "Nagy csend lett. Még a kukac is visszatartotta a levegőt.\n\nNana megnézte a répát. Megszagolta. Megkapargatta. Narancssárga lett tőle a mancsa. Alatta a répa sárga volt.\n\n„Nuni – mondta Nana lassan. – Miért van a répámnak héja?”",
+      "textLong": "Nagy csend lett. Még a kukac is visszatartotta a levegőt.\n\nNana megnézte a répát. Megszagolta. Megkapargatta. Narancssárga lett tőle a mancsa. Alatta a répa sárga volt.\n\n„Nuni – mondta Nana lassan. – Miért van a répámnak héja?”"
+    },
+    {
+      "art": "p09",
+      "textMedium": "Nuni füle egészen a padlóig lekonyult. „Elfelejtettem az ajándékodat – mondta egészen pici hangon. – Ez egy banán. Befestettem.”\n\nNana Nunira meredt. Nana a banánra meredt.\n\nAztán Nana nevetni kezdett. Addig nevetett, amíg le nem esett a székről.",
+      "textLong": "Nuni füle egészen a padlóig lekonyult. „Elfelejtettem az ajándékodat – mondta egészen pici hangon. – Ez egy banán. Befestettem.”\n\nNana Nunira meredt. Nana a banánra meredt.\n\nAztán Nana nevetni kezdett. Addig nevetett, amíg le nem esett a székről."
+    },
+    {
+      "art": "n09",
+      "textMedium": "Amikor Nana végre levegőt kapott, odanyújtotta a banánt. „Te jössz.”\n\n„Kösz, nem” – mondta Nuni.\n\n„Szülinapi szabály.”\n\nNuni hát harapott egy icipicit. Festék. Héj. Petrezselyem.\n\n„BLEE! PFFF! PTÜ!”\n\nMost már egy-egy volt az állás.",
+      "textLong": "Amikor Nana végre levegőt kapott, odanyújtotta a banánt. „Te jössz.”\n\n„Kösz, nem” – mondta Nuni.\n\n„Szülinapi szabály.”\n\nNuni hát harapott egy icipicit. Festék. Héj. Petrezselyem.\n\n„BLEE! PFFF! PTÜ!”\n\nMost már egy-egy volt az állás."
+    },
+    {
+      "art": "n10",
+      "textLong": "Aztán Nana is ki akarta próbálni a festékkészletet.\n\nA krumpliból epret festettek. A hagymából almát. A borsóból egy nagyon kicsi répát, és azt odaadták a kukacnak.\n\nA kukac nem szólt semmit. A kukacok sosem szólnak."
+    },
+    {
+      "art": "p10",
+      "textMedium": "„Egy festett banán! – kapkodott levegő után Nana. – Ilyen vicces ajándékot még soha nem kaptam!”\n\nFöltette a polcra, a legszebb kupája mellé.\n\nAztán teleették magukat tortával, és aznap este két nyúl aludt el narancssárga festékkel az orrán. Mert néha még a világ legvagányabb nyulainak is aludniuk kell.",
+      "textLong": "„Egy festett banán – sóhajtotta Nana. – Ilyen vicces ajándékot még soha nem kaptam.”\n\nFöltette a polcra, a legszebb kupája mellé.\n\nAztán teleették magukat tortával, és aznap este két nyúl aludt el narancssárga festékkel az orrán. Mert néha még a világ legvagányabb nyulainak is aludniuk kell."
+    }
+  ]
+}

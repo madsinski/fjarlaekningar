@@ -29,9 +29,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     ]);
     await refreshStoryStatus(id);
   } else {
-    const { data: rows } = await supabaseAdmin.from("bk_page_texts").select("page_id, lang, text").in("page_id", [a, b]);
+    const { data: rows } = await supabaseAdmin.from("bk_page_texts").select("page_id, lang, length, text").in("page_id", [a, b]);
     await supabaseAdmin.from("bk_page_texts").delete().in("page_id", [a, b]);
-    const moved = (rows || []).map((r) => ({ page_id: r.page_id === a ? b : a, lang: r.lang, text: r.text }));
+    const moved = (rows || []).map((r) => ({ page_id: r.page_id === a ? b : a, lang: r.lang, length: r.length, text: r.text }));
     if (moved.length) {
       const { error } = await supabaseAdmin.from("bk_page_texts").insert(moved);
       // Mistakist innsetningin má textinn ekki glatast: setjum upprunalegu línurnar aftur.

@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { buildPdf, type PdfKind } from "@/lib/bokasmidja/pdf";
-import { pick, type I18nText, type Lang, type StoryView } from "@/lib/bokasmidja/types";
+import { LENGTH_KEYS, pageText, pagesFor, pick, type I18nText, type Lang, type StoryLength, type StoryView } from "@/lib/bokasmidja/types";
 import { translator } from "@/lib/bokasmidja/i18n";
 import { useBk } from "./Provider";
 import { LangSwitch } from "./ui";
@@ -16,14 +16,19 @@ const KINDS: { kind: PdfKind; emoji: string; title: "pdf.read" | "pdf.print" | "
   { kind: "publish", emoji: "📚", title: "pdf.publish", sub: "pdf.publishSub" },
 ];
 
-export default function PdfDialog({ book, load, onClose }: {
+export default function PdfDialog({ book, load, onClose, length, chooseLength }: {
   book: { title: I18nText; subtitle: I18nText; color: string; emoji: string; cover: boolean; coverSvg?: string | null; coverImage?: string | null };
   /** Stories with their pages; fetched when the export starts. */
   load: () => Promise<StoryView[]>;
   onClose: () => void;
+  /** The version to export (1 short, 2 medium, 3 long). */
+  length?: StoryLength;
+  /** Let the reader pick the version here (the book page, where no reader has chosen one). */
+  chooseLength?: boolean;
 }) {
   const { lang, t } = useBk();
   const [pdfLang, setPdfLang] = useState<Lang>(lang);
+  const [len, setLen] = useState<StoryLength>(length ?? 1);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [error, setError] = useState("");
 
@@ -35,6 +40,8 @@ export default function PdfDialog({ book, load, onClose }: {
       if (!stories.length) { setError(t("pdf.notReady")); setProgress(null); return; }
       const tl = translator(pdfLang);
       const text = (v: I18nText, s: StoryView) => v[pdfLang] || v[s.sourceLang] || pick(v, pdfLang);
+      // A story that only has one length is exported whole, whatever is chosen.
+      const lengthOf = (s: StoryView): StoryLength => (s.lengths >= 3 ? len : 1);
       const css = getComputedStyle(document.querySelector(".bk-root") || document.body);
       const bytes = await buildPdf({
         kind,
@@ -44,7 +51,7 @@ export default function PdfDialog({ book, load, onClose }: {
         stories: stories.map((s) => ({
           title: text(s.title, s),
           credit: s.authorName ? tl("reader.inventedBy", { name: s.authorName }) : "",
-          pages: (s.pages || []).map((p) => ({ text: text(p.text, s), svg: p.svg, textFirst: p.layout === "text-first", noPicture: !p.svg && !p.autoArt })),
+          pages: pagesFor(s.pages || [], lengthOf(s)).map((p) => ({ text: pageText(p, pdfLang, lengthOf(s)) || pageText(p, s.sourceLang, lengthOf(s)) || text(p.text, s), svg: p.svg, textFirst: p.layout === "text-first", noPicture: !p.svg && !p.autoArt })),
         })),
         onProgress: (done, total) => setProgress({ done, total }),
       });
@@ -52,7 +59,7 @@ export default function PdfDialog({ book, load, onClose }: {
       const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/pdf" }));
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${name}-${kind}-${pdfLang}.pdf`;
+      a.download = `${name}-${kind}-${pdfLang}${len > 1 ? `-${LENGTH_KEYS[len - 1]}` : ""}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -73,6 +80,19 @@ export default function PdfDialog({ book, load, onClose }: {
         </div>
         <p className="mt-4 font-extrabold text-slate-600">{t("pdf.lang")}</p>
         <div className="mt-2"><LangSwitch value={pdfLang} onPick={setPdfLang} /></div>
+        {chooseLength && (
+          <>
+            <p className="mt-4 font-extrabold text-slate-600">{t("len.title")}</p>
+            <div className="mt-2 flex flex-wrap gap-2" role="group">
+              {([1, 2, 3] as const).map((l) => (
+                <button key={l} type="button" onClick={() => setLen(l)} aria-pressed={len === l} disabled={!!progress}
+                  className={`bk-press bk-display rounded-2xl bg-white px-4 py-2 text-lg font-extrabold ${len === l ? "ring-4 ring-slate-900" : "opacity-80 ring-2 ring-slate-200"}`}>
+                  {t(`len.${LENGTH_KEYS[l - 1]}`)}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
         <div className="mt-5 grid gap-3">
           {KINDS.map((k) => (
             <button key={k.kind} type="button" onClick={() => make(k.kind)} disabled={!!progress}

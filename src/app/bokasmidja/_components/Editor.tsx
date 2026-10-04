@@ -15,7 +15,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowLeft, ArrowLeftRight, ArrowUp, Camera, Check, Hand, Paintbrush, Plus, SpellCheck, Trash2 } from "lucide-react";
 import { errorText } from "@/lib/bokasmidja/i18n";
-import { LANGS, MAX_PAGES, type Lang, type PageView } from "@/lib/bokasmidja/types";
+import { LANGS, LENGTH_KEYS, MAX_PAGES, pageText, pagesFor, type Lang, type PageView, type StoryLength } from "@/lib/bokasmidja/types";
 import { useBk } from "./Provider";
 import type { Story } from "./StoryRoom";
 import { Art, LangSwitch, TopBar, call, cx, shrinkImage } from "./ui";
@@ -40,7 +40,14 @@ export default function Editor({ initial }: { initial: Story }) {
   const dirty = useRef(new Set<string>());
   const queue = useRef<Promise<unknown>>(Promise.resolve());
   const url = `/api/bokasmidja/stories/${story.id}`;
-  const pages = story.pages;
+  // Saga með þrjár lengdir: ritillinn sýnir eina útgáfu í einu. Texti sem er
+  // skrifaður hér verður texti þeirrar útgáfu. Röð síðna, nýjar síður og eyðing
+  // eiga við um alla söguna og eru því aðeins í boði í lengstu útgáfunni.
+  const multi = story.lengths >= 3;
+  const [len, setLen] = useState<StoryLength>(multi ? 3 : 1);
+  const pages = pagesFor(story.pages, multi ? len : 1);
+  const whole = !multi || len === 3;
+  const field = len === 3 && multi ? "textL" : len === 2 && multi ? "textM" : "text";
 
   /** Updates local state at once and sends the change to the server, in order. */
   const send = useCallback((method: string, path: string, body?: unknown) => {
@@ -64,12 +71,13 @@ export default function Editor({ initial }: { initial: Story }) {
 
   // ── Texti ────────────────────────────────────────────────────────────────
   const typeText = (id: string, value: string) => {
-    dirty.current.add(`${id}:${lang}`);
-    patchPages((ps) => ps.map((p) => (p.id === id ? { ...p, text: { ...p.text, [lang]: value } } : p)));
+    dirty.current.add(`${id}:${lang}:${field}`);
+    patchPages((ps) => ps.map((p) => (p.id === id ? { ...p, [field]: { ...p[field], [lang]: value } } : p)));
   };
   const saveText = (id: string, l: Lang) => {
-    if (!dirty.current.delete(`${id}:${l}`)) return;
-    void send("PATCH", `/api/bokasmidja/pages/${id}`, { lang: l, text: live.current.pages.find((p) => p.id === id)?.text[l] || "" });
+    if (!dirty.current.delete(`${id}:${l}:${field}`)) return;
+    const length = field === "textL" ? 3 : field === "textM" ? 2 : 1;
+    void send("PATCH", `/api/bokasmidja/pages/${id}`, { lang: l, length, text: live.current.pages.find((p) => p.id === id)?.[field]?.[l] || "" });
   };
   const typeStory = (field: "title" | "summary", value: string) => {
     dirty.current.add(`story:${lang}`);
@@ -241,7 +249,7 @@ export default function Editor({ initial }: { initial: Story }) {
     </button>
   );
   const dragNumber = drag ? pages.findIndex((p) => p.id === drag.id) + 1 : 0;
-  const field = "w-full rounded-2xl border-4 border-slate-200 px-4 py-3 text-xl outline-none focus:border-violet-400";
+  const inputClass = "w-full rounded-2xl border-4 border-slate-200 px-4 py-3 text-xl outline-none focus:border-violet-400";
 
   return (
     <>
@@ -256,6 +264,20 @@ export default function Editor({ initial }: { initial: Story }) {
         <section className="mt-5 rounded-[2rem] bg-white p-5 shadow-lg ring-2 ring-slate-100">
           <p className="bk-display text-xl font-extrabold">{t("edit.textLang")}</p>
           <div className="mt-2"><LangSwitch big value={lang} onPick={(l) => { saveStory(lang); setLang(l); }} /></div>
+          {multi && (
+            <fieldset className="mt-5">
+              <legend className="bk-display text-xl font-extrabold">{t("len.title")}</legend>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {([1, 2, 3] as const).map((l) => (
+                  <button key={l} type="button" aria-pressed={len === l}
+                    onClick={() => { (document.activeElement as HTMLElement | null)?.blur?.(); setLen(l); }}
+                    className={cx("bk-press bk-display rounded-2xl bg-white px-4 py-2 text-lg font-extrabold", len === l ? "ring-4 ring-slate-900" : "opacity-80 ring-2 ring-slate-200")}>
+                    {t(`len.${LENGTH_KEYS[l - 1]}`)} · {t("len.pages", { n: pagesFor(story.pages, l).length })}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          )}
           {lang === "is" && (
             <div className="mt-4">
               <button type="button" onClick={proofread} disabled={checking}
@@ -266,11 +288,11 @@ export default function Editor({ initial }: { initial: Story }) {
             </div>
           )}
           <label className="mt-5 block font-extrabold text-slate-600">{t("edit.storyTitle")}
-            <input lang={lang} className={cx(field, "bk-display mt-1 font-extrabold")} maxLength={120} value={story.title[lang] || ""}
+            <input lang={lang} className={cx(inputClass, "bk-display mt-1 font-extrabold")} maxLength={120} value={story.title[lang] || ""}
               onChange={(e) => typeStory("title", e.target.value)} onBlur={() => saveStory(lang)} />
           </label>
           <label className="mt-4 block font-extrabold text-slate-600">{t("edit.summary")}
-            <textarea lang={lang} className={cx(field, "mt-1 text-lg")} rows={2} maxLength={600} value={story.summary[lang] || ""}
+            <textarea lang={lang} className={cx(inputClass, "mt-1 text-lg")} rows={2} maxLength={600} value={story.summary[lang] || ""}
               onChange={(e) => typeStory("summary", e.target.value)} onBlur={() => saveStory(lang)} />
           </label>
         </section>
@@ -285,12 +307,12 @@ export default function Editor({ initial }: { initial: Story }) {
                 className={cx("rounded-[2rem] bg-white p-4 shadow-lg ring-4 transition sm:p-5",
                   over("page") ? "ring-amber-400" : "ring-slate-100", drag?.kind === "page" && drag.id === p.id && "opacity-50")}>
                 <div className="flex flex-wrap items-center gap-2">
-                  {grip("page", p.id, t("edit.movePage", { n }))}
+                  {whole && grip("page", p.id, t("edit.movePage", { n }))}
                   <h2 className="bk-display mr-auto text-2xl font-extrabold">{t("edit.page", { n })}</h2>
-                  <IconButton label={t("edit.up", { n })} disabled={i === 0} onClick={() => reorder(p.id, i - 1)}><ArrowUp className="h-6 w-6" aria-hidden /></IconButton>
-                  <IconButton label={t("edit.down", { n })} disabled={i === pages.length - 1} onClick={() => reorder(p.id, i + 1)}><ArrowDown className="h-6 w-6" aria-hidden /></IconButton>
+                  {whole && <IconButton label={t("edit.up", { n })} disabled={i === 0} onClick={() => reorder(p.id, i - 1)}><ArrowUp className="h-6 w-6" aria-hidden /></IconButton>}
+                  {whole && <IconButton label={t("edit.down", { n })} disabled={i === pages.length - 1} onClick={() => reorder(p.id, i + 1)}><ArrowDown className="h-6 w-6" aria-hidden /></IconButton>}
                   <IconButton label={t("edit.flip")} onClick={() => flip(p.id)}><ArrowLeftRight className="h-6 w-6 text-violet-600" aria-hidden /></IconButton>
-                  <IconButton label={t("edit.deletePage", { n })} disabled={pages.length <= 1} onClick={() => remove(p, n)}><Trash2 className="h-6 w-6 text-red-600" aria-hidden /></IconButton>
+                  {whole && <IconButton label={t("edit.deletePage", { n })} disabled={pages.length <= 1} onClick={() => remove(p, n)}><Trash2 className="h-6 w-6 text-red-600" aria-hidden /></IconButton>}
                 </div>
 
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -335,10 +357,10 @@ export default function Editor({ initial }: { initial: Story }) {
                       {grip("text", p.id, t("edit.moveText", { n }))}
                       <label htmlFor={`bk-text-${p.id}`} className="bk-display text-lg font-extrabold text-slate-600">{t("edit.text")}</label>
                     </div>
-                    <textarea id={`bk-text-${p.id}`} lang={lang} value={p.text[lang] || ""} maxLength={1500} placeholder={t("edit.textPlaceholder")}
+                    <textarea id={`bk-text-${p.id}`} lang={lang} value={pageText(p, lang, multi ? len : 1)} maxLength={1500} placeholder={t("edit.textPlaceholder")}
                       onChange={(e) => typeText(p.id, e.target.value)} onBlur={() => saveText(p.id, lang)}
-                      className={cx(field, "min-h-48 flex-1 leading-relaxed")} />
-                    {!p.text[lang] && LANGS.some((l) => p.text[l]) && (
+                      className={cx(inputClass, "min-h-48 flex-1 leading-relaxed")} />
+                    {!pageText(p, lang, multi ? len : 1) && LANGS.some((l) => p.text[l]) && (
                       <p className="mt-2 rounded-2xl bg-slate-50 p-3 text-slate-600" lang={LANGS.find((l) => p.text[l])}>{p.text[LANGS.find((l) => p.text[l])!]}</p>
                     )}
                   </div>
@@ -348,7 +370,7 @@ export default function Editor({ initial }: { initial: Story }) {
           })}
         </ol>
 
-        {pages.length < MAX_PAGES && (
+        {whole && pages.length < MAX_PAGES && (
           <button type="button" onClick={add}
             className="bk-press mt-6 flex w-full items-center justify-center gap-3 rounded-[2rem] border-4 border-dashed border-slate-300 bg-white/60 p-6">
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100"><Plus className="h-7 w-7 text-orange-500" aria-hidden /></span>

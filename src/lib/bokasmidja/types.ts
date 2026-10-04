@@ -15,6 +15,11 @@ export const LANG_COOKIE = "bk_lang";
 
 export type I18nText = Partial<Record<Lang, string>>;
 
+/** 1 short, 2 medium, 3 long. */
+export type StoryLength = 1 | 2 | 3;
+export const LENGTH_KEYS = ["short", "medium", "long"] as const;
+export type LengthKey = (typeof LENGTH_KEYS)[number];
+
 /** Best available text: the wanted language, then English, then anything. */
 export function pick(text: I18nText | null | undefined, lang: Lang): string {
   if (!text) return "";
@@ -42,6 +47,11 @@ export interface PageView {
   id: string;
   position: number;
   text: I18nText;
+  /** Texts of the medium and long versions, where they differ from the shorter one. */
+  textM?: I18nText;
+  textL?: I18nText;
+  /** The shortest version this page appears in: 1 short, 2 medium, 3 long. */
+  level: StoryLength;
   svg: string | null;
   /** Which comes first on the page: the picture or the text. */
   layout: "art-first" | "text-first";
@@ -64,6 +74,8 @@ export interface StoryView {
   cover: string | null;
   /** The Icelandic text has been through the proofreading step. */
   polishedIs?: boolean;
+  /** Longest version the story has: 1 (one length only) or 3 (short, medium and long). */
+  lengths: number;
   pages?: PageView[];
 }
 
@@ -83,10 +95,10 @@ export interface BookView {
 }
 
 export type Idea =
-  | { kind: "prompt"; text: string }
-  | { kind: "wizard"; answers: Record<string, string>; heroName: string; extra: string };
+  | { kind: "prompt"; text: string; length?: LengthKey }
+  | { kind: "wizard"; answers: Record<string, string>; heroName: string; extra: string; length?: LengthKey };
 
-export const MAX_PAGES = 20;
+export const MAX_PAGES = 26;
 export const MAX_STORIES = 30;
 
 /** Illustration canvas. Every page picture uses this viewBox. */
@@ -95,3 +107,21 @@ export const ART_H = 900;
 
 export const ANIMS = ["float", "swim", "bob", "sway", "wiggle", "spin", "pulse", "twinkle", "blink", "drift"] as const;
 export const TAPS = ["jump", "spin", "wiggle", "grow", "splash", "hide"] as const;
+
+/** The pages of one version of a story: a page shows in every version at or above its level. */
+export function pagesFor<P extends { level: StoryLength }>(pages: P[], length: StoryLength): P[] {
+  return pages.filter((p) => p.level <= length);
+}
+
+/** Which stored text a page uses in a version: its own, or the next shorter one. Returns the length it came from. */
+export function textSource(p: Pick<PageView, "text" | "textM" | "textL">, lang: Lang, length: StoryLength): StoryLength {
+  if (length >= 3 && p.textL?.[lang]) return 3;
+  if (length >= 2 && p.textM?.[lang]) return 2;
+  return 1;
+}
+
+/** A page's text in a language for a version ("" when it has none). */
+export function pageText(p: Pick<PageView, "text" | "textM" | "textL">, lang: Lang, length: StoryLength): string {
+  const from = textSource(p, lang, length);
+  return (from === 3 ? p.textL?.[lang] : from === 2 ? p.textM?.[lang] : p.text[lang]) || "";
+}

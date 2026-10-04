@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, FileDown, LayoutDashboard, Maximize, MoreHorizontal, Pencil, RefreshCw, Sparkles, Square, Trash2, Volume2 } from "lucide-react";
 import { errorText } from "@/lib/bokasmidja/i18n";
-import { LANGS, LANG_BCP47, pick, type Lang } from "@/lib/bokasmidja/types";
+import { LANGS, LANG_BCP47, LENGTH_KEYS, pageText, pagesFor, pick, textSource, type Lang, type StoryLength } from "@/lib/bokasmidja/types";
 import PdfDialog from "./PdfDialog";
 import { useBk } from "./Provider";
 import type { BookInfo, Phase, Story } from "./StoryRoom";
@@ -62,7 +62,10 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
 }) {
   const { lang, t } = useBk();
   const router = useRouter();
-  const n = story.pages.length;
+  // Útgáfa sögunnar: stutt, miðlungs eða löng. Saga með eina lengd er alltaf „stutt“.
+  const [len, setLen] = useState<StoryLength>(1);
+  const pages = pagesFor(story.pages, story.lengths >= 3 ? len : 1);
+  const n = pages.length;
   const [slide, setSlide] = useState(0); // 0 = kápa, 1..n = síður, n+1 = endir
   const [readLang, setReadLang] = useState<Lang>(lang);
   const [magic, setMagic] = useState(true);
@@ -77,15 +80,29 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
   const root = useRef<HTMLDivElement | null>(null);
   const touch = useRef<number | null>(null);
   // Nýjustu gildi handa atburðahlusturum sem lifa lengur en ein teikning.
-  const live = useRef({ slide, listening, readLang, story });
-  useEffect(() => { live.current = { slide, listening, readLang, story }; });
+  const live = useRef({ slide, listening, readLang, story, pages, len });
+  useEffect(() => { live.current = { slide, listening, readLang, story, pages, len }; });
+  // Síðasta val barnsins á lengd er munað í þessu tæki.
+  useEffect(() => {
+    if (story.lengths < 3) return;
+    let saved = 0;
+    try { saved = Number(window.localStorage.getItem("bk_len")); } catch { /* engin geymsla */ }
+    if (saved === 2 || saved === 3) setLen(saved);
+  }, [story.lengths]);
+  const pickLength = (l: StoryLength) => {
+    silence();
+    setListening(false);
+    setLen(l);
+    setSlide(0);
+    try { window.localStorage.setItem("bk_len", String(l)); } catch { /* engin geymsla */ }
+  };
 
-  const page = slide >= 1 && slide <= n ? story.pages[slide - 1] : null;
+  const page = slide >= 1 && slide <= n ? pages[slide - 1] : null;
   const textIn = (v: Partial<Record<Lang, string>>, l: Lang) => v[l] || v[story.sourceLang] || pick(v, l);
   const title = textIn(story.title, readLang);
   // Textinn er til á öðru máli en ekki þessu (auð síða er ekki „vöntun“).
-  const missing = !!page && !page.text[readLang] && LANGS.some((l) => page.text[l]);
-  const shown = page ? page.text[readLang] || page.text[story.sourceLang] || pick(page.text, readLang) : "";
+  const missing = !!page && !pageText(page, readLang, len) && LANGS.some((l) => pageText(page, l, len));
+  const shown = page ? pageText(page, readLang, len) || pageText(page, story.sourceLang, len) || pick(page.text, readLang) : "";
   // Síða án myndar sem smiðjan á ekki að mála: aðeins texti.
   const textOnly = !!page && !page.svg && !page.autoArt;
   const backHref = book.collection ? `/bokasmidja/book/${book.id}` : "/bokasmidja/books";
@@ -101,15 +118,15 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
   /** Les síðu i upphátt og flettir svo áfram. Kallað beint úr smelli, svo iOS leyfi spilun. */
   const play = useCallback((i: number) => {
     silence();
-    const { story: s, readLang: l } = live.current;
-    const p = s.pages[i - 1];
-    const text = p ? p.text[l] || p.text[s.sourceLang] : "";
-    const speechLang = p?.text[l] ? l : s.sourceLang;
+    const { story: s, readLang: l, pages: ps, len: length } = live.current;
+    const p = ps[i - 1];
+    const text = p ? pageText(p, l, length) || pageText(p, s.sourceLang, length) : "";
+    const speechLang = p && pageText(p, l, length) ? l : s.sourceLang;
     if (!p || !text) { setListening(false); return; }
     const onward = () => {
       timer.current = setTimeout(() => {
         if (!live.current.listening) return;
-        if (i >= s.pages.length) { setSlide(s.pages.length + 1); setListening(false); return; }
+        if (i >= ps.length) { setSlide(ps.length + 1); setListening(false); return; }
         setSlide(i + 1);
         play(i + 1);
       }, 800);
@@ -121,19 +138,19 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
     const a = (audio.current ??= new Audio());
     a.onended = onward;
     a.onerror = fallback;
-    a.src = `/api/bokasmidja/pages/${p.id}/audio?lang=${speechLang}`;
+    a.src = `/api/bokasmidja/pages/${p.id}/audio?lang=${speechLang}&length=${length}`;
     a.play().catch(fallback);
   }, [silence, t]);
 
   const go = useCallback((to: number) => {
-    const { listening: on, story: s } = live.current;
-    const next = Math.max(0, Math.min(s.pages.length + 1, to));
+    const { listening: on, pages: ps } = live.current;
+    const next = Math.max(0, Math.min(ps.length + 1, to));
     setSlide(next);
     setDraft(null);
     setMenu(false);
     setNote("");
     if (!on) return;
-    if (next >= 1 && next <= s.pages.length) play(next);
+    if (next >= 1 && next <= ps.length) play(next);
     else { silence(); setListening(false); }
   }, [play, silence]);
 
@@ -176,11 +193,14 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
   const saveText = async () => {
     if (!page || draft === null) return;
     setBusy(true);
-    const langToSave = page.text[readLang] ? readLang : story.sourceLang;
-    const res = await call("PATCH", `/api/bokasmidja/pages/${page.id}`, { lang: langToSave, text: draft });
+    const langToSave = pageText(page, readLang, len) ? readLang : story.sourceLang;
+    // Leiðréttingin fer í þann texta sem sést: útgáfunnar sjálfrar, eða styttri útgáfu sem hún erfir.
+    const from = textSource(page, langToSave, len);
+    const field = from === 3 ? "textL" : from === 2 ? "textM" : "text";
+    const res = await call("PATCH", `/api/bokasmidja/pages/${page.id}`, { lang: langToSave, length: from, text: draft });
     setBusy(false);
     if (!res.ok) { setNote(errorText(t, res.error)); return; }
-    setStory({ ...story, pages: story.pages.map((p) => (p.id === page.id ? { ...p, text: { ...p.text, [langToSave]: draft.trim() } } : p)) });
+    setStory({ ...story, pages: story.pages.map((p) => (p.id === page.id ? { ...p, [field]: { ...p[field], [langToSave]: draft.trim() } } : p)) });
     setDraft(null);
   };
 
@@ -226,7 +246,7 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
                 <MenuItem icon={<FileDown className="h-5 w-5 text-sky-600" />} onClick={() => { setMenu(false); setPdf(true); }}>{t("book.pdf")}</MenuItem>
                 <MenuItem icon={<Maximize className="h-5 w-5 text-slate-600" />} onClick={() => { setMenu(false); void root.current?.requestFullscreen?.().catch(() => {}); }}>{t("reader.full")}</MenuItem>
                 {editable && <Link href={`/bokasmidja/story/${story.id}/edit`} className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left font-bold hover:bg-slate-50"><LayoutDashboard className="h-5 w-5 text-orange-600" aria-hidden />{t("edit.open")}</Link>}
-                {editable && page && !missing && <MenuItem icon={<Pencil className="h-5 w-5 text-violet-600" />} onClick={() => { setMenu(false); setDraft(page.text[readLang] || page.text[story.sourceLang] || ""); }}>{t("reader.edit")}</MenuItem>}
+                {editable && page && !missing && <MenuItem icon={<Pencil className="h-5 w-5 text-violet-600" />} onClick={() => { setMenu(false); setDraft(shown); }}>{t("reader.edit")}</MenuItem>}
                 {editable && page && page.svg && phase.kind === "done" && <MenuItem icon={<RefreshCw className="h-5 w-5 text-emerald-600" />} onClick={repaint}>{t("reader.repaint")}</MenuItem>}
                 {editable && <MenuItem icon={<Trash2 className="h-5 w-5 text-red-600" />} onClick={remove}>{t("reader.delete")}</MenuItem>}
               </div>
@@ -266,6 +286,21 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
               <h1 className="bk-display text-4xl font-extrabold leading-tight text-slate-900 [text-wrap:balance] sm:text-6xl">{title}</h1>
               {story.authorName && <p className="mt-3 text-xl font-bold text-slate-600">{t("reader.inventedBy", { name: story.authorName })}</p>}
               <p className="mt-4 text-xl leading-relaxed text-slate-700">{textIn(story.summary, readLang)}</p>
+              {story.lengths >= 3 && (
+                <fieldset className="mt-5">
+                  <legend className="bk-display text-xl font-extrabold">{t("len.title")}</legend>
+                  <div className="mt-2 flex flex-wrap justify-center gap-2 lg:justify-start">
+                    {([1, 2, 3] as const).map((l) => (
+                      <button key={l} type="button" onClick={() => pickLength(l)} aria-pressed={len === l}
+                        className={cx("bk-press flex min-w-28 flex-col items-center rounded-2xl bg-white px-4 py-2 font-extrabold", len === l ? "ring-4 ring-slate-900" : "opacity-80 ring-2 ring-slate-200")}>
+                        <span aria-hidden className="text-2xl">{["📗", "📘", "📚"][l - 1]}</span>
+                        <span className="bk-display text-lg">{t(`len.${LENGTH_KEYS[l - 1]}`)}</span>
+                        <span className="text-sm font-bold text-slate-500">{t("len.pages", { n: pagesFor(story.pages, l).length })}</span>
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+              )}
               <div className="mt-6 flex flex-wrap justify-center gap-3 lg:justify-start">
                 <BigButton tone="green" className="text-2xl" onClick={() => go(1)}>{t("reader.start")}<ArrowRight className="h-7 w-7" aria-hidden /></BigButton>
                 <BigButton tone="blue" className="text-2xl" onClick={toggleListen}><Volume2 className="h-7 w-7" aria-hidden />{t("reader.listen")}</BigButton>
@@ -297,7 +332,7 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
               ) : (
                 <>
                   {missing && <p className="mb-3 rounded-2xl bg-amber-100 p-3 font-bold text-amber-900">{t("reader.missingLang")}</p>}
-                  <p lang={page.text[readLang] ? readLang : story.sourceLang} className="whitespace-pre-line text-2xl font-bold leading-relaxed text-slate-800 sm:text-[1.7rem] sm:leading-[1.6]">
+                  <p lang={pageText(page, readLang, len) ? readLang : story.sourceLang} className="whitespace-pre-line text-2xl font-bold leading-relaxed text-slate-800 sm:text-[1.7rem] sm:leading-[1.6]">
                     {shown}
                   </p>
                 </>
@@ -358,7 +393,7 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
       </nav>
 
       {pdf && (
-        <PdfDialog onClose={() => setPdf(false)} load={async () => [story]}
+        <PdfDialog onClose={() => setPdf(false)} load={async () => [story]} length={story.lengths >= 3 ? len : 1}
           book={{ title: story.title, subtitle: story.summary, color: book.color, emoji: book.emoji, cover: false }} />
       )}
     </div>

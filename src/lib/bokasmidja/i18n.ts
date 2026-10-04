@@ -283,6 +283,20 @@ const M = {
   "err.too_many_pages": ["The book can't have more pages.", "Bókin getur ekki haft fleiri síður.", "Boken kan ikke ha flere sider.", "A könyvnek nem lehet több oldala."],
   "err.last_page": ["A book needs at least one page.", "Bók þarf að hafa að minnsta kosti eina síðu.", "En bok må ha minst én side.", "Egy könyvnek legalább egy oldala kell legyen."],
 
+  // Story length
+  "len.title": ["How long a story?", "Hversu löng saga?", "Hvor lang historie?", "Milyen hosszú legyen a mese?"],
+  "len.short": ["Short", "Stutt", "Kort", "Rövid"],
+  "len.medium": ["Medium", "Miðlungs", "Middels", "Közepes"],
+  "len.long": ["Long", "Löng", "Lang", "Hosszú"],
+  "len.pages": ["{n} pages", "{n} síður", "{n} sider", "{n} oldal"],
+  "len.wait": [
+    "A longer story takes longer to make.",
+    "Lengri saga er lengur í smíðum.",
+    "En lengre historie tar lengre tid å lage.",
+    "A hosszabb mese tovább készül.",
+  ],
+  "len.only": ["Only in the {length} version", "Aðeins í útgáfunni: {length}", "Bare i versjonen: {length}", "Csak ebben a változatban: {length}"],
+
   // PDF
   "pdf.title": ["Make a PDF", "Búa til PDF", "Lag PDF", "PDF készítése"],
   "pdf.read": ["For reading", "Til að lesa", "For lesing", "Olvasáshoz"],

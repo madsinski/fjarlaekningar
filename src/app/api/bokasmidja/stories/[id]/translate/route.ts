@@ -38,7 +38,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       summary: pick(story.summary, from),
       pages: todo.map((p) => p.text[from] || pick(p.text, from)),
     }, from, lang);
-    const rows = todo.map((p, i) => ({ page_id: p.id, lang, text: out.pages[i].trim() })).filter((r) => r.text);
+    const rows = todo.map((p, i) => ({ page_id: p.id, lang, length: 1, text: out.pages[i].trim() })).filter((r) => r.text);
     if (rows.length) await supabaseAdmin.from("bk_page_texts").upsert(rows);
     // Nýr íslenskur texti þarf yfirlestur (sjá /polish).
     if (lang === "is" && rows.length && !needTitle) await supabaseAdmin.from("bk_story_texts").update({ polished_at: null }).eq("story_id", id).eq("lang", "is");

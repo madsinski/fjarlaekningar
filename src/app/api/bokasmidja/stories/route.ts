@@ -1,13 +1,13 @@
 // Ný saga í bók, úr hugmynd barns. Sagan er aðeins skráð hér; höfundurinn
 // skrifar hana í /stories/:id/write, svo viðmótið geti sýnt framvinduna.
 //   POST /api/bokasmidja/stories  { bookId, lang, idea }
-//     idea: { kind: "prompt", text } | { kind: "wizard", answers, heroName, extra }
+//     idea: { kind: "prompt", text } | { kind: "wizard", answers, heroName, extra }, hvor um sig með length: "short" | "medium" | "long"
 // Sagan fer aftast í bókina; bók tekur við sögum þar til hún er full (MAX_STORIES).
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { throttle } from "@/lib/bokasmidja/auth";
 import { UUID_RE, cleanLine, cleanText, fail, json, readJson, requireViewer, viewerId } from "@/lib/bokasmidja/server";
-import { MAX_STORIES, isLang, type Idea } from "@/lib/bokasmidja/types";
+import { LENGTH_KEYS, MAX_STORIES, isLang, type Idea, type LengthKey } from "@/lib/bokasmidja/types";
 import { IDEA_MAX, cleanAnswers } from "@/lib/bokasmidja/wizard";
 
 export const runtime = "nodejs";
@@ -23,15 +23,16 @@ export async function POST(req: Request) {
   const body = await readJson(req);
   if (!isLang(body.lang)) return fail("bad_request");
   const raw = (body.idea && typeof body.idea === "object" ? body.idea : {}) as Record<string, unknown>;
+  const length: LengthKey = (LENGTH_KEYS as readonly unknown[]).includes(raw.length) ? (raw.length as LengthKey) : "short";
   let idea: Idea;
   if (raw.kind === "prompt") {
     const text = cleanText(raw.text, IDEA_MAX);
     if (text.length < 3) return fail("idea_missing");
-    idea = { kind: "prompt", text };
+    idea = { kind: "prompt", text, length };
   } else if (raw.kind === "wizard") {
     const answers = cleanAnswers(raw.answers);
     if (Object.keys(answers).length < 2) return fail("idea_missing");
-    idea = { kind: "wizard", answers, heroName: cleanLine(raw.heroName, 40), extra: cleanText(raw.extra, 400) };
+    idea = { kind: "wizard", answers, heroName: cleanLine(raw.heroName, 40), extra: cleanText(raw.extra, 400), length };
   } else return fail("bad_request");
 
   const bookId = typeof body.bookId === "string" && UUID_RE.test(body.bookId) ? body.bookId : null;

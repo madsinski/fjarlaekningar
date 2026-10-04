@@ -189,3 +189,34 @@ alter table public.bk_story_texts add column if not exists polished_at timestamp
 --   lokuðu geymslunni. Sé hvorugt til sýnir hillan lit og tákn bókarinnar.
 alter table public.bk_books add column if not exists cover_svg text;
 alter table public.bk_books add column if not exists cover_image_path text;
+
+-- ── Stutt, miðlungs og löng útgáfa sögu (2026-10-04) ────────────────────────
+-- Útgáfurnar eru hreiðraðar: löng inniheldur allar síður miðlungs, miðlungs
+-- allar síður stuttrar. level á síðu segir í hvaða útgáfu hún birtist fyrst
+-- (1 = stutt, 2 = miðlungs, 3 = löng). Texti síðu getur verið ólíkur eftir
+-- útgáfu: bk_page_texts.length; vanti texta á lengd er notaður sá næsti fyrir
+-- neðan. bk_stories.lengths = hæsta útgáfa sem sagan á (1 eða 3).
+-- art_key: heiti myndar í handgerðu sögunum (p01, n03 …), svo innflutningur
+-- finni síðuna aftur þótt röð breytist.
+alter table public.bk_pages add column if not exists level smallint not null default 1;
+alter table public.bk_pages add column if not exists art_key text;
+alter table public.bk_stories add column if not exists lengths smallint not null default 1;
+alter table public.bk_page_texts add column if not exists length smallint not null default 1;
+alter table public.bk_audio add column if not exists length smallint not null default 1;
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'bk_pages_level_check') then
+    alter table public.bk_pages add constraint bk_pages_level_check check (level between 1 and 3);
+  end if;
+  -- Aðallyklarnir fá lengdina með.
+  if (select count(*) from pg_index i join pg_attribute a on a.attrelid = i.indrelid and a.attnum = any(i.indkey)
+      where i.indrelid = 'public.bk_page_texts'::regclass and i.indisprimary) < 3 then
+    alter table public.bk_page_texts drop constraint bk_page_texts_pkey;
+    alter table public.bk_page_texts add primary key (page_id, lang, length);
+  end if;
+  if (select count(*) from pg_index i join pg_attribute a on a.attrelid = i.indrelid and a.attnum = any(i.indkey)
+      where i.indrelid = 'public.bk_audio'::regclass and i.indisprimary) < 3 then
+    alter table public.bk_audio drop constraint bk_audio_pkey;
+    alter table public.bk_audio add primary key (page_id, lang, length);
+  end if;
+end $$;

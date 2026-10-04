@@ -98,11 +98,67 @@ for (const book of en.books) {
       polished_at: l === "is" ? new Date().toISOString() : null,
     }))));
     const pages = await must(db.from("bk_pages").insert(story.pages.map((p, i) => ({
-      story_id: row.id, position: i + 1, scene: p.scene, svg: pictures[i], auto_art: false,
+      story_id: row.id, position: i + 1, scene: p.scene, svg: pictures[i], auto_art: false, art_key: `p${String(i + 1).padStart(2, "0")}`,
     }))).select("id, position"));
     const idAt = new Map(pages.map((p) => [p.position, p.id]));
     await must(db.from("bk_page_texts").insert(LANGS.flatMap((l) => texts[l].pages.map((p, i) => ({ page_id: idAt.get(i + 1), lang: l, text: pageText(p) })))));
     console.log(`  ${story.key}: ${pages.length} pages in ${LANGS.length} languages`);
   }
 }
+// ── Medium and long versions ────────────────────────────────────────────────
+// stories/long/<key>.json lists the long version in reading order; each page
+// names its picture (p01… existing, n01… new) and whether it is also in the
+// medium version. Loaded once every new picture and every translation is there.
+const readJson = (file) => (existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : null);
+for (const book of en.books) {
+  const row = await must(db.from("bk_books").select("id").eq("slug", book.key).maybeSingle());
+  for (const story of book.stories) {
+    const long = readJson(join(root, "stories", "long", `${story.key}.json`));
+    if (!long) continue;
+    const others = Object.fromEntries(Object.keys(tr).map((l) => [l, readJson(join(root, "stories", "long", l, `${story.key}.json`))]));
+    const arts = long.pages.map((p) => p.art);
+    const untranslated = Object.keys(tr).filter((l) => !others[l] || others[l].pages.map((p) => p.art).join() !== arts.join());
+    const undrawn = long.pages.filter((p) => !p.short && !existsSync(join(root, "art", story.key, `${p.art}.svg`))).map((p) => p.art);
+    if (untranslated.length || undrawn.length) {
+      console.log(`  ${story.key} long: skipped — ${untranslated.length ? `no finished text in ${untranslated.join(", ")}` : `pictures missing: ${undrawn.join(" ")}`}`);
+      continue;
+    }
+    const pictures = Object.fromEntries(long.pages.filter((p) => !p.short).map((p) => [p.art, picture(join(root, "art", story.key, `${p.art}.svg`), `${story.key.replace(/[^a-z0-9]/g, "")}${p.art}`)]));
+    const medium = long.pages.filter((p) => p.medium).length;
+    console.log(`  ${story.key} long: ${long.pages.length} pages (medium ${medium}), ${Object.keys(pictures).length} new pictures — valid`);
+    if (dry || !row) continue;
+
+    const stories = await must(db.from("bk_stories").select("id, idea").eq("book_id", row.id));
+    const target = stories.find((s) => s.idea?.seed === story.key);
+    if (!target) { console.log(`  ${story.key} long: the short version is not loaded yet`); continue; }
+    let pages = await must(db.from("bk_pages").select("id, position, art_key").eq("story_id", target.id).order("position"));
+    // First time: name the existing pages after their pictures (p01, p02 …).
+    if (pages.every((p) => !p.art_key)) {
+      for (const p of pages) await must(db.from("bk_pages").update({ art_key: `p${String(p.position).padStart(2, "0")}` }).eq("id", p.id));
+      pages = pages.map((p) => ({ ...p, art_key: `p${String(p.position).padStart(2, "0")}` }));
+    }
+    const idOf = new Map(pages.filter((p) => p.art_key).map((p) => [p.art_key, p.id]));
+    for (const [i, p] of long.pages.entries()) {
+      const fields = { position: i + 1, level: p.short ? 1 : p.medium ? 2 : 3 };
+      if (idOf.has(p.art)) {
+        await must(db.from("bk_pages").update(p.short ? fields : { ...fields, svg: pictures[p.art], scene: p.scene || "" }).eq("id", idOf.get(p.art)));
+      } else {
+        if (p.short) throw new Error(`${story.key}: existing page ${p.art} not found in the database`);
+        const made = await must(db.from("bk_pages").insert({ story_id: target.id, art_key: p.art, svg: pictures[p.art], scene: p.scene || "", auto_art: false, ...fields }).select("id").single());
+        idOf.set(p.art, made.id);
+      }
+    }
+    const texts = [];
+    for (const [l, src] of [["en", long], ...Object.entries(others)]) {
+      for (const p of src.pages) {
+        if (p.textLong) texts.push({ page_id: idOf.get(p.art), lang: l, length: 3, text: p.textLong.trim() });
+        if (p.textMedium) texts.push({ page_id: idOf.get(p.art), lang: l, length: 2, text: p.textMedium.trim() });
+      }
+    }
+    await must(db.from("bk_page_texts").upsert(texts));
+    await must(db.from("bk_stories").update({ lengths: 3, updated_at: new Date().toISOString() }).eq("id", target.id));
+    console.log(`    loaded: ${texts.length} texts`);
+  }
+}
+
 console.log(dry ? "dry run: nothing written" : "done");
