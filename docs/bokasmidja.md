@@ -114,6 +114,33 @@ The story itself is not rewritten: same pages, names, sound words and jokes.
 In the editor, "Proofread the Icelandic" runs it again after manual changes.
 It adds about one to two minutes per story.
 
+## The hand-made stories
+
+"Bedtime Stories for Tough Kids" holds six stories written and illustrated by
+hand rather than by the app: two with the White Whale, two with Teddy the
+bear, two with the rabbits Nana and Nuni. Their sources live in
+`content/bokasmidja/`:
+
+| Path | What |
+|---|---|
+| `stories/en.json` | The stories in English, with a scene note per page |
+| `stories/{is,nb,hu}.json` | The same stories by key in the other languages |
+| `art/<story>/pNN.svg` | One picture per page; `art/tough-kids/cover.svg` is the cover |
+| `art/*-sheet.svg`, `art/STYLE.md` | Character designs and the illustration brief |
+| `tools/check.py` | Validates a picture the way the app will and renders it |
+| `tools/import.mjs` | Loads everything into the database |
+
+`node content/bokasmidja/tools/import.mjs` adds any story not yet loaded and
+leaves the rest alone, including stories children added to the book. `--dry`
+only validates; `--replace` reloads the hand-made stories from the files, which
+discards edits made to them in the app.
+
+The voice (cool and funny for 5–7 year olds, a narrator who talks straight to
+the child) and the story arc (hook, trigger, three escalating beats, low point,
+the hero's own turn, climax, warm sleepy landing) are the same ones the app's
+writer is instructed to follow. Every story ends on the book's refrain: even
+the toughest hero has to sleep sometime.
+
 ## Changing a book
 
 `/bokasmidja/story/:id/edit`, open to the child who made the story and to

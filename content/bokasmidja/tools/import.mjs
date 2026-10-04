@@ -5,8 +5,9 @@
 //
 // Source: stories/en.json (books and stories), stories/{is,nb,hu}.json (the same
 // stories by key), art/<story-key>/pNN.svg and art/<book-key>/cover.svg.
-// Safe to run again: a book is matched by its slug and its hand-made stories
-// (idea.seed) are replaced; stories children added to the book are left alone.
+// Safe to run again: a book is matched by its slug; hand-made stories already
+// loaded (idea.seed) are left alone unless --replace is given, and stories
+// children added to the book are never touched.
 // Every picture goes through the app's own SVG sanitizer first.
 
 import { createClient } from "@supabase/supabase-js";
@@ -74,12 +75,18 @@ for (const book of en.books) {
   }).select("id").single())).id;
   if (existing) await must(db.from("bk_books").update(fields).eq("id", bookId));
 
+  // Stories already loaded are left alone (their ids, audio and any edits made
+  // in the app survive); pass --replace to load them again from these files.
   const old = await must(db.from("bk_stories").select("id, idea").eq("book_id", bookId));
+  const replace = process.argv.includes("--replace");
   const seeded = old.filter((s) => s.idea?.seed);
-  if (seeded.length) await must(db.from("bk_stories").delete().in("id", seeded.map((s) => s.id)));
-  const kept = old.length - seeded.length;
+  if (replace && seeded.length) await must(db.from("bk_stories").delete().in("id", seeded.map((s) => s.id)));
+  const have = new Set(replace ? [] : seeded.map((s) => s.idea.seed));
+  const todo = stories.filter(({ story }) => !have.has(story.key));
+  for (const { story } of stories) if (have.has(story.key)) console.log(`  ${story.key}: already loaded, left as is`);
+  const kept = replace ? old.length - seeded.length : old.length;
 
-  for (const [n, { story, texts, pictures }] of stories.entries()) {
+  for (const [n, { story, texts, pictures }] of todo.entries()) {
     const row = await must(db.from("bk_stories").insert({
       book_id: bookId, position: kept + n + 1, status: "ready", source_lang: "en",
       idea: { kind: "prompt", text: story.summary, seed: story.key },
