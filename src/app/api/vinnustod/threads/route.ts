@@ -7,6 +7,7 @@ import { getSmsActor } from "@/lib/sms-actor";
 import { clientIp, sameOrigin, throttle } from "@/lib/vinnustod/auth";
 import { cleanLine, cleanText, fail, json, originOf, readJson } from "@/lib/vinnustod/server";
 import { MAX_BODY, MAX_SUBJECT, subjectFrom, THREAD_COLUMNS, addMessage, canAsk, notifyStaff, ownerColumn, threadFor, unreadFor, type ThreadRow } from "@/lib/vinnustod/threads";
+import { KENNITALA_BLOCKED, hasKennitala } from "@/lib/vinnustod/redact";
 
 export const runtime = "nodejs";
 
@@ -28,6 +29,7 @@ export async function POST(req: Request) {
   }
   const body = await readJson(req);
   const text = cleanText(body.body, MAX_BODY);
+  if (hasKennitala(text)) return fail(KENNITALA_BLOCKED);
   // Fyrirsögn er valkvæð (eldri útgáfur sendu hana); annars fyrsta lína skilaboðanna.
   const subject = cleanLine(body.subject, MAX_SUBJECT) || subjectFrom(text);
   if (!text) return fail("Skrifaðu spurninguna.");

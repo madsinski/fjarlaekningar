@@ -11,6 +11,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ChevronDown, Loader2, MessageCircle, Send, Trash2 } from "lucide-react";
 import { Button, Card, Field, Notice, cx, inputCls } from "@/app/hsu/_components/ui";
 import { ENTER_HINT, UnreadDot, onEnterSend, vsApi, whenIs } from "./shared";
+import { KENNITALA_BLOCKED, hasKennitala } from "@/lib/vinnustod/redact";
 
 interface Thread {
   id: string;
@@ -35,6 +36,7 @@ export function NewQuestion({ initial, onCancel, onCreated }: { initial: string;
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (busy || !body.trim()) return;
+    if (hasKennitala(body)) { setErr(KENNITALA_BLOCKED); return; }
     setBusy(true); setErr(null);
     const r = await vsApi<{ id: string }>("/api/vinnustod/threads", { body: { body }, staff: true });
     setBusy(false);
@@ -90,6 +92,7 @@ export function ThreadView({ id, onBack, onRead, refresh = 0 }: { id: string; on
   const send = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (busy || !reply.trim()) return;
+    if (hasKennitala(reply)) { setErr(KENNITALA_BLOCKED); return; }
     setBusy(true); setErr(null);
     const r = await vsApi(`/api/vinnustod/threads/${id}`, { body: { body: reply }, staff: true });
     setBusy(false);
@@ -222,6 +225,7 @@ export function ConversationCard({ onUnreadChange, refresh = 0, ask }: {
 
   const send = async () => {
     if (busy || !reply.trim()) return;
+    if (hasKennitala(reply)) { setErr(KENNITALA_BLOCKED); return; }
     const text = reply;
     // Reiturinn tæmist strax; textinn kemur aftur ef sendingin mistekst.
     setBusy(true); setErr(null); setReply("");

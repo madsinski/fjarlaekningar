@@ -10,6 +10,7 @@ import { UUID_RE, cleanLine, cleanText, fail, json, originOf, readJson } from "@
 import {
   MAX_BODY, MAX_SUBJECT, subjectFrom, THREAD_COLUMNS, addMessage, askersFor, listRecipients, notifyUser, threadFor, unreadFor, type ThreadRow,
 } from "@/lib/vinnustod/threads";
+import { KENNITALA_BLOCKED, hasKennitala } from "@/lib/vinnustod/redact";
 
 export const runtime = "nodejs";
 
@@ -38,6 +39,7 @@ export async function POST(req: Request) {
   const to = (await listRecipients()).find((r) => r.kind === kind && r.id === id);
   if (!to) return fail("Viðtakandinn fannst ekki eða er óvirkur.", 404);
   const text = cleanText(body.body, MAX_BODY);
+  if (hasKennitala(text)) return fail(KENNITALA_BLOCKED);
   // Fyrirsögn er valkvæð (eldri útgáfur sendu hana); annars fyrsta lína skilaboðanna.
   const subject = cleanLine(body.subject, MAX_SUBJECT) || subjectFrom(text);
   if (!text) return fail("Skeytið er tómt.");

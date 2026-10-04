@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Check, PenSquare, Search, Send, Trash2 } from "lucide-react";
 import { ENTER_HINT, onEnterSend } from "@/app/vinnustod/_components/shared";
+import { KENNITALA_BLOCKED, hasKennitala } from "@/lib/vinnustod/redact";
 import { supabase } from "@/lib/supabase";
 
 async function api<T = Record<string, unknown>>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T & { ok: boolean; error?: string }> {
@@ -153,6 +154,7 @@ function InboxThreadView({ id, onBack, refresh = 0, compact = false }: { id: str
 
   const send = async () => {
     if (busy || !reply.trim()) return;
+    if (hasKennitala(reply)) { setErr(KENNITALA_BLOCKED); return; }
     setBusy(true); setErr(null);
     const r = await api(`/api/admin/vinnustod/threads/${id}`, { body: { body: reply } });
     setBusy(false);
@@ -243,6 +245,7 @@ function Compose({ onCancel, onSent, compact = false, initialTo = null }: {
 
   const send = async () => {
     if (!to || busy || !body.trim()) return;
+    if (hasKennitala(body)) { setErr(KENNITALA_BLOCKED); return; }
     setBusy(true); setErr(null);
     const r = await api<{ id: string }>("/api/admin/vinnustod/threads", { body: { kind: to.kind, id: to.id, body } });
     setBusy(false);

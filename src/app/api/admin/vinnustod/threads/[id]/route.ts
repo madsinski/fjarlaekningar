@@ -6,6 +6,7 @@ import { ownerTarget, signalSync } from "@/lib/vinnustod/live";
 import { getVsAdmin } from "@/lib/vinnustod/admin";
 import { UUID_RE, cleanText, fail, json, originOf, readJson } from "@/lib/vinnustod/server";
 import { MAX_BODY, THREAD_COLUMNS, addMessage, askersFor, loadMessages, notifyUser, type ThreadRow } from "@/lib/vinnustod/threads";
+import { KENNITALA_BLOCKED, hasKennitala } from "@/lib/vinnustod/redact";
 
 export const runtime = "nodejs";
 
@@ -37,6 +38,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (!thread) return fail("Samtalið fannst ekki", 404);
   const body = await readJson(req);
   const text = cleanText(body.body, MAX_BODY);
+  if (hasKennitala(text)) return fail(KENNITALA_BLOCKED);
   if (!text) return fail("Svarið er tómt.");
   await addMessage({ threadId: id, kind: "staff", authorId: admin.id, authorName: admin.name, body: text });
   const user = (await askersFor([thread])).get(id);

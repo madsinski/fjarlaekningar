@@ -7,6 +7,7 @@ import { ownerTarget, signalSync } from "@/lib/vinnustod/live";
 import { after } from "next/server";
 import { UUID_RE, cleanText, fail, json, originOf, readJson } from "@/lib/vinnustod/server";
 import { MAX_BODY, THREAD_COLUMNS, addMessage, canAsk, loadMessages, notifyStaff, ownerColumn, type ThreadRow } from "@/lib/vinnustod/threads";
+import { KENNITALA_BLOCKED, hasKennitala } from "@/lib/vinnustod/redact";
 
 export const runtime = "nodejs";
 
@@ -36,6 +37,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (!(await throttle(`reply:${own.actor.id}`, 60, 3600))) return fail("Of mörg skeyti á stuttum tíma.", 429);
   const body = await readJson(req);
   const text = cleanText(body.body, MAX_BODY);
+  if (hasKennitala(text)) return fail(KENNITALA_BLOCKED);
   if (!text) return fail("Skeytið er tómt.");
   await addMessage({ threadId: id, kind: "user", askerKind: own.actor.kind, authorId: own.actor.id, authorName: own.actor.name, body: text });
   notifyStaff({
