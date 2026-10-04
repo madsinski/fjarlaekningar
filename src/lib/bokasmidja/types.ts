@@ -43,6 +43,12 @@ export interface PageView {
   position: number;
   text: I18nText;
   svg: string | null;
+  /** Which comes first on the page: the picture or the text. */
+  layout: "art-first" | "text-first";
+  /** May the workshop paint this page by itself when the picture is missing? */
+  autoArt: boolean;
+  /** The child uploaded a drawing for this page. */
+  hasDrawing: boolean;
 }
 
 export interface StoryView {
@@ -73,6 +79,8 @@ export interface BookView {
 export type Idea =
   | { kind: "prompt"; text: string }
   | { kind: "wizard"; answers: Record<string, string>; heroName: string; extra: string };
+
+export const MAX_PAGES = 20;
 
 /** Illustration canvas. Every page picture uses this viewBox. */
 export const ART_W = 1200;

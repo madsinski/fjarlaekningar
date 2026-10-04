@@ -14,8 +14,10 @@ not linked from the site, is not in the sitemap and is marked `noindex`.
 
 | Feature | How |
 |---|---|
-| Writer | Claude (`claude-opus-5-5`) turns a child's idea into a 9–11 page story in the child's language, then re-tells it in the other three. |
-| Illustrator | Claude draws every page as layered SVG, with the first page passed along as a reference so characters stay the same. |
+| Writer | The writer agent turns a child's idea into a 9–11 page story in the child's language, then re-tells it in the other three. |
+| Illustrator | The illustrator agent draws every page as layered SVG, with the first page passed along as a reference so characters stay the same. |
+| Own drawings | A child photographs or uploads a drawing for a page; the illustrator redraws it as a finished picture in the book's style, keeping what the child drew. The original is kept and shown beside it. |
+| Editor | "Change the book": every text in every language, title and summary, add and delete pages, and drag-and-drop to move pictures, texts and whole pages. |
 | Animation | The illustrator tags parts of the picture (`data-anim`, `data-tap`). With "Magic" on, tagged parts move gently and react when tapped. |
 | Reading | A reader for tablets, phones and computers: big buttons, swipe, arrow keys, full screen. |
 | Audio book | "Read to me" reads each page aloud and turns the page by itself. OpenAI TTS, cached as mp3; the device's own voice is the fallback. |
@@ -32,8 +34,8 @@ not linked from the site, is not in the sitemap and is marked `noindex`.
    | Variable | Needed for |
    |---|---|
    | `BOKASMIDJA_PARENT_CODE` | The grown-up code, at least 6 characters. The whole module is locked while it is unset. |
-   | `ANTHROPIC_API_KEY` | Writing and illustrating. Without it, existing books can be read but none can be made. |
-   | `OPENAI_API_KEY` | The read-aloud voice (already set for other modules). |
+   | `OPENAI_API_KEY` | Writing, illustrating and the read-aloud voice (already set for other modules; model `gpt-5.4`). |
+   | `ANTHROPIC_API_KEY` | Optional. When set, writing and illustrating switch to Claude (`claude-opus-5-5`); the voice stays on OpenAI. |
 
 3. **First use** — open `/bokasmidja`, type the grown-up code, add the children
    (name, picture, four-digit code, language, age) and go to the bookshelf.
@@ -72,8 +74,32 @@ same page twice.
 
 Limits per day: a child can start 5 stories; a grown-up 30.
 
-In the reader, the "…" menu has: make a PDF, full screen, fix the text of a
-page, paint a picture again, and delete the story.
+In the reader, the "…" menu has: make a PDF, full screen, change the book,
+fix the text of a page, paint a picture again, and delete the story.
+
+## Changing a book
+
+`/bokasmidja/story/:id/edit`, open to the child who made the story and to
+grown-ups.
+
+- **Text** — pick the language at the top, then type in any page. Text saves
+  when you leave the box. Title and summary are edited the same way.
+- **Own drawing** — "Use my drawing" on a page opens the camera or the photo
+  library. The picture is shrunk in the browser, sent to the illustrator and
+  comes back as the page's illustration in one to two minutes.
+- **Where a picture goes** — hold the ✋ on a picture and drag it onto another
+  page: the two pictures swap. Upload on any page and move it afterwards.
+- **Moving text and pages** — the ✋ on a text swaps texts between pages (in all
+  languages); the ✋ beside "Page 3" moves the whole page. Arrow buttons do the
+  same for pages without dragging.
+- **Picture and text order** — the ⇄ button (or dropping a picture on its own
+  text) puts the text before the picture. The reader and the PDF follow it.
+- **New pages** — "Add a page" adds an empty page at the end. Text written
+  there in one language is re-told in the others the next time the story opens.
+
+A page that was added, or whose picture was moved away, is never painted
+automatically; use "Paint a picture" or a drawing. A page without a picture
+shows as a text-only page.
 
 ## Things to know
 
@@ -96,11 +122,11 @@ page, paint a picture again, and delete the story.
 | Path | What |
 |---|---|
 | `src/lib/bokasmidja/auth.ts` | Device trust, sessions, PIN rules |
-| `src/lib/bokasmidja/agents.ts` | The writer, translator and illustrator prompts and calls |
+| `src/lib/bokasmidja/agents.ts` | The writer, translator and illustrator prompts and calls (OpenAI or Claude) |
 | `src/lib/bokasmidja/svg.ts` | SVG sanitizer |
 | `src/lib/bokasmidja/wizard.ts` | The questionnaire, in four languages |
 | `src/lib/bokasmidja/i18n.ts` | Interface strings, in four languages |
 | `src/lib/bokasmidja/pdf.ts` | PDF builder (browser) |
 | `src/lib/bokasmidja/server.ts` | Guards and data loading |
-| `src/app/bokasmidja/` | Pages and components; animations in `bokasmidja.css` |
+| `src/app/bokasmidja/` | Pages and components (`Editor.tsx` is the editor); animations in `bokasmidja.css` |
 | `src/app/api/bokasmidja/` | API routes |

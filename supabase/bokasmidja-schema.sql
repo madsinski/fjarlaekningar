@@ -152,3 +152,21 @@ values (
   7
 )
 on conflict (slug) do nothing;
+
+-- ── Ritstjórn og teikningar barna (2026-10-04) ──────────────────────────────
+-- layout: hvort myndin eða textinn kemur á undan á síðunni.
+-- auto_art: má smiðjan mála síðuna sjálfkrafa ef mynd vantar? Slökkt á síðum
+--   sem barnið bætti við eða færði myndina af, svo ekkert sé málað óumbeðið.
+-- drawing_path: upprunaleg teikning barnsins í lokuðu geymslunni.
+alter table public.bk_pages add column if not exists layout text not null default 'art-first';
+alter table public.bk_pages add column if not exists auto_art boolean not null default true;
+alter table public.bk_pages add column if not exists drawing_path text;
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'bk_pages_layout_check') then
+    alter table public.bk_pages add constraint bk_pages_layout_check check (layout in ('art-first', 'text-first'));
+  end if;
+end $$;
+-- Síðum er endurraðað í ritlinum; röðin þarf því ekki að vera einkvæm á miðri leið.
+alter table public.bk_pages drop constraint if exists bk_pages_story_id_position_key;
+create index if not exists bk_pages_story_idx on public.bk_pages (story_id, position);

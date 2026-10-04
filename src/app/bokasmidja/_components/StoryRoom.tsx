@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { errorText } from "@/lib/bokasmidja/i18n";
-import { LANGS, type I18nText, type PageView, type StoryView } from "@/lib/bokasmidja/types";
+import { LANGS, type I18nText, type Lang, type PageView, type StoryView } from "@/lib/bokasmidja/types";
 import { useBk } from "./Provider";
 import Reader from "./Reader";
 import { BigButton, TopBar, call, cx } from "./ui";
@@ -24,8 +24,10 @@ export type Phase =
   | { kind: "error"; code: string };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** Síðu vantar texta á þessu máli en á hann á öðru. */
+const lacks = (s: Story, l: Lang) => !s.title[l] || s.pages.some((p) => !p.text[l] && LANGS.some((x) => p.text[x]));
 const needsWork = (s: Story) =>
-  s.status !== "ready" || LANGS.some((l) => l !== s.sourceLang && s.pages.some((p) => !p.text[l]));
+  s.status === "idea" || s.pages.some((p) => !p.svg && p.autoArt) || LANGS.some((l) => lacks(s, l));
 
 export default function StoryRoom({ initial, book, editable }: { initial: Story; book: BookInfo; editable: boolean }) {
   const { t } = useBk();
@@ -59,7 +61,7 @@ export default function StoryRoom({ initial, book, editable }: { initial: Story;
 
       // 2. Málarinn málar síðu fyrir síðu.
       for (const page of s.pages) {
-        if (page.svg) continue;
+        if (page.svg || !page.autoArt) continue;
         for (let tries = 0; alive.current; tries++) {
           show({ kind: "painting", n: page.position, total: s.pages.length });
           const res = await call("POST", `/api/bokasmidja/pages/${page.id}/illustrate`, {});
@@ -84,7 +86,7 @@ export default function StoryRoom({ initial, book, editable }: { initial: Story;
       // 3. Sagan endursögð á hinum málunum.
       for (const lang of LANGS) {
         if (!alive.current) return;
-        if (lang === s.sourceLang || s.pages.every((p) => p.text[lang])) continue;
+        if (!lacks(s, lang)) continue;
         show({ kind: "translating" });
         for (let tries = 0; tries < 30 && alive.current; tries++) {
           const res = await call("POST", `${url}/translate`, { lang });

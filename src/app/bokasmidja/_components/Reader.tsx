@@ -7,9 +7,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, FileDown, Maximize, MoreHorizontal, Pencil, RefreshCw, Sparkles, Square, Trash2, Volume2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileDown, LayoutDashboard, Maximize, MoreHorizontal, Pencil, RefreshCw, Sparkles, Square, Trash2, Volume2 } from "lucide-react";
 import { errorText } from "@/lib/bokasmidja/i18n";
-import { LANG_BCP47, pick, type Lang } from "@/lib/bokasmidja/types";
+import { LANGS, LANG_BCP47, pick, type Lang } from "@/lib/bokasmidja/types";
 import PdfDialog from "./PdfDialog";
 import { useBk } from "./Provider";
 import type { BookInfo, Phase, Story } from "./StoryRoom";
@@ -83,7 +83,11 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
   const page = slide >= 1 && slide <= n ? story.pages[slide - 1] : null;
   const textIn = (v: Partial<Record<Lang, string>>, l: Lang) => v[l] || v[story.sourceLang] || pick(v, l);
   const title = textIn(story.title, readLang);
-  const missing = !!page && !page.text[readLang];
+  // Textinn er til á öðru máli en ekki þessu (auð síða er ekki „vöntun“).
+  const missing = !!page && !page.text[readLang] && LANGS.some((l) => page.text[l]);
+  const shown = page ? page.text[readLang] || page.text[story.sourceLang] || pick(page.text, readLang) : "";
+  // Síða án myndar sem smiðjan á ekki að mála: aðeins texti.
+  const textOnly = !!page && !page.svg && !page.autoArt;
   const backHref = book.collection ? `/bokasmidja/book/${book.id}` : "/bokasmidja/books";
 
   const silence = useCallback(() => {
@@ -221,6 +225,7 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
               <div className="bk-pop absolute right-0 z-20 mt-2 w-72 rounded-3xl bg-white p-2 shadow-2xl ring-2 ring-slate-100">
                 <MenuItem icon={<FileDown className="h-5 w-5 text-sky-600" />} onClick={() => { setMenu(false); setPdf(true); }}>{t("book.pdf")}</MenuItem>
                 <MenuItem icon={<Maximize className="h-5 w-5 text-slate-600" />} onClick={() => { setMenu(false); void root.current?.requestFullscreen?.().catch(() => {}); }}>{t("reader.full")}</MenuItem>
+                {editable && <Link href={`/bokasmidja/story/${story.id}/edit`} className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left font-bold hover:bg-slate-50"><LayoutDashboard className="h-5 w-5 text-orange-600" aria-hidden />{t("edit.open")}</Link>}
                 {editable && page && !missing && <MenuItem icon={<Pencil className="h-5 w-5 text-violet-600" />} onClick={() => { setMenu(false); setDraft(page.text[readLang] || page.text[story.sourceLang] || ""); }}>{t("reader.edit")}</MenuItem>}
                 {editable && page && page.svg && phase.kind === "done" && <MenuItem icon={<RefreshCw className="h-5 w-5 text-emerald-600" />} onClick={repaint}>{t("reader.repaint")}</MenuItem>}
                 {editable && <MenuItem icon={<Trash2 className="h-5 w-5 text-red-600" />} onClick={remove}>{t("reader.delete")}</MenuItem>}
@@ -270,15 +275,15 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
         )}
 
         {page && (
-          <section key={page.id} className="bk-pop grid flex-1 items-center gap-5 lg:grid-cols-[3fr_2fr]">
-            <div className={cx(magic && "bk-magic")} onClick={onArt}>
+          <section key={page.id} className={cx("bk-pop grid flex-1 items-center gap-5", textOnly ? "mx-auto w-full max-w-3xl" : page.layout === "text-first" ? "lg:grid-cols-[2fr_3fr]" : "lg:grid-cols-[3fr_2fr]")}>
+            {!textOnly && <div className={cx(magic && "bk-magic", page.layout === "text-first" && "order-2")} onClick={onArt}>
               <Art svg={page.svg} className="rounded-[2rem] shadow-xl ring-4 ring-white">
                 <span className="flex flex-col items-center gap-3 p-6 text-center font-bold text-sky-900">
                   <span aria-hidden className="bk-write text-6xl">🎨</span>{t("studio.pagePainting")}
                 </span>
               </Art>
               {magic && page.svg && slide === 1 && <p className="mt-2 text-center font-bold text-slate-500">👆 {t("reader.tapHint")}</p>}
-            </div>
+            </div>}
             <div className="rounded-[2rem] bg-white p-6 shadow-lg ring-2 ring-slate-100">
               {draft !== null ? (
                 <>
@@ -293,7 +298,7 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
                 <>
                   {missing && <p className="mb-3 rounded-2xl bg-amber-100 p-3 font-bold text-amber-900">{t("reader.missingLang")}</p>}
                   <p lang={page.text[readLang] ? readLang : story.sourceLang} className="whitespace-pre-line text-2xl font-bold leading-relaxed text-slate-800 sm:text-[1.7rem] sm:leading-[1.6]">
-                    {page.text[readLang] || page.text[story.sourceLang]}
+                    {shown}
                   </p>
                 </>
               )}

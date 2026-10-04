@@ -24,7 +24,7 @@ const SPECS: Record<PdfKind, Spec> = {
   publish: { wPt: 594, hPt: 738, scale: 300 / 72, bleedPt: 9, marginPt: 36, inset: false, quality: 0.92 },
 };
 
-export interface PdfStory { title: string; credit: string; pages: { text: string; svg: string | null }[] }
+export interface PdfStory { title: string; credit: string; pages: { text: string; svg: string | null; textFirst?: boolean; noPicture?: boolean }[] }
 export interface PdfInput {
   kind: PdfKind;
   /** Set for a collection: adds a book cover page before the stories. */
@@ -176,13 +176,26 @@ export async function buildPdf(input: PdfInput): Promise<Uint8Array> {
       pageNo++;
       ctx.fillStyle = PAPER;
       ctx.fillRect(0, 0, W, H);
-      const artH = spec.inset
-        ? safe + (await picture(page.svg, safe, safe, W - 2 * safe, (W - 2 * safe) * 0.03))
-        : await picture(page.svg, 0, 0, W, 0);
       const numberPx = H * 0.016;
       const gap = spec.marginPt * spec.scale * 0.7;
+      const artW = spec.inset ? W - 2 * safe : W;
+      const artHeight = page.noPicture ? 0 : (artW * ART_H) / ART_W;
+      const edge = spec.inset ? safe : 0;
+      const bottom = H - safe - numberPx * 2; // the text never runs into the page number
+      // The picture sits at the top, or at the bottom when the page is text-first.
+      let box = { x: safe, y: safe, w: W - 2 * safe, h: bottom - safe };
+      if (!page.noPicture && page.textFirst) {
+        const artY = spec.inset ? bottom - artHeight : H - artHeight;
+        await picture(page.svg, edge, artY, artW, spec.inset ? artW * 0.03 : 0);
+        box = { ...box, h: artY - gap - safe };
+      } else if (!page.noPicture) {
+        await picture(page.svg, edge, edge, artW, spec.inset ? artW * 0.03 : 0);
+        box = { ...box, y: edge + artHeight + gap, h: bottom - (edge + artHeight + gap) };
+      }
       ctx.fillStyle = INK;
-      fitText(ctx, page.text, body, { x: safe, y: artH + gap, w: W - 2 * safe, h: H - safe - numberPx * 2 - artH - gap }, H * 0.03, H * 0.014);
+      fitText(ctx, page.text, body, box, H * 0.03, H * 0.014);
+      // A full-bleed picture at the bottom covers the number's place; skip it there.
+      if (page.textFirst && !page.noPicture && !spec.inset) { await flush(); continue; }
       ctx.fillStyle = "#94a3b8";
       ctx.font = body(numberPx);
       ctx.fillText(String(pageNo), W / 2, H - safe);

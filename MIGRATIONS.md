@@ -52,7 +52,7 @@ modules also need a **Storage bucket** — noted inline.
 | 37 | `supabase/staff-documents-schema.sql` | Skjöl starfsfólks. | ✅ done (staðfest 2026-09-20) |
 | 37 | `supabase/stofnanir-schema.sql` | Samstarfsstofnanir — `partner_pages`, deilt um `/samstarf/<slug>`. | ✅ done (staðfest 2026-09-20) |
 | 37 | `supabase/thjonustukonnun.sql` | AI-samantekt á þjónustukönnunum — `survey_ai_summaries`. | ✅ done (staðfest 2026-09-20) |
-| 38 | `supabase/bokasmidja-schema.sql` | Bókasmiðjan — einkamál fjölskyldu, ekki hluti af þjónustunni: börn með fjögurra stafa kóða, traust tæki, lotur, bækur, sögur, síður (SVG-myndir), textar á fjórum málum og upplestur. Lokuð geymsla `bokasmidja` (mp3) verður til í skránni. Allar `bk_*` töflur lokaðar vöfrum. Sáir bókinni „Bedtime Stories for Tough Kids“ með sjö auðum sætum. Sjá `docs/bokasmidja.md`. | ✅ done (2026-10-04) |
+| 38 | `supabase/bokasmidja-schema.sql` | Bókasmiðjan — einkamál fjölskyldu, ekki hluti af þjónustunni: börn með fjögurra stafa kóða, traust tæki, lotur, bækur, sögur, síður (SVG-myndir), textar á fjórum málum og upplestur. Lokuð geymsla `bokasmidja` (mp3) verður til í skránni. Allar `bk_*` töflur lokaðar vöfrum. Sáir bókinni „Bedtime Stories for Tough Kids“ með sjö auðum sætum. Viðbót sama dag: `bk_pages.layout`, `auto_art`, `drawing_path` (ritill og teikningar barna) og röð síðna ekki lengur einkvæm. Sjá `docs/bokasmidja.md`. | ✅ done (2026-10-04, viðbót líka) |
 
 > After running a migration, the matching admin module works immediately (no
 > redeploy needed — the tables just start returning data).

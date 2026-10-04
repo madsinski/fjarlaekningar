@@ -105,7 +105,7 @@ export async function loadStory(id: string): Promise<(StoryView & { pages: PageV
   if (!s) return null;
   const [{ data: texts }, { data: pages }, names] = await Promise.all([
     supabaseAdmin.from("bk_story_texts").select("lang, title, summary").eq("story_id", id),
-    supabaseAdmin.from("bk_pages").select("id, position, svg").eq("story_id", id).order("position"),
+    supabaseAdmin.from("bk_pages").select("id, position, svg, layout, auto_art, drawing_path").eq("story_id", id).order("position").order("created_at"),
     childNames(),
   ]);
   const pageIds = (pages || []).map((p: any) => p.id);
@@ -115,17 +115,17 @@ export async function loadStory(id: string): Promise<(StoryView & { pages: PageV
   const views: PageView[] = (pages || []).map((p: any) => {
     const text: I18nText = {};
     for (const t of pageTexts || []) if (t.page_id === p.id && isLang(t.lang)) text[t.lang as Lang] = t.text;
-    return { id: p.id, position: p.position, svg: p.svg, text };
+    return { id: p.id, position: p.position, svg: p.svg, text, layout: p.layout === "text-first" ? "text-first" : "art-first", autoArt: p.auto_art !== false, hasDrawing: !!p.drawing_path };
   });
   return { ...toStory(s, texts || [], names, views[0]?.svg ?? null), pages: views };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-/** Saga telst tilbúin þegar allar síður hafa mynd. */
+/** Saga telst tilbúin þegar allar síður sem smiðjan á að mála hafa mynd. */
 export async function refreshStoryStatus(storyId: string) {
-  const { data: pages } = await supabaseAdmin.from("bk_pages").select("svg").eq("story_id", storyId);
+  const { data: pages } = await supabaseAdmin.from("bk_pages").select("svg, auto_art").eq("story_id", storyId);
   if (!pages?.length) return;
-  const status = pages.every((p) => !!p.svg) ? "ready" : "written";
+  const status = pages.every((p) => !!p.svg || !p.auto_art) ? "ready" : "written";
   await supabaseAdmin.from("bk_stories").update({ status, updated_at: new Date().toISOString() }).eq("id", storyId);
 }
 
@@ -134,15 +134,51 @@ export async function unlock(key: string) {
   await supabaseAdmin.from("hsu_auth_throttle").delete().eq("key", `bk:${key}`);
 }
 
-/** Eyðir upplestrarskrám sagna úr geymslunni áður en línurnar hverfa (cascade). */
+/** Eyðir upplestrarskrám og teikningum sagna úr geymslunni áður en línurnar hverfa (cascade). */
 export async function removeAudio(storyIds: string[]) {
   if (!storyIds.length) return;
   const { data: pages } = await supabaseAdmin.from("bk_pages").select("id").in("story_id", storyIds);
   const pageIds = (pages || []).map((p) => p.id);
   if (!pageIds.length) return;
-  const { data: audio } = await supabaseAdmin.from("bk_audio").select("storage_path").in("page_id", pageIds);
-  const paths = (audio || []).map((a) => a.storage_path);
+  const [{ data: audio }, { data: drawn }] = await Promise.all([
+    supabaseAdmin.from("bk_audio").select("storage_path").in("page_id", pageIds),
+    supabaseAdmin.from("bk_pages").select("drawing_path").in("id", pageIds).not("drawing_path", "is", null),
+  ]);
+  const paths = [...(audio || []).map((a) => a.storage_path), ...(drawn || []).map((d) => d.drawing_path as string)];
   if (paths.length) await supabaseAdmin.storage.from(AUDIO_BUCKET).remove(paths);
 }
 
 export const AUDIO_BUCKET = "bokasmidja";
+
+/** Sagan sem síða tilheyrir, ef notandinn má breyta henni. Annars svar til að senda beint. */
+export async function editablePage(viewer: Viewer, pageId: string) {
+  if (!UUID_RE.test(pageId)) return { res: fail("bad_request") } as const;
+  const { data: page } = await supabaseAdmin.from("bk_pages")
+    .select("id, story_id, position, scene, svg, layout, drawing_path").eq("id", pageId).maybeSingle();
+  if (!page) return { res: fail("not_found", 404) } as const;
+  const { data: story } = await supabaseAdmin.from("bk_stories")
+    .select("id, book_id, source_lang, art, created_by").eq("id", page.story_id).maybeSingle();
+  if (!story) return { res: fail("not_found", 404) } as const;
+  if (!canEdit(viewer, story.created_by)) return { res: fail("not_yours", 403) } as const;
+  return { page, story } as const;
+}
+
+/** Sama fyrir sögu. */
+export async function editableStory(viewer: Viewer, storyId: string) {
+  if (!UUID_RE.test(storyId)) return { res: fail("bad_request") } as const;
+  const { data: story } = await supabaseAdmin.from("bk_stories")
+    .select("id, book_id, status, source_lang, created_by").eq("id", storyId).maybeSingle();
+  if (!story) return { res: fail("not_found", 404) } as const;
+  if (!canEdit(viewer, story.created_by)) return { res: fail("not_yours", 403) } as const;
+  return { story } as const;
+}
+
+/** Númerar síður sögunnar 1..n í þeirri röð sem gefin er (eða núverandi röð). */
+export async function renumberPages(storyId: string, order?: string[]) {
+  let ids = order;
+  if (!ids) {
+    const { data } = await supabaseAdmin.from("bk_pages").select("id").eq("story_id", storyId).order("position").order("created_at");
+    ids = (data || []).map((p) => p.id);
+  }
+  await Promise.all(ids.map((id, i) => supabaseAdmin.from("bk_pages").update({ position: i + 1 }).eq("id", id).eq("story_id", storyId)));
+}

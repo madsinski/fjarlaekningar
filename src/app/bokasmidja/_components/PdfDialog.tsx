@@ -44,7 +44,7 @@ export default function PdfDialog({ book, load, onClose }: {
         stories: stories.map((s) => ({
           title: text(s.title, s),
           credit: s.authorName ? tl("reader.inventedBy", { name: s.authorName }) : "",
-          pages: (s.pages || []).map((p) => ({ text: text(p.text, s), svg: p.svg })),
+          pages: (s.pages || []).map((p) => ({ text: text(p.text, s), svg: p.svg, textFirst: p.layout === "text-first", noPicture: !p.svg && !p.autoArt })),
         })),
         onProgress: (done, total) => setProgress({ done, total }),
       });
