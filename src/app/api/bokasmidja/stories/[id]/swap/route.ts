@@ -16,7 +16,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
   const { what, a, b } = await readJson(req);
   if ((what !== "art" && what !== "text") || typeof a !== "string" || typeof b !== "string" || !UUID_RE.test(a) || !UUID_RE.test(b) || a === b) return fail("bad_request");
-  const { data: pages } = await supabaseAdmin.from("bk_pages").select("id, svg, scene, drawing_path").eq("story_id", id).in("id", [a, b]);
+  const { data: pages } = await supabaseAdmin.from("bk_pages").select("id, svg, image_path, scene, drawing_path").eq("story_id", id).in("id", [a, b]);
   const pa = pages?.find((p) => p.id === a);
   const pb = pages?.find((p) => p.id === b);
   if (!pa || !pb) return fail("not_found", 404);
@@ -24,8 +24,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (what === "art") {
     // auto_art: false á báðum — síða sem missti myndina sína verður ekki máluð óumbeðið.
     await Promise.all([
-      supabaseAdmin.from("bk_pages").update({ svg: pb.svg, scene: pb.scene, drawing_path: pb.drawing_path, auto_art: false }).eq("id", a),
-      supabaseAdmin.from("bk_pages").update({ svg: pa.svg, scene: pa.scene, drawing_path: pa.drawing_path, auto_art: false }).eq("id", b),
+      supabaseAdmin.from("bk_pages").update({ svg: pb.svg, image_path: pb.image_path, scene: pb.scene, drawing_path: pb.drawing_path, auto_art: false }).eq("id", a),
+      supabaseAdmin.from("bk_pages").update({ svg: pa.svg, image_path: pa.image_path, scene: pa.scene, drawing_path: pa.drawing_path, auto_art: false }).eq("id", b),
     ]);
     await refreshStoryStatus(id);
   } else {

@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, FileDown, LayoutDashboard, Maximize, MoreHorizontal, Pencil, RefreshCw, Sparkles, Square, Trash2, Volume2 } from "lucide-react";
 import { errorText } from "@/lib/bokasmidja/i18n";
-import { LANGS, LANG_BCP47, LENGTH_KEYS, pageText, pagesFor, pick, textSource, type Lang, type StoryLength } from "@/lib/bokasmidja/types";
+import { LANGS, LANG_BCP47, LENGTH_KEYS, NARRATORS, isNarrator, pageText, pagesFor, pick, textSource, type Lang, type Narrator, type StoryLength } from "@/lib/bokasmidja/types";
 import PdfDialog from "./PdfDialog";
 import { useBk } from "./Provider";
 import type { BookInfo, Phase, Story } from "./StoryRoom";
@@ -64,6 +64,8 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
   const router = useRouter();
   // Útgáfa sögunnar: stutt, miðlungs eða löng. Saga með eina lengd er alltaf „stutt“.
   const [len, setLen] = useState<StoryLength>(1);
+  // Sögumaðurinn sem les upphátt; valið er munað í tækinu.
+  const [voice, setVoice] = useState<Narrator>("storyteller");
   const pages = pagesFor(story.pages, story.lengths >= 3 ? len : 1);
   const n = pages.length;
   const [slide, setSlide] = useState(0); // 0 = kápa, 1..n = síður, n+1 = endir
@@ -80,8 +82,13 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
   const root = useRef<HTMLDivElement | null>(null);
   const touch = useRef<number | null>(null);
   // Nýjustu gildi handa atburðahlusturum sem lifa lengur en ein teikning.
-  const live = useRef({ slide, listening, readLang, story, pages, len });
-  useEffect(() => { live.current = { slide, listening, readLang, story, pages, len }; });
+  const live = useRef({ slide, listening, readLang, story, pages, len, voice });
+  useEffect(() => { live.current = { slide, listening, readLang, story, pages, len, voice }; });
+  useEffect(() => {
+    let saved: string | null = null;
+    try { saved = window.localStorage.getItem("bk_voice"); } catch { /* engin geymsla */ }
+    if (isNarrator(saved)) setVoice(saved);
+  }, []);
   // Síðasta val barnsins á lengd er munað í þessu tæki.
   useEffect(() => {
     if (story.lengths < 3) return;
@@ -138,7 +145,7 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
     const a = (audio.current ??= new Audio());
     a.onended = onward;
     a.onerror = fallback;
-    a.src = `/api/bokasmidja/pages/${p.id}/audio?lang=${speechLang}&length=${length}`;
+    a.src = `/api/bokasmidja/pages/${p.id}/audio?lang=${speechLang}&length=${length}&voice=${live.current.voice}`;
     a.play().catch(fallback);
   }, [silence, t]);
 
@@ -174,6 +181,13 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [go]);
+
+  const pickVoice = (v: Narrator) => {
+    setVoice(v);
+    live.current.voice = v;
+    try { window.localStorage.setItem("bk_voice", v); } catch { /* engin geymsla */ }
+    if (listening && page) play(slide);
+  };
 
   const pickLang = (l: Lang) => {
     setReadLang(l);
@@ -244,6 +258,17 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
             </button>
             {menu && (
               <div className="bk-pop absolute right-0 z-20 mt-2 w-72 rounded-3xl bg-white p-2 shadow-2xl ring-2 ring-slate-100">
+                <fieldset className="px-3 pb-2 pt-1">
+                  <legend className="text-sm font-extrabold uppercase tracking-wide text-slate-400">{t("voice.title")}</legend>
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {NARRATORS.map((v) => (
+                      <button key={v} type="button" onClick={() => pickVoice(v)} aria-pressed={voice === v}
+                        className={cx("bk-press rounded-xl px-3 py-1.5 text-sm font-extrabold", voice === v ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700")}>
+                        {["🎭", "🦸", "🌙"][NARRATORS.indexOf(v)]} {t(`voice.${v}`)}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
                 <MenuItem icon={<FileDown className="h-5 w-5 text-sky-600" />} onClick={() => { setMenu(false); setPdf(true); }}>{t("book.pdf")}</MenuItem>
                 <MenuItem icon={<Maximize className="h-5 w-5 text-slate-600" />} onClick={() => { setMenu(false); void root.current?.requestFullscreen?.().catch(() => {}); }}>{t("reader.full")}</MenuItem>
                 {editable && <Link href={`/bokasmidja/story/${story.id}/edit`} className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left font-bold hover:bg-slate-50"><LayoutDashboard className="h-5 w-5 text-orange-600" aria-hidden />{t("edit.open")}</Link>}

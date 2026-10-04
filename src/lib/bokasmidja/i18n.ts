@@ -309,6 +309,12 @@ const M = {
   ],
   "len.only": ["Only in the {length} version", "Aðeins í útgáfunni: {length}", "Bare i versjonen: {length}", "Csak ebben a változatban: {length}"],
 
+  // Reading voice
+  "voice.title": ["Reading voice", "Sögumaður", "Lesestemme", "Felolvasó hang"],
+  "voice.storyteller": ["Storyteller", "Sagnaþulur", "Forteller", "Mesemondó"],
+  "voice.hero": ["Action hero", "Ofurhetja", "Actionhelt", "Akcióhős"],
+  "voice.gentle": ["Gentle", "Róleg", "Rolig", "Szelíd"],
+
   // PDF
   "pdf.title": ["Make a PDF", "Búa til PDF", "Lag PDF", "PDF készítése"],
   "pdf.read": ["For reading", "Til að lesa", "For lesing", "Olvasáshoz"],

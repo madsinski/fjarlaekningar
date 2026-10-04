@@ -80,6 +80,8 @@ export interface StoryView {
   lengths: number;
   /** The characters have been designed (a character sheet exists). */
   hasSheet?: boolean;
+  /** How the app paints new pictures for this story: generated images, or drawn SVG. */
+  artMode?: "image" | "svg";
   pages?: PageView[];
 }
 
@@ -129,3 +131,8 @@ export function pageText(p: Pick<PageView, "text" | "textM" | "textL">, lang: La
   const from = textSource(p, lang, length);
   return (from === 3 ? p.textL?.[lang] : from === 2 ? p.textM?.[lang] : p.text[lang]) || "";
 }
+
+/** Narrators for the read-aloud. Each has its own recording of every page. */
+export const NARRATORS = ["storyteller", "hero", "gentle"] as const;
+export type Narrator = (typeof NARRATORS)[number];
+export const isNarrator = (v: unknown): v is Narrator => typeof v === "string" && (NARRATORS as readonly string[]).includes(v);

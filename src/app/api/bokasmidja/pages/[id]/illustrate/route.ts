@@ -9,6 +9,7 @@
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { AgentError, agentsConfigured, illustratePage, reviewPicture } from "@/lib/bokasmidja/agents";
+import { artMode, paintPage, pictureSvg, removePictures } from "@/lib/bokasmidja/images";
 import { renderPng } from "@/lib/bokasmidja/render";
 import { throttle } from "@/lib/bokasmidja/auth";
 import { UUID_RE, canEdit, fail, json, readJson, refreshStoryStatus, requireViewer, unlock, viewerId } from "@/lib/bokasmidja/server";
@@ -27,14 +28,16 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const redo = body.redo === true;
   const review = body.review === true;
 
-  const { data: page } = await supabaseAdmin.from("bk_pages").select("id, story_id, position, scene, svg, reviewed").eq("id", id).maybeSingle();
+  const { data: page } = await supabaseAdmin.from("bk_pages").select("id, story_id, position, scene, svg, image_path, reviewed").eq("id", id).maybeSingle();
   if (!page) return fail("not_found", 404);
   const { data: story } = await supabaseAdmin.from("bk_stories")
     .select("id, source_lang, art, created_by").eq("id", page.story_id).single();
   if (!story) return fail("not_found", 404);
-  if (review && (!page.svg || page.reviewed)) return json({ ok: true, svg: page.svg });
-  if (page.svg && !review) {
-    if (!redo) return json({ ok: true, svg: page.svg });
+  // Mynd síðunnar eins og skjáirnir fá hana: teiknuð SVG, eða máluð mynd í SVG-umgjörð.
+  const current = page.svg ?? (page.image_path ? pictureSvg(page.id, page.image_path) : null);
+  if (review && (!page.svg || page.reviewed)) return json({ ok: true, svg: current });
+  if (current && !review) {
+    if (!redo) return json({ ok: true, svg: current });
     if (!canEdit(auth.viewer, story.created_by)) return fail("not_yours", 403);
   }
   if (!agentsConfigured()) return fail("not_configured", 503);
@@ -56,7 +59,21 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       (rows || []).find((r) => r.lang === "en") || (rows || []).find((r) => r.lang === story.source_lang) || (rows || [])[0];
     const reference = first?.svg && first.svg.length <= REFERENCE_MAX ? first.svg : null;
 
-    const art = (story.art || {}) as Parameters<typeof illustratePage>[0]["art"] & { sheetSvg?: string };
+    const art = (story.art || {}) as Parameters<typeof illustratePage>[0]["art"] & { sheetSvg?: string; sheetImage?: string };
+
+    // Máluð mynd frá myndlíkani: hröð, og persónurnar teknar af persónublaðinu.
+    if (artMode() === "image" && !review) {
+      const path = await paintPage({
+        storyId: story.id, pageId: id, art, title: best(storyTexts)?.title || "",
+        scene: page.scene, pageText: best(texts)?.text || "", sheetPath: art.sheetImage,
+      });
+      await supabaseAdmin.from("bk_pages").update({ image_path: path, svg: null, reviewed: true }).eq("id", id);
+      await removePictures([page.image_path]);
+      await refreshStoryStatus(story.id);
+      await unlock(lock);
+      return json({ ok: true, svg: pictureSvg(id, path) });
+    }
+
     const input = {
       art,
       sheetSvg: art.sheetSvg && art.sheetSvg.length <= REFERENCE_MAX ? art.sheetSvg : null,

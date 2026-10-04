@@ -227,3 +227,22 @@ end $$;
 alter table public.bk_pages add column if not exists reviewed boolean not null default false;
 -- Myndir sem voru til áður en yfirferðin kom eru látnar eiga sig.
 update public.bk_pages set reviewed = true where reviewed = false and svg is not null and created_at < '2026-10-05';
+
+-- ── Málaðar myndir (myndlíkan) (2026-10-04) ─────────────────────────────────
+-- Sögur sem verða til í smiðjunni fá myndir frá myndlíkani: hraðari og ódýrari
+-- en SVG-teikning. image_path: myndin í lokuðu geymslunni (art/<saga>/…).
+-- Síða á annaðhvort svg (handgerð eða teiknuð) eða image_path.
+alter table public.bk_pages add column if not exists image_path text;
+
+-- ── Sögumenn (2026-10-04) ───────────────────────────────────────────────────
+-- Upplestur er til með ólíkum sögumönnum (storyteller, hero, gentle); hver
+-- þeirra á sína upptöku af hverri síðu.
+alter table public.bk_audio add column if not exists voice text not null default 'gentle';
+do $$
+begin
+  if (select count(*) from pg_index i join pg_attribute a on a.attrelid = i.indrelid and a.attnum = any(i.indkey)
+      where i.indrelid = 'public.bk_audio'::regclass and i.indisprimary) < 4 then
+    alter table public.bk_audio drop constraint bk_audio_pkey;
+    alter table public.bk_audio add primary key (page_id, lang, length, voice);
+  end if;
+end $$;

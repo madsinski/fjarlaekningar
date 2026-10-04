@@ -66,9 +66,9 @@ export default function StoryRoom({ initial, book, editable }: { initial: Story;
 
       // Íslenskur texti fer í yfirlestur áður en lesið er. Mistakist það stöðvar
       // það ekki smíðina: reynt er aftur næst þegar sagan er opnuð.
-      const polish = async () => {
+      const polish = async (quiet = false) => {
         if (!needsPolish(s) || !alive.current) return;
-        show({ kind: "polishing" });
+        if (!quiet) show({ kind: "polishing" });
         for (let tries = 0; tries < 30 && alive.current; tries++) {
           const res = await call("POST", `${url}/polish`, {});
           if (!res.ok || !res.busy) break;
@@ -76,7 +76,11 @@ export default function StoryRoom({ initial, book, editable }: { initial: Story;
         }
         await reload();
       };
-      await polish();
+      // Málaðar myndir eru fljótar: yfirlesturinn fer þá fram á meðan málað er,
+      // svo bókin sé tilbúin á fáeinum mínútum. Annars er lesið yfir fyrst.
+      const painted = s.artMode === "image";
+      const proofreading = painted ? polish(true) : polish();
+      if (!painted) await proofreading;
 
       // Persónublað: hetjurnar hannaðar einu sinni, áður en fyrsta síðan er máluð.
       // Mistakist það er málað án þess.
@@ -90,29 +94,40 @@ export default function StoryRoom({ initial, book, editable }: { initial: Story;
         await reload();
       }
 
-      // 2. Málarinn málar síðu fyrir síðu.
-      for (const page of s.pages) {
-        if (page.svg || !page.autoArt) continue;
-        for (let tries = 0; alive.current; tries++) {
-          show({ kind: "painting", n: page.position, total: s.pages.length });
+      // 2. Málarinn málar síðurnar: eina í einu þegar teiknað er (SVG), fjórar
+      // í einu þegar málað er með myndlíkani.
+      const todo = s.pages.filter((p) => !p.svg && p.autoArt);
+      const total = s.pages.length;
+      let painting = 0;
+      let failure: string | null = null;
+      const paintOne = async (page: PageView) => {
+        for (let tries = 0; alive.current && !failure; tries++) {
           const res = await call("POST", `/api/bokasmidja/pages/${page.id}/illustrate`, {});
           if (res.ok && res.svg) {
-            s = { ...s, pages: s.pages.map((p) => (p.id === page.id ? { ...p, svg: res.svg } : p)) };
+            s = { ...s, pages: s.pages.map((p) => (p.id === page.id ? { ...p, svg: res.svg, reviewed: painted || p.reviewed } : p)) };
             if (alive.current) setStory(s);
-            break;
+            return;
           }
           if (res.ok && res.busy) {
+            if (tries > 40) { failure = "agent_failed"; return; }
             await sleep(10000);
-            await reload();
-            if (s.pages.find((p) => p.id === page.id)?.svg) break;
-            if (tries > 40) return show({ kind: "error", code: "agent_failed" });
             continue;
           }
           // Ein mynd má mistakast einu sinni; önnur villa stöðvar smíðina.
-          if (tries >= 1 || res.error !== "agent_failed") return show({ kind: "error", code: res.error });
+          if (tries >= 1 || res.error !== "agent_failed") { failure = res.error || "agent_failed"; return; }
         }
-        if (!alive.current) return;
-      }
+      };
+      const queue = [...todo];
+      const worker = async () => {
+        for (let page = queue.shift(); page && alive.current && !failure; page = queue.shift()) {
+          show({ kind: "painting", n: Math.min(total, total - todo.length + ++painting), total });
+          await paintOne(page);
+        }
+      };
+      await Promise.all(Array.from({ length: painted ? 4 : 1 }, worker));
+      await proofreading;
+      if (failure) return show({ kind: "error", code: failure });
+      if (!alive.current) return;
 
       // Yfirferð: málarinn skoðar hverja mynd sína teiknaða og lagar það sem er að.
       // Sagan er þegar lesanleg; villa hér stöðvar ekki smíðina.

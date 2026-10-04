@@ -41,7 +41,7 @@ export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }
   if ((count ?? 0) <= 1) return fail("last_page");
 
   const { data: audio } = await supabaseAdmin.from("bk_audio").select("storage_path").eq("page_id", id);
-  const paths = [...(audio || []).map((a) => a.storage_path), ...(found.page.drawing_path ? [found.page.drawing_path] : [])];
+  const paths = [...(audio || []).map((a) => a.storage_path), found.page.drawing_path, found.page.image_path].filter((p): p is string => !!p);
   if (paths.length) await supabaseAdmin.storage.from(AUDIO_BUCKET).remove(paths);
   await supabaseAdmin.from("bk_pages").delete().eq("id", id);
   await renumberPages(found.story.id);

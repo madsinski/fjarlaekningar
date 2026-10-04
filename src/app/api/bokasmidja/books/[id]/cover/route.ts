@@ -9,6 +9,7 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { AgentError, agentsConfigured, illustratePage } from "@/lib/bokasmidja/agents";
 import { throttle } from "@/lib/bokasmidja/auth";
+import { artMode, paintCover } from "@/lib/bokasmidja/images";
 import { AUDIO_BUCKET, UUID_RE, canEdit, fail, json, readImage, readJson, requireViewer, unlock, viewerId } from "@/lib/bokasmidja/server";
 import { pick, type I18nText, type Viewer } from "@/lib/bokasmidja/types";
 
@@ -67,6 +68,20 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       return t ? [`- ${t.title}: ${t.summary}`] : [];
     });
     const title = pick(book.title as I18nText, "en");
+
+    // Máluð kápa frá myndlíkani; geymd og sýnd eins og tilbúin kápumynd.
+    if (artMode() === "image") {
+      const art = (first?.art || {}) as { characters?: { name: string; look: string }[]; setting?: string; sheetImage?: string };
+      const about = [book.concept ? `About the book: ${book.concept}` : "", blurbs.length ? `Stories in the book:\n${blurbs.slice(0, 8).join("\n")}` : ""].filter(Boolean).join("\n\n");
+      const path = await paintCover({
+        bookId: id, title, about, art, sheetPath: art.sheetImage,
+        drawing: image ? { bytes: image.bytes, type: image.mediaType } : null,
+      });
+      if (book.cover_image_path) await supabaseAdmin.storage.from(AUDIO_BUCKET).remove([book.cover_image_path]);
+      await supabaseAdmin.from("bk_books").update({ cover_image_path: path, cover_svg: null }).eq("id", id);
+      await unlock(lock);
+      return json({ ok: true, coverSvg: null, coverImage: `/api/bokasmidja/books/${id}/cover?v=${encodeURIComponent(path.slice(-12))}` });
+    }
     const scene = [
       `The front cover picture for the children's book "${title || "a book of stories"}".`,
       book.concept ? `About the book: ${book.concept}` : "",

@@ -7,6 +7,7 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { AgentError, agentsConfigured, illustratePage } from "@/lib/bokasmidja/agents";
 import { throttle } from "@/lib/bokasmidja/auth";
+import { artMode, paintPage, pictureSvg, removePictures } from "@/lib/bokasmidja/images";
 import { AUDIO_BUCKET, UUID_RE, editablePage, fail, json, readImage, readJson, refreshStoryStatus, requireViewer, unlock, viewerId } from "@/lib/bokasmidja/server";
 
 const REFERENCE_MAX = 60_000;
@@ -42,6 +43,23 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     const best = <T extends { lang: string }>(rows: T[] | null) =>
       (rows || []).find((r) => r.lang === "en") || (rows || []).find((r) => r.lang === story.source_lang) || (rows || [])[0];
     const ref = first?.[0];
+
+    // Máluð mynd: teikning barnsins er send myndlíkaninu sem fyrirmynd, ásamt persónublaðinu.
+    if (artMode() === "image") {
+      const art = (story.art || {}) as Parameters<typeof illustratePage>[0]["art"] & { sheetImage?: string };
+      const painted = await paintPage({
+        storyId: story.id, pageId: id, art, title: best(storyTexts)?.title || "", scene: page.scene,
+        pageText: best(texts)?.text || "", sheetPath: art.sheetImage, drawing: { bytes, type: mediaType },
+      });
+      const original = `drawings/${id}-${Date.now().toString(36)}.${mediaType === "image/png" ? "png" : "jpg"}`;
+      const up = await supabaseAdmin.storage.from(AUDIO_BUCKET).upload(original, bytes, { contentType: mediaType, upsert: true });
+      await supabaseAdmin.from("bk_pages")
+        .update({ image_path: painted, svg: null, auto_art: false, reviewed: true, ...(up.error ? {} : { drawing_path: original }) }).eq("id", id);
+      await removePictures([page.image_path, up.error ? null : page.drawing_path]);
+      await refreshStoryStatus(story.id);
+      await unlock(lock);
+      return json({ ok: true, svg: pictureSvg(id, painted), hasDrawing: !up.error || !!page.drawing_path });
+    }
 
     const svg = await illustratePage({
       art: (story.art || {}) as Parameters<typeof illustratePage>[0]["art"],

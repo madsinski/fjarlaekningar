@@ -166,30 +166,54 @@ version.
 
 ## How the app makes a story
 
-The app's own story maker follows the process that produced the hand-made
-stories:
-
 1. **Write** in the child's language, in the tough-kids voice and the classic
-   picture-book arc, at the chosen length.
-2. **Proofread** Icelandic text (see Icelandic above).
-3. **Character sheet** — the illustrator designs the recurring characters once
-   (`POST /stories/:id/sheet`, kept in `bk_stories.art.sheetSvg`). Every page
-   is drawn from this sheet, which is what keeps the hero the same.
-4. **Paint** each page from the sheet and the illustration brief.
-5. **Look and correct** — each picture is rendered to an image, shown back to
-   the illustrator and redrawn if something is off (`POST /pages/:id/illustrate`
-   with `{ review: true }`, once per picture; `bk_pages.reviewed`).
-6. **Re-tell** in the other languages.
+   picture-book arc, at the chosen length (about two minutes).
+2. **Paint the heroes** — one character sheet for the story
+   (`POST /stories/:id/sheet`, about half a minute).
+3. **Paint the pages** — each page is painted by an image model with the
+   character sheet as a reference picture, which keeps the heroes the same
+   from page to page. The app paints four pages at a time
+   (`POST /pages/:id/illustrate`, about half a minute each).
+4. **Proofread** Icelandic text (see Icelandic above); this runs while the
+   pages are being painted.
+5. **Re-tell** in the other languages.
 
-The child can read as soon as step 1 is done; pictures appear and improve
-while they read. Rough times on OpenAI: writing 2 min, character sheet 1.5 min,
-each picture 2.5 min plus 1 min of review.
+The child can read as soon as step 1 is done; pictures appear while they
+read. A short story is fully illustrated about four to five minutes after the
+idea is sent.
 
-**Which model:** with only `OPENAI_API_KEY` set, all of this runs on OpenAI.
-The process helps, but the drawing and writing quality is noticeably below the
-hand-made stories. Setting `ANTHROPIC_API_KEY` switches the writer, translator
-and illustrator to Claude with no other change; the reading voice and the
-Icelandic proofreading editor stay on OpenAI.
+**Painted pictures** (`src/lib/bokasmidja/images.ts`) come from OpenAI's
+`gpt-image-2` at 1536 × 1024, stored as JPEG in the private bucket under
+`art/<story>/` and served by `GET /pages/:id/image`. To the screens a painted
+picture looks like any other: the server wraps it in SVG markup. With "Magic"
+on, a painted picture drifts gently as a whole; it has no separate parts to
+tap. A child's drawing and a book cover are painted the same way, with the
+drawing as a second reference picture.
+
+- **Rate limit:** the OpenAI account allows a limited number of reference
+  images per minute (5 when this was built). When it is reached, a page waits
+  and tries again by itself, so a long story simply takes a few minutes more.
+  The limit rises with the account's usage tier.
+- **Sharpness:** fine for screens and home printing; soft at print-shop size.
+- **The older illustrator** draws layered SVG with a character sheet and a
+  render-and-review step (`agents.ts`, `render.ts`). It is slower and costs
+  more, but its pictures have tappable, animated parts. `BOKASMIDJA_ART=svg`
+  switches the app back to it. The six hand-made stories are SVG and are not
+  affected either way.
+
+**Which model writes:** with only `OPENAI_API_KEY` set, the text is written by
+OpenAI. Setting `ANTHROPIC_API_KEY` switches the writer and translator to
+Claude with no other change. Pictures, the reading voice and the Icelandic
+proofreading editor stay on OpenAI.
+
+## Reading voice
+
+"Read to me" has three narrators, chosen in the reader's "…" menu and
+remembered on the device: **Storyteller** (dramatic, the default), **Action
+hero** (bold and energetic) and **Gentle** (calm). They differ in voice and,
+mostly, in the acting directions given to the voice model
+(`pages/[id]/audio/route.ts`). Each narrator has its own cached recording of
+every page, per language and length.
 
 ## Changing a book
 

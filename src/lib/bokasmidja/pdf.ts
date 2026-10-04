@@ -39,6 +39,17 @@ const PAPER = "#fffdf7";
 const INK = "#1f2937";
 
 function loadSvg(svg: string): Promise<HTMLImageElement | null> {
+  // A painted picture arrives wrapped in SVG; a browser will not fetch an image from inside
+  // an SVG that is itself used as an image, so the picture is loaded from its own address.
+  const photo = /<image href="([^"]+)"/.exec(svg);
+  if (photo) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = photo[1];
+    });
+  }
   // An explicit size makes every browser rasterise the picture at full canvas resolution.
   const sized = svg.replace(/^<svg /, `<svg width="${ART_W * 2}" height="${ART_H * 2}" `);
   const url = URL.createObjectURL(new Blob([sized], { type: "image/svg+xml" }));
@@ -138,7 +149,13 @@ export async function buildPdf(input: PdfInput): Promise<Uint8Array> {
     ctx.fillStyle = "#e0f2fe";
     ctx.fillRect(x, y, w, h);
     const img = svg ? await loadSvg(svg) : null;
-    if (img) ctx.drawImage(img, x, y, w, h);
+    if (img) {
+      // Fill the 4:3 frame, cropping evenly (painted pictures are a little wider than the frame).
+      const scale = Math.max(w / img.naturalWidth, h / img.naturalHeight);
+      const dw = img.naturalWidth * scale;
+      const dh = img.naturalHeight * scale;
+      ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+    }
     ctx.restore();
     return h;
   };

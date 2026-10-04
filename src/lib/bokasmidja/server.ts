@@ -8,6 +8,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getViewer, sameOrigin } from "./auth";
+import { artMode, pictureSvg } from "./images";
 import { LANG_COOKIE, isLang, type BookView, type I18nText, type Lang, type PageView, type StoryView, type Viewer } from "./types";
 
 export const json = (body: unknown, status = 200) => NextResponse.json(body, { status });
@@ -88,10 +89,10 @@ export async function loadBooks(opts: { bookId?: string; covers?: boolean } = {}
     storyIds.length ? supabaseAdmin.from("bk_story_texts").select("story_id, lang, title, summary").in("story_id", storyIds) : Promise.resolve({ data: [] as any[] }),
     childNames(),
     opts.covers && storyIds.length
-      ? supabaseAdmin.from("bk_pages").select("story_id, svg").in("story_id", storyIds).eq("position", 1)
+      ? supabaseAdmin.from("bk_pages").select("id, story_id, svg, image_path").in("story_id", storyIds).eq("position", 1)
       : Promise.resolve({ data: [] as any[] }),
   ]);
-  const coverOf = new Map((covers.data || []).map((p: any) => [p.story_id, p.svg as string | null]));
+  const coverOf = new Map((covers.data || []).map((p: any) => [p.story_id, (p.svg ?? (p.image_path ? pictureSvg(p.id, p.image_path) : null)) as string | null]));
   return books.map((b: any) => ({
     id: b.id, title: i18n(b.title), subtitle: i18n(b.subtitle), color: b.color, emoji: b.emoji,
     plannedStories: b.planned_stories, createdBy: b.created_by,
@@ -110,7 +111,7 @@ export async function loadStory(id: string): Promise<(StoryView & { pages: PageV
   if (!s) return null;
   const [{ data: texts }, { data: pages }, names] = await Promise.all([
     supabaseAdmin.from("bk_story_texts").select("lang, title, summary, polished_at").eq("story_id", id),
-    supabaseAdmin.from("bk_pages").select("id, position, svg, layout, auto_art, drawing_path, level, reviewed").eq("story_id", id).order("position").order("created_at"),
+    supabaseAdmin.from("bk_pages").select("id, position, svg, image_path, layout, auto_art, drawing_path, level, reviewed").eq("story_id", id).order("position").order("created_at"),
     childNames(),
   ]);
   const pageIds = (pages || []).map((p: any) => p.id);
@@ -125,17 +126,18 @@ export async function loadStory(id: string): Promise<(StoryView & { pages: PageV
       if (t.page_id !== p.id || !isLang(t.lang)) continue;
       (t.length === 3 ? textL : t.length === 2 ? textM : text)[t.lang as Lang] = t.text;
     }
-    return { id: p.id, position: p.position, svg: p.svg, text, textM, textL, level: p.level === 3 ? 3 : p.level === 2 ? 2 : 1, layout: p.layout === "text-first" ? "text-first" : "art-first", autoArt: p.auto_art !== false, hasDrawing: !!p.drawing_path, reviewed: p.reviewed === true };
+    // Máluð mynd er afhent sem SVG utan um myndina, svo skjáirnir fari eins með báðar gerðir.
+    return { id: p.id, position: p.position, svg: p.svg ?? (p.image_path ? pictureSvg(p.id, p.image_path) : null), text, textM, textL, level: p.level === 3 ? 3 : p.level === 2 ? 2 : 1, layout: p.layout === "text-first" ? "text-first" : "art-first", autoArt: p.auto_art !== false, hasDrawing: !!p.drawing_path, reviewed: p.reviewed === true };
   });
-  return { ...toStory(s, texts || [], names, views[0]?.svg ?? null), hasSheet: !!s.art?.sheetSvg, pages: views };
+  return { ...toStory(s, texts || [], names, views[0]?.svg ?? null), hasSheet: !!(s.art?.sheetSvg || s.art?.sheetImage), artMode: artMode(), pages: views };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 /** Saga telst tilbúin þegar allar síður sem smiðjan á að mála hafa mynd. */
 export async function refreshStoryStatus(storyId: string) {
-  const { data: pages } = await supabaseAdmin.from("bk_pages").select("svg, auto_art").eq("story_id", storyId);
+  const { data: pages } = await supabaseAdmin.from("bk_pages").select("svg, image_path, auto_art").eq("story_id", storyId);
   if (!pages?.length) return;
-  const status = pages.every((p) => !!p.svg || !p.auto_art) ? "ready" : "written";
+  const status = pages.every((p) => !!p.svg || !!p.image_path || !p.auto_art) ? "ready" : "written";
   await supabaseAdmin.from("bk_stories").update({ status, updated_at: new Date().toISOString() }).eq("id", storyId);
 }
 
@@ -144,7 +146,7 @@ export async function unlock(key: string) {
   await supabaseAdmin.from("hsu_auth_throttle").delete().eq("key", `bk:${key}`);
 }
 
-/** Eyðir upplestrarskrám og teikningum sagna úr geymslunni áður en línurnar hverfa (cascade). */
+/** Eyðir upplestrarskrám, teikningum og máluðum myndum sagna úr geymslunni áður en línurnar hverfa (cascade). */
 export async function removeAudio(storyIds: string[]) {
   if (!storyIds.length) return;
   const { data: pages } = await supabaseAdmin.from("bk_pages").select("id").in("story_id", storyIds);
@@ -152,9 +154,15 @@ export async function removeAudio(storyIds: string[]) {
   if (!pageIds.length) return;
   const [{ data: audio }, { data: drawn }] = await Promise.all([
     supabaseAdmin.from("bk_audio").select("storage_path").in("page_id", pageIds),
-    supabaseAdmin.from("bk_pages").select("drawing_path").in("id", pageIds).not("drawing_path", "is", null),
+    supabaseAdmin.from("bk_pages").select("drawing_path, image_path").in("id", pageIds),
   ]);
-  const paths = [...(audio || []).map((a) => a.storage_path), ...(drawn || []).map((d) => d.drawing_path as string)];
+  const { data: owners } = await supabaseAdmin.from("bk_stories").select("art").in("id", storyIds);
+  const paths = [
+    ...(audio || []).map((a) => a.storage_path),
+    ...(drawn || []).flatMap((d) => [d.drawing_path, d.image_path]),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...(owners || []).map((o: any) => o.art?.sheetImage),
+  ].filter((p): p is string => !!p);
   if (paths.length) await supabaseAdmin.storage.from(AUDIO_BUCKET).remove(paths);
 }
 
@@ -164,7 +172,7 @@ export const AUDIO_BUCKET = "bokasmidja";
 export async function editablePage(viewer: Viewer, pageId: string) {
   if (!UUID_RE.test(pageId)) return { res: fail("bad_request") } as const;
   const { data: page } = await supabaseAdmin.from("bk_pages")
-    .select("id, story_id, position, scene, svg, layout, drawing_path").eq("id", pageId).maybeSingle();
+    .select("id, story_id, position, scene, svg, image_path, layout, drawing_path").eq("id", pageId).maybeSingle();
   if (!page) return { res: fail("not_found", 404) } as const;
   const { data: story } = await supabaseAdmin.from("bk_stories")
     .select("id, book_id, source_lang, art, created_by").eq("id", page.story_id).maybeSingle();
