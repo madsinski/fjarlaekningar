@@ -78,7 +78,8 @@ export async function proxy(request: NextRequest) {
   // "/hsu" is the HSU doctors' roster (own login), unrelated to the launch state.
   // "/vinnustod" is the partner workstation (own login), same reasoning.
   // "/personuvernd-starfsfolks" is the privacy notice Google OAuth points to.
-  const alwaysPublic = ["/admin", "/skjol", "/kynning", "/breytingaskra", "/fyrirspurn", "/personuverndarbeidni", "/kannanir", "/present", "/afskra", "/vaktir", "/samstarf", "/hsu", "/vinnustod", "/personuvernd-starfsfolks"];
+  // "/bokasmidja" is a private family module (own login), unrelated to the launch state.
+  const alwaysPublic = ["/admin", "/skjol", "/kynning", "/breytingaskra", "/fyrirspurn", "/personuverndarbeidni", "/kannanir", "/present", "/afskra", "/vaktir", "/samstarf", "/hsu", "/vinnustod", "/personuvernd-starfsfolks", "/bokasmidja"];
   if (alwaysPublic.some((p) => request.nextUrl.pathname.startsWith(p))) {
     return NextResponse.next(withPathname(request));
   }

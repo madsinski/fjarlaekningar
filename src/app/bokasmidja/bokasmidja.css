@@ -1,0 +1,79 @@
+/* Bókasmiðjan — letur, bakgrunnur og hreyfingar myndanna. */
+
+.bk-root {
+  font-family: var(--font-bk-body), ui-rounded, system-ui, sans-serif;
+  background:
+    radial-gradient(1200px 500px at 10% -10%, #fef3c7 0%, transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, #dbeafe 0%, transparent 55%),
+    linear-gradient(#fffbeb, #fff7ed);
+  -webkit-tap-highlight-color: transparent;
+}
+.bk-display { font-family: var(--font-bk-display), ui-rounded, system-ui, sans-serif; }
+
+/* Takkar sem „ýtast niður“ eins og leikfang. */
+.bk-press { transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease; }
+.bk-press:active:not(:disabled) { transform: translateY(3px) scale(0.985); filter: brightness(0.97); }
+.bk-press:disabled { opacity: 0.55; }
+.bk-press:focus-visible { outline: 4px solid #1d4ed8; outline-offset: 3px; }
+
+@keyframes bk-pop { 0% { transform: scale(0.9); opacity: 0 } 100% { transform: scale(1); opacity: 1 } }
+.bk-pop { animation: bk-pop 0.25s ease-out both; }
+@keyframes bk-shake { 0%, 100% { transform: translateX(0) } 20%, 60% { transform: translateX(-8px) } 40%, 80% { transform: translateX(8px) } }
+.bk-shake { animation: bk-shake 0.4s ease; }
+@keyframes bk-nudge { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
+.bk-nudge { animation: bk-nudge 1.6s ease-in-out infinite; }
+@keyframes bk-write { 0%, 100% { transform: translate(0, 0) rotate(-8deg) } 50% { transform: translate(18px, -6px) rotate(8deg) } }
+.bk-write { animation: bk-write 1.2s ease-in-out infinite; display: inline-block; }
+
+/* ── Myndirnar ────────────────────────────────────────────────────────────── */
+.bk-art { aspect-ratio: 4 / 3; overflow: hidden; background: #e0f2fe; }
+.bk-art > svg { width: 100%; height: 100%; display: block; }
+
+/* Hreyfingar nota translate/rotate/scale (ekki transform), svo þær leggjast
+   ofan á transform-eigindi myndarinnar í stað þess að yfirskrifa það. */
+.bk-art [data-anim], .bk-art [data-tap] { transform-box: fill-box; transform-origin: center; }
+.bk-magic [data-tap] { cursor: pointer; }
+
+.bk-magic [data-anim="float"] { animation: bk-a-float 5s ease-in-out infinite; }
+.bk-magic [data-anim="swim"] { animation: bk-a-swim 6.5s ease-in-out infinite; }
+.bk-magic [data-anim="bob"] { animation: bk-a-bob 3.2s ease-in-out infinite; }
+.bk-magic [data-anim="sway"] { animation: bk-a-sway 4.2s ease-in-out infinite; transform-origin: 50% 100%; }
+.bk-magic [data-anim="wiggle"] { animation: bk-a-wiggle 1.4s ease-in-out infinite; }
+.bk-magic [data-anim="spin"] { animation: bk-a-spin 14s linear infinite; }
+.bk-magic [data-anim="pulse"] { animation: bk-a-pulse 2.6s ease-in-out infinite; }
+.bk-magic [data-anim="twinkle"] { animation: bk-a-twinkle 1.9s ease-in-out infinite; }
+.bk-magic [data-anim="blink"] { animation: bk-a-blink 4.5s ease-in-out infinite; }
+.bk-magic [data-anim="drift"] { animation: bk-a-drift 16s ease-in-out infinite; }
+/* Ekki allt í takt. */
+.bk-magic [data-anim]:nth-of-type(2n) { animation-delay: -1.3s; }
+.bk-magic [data-anim]:nth-of-type(3n) { animation-delay: -2.7s; }
+
+@keyframes bk-a-float { 0%, 100% { translate: 0 0 } 50% { translate: 0 -14px } }
+@keyframes bk-a-swim { 0%, 100% { translate: -14px 0; rotate: -2deg } 50% { translate: 16px -10px; rotate: 3deg } }
+@keyframes bk-a-bob { 0%, 100% { translate: 0 0; rotate: -1.5deg } 50% { translate: 0 9px; rotate: 1.5deg } }
+@keyframes bk-a-sway { 0%, 100% { rotate: -3.5deg } 50% { rotate: 3.5deg } }
+@keyframes bk-a-wiggle { 0%, 100% { rotate: -5deg } 50% { rotate: 5deg } }
+@keyframes bk-a-spin { to { rotate: 360deg } }
+@keyframes bk-a-pulse { 0%, 100% { scale: 1 } 50% { scale: 1.08 } }
+@keyframes bk-a-twinkle { 0%, 100% { opacity: 1; scale: 1 } 50% { opacity: 0.35; scale: 0.82 } }
+@keyframes bk-a-blink { 0%, 91%, 100% { scale: 1 1 } 94%, 97% { scale: 1 0.1 } }
+@keyframes bk-a-drift { 0%, 100% { translate: -20px 0 } 50% { translate: 36px 0 } }
+
+/* Snerting: yfirskrifar hvíldarhreyfinguna rétt á meðan. */
+.bk-magic [data-tapped="jump"] { animation: bk-t-jump 0.75s cubic-bezier(0.3, 0.7, 0.4, 1) 1; }
+.bk-magic [data-tapped="spin"] { animation: bk-t-spin 0.8s ease-in-out 1; }
+.bk-magic [data-tapped="wiggle"] { animation: bk-t-wiggle 0.7s ease-in-out 1; }
+.bk-magic [data-tapped="grow"] { animation: bk-t-grow 0.8s ease-in-out 1; }
+.bk-magic [data-tapped="splash"] { animation: bk-t-splash 0.9s ease-in-out 1; }
+.bk-magic [data-tapped="hide"] { animation: bk-t-hide 1.4s ease-in-out 1; }
+
+@keyframes bk-t-jump { 0%, 100% { translate: 0 0; scale: 1 1 } 15% { scale: 1.08 0.9 } 50% { translate: 0 -70px; scale: 0.96 1.06 } 85% { scale: 1.06 0.94 } }
+@keyframes bk-t-spin { to { rotate: 360deg } }
+@keyframes bk-t-wiggle { 0%, 100% { rotate: 0deg } 15%, 45%, 75% { rotate: -11deg } 30%, 60%, 90% { rotate: 11deg } }
+@keyframes bk-t-grow { 0%, 100% { scale: 1 } 45% { scale: 1.35 } }
+@keyframes bk-t-splash { 0%, 100% { translate: 0 0; rotate: 0deg } 35% { translate: 0 28px; rotate: -8deg } 65% { translate: 0 -34px; rotate: 6deg } }
+@keyframes bk-t-hide { 0%, 100% { opacity: 1; scale: 1 } 30%, 65% { opacity: 0; scale: 0.3 } }
+
+@media (prefers-reduced-motion: reduce) {
+  .bk-magic [data-anim], .bk-nudge, .bk-write { animation: none !important; }
+}

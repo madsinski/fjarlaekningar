@@ -1,0 +1,52 @@
+// Sagan endursögð á öðru máli (enska, íslenska, norska, ungverska).
+//   POST /api/bokasmidja/stories/:id/translate  { lang }
+// Endurtekningarþolið: sé sagan þegar til á málinu gerist ekkert.
+
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { AgentError, agentsConfigured, translateStory } from "@/lib/bokasmidja/agents";
+import { throttle } from "@/lib/bokasmidja/auth";
+import { UUID_RE, fail, json, loadStory, readJson, requireViewer, unlock, viewerId } from "@/lib/bokasmidja/server";
+import { isLang, type I18nText } from "@/lib/bokasmidja/types";
+
+export const runtime = "nodejs";
+export const maxDuration = 300;
+
+export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const auth = await requireViewer(req);
+  if ("res" in auth) return auth.res;
+  const { id } = await ctx.params;
+  const { lang } = await readJson(req);
+  if (!UUID_RE.test(id) || !isLang(lang)) return fail("bad_request");
+  if (!agentsConfigured()) return fail("not_configured", 503);
+
+  const story = await loadStory(id);
+  if (!story || story.status === "idea") return fail("not_found", 404);
+  const from = story.sourceLang;
+  if (lang === from || story.pages.every((p) => p.text[lang])) return json({ ok: true });
+  if (!(await throttle(`translate:${viewerId(auth.viewer) ?? "parent"}`, 60, 86400))) return fail("daily_limit", 429);
+
+  const lock = `translate:${id}:${lang}`;
+  if (!(await throttle(lock, 1, 280))) return json({ ok: true, busy: true });
+
+  try {
+    const out = await translateStory({
+      title: story.title[from] || "",
+      summary: story.summary[from] || "",
+      pages: story.pages.map((p) => p.text[from] || ""),
+    }, from, lang);
+    await supabaseAdmin.from("bk_page_texts")
+      .upsert(story.pages.map((p, i) => ({ page_id: p.id, lang, text: out.pages[i].trim() })));
+    await supabaseAdmin.from("bk_story_texts")
+      .upsert({ story_id: id, lang, title: out.title.trim(), summary: out.summary.trim() });
+    // Bók utan um eina sögu fær titilinn líka á þessu máli.
+    const { data: book } = await supabaseAdmin.from("bk_books").select("id, slug, title, planned_stories").eq("id", story.bookId).maybeSingle();
+    if (book && !book.slug && book.planned_stories === 1) {
+      await supabaseAdmin.from("bk_books").update({ title: { ...(book.title as I18nText), [lang]: out.title.trim() } }).eq("id", book.id);
+    }
+    return json({ ok: true });
+  } catch (e) {
+    await unlock(lock);
+    if (!(e instanceof AgentError)) console.error("[bokasmidja] translate failed", e);
+    return fail("agent_failed", 502);
+  }
+}
