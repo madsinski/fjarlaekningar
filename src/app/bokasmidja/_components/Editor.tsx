@@ -225,7 +225,7 @@ export default function Editor({ initial }: { initial: Story }) {
 
   return (
     <>
-      <TopBar />
+      <TopBar langSwitch={false} />
       <main className={cx("mx-auto w-full max-w-5xl px-4 pb-28 pt-4", drag && "select-none")}>
         <Link href={`/bokasmidja/story/${story.id}`} className="bk-press inline-flex items-center gap-1 rounded-2xl px-2 py-1.5 font-extrabold text-slate-600">
           <ArrowLeft className="h-5 w-5" aria-hidden />{story.title[lang] || story.title[story.sourceLang]}

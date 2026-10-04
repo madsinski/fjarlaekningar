@@ -210,7 +210,7 @@ export default function Reader({ story, setStory, book, phase, editable, onRetry
 
   return (
     <div ref={root} className="bk-root flex min-h-screen flex-col">
-      <TopBar />
+      <TopBar langSwitch={false} />
       <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-2 px-4 pt-3">
         <Link href={backHref} className="bk-press flex items-center gap-1 rounded-2xl px-2 py-1.5 font-extrabold text-slate-600">
           <ArrowLeft className="h-5 w-5" aria-hidden /><span className="max-w-[40vw] truncate">{book.collection ? pick(book.title, lang) : t("nav.shelf")}</span>

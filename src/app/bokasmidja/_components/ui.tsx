@@ -123,8 +123,12 @@ export function LangSwitch({ value, onPick, big }: { value?: Lang; onPick?: (l: 
   );
 }
 
-/** Haus innri síðna: heim í hilluna, hver er inni, mál og útskráning. */
-export function TopBar() {
+/**
+ * Haus innri síðna: heim í hilluna, hver er inni, mál og útskráning.
+ * `langSwitch={false}` á síðum sem hafa sitt eigið málaval (lesarinn, ritillinn),
+ * svo þar sé aðeins ein röð af fánum.
+ */
+export function TopBar({ langSwitch = true }: { langSwitch?: boolean }) {
   const { t, viewer } = useBk();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -141,7 +145,7 @@ export function TopBar() {
         <span className="bk-display text-lg">{t("nav.shelf")}</span>
       </Link>
       <div className="ml-auto flex items-center gap-2">
-        <LangSwitch />
+        {langSwitch && <LangSwitch />}
         {viewer?.role === "parent" ? (
           <Link href="/bokasmidja/parent" aria-label={t("parent.title")} className="bk-press rounded-2xl bg-white p-2.5 ring-2 ring-slate-200">
             <Settings className="h-6 w-6 text-slate-600" aria-hidden />
