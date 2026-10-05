@@ -430,3 +430,19 @@ create index if not exists hsu_task_reminders_month_idx on public.hsu_task_remin
 alter table public.hsu_task_reminders enable row level security;
 drop policy if exists hsu_task_reminders_none on public.hsu_task_reminders;
 create policy hsu_task_reminders_none on public.hsu_task_reminders for all using (false) with check (false);
+
+-- ── Flýtimóttaka: fastir dagar og þak (2026-10-05) ─────────────────────────
+-- Fastir vikudagar (day_weekdays) voru til fyrir en giltu AÐEINS þegar læknir
+-- hafði engar óskir skráð — merkti hann daga í skrefi 3 giltu þeir einir og
+-- föstu dagarnir féllu niður. Nú eru föstu dagarnir HARÐIR: merking í óskum
+-- getur þrengt þá en aldrei víkkað.
+--
+-- fm_max_week / fm_max_month: hámark dagvakta á flýtimóttöku í viku og mánuði.
+-- NULL = ekkert þak. Læknirinn stillir þetta sjálfur (Óskir → skref 3) og
+-- yfirlæknir sér það á Læknar.
+alter table public.hsu_doctors add column if not exists fm_max_week smallint;
+alter table public.hsu_doctors add column if not exists fm_max_month smallint;
+alter table public.hsu_doctors drop constraint if exists hsu_doctors_fm_max_week_check;
+alter table public.hsu_doctors add constraint hsu_doctors_fm_max_week_check check (fm_max_week is null or (fm_max_week >= 0 and fm_max_week <= 7));
+alter table public.hsu_doctors drop constraint if exists hsu_doctors_fm_max_month_check;
+alter table public.hsu_doctors add constraint hsu_doctors_fm_max_month_check check (fm_max_month is null or (fm_max_month >= 0 and fm_max_month <= 31));

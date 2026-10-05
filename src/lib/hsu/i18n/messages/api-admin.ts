@@ -166,6 +166,8 @@ export const apiAdmin = defineMessages(
     "conflict.day_weekday": "Læknirinn vinnur ekki dagvinnu á þessum vikudegi",
     "conflict.evening_weekday": "Læknirinn óskaði ekki eftir kvöldvöktum á þessum vikudegi",
     "conflict.day_part": "Læknirinn óskaði eftir hálfum degi — vaktin nær yfir annan tíma",
+    "conflict.fm_week": "Fleiri flýtimóttökuvaktir í vikunni en læknirinn tekur",
+    "conflict.fm_month": "Fleiri flýtimóttökuvaktir í mánuðinum en læknirinn tekur",
   },
   {
     en: {
@@ -318,6 +320,8 @@ export const apiAdmin = defineMessages(
       "conflict.day_weekday": "The doctor does not work day shifts on this weekday",
       "conflict.evening_weekday": "The doctor did not request evening shifts on this weekday",
       "conflict.day_part": "The doctor requested a half day — the shift covers a different time",
+      "conflict.fm_week": "More day-clinic shifts this week than the doctor takes",
+      "conflict.fm_month": "More day-clinic shifts this month than the doctor takes",
     },
   },
 );

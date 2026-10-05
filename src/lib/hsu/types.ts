@@ -34,6 +34,10 @@ export interface HsuDoctor {
   needs_bakvakt: boolean;
   /** Dagvaktir aðeins þessa vikudaga (0=sun … 6=lau). Tómt = allir dagar. */
   day_weekdays: number[];
+  /** Hámark flýtimóttökuvakta í viku. null = ekkert þak. */
+  fm_max_week: number | null;
+  /** Hámark flýtimóttökuvakta í mánuði. null = ekkert þak. */
+  fm_max_month: number | null;
 }
 
 /** forvakt = mönnuð alla daga; bakvakt = aðeins reyndir, og aðeins þegar þörf er á; other = mönnuð, hver sem er. */

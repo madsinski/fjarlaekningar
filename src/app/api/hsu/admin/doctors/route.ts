@@ -3,7 +3,7 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit, hashSecret, issueAccessLink, passwordProblem, pinProblem } from "@/lib/hsu/auth";
 import { DOCTOR_COLUMNS, fail, json, listDoctors, originOf, readJson, requireManager, toPublicDoctor } from "@/lib/hsu/server";
-import { cleanWeekdays, emailAllowed, sendInviteEmail } from "@/lib/hsu/doctors";
+import { cleanFmMax, cleanWeekdays, emailAllowed, sendInviteEmail } from "@/lib/hsu/doctors";
 import { isLang } from "@/lib/hsu/i18n/core";
 import { langOf, tr } from "@/lib/hsu/i18n/server";
 import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
@@ -40,6 +40,8 @@ export async function POST(req: Request) {
     title: String(body.title ?? "").slice(0, 80),
     can_bakvakt: body.can_bakvakt === true,
     day_weekdays: cleanWeekdays(body.day_weekdays) ?? [],
+    fm_max_week: cleanFmMax(body.fm_max_week, 7) ?? null,
+    fm_max_month: cleanFmMax(body.fm_max_month, 31) ?? null,
     needs_bakvakt: body.needs_bakvakt === true,
     color: typeof body.color === "string" && /^#[0-9a-f]{6}$/i.test(body.color) ? body.color : DOCTOR_COLORS[(count ?? 0) % DOCTOR_COLORS.length],
   };

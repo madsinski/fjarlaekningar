@@ -54,7 +54,7 @@ export async function requireDoctor(req: Request) {
 // ── Læknar ──────────────────────────────────────────────────────────────────
 
 export const DOCTOR_COLUMNS =
-  "id, name, email, phone, title, role, color, fte, active, password_hash, pin_hash, invited_at, invite_token_hash, invite_expires_at, last_login_at, must_change_password, can_bakvakt, needs_bakvakt, day_weekdays, lang, onboarding";
+  "id, name, email, phone, title, role, color, fte, active, password_hash, pin_hash, invited_at, invite_token_hash, invite_expires_at, last_login_at, must_change_password, can_bakvakt, needs_bakvakt, day_weekdays, fm_max_week, fm_max_month, lang, onboarding";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function toPublicDoctor(r: any): HsuDoctor {
@@ -70,6 +70,8 @@ export function toPublicDoctor(r: any): HsuDoctor {
     can_bakvakt: Boolean(r.can_bakvakt),
     needs_bakvakt: Boolean(r.needs_bakvakt),
     day_weekdays: Array.isArray(r.day_weekdays) ? r.day_weekdays.map(Number) : [],
+    fm_max_week: r.fm_max_week ?? null,
+    fm_max_month: r.fm_max_month ?? null,
   };
 }
 

@@ -5,7 +5,7 @@ import { audit, hashSecret, issueAccessLink, passwordProblem } from "@/lib/hsu/a
 import { hsuSync } from "@/lib/hsu/calendar";
 import { DOCTOR_COLUMNS, UUID_RE, fail, json, originOf, readJson, requireManager, toPublicDoctor } from "@/lib/hsu/server";
 import { HSU_EMAIL_DOMAIN, normalizeEmail } from "@/lib/hsu/types";
-import { cleanWeekdays, emailAllowed, sendInviteEmail, sendPromotedEmail } from "@/lib/hsu/doctors";
+import { cleanFmMax, cleanWeekdays, emailAllowed, sendInviteEmail, sendPromotedEmail } from "@/lib/hsu/doctors";
 import { isLang, translator } from "@/lib/hsu/i18n/core";
 import { accountEmails } from "@/lib/hsu/i18n/messages/account-emails";
 import { notifyDoctors } from "@/lib/hsu/notify";
@@ -40,6 +40,10 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (typeof body.can_bakvakt === "boolean") patch.can_bakvakt = body.can_bakvakt;
   const days = cleanWeekdays(body.day_weekdays);
   if (days) patch.day_weekdays = days;
+  const fmW = cleanFmMax(body.fm_max_week, 7);
+  if (fmW !== undefined) patch.fm_max_week = fmW;
+  const fmM = cleanFmMax(body.fm_max_month, 31);
+  if (fmM !== undefined) patch.fm_max_month = fmM;
   if (typeof body.needs_bakvakt === "boolean") patch.needs_bakvakt = body.needs_bakvakt;
   if (body.fte !== undefined) patch.fte = Math.min(100, Math.max(0, Math.round(Number(body.fte)) || 0));
   if (body.role === "head" || body.role === "doctor") {

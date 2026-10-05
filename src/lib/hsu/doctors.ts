@@ -7,6 +7,18 @@ import { hsuEmailHtml, sendHsuEmail } from "./server";
 import { HSU_EMAIL_DOMAIN } from "./types";
 
 /** 0=sun … 6=lau, án endurtekninga. Tómt fylki = allir dagar. */
+/**
+ * Þak á flýtimóttökuvöktum: heil tala innan marka, eða null (ekkert þak).
+ * Tómur strengur og null þýða hvort tveggja „ekkert þak"; undefined = óbreytt.
+ */
+export function cleanFmMax(v: unknown, max: number): number | null | undefined {
+  if (v === undefined) return undefined;
+  if (v === null || v === "") return null;
+  const n = Math.round(Number(v));
+  if (!Number.isFinite(n) || n < 0 || n > max) return undefined;
+  return n;
+}
+
 export function cleanWeekdays(v: unknown): number[] | null {
   if (!Array.isArray(v)) return null;
   return [...new Set(v.map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))].sort();

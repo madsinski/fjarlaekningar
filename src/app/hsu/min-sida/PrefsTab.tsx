@@ -131,6 +131,17 @@ export default function PrefsTab({ data, initialMonth, refresh }: { data: Portal
         onSave={save}
         onLoadPrevious={loadPrevious}
         onProgress={onProgress}
+        fm={{
+          dayWeekdays: data.me.dayWeekdays,
+          maxWeek: data.me.fmMaxWeek,
+          maxMonth: data.me.fmMaxMonth,
+          // Fastar stillingar — vistast strax og gilda alla mánuði.
+          onSave: async (v) => {
+            const r = await hsuApi("/api/hsu/me/fm-settings", { method: "PUT", body: v });
+            if (r.ok) refresh();
+            return r;
+          },
+        }}
       />
     </div>
   );

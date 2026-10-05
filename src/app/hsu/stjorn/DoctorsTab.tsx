@@ -154,6 +154,22 @@ function DoctorFields({ v, set }: { v: DoctorForm; set: (p: Partial<DoctorForm>)
             <button type="button" onClick={() => set({ day_weekdays: [] })} className="rounded-lg px-2 py-1.5 text-xs font-medium text-slate-500 underline">{t("doctors.field.allDays")}</button>
           )}
         </div>
+        {/* Þak læknisins á flýtimóttöku. Hann stillir þetta líka sjálfur í óskunum. */}
+        <div className="mt-3 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-3">
+          {([["fm_max_week", 7, t("doctors.field.fmWeek")], ["fm_max_month", 31, t("doctors.field.fmMonth")]] as const).map(([key, max, label]) => (
+            <label key={key} className="flex items-center gap-2">
+              <span className="text-xs text-slate-600">{label}</span>
+              <input type="number" min={0} max={max} inputMode="numeric"
+                value={v[key] === null ? "" : String(v[key])}
+                placeholder={t("doctors.field.fmNoCap")}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^0-9]/g, "").slice(0, 2);
+                  set({ [key]: raw === "" ? null : Math.min(max, Number(raw)) } as Partial<DoctorForm>);
+                }}
+                className="w-20 rounded-lg border border-slate-300 px-2 py-1 text-sm" />
+            </label>
+          ))}
+        </div>
       </div>
       <div className="space-y-2 rounded-xl border border-slate-200 p-3">
         <label className="flex items-start gap-2.5">
@@ -169,13 +185,13 @@ function DoctorFields({ v, set }: { v: DoctorForm; set: (p: Partial<DoctorForm>)
   );
 }
 
-interface DoctorForm { name: string; email: string; phone: string; title: string; role: HsuRole; fte: number; color: string; can_bakvakt: boolean; needs_bakvakt: boolean; day_weekdays: number[]; lang: Lang }
+interface DoctorForm { name: string; email: string; phone: string; title: string; role: HsuRole; fte: number; color: string; can_bakvakt: boolean; needs_bakvakt: boolean; day_weekdays: number[]; fm_max_week: number | null; fm_max_month: number | null; lang: Lang }
 
 function AddDoctor({ ctx, onClose }: { ctx: PlannerCtx; onClose: () => void }) {
   const t = useT(admin);
   const c = useCommon();
   const [mode, setMode] = useState<"invite" | "manual">("invite");
-  const [v, setV] = useState<DoctorForm>({ name: "", email: "", phone: "", title: "", role: "doctor", fte: 100, color: DOCTOR_COLORS[ctx.data.doctors.length % DOCTOR_COLORS.length], can_bakvakt: false, needs_bakvakt: false, day_weekdays: [], lang: t.lang });
+  const [v, setV] = useState<DoctorForm>({ name: "", email: "", phone: "", title: "", role: "doctor", fte: 100, color: DOCTOR_COLORS[ctx.data.doctors.length % DOCTOR_COLORS.length], can_bakvakt: false, needs_bakvakt: false, day_weekdays: [], fm_max_week: null, fm_max_month: null, lang: t.lang });
   const [password, setPassword] = useState(generatePassword);
   const [mustChange, setMustChange] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -265,7 +281,7 @@ function AddDoctor({ ctx, onClose }: { ctx: PlannerCtx; onClose: () => void }) {
 function EditDoctor({ ctx, doctor, onClose }: { ctx: PlannerCtx; doctor: HsuDoctor; onClose: () => void }) {
   const t = useT(admin);
   const c = useCommon();
-  const [v, setV] = useState<DoctorForm>({ name: doctor.name, email: doctor.email, phone: doctor.phone, title: doctor.title, role: doctor.role, fte: doctor.fte, color: doctor.color, can_bakvakt: doctor.can_bakvakt, needs_bakvakt: doctor.needs_bakvakt, day_weekdays: doctor.day_weekdays ?? [], lang: doctor.lang ?? "is" });
+  const [v, setV] = useState<DoctorForm>({ name: doctor.name, email: doctor.email, phone: doctor.phone, title: doctor.title, role: doctor.role, fte: doctor.fte, color: doctor.color, can_bakvakt: doctor.can_bakvakt, needs_bakvakt: doctor.needs_bakvakt, day_weekdays: doctor.day_weekdays ?? [], fm_max_week: doctor.fm_max_week ?? null, fm_max_month: doctor.fm_max_month ?? null, lang: doctor.lang ?? "is" });
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
   const [link, setLink] = useState<string | null>(null);

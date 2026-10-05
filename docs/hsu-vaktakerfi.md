@@ -159,6 +159,32 @@ Athugið að um helgar og frídaga skarast FM (08–16) og FV2 (08–08) í tím
 leyfir sama lækni báðar, enda er það val yfirlæknis; sé það ekki ætlunin má fella
 FM niður á þeim dögum (taka helgar af vikudögum tegundarinnar) eða breyta tímunum.
 
+## Flýtimóttaka: fastir dagar og þak (2026-10-05)
+
+Hver læknir ræður þrennu um flýtimóttökuna sína. Þetta eru **fastar stillingar sem
+gilda alla mánuði** — ekki mánaðarósk — og standa efst í **skrefi 3** í óskunum
+(`/hsu/min-sida?t=oskir`). Yfirlæknir sér og breytir þeim líka á **Læknar**.
+
+| Stilling | Dálkur | Merking |
+| --- | --- | --- |
+| Fastir vikudagar | `hsu_doctors.day_weekdays` | Læknirinn vinnur flýtimóttöku aðeins þessa vikudaga. Tómt = allir virkir dagar. |
+| Mest í viku | `hsu_doctors.fm_max_week` | Hámark dagvakta í hverri viku (mán–sun). NULL = ekkert þak. |
+| Mest í mánuði | `hsu_doctors.fm_max_month` | Hámark dagvakta í mánuðinum. NULL = ekkert þak. |
+
+**Föstu dagarnir eru harðir.** Fram að þessu giltu þeir aðeins þegar læknirinn hafði
+*engar* óskir skráð: merkti hann daga í skrefi 3 féllu föstu dagarnir niður og
+merkingin ein gilti. Þess vegna gat læknir sem vinnur aðeins mánudaga og miðvikudaga
+fengið þriðjudagsvakt. Nú gildir: **merking í óskum getur ÞRENGT föstu dagana en aldrei
+víkkað þá** (`worksDayShiftOn` í `src/lib/hsu/plan.ts`). Dagar utan föstu daganna eru
+ekki í boði í dagatalinu í skrefi 3.
+
+Þökin bíta á tvennum stað: sjálfvirka skiptingin setur engan umfram þau
+(`blocker` skilar `fmweek`/`fmmonth`), og setji yfirlæknir lækni handvirkt á vakt
+umfram þakið birtist **árekstur** (`fm_week` / `fm_month`) í vaktaplaninu.
+
+Breyti læknir þessu sjálfur er það skráð í `hsu_audit` (`doctor.fmSettings`) svo
+yfirlæknir sjái það í breytingaskránni.
+
 ## Vaktaplanið: hvernig dagurinn er settur upp
 
 Hver dagur í mánaðarplaninu sýnir **eina röð á hverja vaktategund** (FM, FV1,

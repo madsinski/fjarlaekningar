@@ -85,7 +85,7 @@ export function rich(text: string, parts: Record<string, React.ReactNode>): Reac
 }
 
 export default function PrefsEditor({
-  month, initial, status, reviewNote, editable, lockedReason, onSave, mode = "doctor", onLoadPrevious, onProgress,
+  month, initial, status, reviewNote, editable, lockedReason, onSave, mode = "doctor", onLoadPrevious, onProgress, fm,
 }: {
   month: string;
   initial: PrefDraft;
@@ -98,6 +98,17 @@ export default function PrefsEditor({
   onLoadPrevious?: () => Promise<PrefDraft | null>;
   /** Hvaða skref eru búin (2 = dagar merktir, 6 = sent) — fyrir yfirlitið efst. */
   onProgress?: (p: { daysMarked: boolean; fmMarked: boolean; sent: boolean }) => void;
+  /**
+   * Fastar stillingar læknisins á flýtimóttöku: vikudagarnir sem hann vinnur og
+   * þakið á vöktum. Þær gilda ALLA mánuði. `onSave` fylgir aðeins þegar
+   * læknirinn er að skoða sínar eigin óskir — annars eru þær sýndar en læstar.
+   */
+  fm?: {
+    dayWeekdays: number[];
+    maxWeek: number | null;
+    maxMonth: number | null;
+    onSave?: (v: { day_weekdays?: number[]; fm_max_week?: number | null; fm_max_month?: number | null }) => Promise<{ ok: boolean; error?: string }>;
+  };
 }) {
   const t = useT(prefs);
   const c = useCommon();
@@ -142,9 +153,12 @@ export default function PrefsEditor({
 
   // ── Skref 3: dagar á flýtimóttöku ──
   // Aðeins merktir dagar gilda; ómerktur dagur er auður (Hreinsa gerir dag auðan).
+  const fixedDays = fm?.dayWeekdays ?? [];
   const fmDay = (date: string) => {
     const wd = weekdayOf(date);
-    return wd >= 1 && wd <= 5 && !holidayName(date);
+    if (wd < 1 || wd > 5 || holidayName(date)) return false;
+    // Fastir dagar læknisins eru harðir: aðrir dagar eru ekki í boði.
+    return fixedDays.length === 0 || fixedDays.includes(wd);
   };
   const fmLocked = (date: string) => !editable || !fmDay(date) || markFor(draft, date) === "off";
   const applyFm = (date: string, b: FmBrush) => {
@@ -346,6 +360,7 @@ export default function PrefsEditor({
       <Step n={3} steps={steps} done={fmMarked} id="skref-3" title={t("step3.title")}
         hint={t("step3.hint")}
         plainTitle={t("step3.title")}>
+        {fm && <FmSettings fm={fm} editable={editable} />}
         {/* Penslar og dagatal: smellt eða dregið yfir daga, eins og í skrefi 2. */}
         <div>
           <p className="text-[11px] text-slate-500">{t("step3.calendarHint")}</p>
@@ -462,6 +477,76 @@ export default function PrefsEditor({
  * Eitt skref: stórt númer, fyrirsögn og ein setning um hvað á að gera. Hjá
  * yfirlækni (og þegar mánuður er læstur) er það einföld fyrirsögn eins og áður.
  */
+/**
+ * Fastar stillingar læknisins á flýtimóttöku: vikudagarnir sem hann vinnur og
+ * þakið á vöktum í viku og mánuði. Þetta gildir ALLA mánuði, ekki bara þann sem
+ * er opinn — þess vegna vistast það beint og stendur efst í skrefi 3.
+ */
+function FmSettings({ fm, editable }: {
+  fm: NonNullable<Parameters<typeof PrefsEditor>[0]["fm"]>;
+  editable: boolean;
+}) {
+  const t = useT(prefs);
+  const c = useCommon();
+  const [days, setDays] = useState<number[]>(fm.dayWeekdays);
+  const [week, setWeek] = useState(fm.maxWeek === null ? "" : String(fm.maxWeek));
+  const [month, setMonth] = useState(fm.maxMonth === null ? "" : String(fm.maxMonth));
+  const [state, setState] = useState<"idle" | "saving" | "ok" | "err">("idle");
+  const can = Boolean(fm.onSave) && editable;
+
+  const dirty = days.join(",") !== fm.dayWeekdays.join(",")
+    || week !== (fm.maxWeek === null ? "" : String(fm.maxWeek))
+    || month !== (fm.maxMonth === null ? "" : String(fm.maxMonth));
+
+  const save = async () => {
+    if (!fm.onSave) return;
+    setState("saving");
+    const r = await fm.onSave({
+      day_weekdays: days,
+      fm_max_week: week === "" ? null : Number(week),
+      fm_max_month: month === "" ? null : Number(month),
+    });
+    setState(r.ok ? "ok" : "err");
+  };
+
+  const num = (v: string, set: (s: string) => void, max: number, label: string) => (
+    <label className="flex items-center gap-2">
+      <span className="text-xs text-slate-600">{label}</span>
+      <input type="number" min={0} max={max} inputMode="numeric" disabled={!can} value={v}
+        onChange={(e) => set(e.target.value.replace(/[^0-9]/g, "").slice(0, 2))}
+        placeholder={t("fm.noCap")}
+        className="w-20 rounded-lg border border-slate-300 px-2 py-1 text-sm disabled:bg-slate-50 disabled:text-slate-500" />
+    </label>
+  );
+
+  return (
+    <div className="mb-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+      <div className="text-sm font-semibold text-slate-900">{t("fm.title")}</div>
+      <p className="mt-0.5 text-[11px] text-slate-500">{t("fm.hint")}</p>
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        {[1, 2, 3, 4, 5].map((wd) => (
+          <button key={wd} type="button" disabled={!can} aria-pressed={days.includes(wd)}
+            onClick={() => setDays((d) => (d.includes(wd) ? d.filter((x) => x !== wd) : [...d, wd].sort()))}
+            className={cx("rounded-lg px-2.5 py-1.5 text-xs font-semibold ring-1 transition disabled:opacity-60",
+              days.includes(wd) ? "bg-[var(--hsu)] text-white ring-[var(--hsu)]" : "bg-white text-slate-700 ring-slate-300")}>
+            {weekdayShortL(wd, t.lang)}
+          </button>
+        ))}
+        <span className="ml-1 text-[11px] text-slate-500">{days.length === 0 ? t("fm.allDays") : ""}</span>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-4">
+        {num(week, setWeek, 7, t("fm.perWeek"))}
+        {num(month, setMonth, 31, t("fm.perMonth"))}
+        {can && dirty && (
+          <Button size="sm" variant="soft" onClick={save} busy={state === "saving"}>{c("action.save")}</Button>
+        )}
+        {state === "ok" && !dirty && <span className="text-xs font-semibold text-emerald-700">{t("fm.saved")}</span>}
+        {state === "err" && <span className="text-xs font-semibold text-red-600">{t("fm.failed")}</span>}
+      </div>
+    </div>
+  );
+}
+
 export function Step({ n, steps, title, hint, plainTitle, done, optional, id, children }: {
   n: number; steps: boolean; title: string; hint?: string; plainTitle?: string; done?: boolean; optional?: boolean; id?: string; children: React.ReactNode;
 }) {

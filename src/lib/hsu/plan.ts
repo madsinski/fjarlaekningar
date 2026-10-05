@@ -68,6 +68,10 @@ export interface PlanDoctor {
   needsBakvakt?: boolean;
   /** Dagvaktir aðeins þessa vikudaga. Tómt/ósett = allir dagar. */
   dayWeekdays?: number[];
+  /** Hámark dagvakta (flýtimóttöku) í viku. Ósett = ekkert þak. */
+  fmMaxWeek?: number | null;
+  /** Hámark dagvakta (flýtimóttöku) í mánuði. Ósett = ekkert þak. */
+  fmMaxMonth?: number | null;
 }
 
 /** Má læknirinn taka dagvakt á þessum degi? */
@@ -77,19 +81,32 @@ export function worksDayShift(doctor: Pick<PlanDoctor, "dayWeekdays"> | undefine
 }
 
 /**
- * Má læknirinn taka dagvakt á flýtimóttöku þennan dag? Hafi hann skráð óskir
- * fyrir mánuðinn gilda AÐEINS dagarnir sem hann merkti í skrefi 3 — ómerktur
- * dagur er ekki flýtimóttökudagur. Hafi hann engar óskir skráð gilda föstu
- * vikudagarnir sem yfirlæknir stillir (day_weekdays).
+ * Má læknirinn taka dagvakt á flýtimóttöku þennan dag?
+ *
+ * Tvennt þarf að ganga upp, í þessari röð:
+ *   1. FASTIR DAGAR (day_weekdays) eru harðir. Læknir sem vinnur flýtimóttöku
+ *      aðeins mánudaga og miðvikudaga fær aldrei þriðjudagsvakt — merking í
+ *      óskum getur ÞRENGT dagana en aldrei víkkað þá út.
+ *   2. Hafi hann skráð óskir fyrir mánuðinn gilda aðeins dagarnir sem hann
+ *      merkti í skrefi 3; ómerktur dagur er ekki flýtimóttökudagur.
  */
 export function worksDayShiftOn(
   doctor: Pick<PlanDoctor, "dayWeekdays"> | undefined,
   pref: { day_part_marks?: Record<string, string> | null } | null | undefined,
   date: string,
 ): boolean {
-  if (!pref) return worksDayShift(doctor, date);
+  if (!worksDayShift(doctor, date)) return false;
+  if (!pref) return true;
   const mark = pref.day_part_marks?.[date];
   return mark === "all" || mark === "am" || mark === "pm";
+}
+
+/** Mánudagur sömu viku — lykill til að telja vaktir innan vikunnar. */
+export function weekKeyOf(date: string): string {
+  const [y, m, d] = date.split("-").map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d));
+  t.setUTCDate(t.getUTCDate() - ((t.getUTCDay() + 6) % 7));
+  return t.toISOString().slice(0, 10);
 }
 
 export type PlanPrefs = Pick<HsuPreference, "day_marks" | "weekday_marks" | "evening_weekdays" | "day_part" | "day_part_marks" | "min_shifts" | "max_shifts">;
@@ -251,9 +268,19 @@ export function planMonth(
   const wants = (id: string, date: string) => markFor(prefs[id], date) === "want";
 
   /** Hörð athugun. Skilar ástæðu ef læknirinn getur ekki tekið vaktina. */
-  const blocker = (id: string, slot: PlanSlot): "skill" | "dayweek" | "eveningweek" | "daypart" | "off" | "busy" | "rest" | "max" | null => {
+  const blocker = (id: string, slot: PlanSlot): "skill" | "dayweek" | "eveningweek" | "daypart" | "off" | "busy" | "rest" | "max" | "fmweek" | "fmmonth" | null => {
     if (slot.kind === "bakvakt" && !byId.get(id)?.canBakvakt) return "skill";
     if (slot.period === "day" && !worksDayShiftOn(byId.get(id), prefs[id], slot.date)) return "dayweek";
+    // Þak læknisins á dagvöktum — í viku og í mánuði.
+    if (slot.period === "day") {
+      const doc = byId.get(id);
+      const mine = held[id].filter((h) => h.key !== slot.key && h.period === "day");
+      if (doc?.fmMaxWeek != null) {
+        const wk = weekKeyOf(slot.date);
+        if (mine.filter((h) => weekKeyOf(h.date) === wk).length >= doc.fmMaxWeek) return "fmweek";
+      }
+      if (doc?.fmMaxMonth != null && mine.length >= doc.fmMaxMonth) return "fmmonth";
+    }
     if (slot.period === "evening" && !wantsEveningOn(prefs[id], slot.date)) return "eveningweek";
     if (slot.period === "day" && !fitsDayPart(dayPartFor(prefs[id], slot.date), slot.part)) return "daypart";
     if (isOff(id, slot.date)) return "off";
@@ -474,10 +501,11 @@ export function toPlanSlots(
   });
 }
 
-export function toPlanDoctors(doctors: { id: string; name: string; fte: number; active: boolean; can_bakvakt?: boolean; needs_bakvakt?: boolean; day_weekdays?: number[] }[]): PlanDoctor[] {
+export function toPlanDoctors(doctors: { id: string; name: string; fte: number; active: boolean; can_bakvakt?: boolean; needs_bakvakt?: boolean; day_weekdays?: number[]; fm_max_week?: number | null; fm_max_month?: number | null }[]): PlanDoctor[] {
   return doctors.map((d) => ({
     id: d.id, name: d.name, fte: d.fte, active: d.active,
     canBakvakt: Boolean(d.can_bakvakt), needsBakvakt: Boolean(d.needs_bakvakt), dayWeekdays: d.day_weekdays ?? [],
+    fmMaxWeek: d.fm_max_week ?? null, fmMaxMonth: d.fm_max_month ?? null,
   }));
 }
 
@@ -511,12 +539,12 @@ export function statsFor(slots: PlanSlot[], doctors: PlanDoctor[], prefs: Record
 
 // ── Árekstrar í núverandi plani (fyrir handvirkar breytingar) ──────────────
 
-export type ConflictKind = "off" | "double" | "rest" | "max" | "skill" | "no_bakvakt" | "day_weekday" | "evening_weekday" | "day_part";
+export type ConflictKind = "off" | "double" | "rest" | "max" | "skill" | "no_bakvakt" | "day_weekday" | "evening_weekday" | "day_part" | "fm_week" | "fm_month";
 
 /** Árekstur á tungumáli notandans. */
 export const conflictL = (k: ConflictKind, lang: Lang): string => translator(apiAdmin, lang)(`conflict.${k}`);
 
-const CONFLICT_KINDS: ConflictKind[] = ["off", "double", "rest", "max", "skill", "no_bakvakt", "day_weekday", "evening_weekday", "day_part"];
+const CONFLICT_KINDS: ConflictKind[] = ["off", "double", "rest", "max", "skill", "no_bakvakt", "day_weekday", "evening_weekday", "day_part", "fm_week", "fm_month"];
 /** Íslensku textarnir (eldri notkun); nota conflictL þar sem texti birtist. */
 export const CONFLICT_IS = Object.fromEntries(CONFLICT_KINDS.map((k) => [k, conflictL(k, "is")])) as Record<ConflictKind, string>;
 
@@ -524,7 +552,7 @@ export const CONFLICT_IS = Object.fromEntries(CONFLICT_KINDS.map((k) => [k, conf
 export function findConflicts(
   slots: PlanSlot[],
   prefs: Record<string, PlanPrefs | undefined>,
-  doctors: Pick<PlanDoctor, "id" | "canBakvakt" | "needsBakvakt" | "dayWeekdays">[] = [],
+  doctors: Pick<PlanDoctor, "id" | "canBakvakt" | "needsBakvakt" | "dayWeekdays" | "fmMaxWeek" | "fmMaxMonth">[] = [],
 ): Record<string, ConflictKind[]> {
   const out: Record<string, ConflictKind[]> = {};
   const docs = new Map(doctors.map((d) => [d.id, d]));
@@ -551,6 +579,12 @@ export function findConflicts(
       if (info && s.kind === "bakvakt" && !info.canBakvakt) list.push("skill");
       // Dagvakt á röngum vikudegi telst ekki árekstur hafi læknirinn samþykkt hana.
       if (info && s.period === "day" && !viaRequest && !worksDayShiftOn(info, prefs[doc], s.date)) list.push("day_weekday");
+      // Þak læknisins á flýtimóttöku — handvirk vakt umfram það er árekstur.
+      if (info && s.period === "day" && !viaRequest) {
+        const days = mine.filter((x) => x.period === "day");
+        if (info.fmMaxWeek != null && days.filter((x) => weekKeyOf(x.date) === weekKeyOf(s.date)).length > info.fmMaxWeek) list.push("fm_week");
+        if (info.fmMaxMonth != null && days.length > info.fmMaxMonth) list.push("fm_month");
+      }
       if (s.period === "evening" && !viaRequest && !wantsEveningOn(prefs[doc], s.date)) list.push("evening_weekday");
       if (s.period === "day" && !viaRequest && !fitsDayPart(dayPartFor(prefs[doc], s.date), s.part)) list.push("day_part");
       if (info && s.kind === "forvakt" && info.needsBakvakt && !staffedBv.has(s.date)) list.push("no_bakvakt");

@@ -14,6 +14,8 @@ export const apiDoctor = defineMessages(
     "req.unknownLang": "Óþekkt tungumál",
     "req.invalidMonth": "Ógildur mánuður",
     "pdf.notPublished": "Vaktaplan mánaðarins hefur ekki verið birt",
+    "fm.badWeek": "Hámark á viku verður að vera tala á bilinu 0–7",
+    "fm.badMonth": "Hámark á mánuði verður að vera tala á bilinu 0–31",
 
     "password.tooShort": "Lykilorð þarf að vera minnst 10 stafir.",
     "password.tooLong": "Lykilorð er of langt.",
@@ -75,6 +77,8 @@ export const apiDoctor = defineMessages(
       "req.unknownLang": "Unknown language",
       "req.invalidMonth": "Invalid month",
       "pdf.notPublished": "The schedule for this month has not been published",
+      "fm.badWeek": "The weekly maximum must be a number between 0 and 7",
+      "fm.badMonth": "The monthly maximum must be a number between 0 and 31",
 
       "password.tooShort": "Your password must be at least 10 characters long.",
       "password.tooLong": "Your password is too long.",
