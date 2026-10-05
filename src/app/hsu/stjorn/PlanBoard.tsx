@@ -13,7 +13,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  AlertTriangle, ArrowRight, Ban, Clock, Eraser, Hand, Heart, Loader2, Merge, Plus, RefreshCw, Scissors, Shield, Shuffle, Sparkles, Trash2, Undo2, Wand2, X,
+  AlertTriangle, ArrowRight, Ban, Clock, Eraser, Hand, Heart, Loader2, Merge, Plus, Printer, RefreshCw, Scissors, Shield, Shuffle, Sparkles, Trash2, Undo2, Wand2, X,
 } from "lucide-react";
 import { monthWeeks } from "../_components/PrefsEditor";
 import { Badge, Button, Card, Field, Modal, Notice, cx, hsuApi, inputCls, shortName } from "../_components/ui";
@@ -278,6 +278,14 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
             if (!confirm(t("tool.clearConfirm"))) return;
             void apply(shifts.filter((s) => s.doctor_id).map((s) => ({ id: s.id, doctor_id: null })));
           }} disabled={!shifts.some((s) => s.doctor_id)}><Eraser className="h-4 w-4" /> {t("tool.clear")}</Button>
+          {/* Fyrir ritara: allur mánuðurinn á blaði, allir læknar — enginn einn
+              dreginn fram. Virkar í hvaða stöðu sem er, líka áður en birt er. */}
+          {shifts.length > 0 && (
+            <a href={`/api/hsu/admin/months/${month}/pdf`} target="_blank" rel="noopener"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--hsu-soft)] px-3.5 py-2 text-sm font-semibold text-[var(--hsu-dark)] ring-1 ring-[var(--hsu)]/20 transition hover:brightness-95">
+              <Printer className="h-4 w-4" /> {t("tool.print")}
+            </a>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <Badge tone={emptyCount ? "red" : "green"}>{t("tool.unstaffed", { n: emptyCount })}</Badge>

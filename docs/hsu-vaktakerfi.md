@@ -408,10 +408,15 @@ mánaðarplanið á skjánum.
   á báðum stöðum, við hlið mánaðarheitisins (`/api/hsu/me/shifts-pdf?m=2026-10`).
   Aðeins **birtir** mánuðir: óbirt plan svarar 404 og hnappurinn er þá ekki sýndur.
   Skjalið er á tungumáli læknisins.
-* **Forskoða PDF** í birtingarskrefinu (og eftir birtingu) opnar skjalið fyrir mánuð í
-  hvaða stöðu sem er — annaðhvort hlutlaust mánaðarblað eða *eins og tiltekinn læknir
-  fær það*: `/api/hsu/admin/months/2026-10/pdf[?doctorId=…]`, krefst yfirlæknis eða
-  staff-aðgangs, 404 ef ekkert plan er til.
+* **Prenta vaktaplan** í verkfærastiku vaktaplansins — blaðið fyrir **ritarann**:
+  allur mánuðurinn, allir læknar, **hver í sínum lit** (eins og á skjánum) og enginn
+  einn dreginn fram. Engin „Þínar vaktir"-skýring. Virkar í hvaða stöðu sem er, líka
+  áður en planið er birt.
+* **Forskoða PDF** í birtingarskrefinu (og eftir birtingu) gefur sama hlutlausa blaðið
+  eða skjalið *eins og tiltekinn læknir fær það* — þá er hann einn í lit og aðrir gráir.
+
+Báðir hnappar nota `/api/hsu/admin/months/2026-10/pdf[?doctorId=…]`: krefst yfirlæknis
+eða staff-aðgangs og svarar 404 sé ekkert plan til. Án `doctorId` er blað ritarans.
 
 Kóði: `src/lib/hsu/shift-pdf.ts` og `src/lib/hsu/pdf/` — `shared.ts` (vikur, dagar,
 nöfn, litir, rúnnaðir fletir) og `system.ts` (teikningin). pdf-lib;

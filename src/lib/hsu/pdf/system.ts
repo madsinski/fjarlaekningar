@@ -99,11 +99,15 @@ export async function renderSystem(i: ShiftPdfInput): Promise<Uint8Array> {
           const lw = bold.widthOfTextAtSize(label, 6.2);
           page.drawText(label, { x: px + (pw - lw) / 2, y: cy + 3, size: 6.2, font: bold, color: RED });
         } else {
-          const fill = e.own ? mineColor : SLATE100;
-          roundRect(page, { x: px, y: cy, w: pw, h: 10.5, r: 5, color: fill, border: e.own ? undefined : SLATE200 });
+          // Blað eins læknis: hans vaktir í hans lit, aðrir hógværir og gráir.
+          // Blað ritarans (enginn tiltekinn læknir): HVER læknir í sínum lit,
+          // eins og á skjánum — þá les maður planið í fljótu bragði.
+          const colored = i.doctor ? e.own : true;
+          const fill = colored ? (e.own ? mineColor : e.color) : SLATE100;
+          roundRect(page, { x: px, y: cy, w: pw, h: 10.5, r: 5, color: fill, border: colored ? undefined : SLATE200 });
           const txt = clip(e.who, bold, 6.4, pw - 8);
           const lw = bold.widthOfTextAtSize(txt, 6.4);
-          page.drawText(txt, { x: px + (pw - lw) / 2, y: cy + 3, size: 6.4, font: bold, color: e.own ? WHITE : SLATE700 });
+          page.drawText(txt, { x: px + (pw - lw) / 2, y: cy + 3, size: 6.4, font: bold, color: colored ? WHITE : SLATE700 });
         }
         if (e.time) page.drawText(safe(e.time), { x: px + pw - font.widthOfTextAtSize(safe(e.time), 4.6) - 3, y: cy + 11.5, size: 4.6, font, color: SLATE400 });
         ry -= ROW;
@@ -132,8 +136,10 @@ export async function renderSystem(i: ShiftPdfInput): Promise<Uint8Array> {
     page.drawText(safe(label), { x: fx + 9, y: fy, size: 6.8, font: f, color: SLATE500 });
     fx += 9 + f.widthOfTextAtSize(safe(label), 6.8) + 14;
   };
-  if (i.doctor) dot(mineColor, `${t("all.youMark")} — ${t.n("mine.count", ownCount)}`, bold);
-  dot(SLATE100, t("others"));
+  if (i.doctor) {
+    dot(mineColor, `${t("all.youMark")} — ${t.n("mine.count", ownCount)}`, bold);
+    dot(SLATE100, t("others"));
+  }
   // „vantar" fær strikaðan hring svo hann líkist tómu hólfi.
   page.drawCircle({ x: fx + 3, y: fy + 2.5, size: 3, borderColor: RED, borderWidth: 0.7, borderDashArray: [1.4, 1.2] });
   page.drawText(safe(t("vantar")), { x: fx + 9, y: fy, size: 6.8, font, color: SLATE500 });
