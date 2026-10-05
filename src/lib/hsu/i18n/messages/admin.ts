@@ -193,6 +193,11 @@ export const admin = defineMessages(
 
     // ── Vaktategundir ──
     "types.new": "Ný vaktategund",
+    "types.cleared_one": "Ein ómönnuð vakt fjarlægð úr óbirtum vaktaplönum.",
+    "types.cleared_other": "{n} ómannaðar vaktir fjarlægðar úr óbirtum vaktaplönum.",
+    "types.clearedNone": "Engar vaktir þurfti að fjarlægja.",
+    "types.keptStaffed_one": "Ein mönnuð vakt stendur eftir — taktu hana af handvirkt ef hún á ekki að vera.",
+    "types.keptStaffed_other": "{n} mannaðar vaktir standa eftir — taktu þær af handvirkt ef þær eiga ekki að vera.",
     "types.name": "Heiti",
     "types.namePlaceholder": "t.d. Bakvakt",
     "types.short": "Skammstöfun",
@@ -406,6 +411,11 @@ export const admin = defineMessages(
       "reset.button": "Clear {target}",
 
       "types.new": "New shift type",
+      "types.cleared_one": "One unstaffed shift removed from unpublished schedules.",
+      "types.cleared_other": "{n} unstaffed shifts removed from unpublished schedules.",
+      "types.clearedNone": "No shifts needed removing.",
+      "types.keptStaffed_one": "One staffed shift remains — remove it by hand if it should not be there.",
+      "types.keptStaffed_other": "{n} staffed shifts remain — remove them by hand if they should not be there.",
       "types.name": "Name",
       "types.namePlaceholder": "e.g. Second on call",
       "types.short": "Abbreviation",

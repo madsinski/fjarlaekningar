@@ -179,6 +179,7 @@ function ShiftTypeCard({ ctx, type }: { ctx: PlannerCtx; type?: HsuShiftType }) 
   const [open, setOpen] = useState(Boolean(type));
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [cleared, setCleared] = useState<{ removed: number; kept: number } | null>(null);
   const set = (p: Partial<HsuShiftType>) => setV((x) => ({ ...x, ...p }));
   const dirty = JSON.stringify(v) !== JSON.stringify(type ?? blank);
 
@@ -191,12 +192,14 @@ function ShiftTypeCard({ ctx, type }: { ctx: PlannerCtx; type?: HsuShiftType }) 
   }
 
   const save = async () => {
-    setBusy("save"); setErr(null);
+    setBusy("save"); setErr(null); setCleared(null);
     const r = type
-      ? await hsuApi(`/api/hsu/admin/shift-types/${type.id}`, { method: "PATCH", body: v, staff: true })
-      : await hsuApi("/api/hsu/admin/shift-types", { body: v, staff: true });
+      ? await hsuApi<{ removed?: number; kept?: number }>(`/api/hsu/admin/shift-types/${type.id}`, { method: "PATCH", body: v, staff: true })
+      : await hsuApi<{ removed?: number; kept?: number }>("/api/hsu/admin/shift-types", { body: v, staff: true });
     setBusy(null);
     if (!r.ok) { setErr(r.error ?? t("doctors.failed")); return; }
+    // Slökkt á tegund: segja frá vöktunum sem hurfu úr óbirtum mánuðum.
+    if (r.removed || r.kept) setCleared({ removed: r.removed ?? 0, kept: r.kept ?? 0 });
     if (!type) { setV(blank); setOpen(false); }
     await ctx.reload();
   };
@@ -277,6 +280,12 @@ function ShiftTypeCard({ ctx, type }: { ctx: PlannerCtx; type?: HsuShiftType }) 
         </div>
       </div>
       {err && <Notice tone="err">{err}</Notice>}
+      {cleared && (cleared.removed > 0 || cleared.kept > 0) && (
+        <Notice tone="ok">
+          {cleared.removed > 0 ? t.n("types.cleared", cleared.removed) : t("types.clearedNone")}
+          {cleared.kept > 0 ? ` ${t.n("types.keptStaffed", cleared.kept)}` : ""}
+        </Notice>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" onClick={save} busy={busy === "save"} disabled={!dirty || !v.name.trim()}><Save className="h-3.5 w-3.5" /> {type ? c("action.save") : t("types.add")}</Button>
         {type && (

@@ -159,6 +159,24 @@ Athugið að um helgar og frídaga skarast FM (08–16) og FV2 (08–08) í tím
 leyfir sama lækni báðar, enda er það val yfirlæknis; sé það ekki ætlunin má fella
 FM niður á þeim dögum (taka helgar af vikudögum tegundarinnar) eða breyta tímunum.
 
+## Vaktategund gerð óvirk (2026-10-05)
+
+Þegar slökkt er á vaktategund í *Stillingum* hverfa **tómu vaktirnar hennar strax** úr
+óbirtum vaktaplönum frá og með deginum í dag. Áður stóðu þær eftir þar til einhver ýtti
+á „Uppfæra vaktir" — yfirlæknir slökkti á tegundinni, sá engan mun á vaktaplaninu og
+hélt að ekkert hefði gerst.
+
+Tvennt stendur eftir og er ekki snert:
+
+* **Mannaðar vaktir** — einhver hefur þegar lagt vinnu í að raða þeim. Fjöldinn er
+  sýndur („2 mannaðar vaktir standa eftir") svo yfirlæknir geti tekið þær af handvirkt.
+* **Birtir mánuðir** — þær vaktir eru loforð sem læknarnir hafa þegar séð.
+
+Sama hreinsun keyrir þegar tegund er fjarlægð (hún er aðeins gerð óvirk ef vaktir vísa
+enn í hana; hreinsist þær allar er tegundinni eytt alveg). Fjöldinn fer í `hsu_audit`
+(`removedShifts` / `keptShifts`). Kóði: `clearSlotsOfType` í
+`src/app/api/hsu/admin/shift-types/[id]/route.ts`.
+
 ## Flýtimóttaka: fastir dagar og þak (2026-10-05)
 
 Hver læknir ræður þrennu um flýtimóttökuna sína. Þetta eru **fastar stillingar sem
