@@ -303,7 +303,9 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
       <div className="grid gap-4 lg:grid-cols-[1fr_290px]">
         {/* Dagatal */}
         <Card className="overflow-x-auto p-2 sm:p-3">
-          <div className="grid min-w-[940px] grid-cols-7 gap-1.5">
+          {/* Á síma/spjaldtölvu skrunar borðið til hliðar (940px lágmark); á stórum
+              skjá á það að PASSA í dálkinn — annars klipptist sunnudagurinn af. */}
+          <div className="grid min-w-[940px] grid-cols-7 gap-1.5 lg:min-w-0">
             {WEEKDAY_ORDER.map((wd) => <div key={wd} className="py-1 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">{weekdayShortL(wd, t.lang)}</div>)}
             {monthWeeks(month).flat().map((date, i) => {
               if (!date) return <div key={`x${i}`} />;
