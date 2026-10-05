@@ -404,8 +404,10 @@ mánaðarplanið á skjánum.
   minni úr RAUNVERULEGUM vaktategundum og læknum stöðvarinnar — sömu nöfn, sömu litir,
   og sjötta hver vakt skilin eftir ómönnuð svo „vantar“ sjáist. **Ekkert er vistað** og
   ekkert vaktaplan þarf að vera til. Kóði: `src/lib/hsu/pdf/demo.ts`.
-* Læknir prentar af *Mínar vaktir* (`/api/hsu/me/shifts-pdf?m=2026-10`). Aðeins
-  **birtir** mánuðir — óbirt plan svarar 404. Skjalið er á tungumáli læknisins.
+* Læknir prentar af **Mínar vaktir** og af **Vaktaplani** — sami hnappur (`PrintLink`)
+  á báðum stöðum, við hlið mánaðarheitisins (`/api/hsu/me/shifts-pdf?m=2026-10`).
+  Aðeins **birtir** mánuðir: óbirt plan svarar 404 og hnappurinn er þá ekki sýndur.
+  Skjalið er á tungumáli læknisins.
 * **Forskoða PDF** í birtingarskrefinu (og eftir birtingu) opnar skjalið fyrir mánuð í
   hvaða stöðu sem er — annaðhvort hlutlaust mánaðarblað eða *eins og tiltekinn læknir
   fær það*: `/api/hsu/admin/months/2026-10/pdf[?doctorId=…]`, krefst yfirlæknis eða

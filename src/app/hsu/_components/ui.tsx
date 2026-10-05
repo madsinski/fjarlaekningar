@@ -3,7 +3,7 @@
 // Smáeiningar viðmóts HSU vaktakerfis. Litur HSU er í --hsu (sjá layout).
 
 import { useEffect, type ButtonHTMLAttributes, type ReactNode } from "react";
-import { Loader2, X } from "lucide-react";
+import { Loader2, Printer, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { DEFAULT_LANG, LANG_COOKIE, isLang, translator, type Lang } from "@/lib/hsu/i18n/core";
 import { useCommon } from "@/lib/hsu/i18n/client";
@@ -137,6 +137,23 @@ export async function hsuApi<T = Record<string, unknown>>(path: string, init: { 
   } catch {
     return { ok: false, error: translator(common, cookieLang())("error.network") } as T & { ok: boolean; error?: string };
   }
+}
+
+/**
+ * Hlekkur sem opnar prentskjal vaktaplansins í nýjum flipa. Sami hnappur á
+ * „Mínar vaktir" og á „Vaktaplan" svo hann sé á sama stað og líti eins út.
+ * Áberandi að ásettu ráði: læknar eiga að finna hann án þess að leita.
+ */
+export function PrintLink({ month, label, className }: { month: string; label: string; className?: string }) {
+  return (
+    <a href={`/api/hsu/me/shifts-pdf?m=${month}`} target="_blank" rel="noopener"
+      className={cx(
+        "inline-flex items-center gap-1.5 rounded-xl bg-[var(--hsu-soft)] px-3.5 py-2 text-sm font-semibold text-[var(--hsu-dark)] ring-1 ring-[var(--hsu)]/20 transition hover:brightness-95",
+        className,
+      )}>
+      <Printer className="h-4 w-4" /> {label}
+    </a>
+  );
 }
 
 export function HsuLogo({ size = 36 }: { size?: number }) {

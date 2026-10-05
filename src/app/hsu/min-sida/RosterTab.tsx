@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { monthWeeks } from "../_components/PrefsEditor";
-import { Card, cx, hsuApi, shortName } from "../_components/ui";
+import { Card, PrintLink, cx, hsuApi, shortName } from "../_components/ui";
 import { useT } from "@/lib/hsu/i18n/client";
 import { capFirstL, holidayL, monthLabelL, weekdayShortL } from "@/lib/hsu/i18n/format";
 import { prefs } from "@/lib/hsu/i18n/messages/prefs";
@@ -41,6 +41,8 @@ export default function RosterTab({ meId }: { meId: string }) {
           <button onClick={() => setMonth((m) => shiftMonth(m, -1))} aria-label={t("roster.prev")} className="rounded-xl border border-slate-200 bg-white p-2 hover:bg-slate-50"><ChevronLeft className="h-4 w-4" /></button>
           <span className="w-36 text-center text-sm font-bold">{capFirstL(monthLabelL(month, t.lang), t.lang)}</span>
           <button onClick={() => setMonth((m) => shiftMonth(m, 1))} aria-label={t("roster.next")} className="rounded-xl border border-slate-200 bg-white p-2 hover:bg-slate-50"><ChevronRight className="h-4 w-4" /></button>
+          {/* Óbirtur mánuður hefur ekkert skjal — þá er hnappurinn ekki sýndur. */}
+          {state.published && <PrintLink month={month} label={t("roster.print")} className="ml-1" />}
         </div>
       </div>
 

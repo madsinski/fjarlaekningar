@@ -13,7 +13,7 @@ import { portal } from "@/lib/hsu/i18n/messages/portal";
 import type { Lang } from "@/lib/hsu/i18n/core";
 import { dayLabelL, holidayL, monthLabelL, shiftPeriodL, weekdayShortOf } from "@/lib/hsu/i18n/format";
 import HsuHeader from "../_components/HsuHeader";
-import { Badge, Button, Card, Field, Modal, Notice, cx, firstName, hsuApi, inputCls, shortName } from "../_components/ui";
+import { Badge, Button, Card, Field, Modal, Notice, PrintLink, cx, firstName, hsuApi, inputCls, shortName } from "../_components/ui";
 import type { PortalData } from "@/lib/hsu/portal";
 import {
   effectiveStatus, hhmm, holidayName, openWindow,
@@ -431,10 +431,7 @@ function ShiftsTab({ data, swaps, refresh, onLog }: { data: PortalData; swaps: H
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">{t.n("shifts.monthCount", rows.length, { month: monthLabelL(m, t.lang) })}</h2>
             {/* Sama skjal og fylgir birtingarpóstinum: vaktirnar þínar og allur mánuðurinn. */}
-            <a href={`/api/hsu/me/shifts-pdf?m=${m}`} target="_blank" rel="noopener"
-              className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-[var(--hsu-dark)] ring-1 ring-slate-200 transition hover:bg-slate-50">
-              <Printer className="h-3.5 w-3.5" /> {t("shifts.print")}
-            </a>
+            <PrintLink month={m} label={t("shifts.print")} />
           </div>
           <Card className="divide-y divide-slate-100">
             {rows.map((s) => {

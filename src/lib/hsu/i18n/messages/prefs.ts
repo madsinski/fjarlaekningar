@@ -153,6 +153,7 @@ export const prefs = defineMessages(
     "roster.prev": "Fyrri mánuður",
     "roster.next": "Næsti mánuður",
     "roster.notPublished": "Vaktaplan fyrir {month} hefur ekki verið birt.",
+    "roster.print": "Prenta vaktaplan",
     "roster.onlyMine": "Aðeins mínar vaktir",
     /** {label} vaktaheiti, {start}–{end} tímar */
     "roster.shiftTitle": "{label} {start}–{end}",
@@ -302,6 +303,7 @@ export const prefs = defineMessages(
       "roster.prev": "Previous month",
       "roster.next": "Next month",
       "roster.notPublished": "The schedule for {month} has not been published.",
+      "roster.print": "Print schedule",
       "roster.onlyMine": "Only my shifts",
       "roster.shiftTitle": "{label} {start}–{end}",
       "roster.shiftTitlePending": "{label} {start}–{end} · awaiting approval",
