@@ -2,7 +2,7 @@
 
 // Smáeiningar viðmóts HSU vaktakerfis. Litur HSU er í --hsu (sjá layout).
 
-import { useEffect, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { useEffect, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { Loader2, Printer, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { DEFAULT_LANG, LANG_COOKIE, isLang, translator, type Lang } from "@/lib/hsu/i18n/core";
@@ -144,6 +144,35 @@ export async function hsuApi<T = Record<string, unknown>>(path: string, init: { 
  * „Mínar vaktir" og á „Vaktaplan" svo hann sé á sama stað og líti eins út.
  * Áberandi að ásettu ráði: læknar eiga að finna hann án þess að leita.
  */
+/**
+ * Rofi sem man valið milli heimsókna. localStorage getur kastað (einkagluggi,
+ * lokað á vefkökur) — þá stendur sjálfgefna gildið og ekkert brotnar.
+ */
+export function useStoredFlag(key: string, initial: boolean): [boolean, (v: boolean) => void] {
+  const [on, setOn] = useState(initial);
+  useEffect(() => {
+    try {
+      const v = window.localStorage.getItem(key);
+      if (v !== null) setOn(v === "1");
+    } catch { /* ekkert geymt — sjálfgefna gildið stendur */ }
+  }, [key]);
+  const set = (v: boolean) => {
+    setOn(v);
+    try { window.localStorage.setItem(key, v ? "1" : "0"); } catch { /* sleppum */ }
+  };
+  return [on, set];
+}
+
+/** Gátreitur í sama stíl á öllum flipum. */
+export function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-slate-600">
+      <input type="checkbox" className="h-4 w-4" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      {label}
+    </label>
+  );
+}
+
 export function PrintLink({ month, label, className }: { month: string; label: string; className?: string }) {
   return (
     <a href={`/api/hsu/me/shifts-pdf?m=${month}`} target="_blank" rel="noopener"

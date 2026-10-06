@@ -54,6 +54,15 @@ export type DayWork = Partial<Record<string, DayWorkKind>>;
 export const isDayWorkKind = (v: unknown): v is DayWorkKind =>
   typeof v === "string" && (DAY_WORK_KINDS as readonly string[]).includes(v);
 
+/**
+ * Dagvinna læknisins þennan dag, eða null. Frídagar eru undanskildir — þá er
+ * engin dagvinna. Hreint fall: notað bæði í vafra og á þjóni.
+ */
+export function dayWorkOn(work: DayWork | null | undefined, date: string): DayWorkKind | null {
+  if (!work || holidayName(date)) return null;
+  return work[String(weekdayOf(date))] ?? null;
+}
+
 /** Vikudagarnir sem vaktaskipulagið má setja flýtimóttöku á. */
 export function fmWeekdaysOf(work: DayWork | null | undefined): number[] {
   return Object.entries(work ?? {})
