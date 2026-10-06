@@ -9,7 +9,7 @@ import { holidayL, monthLabelL } from "./i18n/format";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendEmail, escapeHtml, type EmailAttachment } from "@/lib/email";
-import { getHsuActor, sameOrigin, type HsuActor } from "./auth";
+import { getHsuActor, sameOrigin, staffFromCookie, type HsuActor } from "./auth";
 import {
   datesInMonth, dayPartFor, isOvernight, markFor, minutesOf, monthRange, splitTimeOf, typeAppliesOn, holidayName, weekdayOf,
   type HsuDoctor, type HsuMonth, type HsuPreference, type HsuShift, type HsuShiftType, type HsuSwap,
@@ -37,7 +37,11 @@ export async function readJson(req: Request): Promise<Record<string, unknown>> {
 export async function requireManager(req: Request): Promise<{ actor: HsuActor } | { res: NextResponse }> {
   const t = tr(req, apiDoctor);
   if (req.method !== "GET" && !sameOrigin(req)) return { res: fail(t("req.invalid"), 403) };
-  const actor = await getHsuActor(req);
+  let actor = await getHsuActor(req);
+  // Sami maður getur verið innskráður sem venjulegur læknir OG sem starfsmaður
+  // Fjarlækninga. Læknislotan gengur fyrir annars staðar, en hér ræður það sem
+  // veitir aðgang: annars fengi hann „aðeins yfirlæknir" þrátt fyrir full réttindi.
+  if (!actor?.canManage) actor = (await staffFromCookie()) ?? actor;
   if (!actor) return { res: fail(t("req.notSignedIn"), 401) };
   if (!actor.canManage) return { res: fail(t("req.headOnly"), 403) };
   return { actor };

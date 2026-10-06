@@ -13,6 +13,7 @@ import { LANG_COOKIE, LANG_COOKIE_OPTS, isLang, translator, type Lang } from "./
 import { apiDoctor } from "./i18n/messages/api-doctor";
 import { createHash, randomBytes, scrypt as scryptCb, timingSafeEqual, type ScryptOptions } from "node:crypto";
 import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { HsuRole } from "./types";
 
@@ -195,27 +196,54 @@ function jwtAal(token: string): string | null {
   }
 }
 
+/**
+ * Starfsmaður Fjarlækninga út frá aðgangslykli. Lykillinn er ALLTAF staðfestur
+ * hjá Supabase (getUser les undirskriftina) — hvort sem hann kom í hausnum eða
+ * úr kökunni — og aal2 er krafa, svo tveggja þrepa auðkenningin standi.
+ */
+async function staffFromToken(token: string): Promise<HsuActor | null> {
+  const { data, error } = await supabaseAdmin.auth.getUser(token);
+  if (error || !data.user?.id) return null;
+  const { data: staff } = await supabaseAdmin
+    .from("staff")
+    .select("id, name, role, roles, active")
+    .eq("id", data.user.id)
+    .maybeSingle();
+  const roles: string[] = Array.isArray(staff?.roles) && staff.roles.length ? staff.roles : [staff?.role];
+  // getUser staðfesti undirskriftina; aal er þá traust krafa í sama lykli.
+  if (!staff?.active || !roles.includes("admin") || jwtAal(token) !== "aal2") return null;
+  return { kind: "staff", staffId: staff.id, name: staff.name, canManage: true, label: `${staff.name} (Fjarlækningar)` };
+}
+
+/**
+ * Lykill starfsmanns úr Supabase-kökunni. Vefslóð sem opnuð er beint (hlekkur á
+ * PDF, t.d. „Prenta vaktaplan") getur ENGAN haus sent — aðeins kökur — svo án
+ * þessa fengi starfsmaður „þú ert ekki innskráð(ur)" þótt hann sé innskráður.
+ * Sama staðfesting og á hausnum; kakan ein og sér veitir engan aðgang.
+ */
+export async function staffFromCookie(): Promise<HsuActor | null> {
+  const jar = await cookies();
+  const client = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+    { cookies: { getAll: () => jar.getAll(), setAll: () => {} } },
+  );
+  const { data } = await client.auth.getSession();
+  const token = data.session?.access_token;
+  return token ? staffFromToken(token) : null;
+}
+
 export async function getHsuActor(req: Request): Promise<HsuActor | null> {
   const auth = req.headers.get("authorization");
   if (auth?.startsWith("Bearer ")) {
-    const token = auth.slice(7);
-    const { data, error } = await supabaseAdmin.auth.getUser(token);
-    if (!error && data.user?.id) {
-      const { data: staff } = await supabaseAdmin
-        .from("staff")
-        .select("id, name, role, roles, active")
-        .eq("id", data.user.id)
-        .maybeSingle();
-      const roles: string[] = Array.isArray(staff?.roles) && staff.roles.length ? staff.roles : [staff?.role];
-      // getUser staðfesti undirskriftina; aal er þá traust krafa í sama lykli.
-      if (staff?.active && roles.includes("admin") && jwtAal(token) === "aal2") {
-        return { kind: "staff", staffId: staff.id, name: staff.name, canManage: true, label: `${staff.name} (Fjarlækningar)` };
-      }
-    }
+    const staff = await staffFromToken(auth.slice(7));
+    if (staff) return staff;
   }
+  // Læknir (eigin lota) gengur fyrir: hann er sá sem kerfið snýst um.
   const doctor = await getDoctorSession();
   if (doctor) return { kind: "doctor", doctor, canManage: doctor.role === "head", label: doctor.name };
-  return null;
+  // Loks starfsmaður úr kökunni — fyrir beinar vefslóðir án hauss.
+  return staffFromCookie();
 }
 
 /**
