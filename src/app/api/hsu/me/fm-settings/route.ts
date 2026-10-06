@@ -11,6 +11,8 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { cleanDayWork, cleanFmMax, cleanWeekdays } from "@/lib/hsu/doctors";
 import { fmWeekdaysOf } from "@/lib/hsu/types";
 import { audit } from "@/lib/hsu/auth";
+import { hsuSync } from "@/lib/hsu/calendar";
+import { after } from "next/server";
 import { fail, json, readJson, requireDoctor } from "@/lib/hsu/server";
 import { tr } from "@/lib/hsu/i18n/server";
 import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
@@ -65,5 +67,7 @@ export async function PUT(req: Request) {
   if (error) return fail(error.message, 500);
   // Yfirlæknir sér breytinguna í breytingaskránni — hún hefur áhrif á vaktaplanið.
   await audit(auth.doctor.name, "doctor.fmSettings", null, patch);
+  // Dagvinnan er í dagatalinu — breyting á henni á að skila sér þangað strax.
+  if (patch.day_work) after(async () => { await hsuSync.syncDoctors([auth.doctor.id]); });
   return json({ ok: true, ...patch });
 }

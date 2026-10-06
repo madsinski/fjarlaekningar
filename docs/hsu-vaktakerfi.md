@@ -209,6 +209,13 @@ mánuði (NULL = ekkert þak). Sjálfvirka skiptingin fer aldrei umfram þau
 (`blocker` → `fmweek`/`fmmonth`) og handvirk vakt umfram þak birtist sem **árekstur**
 (`fm_week` / `fm_month`).
 
+**Dagatalið:** dagvinnan fylgir dagatalinu eins og vaktirnar — bæði í Google-samstillingu
+og .ics-áskrift (`dayWorkRows` í `src/lib/hsu/calendar.ts`). Vikumynstrið er þanið út í
+staka daga sex mánuði fram í tímann; sleppt er almennum frídögum og dögum þar sem
+læknirinn á þegar birta vakt, svo ekkert tvöfaldist. Auðkenni hvers dags er fast, svo
+samstilling endurskrifar ekki atburðina að óþörfu, og breyting á dagvinnuvikunni
+samstillist strax.
+
 **Takmörkun:** þetta er vikumynstur, ekki stakir dagar. Eina vikuna á deild skráir
 yfirlæknir sem „Get ekki" í skrefi 2, eða tekur lækninn af vöktum handvirkt.
 

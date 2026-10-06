@@ -62,6 +62,12 @@ export interface CalendarSyncConfig {
   eventBody: (s: SyncShiftRow, lang?: string) => { summary: string; description: string };
   /** Optional: the doctor's language, so event text follows it (a change rewrites the events). */
   languageOf?: (doctorId: string) => Promise<string>;
+  /**
+   * Optional: events that are not rows in the shifts table — e.g. a doctor's
+   * standing day-work week. They reconcile exactly like shifts, so their ids
+   * must be stable for the same day (otherwise every sync rewrites them).
+   */
+  extraRows?: (doctorId: string, from: string) => Promise<SyncShiftRow[]>;
 }
 
 export interface SyncResult {
@@ -218,19 +224,21 @@ export function createCalendarSync(cfg: CalendarSyncConfig) {
       for (const [col, val] of Object.entries(cfg.requireEquals ?? {})) shiftQuery = shiftQuery.eq(col, val);
       for (const col of cfg.requireNull ?? []) shiftQuery = shiftQuery.is(col, null);
 
-      const [{ data: shiftData, error: shiftErr }, { data: mapData, error: mapErr }] = await Promise.all([
+      const [{ data: shiftData, error: shiftErr }, { data: mapData, error: mapErr }, extra] = await Promise.all([
         shiftQuery,
         supabaseAdmin
           .from(cfg.eventsTable)
           .select("shift_id, shift_date, calendar_id, synced_hash")
           .eq("doctor_id", doctorId)
           .gte("shift_date", from),
+        cfg.extraRows ? cfg.extraRows(doctorId, from) : Promise.resolve([] as SyncShiftRow[]),
       ]);
       // A failed read must not look like "no shifts" — that would delete every
       // event in the doctor's calendar.
       if (shiftErr || mapErr) throw new Error((shiftErr || mapErr)!.message);
 
-      const shifts = (shiftData ?? []) as unknown as SyncShiftRow[];
+      // Dagvinna læknisins kemur ekki úr vaktatöflunni en hegðar sér eins héðan í frá.
+      const shifts = [...((shiftData ?? []) as unknown as SyncShiftRow[]), ...extra];
       const mapped = (mapData ?? []) as { shift_id: string; shift_date: string; calendar_id: string; synced_hash: string }[];
       const have = new Map(mapped.map((m) => [m.shift_id, m]));
       const wanted = new Set(shifts.map((s) => s.id));

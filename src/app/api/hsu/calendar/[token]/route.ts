@@ -3,7 +3,8 @@
 // Aðeins birtar vaktir. Hlekkurinn sjálfur er auðkennið.
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { hsuEventDescription, hsuEventTitle } from "@/lib/hsu/calendar";
+import { dayWorkLabel, dayWorkRows, hsuEventDescription, hsuEventTitle } from "@/lib/hsu/calendar";
+import { isDayWorkKind } from "@/lib/hsu/types";
 import { DEFAULT_LANG, isLang, translator } from "@/lib/hsu/i18n/core";
 import { notifyMsgs } from "@/lib/hsu/i18n/messages/notify";
 
@@ -56,6 +57,10 @@ export async function GET(_req: Request, ctx: { params: Promise<{ token: string 
     .gte("shift_date", since)
     .order("shift_date");
 
+  // Föst dagvinna læknisins fylgir með — hún er ekki vakt í vaktaplaninu.
+  const extra = await dayWorkRows(doctor.id, since);
+  const rows = [...(shifts ?? []), ...extra].sort((a, b) => a.shift_date.localeCompare(b.shift_date));
+
   const lang = isLang(doctor.lang) ? doctor.lang : DEFAULT_LANG;
   const t = translator(notifyMsgs, lang);
   const now = stamp(new Date());
@@ -70,16 +75,18 @@ export async function GET(_req: Request, ctx: { params: Promise<{ token: string 
     "X-PUBLISHED-TTL:PT1H",
     "X-WR-TIMEZONE:Atlantic/Reykjavik",
   ];
-  for (const s of shifts ?? []) {
+  for (const s of rows) {
+    // Dagvinnufærsla ber tegundarlykil sem label; vakt ber heiti vaktategundar.
+    const label = isDayWorkKind(s.label) ? dayWorkLabel(s.label, lang) : (s.label ?? "");
     lines.push(
       "BEGIN:VEVENT",
       `UID:hsu-${s.id}@fjarlaekningar.is`,
       `DTSTAMP:${now}`,
       `DTSTART;VALUE=DATE:${day(s.shift_date)}`,
       `DTEND;VALUE=DATE:${nextDay(s.shift_date)}`,
-      `SUMMARY:${esc(hsuEventTitle(s.label, s.starts, s.ends))}`,
+      `SUMMARY:${esc(hsuEventTitle(label, s.starts, s.ends))}`,
       "TRANSP:TRANSPARENT",
-      `DESCRIPTION:${esc(hsuEventDescription(s, lang))}`,
+      `DESCRIPTION:${esc(hsuEventDescription({ ...s, label }, lang))}`,
       "END:VEVENT",
     );
   }
