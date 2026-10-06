@@ -219,6 +219,12 @@ mánuði (NULL = ekkert þak). Sjálfvirka skiptingin fer aldrei umfram þau
 (`blocker` → `fmweek`/`fmmonth`) og handvirk vakt umfram þak birtist sem **árekstur**
 (`fm_week` / `fm_month`).
 
+**Í viðmóti læknisins** sést dagvinnan á þrem stöðum: **Yfirliti** (innan um næstu
+vaktir), **Mínum vöktum** (í dagsröð með vöktunum) og **Vaktaplani** (merki í deginum).
+Rofinn „Sýna dagvinnu" er sameiginlegur öllum þrem og man valið (`hsu.showDayWork`);
+á Vaktaplani er hann við hliðina á „Aðeins mínar vaktir". Dagur þar sem læknirinn á
+vakt sýnir vaktina eina — dagvinnan er þá ekki endurtekin.
+
 **Dagatalið:** dagvinnan fylgir dagatalinu eins og vaktirnar — bæði í Google-samstillingu
 og .ics-áskrift (`dayWorkRows` í `src/lib/hsu/calendar.ts`). Vikumynstrið er þanið út í
 staka daga sex mánuði fram í tímann; sleppt er almennum frídögum og dögum þar sem

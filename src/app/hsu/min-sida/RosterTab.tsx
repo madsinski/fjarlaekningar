@@ -3,17 +3,19 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { monthWeeks } from "../_components/PrefsEditor";
-import { Card, PrintLink, cx, hsuApi, shortName } from "../_components/ui";
+import { Card, PrintLink, Toggle, cx, hsuApi, shortName, useStoredFlag } from "../_components/ui";
+import { DayWorkChip } from "./DayWork";
 import { useT } from "@/lib/hsu/i18n/client";
 import { capFirstL, holidayL, monthLabelL, weekdayShortL } from "@/lib/hsu/i18n/format";
 import { prefs } from "@/lib/hsu/i18n/messages/prefs";
-import { WEEKDAY_ORDER, holidayName, monthKey, periodOf, shiftMonth, type HsuShift, type ShiftPeriod } from "@/lib/hsu/types";
+import { WEEKDAY_ORDER, dayWorkOn, holidayName, monthKey, periodOf, shiftMonth, type DayWork, type HsuShift, type ShiftPeriod } from "@/lib/hsu/types";
 
-export default function RosterTab({ meId }: { meId: string }) {
+export default function RosterTab({ meId, dayWork }: { meId: string; dayWork: DayWork }) {
   const t = useT(prefs);
   const [month, setMonth] = useState(() => monthKey(new Date()));
   const [state, setState] = useState<{ loading: boolean; published: boolean; shifts: HsuShift[]; doctors: { id: string; name: string; color: string }[]; periods: Record<string, ShiftPeriod> }>({ loading: true, published: false, shifts: [], doctors: [], periods: {} });
-  const [onlyMine, setOnlyMine] = useState(false);
+  const [onlyMine, setOnlyMine] = useStoredFlag("hsu.roster.onlyMine", false);
+  const [showWork, setShowWork] = useStoredFlag("hsu.showDayWork", true);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,9 +54,10 @@ export default function RosterTab({ meId }: { meId: string }) {
         <Card className="p-8 text-center text-sm text-slate-500">{t("roster.notPublished", { month: monthLabelL(month, t.lang) })}</Card>
       ) : (
         <>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            <input type="checkbox" checked={onlyMine} onChange={(e) => setOnlyMine(e.target.checked)} /> {t("roster.onlyMine")}
-          </label>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <Toggle checked={onlyMine} onChange={setOnlyMine} label={t("roster.onlyMine")} />
+            <Toggle checked={showWork} onChange={setShowWork} label={t("roster.showDayWork")} />
+          </div>
           <Card className="overflow-x-auto p-2 sm:p-3">
             <div className="grid min-w-[640px] grid-cols-7 gap-1">
               {WEEKDAY_ORDER.map((wd) => <div key={wd} className="py-1 text-center text-[11px] font-bold uppercase text-slate-500">{weekdayShortL(wd, t.lang)}</div>)}
@@ -69,6 +72,12 @@ export default function RosterTab({ meId }: { meId: string }) {
                       {h && <span className="truncate pl-1 text-[9px] font-semibold text-amber-600" title={h}>{h}</span>}
                     </div>
                     <div className="mt-1 space-y-1">
+                      {/* Dagvinna þín þennan dag — aðeins ef þú átt ekki vakt sama dag. */}
+                      {(() => {
+                        const kind = showWork ? dayWorkOn(dayWork, date) : null;
+                        const mineToday = state.shifts.some((s) => s.shift_date === date && s.doctor_id === meId);
+                        return kind && !mineToday ? <DayWorkChip kind={kind} /> : null;
+                      })()}
                       {(["day", "evening"] as const).map((period) => {
                         const group = shifts.filter((s) => periodOf(s, typeList) === period);
                         if (!group.length) return null;

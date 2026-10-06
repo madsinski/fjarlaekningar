@@ -13,7 +13,7 @@ import { portal } from "@/lib/hsu/i18n/messages/portal";
 import type { Lang } from "@/lib/hsu/i18n/core";
 import { dayLabelL, holidayL, monthLabelL, shiftPeriodL, weekdayShortOf } from "@/lib/hsu/i18n/format";
 import HsuHeader from "../_components/HsuHeader";
-import { Badge, Button, Card, Field, Modal, Notice, PrintLink, cx, firstName, hsuApi, inputCls, shortName } from "../_components/ui";
+import { Badge, Button, Card, Field, Modal, Notice, PrintLink, Toggle, cx, firstName, hsuApi, inputCls, shortName, useStoredFlag } from "../_components/ui";
 import type { PortalData } from "@/lib/hsu/portal";
 import {
   effectiveStatus, hhmm, holidayName, openWindow,
@@ -26,6 +26,7 @@ import AccountTab from "./AccountTab";
 import EmailPrefsCard from "./EmailPrefsCard";
 import CalendarSetup from "./CalendarSetup";
 import Journey, { useJourney } from "./Journey";
+import { DayWorkRow, dayWorkDates } from "./DayWork";
 
 type Tab = "yfirlit" | "vaktir" | "oskir" | "markadur" | "plan" | "stillingar";
 
@@ -171,7 +172,7 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
         {tab === "markadur" && (
           <MarketTab data={data} incoming={incoming} market={market} mine={mine} myRequests={myRequests} name={name} refresh={refresh} />
         )}
-        {tab === "plan" && <RosterTab meId={me.id} />}
+        {tab === "plan" && <RosterTab meId={me.id} dayWork={me.dayWork} />}
         {tab === "stillingar" && (
           <div className="space-y-8">
             <h1 className="text-xl font-bold">{t("settings.title")}</h1>
@@ -200,6 +201,16 @@ function Overview({ data, incoming, market, go, onLog, onCalendar }: {
   const onCall = new Set(data.shiftTypes.filter((t) => t.kind === "forvakt" || t.kind === "bakvakt").map((t) => t.id));
   const unlogged = data.myShifts.filter((s) => s.shift_date <= data.today && onCall.has(s.shift_type_id ?? "") && !s.vinnustund_logged_at);
   const jr = useJourney({ data, incoming, market, unlogged: unlogged.length, go, onCalendar });
+  const [showWork, setShowWork] = useStoredFlag("hsu.showDayWork", true);
+  const next5 = useMemo(() => {
+    const rows: { date: string; shift?: HsuShift; work?: "fm" | "mottaka" | "deild" }[] =
+      upcoming.map((s) => ({ date: s.shift_date, shift: s }));
+    if (showWork) {
+      const taken = new Set(data.myShifts.map((s) => s.shift_date));
+      for (const w of dayWorkDates(data.me.dayWork, data.today, taken, 2)) rows.push({ date: w.date, work: w.kind });
+    }
+    return rows.sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
+  }, [upcoming, data.myShifts, data.me.dayWork, data.today, showWork]);
 
   return (
     <div className="space-y-6">
@@ -222,13 +233,17 @@ function Overview({ data, incoming, market, go, onLog, onCalendar }: {
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">{t("upcoming.title")}</h2>
           <div className="flex items-center gap-3">
+            <Toggle checked={showWork} onChange={setShowWork} label={t("shifts.showDayWork")} />
             <VinnustundLink className="!px-2.5 !py-1 !text-xs" />
             <button onClick={() => go("vaktir")} className="text-sm font-semibold text-[var(--hsu)] hover:underline">{t("upcoming.all")}</button>
           </div>
         </div>
         <Card className="divide-y divide-slate-100">
-          {upcoming.slice(0, 5).map((s) => <ShiftRow key={s.id} s={s} types={data.shiftTypes} today={data.today} onLog={onLog} />)}
-          {upcoming.length === 0 && <div className="p-5 text-sm text-slate-500">{t("upcoming.empty")}</div>}
+          {/* Vaktir og dagvinna saman, í dagsröð — fimm næstu atriði. */}
+          {next5.map((r) => (r.work
+            ? <DayWorkRow key={`w${r.date}`} date={r.date} kind={r.work} />
+            : <ShiftRow key={r.shift!.id} s={r.shift!} types={data.shiftTypes} today={data.today} onLog={onLog} />))}
+          {next5.length === 0 && <div className="p-5 text-sm text-slate-500">{t("upcoming.empty")}</div>}
         </Card>
       </div>
     </div>
@@ -392,11 +407,23 @@ function ShiftsTab({ data, swaps, refresh, onLog }: { data: PortalData; swaps: H
   const t = useT(portal);
   const [offer, setOffer] = useState<HsuShift | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showWork, setShowWork] = useStoredFlag("hsu.showDayWork", true);
+  // Vaktir og dagvinna í einum lista á hvern mánuð, í dagsröð.
   const byMonth = useMemo(() => {
-    const m = new Map<string, HsuShift[]>();
-    for (const s of data.myShifts) (m.get(s.shift_date.slice(0, 7)) ?? m.set(s.shift_date.slice(0, 7), []).get(s.shift_date.slice(0, 7))!).push(s);
-    return [...m.entries()];
-  }, [data.myShifts]);
+    const m = new Map<string, { date: string; shift?: HsuShift; work?: "fm" | "mottaka" | "deild" }[]>();
+    const push = (date: string, v: { date: string; shift?: HsuShift; work?: "fm" | "mottaka" | "deild" }) => {
+      const k = date.slice(0, 7);
+      (m.get(k) ?? m.set(k, []).get(k)!).push(v);
+    };
+    for (const s of data.myShifts) push(s.shift_date, { date: s.shift_date, shift: s });
+    if (showWork) {
+      const taken = new Set(data.myShifts.map((s) => s.shift_date));
+      for (const w of dayWorkDates(data.me.dayWork, data.today, taken)) push(w.date, { date: w.date, work: w.kind });
+    }
+    return [...m.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([k, rows]) => [k, rows.sort((a, b) => a.date.localeCompare(b.date))] as const);
+  }, [data.myShifts, data.me.dayWork, data.today, showWork]);
   const pendingFor = (id: string) => swaps.find((s) => s.shift_id === id);
   // Liðin vakt sem á eftir að merkja við er ekki "búin" — hún má ekki daufna.
   const onCall = new Set(data.shiftTypes.filter((st) => st.kind === "forvakt" || st.kind === "bakvakt").map((st) => st.id));
@@ -418,7 +445,10 @@ function ShiftsTab({ data, swaps, refresh, onLog }: { data: PortalData; swaps: H
             {t("shifts.intro")}
           </p>
         </div>
-        <VinnustundLink />
+        <div className="flex flex-wrap items-center gap-4">
+          <Toggle checked={showWork} onChange={setShowWork} label={t("shifts.showDayWork")} />
+          <VinnustundLink />
+        </div>
       </div>
       <NotificationsBlock data={data} refresh={refresh} />
       <RequestsBlock data={data} refresh={refresh} />
@@ -440,7 +470,9 @@ function ShiftsTab({ data, swaps, refresh, onLog }: { data: PortalData; swaps: H
             <PrintLink month={m} label={t("shifts.print")} />
           </div>
           <Card className="divide-y divide-slate-100">
-            {rows.map((s) => {
+            {rows.map((row) => {
+              if (row.work) return <DayWorkRow key={`w${row.date}`} date={row.date} kind={row.work} />;
+              const s = row.shift!;
               const past = s.shift_date < data.today;
               const p = pendingFor(s.id);
               return (
