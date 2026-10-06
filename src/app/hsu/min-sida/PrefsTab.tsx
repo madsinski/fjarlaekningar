@@ -132,7 +132,7 @@ export default function PrefsTab({ data, initialMonth, refresh }: { data: Portal
         onLoadPrevious={loadPrevious}
         onProgress={onProgress}
         fm={{
-          dayWeekdays: data.me.dayWeekdays,
+          dayWork: data.me.dayWork,
           maxWeek: data.me.fmMaxWeek,
           maxMonth: data.me.fmMaxMonth,
           // Fastar stillingar — vistast strax og gilda alla mánuði.

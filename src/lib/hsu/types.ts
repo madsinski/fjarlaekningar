@@ -38,6 +38,29 @@ export interface HsuDoctor {
   fm_max_week: number | null;
   /** Hámark flýtimóttökuvakta í mánuði. null = ekkert þak. */
   fm_max_month: number | null;
+  /** Föst dagvinnuvika: vikudagur (0=sun … 6=lau) → tegund dagvinnu. */
+  day_work: DayWork;
+}
+
+/**
+ * Tegund dagvinnu. AÐEINS „fm" gerir lækninn lausan í flýtimóttökuvakt í
+ * vaktaplaninu; „mottaka" og „deild" merkja að hann sé í vinnu annars staðar
+ * og megi því ekki fá flýtimóttöku þann dag.
+ */
+export const DAY_WORK_KINDS = ["fm", "mottaka", "deild"] as const;
+export type DayWorkKind = (typeof DAY_WORK_KINDS)[number];
+export type DayWork = Partial<Record<string, DayWorkKind>>;
+
+export const isDayWorkKind = (v: unknown): v is DayWorkKind =>
+  typeof v === "string" && (DAY_WORK_KINDS as readonly string[]).includes(v);
+
+/** Vikudagarnir sem vaktaskipulagið má setja flýtimóttöku á. */
+export function fmWeekdaysOf(work: DayWork | null | undefined): number[] {
+  return Object.entries(work ?? {})
+    .filter(([, kind]) => kind === "fm")
+    .map(([wd]) => Number(wd))
+    .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6)
+    .sort((a, b) => a - b);
 }
 
 /** forvakt = mönnuð alla daga; bakvakt = aðeins reyndir, og aðeins þegar þörf er á; other = mönnuð, hver sem er. */

@@ -10,7 +10,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Ban, Check, CircleCheck, Copy, Heart, Eraser, Send, Save, Sun, Sunrise, Sunset } from "lucide-react";
 import {
-  WEEKDAY_ORDER, datesInMonth, holidayName, markFor, shiftMonth, weekdayOf,
+  WEEKDAY_ORDER, datesInMonth, fmWeekdaysOf, holidayName, markFor, shiftMonth, weekdayOf,
+  type DayWork, type DayWorkKind,
   type DayMark, type DayPart, type DayPlan, type HsuPreference, type Mark, type PrefStatus,
 } from "@/lib/hsu/types";
 import { useCommon, useT } from "@/lib/hsu/i18n/client";
@@ -104,10 +105,11 @@ export default function PrefsEditor({
    * læknirinn er að skoða sínar eigin óskir — annars eru þær sýndar en læstar.
    */
   fm?: {
-    dayWeekdays: number[];
+    /** Vikudagur → tegund dagvinnu. Aðeins „fm" gefur flýtimóttökuvakt. */
+    dayWork: DayWork;
     maxWeek: number | null;
     maxMonth: number | null;
-    onSave?: (v: { day_weekdays?: number[]; fm_max_week?: number | null; fm_max_month?: number | null }) => Promise<{ ok: boolean; error?: string }>;
+    onSave?: (v: { day_work?: DayWork; fm_max_week?: number | null; fm_max_month?: number | null }) => Promise<{ ok: boolean; error?: string }>;
   };
 }) {
   const t = useT(prefs);
@@ -153,7 +155,8 @@ export default function PrefsEditor({
 
   // ── Skref 3: dagar á flýtimóttöku ──
   // Aðeins merktir dagar gilda; ómerktur dagur er auður (Hreinsa gerir dag auðan).
-  const fixedDays = fm?.dayWeekdays ?? [];
+  // Aðeins flýtimóttökudagar koma til greina í dagatalinu hér fyrir neðan.
+  const fixedDays = fmWeekdaysOf(fm?.dayWork);
   const fmDay = (date: string) => {
     const wd = weekdayOf(date);
     if (wd < 1 || wd > 5 || holidayName(date)) return false;
@@ -488,13 +491,14 @@ function FmSettings({ fm, editable }: {
 }) {
   const t = useT(prefs);
   const c = useCommon();
-  const [days, setDays] = useState<number[]>(fm.dayWeekdays);
+  const [work, setWork] = useState<DayWork>(fm.dayWork);
   const [week, setWeek] = useState(fm.maxWeek === null ? "" : String(fm.maxWeek));
   const [month, setMonth] = useState(fm.maxMonth === null ? "" : String(fm.maxMonth));
   const [state, setState] = useState<"idle" | "saving" | "ok" | "err">("idle");
   const can = Boolean(fm.onSave) && editable;
 
-  const dirty = days.join(",") !== fm.dayWeekdays.join(",")
+  const same = JSON.stringify(work) === JSON.stringify(fm.dayWork);
+  const dirty = !same
     || week !== (fm.maxWeek === null ? "" : String(fm.maxWeek))
     || month !== (fm.maxMonth === null ? "" : String(fm.maxMonth));
 
@@ -502,11 +506,26 @@ function FmSettings({ fm, editable }: {
     if (!fm.onSave) return;
     setState("saving");
     const r = await fm.onSave({
-      day_weekdays: days,
+      day_work: work,
       fm_max_week: week === "" ? null : Number(week),
       fm_max_month: month === "" ? null : Number(month),
     });
     setState(r.ok ? "ok" : "err");
+  };
+
+  /** Smellt á vikudag: ekkert → flýtimóttaka → móttaka → deild → ekkert. */
+  const cycle = (wd: number) => {
+    const order: (DayWorkKind | undefined)[] = ["fm", "mottaka", "deild", undefined];
+    const next = order[(order.indexOf(work[String(wd)]) + 1) % order.length];
+    const copy = { ...work };
+    if (next) copy[String(wd)] = next; else delete copy[String(wd)];
+    setWork(copy);
+  };
+
+  const TONE: Record<DayWorkKind, string> = {
+    fm: "bg-[var(--hsu)] text-white ring-[var(--hsu)]",
+    mottaka: "bg-emerald-600 text-white ring-emerald-600",
+    deild: "bg-violet-600 text-white ring-violet-600",
   };
 
   const num = (v: string, set: (s: string) => void, max: number, label: string) => (
@@ -524,16 +543,20 @@ function FmSettings({ fm, editable }: {
       <div className="text-sm font-semibold text-slate-900">{t("fm.title")}</div>
       <p className="mt-0.5 text-[11px] text-slate-500">{t("fm.hint")}</p>
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        {[1, 2, 3, 4, 5].map((wd) => (
-          <button key={wd} type="button" disabled={!can} aria-pressed={days.includes(wd)}
-            onClick={() => setDays((d) => (d.includes(wd) ? d.filter((x) => x !== wd) : [...d, wd].sort()))}
-            className={cx("rounded-lg px-2.5 py-1.5 text-xs font-semibold ring-1 transition disabled:opacity-60",
-              days.includes(wd) ? "bg-[var(--hsu)] text-white ring-[var(--hsu)]" : "bg-white text-slate-700 ring-slate-300")}>
-            {weekdayShortL(wd, t.lang)}
-          </button>
-        ))}
-        <span className="ml-1 text-[11px] text-slate-500">{days.length === 0 ? t("fm.allDays") : ""}</span>
+        {[1, 2, 3, 4, 5].map((wd) => {
+          const kind = work[String(wd)];
+          return (
+            <button key={wd} type="button" disabled={!can} onClick={() => cycle(wd)}
+              aria-label={`${weekdayShortL(wd, t.lang)}: ${kind ? t.dyn(`fm.kind.${kind}`) : t("fm.kind.none")}`}
+              className={cx("flex min-w-20 flex-col items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold ring-1 transition disabled:opacity-60",
+                kind ? TONE[kind] : "bg-white text-slate-500 ring-slate-300")}>
+              <span>{weekdayShortL(wd, t.lang)}</span>
+              <span className="text-[9px] font-bold opacity-90">{kind ? t.dyn(`fm.kind.${kind}`) : t("fm.kind.none")}</span>
+            </button>
+          );
+        })}
       </div>
+      <p className="mt-1.5 text-[11px] text-slate-500">{t("fm.onlyFm")}</p>
       <div className="mt-2 flex flex-wrap items-center gap-4">
         {num(week, setWeek, 7, t("fm.perWeek"))}
         {num(month, setMonth, 31, t("fm.perMonth"))}

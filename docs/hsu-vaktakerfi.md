@@ -177,31 +177,40 @@ enn í hana; hreinsist þær allar er tegundinni eytt alveg). Fjöldinn fer í `
 (`removedShifts` / `keptShifts`). Kóði: `clearSlotsOfType` í
 `src/app/api/hsu/admin/shift-types/[id]/route.ts`.
 
-## Flýtimóttaka: fastir dagar og þak (2026-10-05)
+## Dagvinna læknis: hvaða dagar og hvers konar (2026-10-06)
 
-Hver læknir ræður þrennu um flýtimóttökuna sína. Þetta eru **fastar stillingar sem
-gilda alla mánuði** — ekki mánaðarósk — og standa efst í **skrefi 3** í óskunum
-(`/hsu/min-sida?t=oskir`). Yfirlæknir sér og breytir þeim líka á **Læknar**.
+Hver læknir skráir sjálfur **föstu dagvinnuvikuna sína** efst í **skrefi 3** í óskunum
+(`/hsu/min-sida?t=oskir`). Smellt er á vikudag til að skipta um tegund:
 
-| Stilling | Dálkur | Merking |
+| Tegund | Gildi | Merking |
 | --- | --- | --- |
-| Fastir vikudagar | `hsu_doctors.day_weekdays` | Læknirinn vinnur flýtimóttöku aðeins þessa vikudaga. Tómt = allir virkir dagar. |
-| Mest í viku | `hsu_doctors.fm_max_week` | Hámark dagvakta í hverri viku (mán–sun). NULL = ekkert þak. |
-| Mest í mánuði | `hsu_doctors.fm_max_month` | Hámark dagvakta í mánuðinum. NULL = ekkert þak. |
+| **Flýtimóttaka** | `fm` | Dagvinna á flýtimóttöku — **og aðeins þá má vaktaskipulagið setja hann á flýtimóttökuvakt**. |
+| **Móttaka** | `mottaka` | Almenn móttaka. Hann er í vinnu, en ekki laus í flýtimóttöku. |
+| **Deild** | `deild` | Deildarvinna. Sama: í vinnu, ekki laus í flýtimóttöku. |
+| **Engin** | — | Engin dagvinna þann vikudag. |
 
-**Föstu dagarnir eru harðir.** Fram að þessu giltu þeir aðeins þegar læknirinn hafði
-*engar* óskir skráð: merkti hann daga í skrefi 3 féllu föstu dagarnir niður og
-merkingin ein gilti. Þess vegna gat læknir sem vinnur aðeins mánudaga og miðvikudaga
-fengið þriðjudagsvakt. Nú gildir: **merking í óskum getur ÞRENGT föstu dagana en aldrei
-víkkað þá** (`worksDayShiftOn` í `src/lib/hsu/plan.ts`). Dagar utan föstu daganna eru
-ekki í boði í dagatalinu í skrefi 3.
+Þetta er geymt í `hsu_doctors.day_work` (vikudagur → tegund) og **gildir alla mánuði**.
 
-Þökin bíta á tvennum stað: sjálfvirka skiptingin setur engan umfram þau
-(`blocker` skilar `fmweek`/`fmmonth`), og setji yfirlæknir lækni handvirkt á vakt
-umfram þakið birtist **árekstur** (`fm_week` / `fm_month`) í vaktaplaninu.
+**Hvers vegna þetta rekst ekki á vaktaskipulagið.** `day_weekdays` — dálkurinn sem
+skipulagið les — er **LEITT** af dagvinnuvikunni og inniheldur aðeins `fm`-dagana
+(`fmWeekdaysOf`). Merki læknir þriðjudag sem móttöku dettur þriðjudagurinn sjálfkrafa
+út úr `day_weekdays`, svo hvorki sjálfvirka skiptingin né „Fylla í tómar" getur sett
+hann á flýtimóttöku þann dag — líka þegar yfirlæknir kveikir aftur á flýtimóttöku og
+raðar öllu upp á nýtt. Engin ný regla þurfti í skipulagið: dagarnir eru einfaldlega
+ekki í boði.
 
-Breyti læknir þessu sjálfur er það skráð í `hsu_audit` (`doctor.fmSettings`) svo
-yfirlæknir sjái það í breytingaskránni.
+Af sömu ástæðu sýnir dagatalið í skrefi 3 aðeins flýtimóttökudagana; hinir eru gráir.
+
+Yfirlæknir sér dagvinnuna á **Læknar** (merki: „Móttaka Þri", „Deild Fim") svo hann
+skilji hvers vegna læknirinn er ekki laus, og getur breytt henni þar.
+
+**Þak:** `fm_max_week` og `fm_max_month` takmarka fjölda flýtimóttökuvakta í viku og
+mánuði (NULL = ekkert þak). Sjálfvirka skiptingin fer aldrei umfram þau
+(`blocker` → `fmweek`/`fmmonth`) og handvirk vakt umfram þak birtist sem **árekstur**
+(`fm_week` / `fm_month`).
+
+**Takmörkun:** þetta er vikumynstur, ekki stakir dagar. Eina vikuna á deild skráir
+yfirlæknir sem „Get ekki" í skrefi 2, eða tekur lækninn af vöktum handvirkt.
 
 ## Vaktaplanið: hvernig dagurinn er settur upp
 

@@ -2,7 +2,7 @@
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { loadShiftTypes } from "./server";
-import { monthKey, type HsuMonth, type HsuPreference, type HsuShift, type HsuShiftType, type HsuSwap } from "./types";
+import { monthKey, type DayWork, type HsuMonth, type HsuPreference, type HsuShift, type HsuShiftType, type HsuSwap } from "./types";
 import { normalizeEmailPrefs, type EmailCategory, type EmailMode } from "./email-prefs";
 
 export interface Colleague { id: string; name: string; color: string; role: string; phone: string; email: string }
@@ -18,6 +18,8 @@ export interface PortalNotification {
 
 export interface PortalData {
   me: { id: string; name: string; email: string; role: string; hasPin: boolean; mustChangePassword: boolean; hasCalendarToken: boolean; dayWeekdays: number[]; lang: string;
+    /** Föst dagvinnuvika: vikudagur → flýtimóttaka/móttaka/deild. */
+    dayWork: DayWork;
     /** Þak læknisins á flýtimóttökuvöktum — í viku og mánuði (null = ekkert þak). */
     fmMaxWeek: number | null;
     fmMaxMonth: number | null;
@@ -52,7 +54,7 @@ export async function loadPortal(doctorId: string): Promise<PortalData> {
   const first = `${monthKey(new Date())}-01`;
 
   const [me, colleagues, myShifts, months, prefs, swaps, settings, requests, notifications, google] = await Promise.all([
-    supabaseAdmin.from("hsu_doctors").select("id, name, email, phone, role, pin_hash, must_change_password, calendar_token, day_weekdays, fm_max_week, fm_max_month, lang, onboarding, email_prefs, sms_reminders").eq("id", doctorId).single(),
+    supabaseAdmin.from("hsu_doctors").select("id, name, email, phone, role, pin_hash, must_change_password, calendar_token, day_weekdays, day_work, fm_max_week, fm_max_month, lang, onboarding, email_prefs, sms_reminders").eq("id", doctorId).single(),
     supabaseAdmin.from("hsu_doctors").select("id, name, color, role, phone, email").eq("active", true).order("name"),
     supabaseAdmin.from("hsu_shifts").select("id, shift_date, shift_type_id, label, starts, ends, doctor_id, status, note, vinnustund_logged_at")
       .eq("doctor_id", doctorId).eq("published", true).is("confirm_status", null).gte("shift_date", first).order("shift_date").order("starts"),
@@ -89,6 +91,7 @@ export async function loadPortal(doctorId: string): Promise<PortalData> {
       smsReminders: me.data!.sms_reminders !== false,
       phone: me.data!.phone ?? "",
       dayWeekdays: Array.isArray(me.data!.day_weekdays) ? me.data!.day_weekdays.map(Number) : [],
+      dayWork: (me.data!.day_work ?? {}) as DayWork,
       fmMaxWeek: (me.data!.fm_max_week as number | null) ?? null,
       fmMaxMonth: (me.data!.fm_max_month as number | null) ?? null,
       lang: me.data!.lang ?? "is",

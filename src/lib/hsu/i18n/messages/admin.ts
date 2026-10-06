@@ -36,6 +36,8 @@ export const admin = defineMessages(
     "doctors.badge.bakvakt": "Bakvakt",
     "doctors.badge.needsBakvakt": "Þarf bakvakt",
     "doctors.badge.dayShift": "Dagvakt: {days}",
+    "doctors.badge.mottaka": "Móttaka {days}",
+    "doctors.badge.deild": "Deild {days}",
     "doctors.empty": "Engir læknar skráðir enn.",
 
     "doctors.field.name": "Fullt nafn",
@@ -263,6 +265,8 @@ export const admin = defineMessages(
       "doctors.badge.bakvakt": "Second on call",
       "doctors.badge.needsBakvakt": "Needs second on call",
       "doctors.badge.dayShift": "Day shift: {days}",
+      "doctors.badge.mottaka": "Reception {days}",
+      "doctors.badge.deild": "Ward {days}",
       "doctors.empty": "No doctors added yet.",
 
       "doctors.field.name": "Full name",

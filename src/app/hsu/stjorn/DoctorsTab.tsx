@@ -79,6 +79,15 @@ export default function DoctorsTab({ ctx }: { ctx: PlannerCtx }) {
                       {d.can_bakvakt && <Badge tone="blue">{t("doctors.badge.bakvakt")}</Badge>}
                       {d.needs_bakvakt && <Badge tone="amber">{t("doctors.badge.needsBakvakt")}</Badge>}
                       {d.day_weekdays?.length > 0 && <Badge tone="slate">{t("doctors.badge.dayShift", { days: d.day_weekdays.map((x) => weekdayShortL(x, t.lang)).join(", ") })}</Badge>}
+                      {/* Dagvinna annars staðar: skýrir hvers vegna læknirinn er ekki laus í flýtimóttöku. */}
+                      {(["mottaka", "deild"] as const).map((kind) => {
+                        const days = Object.entries(d.day_work ?? {}).filter(([, k]) => k === kind).map(([wd]) => Number(wd)).sort();
+                        return days.length === 0 ? null : (
+                          <Badge key={kind} tone={kind === "mottaka" ? "green" : "purple"}>
+                            {t.dyn(`doctors.badge.${kind}`, { days: days.map((x) => weekdayShortL(x, t.lang)).join(", ") })}
+                          </Badge>
+                        );
+                      })}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-xs text-slate-500">{d.last_login_at ? timeAgoL(d.last_login_at, t.lang) : "–"}</td>

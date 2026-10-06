@@ -446,3 +446,23 @@ alter table public.hsu_doctors drop constraint if exists hsu_doctors_fm_max_week
 alter table public.hsu_doctors add constraint hsu_doctors_fm_max_week_check check (fm_max_week is null or (fm_max_week >= 0 and fm_max_week <= 7));
 alter table public.hsu_doctors drop constraint if exists hsu_doctors_fm_max_month_check;
 alter table public.hsu_doctors add constraint hsu_doctors_fm_max_month_check check (fm_max_month is null or (fm_max_month >= 0 and fm_max_month <= 31));
+
+-- ── Dagvinna læknis: hvaða dagar og hvers konar (2026-10-06) ───────────────
+-- Læknir skráir sjálfur fasta dagvinnuviku sína: vikudagur → tegund.
+--   'fm'      flýtimóttaka — ÞÁ MÁ hann fá flýtimóttökuvakt í vaktaplaninu
+--   'mottaka' almenn móttaka — hann er í vinnu en EKKI laus í flýtimóttöku
+--   'deild'   deild         — sama: í vinnu, ekki laus í flýtimóttöku
+--   vantar    engin dagvinna þann vikudag
+--
+-- day_weekdays (sem vaktaskipulagið les) er LEITT af þessu: aðeins 'fm'-dagar
+-- fara þangað. Þess vegna getur skráning á móttöku/deild aldrei rekist á þegar
+-- yfirlæknir kveikir aftur á flýtimóttöku — hún útilokar daginn sjálfkrafa.
+alter table public.hsu_doctors add column if not exists day_work jsonb not null default '{}'::jsonb;
+
+-- Núverandi dagvinnudagar voru allir flýtimóttaka.
+update public.hsu_doctors d
+set day_work = coalesce((
+  select jsonb_object_agg(wd::text, 'fm')
+  from unnest(d.day_weekdays) as wd
+), '{}'::jsonb)
+where d.day_work = '{}'::jsonb and array_length(d.day_weekdays, 1) > 0;

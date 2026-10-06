@@ -3,11 +3,11 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit, hashSecret, issueAccessLink, passwordProblem, pinProblem } from "@/lib/hsu/auth";
 import { DOCTOR_COLUMNS, fail, json, listDoctors, originOf, readJson, requireManager, toPublicDoctor } from "@/lib/hsu/server";
-import { cleanFmMax, cleanWeekdays, emailAllowed, sendInviteEmail } from "@/lib/hsu/doctors";
+import { cleanDayWork, cleanFmMax, cleanWeekdays, emailAllowed, sendInviteEmail } from "@/lib/hsu/doctors";
 import { isLang } from "@/lib/hsu/i18n/core";
 import { langOf, tr } from "@/lib/hsu/i18n/server";
 import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
-import { DOCTOR_COLORS, HSU_EMAIL_DOMAIN, normalizeEmail } from "@/lib/hsu/types";
+import { DOCTOR_COLORS, HSU_EMAIL_DOMAIN, fmWeekdaysOf, normalizeEmail } from "@/lib/hsu/types";
 
 export const runtime = "nodejs";
 
@@ -39,7 +39,13 @@ export async function POST(req: Request) {
     phone: String(body.phone ?? "").slice(0, 40),
     title: String(body.title ?? "").slice(0, 80),
     can_bakvakt: body.can_bakvakt === true,
-    day_weekdays: cleanWeekdays(body.day_weekdays) ?? [],
+    // Dagvinnuvikan ræður: day_weekdays eru aðeins flýtimóttökudagarnir.
+    ...(() => {
+      const work = cleanDayWork(body.day_work);
+      if (work) return { day_work: work, day_weekdays: fmWeekdaysOf(work) };
+      const days = cleanWeekdays(body.day_weekdays) ?? [];
+      return { day_work: Object.fromEntries(days.map((d) => [String(d), "fm"])), day_weekdays: days };
+    })(),
     fm_max_week: cleanFmMax(body.fm_max_week, 7) ?? null,
     fm_max_month: cleanFmMax(body.fm_max_month, 31) ?? null,
     needs_bakvakt: body.needs_bakvakt === true,

@@ -4,8 +4,8 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit, hashSecret, issueAccessLink, passwordProblem } from "@/lib/hsu/auth";
 import { hsuSync } from "@/lib/hsu/calendar";
 import { DOCTOR_COLUMNS, UUID_RE, fail, json, originOf, readJson, requireManager, toPublicDoctor } from "@/lib/hsu/server";
-import { HSU_EMAIL_DOMAIN, normalizeEmail } from "@/lib/hsu/types";
-import { cleanFmMax, cleanWeekdays, emailAllowed, sendInviteEmail, sendPromotedEmail } from "@/lib/hsu/doctors";
+import { HSU_EMAIL_DOMAIN, fmWeekdaysOf, normalizeEmail } from "@/lib/hsu/types";
+import { cleanDayWork, cleanFmMax, cleanWeekdays, emailAllowed, sendInviteEmail, sendPromotedEmail } from "@/lib/hsu/doctors";
 import { isLang, translator } from "@/lib/hsu/i18n/core";
 import { accountEmails } from "@/lib/hsu/i18n/messages/account-emails";
 import { notifyDoctors } from "@/lib/hsu/notify";
@@ -38,8 +38,13 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (typeof body.title === "string") patch.title = body.title.slice(0, 80);
   if (typeof body.color === "string" && /^#[0-9a-f]{6}$/i.test(body.color)) patch.color = body.color;
   if (typeof body.can_bakvakt === "boolean") patch.can_bakvakt = body.can_bakvakt;
-  const days = cleanWeekdays(body.day_weekdays);
-  if (days) patch.day_weekdays = days;
+  // Dagvinnuvikan er uppsprettan; day_weekdays (sem planið les) er leitt af henni.
+  const work = cleanDayWork(body.day_work);
+  if (work) { patch.day_work = work; patch.day_weekdays = fmWeekdaysOf(work); }
+  else {
+    const days = cleanWeekdays(body.day_weekdays);
+    if (days) { patch.day_weekdays = days; patch.day_work = Object.fromEntries(days.map((d) => [String(d), "fm"])); }
+  }
   const fmW = cleanFmMax(body.fm_max_week, 7);
   if (fmW !== undefined) patch.fm_max_week = fmW;
   const fmM = cleanFmMax(body.fm_max_month, 31);

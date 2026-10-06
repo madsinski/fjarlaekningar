@@ -4,13 +4,30 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { translator, type Lang } from "./i18n/core";
 import { accountEmails } from "./i18n/messages/account-emails";
 import { hsuEmailHtml, sendHsuEmail } from "./server";
-import { HSU_EMAIL_DOMAIN } from "./types";
+import { HSU_EMAIL_DOMAIN, isDayWorkKind, type DayWork } from "./types";
 
 /** 0=sun … 6=lau, án endurtekninga. Tómt fylki = allir dagar. */
 /**
  * Þak á flýtimóttökuvöktum: heil tala innan marka, eða null (ekkert þak).
  * Tómur strengur og null þýða hvort tveggja „ekkert þak"; undefined = óbreytt.
  */
+/**
+ * Dagvinnuvika úr beiðni: {"1":"fm","2":"mottaka"}. Ógild gildi falla burt.
+ * undefined = óbreytt.
+ */
+export function cleanDayWork(v: unknown): DayWork | undefined {
+  if (v === undefined) return undefined;
+  if (v === null) return {};
+  if (typeof v !== "object") return undefined;
+  const out: DayWork = {};
+  for (const [wd, kind] of Object.entries(v as Record<string, unknown>)) {
+    const n = Number(wd);
+    if (!Number.isInteger(n) || n < 0 || n > 6) continue;
+    if (isDayWorkKind(kind)) out[String(n)] = kind;
+  }
+  return out;
+}
+
 export function cleanFmMax(v: unknown, max: number): number | null | undefined {
   if (v === undefined) return undefined;
   if (v === null || v === "") return null;
