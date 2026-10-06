@@ -177,6 +177,16 @@ enn í hana; hreinsist þær allar er tegundinni eytt alveg). Fjöldinn fer í `
 (`removedShifts` / `keptShifts`). Kóði: `clearSlotsOfType` í
 `src/app/api/hsu/admin/shift-types/[id]/route.ts`.
 
+## Yfirlit: skrefastiginn hverfur þegar hann hefur gert sitt (2026-10-06)
+
+Fimm skrefa stiginn á Yfirliti (aðgangur → óskir → vaktaplan → vaktir → eftir vakt)
+er **kennsluefni fyrir fyrsta hringinn**. Þegar læknirinn hefur sent inn óskir OG
+fengið birt vaktaplan fellur hann sjálfkrafa saman; eftir stendur „Næsta skref" og
+næstu vaktir — það sem hann kom til að sjá. „Sýna skrefin" opnar hann aftur hvenær sem er.
+
+Skilyrðið er reiknað í `DoctorPortal` (`seasoned`): einhver ósk `submitted`/`approved`
+og einhver mánuður `published`. Nýr læknir sér stigann óbreyttan.
+
 ## Dagvinna læknis: hvaða dagar og hvers konar (2026-10-06)
 
 Hver læknir skráir sjálfur **föstu dagvinnuvikuna sína** efst í **skrefi 3** í óskunum

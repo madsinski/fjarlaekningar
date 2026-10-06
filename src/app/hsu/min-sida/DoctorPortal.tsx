@@ -210,7 +210,13 @@ function Overview({ data, incoming, market, go, onLog, onCalendar }: {
       </div>
 
       {/* Leiðin í gegnum mánuðinn — opnast á skrefinu sem á við núna. */}
-      <Journey steps={jr.steps} landing={jr.landing} planMonth={jr.planMonth} extra={<VinnustundLink />} />
+      {/* Læknir sem hefur sent óskir OG fengið birt vaktaplan er búinn að læra
+          ferlið — þá fellur skrefastiginn saman og „næsta skref" stendur eftir. */}
+      <Journey steps={jr.steps} landing={jr.landing} planMonth={jr.planMonth} extra={<VinnustundLink />}
+        seasoned={
+          data.prefs.some((p) => p.status === "submitted" || p.status === "approved")
+          && data.months.some((m) => m.status === "published")
+        } />
 
       <div>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">

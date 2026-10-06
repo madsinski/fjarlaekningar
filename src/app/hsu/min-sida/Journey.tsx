@@ -11,7 +11,7 @@
 //   5. Eftir vakt         skrá útköll í Vinnustund
 
 import { useState, type ReactNode } from "react";
-import { ArrowRight, CalendarCheck, Check, CheckCircle2, CircleDashed, ClipboardList, Clock, KeyRound, Lightbulb, UserRound } from "lucide-react";
+import { ArrowRight, CalendarCheck, Check, CheckCircle2, CircleDashed, ClipboardList, Clock, KeyRound, Lightbulb, UserRound, ChevronDown, ChevronUp} from "lucide-react";
 import type { PortalData } from "@/lib/hsu/portal";
 import type { HsuSwap } from "@/lib/hsu/types";
 import { effectiveStatus, holidayName, openWindow, weekdayOf } from "@/lib/hsu/types";
@@ -198,13 +198,20 @@ function Btn({ a, small = false }: { a: Action; small?: boolean }) {
   );
 }
 
-export default function Journey({ steps, landing, planMonth, extra }: {
+export default function Journey({ steps, landing, planMonth, extra, seasoned }: {
   steps: Step[]; landing: number; planMonth: string;
   /** Aukahnappur í skrefi 5 (hlekkur á Vinnustund). */
   extra?: ReactNode;
+  /**
+   * Læknir sem hefur farið heilan hring — sent óskir og fengið birt vaktaplan.
+   * Þá er skrefastiginn kennsluefni sem hann er búinn með: hann fellur saman og
+   * eftir stendur „næsta skref" og vaktirnar. Hann má alltaf opna hann aftur.
+   */
+  seasoned?: boolean;
 }) {
   const t = useT(journey);
   const [picked, setPicked] = useState<number | null>(null);
+  const [open, setOpen] = useState(!seasoned);
   const sel = picked ?? landing;
   const step = steps[sel];
   const nextStep = steps[landing];
@@ -234,6 +241,14 @@ export default function Journey({ steps, landing, planMonth, extra }: {
       </div>
 
       {/* Skrefin — sama útlit og mánaðarflæði yfirlæknis. */}
+      {seasoned && (
+        <button type="button" onClick={() => setOpen((v) => !v)}
+          className="inline-flex items-center gap-1.5 self-start rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-700">
+          {open ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          {t(open ? "steps.hide" : "steps.show")}
+        </button>
+      )}
+      {open && (<>
       <ol className="grid grid-cols-5 gap-1.5 sm:gap-2" data-tour="journey">
         {steps.map((s, i) => (
           <li key={s.key}>
@@ -308,6 +323,7 @@ export default function Journey({ steps, landing, planMonth, extra }: {
           </div>
         )}
       </Card>
+      </>)}
     </div>
   );
 }

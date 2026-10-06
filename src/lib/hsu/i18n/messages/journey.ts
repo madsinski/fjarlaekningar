@@ -5,6 +5,8 @@ import { defineMessages } from "../core";
 export const journey = defineMessages(
   {
     "next.label": "Næsta skref",
+    "steps.show": "Sýna skrefin",
+    "steps.hide": "Fela skrefin",
     "next.none": "Allt klárt í bili — þú færð tölvupóst þegar eitthvað kallar á þig.",
     "month.chip": "Mánuður: {month}",
     "step.of": "Skref {n} af {total}",
@@ -111,6 +113,8 @@ export const journey = defineMessages(
   {
     en: {
       "next.label": "Next step",
+      "steps.show": "Show the steps",
+      "steps.hide": "Hide the steps",
       "next.none": "All done for now — you'll get an email when something needs you.",
       "month.chip": "Month: {month}",
       "step.of": "Step {n} of {total}",
