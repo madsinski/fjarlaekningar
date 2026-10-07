@@ -1,10 +1,11 @@
-// SMS-áminning til stjórnanda Fjarlækninga um spurningar sem enginn hefur opnað.
+// SMS-áminning til stjórnanda Fjarlækninga um spurningar sem enginn hefur svarað.
 // Server-only. Keyrt af cron (/api/cron/vinnustod-nudge) á 5 mín. fresti.
 //
-// Regla: spurning (síðasta skeyti frá starfsmanni) sem hefur ekki verið opnuð í
+// Regla: spurning (síðasta skeyti frá starfsmanni) sem hefur ekki verið svarað í
 // `nudge_after_minutes` mínútur → eitt SMS í `nudge_phone`, sem telur allar
-// slíkar spurningar. Sama samtal veldur ekki öðru SMS fyrr en nýtt skeyti berst
-// í það eftir áminninguna.
+// slíkar spurningar — hvort sem stjórnandi hefur opnað samtalið eða ekki. Sama
+// samtal veldur ekki öðru SMS fyrr en nýtt skeyti berst í það eftir áminninguna.
+// Samtal sem er merkt lokið veldur engri áminningu.
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { SMS_SENDER, sendSms, smsSegments, toE164 } from "@/lib/sms";
@@ -25,15 +26,13 @@ export async function runNudge(): Promise<{ sent: boolean; threads: number; reas
   const cutoff = new Date(Date.now() - afterMinutes * 60_000).toISOString();
 
   const { data } = await supabaseAdmin.from("gatt_threads")
-    .select("id, subject, owner_name, last_message_at, staff_read_at, admin_nudged_at")
+    .select("id, subject, owner_name, last_message_at, admin_nudged_at")
     .eq("status", "open").eq("last_author", "user").lte("last_message_at", cutoff)
     .order("last_message_at", { ascending: true }).limit(50);
+  // Einu sinni fyrir hvert nýtt skeyti: ný áminning fer út þegar skrifað er
+  // aftur eftir síðustu áminningu.
   const due = (data ?? []).filter((t) => {
-    const unseen = !t.staff_read_at || t.staff_read_at < t.last_message_at;
-    // Einu sinni fyrir hvert nýtt skeyti: ný áminning fer út þegar skrifað er
-    // aftur eftir síðustu áminningu, hvort sem stjórnandi opnaði samtalið eða ekki.
-    const notYet = !t.admin_nudged_at || t.admin_nudged_at < t.last_message_at;
-    return unseen && notYet;
+    return !t.admin_nudged_at || t.admin_nudged_at < t.last_message_at;
   });
   if (!due.length) return { sent: false, threads: 0 };
 

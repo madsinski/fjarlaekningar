@@ -387,7 +387,7 @@ function SettingsTab() {
         <span className="mt-1 block text-xs text-slate-500">Birtist öllum í vinnustöðinni. Tómt númer = ekki birt.</span>
       </fieldset>
       <fieldset className="rounded-xl bg-slate-50 p-3">
-        <legend className="px-1 text-sm font-semibold">SMS ef spurning er ekki opnuð</legend>
+        <legend className="px-1 text-sm font-semibold">SMS ef spurningu er ekki svarað</legend>
         <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
           <label className="block text-xs font-semibold text-slate-600">Símanúmer
             <input className={`${inputCls} mt-1`} value={nudgePhone} onChange={(e) => setNudgePhone(e.target.value)} inputMode="tel" placeholder="+354 …" />
@@ -396,7 +396,7 @@ function SettingsTab() {
             <input className={`${inputCls} mt-1`} type="number" min={1} max={1440} value={nudgeMinutes} onChange={(e) => setNudgeMinutes(e.target.value)} />
           </label>
         </div>
-        <span className="mt-1 block text-xs text-slate-500">Eitt SMS þegar spurning frá starfsmanni hefur ekki verið opnuð í svo margar mínútur — ekki aftur fyrr en samtalið hefur verið opnað. Tómt númer = slökkt.</span>
+        <span className="mt-1 block text-xs text-slate-500">Eitt SMS þegar spurningu frá starfsmanni hefur ekki verið svarað í svo margar mínútur — ekki aftur fyrr en nýtt skeyti berst. Samtal sem er merkt lokið veldur ekki SMS. Tómt númer = slökkt.</span>
       </fieldset>
       {msg && <p className={`text-sm ${msg.ok ? "text-emerald-700" : "text-red-600"}`}>{msg.text}</p>}
       <button className={btnPrimary}>Vista</button>
