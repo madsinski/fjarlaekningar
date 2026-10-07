@@ -125,8 +125,9 @@ Fjarlækningum; hann opnar vinnustöðina sem læknirinn.
 
 Cron `/api/cron/vinnustod-nudge` (5 mín.) sendir **eitt** SMS í `gatt_settings.nudge_phone`
 þegar spurning frá starfsmanni hefur ekki verið opnuð í `nudge_after_minutes` mínútur
-(sjálfgefið 10). Ekki aftur fyrr en stjórnandi hefur opnað samtalið og nýtt skeyti
-berst (`gatt_threads.admin_nudged_at`). Stillt undir *Stillingar* á /admin/vinnustod;
+(sjálfgefið 10). Ekki aftur fyrr en nýtt skeyti berst í samtalið eftir áminninguna
+(`gatt_threads.admin_nudged_at`). Samtal sem stendur opið í földum flipa telst ekki
+opnað (`?peek=1`). Stillt undir *Stillingar* á /admin/vinnustod;
 tómt númer slekkur. Skeytið er skráð í SMS-skrá sem „Kerfið (áminning)“.
 Krefst `CRON_SECRET` (Vercel, Production).
 

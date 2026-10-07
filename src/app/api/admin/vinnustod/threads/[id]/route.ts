@@ -26,7 +26,11 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   if (!thread) return fail("Samtalið fannst ekki", 404);
   const [askers, messages] = await Promise.all([askersFor([thread]), loadMessages(id)]);
   const user = askers.get(id) ?? null;
-  await supabaseAdmin.from("gatt_threads").update({ staff_read_at: new Date().toISOString() }).eq("id", id);
+  // Flipi í bakgrunni sækir samtalið með ?peek=1: þá telst það ekki lesið, svo
+  // SMS-áminningin fari samt út þótt samtalið standi opið í öðrum flipa.
+  if (new URL(req.url).searchParams.get("peek") !== "1") {
+    await supabaseAdmin.from("gatt_threads").update({ staff_read_at: new Date().toISOString() }).eq("id", id);
+  }
   return json({ ok: true, thread, user, messages });
 }
 

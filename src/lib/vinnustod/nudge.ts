@@ -3,8 +3,8 @@
 //
 // Regla: spurning (síðasta skeyti frá starfsmanni) sem hefur ekki verið opnuð í
 // `nudge_after_minutes` mínútur → eitt SMS í `nudge_phone`, sem telur allar
-// slíkar spurningar. Sama samtal veldur ekki öðru SMS fyrr en stjórnandi hefur
-// opnað það (staff_read_at eftir admin_nudged_at) og nýtt skeyti berst.
+// slíkar spurningar. Sama samtal veldur ekki öðru SMS fyrr en nýtt skeyti berst
+// í það eftir áminninguna.
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { SMS_SENDER, sendSms, smsSegments, toE164 } from "@/lib/sms";
@@ -30,8 +30,9 @@ export async function runNudge(): Promise<{ sent: boolean; threads: number; reas
     .order("last_message_at", { ascending: true }).limit(50);
   const due = (data ?? []).filter((t) => {
     const unseen = !t.staff_read_at || t.staff_read_at < t.last_message_at;
-    // Einu sinni: ekki aftur nema stjórnandi hafi opnað samtalið eftir síðustu áminningu.
-    const notYet = !t.admin_nudged_at || (t.staff_read_at && t.staff_read_at > t.admin_nudged_at && t.admin_nudged_at < t.last_message_at);
+    // Einu sinni fyrir hvert nýtt skeyti: ný áminning fer út þegar skrifað er
+    // aftur eftir síðustu áminningu, hvort sem stjórnandi opnaði samtalið eða ekki.
+    const notYet = !t.admin_nudged_at || t.admin_nudged_at < t.last_message_at;
     return unseen && notYet;
   });
   if (!due.length) return { sent: false, threads: 0 };

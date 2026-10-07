@@ -139,9 +139,17 @@ function InboxThreadView({ id, onBack, refresh = 0, compact = false }: { id: str
   const [err, setErr] = useState<string | null>(null);
   const bottom = useRef<HTMLDivElement>(null);
   const load = useCallback(async () => {
-    const r = await api<{ thread: InboxThread; user: InboxThread["user"]; messages: Msg[] }>(`/api/admin/vinnustod/threads/${id}`);
+    // Samtal í földum flipa er sótt án þess að merkjast lesið (sjá ?peek í leiðinni).
+    const peek = document.visibilityState === "hidden" ? "?peek=1" : "";
+    const r = await api<{ thread: InboxThread; user: InboxThread["user"]; messages: Msg[] }>(`/api/admin/vinnustod/threads/${id}${peek}`);
     if (r.ok) setData({ thread: r.thread, user: r.user, messages: r.messages }); else setErr(r.error ?? "Mistókst");
   }, [id]);
+  useEffect(() => {
+    // Þegar flipinn sést aftur er samtalið sótt á ný og merkist þá lesið.
+    const onShow = () => { if (document.visibilityState === "visible") void load(); };
+    document.addEventListener("visibilitychange", onShow);
+    return () => document.removeEventListener("visibilitychange", onShow);
+  }, [load]);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
