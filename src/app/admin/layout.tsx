@@ -15,6 +15,7 @@ import {
   LayoutDashboard,
   LogOut,
   Mail,
+  Menu,
   MessageCircle,
   MessageSquare,
   Presentation,
@@ -25,6 +26,7 @@ import {
   Stethoscope,
   UserRound,
   Users,
+  X,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import Navbar from "@/app/components/Navbar";
@@ -75,6 +77,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [ready, setReady] = useState(false);
   const [staff, setStaff] = useState<StaffProfile | null>(null);
   const [navConfig, setNavConfig] = useState<NavConfig>({});
+  // Á síma er hliðarstikan skúffa sem opnast úr efstu stikunni.
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const isBare = BARE_ROUTES.includes(pathname);
 
@@ -210,29 +214,70 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       ? ordered.filter((n) => n.href.startsWith("/admin/legal") || n.href === "/admin/settings" || n.href === "/admin/account")
       : ordered.filter((n) => n.href === "/admin/account" || n.href === "/admin/settings" || n.href === "/vinnustod")
   ).map((n) => ({ ...n, icon: NAV_ICONS[n.href] }));
+  const isActive = (href: string) => (href === "/admin" ? pathname === "/admin" : pathname.startsWith(href));
+  const current = nav.filter((n) => isActive(n.href)).sort((a, b) => b.href.length - a.href.length)[0];
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Public site top nav bar, same as fjarlaekningar.is */}
-      <Navbar />
+      {/* Public site top nav bar, same as fjarlaekningar.is — desktop only; on a
+          phone it would take a quarter of the screen. `contents` keeps it sticky. */}
+      <div className="hidden lg:contents">
+        <Navbar />
+      </div>
+      {/* Mobile top bar */}
+      <div className="lg:hidden sticky top-0 z-30 flex items-center gap-2 bg-slate-900 px-2 py-2 text-white">
+        <button
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          aria-label="Opna valmynd"
+          aria-expanded={menuOpen}
+          className="rounded-lg p-2.5 hover:bg-slate-800"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-widest text-cyan-400 leading-tight">Stjórnborð</div>
+          <div className="truncate text-sm font-semibold leading-tight">{current?.label ?? "Fjarlækningar"}</div>
+        </div>
+      </div>
+      {menuOpen && (
+        <button
+          type="button"
+          aria-label="Loka valmynd"
+          onClick={() => setMenuOpen(false)}
+          className="lg:hidden fixed inset-0 z-40 bg-slate-900/50"
+        />
+      )}
       <div className="flex flex-1 min-h-0">
-      {/* Sidebar */}
-      <aside className="w-60 shrink-0 bg-slate-900 text-slate-300 flex flex-col">
-        <div className="px-5 py-5 border-b border-slate-800">
-          <div className="text-white font-semibold tracking-tight">Fjarlækningar</div>
-          <div className="text-[11px] uppercase tracking-widest text-cyan-400 mt-0.5">Stjórnborð</div>
+      {/* Sidebar — a slide-in drawer below lg */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 max-w-[85vw] overflow-y-auto overscroll-contain transition-[transform,visibility] duration-200 lg:visible lg:static lg:z-auto lg:w-60 lg:max-w-none lg:translate-x-0 lg:overflow-visible shrink-0 bg-slate-900 text-slate-300 flex flex-col ${
+          menuOpen ? "translate-x-0" : "invisible -translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between px-5 py-5 border-b border-slate-800">
+          <div>
+            <div className="text-white font-semibold tracking-tight">Fjarlækningar</div>
+            <div className="text-[11px] uppercase tracking-widest text-cyan-400 mt-0.5">Stjórnborð</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMenuOpen(false)}
+            aria-label="Loka valmynd"
+            className="lg:hidden rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">
           {nav.map((item) => {
-            const active =
-              item.href === "/admin"
-                ? pathname === "/admin"
-                : pathname.startsWith(item.href);
+            const active = isActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                onClick={() => setMenuOpen(false)}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 lg:py-2 text-sm font-medium transition-colors ${
                   active
                     ? "bg-cyan-500/15 text-white"
                     : "text-slate-400 hover:bg-slate-800 hover:text-white"

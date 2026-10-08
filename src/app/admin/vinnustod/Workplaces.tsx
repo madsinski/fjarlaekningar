@@ -22,7 +22,7 @@ async function api<T = Record<string, unknown>>(path: string, init: { method?: s
   return res.json().catch(() => ({ ok: false, error: `Villa (${res.status})` }));
 }
 
-const inputCls = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100";
+const inputCls = "w-full rounded-lg border border-slate-300 px-3 py-2 text-base sm:text-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100";
 const btn = "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold disabled:opacity-40";
 
 type Draft = { name: string; address: string; phone: string; note: string };
@@ -140,7 +140,7 @@ export default function Workplaces({ places, unlinked, reload }: { places: Workp
                   {merging === p.id && (
                     <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-slate-50 p-2 text-xs">
                       <span className="font-semibold text-slate-700">Sameina við:</span>
-                      <select className={`${inputCls} w-auto py-1 text-xs`} defaultValue="" onChange={(e) => e.target.value && merge(p, e.target.value)}>
+                      <select className={`${inputCls} w-auto max-w-full py-1 sm:text-xs`} defaultValue="" onChange={(e) => e.target.value && merge(p, e.target.value)}>
                         <option value="" disabled>Veldu stöð…</option>
                         {(places ?? []).filter((x) => x.id !== p.id).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
                       </select>

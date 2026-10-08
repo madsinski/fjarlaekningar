@@ -26,11 +26,14 @@ const fmt = (iso: string | null) => {
   const d = new Date(iso);
   return `${d.getDate()}.${d.getMonth() + 1}. kl. ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 };
-const inputCls = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100";
+// 16px á síma: iOS þysjar inn á reiti með minna letri.
+const inputCls = "w-full rounded-lg border border-slate-300 px-3 py-2 text-base sm:text-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100";
 const btn = "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold disabled:opacity-40";
 const btnPrimary = `${btn} bg-cyan-700 text-white hover:bg-cyan-800`;
 const btnGhost = `${btn} border border-slate-300 bg-white text-slate-700 hover:bg-slate-50`;
-
+// Sjálfvirkur fókus aðeins með mús/lyklaborði — á snertiskjá skýst lyklaborðið
+// annars upp yfir samtalið um leið og það opnast.
+const autoFocusOk = () => typeof window !== "undefined" && window.matchMedia("(pointer: fine)").matches;
 
 interface InboxThread {
   id: string; subject: string; status: "open" | "closed"; last_message_at: string; last_author: "user" | "staff"; unread: boolean;
@@ -96,12 +99,12 @@ export default function Inbox({ onAwaitingChange, refresh = 0, compact = false, 
     return <Compose key={presetTo ? `${presetTo.kind}:${presetTo.id}` : "new"} compact={compact} initialTo={presetTo} onCancel={() => { setComposing(false); setPresetTo(null); }} onSent={(id) => { setComposing(false); setOpen(id); void load(); }} />;
   }
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <button className={`${btnPrimary} mr-auto`} onClick={() => setComposing(true)}><PenSquare className="h-4 w-4" /> Ný skilaboð</button>
         {(["open", "closed", "all"] as const).map((f) => (
           <button key={f} onClick={() => setFilter(f)}
-            className={`rounded-full px-3 py-1 text-sm font-medium ${filter === f ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"}`}>
+            className={`rounded-full px-3 py-1.5 text-sm font-medium sm:py-1 ${filter === f ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"}`}>
             {{ open: "Opnar", closed: "Lokið", all: "Allar" }[f]}
           </button>
         ))}
@@ -122,7 +125,7 @@ export default function Inbox({ onAwaitingChange, refresh = 0, compact = false, 
                 <span className={`block truncate text-sm ${t.unread ? "font-bold" : "font-semibold"}`}>{t.subject}</span>
                 <span className="block truncate text-xs text-slate-500">{t.user?.name ?? "?"}{t.user?.workplace ? ` · ${t.user.workplace}` : ""} · {fmt(t.last_message_at)}</span>
               </span>
-              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${t.status === "closed" ? "bg-slate-100 text-slate-500" : t.last_author === "user" ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800"}`}>
+              <span className={`shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ${t.status === "closed" ? "bg-slate-100 text-slate-500" : t.last_author === "user" ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800"}`}>
                 {t.status === "closed" ? "Lokið" : t.last_author === "user" ? "Bíður svars" : "Sent"}
               </span>
             </button>
@@ -182,12 +185,12 @@ function InboxThreadView({ id, onBack, refresh = 0, compact = false }: { id: str
   };
 
   return (
-    <div className="space-y-3">
-      <button onClick={onBack} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-600 hover:underline"><ArrowLeft className="h-4 w-4" /> Öll samtöl</button>
+    <div className="min-w-0 space-y-3">
+      <button onClick={onBack} className="inline-flex items-center gap-1 py-1 text-sm font-semibold text-slate-600 hover:underline"><ArrowLeft className="h-4 w-4" /> Öll samtöl</button>
       {!data ? <div className="h-40 animate-pulse rounded-2xl bg-slate-100" /> : (
-        <div className={compact ? "" : "rounded-2xl border border-slate-200 bg-white p-5"}>
+        <div className={compact ? "" : "rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5"}>
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
+            <div className="min-w-0 [overflow-wrap:anywhere]">
               <h2 className="text-lg font-bold">{data.thread.subject}</h2>
               <p className="text-sm text-slate-500">
                 {[data.user?.name, [data.user?.title, data.user?.workplace].filter(Boolean).join(", ")].filter(Boolean).join(" · ")}
@@ -199,7 +202,7 @@ function InboxThreadView({ id, onBack, refresh = 0, compact = false }: { id: str
           <div className="mt-4 space-y-3">
             {data.messages.map((m) => (
               <div key={m.id} className={`flex ${m.author_kind === "staff" ? "justify-end" : "justify-start"}`}>
-                <div className={`${compact ? "max-w-[90%] px-3 py-2" : "max-w-[80%] px-4 py-2.5"} rounded-2xl [overflow-wrap:anywhere] ${m.author_kind === "staff" ? "bg-cyan-700 text-white" : "border border-slate-200 bg-slate-50"}`}>
+                <div className={`${compact ? "max-w-[90%] px-3 py-2" : "max-w-[90%] px-3 py-2 sm:max-w-[80%] sm:px-4 sm:py-2.5"} rounded-2xl [overflow-wrap:anywhere] ${m.author_kind === "staff" ? "bg-cyan-700 text-white" : "border border-slate-200 bg-slate-50"}`}>
                   <div className={`text-[11px] font-semibold ${m.author_kind === "staff" ? "text-white/80" : "text-slate-500"}`}>{m.author_name} · {fmt(m.created_at)}</div>
                   <p className="mt-0.5 whitespace-pre-wrap text-sm">{m.body}</p>
                 </div>
@@ -208,7 +211,7 @@ function InboxThreadView({ id, onBack, refresh = 0, compact = false }: { id: str
             <div ref={bottom} />
           </div>
           <div className="mt-5 space-y-2 border-t border-slate-100 pt-4">
-            <textarea autoFocus className={`${inputCls} min-h-24`} value={reply} onChange={(e) => setReply(e.target.value)}
+            <textarea autoFocus={autoFocusOk()} className={`${inputCls} min-h-20 sm:min-h-24`} value={reply} onChange={(e) => setReply(e.target.value)}
               onKeyDown={(e) => onEnterSend(e, () => void send())}
               placeholder="Skilaboð — birtast viðtakandanum í vinnustöðinni og fara í tölvupósti" />
             {err && <p className="text-sm text-red-600">{err}</p>}
@@ -221,7 +224,7 @@ function InboxThreadView({ id, onBack, refresh = 0, compact = false }: { id: str
                 : <button className={btnGhost} onClick={() => setStatus("open")}>Opna aftur</button>}
               <button className={`${btnPrimary} ml-auto`} disabled={busy || !reply.trim()} onClick={send}><Send className="h-4 w-4" /> Senda</button>
             </div>
-            <p className="text-right text-[11px] text-slate-400">{ENTER_HINT}</p>
+            <p className="hidden text-right text-[11px] text-slate-400 sm:block">{ENTER_HINT}</p>
           </div>
         </div>
       )}
@@ -262,9 +265,9 @@ function Compose({ onCancel, onSent, compact = false, initialTo = null }: {
   };
 
   return (
-    <div className="space-y-3">
-      <button onClick={onCancel} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-600 hover:underline"><ArrowLeft className="h-4 w-4" /> Öll samtöl</button>
-      <div className={compact ? "space-y-4" : "space-y-4 rounded-2xl border border-slate-200 bg-white p-5"}>
+    <div className="min-w-0 space-y-3">
+      <button onClick={onCancel} className="inline-flex items-center gap-1 py-1 text-sm font-semibold text-slate-600 hover:underline"><ArrowLeft className="h-4 w-4" /> Öll samtöl</button>
+      <div className={compact ? "space-y-4" : "space-y-4 rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5"}>
         <h2 className="text-lg font-bold">Ný skilaboð</h2>
         <div>
           <div className="mb-1 text-sm font-semibold text-slate-700">Til</div>
@@ -281,7 +284,7 @@ function Compose({ onCancel, onSent, compact = false, initialTo = null }: {
               <label className="relative block">
                 <span className="sr-only">Leita að viðtakanda</span>
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input autoFocus className={`${inputCls} pl-9`} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nafn, netfang eða vinnustaður" />
+                <input autoFocus={autoFocusOk()} className={`${inputCls} pl-9`} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nafn, netfang eða vinnustaður" />
               </label>
               <div className="mt-2 max-h-72 overflow-y-auto rounded-lg border border-slate-200">
                 {people === null ? <div className="m-3 h-10 animate-pulse rounded bg-slate-100" />
@@ -295,7 +298,7 @@ function Compose({ onCancel, onSent, compact = false, initialTo = null }: {
                         {group.map((p) => (
                           <button key={`${p.kind}:${p.id}`} onClick={() => setTo(p)} className="flex w-full flex-col px-3 py-2 text-left hover:bg-cyan-50">
                             <span className="text-sm font-semibold">{p.name}</span>
-                            <span className="text-xs text-slate-500">{[p.workplace, p.email].filter(Boolean).join(" · ")}</span>
+                            <span className="text-xs text-slate-500 [overflow-wrap:anywhere]">{[p.workplace, p.email].filter(Boolean).join(" · ")}</span>
                           </button>
                         ))}
                       </div>

@@ -110,7 +110,7 @@ export default function Presence({ refresh = 0, onWrite }: { refresh?: number; o
       </div>
       {err && <p className="p-4 text-sm text-red-600">{err}</p>}
       {people === null ? <div className="m-4 h-24 animate-pulse rounded-lg bg-slate-100" /> : (
-        <div className="max-h-[70vh] divide-y divide-slate-100 overflow-y-auto">
+        <div className="divide-y divide-slate-100 lg:max-h-[70vh] lg:overflow-y-auto">
           {groups.length === 0 && <p className="p-4 text-sm text-slate-500">Enginn innskráður núna.</p>}
           {groups.map((g) => (
             <details key={g.place} open className="group">

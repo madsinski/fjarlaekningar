@@ -24,7 +24,8 @@ async function api<T = Record<string, unknown>>(path: string, init: { method?: s
 }
 
 const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString("is-IS", { dateStyle: "short", timeStyle: "short" }) : "—");
-const inputCls = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100";
+// 16px á síma: iOS þysjar inn á reiti með minna letri.
+const inputCls = "w-full rounded-lg border border-slate-300 px-3 py-2 text-base sm:text-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100";
 const btn = "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold disabled:opacity-40";
 const btnPrimary = `${btn} bg-cyan-700 text-white hover:bg-cyan-800`;
 const btnGhost = `${btn} border border-slate-300 bg-white text-slate-700 hover:bg-slate-50`;
@@ -85,11 +86,11 @@ export default function VinnustodAdminPage() {
     { key: "stillingar", label: "Stillingar", icon: <Settings className="h-4 w-4" /> },
   ];
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-6xl px-3 py-4 sm:px-4 sm:py-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Vinnustöð</h1>
-          <p className="text-sm text-slate-500">Hjúkrunarfræðingar og annað starfsfólk heilsugæslunnar sem vísar á Fjarlækningar.</p>
+          <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">Vinnustöð</h1>
+          <p className="hidden text-sm text-slate-500 sm:block">Hjúkrunarfræðingar og annað starfsfólk heilsugæslunnar sem vísar á Fjarlækningar.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <PushToggle vapidKey={live.vapidKey} variant="light" />
@@ -100,20 +101,21 @@ export default function VinnustodAdminPage() {
           <a href="/vinnustod" target="_blank" rel="noopener" className={btnGhost}>Opna vinnustöðina</a>
         </div>
       </div>
-      <div className="mt-5 flex flex-wrap gap-1 border-b border-slate-200">
+      {/* Ein lína sem skrunar til hliðar á síma í stað þess að brotna í tvær. */}
+      <div className="-mx-3 mt-4 flex gap-1 overflow-x-auto px-3 shadow-[inset_0_-1px_0_#e2e8f0] sm:mx-0 sm:mt-5 sm:px-0">
         {tabs.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={`-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-semibold ${tab === t.key ? "border-cyan-600 text-cyan-800" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
-            {t.icon} {t.label}
+            className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-2.5 py-2.5 text-sm font-semibold sm:px-3 sm:py-2 ${tab === t.key ? "border-cyan-600 text-cyan-800" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
+            <span className="hidden sm:inline-flex">{t.icon}</span> {t.label}
             {t.badge ? <UnreadDot count={t.badge} className="ml-1" /> : null}
           </button>
         ))}
       </div>
-      <div className="mt-6">
+      <div className="mt-4 sm:mt-6">
         {tab === "spurningar" && (
-          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
             <Inbox onAwaitingChange={setAwaiting} refresh={pulse} composeTo={composeTo} />
-            <div className="lg:sticky lg:top-4">
+            <div className="min-w-0 lg:sticky lg:top-4">
               <Presence refresh={pulse} onWrite={(p) => setComposeTo({ kind: p.kind, id: p.id, nonce: Date.now() })} />
             </div>
           </div>
@@ -174,7 +176,7 @@ function UsersTab() {
   };
 
   return (
-    <div className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div className="min-w-0 rounded-2xl border border-slate-200 bg-white">
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
           <h2 className="font-bold text-slate-900">Starfsmenn</h2>
@@ -198,7 +200,7 @@ function UsersTab() {
                     </div>
                   </div>
                   <select aria-label={`Starfsstöð ${u.name}`} disabled={busy === u.id}
-                    className="min-w-0 flex-[1_1_160px] rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs"
+                    className="min-w-0 flex-[1_1_160px] rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-base sm:text-xs"
                     value={u.workplace_id ?? ""}
                     onChange={(e) => void patch(u.id, { workplaceId: e.target.value || null })}>
                     <option value="">{u.workplace && !u.workplace_id ? `${u.workplace} (ekki á lista)` : "— Engin starfsstöð —"}</option>
@@ -222,7 +224,7 @@ function UsersTab() {
           )}
       </div>
 
-      <div className="space-y-6">
+      <div className="min-w-0 space-y-6">
       <form onSubmit={invite} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="flex items-center gap-2 font-bold"><UserPlus className="h-4 w-4 text-cyan-700" /> Bjóða starfsmanni</h2>
         <p className="text-xs text-slate-500">Starfsfólk með netfang á leyfðu léni getur líka skráð sig sjálft á /vinnustod.</p>
@@ -290,8 +292,8 @@ function AnnouncementsTab() {
     await load();
   };
   return (
-    <div className="grid items-start gap-6 lg:grid-cols-[1fr_340px]">
-      <div className="space-y-2">
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="min-w-0 space-y-2">
         {rows === null ? <div className="h-16 animate-pulse rounded-2xl bg-slate-100" />
           : rows.length === 0 ? <p className="rounded-2xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">Engar tilkynningar. Þær birtast efst í vinnustöðinni, t.d. „Nýtt erindi“ eða „Gáttin liggur niðri“.</p>
           : rows.map((a) => {
@@ -299,7 +301,7 @@ function AnnouncementsTab() {
             return (
               <div key={a.id} className={`rounded-2xl border p-4 ${a.level === "warning" ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-white"} ${!a.active || expired ? "opacity-50" : ""}`}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
+                  <div className="min-w-0 [overflow-wrap:anywhere]">
                     <div className="font-bold">{a.title}</div>
                     {a.body && <p className="mt-0.5 whitespace-pre-wrap text-sm text-slate-700">{a.body}</p>}
                     <div className="mt-1 text-xs text-slate-500">{a.created_by} · {fmt(a.created_at)}{a.expires_at ? ` · ${expired ? "rann út" : "rennur út"} ${fmt(a.expires_at)}` : ""}</div>
