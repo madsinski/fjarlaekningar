@@ -335,33 +335,39 @@ export default function HomeView({
           </a>
 
           {press.length > 1 && (
-            /* self-start so the shorter column hugs its two items instead of
-               stretching to the height of the photo beside it. */
-            <ul className="divide-y divide-slate-100 self-start rounded-2xl border border-slate-200 bg-white lg:col-span-5">
-              {press.slice(1, 3).map((p) => (
-                <li key={p.url}>
-                  <a
-                    href={p.url}
-                    target="_blank"
-                    rel="noopener"
-                    className="group flex h-full items-start justify-between gap-5 p-6 sm:p-8"
-                  >
-                    <div className="min-w-0">
-                      <PressMeta item={p} locale={locale} />
-                      <p className="mt-3 font-semibold leading-snug text-slate-900 group-hover:text-brand-cyan-dark">
-                        {p.title}
-                      </p>
-                    </div>
-                    <span
-                      aria-hidden
-                      className="mt-1 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-cyan"
+            /* Every remaining piece is listed, and the card scrolls inside
+               itself once there are too many. On wide screens the list is
+               taken out of flow so the row is only ever as tall as the lead
+               card: a short list still hugs its items, a long one stops at
+               the lead card's bottom edge and scrolls. On narrow screens,
+               where the cards stack, it is capped at a fixed height instead. */
+            <div className="relative lg:col-span-5">
+              <ul className="max-h-[28rem] divide-y divide-slate-100 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white lg:absolute lg:inset-x-0 lg:top-0 lg:max-h-full">
+                {press.slice(1).map((p) => (
+                  <li key={p.url}>
+                    <a
+                      href={p.url}
+                      target="_blank"
+                      rel="noopener"
+                      className="group flex h-full items-start justify-between gap-5 p-6 sm:p-8"
                     >
-                      ↗
-                    </span>
-                  </a>
-                </li>
-              ))}
-            </ul>
+                      <div className="min-w-0">
+                        <PressMeta item={p} locale={locale} />
+                        <p className="mt-3 font-semibold leading-snug text-slate-900 group-hover:text-brand-cyan-dark">
+                          {p.title}
+                        </p>
+                      </div>
+                      <span
+                        aria-hidden
+                        className="mt-1 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-cyan"
+                      >
+                        ↗
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
       </>
