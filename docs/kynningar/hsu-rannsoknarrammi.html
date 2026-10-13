@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<title>Rannsóknarrammi fyrir fjarlækningaþjónustu HSU</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a2330;
+    --muted: #5a6472;
+    --line: #d9dee5;
+    --navy: #173f66;
+    --accent: #b01268;
+  }
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #e9ecef; }
+  body {
+    font-family: Inter, system-ui, sans-serif;
+    color: var(--ink);
+    font-size: 6.2pt;
+    line-height: 1.24;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .page {
+    width: 210mm;
+    height: 297mm;
+    margin: 0 auto;
+    background: #fff;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 6.5mm 11.5mm 0;
+  }
+  @media screen { .page { margin: 24px auto; box-shadow: 0 2px 16px rgba(0,0,0,.12); } }
+
+  /* ── Header ─────────────────────────────────────────── */
+  .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2.4mm; }
+  .top .fj { height: 5.6mm; }
+  .top .hsu { height: 6.6mm; }
+  h1 { font-size: 14.5pt; line-height: 1.15; font-weight: 700; letter-spacing: -.012em; color: var(--navy); }
+  .sub { font-size: 8.6pt; font-weight: 500; color: var(--ink); margin-top: .6mm; }
+  .intro { font-size: 6.9pt; line-height: 1.38; color: #2c3644; margin-top: 1.5mm; }
+  .intro em { font-style: normal; font-weight: 600; color: var(--accent); }
+  header { padding-bottom: 2.3mm; border-bottom: .5mm solid var(--navy); }
+
+  main { flex: 1; display: flex; flex-direction: column; }
+
+  /* ── The table ──────────────────────────────────────── */
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  col.a { width: 32mm; } col.c { width: 26mm; } col.d { width: 28mm; }
+  thead th {
+    text-align: left; font-size: 6.1pt; font-weight: 600; color: var(--muted);
+    padding: 1.3mm 1.6mm .5mm 0;
+  }
+  tbody td { padding: .46mm 1.6mm .46mm 0; vertical-align: top; border-top: 1px solid var(--line); }
+  tbody td:first-child { font-weight: 600; }
+  tbody td:nth-child(3), tbody td:nth-child(4) { color: #3a4553; }
+  tr.grp td {
+    padding: 1.2mm 0 .6mm; font-size: 7.4pt; font-weight: 700; color: var(--navy);
+    border-top: 0;
+  }
+  tr.grp + tr td { border-top: .35mm solid var(--navy); }
+  tr.grp:first-child td { padding-top: .4mm; }
+  .nytt { font-size: 6pt; font-weight: 600; color: var(--accent); white-space: nowrap; }
+
+  /* ── Timeline ───────────────────────────────────────── */
+  h2 { font-size: 7.6pt; font-weight: 700; color: var(--navy); padding-bottom: .7mm; border-bottom: .35mm solid var(--navy); margin-bottom: 1.2mm; }
+  .when { margin-top: 2.2mm; }
+  .steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3mm; }
+  .steps b { display: block; font-weight: 600; }
+  .steps span { display: block; color: #3a4553; }
+  .note { margin-top: 1.3mm; color: var(--muted); }
+
+  /* ── Bottom ─────────────────────────────────────────── */
+  .bottom { display: grid; grid-template-columns: 1.2fr 1.25fr .75fr; gap: 5mm; margin-top: 2.3mm; }
+  .bottom ol { padding-left: 3.3mm; }
+  .bottom ul { list-style: none; }
+  .bottom ul li { position: relative; padding-left: 2.6mm; }
+  .bottom ul li::before { content: "–"; position: absolute; left: 0; color: var(--muted); }
+  .bottom li { margin-bottom: .45mm; }
+  .bottom p { margin-bottom: .9mm; }
+
+  footer {
+    margin-top: 2mm; padding: 1.4mm 0 4.2mm; border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; font-size: 6.3pt; color: var(--muted);
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="top">
+      <img class="fj" src="../../public/fjarlaekningar-logo.svg" alt="Fjarlækningar">
+      <img class="hsu" src="../../public/hsu-logo.webp" alt="Heilbrigðisstofnun Suðurlands">
+    </div>
+    <h1>Rannsóknarrammi fyrir fjarlækningaþjónustu HSU</h1>
+    <p class="sub">Hvað er mælt, hvaðan gögnin koma og hvenær þau liggja fyrir</p>
+    <p class="intro">Yfirlit yfir þá þætti sem við leggjum til að meta í þjónustu Fjarlækninga fyrir HSU, svo að við séum sammála um skilgreiningar, gögn og tímasetningar áður en tölur eru teknar saman. Byggt á rannsóknarsniðinu og fundi Fjarlækninga og HSU 30. september. Þættir sem bættust við á fundinum eru merktir <em>nýtt</em> og ósamþykkt hugmynd að úrbót <em>hugmynd</em>.</p>
+  </header>
+
+  <main>
+    <table>
+      <colgroup><col class="a"><col class="b"><col class="c"><col class="d"></colgroup>
+      <thead>
+        <tr><th>Þáttur</th><th>Hvað er mælt</th><th>Gögn</th><th>Hvenær</th></tr>
+      </thead>
+      <tbody>
+
+        <tr class="grp"><td colspan="4">1. Virkar þjónustan fyrir sjúklinginn?</td></tr>
+        <tr>
+          <td>Ánægja og traust</td>
+          <td>Hlutfall svarenda sem eru ánægðir með þjónustuna (4–5 af 5) og hlutfall sem myndi nota hana aftur. Einnig er spurt hve einfalt ferlið var og um ánægju með biðtíma.</td>
+          <td>Könnun, dagur 0</td>
+          <td>Eftir hvert erindi</td>
+        </tr>
+        <tr>
+          <td>Var leyst úr vandanum?</td>
+          <td>Hlutfall sem svarar „Já, að fullu“ viku síðar. Einnig hvort læknirinn útskýrði niðurstöðu og næstu skref á skýran hátt.</td>
+          <td>Könnun, dagur 7</td>
+          <td>Viku eftir erindi</td>
+        </tr>
+        <tr>
+          <td>Í stað annarrar þjónustu eða ný eftirspurn?</td>
+          <td>Spurt er hvað fólk hefði annars gert. Þeir sem hefðu leitað til læknis annars staðar fengu þjónustu í stað annarrar, en þeir sem hefðu beðið eru ný eftirspurn.</td>
+          <td>Könnun, dagur 0</td>
+          <td>Eftir hvert erindi</td>
+        </tr>
+        <tr>
+          <td>Heimapróf</td>
+          <td>Fjöldi erinda þar sem heimapróf var notað, og hvernig gekk að fá prófið í hendur og að framkvæma það (4–5 af 5).</td>
+          <td>Medalia og könnun, dagur 0</td>
+          <td>Eftir hvert erindi</td>
+        </tr>
+        <tr>
+          <td>Upplifun þeirra sem er vísað annað <span class="nytt">nýtt</span></td>
+          <td>Stutt könnun fyrir þá sem fá ekki úrlausn hjá okkur: Var leiðsögnin skýr? Vissi fólk hvert það átti að leita? Fannst því hún rétt og örugg? Spurningarnar á eftir að semja.</td>
+          <td>Ný könnun</td>
+          <td>Þegar erindi er vísað annað</td>
+        </tr>
+        <tr>
+          <td>Opin svör</td>
+          <td>Athugasemdir úr öllum könnunum eru lesnar, flokkaðar eftir efni og nýttar til úrbóta.</td>
+          <td>Allar kannanir</td>
+          <td>Mánaðarlega</td>
+        </tr>
+
+        <tr class="grp"><td colspan="4">2. Virkar þjónustan fyrir heilbrigðiskerfið?</td></tr>
+        <tr>
+          <td>Fjöldi erinda og úrlausn</td>
+          <td>Fjöldi erinda eftir stöð, mánuði og tegund. Hlutfall erinda sem leyst er úr að fullu í fjarþjónustu, án þess að vísa þurfi annað. Einnig endurtekin erindi vegna sama vanda.</td>
+          <td>Medalia</td>
+          <td>Frá fyrsta degi</td>
+        </tr>
+        <tr>
+          <td>Erindi sem er vísað annað</td>
+          <td>Greint er á milli erinda sem er vísað áfram í viðeigandi þjónustu, til dæmis í skoðun, og erinda sem er vísað frá því að þau eiga ekki heima í fjarþjónustu. Ástæðan er skráð eftir föstum lista.</td>
+          <td>Medalia</td>
+          <td>Frá fyrsta degi</td>
+        </tr>
+        <tr>
+          <td>Greiningar</td>
+          <td>ICD-10 greining er skráð á hvert erindi, líka á þau sem er vísað annað. Borið saman við umsaminn kóðalista og talið hve mörg erindi falla utan hans.</td>
+          <td>Medalia</td>
+          <td>Þegar kóðalistinn liggur fyrir</td>
+        </tr>
+        <tr>
+          <td>Komur á heilsugæslu HSU vegna sömu vandamála</td>
+          <td>Fjöldi skráðra greininga af kóðalistanum eftir stöð og mánuði, hver greining talin einu sinni á sjúkling á dag. Baseline nær 36 mánuði aftur og sama talning heldur áfram, svo að bera megi saman við þróun fyrri ára.</td>
+          <td>Saga</td>
+          <td>Baseline strax, svo eftir 6 og 12 mánuði</td>
+        </tr>
+        <tr>
+          <td>Biðtími sjúklings</td>
+          <td>Tími frá því að erindi berst þar til læknir svarar: miðgildi, og innan hve langs tíma 95% fá svar. Viðmiðið er svar innan tveggja klukkustunda.</td>
+          <td>Medalia</td>
+          <td>Frá fyrsta degi</td>
+        </tr>
+        <tr>
+          <td>Vinnutími læknis</td>
+          <td>Miðgildi þess tíma sem læknir ver í hvert erindi. Læknar skrá tímann í tvær vikur, 20 erindi hver.</td>
+          <td>Skráning lækna okkar</td>
+          <td>Í upphafi og um 9. mánuð</td>
+        </tr>
+        <tr>
+          <td>Starfsfólk HSU</td>
+          <td>Ánægja með samstarfið, hvort þjónustan hjálpar í starfi og hvort hún eigi að halda áfram, greint eftir starfsstétt. Einnig spurt hvað myndi breytast ef þjónustan legðist af.</td>
+          <td>Starfsmannakönnun</td>
+          <td>Í lok tímabils</td>
+        </tr>
+        <tr>
+          <td>Símtöl og álag á hjúkrunarfræðinga <span class="nytt">nýtt</span></td>
+          <td>Fjöldi símtala á stöð á mánuði, ef HSU getur tekið þau saman. Einnig tímamæling: hve langan tíma starfsfólk ver í erindi sem er beint til Fjarlækninga, borið saman við erindi sem er afgreitt á staðnum (tvær vikur, um 40 erindi í hvorum hópi).</td>
+          <td>HSU og tímamæling á stöð</td>
+          <td>12 mánuði aftur og áfram</td>
+        </tr>
+        <tr>
+          <td>Bið og afkastageta <span class="nytt">nýtt</span></td>
+          <td>Bið eftir tíma hjá lækni á stöðinni, í dögum, fyrir og eftir að þjónustan hefst. Ákveða þarf með HSU hvernig biðin er mæld og hvort gögnin eru til.</td>
+          <td>HSU</td>
+          <td>12 mánuði aftur og áfram</td>
+        </tr>
+        <tr>
+          <td>Kostnaður <span class="nytt">nýtt</span></td>
+          <td>Kostnaður stöðvar við afleysingar og verktakalækna fyrir og eftir að þjónustan hefst, borinn saman við fjölda erinda sem leyst er úr í fjarþjónustu. Nýtist í umræðu um fjármögnun.</td>
+          <td>HSU</td>
+          <td>12 mánuði aftur og áfram</td>
+        </tr>
+
+        <tr class="grp"><td colspan="4">3. Er þjónustan örugg?</td></tr>
+        <tr>
+          <td>Atvik</td>
+          <td>Fjöldi óvæntra atvika, það er atvika sem ollu eða hefðu getað valdið sjúklingi tjóni, og þar af alvarleg atvik. Sama skilgreining hjá báðum. Sjúklingar og starfsfólk HSU geta tilkynnt atvik.</td>
+          <td>Atvikaskráning</td>
+          <td>Skráð jafnóðum</td>
+        </tr>
+        <tr>
+          <td>Forskimun (triage)</td>
+          <td>Fjöldi erinda sem spurningalistinn stöðvar og fjöldi sem læknir vísar frá. Sérstaklega eru talin erindi sem listinn hefði átt að stöðva, og bráð veikindi sem komust í gegnum hann.</td>
+          <td>Medalia</td>
+          <td>Frá fyrsta degi</td>
+        </tr>
+        <tr>
+          <td>Myndsímtal við mat á rauðum flöggum <span class="nytt">hugmynd</span></td>
+          <td>Ósamþykkt hugmynd að úrbót: læknir býður myndsímtal til að meta rautt flagg betur áður en erindi er vísað frá. Hæfist eftir 6 mánuði. Borið saman hlutfall erinda sem er vísað frá vegna rauðra flagga fyrir og eftir.</td>
+          <td>Medalia</td>
+          <td>Eftir 6 mánuði, borið saman við fyrstu 6</td>
+        </tr>
+        <tr>
+          <td>Leitað annað innan 7 daga</td>
+          <td>Hlutfall svarenda sem leituðu annað vegna sama vanda, og hvert. HSU ber auk þess erindin saman við Sögu, fer yfir 50–100 sjúkraskrár og skilar fjölda vegna sama vanda.</td>
+          <td>Könnun, dagur 7, og Saga</td>
+          <td>Yfirferð eftir 6 og 12 mánuði</td>
+        </tr>
+        <tr>
+          <td>Rétt greining</td>
+          <td>Hlutfall svarenda sem fengu aðra greiningu annars staðar. Í yfirferð HSU er skráð hvort greining Fjarlækninga stóðst.</td>
+          <td>Könnun, dagur 7, og Saga</td>
+          <td>Eftir 6 og 12 mánuði</td>
+        </tr>
+        <tr>
+          <td>Aukaverkanir lyfja</td>
+          <td>Fjöldi þeirra sem fengu alvarlegar aukaverkanir eða ofnæmisviðbrögð og þurftu að leita læknis, af þeim sem fengu ávísað lyfi. Farið er yfir hvert tilvik sem atvik.</td>
+          <td>Könnun, dagur 7, og atvikaskráning</td>
+          <td>Viku eftir erindi</td>
+        </tr>
+        <tr>
+          <td>Sýklalyf og aðrar lyfjaávísanir</td>
+          <td>Hlutfall erinda þar sem sýklalyfi er ávísað og hlutfall þar sem einhverju lyfi er ávísað. Borið saman við ávísanir HSU við sömu greiningum á baseline-tímabilinu.</td>
+          <td>Medalia og Saga</td>
+          <td>Frá fyrsta degi</td>
+        </tr>
+        <tr>
+          <td>Ákvörðunartré</td>
+          <td>Hlutfall erinda þar sem læknir staðfestir niðurstöðu ákvörðunartrésins. Þegar læknir breytir henni er ástæðan skráð.</td>
+          <td>Medalia</td>
+          <td>Frá fyrsta degi</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <section class="when">
+      <h2>Tímalína á hverri stöð</h2>
+      <div class="steps">
+        <div><b>Áður en mælt er</b><span>Skilgreiningar, kóðalisti og spurningar kannana ákveðin. Skráning í Medalia sett upp.</span></div>
+        <div><b>Strax</b><span>Baseline úr Sögu, 36 mánuði aftur, mánuð fyrir mánuð.</span></div>
+        <div><b>Eftir 1 mánuð</b><span>Fyrsta stöðumat á nýrri stöð, úr Medalia og könnunum. Brugðist við því sem betur má fara.</span></div>
+        <div><b>Eftir 6 mánuði</b><span>Áfangaskýrsla. Gögn úr Medalia, talning úr Sögu og yfirferð 7 daga úrtaks.</span></div>
+        <div><b>Eftir 12 mánuði</b><span>Lokaskýrsla með sömu gögnum, auk starfsmannakönnunar.</span></div>
+      </div>
+      <p class="note">„Frá fyrsta degi“ þýðir að gögnin eru skráð við hvert erindi og ekki er hægt að sækja þau eftir á. Medalia er sjúkraskrárkerfi Fjarlækninga og Saga sjúkraskrárkerfi HSU. Í Vestmannaeyjum hófst þjónustan 17. ágúst 2026. Áfangaskýrsla verður því í febrúar 2027 og lokaskýrsla í ágúst 2027.</p>
+    </section>
+
+    <section class="bottom">
+      <div>
+        <h2>Gögn sem við óskum eftir frá HSU</h2>
+        <ol>
+          <li>Fjöldi greininga af kóðalistanum úr Sögu, 36 mánuði aftur, mánuð fyrir mánuð á hverri stöð</li>
+          <li>Þar af fjöldi þar sem sýklalyfi var ávísað</li>
+          <li>Sama talning eftir 6 og 12 mánuði</li>
+          <li>Tengiliður sem fer yfir 7 daga úrtakið, og samkomulag um miðlun gagna vegna þess</li>
+          <li>Sameiginleg skilgreining á atvikum og dreifing starfsmannakönnunar</li>
+          <li>Ef til eru: símtöl á mánuði, bið eftir tíma og kostnaður við afleysingar, 12 mánuði aftur</li>
+        </ol>
+      </div>
+      <div>
+        <h2>Það sem við þurfum að koma okkur saman um</h2>
+        <ul>
+          <li>Kóðalistinn: 3–5 ICD-10 greiningar fyrir hverja tegund erindis</li>
+          <li>Hvað telst leyst, vísað áfram og vísað frá</li>
+          <li>Aðalmælikvarði. Tillaga okkar er hlutfall erinda sem leyst er úr í fjarþjónustu, innan kóðalistans</li>
+          <li>Aðlögunartími. Við leggjum til að fyrstu fjórar vikur á nýrri stöð teljist ekki með í aðalniðurstöðu en séu birtar</li>
+          <li>Spurningar kannana, þar á meðal nýju könnunarinnar</li>
+          <li>Hvaða nýju þætti er raunhæft að mæla með gögnum HSU</li>
+          <li>Hvort taka eigi upp myndsímtöl eftir 6 mánuði</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Persónuvernd</h2>
+        <p>Frá HSU berast aðeins samantektartölur, það er fjöldi eftir stöð og mánuði. Engar kennitölur eða dagsetningar fylgja.</p>
+        <p>Tölur undir fimm eru ekki birtar. Matið er innra gæðaeftirlit samkvæmt lögum nr. 41/2007.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>Fjarlækningar ehf. · fjarlaekningar.is</span>
+    <span>Drög til samþykktar · 13. október 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>

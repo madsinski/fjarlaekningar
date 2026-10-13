@@ -15,6 +15,13 @@ import { HSU_EMAIL_DOMAIN, isDayWorkKind, type DayWork } from "./types";
  * Dagvinnuvika úr beiðni: {"1":"fm","2":"mottaka"}. Ógild gildi falla burt.
  * undefined = óbreytt.
  */
+/** Dagsetning úr beiðni: "2027-01-31", tómt/null = ekkert, ógilt = óbreytt. */
+export function cleanDate(v: unknown): string | null | undefined {
+  if (v === undefined) return undefined;
+  if (v === null || v === "") return null;
+  return typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined;
+}
+
 export function cleanDayWork(v: unknown): DayWork | undefined {
   if (v === undefined) return undefined;
   if (v === null) return {};

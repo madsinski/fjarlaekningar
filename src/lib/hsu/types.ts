@@ -40,6 +40,20 @@ export interface HsuDoctor {
   fm_max_month: number | null;
   /** Föst dagvinnuvika: vikudagur (0=sun … 6=lau) → tegund dagvinnu. */
   day_work: DayWork;
+  /** Fyrsti starfsdagur (null = hefur alltaf verið). */
+  starts_on: string | null;
+  /** Síðasti starfsdagur (null = ótímabundið). */
+  ends_on: string | null;
+}
+
+/** Er læknirinn við störf einhvern daginn í mánuðinum? */
+export function worksInMonth(d: { starts_on?: string | null; ends_on?: string | null }, month: string): boolean {
+  const first = `${month}-01`;
+  const [y, m] = month.split("-").map(Number);
+  const last = `${month}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, "0")}`;
+  if (d.starts_on && d.starts_on > last) return false;
+  if (d.ends_on && d.ends_on < first) return false;
+  return true;
 }
 
 /**

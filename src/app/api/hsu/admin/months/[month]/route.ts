@@ -11,7 +11,7 @@ import {
 import { requiredSlots, toPlanDoctors, toPlanSlots } from "@/lib/hsu/plan";
 import { notifyDoctors } from "@/lib/hsu/notify";
 import { say } from "@/lib/hsu/shift-edit";
-import { MONTH_STATUS_ORDER, type MonthStatus } from "@/lib/hsu/types";
+import { MONTH_STATUS_ORDER, worksInMonth, type MonthStatus } from "@/lib/hsu/types";
 import { DEFAULT_LANG, isLang, translator, type Lang } from "@/lib/hsu/i18n/core";
 import { dayLabelL, monthLabelL } from "@/lib/hsu/i18n/format";
 import { tr } from "@/lib/hsu/i18n/server";
@@ -22,9 +22,16 @@ import { tasks as hsuTasks } from "@/lib/hsu/i18n/messages/tasks";
 
 export const runtime = "nodejs";
 
-async function activeDoctors() {
-  const { data } = await supabaseAdmin.from("hsu_doctors").select("id, name, email, lang").eq("active", true);
-  return (data ?? []).map((d) => ({ ...d, lang: (isLang(d.lang) ? d.lang : DEFAULT_LANG) as Lang }));
+/**
+ * Virkir læknar. Sé mánuður gefinn eru aðeins þeir taldir sem eru við störf
+ * einhvern daginn í honum — afleysingalæknir sem er farinn fær hvorki
+ * áminningu um óskir né tilkynningu um birtingu.
+ */
+async function activeDoctors(month?: string) {
+  const { data } = await supabaseAdmin.from("hsu_doctors").select("id, name, email, lang, starts_on, ends_on").eq("active", true);
+  return (data ?? [])
+    .filter((d) => !month || worksInMonth(d, month))
+    .map((d) => ({ ...d, lang: (isLang(d.lang) ? d.lang : DEFAULT_LANG) as Lang }));
 }
 
 export async function PUT(req: Request, ctx: { params: Promise<{ month: string }> }) {
@@ -99,7 +106,7 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
     const deadline: string | null = saved.prefs_deadline ?? null;
     const url = `${origin}/hsu/min-sida?t=oskir&m=${month}`;
     after(async () => {
-      const docs = await activeDoctors();
+      const docs = await activeDoctors(month);
       const modes = await emailModesFor(docs.map((d) => d.id), "prefs");
       for (const d of docs) {
         if (modes.get(d.id) !== "now") continue;
@@ -116,7 +123,7 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
   if (notify && publishing) {
     after(async () => {
       const [shifts, types, allDocs] = await Promise.all([loadMonthShifts(month), loadShiftTypes(), listDoctors(false)]);
-      const docs = await activeDoctors();
+      const docs = await activeDoctors(month);
       const modes = await emailModesFor(docs.map((d) => d.id), "publish");
       const names = allDocs.map((d) => ({ id: d.id, name: d.name, color: d.color }));
       const unitName = await pdfUnitName();
@@ -183,7 +190,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ month: string 
   if (body.action !== "remind") return fail(t("err.unknownAction"));
   const scope = body.scope === "all" || body.scope === "one" ? body.scope : "missing";
   const origin = originOf(req);
-  const [prefs, m, doctors] = await Promise.all([loadPreferences(month), loadMonth(month), activeDoctors()]);
+  const [prefs, m, doctors] = await Promise.all([loadPreferences(month), loadMonth(month), activeDoctors(month)]);
   const done = new Set(prefs.filter((p) => p.status === "submitted" || p.status === "approved").map((p) => p.doctor_id));
   const chosen = scope === "all" ? doctors
     : scope === "one" ? doctors.filter((d) => d.id === body.doctorId)

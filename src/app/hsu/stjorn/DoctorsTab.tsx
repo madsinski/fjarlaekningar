@@ -6,7 +6,7 @@ import { Badge, Button, Card, Field, Modal, Notice, cx, hsuApi, inputCls } from 
 import { DOCTOR_COLORS, ROLE_IS, WEEKDAY_ORDER, type HsuDoctor, type HsuRole } from "@/lib/hsu/types";
 import { useCommon, useT } from "@/lib/hsu/i18n/client";
 import { LANGS, LANG_NAMES, type Lang } from "@/lib/hsu/i18n/core";
-import { roleL, timeAgoL, weekdayShortL } from "@/lib/hsu/i18n/format";
+import { dayLabelL, roleL, timeAgoL, weekdayShortL } from "@/lib/hsu/i18n/format";
 import { admin } from "@/lib/hsu/i18n/messages/admin";
 import type { PlannerCtx } from "./types";
 
@@ -80,6 +80,13 @@ export default function DoctorsTab({ ctx }: { ctx: PlannerCtx }) {
                       {d.needs_bakvakt && <Badge tone="amber">{t("doctors.badge.needsBakvakt")}</Badge>}
                       {d.day_weekdays?.length > 0 && <Badge tone="slate">{t("doctors.badge.dayShift", { days: d.day_weekdays.map((x) => weekdayShortL(x, t.lang)).join(", ") })}</Badge>}
                       {/* Dagvinna annars staðar: skýrir hvers vegna læknirinn er ekki laus í flýtimóttöku. */}
+                      {(d.starts_on || d.ends_on) && (
+                        <Badge tone={d.ends_on && d.ends_on < new Date().toISOString().slice(0, 10) ? "slate" : "amber"}>
+                          {d.starts_on && d.ends_on ? t("doctors.badge.period", { from: dayLabelL(d.starts_on, t.lang), to: dayLabelL(d.ends_on, t.lang) })
+                            : d.ends_on ? t("doctors.badge.until", { to: dayLabelL(d.ends_on, t.lang) })
+                            : t("doctors.badge.from", { from: dayLabelL(d.starts_on!, t.lang) })}
+                        </Badge>
+                      )}
                       {(["mottaka", "deild"] as const).map((kind) => {
                         const days = Object.entries(d.day_work ?? {}).filter(([, k]) => k === kind).map(([wd]) => Number(wd)).sort();
                         return days.length === 0 ? null : (
@@ -180,6 +187,19 @@ function DoctorFields({ v, set }: { v: DoctorForm; set: (p: Partial<DoctorForm>)
           ))}
         </div>
       </div>
+      {/* Afleysingalæknir: hér er sagt hvenær hann byrjar og hættir. */}
+      <div className="rounded-xl border border-slate-200 p-3">
+        <div className="text-sm font-semibold">{t("doctors.field.period")}</div>
+        <p className="text-xs text-slate-500">{t("doctors.field.periodHint")}</p>
+        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+          <Field label={t("doctors.field.startsOn")}>
+            <input type="date" className={inputCls} value={v.starts_on} onChange={(e) => set({ starts_on: e.target.value })} />
+          </Field>
+          <Field label={t("doctors.field.endsOn")}>
+            <input type="date" className={inputCls} value={v.ends_on} onChange={(e) => set({ ends_on: e.target.value })} />
+          </Field>
+        </div>
+      </div>
       <div className="space-y-2 rounded-xl border border-slate-200 p-3">
         <label className="flex items-start gap-2.5">
           <input type="checkbox" className="mt-1 h-4 w-4" checked={v.can_bakvakt} onChange={(e) => set({ can_bakvakt: e.target.checked, needs_bakvakt: e.target.checked ? false : v.needs_bakvakt })} />
@@ -194,13 +214,13 @@ function DoctorFields({ v, set }: { v: DoctorForm; set: (p: Partial<DoctorForm>)
   );
 }
 
-interface DoctorForm { name: string; email: string; phone: string; title: string; role: HsuRole; fte: number; color: string; can_bakvakt: boolean; needs_bakvakt: boolean; day_weekdays: number[]; fm_max_week: number | null; fm_max_month: number | null; lang: Lang }
+interface DoctorForm { name: string; email: string; phone: string; title: string; role: HsuRole; fte: number; color: string; can_bakvakt: boolean; needs_bakvakt: boolean; day_weekdays: number[]; fm_max_week: number | null; fm_max_month: number | null; starts_on: string; ends_on: string; lang: Lang }
 
 function AddDoctor({ ctx, onClose }: { ctx: PlannerCtx; onClose: () => void }) {
   const t = useT(admin);
   const c = useCommon();
   const [mode, setMode] = useState<"invite" | "manual">("invite");
-  const [v, setV] = useState<DoctorForm>({ name: "", email: "", phone: "", title: "", role: "doctor", fte: 100, color: DOCTOR_COLORS[ctx.data.doctors.length % DOCTOR_COLORS.length], can_bakvakt: false, needs_bakvakt: false, day_weekdays: [], fm_max_week: null, fm_max_month: null, lang: t.lang });
+  const [v, setV] = useState<DoctorForm>({ name: "", email: "", phone: "", title: "", role: "doctor", fte: 100, color: DOCTOR_COLORS[ctx.data.doctors.length % DOCTOR_COLORS.length], can_bakvakt: false, needs_bakvakt: false, day_weekdays: [], fm_max_week: null, fm_max_month: null, starts_on: "", ends_on: "", lang: t.lang });
   const [password, setPassword] = useState(generatePassword);
   const [mustChange, setMustChange] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -290,7 +310,7 @@ function AddDoctor({ ctx, onClose }: { ctx: PlannerCtx; onClose: () => void }) {
 function EditDoctor({ ctx, doctor, onClose }: { ctx: PlannerCtx; doctor: HsuDoctor; onClose: () => void }) {
   const t = useT(admin);
   const c = useCommon();
-  const [v, setV] = useState<DoctorForm>({ name: doctor.name, email: doctor.email, phone: doctor.phone, title: doctor.title, role: doctor.role, fte: doctor.fte, color: doctor.color, can_bakvakt: doctor.can_bakvakt, needs_bakvakt: doctor.needs_bakvakt, day_weekdays: doctor.day_weekdays ?? [], fm_max_week: doctor.fm_max_week ?? null, fm_max_month: doctor.fm_max_month ?? null, lang: doctor.lang ?? "is" });
+  const [v, setV] = useState<DoctorForm>({ name: doctor.name, email: doctor.email, phone: doctor.phone, title: doctor.title, role: doctor.role, fte: doctor.fte, color: doctor.color, can_bakvakt: doctor.can_bakvakt, needs_bakvakt: doctor.needs_bakvakt, day_weekdays: doctor.day_weekdays ?? [], fm_max_week: doctor.fm_max_week ?? null, fm_max_month: doctor.fm_max_month ?? null, starts_on: doctor.starts_on ?? "", ends_on: doctor.ends_on ?? "", lang: doctor.lang ?? "is" });
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
   const [link, setLink] = useState<string | null>(null);

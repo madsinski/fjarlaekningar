@@ -187,6 +187,36 @@ næstu vaktir — það sem hann kom til að sjá. „Sýna skrefin" opnar hann 
 Skilyrðið er reiknað í `DoctorPortal` (`seasoned`): einhver ósk `submitted`/`approved`
 og einhver mánuður `published`. Nýr læknir sér stigann óbreyttan.
 
+## Læknir í afmarkaðan tíma (2026-10-13)
+
+Afleysingalæknir er oft aðeins hér í nokkra mánuði. Áður var ekkert til nema
+`active`-rofinn: annaðhvort var hann með að eilífu eða horfinn alveg — og hyrfi
+hann alveg færi hann líka úr fyrri vaktaplönum. Nú hefur hver læknir **starfstíma**
+á *Læknar*:
+
+| Reitur | Dálkur | Merking |
+| --- | --- | --- |
+| **Byrjar** | `hsu_doctors.starts_on` | Fyrsti starfsdagur. Autt = hefur alltaf verið. |
+| **Hættir** | `hsu_doctors.ends_on` | Síðasti starfsdagur. Autt = ótímabundið. |
+
+Tímabilið bítur á fjórum stöðum:
+
+* **Vaktaskipulagið** setur hann aldrei á vakt utan tímabilsins (`availableOn`
+  → `blocker` skilar `period`).
+* **Markmiðið hans minnkar í hlutfalli** við dagana sem hann er á staðnum: sá sem er
+  hálfan mánuðinn fær um helmingi færri vaktir, og sá sem er hvergi inni í mánuðinum
+  dettur alveg út úr pottinum. Starfshlutfallið er skalað áður en markmið eru reiknuð,
+  svo hinir taka sjálfkrafa afganginn.
+* **Áminningar og óskapóstar** ná ekki til mánaða sem hann er ekki hér, og hann telst
+  ekki með þeim sem „vantar óskir".
+* **Óskir hans** bjóða aðeins upp á mánuðina sem hann er við störf.
+
+Setji yfirlæknir hann **handvirkt** á vakt utan tímabilsins er það leyft en birtist
+sem **árekstur** (`period`) — stundum þarf að brúa dag, og þá á kerfið að vara við en
+ekki banna.
+
+Merki í læknalistanum sýnir tímabilið („1. nóv. – 31. jan.", „Til 30. nóv.").
+
 ## Dagvinna læknis: hvaða dagar og hvers konar (2026-10-06)
 
 Hver læknir skráir sjálfur **föstu dagvinnuvikuna sína** efst í **skrefi 3** í óskunum

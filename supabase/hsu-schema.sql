@@ -466,3 +466,17 @@ set day_work = coalesce((
   from unnest(d.day_weekdays) as wd
 ), '{}'::jsonb)
 where d.day_work = '{}'::jsonb and array_length(d.day_weekdays, 1) > 0;
+
+-- ── Læknir í afmarkaðan tíma (2026-10-13) ──────────────────────────────────
+-- Afleysingalæknir er oft aðeins í þrjá mánuði. Áður var ekkert til nema
+-- active-rofinn: hann var annaðhvort með að eilífu eða horfinn alveg.
+--   starts_on  fyrsti dagur — NULL = hefur alltaf verið
+--   ends_on    síðasti dagur — NULL = ótímabundið
+-- Vaktaskipulagið setur hann ekki á vakt utan tímabilsins, markmið hans
+-- minnkar í hlutfalli við dagana sem hann er á staðnum, og hvorki áminningar
+-- né óskir ná til mánaða sem hann er ekki hér.
+alter table public.hsu_doctors add column if not exists starts_on date;
+alter table public.hsu_doctors add column if not exists ends_on date;
+alter table public.hsu_doctors drop constraint if exists hsu_doctors_period_check;
+alter table public.hsu_doctors add constraint hsu_doctors_period_check
+  check (starts_on is null or ends_on is null or starts_on <= ends_on);

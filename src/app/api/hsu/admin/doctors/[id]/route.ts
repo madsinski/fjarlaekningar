@@ -5,7 +5,7 @@ import { audit, hashSecret, issueAccessLink, passwordProblem } from "@/lib/hsu/a
 import { hsuSync } from "@/lib/hsu/calendar";
 import { DOCTOR_COLUMNS, UUID_RE, fail, json, originOf, readJson, requireManager, toPublicDoctor } from "@/lib/hsu/server";
 import { HSU_EMAIL_DOMAIN, fmWeekdaysOf, normalizeEmail } from "@/lib/hsu/types";
-import { cleanDayWork, cleanFmMax, cleanWeekdays, emailAllowed, sendInviteEmail, sendPromotedEmail } from "@/lib/hsu/doctors";
+import { cleanDate, cleanDayWork, cleanFmMax, cleanWeekdays, emailAllowed, sendInviteEmail, sendPromotedEmail } from "@/lib/hsu/doctors";
 import { isLang, translator } from "@/lib/hsu/i18n/core";
 import { accountEmails } from "@/lib/hsu/i18n/messages/account-emails";
 import { notifyDoctors } from "@/lib/hsu/notify";
@@ -45,6 +45,10 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     const days = cleanWeekdays(body.day_weekdays);
     if (days) { patch.day_weekdays = days; patch.day_work = Object.fromEntries(days.map((d) => [String(d), "fm"])); }
   }
+  const from = cleanDate(body.starts_on);
+  if (from !== undefined) patch.starts_on = from;
+  const to = cleanDate(body.ends_on);
+  if (to !== undefined) patch.ends_on = to;
   const fmW = cleanFmMax(body.fm_max_week, 7);
   if (fmW !== undefined) patch.fm_max_week = fmW;
   const fmM = cleanFmMax(body.fm_max_month, 31);

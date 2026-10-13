@@ -72,6 +72,21 @@ export interface PlanDoctor {
   fmMaxWeek?: number | null;
   /** Hámark dagvakta (flýtimóttöku) í mánuði. Ósett = ekkert þak. */
   fmMaxMonth?: number | null;
+  /** Fyrsti starfsdagur. Ósett = hefur alltaf verið. */
+  startsOn?: string | null;
+  /** Síðasti starfsdagur. Ósett = ótímabundið. */
+  endsOn?: string | null;
+}
+
+/**
+ * Er læknirinn við störf þennan dag? Afleysingalæknir sem er hér í þrjá mánuði
+ * má hvorki fá vakt fyrir né eftir tímabilið sitt.
+ */
+export function availableOn(doctor: Pick<PlanDoctor, "startsOn" | "endsOn"> | undefined, date: string): boolean {
+  if (!doctor) return true;
+  if (doctor.startsOn && date < doctor.startsOn) return false;
+  if (doctor.endsOn && date > doctor.endsOn) return false;
+  return true;
 }
 
 /** Má læknirinn taka dagvakt á þessum degi? */
@@ -217,7 +232,15 @@ export function planMonth(
   opts: PlanOptions = {},
 ): PlanResult {
   const mode = opts.mode ?? "empty";
-  const pool = doctors
+  // Læknir sem er aðeins hluta mánaðarins fær markmið í hlutfalli við dagana
+  // sem hann er á staðnum; sá sem er hvergi inni í mánuðinum dettur út.
+  const planDates = [...new Set(slots.map((s) => s.date))];
+  const scaled = planDates.length === 0 ? doctors : doctors.map((d) => {
+    if (!d.startsOn && !d.endsOn) return d;
+    const here = planDates.filter((x) => availableOn(d, x)).length;
+    return here === planDates.length ? d : { ...d, fte: Math.round((d.fte * here) / planDates.length) };
+  });
+  const pool = scaled
     .filter((d) => d.active && d.fte > 0)
     .slice()
     .sort((a, b) => a.name.localeCompare(b.name, "is"));
@@ -268,7 +291,8 @@ export function planMonth(
   const wants = (id: string, date: string) => markFor(prefs[id], date) === "want";
 
   /** Hörð athugun. Skilar ástæðu ef læknirinn getur ekki tekið vaktina. */
-  const blocker = (id: string, slot: PlanSlot): "skill" | "dayweek" | "eveningweek" | "daypart" | "off" | "busy" | "rest" | "max" | "fmweek" | "fmmonth" | null => {
+  const blocker = (id: string, slot: PlanSlot): "period" | "skill" | "dayweek" | "eveningweek" | "daypart" | "off" | "busy" | "rest" | "max" | "fmweek" | "fmmonth" | null => {
+    if (!availableOn(byId.get(id), slot.date)) return "period";
     if (slot.kind === "bakvakt" && !byId.get(id)?.canBakvakt) return "skill";
     if (slot.period === "day" && !worksDayShiftOn(byId.get(id), prefs[id], slot.date)) return "dayweek";
     // Þak læknisins á dagvöktum — í viku og í mánuði.
@@ -501,11 +525,12 @@ export function toPlanSlots(
   });
 }
 
-export function toPlanDoctors(doctors: { id: string; name: string; fte: number; active: boolean; can_bakvakt?: boolean; needs_bakvakt?: boolean; day_weekdays?: number[]; fm_max_week?: number | null; fm_max_month?: number | null }[]): PlanDoctor[] {
+export function toPlanDoctors(doctors: { id: string; name: string; fte: number; active: boolean; can_bakvakt?: boolean; needs_bakvakt?: boolean; day_weekdays?: number[]; fm_max_week?: number | null; fm_max_month?: number | null; starts_on?: string | null; ends_on?: string | null }[]): PlanDoctor[] {
   return doctors.map((d) => ({
     id: d.id, name: d.name, fte: d.fte, active: d.active,
     canBakvakt: Boolean(d.can_bakvakt), needsBakvakt: Boolean(d.needs_bakvakt), dayWeekdays: d.day_weekdays ?? [],
     fmMaxWeek: d.fm_max_week ?? null, fmMaxMonth: d.fm_max_month ?? null,
+    startsOn: d.starts_on ?? null, endsOn: d.ends_on ?? null,
   }));
 }
 
@@ -539,12 +564,12 @@ export function statsFor(slots: PlanSlot[], doctors: PlanDoctor[], prefs: Record
 
 // ── Árekstrar í núverandi plani (fyrir handvirkar breytingar) ──────────────
 
-export type ConflictKind = "off" | "double" | "rest" | "max" | "skill" | "no_bakvakt" | "day_weekday" | "evening_weekday" | "day_part" | "fm_week" | "fm_month";
+export type ConflictKind = "off" | "double" | "rest" | "max" | "skill" | "no_bakvakt" | "day_weekday" | "evening_weekday" | "day_part" | "fm_week" | "fm_month" | "period";
 
 /** Árekstur á tungumáli notandans. */
 export const conflictL = (k: ConflictKind, lang: Lang): string => translator(apiAdmin, lang)(`conflict.${k}`);
 
-const CONFLICT_KINDS: ConflictKind[] = ["off", "double", "rest", "max", "skill", "no_bakvakt", "day_weekday", "evening_weekday", "day_part", "fm_week", "fm_month"];
+const CONFLICT_KINDS: ConflictKind[] = ["off", "double", "rest", "max", "skill", "no_bakvakt", "day_weekday", "evening_weekday", "day_part", "fm_week", "fm_month", "period"];
 /** Íslensku textarnir (eldri notkun); nota conflictL þar sem texti birtist. */
 export const CONFLICT_IS = Object.fromEntries(CONFLICT_KINDS.map((k) => [k, conflictL(k, "is")])) as Record<ConflictKind, string>;
 
@@ -552,7 +577,7 @@ export const CONFLICT_IS = Object.fromEntries(CONFLICT_KINDS.map((k) => [k, conf
 export function findConflicts(
   slots: PlanSlot[],
   prefs: Record<string, PlanPrefs | undefined>,
-  doctors: Pick<PlanDoctor, "id" | "canBakvakt" | "needsBakvakt" | "dayWeekdays" | "fmMaxWeek" | "fmMaxMonth">[] = [],
+  doctors: Pick<PlanDoctor, "id" | "canBakvakt" | "needsBakvakt" | "dayWeekdays" | "fmMaxWeek" | "fmMaxMonth" | "startsOn" | "endsOn">[] = [],
 ): Record<string, ConflictKind[]> {
   const out: Record<string, ConflictKind[]> = {};
   const docs = new Map(doctors.map((d) => [d.id, d]));
@@ -571,6 +596,7 @@ export function findConflicts(
       const viaRequest = s.agreed || s.pending;
       if (!viaRequest) counted++;
       const list: ConflictKind[] = [];
+      if (info && !availableOn(info, s.date)) list.push("period");
       if (markFor(prefs[doc], s.date) === "off") list.push("off");
       const r = restBlocks(held, s);
       if (r === "busy") list.push("double");

@@ -21,7 +21,7 @@ import { normalizeEmailPrefs } from "./email-categories";
 import { DEFAULT_LANG, isLang, translator, type Lang } from "./i18n/core";
 import { dayLabelL, monthLabelL } from "./i18n/format";
 import { tasks as msgs } from "./i18n/messages/tasks";
-import { defaultDeadline, monthKey, openWindow, reminderStage, type HsuPreference, type ReminderStage } from "./types";
+import { defaultDeadline, monthKey, openWindow, reminderStage, worksInMonth, type HsuPreference, type ReminderStage } from "./types";
 
 interface Person {
   id: string;
@@ -34,6 +34,8 @@ interface Person {
   sms_reminders: boolean;
   /** Þarf bakvakt á bak við sig — ræður því hvort ómönnuð bakvakt er gat. */
   needs_bakvakt: boolean;
+  starts_on: string | null;
+  ends_on: string | null;
 }
 
 /** Ógert hjá lækninum sjálfum: óskir sem vantar eða eru hálfkláraðar. */
@@ -62,7 +64,9 @@ export async function monthTasks(month: string, people: Person[]): Promise<Month
   const prefOf = new Map(prefs.map((p) => [p.doctor_id, p]));
 
   const own = new Map<string, string>();
-  for (const p of people) {
+  // Læknir sem er ekki við störf í mánuðinum á engar óskir að skrá og er ekki
+  // talinn með þeim sem „vantar" — hann er einfaldlega ekki hér.
+  for (const p of people.filter((x) => worksInMonth(x, month))) {
     const task = ownTask(prefOf.get(p.id));
     if (task) own.set(p.id, task);
   }
@@ -109,7 +113,7 @@ export async function runTaskReminders(opts: { origin: string; today?: string; d
 
   const { data } = await supabaseAdmin
     .from("hsu_doctors")
-    .select("id, name, email, phone, lang, role, email_prefs, sms_reminders, needs_bakvakt")
+    .select("id, name, email, phone, lang, role, email_prefs, sms_reminders, needs_bakvakt, starts_on, ends_on")
     .eq("active", true);
   const people: Person[] = (data ?? []).map((d) => ({
     id: d.id as string,
@@ -121,6 +125,8 @@ export async function runTaskReminders(opts: { origin: string; today?: string; d
     email_prefs: d.email_prefs,
     sms_reminders: d.sms_reminders !== false,
     needs_bakvakt: Boolean(d.needs_bakvakt),
+    starts_on: (d.starts_on as string | null) ?? null,
+    ends_on: (d.ends_on as string | null) ?? null,
   }));
   if (!people.length) return out;
 

@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import PrefsEditor, { PrefsStepNav, Step, draftFrom, rich, type PrefDraft } from "../_components/PrefsEditor";
 import { cx, hsuApi } from "../_components/ui";
 import type { PortalData } from "@/lib/hsu/portal";
-import { effectiveStatus, openWindow, shiftMonth, type HsuPreference, type MonthStatus } from "@/lib/hsu/types";
+import { effectiveStatus, openWindow, shiftMonth, type HsuPreference, type MonthStatus, worksInMonth} from "@/lib/hsu/types";
 import { useT } from "@/lib/hsu/i18n/client";
 import { capFirstL, dayLabelL, monthLabelL, monthStatusL } from "@/lib/hsu/i18n/format";
 import { prefs } from "@/lib/hsu/i18n/messages/prefs";
@@ -16,8 +16,9 @@ export default function PrefsTab({ data, initialMonth, refresh }: { data: Portal
   const options = useMemo(() => {
     const set = new Set<string>(openWindow());
     for (const m of data.months) if (m.status === "collecting" || m.status === "review") set.add(m.month);
-    return [...set].sort();
-  }, [data.months]);
+    // Afleysingalæknir sér ekki mánuði sem hann er ekki við störf í.
+    return [...set].sort().filter((m) => worksInMonth({ starts_on: data.me.startsOn, ends_on: data.me.endsOn }, m));
+  }, [data.months, data.me.startsOn, data.me.endsOn]);
   const stOf = (m: string) => effectiveStatus(data.months.find((x) => x.month === m), m);
 
   // Opnast á fyrsta mánuði sem hægt er að breyta: mánuður í vaktaplani er
