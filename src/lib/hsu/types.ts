@@ -130,6 +130,8 @@ export type MonthStatus = "collecting" | "review" | "planning" | "published";
 export interface HsuMonth {
   month: string;
   status: MonthStatus;
+  /** Læknar sem eru ekki með í ÞESSUM mánuði (frí, leyfi, ekki við sögu). */
+  excluded_doctors?: string[];
   prefs_deadline: string | null;
   note: string;
   published_at: string | null;

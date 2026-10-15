@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit, throttle } from "@/lib/hsu/auth";
 import { hsuSync } from "@/lib/hsu/calendar";
 import {
-  DATE_RE, MONTH_RE, fail, hsuEmailHtml, json, listDoctors, loadMonth, loadMonthShifts, loadPreferences, loadShiftTypes, originOf, pdfUnitName, readJson, requireManager, sendHsuEmail,
+  DATE_RE, MONTH_RE, UUID_RE, fail, hsuEmailHtml, json, listDoctors, loadMonth, loadMonthShifts, loadPreferences, loadShiftTypes, originOf, pdfUnitName, readJson, requireManager, sendHsuEmail,
 } from "@/lib/hsu/server";
 import { requiredSlots, toPlanDoctors, toPlanSlots } from "@/lib/hsu/plan";
 import { notifyDoctors } from "@/lib/hsu/notify";
@@ -48,6 +48,10 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
   if (body.prefs_deadline === null || body.prefs_deadline === "") patch.prefs_deadline = null;
   else if (typeof body.prefs_deadline === "string" && DATE_RE.test(body.prefs_deadline)) patch.prefs_deadline = body.prefs_deadline;
   if (typeof body.note === "string") patch.note = body.note.slice(0, 1000);
+  // Hverjir eru með í þessum mánuði. Listinn er þeir sem eru TEKNIR ÚT.
+  if (Array.isArray(body.excluded_doctors)) {
+    patch.excluded_doctors = [...new Set(body.excluded_doctors.filter((x: unknown) => typeof x === "string" && UUID_RE.test(x)))];
+  }
 
   let status = before?.status ?? "collecting";
   if (typeof body.status === "string" && (MONTH_STATUS_ORDER as string[]).includes(body.status)) {
@@ -60,7 +64,7 @@ export async function PUT(req: Request, ctx: { params: Promise<{ month: string }
     if (shifts.length === 0) return fail(t("err.noPlan"));
     const [types, doctors] = await Promise.all([loadShiftTypes(), listDoctors(false)]);
     // Aðeins vaktir sem á að manna: bakvakt sem enginn þarf er ekki gat.
-    const empty = requiredSlots(toPlanSlots(shifts, types), toPlanDoctors(doctors)).filter((s) => !s.doctorId).length;
+    const empty = requiredSlots(toPlanSlots(shifts, types), toPlanDoctors(doctors, before?.excluded_doctors ?? [])).filter((s) => !s.doctorId).length;
     if (empty > 0 && !body.allow_gaps) {
       return json({ ok: false, error: t.n("err.gaps", empty), needsConfirm: "gaps", empty }, 409);
     }

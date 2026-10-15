@@ -116,7 +116,7 @@ export async function loadMonthShifts(month: string, publishedOnly = false): Pro
 }
 
 export async function loadMonth(month: string): Promise<HsuMonth | null> {
-  const { data, error } = await supabaseAdmin.from("hsu_months").select("month, status, prefs_deadline, note, published_at").eq("month", month).maybeSingle();
+  const { data, error } = await supabaseAdmin.from("hsu_months").select("month, status, prefs_deadline, note, published_at, excluded_doctors").eq("month", month).maybeSingle();
   if (error) throw new Error(error.message);
   return (data as HsuMonth) ?? null;
 }

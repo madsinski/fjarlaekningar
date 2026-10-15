@@ -62,12 +62,23 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
   }, [data.shifts]);
 
   const published = data.month?.status === "published";
+  // Hverjir eru með í þessum mánuði. Læknir sem er tekinn út fær engar vaktir
+  // í sjálfvirku röðuninni, en fyrri mánuðir hans haggast ekki.
+  const excluded = useMemo(() => new Set(data.month?.excluded_doctors ?? []), [data.month?.excluded_doctors]);
+  const toggleDoctor = async (id: string) => {
+    const next = new Set(excluded);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setBusy(`excl:${id}`);
+    await hsuApi(`/api/hsu/admin/months/${month}`, { method: "PUT", body: { excluded_doctors: [...next] }, staff: true });
+    setBusy(null);
+    await ctx.reload();
+  };
   const doctors = useMemo(() => data.doctors.filter((d) => d.active), [data.doctors]);
   const docById = useMemo(() => new Map(data.doctors.map((d) => [d.id, d])), [data.doctors]);
   const prefs = useMemo<Record<string, PlanPrefs>>(() => Object.fromEntries(data.preferences.map((p) => [p.doctor_id, p])), [data.preferences]);
 
   const toSlots = useCallback((list: HsuShift[]): PlanSlot[] => toPlanSlots(list, data.shiftTypes), [data.shiftTypes]);
-  const planDoctors = useMemo(() => toPlanDoctors(doctors), [doctors]);
+  const planDoctors = useMemo(() => toPlanDoctors(doctors, [...excluded]), [doctors, excluded]);
   const kindOf = useCallback((s: HsuShift) => data.shiftTypes.find((x) => x.id === s.shift_type_id)?.kind ?? "other", [data.shiftTypes]);
 
   const slots = useMemo(() => toSlots(shifts), [shifts, toSlots]);
@@ -444,12 +455,20 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
                 const pct = st && st.target ? Math.min(100, (st.count / st.target) * 100) : 0;
                 const over = st && st.count > Math.ceil(st.target);
                 const pref = data.preferences.find((p) => p.doctor_id === d.id);
+                const off = excluded.has(d.id);
                 return (
-                  <li key={d.id}>
-                    <button draggable onDragStart={(e) => startDrag(e, { kind: "doctor", id: d.id })} onDragEnd={endDrag}
+                  <li key={d.id} className="relative">
+                    {/* Með eða ekki með í þessum mánuði — snertir engan annan mánuð. */}
+                    <button type="button" title={t(off ? "docs.include" : "docs.exclude")} aria-label={t(off ? "docs.include" : "docs.exclude")}
+                      onClick={(e) => { e.stopPropagation(); void toggleDoctor(d.id); }}
+                      className="absolute right-1.5 top-1.5 z-10 rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700">
+                      {off ? <Plus className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
+                    </button>
+                    <button draggable={!off} onDragStart={(e) => startDrag(e, { kind: "doctor", id: d.id })} onDragEnd={endDrag}
                       onClick={() => setPick((p) => (p === d.id ? null : d.id))}
                       className={cx("w-full cursor-grab rounded-xl border px-2.5 py-2 text-left transition active:cursor-grabbing",
-                        pick === d.id ? "border-[var(--hsu)] bg-[var(--hsu-soft)] ring-2 ring-[var(--hsu)]/20" : "border-slate-200 bg-white hover:border-slate-300")}>
+                        off ? "border-dashed border-slate-300 bg-slate-50 opacity-60"
+                          : pick === d.id ? "border-[var(--hsu)] bg-[var(--hsu-soft)] ring-2 ring-[var(--hsu)]/20" : "border-slate-200 bg-white hover:border-slate-300")}>
                       <div className="flex items-center gap-2">
                         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: d.color }}>
                           {d.name.split(" ").map((x) => x[0]).slice(0, 2).join("")}
@@ -457,6 +476,7 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
                         <span className="min-w-0 flex-1 truncate text-sm font-semibold">{d.name}</span>
                         {d.can_bakvakt && <span title={t("docs.bvTitle")} className="rounded bg-[var(--hsu-soft)] px-1 text-[9px] font-bold text-[var(--hsu-dark)]">{t("docs.bv")}</span>}
                         {d.needs_bakvakt && <span title={t("docs.needsBvTitle")} className="rounded bg-amber-100 px-1 text-[9px] font-bold text-amber-800">{t("docs.needsBv")}</span>}
+                        {off && <span className="rounded bg-slate-200 px-1 text-[9px] font-bold text-slate-600">{t("docs.notThisMonth")}</span>}
                         <span className={cx("text-sm font-bold tabular-nums", over ? "text-amber-600" : "text-slate-800")}>{st?.count ?? 0}</span>
                         <span className="text-xs tabular-nums text-slate-400">/ {st ? st.target.toLocaleString(LANG_LOCALE[t.lang]) : 0}</span>
                       </div>
@@ -532,7 +552,7 @@ function SlotModal({ shift, ctx, shifts, doctors, prefs, toSlots, stats, onClose
   const slotPart = partOfShift(shift, type);
   const wishOf = (id: string): DayPart => dayPartFor(prefs[id], shift.shift_date);
   const options = useMemo(() => {
-    const planDocs = toPlanDoctors(doctors);
+    const planDocs = toPlanDoctors(doctors, ctx.data.month?.excluded_doctors ?? []);
     return doctors.map((d) => {
       const hypothetical = toSlots(shifts.map((s) => (s.id === shift.id ? { ...s, doctor_id: d.id } : s)));
       const issues = (findConflicts(hypothetical, prefs, planDocs)[shift.id] ?? []).filter((k) => k !== "no_bakvakt");

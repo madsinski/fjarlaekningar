@@ -205,6 +205,24 @@ netfangi er breytt.
 `emailAllowed` sannreynir aðeins form netfangsins; `isHouseEmail` segir til um lénið
 (`HSU_EXTRA_EMAIL_DOMAINS` bætir við lénum sem teljast innanhúss).
 
+## Hverjir eru með í hverjum mánuði (2026-10-15)
+
+Tvær leiðir, og þær eiga við ólík tilvik. **Hvorug snertir fyrri mánuði** — það var
+vandinn við að gera lækni óvirkan: hann hvarf líka úr birtum vaktaplönum.
+
+| Leið | Hvenær | Hvar |
+| --- | --- | --- |
+| **Starfstími** (`starts_on`/`ends_on`) | Föst ráðning: afleysingalæknir sem er hér til tiltekins dags | *Læknar* |
+| **Ekki með í þessum mánuði** (`hsu_months.excluded_doctors`) | Eitt skipti: frí, leyfi, kemur ekki við sögu þann mánuðinn | Læknalistinn á vaktaplaninu |
+
+Á vaktaplaninu er **x** við hvern lækni í listanum til hægri: smellt á hann tekur
+lækninn út úr ÞESSUM mánuði (spjaldið verður grátt og merkt „EKKI MEÐ"), og **+** setur
+hann inn aftur. Sjálfvirka röðunin sleppir honum þá alveg og hinir taka vaktirnar;
+setji yfirlæknir hann samt handvirkt á vakt birtist **árekstur** (`excluded`).
+
+Hvorug leiðin eyðir vöktum sem þegar eru til: taki yfirlæknir lækni út eftir að hafa
+raðað þarf að raða upp á nýtt (eða taka vaktirnar af handvirkt).
+
 ## Læknir í afmarkaðan tíma (2026-10-13)
 
 Afleysingalæknir er oft aðeins hér í nokkra mánuði. Áður var ekkert til nema

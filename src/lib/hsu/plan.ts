@@ -76,6 +76,8 @@ export interface PlanDoctor {
   startsOn?: string | null;
   /** Síðasti starfsdagur. Ósett = ótímabundið. */
   endsOn?: string | null;
+  /** Tekinn út úr ÞESSUM mánuði af yfirlækni (frí, leyfi). */
+  excludedThisMonth?: boolean;
 }
 
 /**
@@ -199,7 +201,7 @@ export function requiredSlots(slots: PlanSlot[], doctors: Pick<PlanDoctor, "id" 
  * lágmarks og hámarks sem hann óskaði. Það sem klemmist af einum dreifist á hina.
  */
 export function computeTargets(total: number, doctors: PlanDoctor[], prefs: Record<string, PlanPrefs | undefined>): Record<string, number> {
-  const pool = doctors.filter((d) => d.active && d.fte > 0);
+  const pool = doctors.filter((d) => d.active && !d.excludedThisMonth && d.fte > 0);
   const targets: Record<string, number> = {};
   let free = new Set(pool.map((d) => d.id));
   let remaining = total;
@@ -241,7 +243,7 @@ export function planMonth(
     return here === planDates.length ? d : { ...d, fte: Math.round((d.fte * here) / planDates.length) };
   });
   const pool = scaled
-    .filter((d) => d.active && d.fte > 0)
+    .filter((d) => d.active && !d.excludedThisMonth && d.fte > 0)
     .slice()
     .sort((a, b) => a.name.localeCompare(b.name, "is"));
   const byId = new Map(pool.map((d) => [d.id, d]));
@@ -525,12 +527,18 @@ export function toPlanSlots(
   });
 }
 
-export function toPlanDoctors(doctors: { id: string; name: string; fte: number; active: boolean; can_bakvakt?: boolean; needs_bakvakt?: boolean; day_weekdays?: number[]; fm_max_week?: number | null; fm_max_month?: number | null; starts_on?: string | null; ends_on?: string | null }[]): PlanDoctor[] {
+export function toPlanDoctors(
+  doctors: { id: string; name: string; fte: number; active: boolean; can_bakvakt?: boolean; needs_bakvakt?: boolean; day_weekdays?: number[]; fm_max_week?: number | null; fm_max_month?: number | null; starts_on?: string | null; ends_on?: string | null }[],
+  /** Læknar sem yfirlæknir tók út úr þessum mánuði (hsu_months.excluded_doctors). */
+  excluded: string[] = [],
+): PlanDoctor[] {
+  const out = new Set(excluded);
   return doctors.map((d) => ({
     id: d.id, name: d.name, fte: d.fte, active: d.active,
     canBakvakt: Boolean(d.can_bakvakt), needsBakvakt: Boolean(d.needs_bakvakt), dayWeekdays: d.day_weekdays ?? [],
     fmMaxWeek: d.fm_max_week ?? null, fmMaxMonth: d.fm_max_month ?? null,
     startsOn: d.starts_on ?? null, endsOn: d.ends_on ?? null,
+    excludedThisMonth: out.has(d.id),
   }));
 }
 
@@ -564,12 +572,12 @@ export function statsFor(slots: PlanSlot[], doctors: PlanDoctor[], prefs: Record
 
 // ── Árekstrar í núverandi plani (fyrir handvirkar breytingar) ──────────────
 
-export type ConflictKind = "off" | "double" | "rest" | "max" | "skill" | "no_bakvakt" | "day_weekday" | "evening_weekday" | "day_part" | "fm_week" | "fm_month" | "period";
+export type ConflictKind = "off" | "double" | "rest" | "max" | "skill" | "no_bakvakt" | "day_weekday" | "evening_weekday" | "day_part" | "fm_week" | "fm_month" | "period" | "excluded";
 
 /** Árekstur á tungumáli notandans. */
 export const conflictL = (k: ConflictKind, lang: Lang): string => translator(apiAdmin, lang)(`conflict.${k}`);
 
-const CONFLICT_KINDS: ConflictKind[] = ["off", "double", "rest", "max", "skill", "no_bakvakt", "day_weekday", "evening_weekday", "day_part", "fm_week", "fm_month", "period"];
+const CONFLICT_KINDS: ConflictKind[] = ["off", "double", "rest", "max", "skill", "no_bakvakt", "day_weekday", "evening_weekday", "day_part", "fm_week", "fm_month", "period", "excluded"];
 /** Íslensku textarnir (eldri notkun); nota conflictL þar sem texti birtist. */
 export const CONFLICT_IS = Object.fromEntries(CONFLICT_KINDS.map((k) => [k, conflictL(k, "is")])) as Record<ConflictKind, string>;
 
@@ -577,7 +585,7 @@ export const CONFLICT_IS = Object.fromEntries(CONFLICT_KINDS.map((k) => [k, conf
 export function findConflicts(
   slots: PlanSlot[],
   prefs: Record<string, PlanPrefs | undefined>,
-  doctors: Pick<PlanDoctor, "id" | "canBakvakt" | "needsBakvakt" | "dayWeekdays" | "fmMaxWeek" | "fmMaxMonth" | "startsOn" | "endsOn">[] = [],
+  doctors: Pick<PlanDoctor, "id" | "canBakvakt" | "needsBakvakt" | "dayWeekdays" | "fmMaxWeek" | "fmMaxMonth" | "startsOn" | "endsOn" | "excludedThisMonth">[] = [],
 ): Record<string, ConflictKind[]> {
   const out: Record<string, ConflictKind[]> = {};
   const docs = new Map(doctors.map((d) => [d.id, d]));
@@ -597,6 +605,7 @@ export function findConflicts(
       if (!viaRequest) counted++;
       const list: ConflictKind[] = [];
       if (info && !availableOn(info, s.date)) list.push("period");
+      if (info?.excludedThisMonth) list.push("excluded");
       if (markFor(prefs[doc], s.date) === "off") list.push("off");
       const r = restBlocks(held, s);
       if (r === "busy") list.push("double");

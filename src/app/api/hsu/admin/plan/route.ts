@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     const before = new Map(shifts.map((s) => [s.id, s.doctor_id]));
     const result = planMonth(
       toPlanSlots(shifts, types),
-      toPlanDoctors(doctors),
+      toPlanDoctors(doctors, m?.excluded_doctors ?? []),
       prefs,
       { mode },
     );

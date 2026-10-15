@@ -480,3 +480,10 @@ alter table public.hsu_doctors add column if not exists ends_on date;
 alter table public.hsu_doctors drop constraint if exists hsu_doctors_period_check;
 alter table public.hsu_doctors add constraint hsu_doctors_period_check
   check (starts_on is null or ends_on is null or starts_on <= ends_on);
+
+-- ── Hverjir eru með í hverjum mánuði (2026-10-15) ──────────────────────────
+-- Starfstími læknis (starts_on/ends_on) nær yfir fasta ráðningu, en stundum
+-- þarf að taka lækni út úr EINUM mánuði: hann er í fríi, í leyfi eða kemur
+-- ekki við sögu þann mánuðinn. Áður var eina leiðin að gera hann óvirkan —
+-- og þá hvarf hann líka úr fyrri mánuðum, þar á meðal birtum vaktaplönum.
+alter table public.hsu_months add column if not exists excluded_doctors uuid[] not null default '{}';
