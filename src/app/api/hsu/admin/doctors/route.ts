@@ -3,7 +3,7 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit, hashSecret, issueAccessLink, passwordProblem, pinProblem } from "@/lib/hsu/auth";
 import { DOCTOR_COLUMNS, fail, json, listDoctors, originOf, readJson, requireManager, toPublicDoctor } from "@/lib/hsu/server";
-import { cleanDate, cleanDayWork, cleanFmMax, cleanWeekdays, emailAllowed, sendInviteEmail } from "@/lib/hsu/doctors";
+import { cleanDate, cleanDayWork, cleanFmMax, cleanWeekdays, emailAllowed, isHouseEmail, sendInviteEmail } from "@/lib/hsu/doctors";
 import { isLang } from "@/lib/hsu/i18n/core";
 import { langOf, tr } from "@/lib/hsu/i18n/server";
 import { apiAdmin } from "@/lib/hsu/i18n/messages/api-admin";
@@ -26,7 +26,11 @@ export async function POST(req: Request) {
   const name = String(body.name ?? "").trim();
   const email = normalizeEmail(String(body.email ?? ""));
   if (!name) return fail(t("err.nameMissing"));
-  if (!emailAllowed(email)) return fail(t("err.emailDomain", { domain: HSU_EMAIL_DOMAIN }));
+  if (!emailAllowed(email)) return fail(t("err.emailInvalid"));
+  // Netfang utan hússins er leyft en yfirlæknir verður að staðfesta það.
+  if (!isHouseEmail(email) && body.allow_external !== true) {
+    return json({ ok: false, needsConfirm: "external", email, error: t("err.emailOutside", { domain: HSU_EMAIL_DOMAIN }) }, 409);
+  }
   const role = body.role === "head" ? "head" : "doctor";
   // Tungumál læknisins (viðmót og tölvupóstar); sjálfgefið það sem stjórnandinn notar.
   const lang = isLang(body.lang) ? body.lang : langOf(req);

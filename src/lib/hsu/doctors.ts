@@ -48,11 +48,21 @@ export function cleanWeekdays(v: unknown): number[] | null {
   return [...new Set(v.map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))].sort();
 }
 
-/** @hsu.is er reglan. Önnur lén aðeins ef HSU_EXTRA_EMAIL_DOMAINS leyfir (t.d. til prófana). */
+/** Nothæft netfang yfirleitt. Lénið ræður engu — sjá isHouseEmail. */
 export function emailAllowed(email: string): boolean {
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+}
+
+/**
+ * Er netfangið innanhúss (@hsu.is)? Afleysingalæknir sem er ekki kominn með
+ * hsu.is-netfang má fá boð á sitt eigið, EN yfirlæknir þarf að staðfesta það
+ * sérstaklega: boðshlekkur á ranglega slegið netfang hleypir ókunnugum inn í
+ * vaktaplanið, og „hsu.si" í stað „hsu.is" er auðvelt að skrifa.
+ */
+export function isHouseEmail(email: string): boolean {
   const extra = (process.env.HSU_EXTRA_EMAIL_DOMAINS ?? "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
-  const domain = email.split("@")[1] ?? "";
-  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) && (domain === HSU_EMAIL_DOMAIN || extra.includes(domain));
+  const domain = (email.split("@")[1] ?? "").toLowerCase();
+  return domain === HSU_EMAIL_DOMAIN || extra.includes(domain);
 }
 
 /** Tengiliður Fjarlækninga (sama og neyðarnúmer vinnustöðvarinnar), t.d. „Mads Christian Aanesen, 767 4393“. */

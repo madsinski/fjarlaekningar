@@ -80,6 +80,7 @@ export default function DoctorsTab({ ctx }: { ctx: PlannerCtx }) {
                       {d.needs_bakvakt && <Badge tone="amber">{t("doctors.badge.needsBakvakt")}</Badge>}
                       {d.day_weekdays?.length > 0 && <Badge tone="slate">{t("doctors.badge.dayShift", { days: d.day_weekdays.map((x) => weekdayShortL(x, t.lang)).join(", ") })}</Badge>}
                       {/* Dagvinna annars staðar: skýrir hvers vegna læknirinn er ekki laus í flýtimóttöku. */}
+                      {d.email && !d.email.toLowerCase().endsWith("@hsu.is") && <Badge tone="purple">{t("doctors.badge.external")}</Badge>}
                       {(d.starts_on || d.ends_on) && (
                         <Badge tone={d.ends_on && d.ends_on < new Date().toISOString().slice(0, 10) ? "slate" : "amber"}>
                           {d.starts_on && d.ends_on ? t("doctors.badge.period", { from: dayLabelL(d.starts_on, t.lang), to: dayLabelL(d.ends_on, t.lang) })
@@ -232,12 +233,17 @@ function AddDoctor({ ctx, onClose }: { ctx: PlannerCtx; onClose: () => void }) {
     try { await navigator.clipboard.writeText(text); setCopied(key); setTimeout(() => setCopied(null), 2000); } catch { /* ignore */ }
   };
 
-  const submit = async () => {
+  const submit = async (allowExternal = false) => {
     setBusy(true); setErr(null);
-    const r = await hsuApi<{ doctor: HsuDoctor; link: string | null; emailed: boolean }>("/api/hsu/admin/doctors", {
-      body: { ...v, mode, password: mode === "manual" ? password : undefined, must_change_password: mustChange }, staff: true,
+    const r = await hsuApi<{ doctor: HsuDoctor; link: string | null; emailed: boolean; needsConfirm?: string }>("/api/hsu/admin/doctors", {
+      body: { ...v, mode, password: mode === "manual" ? password : undefined, must_change_password: mustChange, allow_external: allowExternal }, staff: true,
     });
     setBusy(false);
+    // Netfang utan hússins: spyrja fyrst, senda svo.
+    if (!r.ok && r.needsConfirm === "external") {
+      if (confirm(t("doctors.external.confirm", { email: v.email }))) return submit(true);
+      return;
+    }
     if (!r.ok) { setErr(r.error ?? t("doctors.failed")); return; }
     setDone({ link: r.link, emailed: r.emailed, name: r.doctor.name, email: r.doctor.email });
     await ctx.reload();
@@ -298,7 +304,7 @@ function AddDoctor({ ctx, onClose }: { ctx: PlannerCtx; onClose: () => void }) {
             </div>
           )}
           {err && <Notice tone="err">{err}</Notice>}
-          <Button className="w-full" size="lg" busy={busy} onClick={submit} disabled={!v.name.trim() || !v.email.trim()}>
+          <Button className="w-full" size="lg" busy={busy} onClick={() => submit()} disabled={!v.name.trim() || !v.email.trim()}>
             <Plus className="h-4 w-4" /> {mode === "invite" ? t("doctors.submit.invite") : t("doctors.submit.manual")}
           </Button>
         </div>
@@ -317,10 +323,14 @@ function EditDoctor({ ctx, doctor, onClose }: { ctx: PlannerCtx; doctor: HsuDoct
   const [newPw, setNewPw] = useState<string | null>(null);
   const isSelf = ctx.data.actor.doctorId === doctor.id;
 
-  const patch = async (key: string, body: Record<string, unknown>, okText: string) => {
+  const patch = async (key: string, body: Record<string, unknown>, okText: string): Promise<{ link: string | null; emailed: boolean } | null> => {
     setBusy(key); setMsg(null);
-    const r = await hsuApi<{ link: string | null; emailed: boolean }>(`/api/hsu/admin/doctors/${doctor.id}`, { method: "PATCH", body, staff: true });
+    const r = await hsuApi<{ link: string | null; emailed: boolean; needsConfirm?: string; email?: string }>(`/api/hsu/admin/doctors/${doctor.id}`, { method: "PATCH", body, staff: true });
     setBusy(null);
+    if (!r.ok && r.needsConfirm === "external") {
+      if (confirm(t("doctors.external.confirm", { email: r.email ?? "" }))) return patch(key, { ...body, allow_external: true }, okText);
+      return null;
+    }
     if (!r.ok) { setMsg({ tone: "err", text: r.error ?? t("doctors.failed") }); return null; }
     setMsg({ tone: "ok", text: okText });
     await ctx.reload();

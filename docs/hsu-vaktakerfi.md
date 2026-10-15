@@ -187,6 +187,24 @@ næstu vaktir — það sem hann kom til að sjá. „Sýna skrefin" opnar hann 
 Skilyrðið er reiknað í `DoctorPortal` (`seasoned`): einhver ósk `submitted`/`approved`
 og einhver mánuður `published`. Nýr læknir sér stigann óbreyttan.
 
+## Netfang utan hússins (2026-10-15)
+
+Afleysingalæknir er oft kominn til starfa áður en hann fær @hsu.is-netfang. Áður
+hafnaði kerfið slíku netfangi alfarið, svo ekki var hægt að bjóða honum í vaktakerfið.
+
+Nú má **hvaða gilt netfang sem er**, en yfirlæknir verður að **staðfesta** það þegar
+lénið er ekki @hsu.is: boðshlekkur á ranglega slegið netfang hleypir ókunnugum inn í
+vaktaplanið, og „hsu.si" í stað „hsu.is" er auðvelt að skrifa. Staðfestingin er sama
+mynstur og við birtingu með göt (`needsConfirm`), og gildir bæði við stofnun og þegar
+netfangi er breytt.
+
+* **@hsu.is** — óbreytt, engin staðfesting.
+* **Notandanafn án léns** („jon.jonsson") fær áfram @hsu.is sjálfkrafa.
+* **Annað lén** — staðfesting, svo merkið „Utanhúss netfang" í læknalistanum.
+
+`emailAllowed` sannreynir aðeins form netfangsins; `isHouseEmail` segir til um lénið
+(`HSU_EXTRA_EMAIL_DOMAINS` bætir við lénum sem teljast innanhúss).
+
 ## Læknir í afmarkaðan tíma (2026-10-13)
 
 Afleysingalæknir er oft aðeins hér í nokkra mánuði. Áður var ekkert til nema

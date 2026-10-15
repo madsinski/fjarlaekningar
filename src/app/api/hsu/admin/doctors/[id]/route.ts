@@ -5,7 +5,7 @@ import { audit, hashSecret, issueAccessLink, passwordProblem } from "@/lib/hsu/a
 import { hsuSync } from "@/lib/hsu/calendar";
 import { DOCTOR_COLUMNS, UUID_RE, fail, json, originOf, readJson, requireManager, toPublicDoctor } from "@/lib/hsu/server";
 import { HSU_EMAIL_DOMAIN, fmWeekdaysOf, normalizeEmail } from "@/lib/hsu/types";
-import { cleanDate, cleanDayWork, cleanFmMax, cleanWeekdays, emailAllowed, sendInviteEmail, sendPromotedEmail } from "@/lib/hsu/doctors";
+import { cleanDate, cleanDayWork, cleanFmMax, cleanWeekdays, emailAllowed, isHouseEmail, sendInviteEmail, sendPromotedEmail } from "@/lib/hsu/doctors";
 import { isLang, translator } from "@/lib/hsu/i18n/core";
 import { accountEmails } from "@/lib/hsu/i18n/messages/account-emails";
 import { notifyDoctors } from "@/lib/hsu/notify";
@@ -31,7 +31,11 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (typeof body.name === "string" && body.name.trim()) patch.name = body.name.trim().slice(0, 120);
   if (typeof body.email === "string") {
     const email = normalizeEmail(body.email);
-    if (!emailAllowed(email)) return fail(t("err.emailDomain", { domain: HSU_EMAIL_DOMAIN }));
+    if (!emailAllowed(email)) return fail(t("err.emailInvalid"));
+    // Netfang utan hússins er leyft en yfirlæknir verður að staðfesta það.
+    if (!isHouseEmail(email) && body.allow_external !== true) {
+      return json({ ok: false, needsConfirm: "external", email, error: t("err.emailOutside", { domain: HSU_EMAIL_DOMAIN }) }, 409);
+    }
     patch.email = email;
   }
   if (typeof body.phone === "string") patch.phone = body.phone.slice(0, 40);
