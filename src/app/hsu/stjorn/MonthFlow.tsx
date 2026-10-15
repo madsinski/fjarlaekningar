@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import PrefsEditor, { PREF_TONE, PrefsMini, draftFrom, type PrefDraft } from "../_components/PrefsEditor";
 import { Badge, Button, Card, Field, Modal, Notice, cx, hsuApi, inputCls } from "../_components/ui";
-import { datesInMonth, defaultDeadline, effectiveStatus, inOpenWindow, markFor, openWindow, opensOn, type HsuDoctor, type HsuPreference, type MonthStatus } from "@/lib/hsu/types";
+import { datesInMonth, defaultDeadline, doctorsForMonth, effectiveStatus, inOpenWindow, markFor, openWindow, opensOn, type HsuDoctor, type HsuPreference, type MonthStatus } from "@/lib/hsu/types";
 import { useCommon, useT } from "@/lib/hsu/i18n/client";
 import { LANG_LOCALE, type Translator } from "@/lib/hsu/i18n/core";
 import { dateTimeL, dayLabelL, dayPartL, monthLabelL, prefStatusL, weekdayShortL } from "@/lib/hsu/i18n/format";
@@ -75,14 +75,14 @@ type StepState = { state: "done" | "partial" | "todo"; detail: string };
  */
 function stepProgress(ctx: PlannerCtx, t: T): StepState[] {
   const { data } = ctx;
-  const doctors = data.doctors.filter((d) => d.active);
+  const doctors = doctorsForMonth(data.doctors, ctx.month, data.month?.excluded_doctors);
   const byDoc = prefsByDoctor(data.preferences);
   const n = doctors.length;
   const sent = doctors.filter((d) => ["submitted", "approved"].includes(byDoc[d.id]?.status ?? "")).length;
   const approved = doctors.filter((d) => byDoc[d.id]?.status === "approved").length;
 
   const slots = toPlanSlots(data.shifts, data.shiftTypes);
-  const planDocs = toPlanDoctors(doctors);
+  const planDocs = toPlanDoctors(doctors, data.month?.excluded_doctors ?? []);
   const prefs: Record<string, PlanPrefs> = Object.fromEntries(data.preferences.map((p) => [p.doctor_id, p]));
   const empty = requiredSlots(slots, planDocs).filter((s) => !s.doctorId).length;
   const conflicts = Object.keys(findConflicts(slots, prefs, planDocs)).length;
@@ -156,7 +156,7 @@ function StepCollect({ ctx, setStatus, goNext }: { ctx: PlannerCtx; setStatus: S
   // þegar skilafrestur er vistaður eða mánuðurinn færður áfram.
   const open3 = inOpenWindow(month);
   const m = data.month ?? (open3 ? { month, status: "collecting" as const, prefs_deadline: null, note: "", opened_at: "", published_at: null } : null);
-  const doctors = data.doctors.filter((d) => d.active);
+  const doctors = doctorsForMonth(data.doctors, month, data.month?.excluded_doctors);
   const byDoc = prefsByDoctor(data.preferences);
   const sent = doctors.filter((d) => ["submitted", "approved"].includes(byDoc[d.id]?.status ?? "")).length;
 
@@ -352,7 +352,7 @@ function StepReview({ ctx, setStatus, goNext }: { ctx: PlannerCtx; setStatus: Se
   const t = useT(stjorn);
   const c = useCommon();
   const { data, month } = ctx;
-  const doctors = data.doctors.filter((d) => d.active);
+  const doctors = doctorsForMonth(data.doctors, month, data.month?.excluded_doctors);
   const byDoc = prefsByDoctor(data.preferences);
   const approved = doctors.filter((d) => byDoc[d.id]?.status === "approved").length;
   const submitted = doctors.filter((d) => byDoc[d.id]?.status === "submitted").length;
@@ -491,7 +491,7 @@ function StepPublish({ ctx, setStatus, goPlan }: { ctx: PlannerCtx; setStatus: S
   const published = data.month?.status === "published";
 
   const slots = toPlanSlots(data.shifts, data.shiftTypes);
-  const planDocs = toPlanDoctors(data.doctors.filter((d) => d.active));
+  const planDocs = toPlanDoctors(doctorsForMonth(data.doctors, month, data.month?.excluded_doctors), data.month?.excluded_doctors ?? []);
   const prefs: Record<string, PlanPrefs> = Object.fromEntries(data.preferences.map((p) => [p.doctor_id, p]));
   const conflicts = Object.keys(findConflicts(slots, prefs, planDocs)).length;
   const empty = requiredSlots(slots, planDocs).filter((s) => !s.doctorId).length;
@@ -540,7 +540,7 @@ function StepPublish({ ctx, setStatus, goPlan }: { ctx: PlannerCtx; setStatus: S
               [t("publish.stat.shifts"), data.shifts.length, "slate"],
               [t("publish.stat.empty"), empty, empty ? "red" : "green"],
               [t("publish.stat.conflicts"), conflicts, conflicts ? "amber" : "green"],
-              [t("publish.stat.doctors"), data.doctors.filter((d) => d.active).length, "slate"],
+              [t("publish.stat.doctors"), doctorsForMonth(data.doctors, month, data.month?.excluded_doctors).length, "slate"],
             ].map(([l, v, tone]) => (
               <div key={String(l)} className={cx("rounded-2xl p-4 text-center", tone === "red" ? "bg-red-50" : tone === "amber" ? "bg-amber-50" : tone === "green" ? "bg-emerald-50" : "bg-slate-50")}>
                 <div className="text-2xl font-bold tabular-nums">{v}</div>

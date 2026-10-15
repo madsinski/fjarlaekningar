@@ -46,6 +46,18 @@ export interface HsuDoctor {
   ends_on: string | null;
 }
 
+/**
+ * Læknarnir sem koma við sögu í þessum mánuði: virkir, innan starfstíma og ekki
+ * teknir út úr mánuðinum. Notað alls staðar þar sem mánuður er undir — óskir,
+ * yfirferð, vaktaskipulag og talningar — svo sama fólk sé alls staðar talið.
+ */
+export function doctorsForMonth<T extends { id: string; active: boolean; starts_on?: string | null; ends_on?: string | null }>(
+  doctors: T[], month: string, excluded: readonly string[] = [],
+): T[] {
+  const out = new Set(excluded);
+  return doctors.filter((d) => d.active && !out.has(d.id) && worksInMonth(d, month));
+}
+
 /** Er læknirinn við störf einhvern daginn í mánuðinum? */
 export function worksInMonth(d: { starts_on?: string | null; ends_on?: string | null }, month: string): boolean {
   const first = `${month}-01`;

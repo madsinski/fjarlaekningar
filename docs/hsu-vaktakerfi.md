@@ -220,6 +220,16 @@ lækninn út úr ÞESSUM mánuði (spjaldið verður grátt og merkt „EKKI ME�
 hann inn aftur. Sjálfvirka röðunin sleppir honum þá alveg og hinir taka vaktirnar;
 setji yfirlæknir hann samt handvirkt á vakt birtist **árekstur** (`excluded`).
 
+**Alls staðar sama fólkið.** `doctorsForMonth(doctors, month, excluded)` er eina
+uppsprettan að því hverjir koma við sögu í mánuði: virkir, innan starfstíma og ekki
+teknir út. Hún er notuð í skrefi 1 (óskir lækna), skrefi 2 (samþykkja óskir),
+læknalistanum á vaktaplaninu, talningunum í stikunni og við birtingu — svo læknir sem
+er hættur birtist hvergi í næsta mánuði og „4 af 6" telur réttan hóp.
+
+Á vaktaplaninu er þó munur: læknir sem er **tekinn út úr mánuðinum** stendur áfram í
+listanum (grár, merktur „EKKI MEÐ") svo hægt sé að setja hann inn aftur, en læknir sem
+er **kominn fram yfir starfstíma** birtist alls ekki.
+
 Hvorug leiðin eyðir vöktum sem þegar eru til: taki yfirlæknir lækni út eftir að hafa
 raðað þarf að raða upp á nýtt (eða taka vaktirnar af handvirkt).
 

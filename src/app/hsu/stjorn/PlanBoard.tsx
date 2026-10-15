@@ -24,6 +24,7 @@ import {
 import {
   WEEKDAY_ORDER, dayPartFor, hhmm, holidayName, isOvernight, isWeekendish, markFor, minutesOf, partOfShift, periodOf, typeAppliesOn,
   type DayPart, type HsuDoctor, type HsuShift, type HsuShiftType,
+  doctorsForMonth,
 } from "@/lib/hsu/types";
 import { useT } from "@/lib/hsu/i18n/client";
 import { LANG_LOCALE } from "@/lib/hsu/i18n/core";
@@ -73,7 +74,8 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
     setBusy(null);
     await ctx.reload();
   };
-  const doctors = useMemo(() => data.doctors.filter((d) => d.active), [data.doctors]);
+  // Sömu læknar og í skrefum 1–2: innan starfstíma og ekki teknir út úr mánuðinum.
+  const doctors = useMemo(() => doctorsForMonth(data.doctors, month, []), [data.doctors, month]);
   const docById = useMemo(() => new Map(data.doctors.map((d) => [d.id, d])), [data.doctors]);
   const prefs = useMemo<Record<string, PlanPrefs>>(() => Object.fromEntries(data.preferences.map((p) => [p.doctor_id, p])), [data.preferences]);
 
