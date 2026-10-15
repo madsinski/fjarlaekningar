@@ -45,12 +45,15 @@ export default function DoctorsTab({ ctx }: { ctx: PlannerCtx }) {
       </div>
 
       <Card className="overflow-x-auto">
-        <table className="w-full min-w-[720px] text-sm">
+        <table className="w-full min-w-[980px] text-sm">
           <thead>
             <tr className="border-b border-slate-100 text-left text-[11px] uppercase tracking-wide text-slate-500">
               <th className="px-4 py-2.5">{t("doctors.col.doctor")}</th>
               <th className="px-4 py-2.5">{t("doctors.col.role")}</th>
               <th className="px-4 py-2.5 text-right">{t("doctors.col.fte")}</th>
+              <th className="px-4 py-2.5">{t("doctors.col.employment")}</th>
+              <th className="px-4 py-2.5 whitespace-nowrap">{t("doctors.col.startsOn")}</th>
+              <th className="px-4 py-2.5 whitespace-nowrap">{t("doctors.col.endsOn")}</th>
               <th className="px-4 py-2.5">{t("doctors.col.status")}</th>
               <th className="px-4 py-2.5">{t("doctors.col.lastLogin")}</th>
               <th className="px-4 py-2.5" />
@@ -72,30 +75,24 @@ export default function DoctorsTab({ ctx }: { ctx: PlannerCtx }) {
                   </td>
                   <td className="px-4 py-3">{d.role === "head" ? <Badge tone="blue">{roleL("head", t.lang)}</Badge> : roleL("doctor", t.lang)}</td>
                   <td className="px-4 py-3 text-right tabular-nums">{d.fte}%</td>
+                  {/* Ráðning leiðist af starfslokum: skráður lokadagur = tímabundin ráðning. */}
+                  <td className="px-4 py-3">
+                    {d.ends_on
+                      ? <Badge tone="amber">{t("doctors.employment.temp")}</Badge>
+                      : <span className="text-slate-500">{t("doctors.employment.permanent")}</span>}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap tabular-nums text-slate-600">{d.starts_on ? dayLabelL(d.starts_on, t.lang) : ""}</td>
+                  <td className={cx("px-4 py-3 whitespace-nowrap tabular-nums",
+                    d.ends_on && d.ends_on < new Date().toISOString().slice(0, 10) ? "font-semibold text-slate-400" : "text-slate-600")}>
+                    {d.ends_on ? dayLabelL(d.ends_on, t.lang) : ""}
+                  </td>
+                  {/* Staðan sjálf og það eitt sem ræður því hvaða vaktir hann getur tekið.
+                      Annað (aðgangskóði, dagvinna, netfang) sést í spjaldi læknisins. */}
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
                       <Badge tone={st.tone}>{t.dyn(`doctors.status.${st.key}`)}</Badge>
-                      {d.has_pin && <Badge tone="slate"><KeyRound className="h-3 w-3" /> {t("doctors.badge.pin")}</Badge>}
                       {d.can_bakvakt && <Badge tone="blue">{t("doctors.badge.bakvakt")}</Badge>}
                       {d.needs_bakvakt && <Badge tone="amber">{t("doctors.badge.needsBakvakt")}</Badge>}
-                      {d.day_weekdays?.length > 0 && <Badge tone="slate">{t("doctors.badge.dayShift", { days: d.day_weekdays.map((x) => weekdayShortL(x, t.lang)).join(", ") })}</Badge>}
-                      {/* Dagvinna annars staðar: skýrir hvers vegna læknirinn er ekki laus í flýtimóttöku. */}
-                      {d.email && !d.email.toLowerCase().endsWith("@hsu.is") && <Badge tone="purple">{t("doctors.badge.external")}</Badge>}
-                      {(d.starts_on || d.ends_on) && (
-                        <Badge tone={d.ends_on && d.ends_on < new Date().toISOString().slice(0, 10) ? "slate" : "amber"}>
-                          {d.starts_on && d.ends_on ? t("doctors.badge.period", { from: dayLabelL(d.starts_on, t.lang), to: dayLabelL(d.ends_on, t.lang) })
-                            : d.ends_on ? t("doctors.badge.until", { to: dayLabelL(d.ends_on, t.lang) })
-                            : t("doctors.badge.from", { from: dayLabelL(d.starts_on!, t.lang) })}
-                        </Badge>
-                      )}
-                      {(["mottaka", "deild"] as const).map((kind) => {
-                        const days = Object.entries(d.day_work ?? {}).filter(([, k]) => k === kind).map(([wd]) => Number(wd)).sort();
-                        return days.length === 0 ? null : (
-                          <Badge key={kind} tone={kind === "mottaka" ? "green" : "purple"}>
-                            {t.dyn(`doctors.badge.${kind}`, { days: days.map((x) => weekdayShortL(x, t.lang)).join(", ") })}
-                          </Badge>
-                        );
-                      })}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-xs text-slate-500">{d.last_login_at ? timeAgoL(d.last_login_at, t.lang) : "–"}</td>
