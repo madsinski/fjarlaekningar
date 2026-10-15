@@ -26,6 +26,16 @@ export function dayLabelL(date: string, lang: Lang): string {
   return t("date.dayMonth", { d, m: t.dyn(`monthShort.${m}`) });
 }
 
+/**
+ * "2026-10-31" → "31. okt. 2026" / "31 Oct 2026". Notað þar sem dagsetning
+ * stendur ein og sér, t.d. starfslok læknis — án ársins væri hún tvíræð.
+ */
+export function dayYearL(date: string, lang: Lang): string {
+  const [y, m, d] = ymd(date);
+  const t = tc(lang);
+  return t("date.dayMonthYear", { d, m: t.dyn(`monthShort.${m}`), y });
+}
+
 export function weekdayOfDate(date: string): number {
   const [y, m, d] = ymd(date);
   return new Date(Date.UTC(y, m - 1, d)).getUTCDay();

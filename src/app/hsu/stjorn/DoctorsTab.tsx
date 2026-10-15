@@ -6,7 +6,7 @@ import { Badge, Button, Card, Field, Modal, Notice, cx, hsuApi, inputCls } from 
 import { DOCTOR_COLORS, ROLE_IS, WEEKDAY_ORDER, type HsuDoctor, type HsuRole } from "@/lib/hsu/types";
 import { useCommon, useT } from "@/lib/hsu/i18n/client";
 import { LANGS, LANG_NAMES, type Lang } from "@/lib/hsu/i18n/core";
-import { dayLabelL, roleL, timeAgoL, weekdayShortL } from "@/lib/hsu/i18n/format";
+import { dayYearL, roleL, timeAgoL, weekdayShortL } from "@/lib/hsu/i18n/format";
 import { admin } from "@/lib/hsu/i18n/messages/admin";
 import type { PlannerCtx } from "./types";
 
@@ -81,10 +81,10 @@ export default function DoctorsTab({ ctx }: { ctx: PlannerCtx }) {
                       ? <Badge tone="amber">{t("doctors.employment.temp")}</Badge>
                       : <span className="text-slate-500">{t("doctors.employment.permanent")}</span>}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap tabular-nums text-slate-600">{d.starts_on ? dayLabelL(d.starts_on, t.lang) : ""}</td>
+                  <td className="px-4 py-3 whitespace-nowrap tabular-nums text-slate-600">{d.starts_on ? dayYearL(d.starts_on, t.lang) : ""}</td>
                   <td className={cx("px-4 py-3 whitespace-nowrap tabular-nums",
                     d.ends_on && d.ends_on < new Date().toISOString().slice(0, 10) ? "font-semibold text-slate-400" : "text-slate-600")}>
-                    {d.ends_on ? dayLabelL(d.ends_on, t.lang) : ""}
+                    {d.ends_on ? dayYearL(d.ends_on, t.lang) : ""}
                   </td>
                   {/* Staðan sjálf og það eitt sem ræður því hvaða vaktir hann getur tekið.
                       Annað (aðgangskóði, dagvinna, netfang) sést í spjaldi læknisins. */}

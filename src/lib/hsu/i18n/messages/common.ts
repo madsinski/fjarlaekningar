@@ -17,6 +17,7 @@ export const common = defineMessages(
     "monthShort.9": "sep.", "monthShort.10": "okt.", "monthShort.11": "nóv.", "monthShort.12": "des.",
     /** {d} dagur, {m} stuttur mánuður */
     "date.dayMonth": "{d}. {m}",
+    "date.dayMonthYear": "{d}. {m} {y}",
     /** {m} mánuður, {y} ár */
     "date.monthYear": "{m} {y}",
 
@@ -97,6 +98,7 @@ export const common = defineMessages(
       "monthShort.5": "May", "monthShort.6": "Jun", "monthShort.7": "Jul", "monthShort.8": "Aug",
       "monthShort.9": "Sep", "monthShort.10": "Oct", "monthShort.11": "Nov", "monthShort.12": "Dec",
       "date.dayMonth": "{d} {m}",
+      "date.dayMonthYear": "{d} {m} {y}",
       "date.monthYear": "{m} {y}",
 
       "weekday.0": "Sun", "weekday.1": "Mon", "weekday.2": "Tue", "weekday.3": "Wed",
