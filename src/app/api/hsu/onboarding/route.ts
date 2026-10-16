@@ -1,5 +1,5 @@
 // Innleiðing: skrá að notandi hafi séð kynningu eða leiðarvísi (eða endurstilla).
-//   POST { key: "tour:doctor" | "tour:head" | "guide:head", done: boolean }
+//   POST { key: "tour:doctor" | "tour:head" | "guide:head" | "tips:off" | "news:<id>", done: boolean }
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getDoctorSession, sameOrigin } from "@/lib/hsu/auth";
@@ -9,7 +9,9 @@ import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
 
 export const runtime = "nodejs";
 
-const KEYS = ["setup:calendar", "tour:doctor", "tour:head", "guide:head"] as const;
+const KEYS = ["setup:calendar", "tour:doctor", "tour:head", "guide:head", "tips:off"] as const;
+// Tilkynningar um nýjungar fá lykil hver: news:<id> (sjá lib/hsu/help/news.ts).
+const NEWS_KEY = /^news:[a-z0-9-]{1,40}$/;
 
 export async function POST(req: Request) {
   const t = tr(req, apiDoctor);
@@ -18,7 +20,7 @@ export async function POST(req: Request) {
   if (!doctor) return fail(t("req.notSignedIn"), 401);
   const body = await readJson(req);
   const key = body.key as (typeof KEYS)[number];
-  if (!KEYS.includes(key)) return fail(t("req.unknownKey"));
+  if (!KEYS.includes(key) && !NEWS_KEY.test(String(body.key ?? ""))) return fail(t("req.unknownKey"));
   const { data } = await supabaseAdmin.from("hsu_doctors").select("onboarding").eq("id", doctor.id).single();
   const next = { ...((data?.onboarding ?? {}) as Record<string, string>) };
   if (body.done === false) delete next[key];

@@ -311,6 +311,39 @@ samstillist strax.
 **Takmörkun:** þetta er vikumynstur, ekki stakir dagar. Eina vikuna á deild skráir
 yfirlæknir sem „Get ekki" í skrefi 2, eða tekur lækninn af vöktum handvirkt.
 
+## Hjálp í hausnum, nýjungar og ráð (2026-10-16)
+
+Spurningarmerkið efst til hægri opnar **hjálparsafnið**: 26 leiðbeiningar um
+allt sem læknir gerir í kerfinu, flokkaðar (Fyrstu skref, Óskir, Vaktirnar
+þínar, Vaktaskipti og markaður, Dagatal og tilkynningar) og leitarbærar. Hver
+leiðbeining segir hvenær hún á við, telur skrefin upp og hefur hnappinn „Sýna
+mér“ sem opnar réttan flipa. Kynningin á kerfinu er fyrsta leiðbeiningin — hún
+var áður grafin í notendavalmyndinni.
+
+* Efnið: `src/lib/hsu/i18n/messages/help.ts` (`<id>.t` titill, `.w` hvenær,
+  `.s` skrefin eitt í línu, `.k` leitarorð).
+* Uppbyggingin: `src/lib/hsu/help/articles.ts` — flokkur, flipi og hvort
+  skýringarmynd fylgir (dragið, pensillinn, hálfur dagur, dagatalið).
+* **Leitin fellir broddstafi** (`fold()`), svo „oskir“ finnur „Óskir“. Hún
+  gerir hins vegar ekki beygingar: nefnifallsmyndir orða sem fólk slær inn
+  þurfa að vera í `.k` (t.d. „flýtimóttaka“ þegar textinn segir
+  „flýtimóttöku“). Það er það sem þarf að muna þegar leiðbeining er bætt við.
+
+**Sprettigluggar við innskráningu.** `Nudge.tsx` sýnir annaðhvort nýjung sem
+læknirinn hefur ekki séð, eða eitt ráð:
+
+* *Nýjungar* eru skráðar í `src/lib/hsu/help/news.ts` — ein lína þegar virkni
+  fer í loftið, texti í `help.ts` (`news.<id>.t` og `.b`). Hver læknir sér hana
+  einu sinni (`hsu_doctors.onboarding["news:<id>"]`), og „Sjá leiðbeiningar“
+  opnar tengdu greinina.
+* *Ráðin* eru vísun í hjálparsafnið (`tips.ts`) og rúlla áfram; talan er geymd
+  í vafranum. „Ekki sýna ráð aftur“ setur `onboarding["tips:off"]` og þá
+  birtast þau ekki framar — greinarnar eru áfram undir spurningarmerkinu.
+* Hvorugt birtist meðan kynningin eða dagatalsuppsetningin er á skjánum, né
+  hjá lækni sem hefur ekki enn klárað kynninguna.
+
+> Nýir lyklar í `/api/hsu/onboarding`: `tips:off` og `news:<id>`.
+
 ## Vaktaskipti: vakt fyrir vakt (2026-10-16)
 
 Vaktamarkaðurinn snýst um að GEFA vakt frá sér. Skipti eru gagnkvæm: læknirinn

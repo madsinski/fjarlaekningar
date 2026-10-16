@@ -6,6 +6,8 @@ import {
   AlertTriangle, ArrowLeftRight, Bell, CalendarCheck, CalendarRange, Check, CheckCircle2, ClipboardList, ExternalLink, Home, Printer, Settings, Store,
 } from "lucide-react";
 import Tour, { markOnboarding, type TourStep } from "../_components/Tour";
+import Help from "../_components/Help";
+import Nudge from "../_components/Nudge";
 import { useCommon, useT } from "@/lib/hsu/i18n/client";
 import { common } from "@/lib/hsu/i18n/messages/common";
 import { onboarding as onboardingMsgs } from "@/lib/hsu/i18n/messages/onboarding";
@@ -73,6 +75,10 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
   // Hvort tveggja bíður þar til læknirinn hefur valið sér lykilorð.
   const to = useT(onboardingMsgs);
   const [tourOpen, setTourOpen] = useState(false);
+  // Hjálparsafnið: spurningarmerkið í hausnum, og hægt að opna á tiltekinni grein.
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [helpAt, setHelpAt] = useState<string | null>(null);
+  const openHelp = (id: string | null = null) => { setHelpAt(id); setHelpOpen(true); };
   const [setupOpen, setSetupOpen] = useState(false);
   const calendarConnected = me.hasCalendarToken || me.googleConnected;
   // Heimkoma frá Google opnar gluggann einu sinni; eftir lokun gildir það ekki
@@ -145,10 +151,16 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
           // hér kemst í hana með sinni innskráningu.
           ...(me.role === "head" ? [{ href: "/hsu/stjorn", label: c("nav.planner"), icon: "grid" as const }] : []),
         ]}
+        onHelp={() => openHelp()}
         actions={[{ label: to("menu.tour"), onClick: () => setTourOpen(true), icon: "help" }]}
       />
       <CalendarSetup name={me.name} open={setupOpen} onClose={closeSetup} />
       <Tour steps={tourSteps} open={tourOpen} onClose={closeTour} />
+      <Help open={helpOpen} startAt={helpAt} onClose={() => { setHelpOpen(false); setHelpAt(null); }}
+        onGo={(tb) => setTab(tb)} onTour={() => setTourOpen(true)} />
+      {/* Nýjungar og ráð bíða þar til kynningin og dagatalsuppsetningin eru frá. */}
+      <Nudge onboarding={me.onboarding} hold={tourOpen || setupOpen || helpOpen || !me.onboarding["tour:doctor"]}
+        onOpenHelp={(id) => openHelp(id ?? null)} onRefresh={refresh} />
 
       <nav className="sticky top-16 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div data-tour="tabs" className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-3 py-2 sm:px-5 [scrollbar-width:none]">

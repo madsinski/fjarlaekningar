@@ -7,7 +7,7 @@ import { common } from "@/lib/hsu/i18n/messages/common";
 import { HsuLogo, hsuApi, initials } from "./ui";
 
 export default function HsuHeader({
-  unitName, userName, subtitle, links = [], onLogout, actions = [],
+  unitName, userName, subtitle, links = [], onLogout, actions = [], onHelp,
 }: {
   /** Heiti starfsstöðvar úr stillingum; sjálfgefna íslenska heitið er þýtt. */
   unitName?: string;
@@ -18,6 +18,8 @@ export default function HsuHeader({
   onLogout?: () => Promise<string | void> | string | void;
   /** Aukaaðgerðir í valmyndinni, t.d. „Kynning á kerfinu“. */
   actions?: { label: string; onClick: () => void; icon?: "help" | "list" }[];
+  /** Spurningarmerkið í hausnum: opnar hjálparsafnið. */
+  onHelp?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const t = useCommon();
@@ -36,6 +38,12 @@ export default function HsuHeader({
           </div>
         </a>
         <div className="flex items-center gap-2">
+        {onHelp && (
+          <button type="button" onClick={onHelp} data-tour="help" title={t("action.help")} aria-label={t("action.help")}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-[var(--hsu)]">
+            <CircleHelp className="h-5 w-5" />
+          </button>
+        )}
         <span data-tour="lang" className="hidden sm:inline-flex"><LanguageSwitch /></span>
         <div className="relative">
           <button onClick={() => setOpen((o) => !o)} aria-expanded={open} data-tour="user-menu"
