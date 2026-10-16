@@ -115,11 +115,16 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
   };
   const name = (id: string | null) => data.colleagues.find((c) => c.id === id)?.name ?? t("unknownDoctor");
 
-  const incoming = data.swaps.filter((s) => s.status === "pending" && s.to_doctor === me.id);
+  // Boð (ein vakt gefin) og SKIPTI (vakt fyrir vakt) eru sitt hvort; þau mega
+  // ekki blandast, hvorki í listunum né í merkinu á vöktunum mínum.
+  const isSwap = (s: HsuSwap) => Boolean(s.want_shift_id);
+  const incoming = data.swaps.filter((s) => s.status === "pending" && s.to_doctor === me.id && !isSwap(s));
   const market = data.swaps.filter((s) => s.status === "pending" && !s.to_doctor && s.from_doctor !== me.id);
-  const mine = data.swaps.filter((s) => s.from_doctor === me.id);
+  const mine = data.swaps.filter((s) => s.from_doctor === me.id && !isSwap(s));
   const myRequests = data.swaps.filter((s) => s.status === "awaiting_approval" && s.taken_by === me.id);
-  const marketCount = incoming.length + market.length;
+  const swapIn = data.swaps.filter((s) => s.status === "pending" && s.to_doctor === me.id && isSwap(s));
+  const swapOut = data.swaps.filter((s) => s.status === "pending" && s.from_doctor === me.id && isSwap(s));
+  const marketCount = incoming.length + market.length + swapIn.length;
 
   // Næstu þrír mánuðir eru opnir fyrir óskir, auk mánaða sem yfirlæknir hefur enn opna.
   const openPrefMonths = [...new Set([...openWindow(), ...data.months.map((m) => m.month)])]
@@ -170,9 +175,9 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
         {tab === "vaktir" && <ShiftsTab data={data} swaps={mine} refresh={refresh} onLog={logVinnustund} />}
         {tab === "oskir" && <PrefsTab data={data} initialMonth={initialMonth} refresh={refresh} />}
         {tab === "markadur" && (
-          <MarketTab data={data} incoming={incoming} market={market} mine={mine} myRequests={myRequests} name={name} refresh={refresh} />
+          <MarketTab data={data} incoming={incoming} market={market} mine={mine} myRequests={myRequests} swapIn={swapIn} swapOut={swapOut} name={name} refresh={refresh} />
         )}
-        {tab === "plan" && <RosterTab meId={me.id} dayWork={me.dayWork} />}
+        {tab === "plan" && <RosterTab meId={me.id} dayWork={me.dayWork} swaps={data.swaps} refresh={refresh} />}
         {tab === "stillingar" && (
           <div className="space-y-8">
             <h1 className="text-xl font-bold">{t("settings.title")}</h1>
@@ -609,8 +614,9 @@ function swapShift(s: HsuSwap): HsuShift | null {
   } as HsuShift;
 }
 
-function MarketTab({ data, incoming, market, mine, myRequests, name, refresh }: {
+function MarketTab({ data, incoming, market, mine, myRequests, swapIn, swapOut, name, refresh }: {
   data: PortalData; incoming: HsuSwap[]; market: HsuSwap[]; mine: HsuSwap[]; myRequests: HsuSwap[];
+  swapIn: HsuSwap[]; swapOut: HsuSwap[];
   name: (id: string | null) => string; refresh: () => void;
 }) {
   const t = useT(portal);
@@ -622,6 +628,15 @@ function MarketTab({ data, incoming, market, mine, myRequests, name, refresh }: 
     setBusy(null);
     if (!r.ok) { setMsg({ tone: "err", text: r.error ?? t("failed") }); return; }
     if (action === "accept") setMsg({ tone: "ok", text: r.awaitingApproval ? t("market.ok.awaiting") : t("market.ok.taken") });
+    refresh();
+  };
+  // Skipti: sama leið, en önnur skilaboð — hér skipta tvær vaktir um hendur.
+  const actSwap = async (id: string, action: "accept" | "decline" | "cancel") => {
+    setBusy(id + action); setMsg(null);
+    const r = await hsuApi(`/api/hsu/me/swaps/${id}`, { method: "PATCH", body: { action } });
+    setBusy(null);
+    if (!r.ok) { setMsg({ tone: "err", text: r.error ?? t("failed") }); return; }
+    setMsg({ tone: "ok", text: t(action === "accept" ? "market.swap.ok.done" : action === "decline" ? "market.swap.ok.declined" : "market.swap.ok.cancelled") });
     refresh();
   };
   const when = (s: HsuSwap) => (s.shift ? shiftWhen(s.shift, t.lang) : "");
@@ -636,6 +651,25 @@ function MarketTab({ data, incoming, market, mine, myRequests, name, refresh }: 
         </p>
       </div>
       {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
+
+      <Section title={t("market.swap.incoming")} empty={t("market.swap.incoming.empty")}>
+        {swapIn.map((w) => (
+          <SwapRow key={w.id} give={w.wantShift} get={w.shift}
+            who={w.note ? t("market.swap.fromNote", { name: name(w.from_doctor), note: w.note }) : t("market.swap.from", { name: name(w.from_doctor) })}
+            actions={<>
+              <Button size="sm" onClick={() => actSwap(w.id, "accept")} busy={busy === w.id + "accept"}>{t("market.swap.accept")}</Button>
+              <Button size="sm" variant="ghost" onClick={() => actSwap(w.id, "decline")} busy={busy === w.id + "decline"}>{t("market.swap.decline")}</Button>
+            </>} />
+        ))}
+      </Section>
+
+      <Section title={t("market.swap.outgoing")} empty={t("market.swap.outgoing.empty")}>
+        {swapOut.map((w) => (
+          <SwapRow key={w.id} give={w.shift} get={w.wantShift}
+            who={t("market.swap.to", { name: name(w.to_doctor) })}
+            actions={<Button size="sm" variant="ghost" onClick={() => actSwap(w.id, "cancel")} busy={busy === w.id + "cancel"}>{t("market.swap.cancel")}</Button>} />
+        ))}
+      </Section>
 
       <Section title={t("market.incoming")} empty={t("market.incoming.empty")}>
         {incoming.map((s) => (
@@ -679,6 +713,37 @@ function MarketTab({ data, incoming, market, mine, myRequests, name, refresh }: 
 }
 
 /** Lína á vaktamarkaði — sama litakóðun og í „Mínum vöktum“. */
+/**
+ * Beiðni um vaktaskipti: báðar vaktirnar sjást, það sem þú lætur og það sem
+ * þú fær. Hvor vaktin er hvor fer eftir því hvort beiðnin er þín eða til þín.
+ */
+function SwapRow({ give, get, who, actions }: {
+  give: HsuSwap["shift"];
+  get: HsuSwap["shift"];
+  who: string;
+  actions?: React.ReactNode;
+}) {
+  const t = useT(portal);
+  const side = (label: string, s: HsuSwap["shift"], tone: "give" | "get") => (
+    <div className={cx("min-w-0 flex-1 rounded-xl p-2.5", tone === "give" ? "bg-slate-50" : "bg-[var(--hsu-soft)]")}>
+      <div className={cx("text-[10px] font-bold uppercase tracking-wide", tone === "give" ? "text-slate-500" : "text-[var(--hsu-dark)]")}>{label}</div>
+      <div className="text-sm font-semibold text-slate-900">{s ? shiftWhen(s, t.lang) : t("market.swap.gone")}</div>
+    </div>
+  );
+  return (
+    <div className="space-y-2 p-4">
+      <div className="text-xs text-slate-600">{who}</div>
+      <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+        {side(t("market.swap.give"), give, "give")}
+        <ArrowLeftRight className="mx-auto h-4 w-4 shrink-0 text-slate-400" />
+        {side(t("market.swap.get"), get, "get")}
+      </div>
+      <p className="text-xs text-slate-500">{t("market.swap.whoCan")}</p>
+      {actions && <div className="flex flex-wrap gap-2 pt-1">{actions}</div>}
+    </div>
+  );
+}
+
 function MarketRow({ s, types, fallback, who, clash, actions }: {
   s: HsuSwap; types: HsuShiftType[]; fallback: string; who: string; clash?: boolean; actions?: React.ReactNode;
 }) {

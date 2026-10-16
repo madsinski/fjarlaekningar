@@ -67,7 +67,7 @@ export async function loadPortal(doctorId: string): Promise<PortalData> {
     // vensl í hsu_shifts (shift_id og want_shift_id), svo „hsu_shifts" eitt og
     // sér er margrætt og fyrirspurnin félli á PostgREST-villu.
     supabaseAdmin.from("hsu_swaps")
-      .select("id, shift_id, from_doctor, to_doctor, taken_by, note, status, created_at, shift:hsu_shifts!hsu_swaps_shift_id_fkey!inner(shift_date, starts, ends, label, published, shift_type_id)")
+      .select("id, shift_id, want_shift_id, from_doctor, to_doctor, taken_by, note, status, created_at, shift:hsu_shifts!hsu_swaps_shift_id_fkey!inner(shift_date, starts, ends, label, published, shift_type_id), wantShift:hsu_shifts!hsu_swaps_want_shift_id_fkey(shift_date, starts, ends, label, shift_type_id)")
       .in("status", ["pending", "awaiting_approval"])
       .gte("shift.shift_date", today)
       .eq("shift.published", true)

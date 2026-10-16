@@ -135,7 +135,7 @@ export async function loadPendingSwaps(): Promise<HsuSwap[]> {
   // sér er margrætt og fyrirspurnin félli á PostgREST-villu.
   const { data, error } = await supabaseAdmin
     .from("hsu_swaps")
-    .select("id, shift_id, from_doctor, to_doctor, taken_by, note, status, created_at, shift:hsu_shifts!hsu_swaps_shift_id_fkey(shift_date, starts, ends, label, shift_type_id)")
+    .select("id, shift_id, want_shift_id, from_doctor, to_doctor, taken_by, note, status, created_at, shift:hsu_shifts!hsu_swaps_shift_id_fkey(shift_date, starts, ends, label, shift_type_id), wantShift:hsu_shifts!hsu_swaps_want_shift_id_fkey(shift_date, starts, ends, label, shift_type_id)")
     .in("status", ["pending", "awaiting_approval"])
     .order("created_at");
   if (error) throw new Error(error.message);

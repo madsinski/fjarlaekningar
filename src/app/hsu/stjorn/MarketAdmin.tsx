@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useState, type ReactNode } from "react";
-import { Check, X } from "lucide-react";
+import { ArrowLeftRight, Check, X } from "lucide-react";
 import { Badge, Button, Card, Notice, hsuApi } from "../_components/ui";
 import { hhmm } from "@/lib/hsu/types";
 import { useT } from "@/lib/hsu/i18n/client";
@@ -21,7 +21,9 @@ export default function MarketAdmin({ ctx }: { ctx: PlannerCtx }) {
   const [err, setErr] = useState<string | null>(null);
   const name = (id: string | null) => data.doctors.find((d) => d.id === id)?.name ?? "—";
   const awaiting = data.swaps.filter((s) => s.status === "awaiting_approval");
-  const pending = data.swaps.filter((s) => s.status === "pending");
+  // Skipti (vakt fyrir vakt) eru annars konar beiðni en boð og fá sinn hluta.
+  const swapAsks = data.swaps.filter((s) => s.status === "pending" && s.want_shift_id);
+  const pending = data.swaps.filter((s) => s.status === "pending" && !s.want_shift_id);
 
   const act = async (id: string, action: "approve" | "reject" | "cancel") => {
     setBusy(id + action); setErr(null);
@@ -31,7 +33,9 @@ export default function MarketAdmin({ ctx }: { ctx: PlannerCtx }) {
     await ctx.reload();
   };
 
-  const when = (s: (typeof data.swaps)[number]) => s.shift ? `${weekdayShortOf(s.shift.shift_date, t.lang)} ${dayLabelL(s.shift.shift_date, t.lang)} · ${s.shift.label} ${hhmm(s.shift.starts)}–${hhmm(s.shift.ends)}` : "";
+  const whenOf = (sh: (typeof data.swaps)[number]["shift"]) =>
+    sh ? `${weekdayShortOf(sh.shift_date, t.lang)} ${dayLabelL(sh.shift_date, t.lang)} · ${sh.label} ${hhmm(sh.starts)}–${hhmm(sh.ends)}` : "";
+  const when = (s: (typeof data.swaps)[number]) => whenOf(s.shift);
 
   return (
     <div className="space-y-6">
@@ -44,6 +48,36 @@ export default function MarketAdmin({ ctx }: { ctx: PlannerCtx }) {
         </p>
       </div>
       {err && <Notice tone="err">{err}</Notice>}
+
+      <section>
+        <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-500">{t("market.swapAsk")}</h2>
+        <Card className="divide-y divide-slate-100">
+          {swapAsks.length === 0 && <div className="p-5 text-sm text-slate-500">{t("market.swapAsk.empty")}</div>}
+          {swapAsks.map((s) => (
+            <div key={s.id} className="flex flex-wrap items-start justify-between gap-3 p-4">
+              <div className="min-w-0 space-y-1">
+                {/* Hvor lætur hvað — það er það sem yfirlæknir þarf að sjá. */}
+                <div className="text-sm">
+                  <span className="font-semibold">{name(s.from_doctor)}</span>
+                  <span className="text-slate-500"> {t("market.swapAsk.gives")} </span>
+                  <span className="font-semibold">{when(s)}</span>
+                </div>
+                <div className="flex items-center gap-1 text-slate-400"><ArrowLeftRight className="h-3.5 w-3.5" /></div>
+                <div className="text-sm">
+                  <span className="font-semibold">{name(s.to_doctor)}</span>
+                  <span className="text-slate-500"> {t("market.swapAsk.gives")} </span>
+                  <span className="font-semibold">{whenOf(s.wantShift)}</span>
+                </div>
+                {s.note && <div className="text-xs text-slate-500">{`„${s.note}“`}</div>}
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" variant="success" busy={busy === s.id + "approve"} onClick={() => act(s.id, "approve")}><Check className="h-3.5 w-3.5" /> {t("market.approve")}</Button>
+                <Button size="sm" variant="ghost" busy={busy === s.id + "reject"} onClick={() => act(s.id, "reject")}><X className="h-3.5 w-3.5" /> {t("market.reject")}</Button>
+              </div>
+            </div>
+          ))}
+        </Card>
+      </section>
 
       <section>
         <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-500">{t("market.awaiting")}</h2>

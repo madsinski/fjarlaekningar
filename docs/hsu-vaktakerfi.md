@@ -311,6 +311,34 @@ samstillist strax.
 **Takmörkun:** þetta er vikumynstur, ekki stakir dagar. Eina vikuna á deild skráir
 yfirlæknir sem „Get ekki" í skrefi 2, eða tekur lækninn af vöktum handvirkt.
 
+## Vaktaskipti: vakt fyrir vakt (2026-10-16)
+
+Vaktamarkaðurinn snýst um að GEFA vakt frá sér. Skipti eru gagnkvæm: læknirinn
+dregur sína vakt á vakt annars læknis í **Vaktaplani** (eða smellir á sína vakt
+og svo á hina — sama leið virkar á síma). Upp kemur staðfesting sem sýnir hvað
+hann lætur og hvað hann fær, með valfrjálsum skilaboðum.
+
+**Hver samþykkir.** Viðtakandinn fær beiðnina undir *Vaktamarkaður* og getur
+samþykkt eða hafnað. Yfirlæknir fær hana líka (*Vaktamarkaður* í stjórnborði) og
+má samþykkja hana sjálfur — hann þarf ekki að bíða eftir lækninum.
+Beiðandinn getur dregið hana til baka. Þegar skiptin eru samþykkt skipta báðar
+vaktir um hendur í sömu andrá, bæði dagatöl eru samstillt og báðir fá
+tilkynningu um hvað þeir fengu og hvað þeir létu.
+
+**Gögn.** Sama tafla og markaðurinn, `hsu_swaps`, með nýrri súlu
+`want_shift_id`: sé hún sett er beiðnin SKIPTI (shift_id fyrir want_shift_id),
+annars boð eins og áður. Vaktirnar halda stöðunni `assigned` á meðan beðið er —
+skiptibeiðni setur ekki vakt á markað — og í Vaktaplani eru báðar merktar ⇄.
+
+**Varnir** (bæði þegar beðið er og aftur við samþykki, því staðan getur breyst):
+eigin vakt, ómönnuð vakt, liðin vakt, vakt sem bíður svars, bakvaktarréttindi í
+bæði horn, og að hvorugur endi á tveimur vöktum sem skarast í tíma.
+
+> **Athugið um vensl:** `hsu_swaps` hefur nú TVÖ vensl í `hsu_shifts`. Öll
+> embed í PostgREST verða að vísa skýrt í venslin (`hsu_swaps_shift_id_fkey`,
+> `hsu_swaps_want_shift_id_fkey`); annars verður fyrirspurnin margræð og fellur.
+> Það felldi /hsu/min-sida í stutta stund 16. október.
+
 ## „Get ekki“ á við kvöldvaktir, ekki dagvinnu (2026-10-16)
 
 Skref 2 í Óskum heitir „Kvöld- og næturvaktir“ og þar merkir læknirinn „get
