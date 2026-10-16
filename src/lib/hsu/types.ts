@@ -239,6 +239,8 @@ export type HsuSwapStatus = "pending" | "awaiting_approval" | "accepted" | "decl
 export interface HsuSwap {
   id: string;
   shift_id: string;
+  /** Sett = SKIPTI (vakt fyrir vakt); null = boð eða vaktamarkaður. */
+  want_shift_id?: string | null;
   from_doctor: string | null;
   to_doctor: string | null;
   taken_by: string | null;
@@ -246,7 +248,12 @@ export interface HsuSwap {
   status: HsuSwapStatus;
   created_at: string;
   shift?: { shift_date: string; starts: string; ends: string; label: string; shift_type_id?: string | null } | null;
+  /** Vaktin sem beðið er um í staðinn — aðeins í skiptum. */
+  wantShift?: { shift_date: string; starts: string; ends: string; label: string; shift_type_id?: string | null } | null;
 }
+
+/** Er þetta skiptibeiðni (vakt fyrir vakt) eða boð/markaður? */
+export const isSwapRequest = (s: { want_shift_id?: string | null }): boolean => Boolean(s.want_shift_id);
 
 export const MONTH_STATUS_ORDER: MonthStatus[] = ["collecting", "review", "planning", "published"];
 

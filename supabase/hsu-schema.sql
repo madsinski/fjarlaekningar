@@ -487,3 +487,14 @@ alter table public.hsu_doctors add constraint hsu_doctors_period_check
 -- ekki við sögu þann mánuðinn. Áður var eina leiðin að gera hann óvirkan —
 -- og þá hvarf hann líka úr fyrri mánuðum, þar á meðal birtum vaktaplönum.
 alter table public.hsu_months add column if not exists excluded_doctors uuid[] not null default '{}';
+
+-- ── Vaktaskipti: vakt fyrir vakt (2026-10-16) ───────────────────────────────
+-- Vaktamarkaðurinn (hsu_swaps) var til þess að GEFA vakt frá sér. Skipti eru
+-- gagnkvæm: læknir dregur sína vakt á vakt annars læknis í Vaktaplani.
+--   want_shift_id null  = boð eða vaktamarkaður, eins og áður.
+--   want_shift_id sett  = SKIPTI: from_doctor gefur shift_id og fær
+--                         want_shift_id í staðinn frá to_doctor.
+-- Hvort sem er viðtakandinn eða yfirlæknir má samþykkja skiptin. Vaktirnar
+-- halda status 'assigned' á meðan beðið er — skipti setja ekki vakt á markað.
+alter table public.hsu_swaps add column if not exists want_shift_id uuid references public.hsu_shifts(id) on delete cascade;
+create index if not exists hsu_swaps_want_shift_idx on public.hsu_swaps (want_shift_id);

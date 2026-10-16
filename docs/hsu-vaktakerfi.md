@@ -311,6 +311,29 @@ samstillist strax.
 **Takmörkun:** þetta er vikumynstur, ekki stakir dagar. Eina vikuna á deild skráir
 yfirlæknir sem „Get ekki" í skrefi 2, eða tekur lækninn af vöktum handvirkt.
 
+## „Get ekki“ á við kvöldvaktir, ekki dagvinnu (2026-10-16)
+
+Skref 2 í Óskum heitir „Kvöld- og næturvaktir“ og þar merkir læknirinn „get
+ekki“. Áður gilti það merki um ALLAR vaktir dagsins: dagurinn varð þá líka
+óvirkur í skrefi 3 (Dagvaktir á flýtimóttöku) og læknirinn gat ekki skráð
+dagvinnu þótt hann væri til í hana. Mads merkti 13.–28. nóvember „get ekki“ og
+komst þá ekki að flýtimóttökudögunum sínum (mán/mið) í þeim glugga.
+
+Skrefin eru nú sjálfstæð:
+
+* Skref 2 („get ekki“) gildir um forvakt og bakvakt — vaktir utan dagvinnutíma.
+* Skref 3 (`day_part_marks`) ræður dagvinnunni, og aðeins dagar sem læknirinn
+  merkir SJÁLFUR þar koma til greina (`worksDayShiftOn`). Dagvakt getur því
+  ekki lent á degi sem hann sleppti — merking í skrefi 2 þarf ekki að vernda
+  hann fyrir því.
+
+Dagur sem er „get ekki“ fær lítinn rauðan punkt í skrefi 3 og flettitextann
+„Get ekki á kvöldvakt. Dagvinna samt í boði.“ — áminning, ekki lás.
+
+Breytt á þremur stöðum, allar með sömu reglu: `fmLocked` í PrefsEditor.tsx,
+`blocker()` og `findConflicts()` í plan.ts (bæði horfa nú aðeins á
+`slot.period === "evening"`).
+
 ## Vikunúmer í dagatölunum (2026-10-16)
 
 Öll dagatöl kerfisins hafa mjóan dálk lengst til vinstri með vikunúmeri hverrar

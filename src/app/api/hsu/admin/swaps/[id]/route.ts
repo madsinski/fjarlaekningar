@@ -1,9 +1,13 @@
 // Yfirlæknir samþykkir eða hafnar vaktaskiptum, eða fellir boð niður.
+//
+// Tvennt kemur hingað: boð af vaktamarkaði sem bíða samþykkis, og BEIÐNIR UM
+// SKIPTI (want_shift_id sett) sem yfirlæknir má afgreiða sjálfur — hann þarf
+// ekki að bíða þess að viðtakandinn svari.
 
 import { after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit } from "@/lib/hsu/auth";
-import { shiftPhrase, transferShift } from "@/lib/hsu/market";
+import { canDoBakvakt, isBakvaktShift, loadSwapSides, shiftPhrase, swapOverlap, swapShifts, transferShift } from "@/lib/hsu/market";
 import { notifyDoctors } from "@/lib/hsu/notify";
 import { say } from "@/lib/hsu/shift-edit";
 import { DEFAULT_LANG, isLang, translator } from "@/lib/hsu/i18n/core";
@@ -25,12 +29,51 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
   const { data: swap } = await supabaseAdmin
     .from("hsu_swaps")
-    .select("id, shift_id, from_doctor, to_doctor, taken_by, status, shift:hsu_shifts(shift_date, starts, ends, label, doctor_id)")
+    .select("id, shift_id, want_shift_id, from_doctor, to_doctor, taken_by, status, shift:hsu_shifts!hsu_swaps_shift_id_fkey(shift_date, starts, ends, label, doctor_id)")
     .eq("id", id)
     .maybeSingle();
   if (!swap) return fail(t("err.notFound"), 404);
   const shift = swap.shift as unknown as { shift_date: string; starts: string; ends: string; label: string; doctor_id: string | null };
   const now = new Date().toISOString();
+
+  // ── Beiðni um vaktaskipti ──
+  if (swap.want_shift_id) {
+    if (swap.status !== "pending") return fail(t("err.offerInactive"), 409);
+    if (!swap.from_doctor || !swap.to_doctor) return fail(t("err.badRequest"));
+    const sides = await loadSwapSides(swap.shift_id, swap.want_shift_id);
+    if (!sides) return fail(t("err.notFound"), 404);
+    const { a: mine, b: theirs } = sides;
+
+    if (action === "approve") {
+      // Staðan gæti hafa breyst frá því beiðnin var gerð.
+      if (mine.doctor_id !== swap.from_doctor || theirs.doctor_id !== swap.to_doctor) return fail(t("swapAsk.changed"), 409);
+      if (await swapOverlap(mine, theirs)) return fail(t("swapAsk.overlap"), 409);
+      if ((await isBakvaktShift(mine.id)) && !(await canDoBakvakt(swap.to_doctor))) return fail(t("swapAsk.noBakvakt"), 409);
+      if ((await isBakvaktShift(theirs.id)) && !(await canDoBakvakt(swap.from_doctor))) return fail(t("swapAsk.noBakvakt"), 409);
+      await swapShifts({
+        swapId: swap.id, a: mine, b: theirs,
+        aDoctor: swap.from_doctor, bDoctor: swap.to_doctor,
+        actor: auth.actor.label, origin,
+      });
+      return json({ ok: true });
+    }
+
+    if (action === "reject" || action === "cancel") {
+      await supabaseAdmin.from("hsu_swaps").update({ status: "declined", resolved_at: now }).eq("id", swap.id);
+      await audit(auth.actor.label, "swap.reject", mine.shift_date.slice(0, 7), { swapId: swap.id });
+      const line = say((l) => l("swapAsk.rejected.line", { by: auth.actor.label, a: shiftPhrase(mine, l.lang), b: shiftPhrase(theirs, l.lang) }));
+      notifyDoctors({
+        origin,
+        category: "marketMine",
+        subject: say((l) => l("swapAsk.rejected.subject")),
+        heading: say((l) => l("swapAsk.rejected.subject")),
+        notices: [{ doctorId: swap.from_doctor, line }, { doctorId: swap.to_doctor, line }],
+      });
+      return json({ ok: true });
+    }
+
+    return fail(t("err.unknownAction"));
+  }
 
   if (action === "approve") {
     if (swap.status !== "awaiting_approval" || !swap.taken_by) return fail(t("err.nothingAwaiting"), 409);

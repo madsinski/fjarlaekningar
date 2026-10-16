@@ -309,7 +309,10 @@ export function planMonth(
     }
     if (slot.period === "evening" && !wantsEveningOn(prefs[id], slot.date)) return "eveningweek";
     if (slot.period === "day" && !fitsDayPart(dayPartFor(prefs[id], slot.date), slot.part)) return "daypart";
-    if (isOff(id, slot.date)) return "off";
+    // „Get ekki" á við vaktir utan dagvinnutíma. Dagvinnu á flýtimóttöku skráir
+    // læknirinn sérstaklega (day_part_marks) og hún kemur aðeins á daga sem hann
+    // merkti sjálfur — sjá worksDayShiftOn — svo kvöldmerkingin má ekki loka henni.
+    if (slot.period === "evening" && isOff(id, slot.date)) return "off";
     const r = restBlocks(held[id], slot);
     if (r) return r;
     const count = held[id].filter((h) => h.key !== slot.key).length;
@@ -606,7 +609,8 @@ export function findConflicts(
       const list: ConflictKind[] = [];
       if (info && !availableOn(info, s.date)) list.push("period");
       if (info?.excludedThisMonth) list.push("excluded");
-      if (markFor(prefs[doc], s.date) === "off") list.push("off");
+      // Sama regla og í blocker: „get ekki" á við kvöldvaktir, ekki dagvinnu.
+      if (s.period === "evening" && markFor(prefs[doc], s.date) === "off") list.push("off");
       const r = restBlocks(held, s);
       if (r === "busy") list.push("double");
       else if (r === "rest") list.push("rest");
