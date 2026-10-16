@@ -17,6 +17,7 @@ export interface HsuNews {
 }
 
 export const HSU_NEWS: HsuNews[] = [
+  { id: "dagvinna", date: "2026-10-17", article: "fm" },
   { id: "help", date: "2026-10-16" },
   { id: "swap", date: "2026-10-16", article: "swap" },
   { id: "weeknos", date: "2026-10-16", article: "roster" },
