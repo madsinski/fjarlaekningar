@@ -11,7 +11,7 @@ import { CalendarDays } from "lucide-react";
 import { useT } from "@/lib/hsu/i18n/client";
 import { dayLabelL, weekdayShortOf } from "@/lib/hsu/i18n/format";
 import { prefs as prefsMsgs } from "@/lib/hsu/i18n/messages/prefs";
-import { dayWorkOn, datesInMonth, monthKey, shiftMonth, type DayWork, type DayWorkKind } from "@/lib/hsu/types";
+import { dayWorkOn, datesInMonth, monthKey, shiftMonth, type DayWork, type DayWorkKind, type DayWorkOverrides } from "@/lib/hsu/types";
 
 /** Litur hverrar tegundar — sá sami og í skrefi 3. */
 export const DAY_WORK_TONE: Record<DayWorkKind, string> = {
@@ -29,14 +29,14 @@ export function useDayWorkLabel() {
  * Dagvinnudagar frá og með `from`, `months` mánuði fram í tímann, að frádregnum
  * dögum þar sem læknirinn á þegar vakt.
  */
-export function dayWorkDates(work: DayWork, from: string, taken: Set<string>, months = 3): { date: string; kind: DayWorkKind }[] {
-  if (!work || !Object.keys(work).length) return [];
+export function dayWorkDates(work: DayWork, from: string, taken: Set<string>, months = 3, own?: DayWorkOverrides): { date: string; kind: DayWorkKind }[] {
+  if (!Object.keys(work ?? {}).length && !Object.keys(own ?? {}).length) return [];
   const out: { date: string; kind: DayWorkKind }[] = [];
   const first = monthKey(new Date(`${from}T00:00:00Z`));
   for (let i = 0; i <= months; i++) {
     for (const date of datesInMonth(shiftMonth(first, i))) {
       if (date < from || taken.has(date)) continue;
-      const kind = dayWorkOn(work, date);
+      const kind = dayWorkOn(work, date, own);
       if (kind) out.push({ date, kind });
     }
   }

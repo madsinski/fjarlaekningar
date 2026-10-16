@@ -85,10 +85,10 @@ export const help = defineMessages(
     "evening.s": "Merkingin í skrefi 2 á við forvakt og bakvakt — vaktir utan dagvinnutíma.\nHún lokar EKKI á dagvinnu á flýtimóttöku; hana velurðu sjálfstætt í skrefi 3.\nViltu hvorugt þann daginn skaltu líka sleppa honum í skrefi 3.",
     "evening.k": "forvakt, bakvakt, frí, veikindi, kvöld",
 
-    "fm.t": "Dagvaktir á flýtimóttöku",
-    "fm.w": "Þegar þú vilt velja hvaða daga þú ert á flýtimóttöku.",
-    "fm.s": "Opnaðu skref 3 í Óskum.\nSmelltu á dag til að merkja hann: allan daginn, fyrir hádegi eða eftir hádegi.\nÓmerktur dagur telst ekki flýtimóttökudagur — þá færðu enga dagvakt þann daginn.\nSéu fastir dagar skráðir á þig birtast aðeins þeir dagar.",
-    "fm.k": "FM, flýtimóttaka, flýtimóttöku, dagvakt, dagvaktir, móttaka, hálfur dagur, fyrir hádegi, eftir hádegi",
+    "fm.t": "Dagvinna: hvaða daga og hvers konar",
+    "fm.w": "Þegar þú vilt skrá dagvinnuna þína fyrir mánuðinn.",
+    "fm.s": "Opnaðu skref 3, Dagvinna, í Óskum.\nVeldu fyrst hvers konar vinna það er: flýtimóttaka, móttaka eða deild.\nVeldu svo hvaða hluta dagsins — allan daginn, fyrir hádegi eða eftir hádegi.\nSmelltu á dag eða dragðu yfir marga.\nÓmerktur dagur telst engin dagvinna.\nVaktaskipulagið setur aðeins dagvakt á flýtimóttökudaga, og aðeins á föstu dagana þína séu þeir skráðir. Móttöku og deild má skrá hvaða virka dag sem er.",
+    "fm.k": "dagvinna, FM, flýtimóttaka, flýtimóttöku, dagvakt, dagvaktir, móttaka, deild, hálfur dagur, fyrir hádegi, eftir hádegi",
 
     "fmcap.t": "Hámark flýtimóttöku í viku og mánuði",
     "fmcap.w": "Þegar þú vilt setja þak á fjölda dagvakta.",
@@ -256,10 +256,10 @@ export const help = defineMessages(
       "evening.s": "The mark in step 2 applies to first and second on call — shifts outside day-work hours.\nIt does NOT block walk-in clinic day work; you choose that separately in step 3.\nIf you want neither that day, leave it unmarked in step 3 as well.",
       "evening.k": "on call, time off, sick, evening",
 
-      "fm.t": "Walk-in clinic day shifts",
-      "fm.w": "When you want to choose which days you are at the walk-in clinic.",
-      "fm.s": "Open step 3 in Requests.\nClick a day to mark it: all day, morning or afternoon.\nAn unmarked day doesn't count — you get no day shift that day.\nIf you have fixed days, only those days are shown.",
-      "fm.k": "walk-in, half day, morning, afternoon",
+      "fm.t": "Day work: which days and what kind",
+      "fm.w": "When you want to record your day work for the month.",
+      "fm.s": "Open step 3, Day work, in Requests.\nFirst choose the kind of work: day clinic, reception or ward.\nThen choose the part of the day — all day, morning or afternoon.\nClick a day or drag across several.\nAn unmarked day counts as no day work.\nThe planner only assigns day shifts on day-clinic days, and only on your fixed days if you have any. Reception and ward can go on any weekday.",
+      "fm.k": "day work, walk-in, day clinic, reception, ward, half day, morning, afternoon",
 
       "fmcap.t": "Weekly and monthly cap on walk-in shifts",
       "fmcap.w": "When you want a limit on the number of day shifts.",

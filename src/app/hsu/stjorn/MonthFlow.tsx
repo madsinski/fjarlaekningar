@@ -8,9 +8,9 @@ import {
   AlertTriangle, ArrowRight, Ban, BellRing, Check, CheckCheck, ClipboardList, Eye, Heart, History, Megaphone, MessageSquareWarning,
   Pencil, Printer, RotateCcw, Sparkles, Undo2,
 } from "lucide-react";
-import PrefsEditor, { PREF_TONE, PrefsMini, draftFrom, type PrefDraft } from "../_components/PrefsEditor";
+import PrefsEditor, { PREF_TONE, PrefsMini, draftFrom, type MiniView, type PrefDraft } from "../_components/PrefsEditor";
 import { Badge, Button, Card, Field, Modal, Notice, cx, hsuApi, inputCls } from "../_components/ui";
-import { datesInMonth, defaultDeadline, doctorsForMonth, effectiveStatus, inOpenWindow, markFor, openWindow, opensOn, type HsuDoctor, type HsuPreference, type MonthStatus } from "@/lib/hsu/types";
+import { datesInMonth, defaultDeadline, doctorsForMonth, effectiveStatus, inOpenWindow, markFor, openWindow, opensOn, type DayWork, type HsuDoctor, type HsuPreference, type MonthStatus } from "@/lib/hsu/types";
 import { useCommon, useT } from "@/lib/hsu/i18n/client";
 import { LANG_LOCALE, type Translator } from "@/lib/hsu/i18n/core";
 import { dateTimeL, dayLabelL, dayPartL, monthLabelL, prefStatusL, weekdayShortL } from "@/lib/hsu/i18n/format";
@@ -327,6 +327,26 @@ function StepCollect({ ctx, setStatus, goNext }: { ctx: PlannerCtx; setStatus: S
   );
 }
 
+/** Kvöldvaktir eða dagvinna — notað bæði fyrir alla og fyrir stakt kort. */
+function ViewSwitch({ value, onChange, t, small }: {
+  value: MiniView;
+  onChange: (v: MiniView) => void;
+  t: ReturnType<typeof useT<typeof stjorn.is>>;
+  small?: boolean;
+}) {
+  return (
+    <div className={cx("inline-flex rounded-lg bg-slate-100 p-0.5", small && "scale-95 origin-left")}>
+      {(["evening", "daywork"] as MiniView[]).map((v) => (
+        <button key={v} type="button" onClick={() => onChange(v)} aria-pressed={value === v}
+          className={cx("rounded-md px-2.5 py-1 text-[11px] font-semibold transition",
+            value === v ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>
+          {t(v === "evening" ? "review.view.evening" : "review.view.daywork")}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function EditPrefsModal({ ctx, doctor, onClose }: { ctx: PlannerCtx; doctor: HsuDoctor; onClose: () => void }) {
   const t = useT(stjorn);
   const pref = ctx.data.preferences.find((p) => p.doctor_id === doctor.id) ?? null;
@@ -341,7 +361,10 @@ function EditPrefsModal({ ctx, doctor, onClose }: { ctx: PlannerCtx; doctor: Hsu
   };
   return (
     <Modal open onClose={onClose} title={t("prefs.modalTitle", { name: doctor.name })} wide>
-      <PrefsEditor month={ctx.month} initial={initial} status={pref?.status ?? "none"} reviewNote={pref?.review_note} editable mode="admin" onSave={save} />
+      {/* Dagvinnustillingar læknisins fylgja með (án onSave: aðeins til sýnis),
+          svo yfirlæknir sjái sömu föstu daga og þök og læknirinn sjálfur. */}
+      <PrefsEditor month={ctx.month} initial={initial} status={pref?.status ?? "none"} reviewNote={pref?.review_note} editable mode="admin" onSave={save}
+        fm={{ dayWork: (doctor.day_work ?? {}) as DayWork, maxWeek: doctor.fm_max_week ?? null, maxMonth: doctor.fm_max_month ?? null }} />
     </Modal>
   );
 }
@@ -362,6 +385,12 @@ function StepReview({ ctx, setStatus, goNext }: { ctx: PlannerCtx; setStatus: Se
   const [editing, setEditing] = useState<HsuDoctor | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const dates = datesInMonth(month);
+  // Yfirlitsmyndin á kortunum sýnir annaðhvort kvöldvaktir eða dagvinnu.
+  // Rofinn efst stillir alla, og hvert kort má víkja frá honum.
+  const [view, setView] = useState<MiniView>("evening");
+  const [cardView, setCardView] = useState<Record<string, MiniView>>({});
+  const viewOf = (id: string) => cardView[id] ?? view;
+  const setAll = (v: MiniView) => { setView(v); setCardView({}); };
 
   const review = async (doctorId: string, action: "approve" | "request_changes" | "reopen", note = "") => {
     setBusy(doctorId + action); setErr(null);
@@ -401,6 +430,11 @@ function StepReview({ ctx, setStatus, goNext }: { ctx: PlannerCtx; setStatus: Se
       </Card>
       {err && <Notice tone="err">{err}</Notice>}
 
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-semibold text-slate-500">{t("review.view.label")}</span>
+        <ViewSwitch value={view} onChange={setAll} t={t} />
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {doctors.map((d) => {
           const p = byDoc[d.id] ?? null;
@@ -422,8 +456,12 @@ function StepReview({ ctx, setStatus, goNext }: { ctx: PlannerCtx; setStatus: Se
                 <Badge tone={PREF_TONE[st]}>{prefStatusL(st, t.lang)}</Badge>
               </div>
 
-              <div className="mt-3 flex gap-4">
-                <PrefsMini month={month} pref={p} />
+              <div className="mt-3">
+                <ViewSwitch value={viewOf(d.id)} onChange={(v) => setCardView((c) => ({ ...c, [d.id]: v }))} t={t} small />
+              </div>
+
+              <div className="mt-2 flex gap-4">
+                <PrefsMini month={month} pref={p} view={viewOf(d.id)} />
                 <div className="space-y-1.5 text-xs text-slate-600">
                   <div className="flex items-center gap-1.5"><Ban className="h-3.5 w-3.5 text-red-500" /> {t.n("review.off", off)}</div>
                   <div className="flex items-center gap-1.5"><Heart className="h-3.5 w-3.5 text-emerald-500" /> {t.n("review.want", want)}</div>

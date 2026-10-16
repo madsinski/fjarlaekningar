@@ -498,3 +498,13 @@ alter table public.hsu_months add column if not exists excluded_doctors uuid[] n
 -- halda status 'assigned' á meðan beðið er — skipti setja ekki vakt á markað.
 alter table public.hsu_swaps add column if not exists want_shift_id uuid references public.hsu_shifts(id) on delete cascade;
 create index if not exists hsu_swaps_want_shift_idx on public.hsu_swaps (want_shift_id);
+
+-- ── Dagvinna: hvers konar vinna hvern dag (2026-10-16) ──────────────────────
+-- Skref 3 í óskum hét áður „Dagvaktir á flýtimóttöku" og merkti aðeins HVORT
+-- (og hvaða hluta dags) læknirinn væri á flýtimóttöku. Nú heitir það „Dagvinna"
+-- og hver dagur ber líka TEGUND: fm (flýtimóttaka), mottaka eða deild.
+--   day_part_marks  {"2026-11-10":"all"}       — hvaða hluta dagsins (óbreytt)
+--   day_kind_marks  {"2026-11-10":"mottaka"}   — hvers konar vinna (nýtt)
+-- Ósett tegund telst flýtimóttaka, svo eldri óskir halda merkingu sinni.
+-- Vaktaskipulagið setur dagvakt AÐEINS á daga sem eru flýtimóttaka.
+alter table public.hsu_preferences add column if not exists day_kind_marks jsonb not null default '{}'::jsonb;

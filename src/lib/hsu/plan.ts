@@ -109,13 +109,17 @@ export function worksDayShift(doctor: Pick<PlanDoctor, "dayWeekdays"> | undefine
  */
 export function worksDayShiftOn(
   doctor: Pick<PlanDoctor, "dayWeekdays"> | undefined,
-  pref: { day_part_marks?: Record<string, string> | null } | null | undefined,
+  pref: { day_part_marks?: Record<string, string> | null; day_kind_marks?: Record<string, string> | null } | null | undefined,
   date: string,
 ): boolean {
   if (!worksDayShift(doctor, date)) return false;
   if (!pref) return true;
   const mark = pref.day_part_marks?.[date];
-  return mark === "all" || mark === "am" || mark === "pm";
+  if (!(mark === "all" || mark === "am" || mark === "pm")) return false;
+  // Dagvinna sem er móttaka eða deild er ekki flýtimóttaka: læknirinn er við
+  // störf en ekki á þeirri vakt sem vaktaskipulagið úthlutar.
+  const kind = pref.day_kind_marks?.[date];
+  return !kind || kind === "fm";
 }
 
 /** Mánudagur sömu viku — lykill til að telja vaktir innan vikunnar. */
@@ -126,7 +130,7 @@ export function weekKeyOf(date: string): string {
   return t.toISOString().slice(0, 10);
 }
 
-export type PlanPrefs = Pick<HsuPreference, "day_marks" | "weekday_marks" | "evening_weekdays" | "day_part" | "day_part_marks" | "min_shifts" | "max_shifts">;
+export type PlanPrefs = Pick<HsuPreference, "day_marks" | "weekday_marks" | "evening_weekdays" | "day_part" | "day_part_marks" | "day_kind_marks" | "min_shifts" | "max_shifts">;
 
 export interface PlanOptions {
   /** empty = fylla aðeins tómar vaktir; all = skipta öllum mánuðinum upp á nýtt. */

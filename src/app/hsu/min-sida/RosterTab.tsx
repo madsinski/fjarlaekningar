@@ -8,9 +8,9 @@ import { DayWorkChip } from "./DayWork";
 import { useT } from "@/lib/hsu/i18n/client";
 import { capFirstL, dayLabelL, holidayL, monthLabelL, weekdayShortL } from "@/lib/hsu/i18n/format";
 import { prefs } from "@/lib/hsu/i18n/messages/prefs";
-import { WEEKDAY_ORDER, dayWorkOn, holidayName, hhmm, monthKey, periodOf, shiftMonth, weekdayOf, type DayWork, type HsuShift, type HsuSwap, type ShiftPeriod } from "@/lib/hsu/types";
+import { WEEKDAY_ORDER, dayWorkOn, holidayName, hhmm, monthKey, periodOf, shiftMonth, weekdayOf, type DayWork, type DayWorkOverrides, type HsuShift, type HsuSwap, type ShiftPeriod } from "@/lib/hsu/types";
 
-export default function RosterTab({ meId, dayWork, swaps, refresh }: { meId: string; dayWork: DayWork; swaps: HsuSwap[]; refresh: () => void }) {
+export default function RosterTab({ meId, dayWork, dayKinds, swaps, refresh }: { meId: string; dayWork: DayWork; dayKinds: DayWorkOverrides; swaps: HsuSwap[]; refresh: () => void }) {
   const t = useT(prefs);
   const [month, setMonth] = useState(() => monthKey(new Date()));
   const [state, setState] = useState<{ loading: boolean; published: boolean; shifts: HsuShift[]; doctors: { id: string; name: string; color: string }[]; periods: Record<string, ShiftPeriod> }>({ loading: true, published: false, shifts: [], doctors: [], periods: {} });
@@ -129,7 +129,7 @@ export default function RosterTab({ meId, dayWork, swaps, refresh }: { meId: str
                     <div className="mt-1 space-y-1">
                       {/* Dagvinna þín þennan dag — aðeins ef þú átt ekki vakt sama dag. */}
                       {(() => {
-                        const kind = showWork ? dayWorkOn(dayWork, date) : null;
+                        const kind = showWork ? dayWorkOn(dayWork, date, dayKinds) : null;
                         const mineToday = state.shifts.some((s) => s.shift_date === date && s.doctor_id === meId);
                         return kind && !mineToday ? <DayWorkChip kind={kind} /> : null;
                       })()}

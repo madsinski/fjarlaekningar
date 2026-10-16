@@ -311,6 +311,42 @@ samstillist strax.
 **Takmörkun:** þetta er vikumynstur, ekki stakir dagar. Eina vikuna á deild skráir
 yfirlæknir sem „Get ekki" í skrefi 2, eða tekur lækninn af vöktum handvirkt.
 
+## Dagvinna: þrjár tegundir á pensli (2026-10-16)
+
+Skref 3 í Óskum hét „Dagvaktir á flýtimóttöku“ og merkti aðeins HVORT (og hvaða
+hluta dags) læknirinn væri á flýtimóttöku. Það heitir nú **Dagvinna** og hver
+dagur ber tvennt:
+
+* **Hvers konar** — flýtimóttaka, móttaka eða deild (`day_kind_marks`, ný súla
+  í `hsu_preferences`). Ósett tegund telst flýtimóttaka, svo eldri óskir halda
+  merkingu sinni.
+* **Hvaða hluta dagsins** — allan daginn, f.h. eða e.h. (`day_part_marks`,
+  óbreytt).
+
+Pensillinn er því í tveimur röðum, og liturinn á deginum segir tegundina
+(flýtimóttaka blá, móttaka græn, deild fjólublá).
+
+**Föstu dagarnir gilda bara um flýtimóttöku.** Hafi læknirinn skráð fasta
+flýtimóttökudaga (`hsu_doctors.day_work`) má aðeins setja flýtimóttöku á þá —
+hinir daufast meðan sá pensill er valinn. Móttöku og deild má skrá hvaða virka
+dag sem er, enda er það hans eigin dagvinna en ekki vakt sem vaktaskipulagið
+úthlutar.
+
+**Vaktaskipulagið** setur dagvakt AÐEINS á flýtimóttökudaga: `worksDayShiftOn()`
+krefst þess að tegundin sé `fm`. Dagur sem er móttaka eða deild er dagvinna í
+dagatalinu en kemur ekki til greina í mönnun.
+
+**Merking mánaðarins gengur framar vikumynstrinu** alls staðar þar sem dagvinnan
+sést — Vaktaplani, Mínum vöktum, Yfirliti og í dagatalssamstillingunni
+(`dayWorkOn(work, date, overrides)` og `dayWorkOverrides(prefs)`). Dagur sem er
+merktur „ekki“ tekur daginn úr vikumynstrinu.
+
+**Samþykkja óskir** hefur nú rofa: *Kvöldvaktir* eða *Dagvinna*. Rofinn efst
+stillir öll kortin og hvert kort má víkja frá honum, svo yfirlæknir getur borið
+saman dagvinnu allra í einu eða rýnt í einn lækni. Yfirferðarglugginn
+(„Breyta“) fær líka föstu dagana og þökin hans læknisins til sýnis, svo
+yfirlæknir sjái sömu reglur og læknirinn sjálfur.
+
 ## Hjálp í hausnum, nýjungar og ráð (2026-10-16)
 
 Spurningarmerkið efst til hægri opnar **hjálparsafnið**: 26 leiðbeiningar um

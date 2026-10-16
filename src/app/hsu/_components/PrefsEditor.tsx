@@ -10,7 +10,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Ban, Check, CircleCheck, Copy, Heart, Eraser, Send, Save, Sun, Sunrise, Sunset } from "lucide-react";
 import {
-  WEEKDAY_ORDER, datesInMonth, fmWeekdaysOf, holidayName, isoWeekOf, markFor, shiftMonth, weekdayOf,
+  DAY_WORK_KINDS, WEEKDAY_ORDER, datesInMonth, fmWeekdaysOf, holidayName, isoWeekOf, markFor, shiftMonth, weekdayOf,
   type DayWork, type DayWorkKind,
   type DayMark, type DayPart, type DayPlan, type HsuPreference, type Mark, type PrefStatus,
 } from "@/lib/hsu/types";
@@ -26,8 +26,10 @@ export interface PrefDraft {
   evening_weekdays: number[];
   /** Dagvaktir: allan daginn, fyrir hádegi eða eftir hádegi — regla mánaðarins. */
   day_part: DayPart;
-  /** Stakir dagar á flýtimóttöku sem víkja frá reglunni (þ.m.t. „none“ = ekki þann dag). */
+  /** Stakir dagvinnudagar sem víkja frá reglunni (þ.m.t. „none“ = ekki þann dag). */
   day_part_marks: Record<string, DayPlan>;
+  /** Hvers konar dagvinna hvern merktan dag; ósett = flýtimóttaka. */
+  day_kind_marks: Record<string, DayWorkKind>;
   min_shifts: number | null;
   max_shifts: number | null;
   note: string;
@@ -37,18 +39,30 @@ type Brush = "off" | "want" | "ok" | "clear";
 /** Það sem pensilstroka gerir í raun — ákveðið á fyrsta degi strokunnar. */
 type Stroke = Brush;
 
-/** Penslar í skrefi 3 (flýtimóttaka): hluti dagsins, „Ekki“, eða aftur eftir reglu. */
+/** Penslar í skrefi 3 (dagvinna): hluti dagsins, „Ekki“, eða aftur eftir reglu. */
 type FmBrush = DayPlan | "rule";
+
+/** Litur hverrar dagvinnutegundar: fylltur reitur í dagatalinu og valinn pensill. */
+const KIND_FILL: Record<DayWorkKind, string> = {
+  fm: "bg-[var(--hsu)] text-white",
+  mottaka: "bg-emerald-600 text-white",
+  deild: "bg-violet-600 text-white",
+};
+const KIND_ON: Record<DayWorkKind, string> = {
+  fm: "data-[on=true]:bg-[var(--hsu)] data-[on=true]:ring-[var(--hsu)]",
+  mottaka: "data-[on=true]:bg-emerald-600 data-[on=true]:ring-emerald-600",
+  deild: "data-[on=true]:bg-violet-600 data-[on=true]:ring-violet-600",
+};
 
 export const PREF_TONE: Record<PrefStatus | "none", "slate" | "blue" | "green" | "amber" | "red"> = {
   none: "slate", draft: "amber", submitted: "blue", approved: "green", changes_requested: "red",
 };
 
 function emptyDraft(): PrefDraft {
-  return { day_marks: {}, weekday_marks: {}, evening_weekdays: [], day_part: "all", day_part_marks: {}, min_shifts: null, max_shifts: null, note: "" };
+  return { day_marks: {}, weekday_marks: {}, evening_weekdays: [], day_part: "all", day_part_marks: {}, day_kind_marks: {}, min_shifts: null, max_shifts: null, note: "" };
 }
 
-export function draftFrom(p: Pick<HsuPreference, "day_marks" | "weekday_marks" | "evening_weekdays" | "day_part" | "day_part_marks" | "min_shifts" | "max_shifts" | "note"> | null | undefined): PrefDraft {
+export function draftFrom(p: Pick<HsuPreference, "day_marks" | "weekday_marks" | "evening_weekdays" | "day_part" | "day_part_marks" | "day_kind_marks" | "min_shifts" | "max_shifts" | "note"> | null | undefined): PrefDraft {
   if (!p) return emptyDraft();
   return {
     day_marks: { ...(p.day_marks ?? {}) },
@@ -56,6 +70,7 @@ export function draftFrom(p: Pick<HsuPreference, "day_marks" | "weekday_marks" |
     evening_weekdays: [...(p.evening_weekdays ?? [])],
     day_part: p.day_part ?? "all",
     day_part_marks: { ...(p.day_part_marks ?? {}) },
+    day_kind_marks: { ...(p.day_kind_marks ?? {}) },
     min_shifts: p.min_shifts ?? null,
     max_shifts: p.max_shifts ?? null,
     note: p.note ?? "",
@@ -151,6 +166,7 @@ export default function PrefsEditor({
   const [dirty, setDirty] = useState(false);
   const painting = useRef<null | Stroke>(null);
   const [fmBrush, setFmBrush] = useState<FmBrush>("all");
+  const [fmKind, setFmKind] = useState<DayWorkKind>("fm");
   const fmPainting = useRef<null | FmBrush>(null);
 
   useEffect(() => {
@@ -183,29 +199,39 @@ export default function PrefsEditor({
     });
   };
 
-  // ── Skref 3: dagar á flýtimóttöku ──
-  // Aðeins merktir dagar gilda; ómerktur dagur er auður (Hreinsa gerir dag auðan).
-  // Aðeins flýtimóttökudagar koma til greina í dagatalinu hér fyrir neðan.
+  // ── Skref 3: dagvinna ──
+  // Hver merktur dagur ber tvennt: HVERS KONAR vinna (flýtimóttaka, móttaka eða
+  // deild) og HVAÐA HLUTA dagsins. Ómerktur dagur er auður.
   const fixedDays = fmWeekdaysOf(fm?.dayWork);
-  const fmDay = (date: string) => {
+  // Dagvinna er virkur dagur sem er ekki frídagur.
+  const workDay = (date: string) => {
     const wd = weekdayOf(date);
-    if (wd < 1 || wd > 5 || holidayName(date)) return false;
-    // Fastir dagar læknisins eru harðir: aðrir dagar eru ekki í boði.
-    return fixedDays.length === 0 || fixedDays.includes(wd);
+    return wd >= 1 && wd <= 5 && !holidayName(date);
   };
+  /**
+   * Fastir flýtimóttökudagar læknisins eru harðir: FLÝTIMÓTTÖKU má aðeins setja
+   * á þá. Móttöku og deild má skrá hvaða virka dag sem er — það er hans eigin
+   * dagvinna, ekki vakt sem vaktaskipulagið úthlutar.
+   */
+  const canPaint = (date: string, kind: DayWorkKind) =>
+    workDay(date) && (kind !== "fm" || fixedDays.length === 0 || fixedDays.includes(weekdayOf(date)));
   // „Get ekki" í skrefi 2 á við vaktir utan dagvinnutíma (forvakt/bakvakt) og
-  // læsir EKKI flýtimóttöku: dagvinnuna skráir læknirinn hér, sjálfstætt.
-  const fmLocked = (date: string) => !editable || !fmDay(date);
+  // læsir EKKI dagvinnu: hana skráir læknirinn hér, sjálfstætt.
+  const fmLocked = (date: string) => !editable || !canPaint(date, fmKind);
   const applyFm = (date: string, b: FmBrush) => {
     if (fmLocked(date)) return;
     update((d) => {
       const parts = { ...d.day_part_marks };
-      if (b === "rule") delete parts[date]; else parts[date] = b;
-      return { ...d, day_part_marks: parts };
+      const kinds = { ...d.day_kind_marks };
+      if (b === "rule") { delete parts[date]; delete kinds[date]; }
+      else { parts[date] = b; kinds[date] = fmKind; }
+      return { ...d, day_part_marks: parts, day_kind_marks: kinds };
     });
   };
   // Sami pensill á dag sem þegar ber hann: aftur eftir reglu (eins og í skrefi 2).
-  const fmStrokeFor = (date: string): FmBrush => (fmBrush !== "rule" && draft.day_part_marks[date] === fmBrush ? "rule" : fmBrush);
+  // Bæði tegund og hluti þurfa að stemma, annars er dagnum breytt í þau.
+  const fmStrokeFor = (date: string): FmBrush =>
+    fmBrush !== "rule" && draft.day_part_marks[date] === fmBrush && (draft.day_kind_marks[date] ?? "fm") === fmKind ? "rule" : fmBrush;
   const fmMouse = useRef(false);
   const onFmDown = (e: React.PointerEvent, date: string) => {
     if (fmLocked(date) || e.pointerType !== "mouse") return;
@@ -403,7 +429,27 @@ export default function PrefsEditor({
         <div>
           <p className="text-[11px] text-slate-500">{t("step3.calendarHint")}</p>
           {editable && (
-            <div className="mt-2 grid grid-cols-2 gap-2 sm:inline-grid sm:w-auto sm:grid-cols-4">
+            <p className="mt-2 text-[11px] font-bold uppercase tracking-wide text-slate-500">{t("step3.kindLabel")}</p>
+          )}
+          {editable && (
+            <div className="mt-1 grid grid-cols-3 gap-2 sm:inline-grid sm:w-auto sm:grid-cols-3">
+              {DAY_WORK_KINDS.map((k) => (
+                <button key={k} type="button" data-on={fmKind === k} onClick={() => setFmKind(k)}
+                  className={cx("inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 transition",
+                    "data-[on=true]:text-white", KIND_ON[k])}>
+                  {t.dyn(`fm.kind.${k}`)}
+                </button>
+              ))}
+            </div>
+          )}
+          {editable && fmKind === "fm" && fixedDays.length > 0 && (
+            <p className="mt-1.5 text-[11px] text-slate-500">{t("step3.fmFixedNote")}</p>
+          )}
+          {editable && (
+            <p className="mt-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">{t("step3.partLabel")}</p>
+          )}
+          {editable && (
+            <div className="mt-1 grid grid-cols-2 gap-2 sm:inline-grid sm:w-auto sm:grid-cols-4">
               {([
                 ["all", <Sun key="i" className="h-4 w-4" />, "data-[on=true]:bg-[var(--hsu)] data-[on=true]:text-white data-[on=true]:ring-[var(--hsu)]"],
                 ["am", <Sunrise key="i" className="h-4 w-4" />, "data-[on=true]:bg-[var(--hsu)] data-[on=true]:text-white data-[on=true]:ring-[var(--hsu)]"],
@@ -427,33 +473,47 @@ export default function PrefsEditor({
               const date = cell;
               if (!date) return <div key={`f${i}`} />;
               const n = Number(date.slice(8));
-              if (!fmDay(date)) {
+              // Helgar og frídagar eru aldrei dagvinna.
+              if (!workDay(date)) {
                 return <div key={date} className="flex aspect-square min-h-11 items-center justify-center rounded-xl text-sm text-slate-300 sm:aspect-[4/3]">{n}</div>;
               }
+              // Flýtimóttöku má aðeins setja á föstu dagana; þá daufast hinir
+              // meðan sá pensill er valinn, en móttöku og deild má setja hvar sem er.
+              const dimmed = !canPaint(date, fmKind);
               // Dagur sem er „get ekki" í skrefi 2 er samt í boði hér — það
               // merki á aðeins við kvöldvaktir. Punkturinn minnir á merkinguna.
               const offEvening = markFor(draft, date) === "off";
               const eff: DayPlan | undefined = draft.day_part_marks[date];
-              const label = eff ? t(`step3.cell.${eff}` as "step3.cell.all") : "";
+              const kind: DayWorkKind = draft.day_kind_marks[date] ?? "fm";
+              const part = eff && eff !== "none" ? t(`step3.cell.${eff}` as "step3.cell.all") : "";
+              // Merkt tegund stendur á spjaldinu; hlutinn fylgir í sviga sé hann hálfur.
+              const label = eff === "none" ? t("step3.cell.none")
+                : eff ? `${t.dyn(`fm.kind.${kind}`)}${eff === "all" ? "" : ` ${part}`}`
+                : "";
               return (
                 <button key={date} type="button" disabled={!editable}
                   onPointerDown={(e) => onFmDown(e, date)} onPointerEnter={() => onFmEnter(date)} onClick={() => onFmTap(date)}
                   title={offEvening ? t("step3.cell.offEvening") : undefined}
                   aria-label={t("step3.cell.aria", { day: dayLabelL(date, t.lang), state: label || (offEvening ? t("step3.cell.offEvening") : "") })}
-                  className={cx("relative flex aspect-square min-h-11 flex-col items-center justify-center rounded-xl text-sm font-semibold transition sm:aspect-[4/3]",
+                  className={cx("relative flex aspect-square min-h-11 flex-col items-center justify-center rounded-xl px-0.5 text-sm font-semibold transition sm:aspect-[4/3]",
                     eff === "none" ? "bg-slate-200 text-slate-500 ring-2 ring-inset ring-slate-400"
-                      : eff ? "bg-[var(--hsu)] text-white"
+                      : eff ? KIND_FILL[kind]
                       : "bg-white text-slate-700 ring-1 ring-inset ring-slate-200",
+                    dimmed && !eff && "opacity-40",
                     editable && "hover:brightness-95")}>
                   <span>{n}</span>
-                  <span className="text-[9px] font-bold leading-none">{label}</span>
+                  <span className="truncate text-[9px] font-bold leading-none">{label}</span>
                   {offEvening && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-red-400" aria-hidden />}
                 </button>
               );
             })}
           </div>
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-500">
-            <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-[var(--hsu)]" /> {t("step3.legend.custom")}</span>
+            {DAY_WORK_KINDS.map((k) => (
+              <span key={k} className="inline-flex items-center gap-1">
+                <span className={cx("h-2.5 w-2.5 rounded", KIND_FILL[k])} /> {t.dyn(`fm.kind.${k}`)}
+              </span>
+            ))}
             <span className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-red-400" /> {t("step3.legend.offEvening")}</span>
           </div>
         </div>
@@ -673,20 +733,44 @@ export function PrefsStepNav({ daysMarked, fmMarked = false, sent }: { daysMarke
 }
 
 /** Lítið, óbreytanlegt yfirlit óska — fyrir yfirferð yfirlæknis. */
-export function PrefsMini({ month, pref }: { month: string; pref: Pick<HsuPreference, "day_marks" | "weekday_marks"> | null }) {
+/** Hvort yfirlitsmyndin sýnir kvöldvaktamerkingar eða dagvinnuna. */
+export type MiniView = "evening" | "daywork";
+
+export function PrefsMini({ month, pref, view = "evening" }: {
+  month: string;
+  pref: Pick<HsuPreference, "day_marks" | "weekday_marks" | "day_part_marks" | "day_kind_marks"> | null;
+  view?: MiniView;
+}) {
   const t = useCommon();
+  const tp = useT(prefs);
   const weeks = monthWeeks(month);
   return (
-    <div className="inline-grid grid-cols-7 gap-0.5" aria-hidden>
+    <div className="inline-grid grid-cols-7 gap-0.5">
       {WEEKDAY_ORDER.map((wd) => <span key={wd} className="text-center text-[8px] font-bold uppercase text-slate-400">{weekdayShortL(wd, t.lang)[0]}</span>)}
       {weeks.flat().map((date, i) => {
         if (!date) return <span key={i} className="h-5 w-5" />;
+        const day = Number(date.slice(8));
+        if (view === "daywork") {
+          // Dagvinnan: tegundin ræður litnum, „ekki“ er dökkgrátt.
+          const part = pref?.day_part_marks?.[date];
+          const kind: DayWorkKind = pref?.day_kind_marks?.[date] ?? "fm";
+          const tone = !part ? "bg-slate-100 text-slate-500"
+            : part === "none" ? "bg-slate-400 text-white"
+            : kind === "mottaka" ? "bg-emerald-600 text-white"
+            : kind === "deild" ? "bg-violet-600 text-white"
+            : "bg-[var(--hsu)] text-white";
+          const label = !part ? "" : part === "none" ? tp("step3.cell.none") : `${tp.dyn(`fm.kind.${kind}`)}${part === "all" ? "" : ` ${tp(`step3.cell.${part}` as "step3.cell.am")}`}`;
+          return (
+            <span key={date} title={`${dayLabelL(date, t.lang)}${label ? ` — ${label}` : ""}`}
+              className={cx("flex h-5 w-5 items-center justify-center rounded text-[9px] font-semibold", tone)}>{day}</span>
+          );
+        }
         const m = markFor(pref, date);
         return (
           <span key={date} title={dayLabelL(date, t.lang)} className={cx(
             "flex h-5 w-5 items-center justify-center rounded text-[9px] font-semibold",
             m === "off" ? "bg-red-500 text-white" : m === "want" ? "bg-emerald-500 text-white" : pref?.day_marks?.[date] === "ok" ? "bg-[var(--hsu)] text-white" : "bg-slate-100 text-slate-500",
-          )}>{Number(date.slice(8))}</span>
+          )}>{day}</span>
         );
       })}
     </div>

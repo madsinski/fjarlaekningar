@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { hhmm } from "@/lib/roster";
 import { isLang, translator, type Lang } from "./i18n/core";
 import {
-  datesInMonth, holidayName, isDayWorkKind, monthKey, shiftMonth, weekdayOf,
+  datesInMonth, dayWorkOn, dayWorkOverrides, isDayWorkKind, monthKey, shiftMonth,
   type DayWork, type DayWorkKind,
 } from "./types";
 import { doctorLang } from "./i18n/server";
@@ -86,12 +86,14 @@ export async function dayWorkRows(doctorId: string, from: string): Promise<SyncS
   const { data: doc } = await supabaseAdmin
     .from("hsu_doctors").select("day_work").eq("id", doctorId).maybeSingle();
   const work = (doc?.day_work ?? {}) as DayWork;
-  if (!Object.keys(work).length) return [];
 
-  const [{ data: types }, { data: existing }] = await Promise.all([
+  const [{ data: types }, { data: existing }, { data: prefRows }] = await Promise.all([
     supabaseAdmin.from("hsu_shift_types").select("starts, ends, period").eq("period", "day").limit(1),
     supabaseAdmin.from("hsu_shifts").select("shift_date").eq("doctor_id", doctorId).eq("published", true).gte("shift_date", from),
+    // Dagvinna sem læknirinn merkti í óskum mánaðarins gengur framar vikumynstrinu.
+    supabaseAdmin.from("hsu_preferences").select("day_part_marks, day_kind_marks").eq("doctor_id", doctorId).gte("month", from.slice(0, 7)),
   ]);
+  const own = dayWorkOverrides((prefRows ?? []) as never);
   const starts = (types?.[0]?.starts as string) ?? "08:00:00";
   const ends = (types?.[0]?.ends as string) ?? "16:00:00";
   const taken = new Set((existing ?? []).map((r) => r.shift_date as string));
@@ -101,8 +103,8 @@ export async function dayWorkRows(doctorId: string, from: string): Promise<SyncS
   for (let i = 0; i <= DAY_WORK_MONTHS_AHEAD; i++) {
     for (const date of datesInMonth(shiftMonth(first, i))) {
       if (date < from) continue;
-      const kind = work[String(weekdayOf(date))];
-      if (!kind || holidayName(date) || taken.has(date)) continue;
+      const kind = dayWorkOn(work, date, own);
+      if (!kind || taken.has(date)) continue;
       rows.push({ id: dayWorkId(doctorId, date), shift_date: date, starts, ends, note: "", status: "assigned", label: kind });
     }
   }

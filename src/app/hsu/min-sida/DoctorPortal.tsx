@@ -18,7 +18,7 @@ import HsuHeader from "../_components/HsuHeader";
 import { Badge, Button, Card, Field, Modal, Notice, PrintLink, Toggle, cx, firstName, hsuApi, inputCls, shortName, useStoredFlag } from "../_components/ui";
 import type { PortalData } from "@/lib/hsu/portal";
 import {
-  effectiveStatus, hhmm, holidayName, openWindow,
+  dayWorkOverrides, effectiveStatus, hhmm, holidayName, openWindow,
   type HsuShift, type HsuShiftType, type HsuSwap,
 } from "@/lib/hsu/types";
 import PrefsTab from "./PrefsTab";
@@ -123,6 +123,10 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
 
   // Boð (ein vakt gefin) og SKIPTI (vakt fyrir vakt) eru sitt hvort; þau mega
   // ekki blandast, hvorki í listunum né í merkinu á vöktunum mínum.
+  // Dagvinna sem læknirinn merkti sjálfur í óskum gengur framar vikumynstrinu
+  // — bæði í listunum hér og í Vaktaplani.
+  const ownDayWork = dayWorkOverrides(data.prefs);
+
   const isSwap = (s: HsuSwap) => Boolean(s.want_shift_id);
   const incoming = data.swaps.filter((s) => s.status === "pending" && s.to_doctor === me.id && !isSwap(s));
   const market = data.swaps.filter((s) => s.status === "pending" && !s.to_doctor && s.from_doctor !== me.id);
@@ -189,7 +193,7 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
         {tab === "markadur" && (
           <MarketTab data={data} incoming={incoming} market={market} mine={mine} myRequests={myRequests} swapIn={swapIn} swapOut={swapOut} name={name} refresh={refresh} />
         )}
-        {tab === "plan" && <RosterTab meId={me.id} dayWork={me.dayWork} swaps={data.swaps} refresh={refresh} />}
+        {tab === "plan" && <RosterTab meId={me.id} dayWork={me.dayWork} dayKinds={ownDayWork} swaps={data.swaps} refresh={refresh} />}
         {tab === "stillingar" && (
           <div className="space-y-8">
             <h1 className="text-xl font-bold">{t("settings.title")}</h1>
@@ -224,10 +228,10 @@ function Overview({ data, incoming, market, go, onLog, onCalendar }: {
       upcoming.map((s) => ({ date: s.shift_date, shift: s }));
     if (showWork) {
       const taken = new Set(data.myShifts.map((s) => s.shift_date));
-      for (const w of dayWorkDates(data.me.dayWork, data.today, taken, 2)) rows.push({ date: w.date, work: w.kind });
+      for (const w of dayWorkDates(data.me.dayWork, data.today, taken, 2, dayWorkOverrides(data.prefs))) rows.push({ date: w.date, work: w.kind });
     }
     return rows.sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
-  }, [upcoming, data.myShifts, data.me.dayWork, data.today, showWork]);
+  }, [upcoming, data.myShifts, data.me.dayWork, data.prefs, data.today, showWork]);
 
   return (
     <div className="space-y-6">
@@ -435,12 +439,12 @@ function ShiftsTab({ data, swaps, refresh, onLog }: { data: PortalData; swaps: H
     for (const s of data.myShifts) push(s.shift_date, { date: s.shift_date, shift: s });
     if (showWork) {
       const taken = new Set(data.myShifts.map((s) => s.shift_date));
-      for (const w of dayWorkDates(data.me.dayWork, data.today, taken)) push(w.date, { date: w.date, work: w.kind });
+      for (const w of dayWorkDates(data.me.dayWork, data.today, taken, 3, dayWorkOverrides(data.prefs))) push(w.date, { date: w.date, work: w.kind });
     }
     return [...m.entries()]
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([k, rows]) => [k, rows.sort((a, b) => a.date.localeCompare(b.date))] as const);
-  }, [data.myShifts, data.me.dayWork, data.today, showWork]);
+  }, [data.myShifts, data.me.dayWork, data.prefs, data.today, showWork]);
   const pendingFor = (id: string) => swaps.find((s) => s.shift_id === id);
   // Liðin vakt sem á eftir að merkja við er ekki "búin" — hún má ekki daufna.
   const onCall = new Set(data.shiftTypes.filter((st) => st.kind === "forvakt" || st.kind === "bakvakt").map((st) => st.id));

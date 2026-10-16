@@ -118,9 +118,48 @@ export const isDayWorkKind = (v: unknown): v is DayWorkKind =>
  * Dagvinna læknisins þennan dag, eða null. Frídagar eru undanskildir — þá er
  * engin dagvinna. Hreint fall: notað bæði í vafra og á þjóni.
  */
-export function dayWorkOn(work: DayWork | null | undefined, date: string): DayWorkKind | null {
-  if (!work || holidayName(date)) return null;
-  return work[String(weekdayOf(date))] ?? null;
+export function dayWorkOn(
+  work: DayWork | null | undefined,
+  date: string,
+  overrides?: DayWorkOverrides | null,
+): DayWorkKind | null {
+  if (holidayName(date)) return null;
+  // Dagur sem læknirinn merkti sjálfur í óskum mánaðarins ræður — líka þegar
+  // hann merkti „ekki“ (null), sem tekur daginn úr vikumynstrinu.
+  const own = overrides?.[date];
+  if (own !== undefined) return own;
+  return work?.[String(weekdayOf(date))] ?? null;
+}
+
+/** Dagar sem læknirinn merkti sjálfur: tegundin, eða null = engin dagvinna. */
+export type DayWorkOverrides = Record<string, DayWorkKind | null>;
+
+/**
+ * Dagvinnumerkingar úr óskum: `day_part_marks` segir hvaða daga og
+ * `day_kind_marks` hvers konar. Ósett tegund telst flýtimóttaka.
+ */
+export function dayWorkOverrides(
+  prefs: { day_part_marks?: Record<string, DayPlan> | null; day_kind_marks?: Record<string, DayWorkKind> | null }[],
+): DayWorkOverrides {
+  const out: DayWorkOverrides = {};
+  for (const p of prefs) {
+    for (const [date, part] of Object.entries(p.day_part_marks ?? {})) {
+      out[date] = part === "none" ? null : (p.day_kind_marks?.[date] ?? "fm");
+    }
+  }
+  return out;
+}
+
+/**
+ * Hvers konar dagvinna er á þessum degi: merking mánaðarins gengur fyrir,
+ * annars vikumynstrið sem læknirinn hefur skráð, og annars flýtimóttaka.
+ */
+export function dayKindFor(
+  marks: Record<string, DayWorkKind> | null | undefined,
+  date: string,
+  weekly?: DayWork | null,
+): DayWorkKind {
+  return marks?.[date] ?? dayWorkOn(weekly, date) ?? "fm";
 }
 
 /** Vikudagarnir sem vaktaskipulagið má setja flýtimóttöku á. */
@@ -201,6 +240,8 @@ export interface HsuPreference {
   day_part: DayPart;
   /** Undantekningar frá reglunni, dagsetning → hluti dags. */
   day_part_marks: Record<string, DayPlan>;
+  /** Hvers konar dagvinna er þennan dag; ósett = flýtimóttaka. */
+  day_kind_marks: Record<string, DayWorkKind>;
   min_shifts: number | null;
   max_shifts: number | null;
   note: string;
