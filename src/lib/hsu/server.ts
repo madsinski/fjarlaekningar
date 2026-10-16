@@ -130,9 +130,12 @@ export async function loadPreferences(month: string, doctorId?: string): Promise
 }
 
 export async function loadPendingSwaps(): Promise<HsuSwap[]> {
+  // Vísað skýrt í hsu_swaps_shift_id_fkey: hsu_swaps hefur fleiri en ein
+  // vensl í hsu_shifts (shift_id og want_shift_id), svo „hsu_shifts" eitt og
+  // sér er margrætt og fyrirspurnin félli á PostgREST-villu.
   const { data, error } = await supabaseAdmin
     .from("hsu_swaps")
-    .select("id, shift_id, from_doctor, to_doctor, taken_by, note, status, created_at, shift:hsu_shifts(shift_date, starts, ends, label, shift_type_id)")
+    .select("id, shift_id, from_doctor, to_doctor, taken_by, note, status, created_at, shift:hsu_shifts!hsu_swaps_shift_id_fkey(shift_date, starts, ends, label, shift_type_id)")
     .in("status", ["pending", "awaiting_approval"])
     .order("created_at");
   if (error) throw new Error(error.message);
