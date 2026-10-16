@@ -15,6 +15,9 @@ export const common = defineMessages(
     "monthShort.1": "jan.", "monthShort.2": "feb.", "monthShort.3": "mar.", "monthShort.4": "apr.",
     "monthShort.5": "maí", "monthShort.6": "jún.", "monthShort.7": "júl.", "monthShort.8": "ágú.",
     "monthShort.9": "sep.", "monthShort.10": "okt.", "monthShort.11": "nóv.", "monthShort.12": "des.",
+    /** Vikunúmer: dálkhausinn í dagatölunum og fullt heiti í flettitexta. */
+    "week.abbr": "V",
+    "week.n": "Vika {n}",
     /** {d} dagur, {m} stuttur mánuður */
     "date.dayMonth": "{d}. {m}",
     "date.dayMonthYear": "{d}. {m} {y}",
@@ -90,6 +93,8 @@ export const common = defineMessages(
       "app.tagline": "Doctors' shifts",
       "app.unit": "Vestmannaeyjar Health Centre",
       "app.planner": "Shift planning",
+      "week.abbr": "W",
+      "week.n": "Week {n}",
 
       "month.1": "January", "month.2": "February", "month.3": "March", "month.4": "April",
       "month.5": "May", "month.6": "June", "month.7": "July", "month.8": "August",

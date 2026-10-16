@@ -15,7 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle, ArrowRight, Ban, Clock, Eraser, Hand, Heart, Loader2, Merge, Plus, Printer, RefreshCw, Scissors, Shield, Shuffle, Sparkles, Trash2, Undo2, Wand2, X,
 } from "lucide-react";
-import { monthWeeks } from "../_components/PrefsEditor";
+import { WeekHead, WeekNo, isWeekCell, monthCellsWithWeeks } from "../_components/PrefsEditor";
 import { Badge, Button, Card, Field, Modal, Notice, cx, hsuApi, inputCls, shortName } from "../_components/ui";
 import {
   bakvaktNeededDates, findConflicts, requiredSlots, statsFor, toPlanDoctors, toPlanSlots,
@@ -326,9 +326,12 @@ export default function PlanBoard({ ctx, goNext }: { ctx: PlannerCtx; goNext: ()
         <Card className="overflow-x-auto p-2 sm:p-3">
           {/* Á síma/spjaldtölvu skrunar borðið til hliðar (940px lágmark); á stórum
               skjá á það að PASSA í dálkinn — annars klipptist sunnudagurinn af. */}
-          <div className="grid min-w-[940px] grid-cols-7 gap-1.5 lg:min-w-0">
+          <div className="grid min-w-[980px] grid-cols-[1.9rem_repeat(7,minmax(0,1fr))] gap-1.5 lg:min-w-0">
+            <WeekHead />
             {WEEKDAY_ORDER.map((wd) => <div key={wd} className="py-1 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">{weekdayShortL(wd, t.lang)}</div>)}
-            {monthWeeks(month).flat().map((date, i) => {
+            {monthCellsWithWeeks(month).map((cell, i) => {
+              if (isWeekCell(cell)) return <WeekNo key={`w${i}`} n={cell.week} />;
+              const date = cell;
               if (!date) return <div key={`x${i}`} />;
               const list = byDate.get(date) ?? [];
               const h = holidayL(holidayName(date), t.lang);

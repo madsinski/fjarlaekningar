@@ -2,9 +2,9 @@
 
 import { useCallback, useMemo, useState } from "react";
 import PrefsEditor, { PrefsStepNav, Step, draftFrom, rich, type PrefDraft } from "../_components/PrefsEditor";
-import { cx, hsuApi } from "../_components/ui";
+import { Notice, cx, hsuApi } from "../_components/ui";
 import type { PortalData } from "@/lib/hsu/portal";
-import { effectiveStatus, openWindow, shiftMonth, type HsuPreference, type MonthStatus, worksInMonth} from "@/lib/hsu/types";
+import { doctorMayEdit, effectiveStatus, openWindow, shiftMonth, type HsuPreference, type MonthStatus, worksInMonth} from "@/lib/hsu/types";
 import { useT } from "@/lib/hsu/i18n/client";
 import { capFirstL, dayLabelL, monthLabelL, monthStatusL } from "@/lib/hsu/i18n/format";
 import { prefs } from "@/lib/hsu/i18n/messages/prefs";
@@ -15,7 +15,11 @@ export default function PrefsTab({ data, initialMonth, refresh }: { data: Portal
   // sem yfirlæknir hefur enn opna.
   const options = useMemo(() => {
     const set = new Set<string>(openWindow());
-    for (const m of data.months) if (m.status === "collecting" || m.status === "review") set.add(m.month);
+    for (const m of data.months) {
+      // „planning" er með: yfirlæknir byrjar stundum að raða áður en allir hafa
+      // skilað, og þá á sá sem vantar enn að geta skráð óskir.
+      if (m.status === "collecting" || m.status === "review" || m.status === "planning") set.add(m.month);
+    }
     // Afleysingalæknir sér ekki mánuði sem hann er ekki við störf í.
     return [...set].sort().filter((m) => worksInMonth({ starts_on: data.me.startsOn, ends_on: data.me.endsOn }, m));
   }, [data.months, data.me.startsOn, data.me.endsOn]);
@@ -23,11 +27,10 @@ export default function PrefsTab({ data, initialMonth, refresh }: { data: Portal
 
   // Opnast á fyrsta mánuði sem hægt er að breyta: mánuður í vaktaplani er
   // læstur, og læknir sem kemur hingað vill skrá óskir, ekki lesa lás.
+  const prefStatusOf = (m: string) => data.prefs.find((p) => p.month === m)?.status ?? null;
   const [month, setMonth] = useState(() => {
     if (options.includes(initialMonth)) return initialMonth;
-    const collecting = options.find((m) => stOf(m) === "collecting");
-    if (collecting) return collecting;
-    const open = options.find((m) => stOf(m) === "review");
+    const open = options.find((m) => doctorMayEdit(stOf(m), prefStatusOf(m)));
     return open ?? options[0];
   });
 
@@ -36,15 +39,16 @@ export default function PrefsTab({ data, initialMonth, refresh }: { data: Portal
   const initial = useMemo(() => draftFrom(pref), [pref]);
 
   const status: MonthStatus | null = effectiveStatus(monthRow, month);
-  // Aðeins mánuður sem yfirlæknir hefur opnað er opinn lækninum.
-  const editable = status === "collecting" || (status === "review" && (!pref || pref.status === "draft" || pref.status === "changes_requested"));
+  const editable = doctorMayEdit(status, pref?.status ?? null);
   const lockedReason = !status
     ? t("locked.notOpen", { month: monthLabelL(month, t.lang) })
-    : status === "planning" || status === "published"
+    : status === "published"
     ? t("locked.planning")
     : pref?.status === "approved"
       ? t("locked.approved")
       : t("locked.review");
+  // Opið en yfirlæknir er byrjaður að raða: óskirnar gilda, en hann þarf að vita af þeim.
+  const late = editable && status === "planning";
 
   const [progress, setProgress] = useState({ daysMarked: false, fmMarked: false, sent: false });
   const onProgress = useCallback((p: { daysMarked: boolean; fmMarked: boolean; sent: boolean }) => {
@@ -77,6 +81,8 @@ export default function PrefsTab({ data, initialMonth, refresh }: { data: Portal
         </p>
       </div>
 
+      {late && <Notice tone="warn">{t("late.planning", { month: monthLabelL(month, t.lang) })}</Notice>}
+
       {editable && (
         <div className="rounded-2xl border border-slate-200 bg-white px-2 py-1.5 shadow-sm">
           <PrefsStepNav daysMarked={progress.daysMarked} fmMarked={progress.fmMarked} sent={progress.sent} />
@@ -100,7 +106,7 @@ export default function PrefsTab({ data, initialMonth, refresh }: { data: Portal
                   const [label, tone] = ps === "approved" ? [t("month.state.approved"), "green"]
                     : ps === "submitted" ? [t("month.state.submitted"), "green"]
                     : ps === "changes_requested" ? [t("month.state.changes"), "red"]
-                    : st === "planning" || st === "published" ? [monthStatusL(st, t.lang), "slate"]
+                    : !doctorMayEdit(st, ps ?? null) && (st === "planning" || st === "published") ? [monthStatusL(st, t.lang), "slate"]
                     : ps === "draft" ? [t("month.state.draft"), "amber"]
                     : [t("month.state.notStarted"), "amber"];
                   return (

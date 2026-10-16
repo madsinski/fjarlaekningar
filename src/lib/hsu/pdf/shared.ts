@@ -6,7 +6,7 @@ import { rgb, type Color, type PDFFont, type PDFPage } from "pdf-lib";
 import { translator, type Lang } from "../i18n/core";
 import { holidayL, weekdayOfDate } from "../i18n/format";
 import { shiftPdf } from "../i18n/messages/shift-pdf";
-import { datesInMonth, hhmm, holidayName, type HsuShift, type HsuShiftType } from "../types";
+import { datesInMonth, hhmm, holidayName, isoWeekOf, type HsuShift, type HsuShiftType } from "../types";
 
 export interface ShiftPdfDoctor {
   id: string;
@@ -164,6 +164,8 @@ export interface Cell {
 export interface Prepared {
   t: ReturnType<typeof translator<typeof shiftPdf.is>>;
   weeks: Cell[][];
+  /** Vikunúmer hverrar raðar — sama tal og á skjánum. */
+  weekNos: number[];
   mineColor: Color;
   ownCount: number;
   /** Dagsetningar viðtakandans (1–31) — fyrir borða og samantektir. */
@@ -254,13 +256,14 @@ export function prepare(i: ShiftPdfInput): Prepared {
     }
     weeks.push(row);
   }
+  const weekNos = weeks.map((row) => isoWeekOf(row.find((c) => c.date)!.date!));
 
   const legend = i.types
     .filter((ty) => i.shifts.some((s) => s.shift_type_id === ty.id))
     .sort((a, b) => (a.period === b.period ? 0 : a.period === "day" ? -1 : 1) || a.sort - b.sort || a.short.localeCompare(b.short))
     .map((ty) => ({ short: ty.short, name: ty.name, time: `${hhmm(ty.starts)}–${hhmm(ty.ends)}`, color: hex(ty.color, HSU), day: ty.period === "day" }));
 
-  return { t, weeks, mineColor, ownCount, ownDays, legend, multiDay: multi.day.size > 1, multiEve: multi.eve.size > 1, dates };
+  return { t, weeks, weekNos, mineColor, ownCount, ownDays, legend, multiDay: multi.day.size > 1, multiEve: multi.eve.size > 1, dates };
 }
 
 /** Hvenær skjalið var búið til / planið birt — fótur allra sniða. */

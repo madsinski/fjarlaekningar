@@ -57,17 +57,9 @@ export function sanitizePrefs(month: string, body: Record<string, unknown>, lang
   return p;
 }
 
-/**
- * Má læknirinn sjálfur breyta óskum fyrir þennan mánuð? `monthStatus` er
- * virk staða (effectiveStatus): næstu þrír mánuðir teljast opnir. Opið meðan
- * óskum er safnað; í yfirferð aðeins ef hann á eftir að senda eða yfirlæknir
- * bað um breytingar. Eftir að vaktaplan fer í smíði er lokað.
- */
-export function doctorMayEdit(monthStatus: string | null, prefStatus: PrefStatus | null): boolean {
-  if (monthStatus === "collecting") return true;
-  if (monthStatus === "review") return prefStatus !== "approved" && prefStatus !== "submitted";
-  return false;
-}
+// Reglan um hvenær læknir má breyta óskum er í types.ts — hrein og sameiginleg
+// með biðlaranum (sjá doctorMayEdit).
+export { doctorMayEdit } from "./types";
 
 export async function savePrefs(opts: {
   doctorId: string;

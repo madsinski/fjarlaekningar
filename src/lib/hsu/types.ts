@@ -58,6 +58,40 @@ export function doctorsForMonth<T extends { id: string; active: boolean; starts_
   return doctors.filter((d) => d.active && !out.has(d.id) && worksInMonth(d, month));
 }
 
+/**
+ * Má læknirinn sjálfur breyta óskum fyrir þennan mánuð? `monthStatus` er virk
+ * staða (effectiveStatus): næstu þrír mánuðir teljast opnir.
+ *
+ * Opið meðan óskum er safnað. Í yfirferð — OG eftir að yfirlæknir er byrjaður
+ * að raða — kemst sá enn að sem á eftir að senda eða var beðinn um breytingar:
+ * yfirlæknir byrjar stundum á planinu áður en allir hafa skilað, og þá á þeim
+ * sem vantar ekki að vera úthýst. Óskir sem eru komnar til hans (sendar eða
+ * samþykktar) eru hins vegar læstar — þeim breytir hann sjálfur.
+ * Birt plan er lokað; þá gildir vaktaskiptaleiðin.
+ */
+export function doctorMayEdit(monthStatus: string | null, prefStatus: PrefStatus | null): boolean {
+  if (monthStatus === "collecting") return true;
+  if (monthStatus === "review" || monthStatus === "planning") {
+    return prefStatus !== "approved" && prefStatus !== "submitted";
+  }
+  return false;
+}
+
+/**
+ * Vikunúmer samkvæmt ISO-8601 (vikan hefst á mánudegi og vika 1 er sú sem
+ * inniheldur fyrsta fimmtudag ársins) — það er vikutalið sem notað er á Íslandi.
+ */
+export function isoWeekOf(date: string): number {
+  const [y, m, d] = date.split("-").map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d));
+  // Fimmtudagur vikunnar ræður því hvaða ári og viku dagurinn tilheyrir.
+  t.setUTCDate(t.getUTCDate() + 3 - ((t.getUTCDay() + 6) % 7));
+  const jan4 = new Date(Date.UTC(t.getUTCFullYear(), 0, 4));
+  const firstMonday = new Date(jan4);
+  firstMonday.setUTCDate(jan4.getUTCDate() - ((jan4.getUTCDay() + 6) % 7));
+  return 1 + Math.round((t.getTime() - firstMonday.getTime()) / (7 * 86400000));
+}
+
 /** Er læknirinn við störf einhvern daginn í mánuðinum? */
 export function worksInMonth(d: { starts_on?: string | null; ends_on?: string | null }, month: string): boolean {
   const first = `${month}-01`;

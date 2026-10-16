@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { monthWeeks } from "../_components/PrefsEditor";
+import { WeekHead, WeekNo, isWeekCell, monthCellsWithWeeks } from "../_components/PrefsEditor";
 import { Card, PrintLink, Toggle, cx, hsuApi, shortName, useStoredFlag } from "../_components/ui";
 import { DayWorkChip } from "./DayWork";
 import { useT } from "@/lib/hsu/i18n/client";
@@ -59,9 +59,12 @@ export default function RosterTab({ meId, dayWork }: { meId: string; dayWork: Da
             <Toggle checked={showWork} onChange={setShowWork} label={t("roster.showDayWork")} />
           </div>
           <Card className="overflow-x-auto p-2 sm:p-3">
-            <div className="grid min-w-[640px] grid-cols-7 gap-1">
+            <div className="grid min-w-[680px] grid-cols-[1.9rem_repeat(7,minmax(0,1fr))] gap-1">
+              <WeekHead />
               {WEEKDAY_ORDER.map((wd) => <div key={wd} className="py-1 text-center text-[11px] font-bold uppercase text-slate-500">{weekdayShortL(wd, t.lang)}</div>)}
-              {monthWeeks(month).flat().map((date, i) => {
+              {monthCellsWithWeeks(month).map((cell, i) => {
+                if (isWeekCell(cell)) return <WeekNo key={`w${i}`} n={cell.week} />;
+                const date = cell;
                 if (!date) return <div key={i} />;
                 const h = holidayL(holidayName(date), t.lang);
                 const shifts = state.shifts.filter((s) => s.shift_date === date && (!onlyMine || s.doctor_id === meId));

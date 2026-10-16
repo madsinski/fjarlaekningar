@@ -10,7 +10,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Ban, Check, CircleCheck, Copy, Heart, Eraser, Send, Save, Sun, Sunrise, Sunset } from "lucide-react";
 import {
-  WEEKDAY_ORDER, datesInMonth, fmWeekdaysOf, holidayName, markFor, shiftMonth, weekdayOf,
+  WEEKDAY_ORDER, datesInMonth, fmWeekdaysOf, holidayName, isoWeekOf, markFor, shiftMonth, weekdayOf,
   type DayWork, type DayWorkKind,
   type DayMark, type DayPart, type DayPlan, type HsuPreference, type Mark, type PrefStatus,
 } from "@/lib/hsu/types";
@@ -71,6 +71,35 @@ export function monthWeeks(month: string): (string | null)[][] {
   const weeks: (string | null)[][] = [];
   for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
   return weeks;
+}
+
+/** Vikunúmerahólf fremst í hverri viku; dagar eru strengir eða null. */
+export type WeekCell = { week: number };
+export const isWeekCell = (c: unknown): c is WeekCell => typeof c === "object" && c !== null && "week" in c;
+
+/**
+ * Frumur mánaðarins í þeirri röð sem netið teiknar þær, með vikunúmeri fremst
+ * í hverri viku. Öll dagatöl kerfisins nota þetta svo vikurnar standi eins alls
+ * staðar — og það er vikan sem fólk vísar í („vika 46").
+ */
+export function monthCellsWithWeeks(month: string): (string | null | WeekCell)[] {
+  return monthWeeks(month).flatMap((days) => [{ week: isoWeekOf(days.find(Boolean) as string) }, ...days]);
+}
+
+/** Vikunúmerið sjálft, hógvært til vinstri. */
+export function WeekNo({ n, className }: { n: number; className?: string }) {
+  const c = useCommon();
+  return (
+    <div className={cx("flex items-center justify-center text-[10px] font-bold tabular-nums text-slate-400", className)} title={c("week.n", { n })}>
+      {n}
+    </div>
+  );
+}
+
+/** Haus yfir vikunúmeradálkinum. */
+export function WeekHead() {
+  const c = useCommon();
+  return <div className="py-1 text-center text-[9px] font-bold uppercase tracking-wide text-slate-400" title={c("week.n", { n: "" }).trim()}>{c("week.abbr")}</div>;
 }
 
 /**
@@ -138,6 +167,7 @@ export default function PrefsEditor({
   }, []);
 
   const weeks = useMemo(() => monthWeeks(month), [month]);
+  const cells = useMemo(() => monthCellsWithWeeks(month), [month]);
   const dates = useMemo(() => datesInMonth(month), [month]);
   const next = shiftMonth(month, 1);
 
@@ -309,7 +339,8 @@ export default function PrefsEditor({
           </div>
         )}
       <div className="select-none">
-        <div className="grid grid-cols-7 gap-1.5">
+        <div className="grid grid-cols-[1.9rem_repeat(7,minmax(0,1fr))] gap-1.5">
+          <WeekHead />
           {WEEKDAY_ORDER.map((wd) => {
             const m = draft.weekday_marks[String(wd)];
             return (
@@ -326,8 +357,10 @@ export default function PrefsEditor({
             );
           })}
         </div>
-        <div className="mt-1.5 grid grid-cols-7 gap-1.5">
-          {weeks.flat().map((date, i) => {
+        <div className="mt-1.5 grid grid-cols-[1.9rem_repeat(7,minmax(0,1fr))] gap-1.5">
+          {cells.map((cell, i) => {
+            if (isWeekCell(cell)) return <WeekNo key={`w${i}`} n={cell.week} />;
+            const date = cell;
             if (!date) return <div key={`e${i}`} />;
             const h = holidayL(holidayName(date), t.lang);
             const m = markFor(draft, date);
@@ -382,11 +415,14 @@ export default function PrefsEditor({
               ))}
             </div>
           )}
-          <div className="mt-2 grid grid-cols-7 gap-1.5 select-none">
+          <div className="mt-2 grid grid-cols-[1.9rem_repeat(7,minmax(0,1fr))] gap-1.5 select-none">
+            <WeekHead />
             {WEEKDAY_ORDER.map((wd) => (
               <div key={wd} className="py-1 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">{weekdayShortL(wd, t.lang)}</div>
             ))}
-            {weeks.flat().map((date, i) => {
+            {cells.map((cell, i) => {
+              if (isWeekCell(cell)) return <WeekNo key={`w${i}`} n={cell.week} />;
+              const date = cell;
               if (!date) return <div key={`f${i}`} />;
               const n = Number(date.slice(8));
               if (!fmDay(date)) {

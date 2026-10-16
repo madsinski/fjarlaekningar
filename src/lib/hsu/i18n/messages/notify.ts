@@ -48,6 +48,9 @@ export const notifyMsgs = defineMessages(
     "dayWeekdays.heading": "Dagvinnudagar uppfærðir",
     "dayWeekdays.line": "{name} vinnur nú dagvaktir: {days}.",
     "dayWeekdays.all": "alla daga",
+    "prefsLate.subject": "{name} skráði óskir fyrir {month}",
+    "prefsLate.heading": "Óskir komnar eftir að skipulag byrjaði",
+    "prefsLate.line": "{name} hefur nú skráð óskir fyrir {month}. Þær komu eftir að þú byrjaðir að raða, og því er rétt að skoða þær áður en vaktaplanið verður birt.",
 
     "request.accepted.subject": "{name} samþykkti aukavakt",
     "request.accepted.heading": "Aukavakt samþykkt",
@@ -134,6 +137,9 @@ export const notifyMsgs = defineMessages(
       "dayWeekdays.heading": "Day-shift weekdays updated",
       "dayWeekdays.line": "{name} now works day shifts on: {days}.",
       "dayWeekdays.all": "all days",
+      "prefsLate.subject": "{name} submitted requests for {month}",
+      "prefsLate.heading": "Requests received after planning started",
+      "prefsLate.line": "{name} has now submitted requests for {month}. They arrived after you started building the schedule, so it is worth reviewing them before the plan is published.",
 
       "request.accepted.subject": "{name} accepted an extra shift",
       "request.accepted.heading": "Extra shift accepted",

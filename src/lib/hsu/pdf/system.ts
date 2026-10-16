@@ -8,12 +8,12 @@
 import { PDFDocument, StandardFonts, type Color, type PDFFont, type PDFPage } from "pdf-lib";
 import { monthLabelL, weekdayShortL } from "../i18n/format";
 import {
-  HSU, INK, RED, SLATE50, SLATE100, SLATE200, SLATE400, SLATE500, SLATE700, WHITE,
+  HSU, INK, RED, SLATE50, SLATE100, SLATE200, SLATE300, SLATE400, SLATE500, SLATE700, WHITE,
   clip, initials, prepare, roundRect, safe, stamp, type Entry, type ShiftPdfInput,
 } from "./shared";
 
 export async function renderSystem(i: ShiftPdfInput): Promise<Uint8Array> {
-  const { t, weeks, mineColor, ownCount, legend, multiDay, multiEve } = prepare(i);
+  const { t, weeks, weekNos, mineColor, ownCount, legend, multiDay, multiEve } = prepare(i);
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
@@ -50,10 +50,14 @@ export async function renderSystem(i: ShiftPdfInput): Promise<Uint8Array> {
   y -= 42;
 
   // ── Vikudagahaus ──
-  const colW = (W - M * 2) / 7;
+  // Mjór dálkur vinstra megin fyrir vikunúmerin.
+  const WEEKW = 15;
+  const colW = (W - M * 2 - WEEKW) / 7;
+  const wHead = safe(t("week.abbr"));
+  page.drawText(wHead, { x: M + (WEEKW - bold.widthOfTextAtSize(wHead, 6.5)) / 2, y: y - 7.5, size: 6.5, font: bold, color: SLATE300 });
   for (let c = 0; c < 7; c++) {
     const label = safe(weekdayShortL((c + 1) % 7, i.lang)).toUpperCase();
-    page.drawText(label, { x: M + c * colW + (colW - bold.widthOfTextAtSize(label, 7.5)) / 2, y: y - 7.5, size: 7.5, font: bold, color: SLATE400 });
+    page.drawText(label, { x: M + WEEKW + c * colW + (colW - bold.widthOfTextAtSize(label, 7.5)) / 2, y: y - 7.5, size: 7.5, font: bold, color: SLATE400 });
   }
   y -= 13;
 
@@ -68,8 +72,15 @@ export async function renderSystem(i: ShiftPdfInput): Promise<Uint8Array> {
   const ROW = 12.5;    // hæð einnar raðar í spjaldinu
 
   weeks.forEach((week, w) => {
+    // Vikunúmerið í mjóa dálkinum vinstra megin, á miðri röð.
+    const no = String(weekNos[w]);
+    page.drawText(no, {
+      x: M + (WEEKW - GAP - bold.widthOfTextAtSize(no, 7)) / 2,
+      y: gridTop - w * rowH - rowH / 2 - 2.5,
+      size: 7, font: bold, color: SLATE300,
+    });
     week.forEach((cell, c) => {
-      const x = M + c * colW + GAP / 2;
+      const x = M + WEEKW + c * colW + GAP / 2;
       const top = gridTop - w * rowH - GAP / 2;
       if (!cell.date) return; // dagar utan mánaðar eru auðir — eins og á skjánum
 

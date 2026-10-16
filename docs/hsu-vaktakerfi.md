@@ -311,6 +311,42 @@ samstillist strax.
 **Takmörkun:** þetta er vikumynstur, ekki stakir dagar. Eina vikuna á deild skráir
 yfirlæknir sem „Get ekki" í skrefi 2, eða tekur lækninn af vöktum handvirkt.
 
+## Vikunúmer í dagatölunum (2026-10-16)
+
+Öll dagatöl kerfisins hafa mjóan dálk lengst til vinstri með vikunúmeri hverrar
+raðar (ISO-8601: vikan hefst á mánudegi, vika 1 er sú sem inniheldur fyrsta
+fimmtudag ársins — sama tal og Íslendingar nota og sama og í Outlook/Google).
+Hausinn yfir dálkinum er `V` (`W` á ensku) og flettitextinn „Vika 46".
+
+Þetta gildir um óskadagatalið (bæði skref), Vaktaplan læknis, vaktaplan
+yfirlæknis/ritara og vaktaplanið á PDF. Reiknað í `isoWeekOf()` (types.ts) og
+raðað upp í `monthCellsWithWeeks()` (PrefsEditor.tsx) svo allar sýnir noti sama
+talið. Litla yfirlitsmyndin í Óskum (`PrefsMini`) er undanskilin — hún er
+þéttleikamynd í fáum pixlum, ekki dagatal til að lesa úr.
+
+## Óskir þótt yfirlæknir sé byrjaður að raða (2026-10-16)
+
+Yfirlæknir byrjar stundum á vaktaplaninu áður en allir hafa skilað óskum (t.d.
+nóvember 2026, sem fór í `planning` með þrjá lækna óskráða). Áður lokaðist
+ritillinn um leið og mánuðurinn fór úr söfnun og þeir sem vantaði komust ekki að.
+
+Nú gildir ein regla, `doctorMayEdit()` í `types.ts`, sem bæði biðlari og þjónn
+nota (áður var hún afrituð á báðum stöðum):
+
+| Staða mánaðar | Engar óskir / drög / breytinga beðið | Sendar eða samþykktar |
+| --- | --- | --- |
+| `collecting` | opið | opið |
+| `review` | opið | læst |
+| `planning` | **opið** | læst |
+| `published` | læst | læst |
+
+Læknirinn sér þá gula skýringu: yfirlæknir sé byrjaður að raða, óskirnar gildi
+samt og hann fái tilkynningu um þær. Þegar óskir eru sendar inn á meðan
+mánuðurinn er í `planning` fer tilkynning til yfirlækna (`prefsLate.*`) með
+hlekk á planið — annars gætu þær farið framhjá honum, hann er búinn með
+söfnunina. Óskir sem þegar eru komnar til hans (sendar/samþykktar) breytir hann
+sjálfur, eins og áður.
+
 ## Vaktaplanið: hvernig dagurinn er settur upp
 
 Hver dagur í mánaðarplaninu sýnir **eina röð á hverja vaktategund** (FM, FV1,

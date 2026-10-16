@@ -3,7 +3,11 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { audit } from "@/lib/hsu/auth";
 import { copyToNextMonth, doctorMayEdit, sanitizePrefs, savePrefs } from "@/lib/hsu/prefs";
-import { MONTH_RE, fail, json, loadMonth, loadPreferences, readJson, requireDoctor } from "@/lib/hsu/server";
+import { MONTH_RE, fail, json, loadMonth, loadPreferences, originOf, readJson, requireDoctor } from "@/lib/hsu/server";
+import { notifyHeads } from "@/lib/hsu/notify";
+import { translator } from "@/lib/hsu/i18n/core";
+import { notifyMsgs } from "@/lib/hsu/i18n/messages/notify";
+import { monthLabelL } from "@/lib/hsu/i18n/format";
 import { monthKey, shiftMonth, type PrefStatus } from "@/lib/hsu/types";
 import { tr } from "@/lib/hsu/i18n/server";
 import { apiDoctor } from "@/lib/hsu/i18n/messages/api-doctor";
@@ -50,5 +54,18 @@ export async function PUT(req: Request) {
   if (body.also_next) copiedTo = await copyToNextMonth(auth.doctor.id, month, input, status, "");
 
   if (status === "submitted") await audit(auth.doctor.name, "prefs.submit", month, { copiedTo });
+
+  // Óskir sem koma eftir að yfirlæknir byrjaði að raða gætu annars farið
+  // framhjá honum — hann er búinn með söfnunina. Því fær hann boð um þær.
+  if (status === "submitted" && effectiveStatus(m, month) === "planning") {
+    const name = auth.doctor.name;
+    notifyHeads({
+      origin: originOf(req),
+      subject: (l) => translator(notifyMsgs, l)("prefsLate.subject", { name, month: monthLabelL(month, l) }),
+      heading: (l) => translator(notifyMsgs, l)("prefsLate.heading"),
+      lines: [(l) => translator(notifyMsgs, l)("prefsLate.line", { name, month: monthLabelL(month, l) })],
+      path: `/hsu/stjorn?t=plan&m=${month}`,
+    });
+  }
   return json({ ok: true, preference: { ...saved, review_note: status === "submitted" ? "" : saved.review_note }, copiedTo });
 }
