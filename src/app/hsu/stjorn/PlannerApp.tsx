@@ -13,6 +13,7 @@ import MarketAdmin from "./MarketAdmin";
 import SettingsTab from "./SettingsTab";
 import HeadGuide from "./HeadGuide";
 import Tour, { markOnboarding, seenLocally, type TourStep } from "../_components/Tour";
+import Nudge from "../_components/Nudge";
 import { useCommon, useT } from "@/lib/hsu/i18n/client";
 import { capFirstL, monthLabelL, monthStatusL } from "@/lib/hsu/i18n/format";
 import { admin } from "@/lib/hsu/i18n/messages/admin";
@@ -208,6 +209,13 @@ export default function PlannerApp() {
         )}
       </main>
       <Tour steps={tourSteps} open={tourOpen && Boolean(data)} onClose={closeTour} />
+      {/* Nýjungar og ráð fyrir yfirlækni — bíða þar til kynningin er frá.
+          Staff-aðgangur á enga læknaröð, svo þá er munað í vafranum. */}
+      {data && (
+        <Nudge role="head" persist={persist} onboarding={(seen ?? {}) as Record<string, string>}
+          hold={tourOpen || Boolean(guideOpen) || (persist && !seen?.["tour:head"])}
+          onGo={(tb) => setTab(tb as Tab)} onRefresh={() => { void load(); }} />
+      )}
     </div>
   );
 }

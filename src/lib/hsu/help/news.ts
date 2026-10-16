@@ -12,18 +12,23 @@ export interface HsuNews {
   id: string;
   /** Dagsetning útgáfu (ISO). Nýjast birtist fyrst. */
   date: string;
-  /** Leiðbeining í hjálparsafninu sem á við. */
+  /** Leiðbeining í hjálparsafninu sem á við (aðeins læknar hafa safnið). */
   article?: string;
+  /** Hverjir sjá tilkynninguna; sjálfgefið báðir. */
+  role?: "doctor" | "head" | "both";
 }
 
 export const HSU_NEWS: HsuNews[] = [
   { id: "dagvinna", date: "2026-10-17", article: "fm" },
-  { id: "help", date: "2026-10-16" },
+  { id: "help", date: "2026-10-16", role: "doctor" },
   { id: "swap", date: "2026-10-16", article: "swap" },
   { id: "weeknos", date: "2026-10-16", article: "roster" },
 ];
 
-/** Nýjasta tilkynningin sem læknirinn hefur ekki séð. */
-export function nextNews(onboarding: Record<string, string>): HsuNews | null {
-  return [...HSU_NEWS].sort((a, b) => b.date.localeCompare(a.date)).find((n) => !onboarding[`news:${n.id}`]) ?? null;
+/** Nýjasta tilkynningin sem viðkomandi hefur ekki séð. */
+export function nextNews(onboarding: Record<string, string>, role: "doctor" | "head" = "doctor"): HsuNews | null {
+  return [...HSU_NEWS]
+    .filter((n) => (n.role ?? "both") === "both" || n.role === role)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .find((n) => !onboarding[`news:${n.id}`]) ?? null;
 }

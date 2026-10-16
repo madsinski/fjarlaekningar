@@ -366,17 +366,25 @@ var áður grafin í notendavalmyndinni.
   „flýtimóttöku“). Það er það sem þarf að muna þegar leiðbeining er bætt við.
 
 **Sprettigluggar við innskráningu.** `Nudge.tsx` sýnir annaðhvort nýjung sem
-læknirinn hefur ekki séð, eða eitt ráð:
+viðkomandi hefur ekki séð, eða nokkur ráð í einu — bæði á læknasíðunni og í
+stjórnborði yfirlæknis:
 
 * *Nýjungar* eru skráðar í `src/lib/hsu/help/news.ts` — ein lína þegar virkni
   fer í loftið, texti í `help.ts` (`news.<id>.t` og `.b`). Hver læknir sér hana
   einu sinni (`hsu_doctors.onboarding["news:<id>"]`), og „Sjá leiðbeiningar“
   opnar tengdu greinina.
-* *Ráðin* eru vísun í hjálparsafnið (`tips.ts`) og rúlla áfram; talan er geymd
-  í vafranum. „Ekki sýna ráð aftur“ setur `onboarding["tips:off"]` og þá
-  birtast þau ekki framar — greinarnar eru áfram undir spurningarmerkinu.
+* *Ráðin* koma **þrjú í einu** (`TIPS_AT_ONCE` í `tips.ts`) og rúlla áfram;
+  staðan er geymd í vafranum. Glugginn er með appelsínugulum haus (`headerTone`
+  á `Modal`) svo hann grípi augað innan um bláa kerfið. „Ekki sýna ráð aftur“
+  setur `onboarding["tips:off"]`.
+* Ráð LÆKNIS vísar í hjálparsafnið (`article`): titill, „hvenær“ og fyrsta
+  skrefið koma þaðan og „Sýna mér“ opnar greinina — einn staður til að halda við.
+* Ráð YFIRLÆKNIS hefur eigin texta (`tip.<id>.t` og `.b`), enda hefur hann ekki
+  hjálparsafn; „Sýna mér“ opnar þá flipann sem ráðið á við.
+* Nýjungar og ráð eru merkt hlutverki, svo hvor sér sitt. Staff-aðgangur
+  (Fjarlækningar) á enga læknaröð og man því í vafranum (`persist={false}`).
 * Hvorugt birtist meðan kynningin eða dagatalsuppsetningin er á skjánum, né
-  hjá lækni sem hefur ekki enn klárað kynninguna.
+  hjá þeim sem hefur ekki enn klárað kynninguna.
 
 > Nýir lyklar í `/api/hsu/onboarding`: `tips:off` og `news:<id>`.
 

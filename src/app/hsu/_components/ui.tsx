@@ -68,7 +68,11 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
 export const inputCls =
   "block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[var(--hsu)] focus:outline-none focus:ring-2 focus:ring-[var(--hsu)]/20";
 
-export function Modal({ open, onClose, title, children, wide }: { open: boolean; onClose: () => void; title: string; children: ReactNode; wide?: boolean }) {
+export function Modal({ open, onClose, title, children, wide, headerTone }: {
+  open: boolean; onClose: () => void; title: string; children: ReactNode; wide?: boolean;
+  /** Litaður haus fyrir glugga sem eiga að grípa augað (ráð og nýjungar). */
+  headerTone?: "amber";
+}) {
   const c = useCommon();
   useEffect(() => {
     if (!open) return;
@@ -82,9 +86,11 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
       className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-0 sm:items-center sm:p-4">
       <div onClick={(e) => e.stopPropagation()}
         className={cx("max-h-[92vh] w-full overflow-y-auto rounded-t-2xl bg-white shadow-xl sm:rounded-2xl", wide ? "sm:max-w-3xl" : "sm:max-w-md")}>
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-5 py-3">
-          <h2 className="text-base font-bold text-slate-900">{title}</h2>
-          <button onClick={onClose} aria-label={c("action.close")} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X className="h-5 w-5" /></button>
+        <div className={cx("sticky top-0 z-10 flex items-center justify-between border-b px-5 py-3",
+          headerTone === "amber" ? "border-amber-600 bg-gradient-to-r from-amber-500 to-orange-500" : "border-slate-100 bg-white")}>
+          <h2 className={cx("text-base font-bold", headerTone === "amber" ? "text-white" : "text-slate-900")}>{title}</h2>
+          <button onClick={onClose} aria-label={c("action.close")}
+            className={cx("rounded-lg p-1", headerTone === "amber" ? "text-white/80 hover:bg-white/20 hover:text-white" : "text-slate-400 hover:bg-slate-100 hover:text-slate-700")}><X className="h-5 w-5" /></button>
         </div>
         <div className="p-5">{children}</div>
       </div>

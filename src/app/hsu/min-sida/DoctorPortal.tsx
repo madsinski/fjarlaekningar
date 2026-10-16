@@ -163,8 +163,8 @@ export default function DoctorPortal({ data, initialTab, initialMonth }: { data:
       <Help open={helpOpen} startAt={helpAt} onClose={() => { setHelpOpen(false); setHelpAt(null); }}
         onGo={(tb) => setTab(tb)} onTour={() => setTourOpen(true)} />
       {/* Nýjungar og ráð bíða þar til kynningin og dagatalsuppsetningin eru frá. */}
-      <Nudge onboarding={me.onboarding} hold={tourOpen || setupOpen || helpOpen || !me.onboarding["tour:doctor"]}
-        onOpenHelp={(id) => openHelp(id ?? null)} onRefresh={refresh} />
+      <Nudge role="doctor" onboarding={me.onboarding} hold={tourOpen || setupOpen || helpOpen || !me.onboarding["tour:doctor"]}
+        onOpenHelp={(id) => openHelp(id ?? null)} onGo={(tb) => setTab(tb as Tab)} onRefresh={refresh} />
 
       <nav className="sticky top-16 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div data-tour="tabs" className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-3 py-2 sm:px-5 [scrollbar-width:none]">
