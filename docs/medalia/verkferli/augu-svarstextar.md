@@ -175,6 +175,47 @@ LEITAÐU AÐSTOÐAR EF
 
 ---
 
+## 5b. Sýktur augnloksþrymill
+
+Spectracillin = amoxicillín/klavúlansýra (500/125 mg töflur). Athugið pensilínofnæmi áður en ávísað er.
+
+```text
+Takk fyrir erindið. Ég hef farið yfir svörin þín og myndirnar.
+
+MAT
+Miðað við myndirnar og lýsinguna þína ertu með augnloksþrymil sem hefur sýkst. Augnloksþrymill er hnútur sem myndast þegar fitukirtill í augnlokinu stíflast og hann er oftast verkjalaus. Nú er hnúturinn [rauður, heitur og aumur / og augnlokið í kring bólgið] og það bendir til þess að bakteríur hafi komist í hann. Sýkinguna þarf að meðhöndla svo að hún breiðist ekki út í augnlokið eða í kringum augað.
+
+MEÐFERÐ
+- Leggðu heitan bakstur á lokað augnlokið í fimm mínútur, þrisvar til fimm sinnum á dag. Notaðu þvottapoka vættan í heitu vatni. Vættu hann aftur þegar hann fer að kólna svo að hann haldist heitur allan tímann, en gættu þess að hann sé ekki of heitur.
+- Nuddaðu augnlokið varlega á eftir, í átt að brún augnloksins.
+- Ekki kreista hnútinn eða stinga á honum. Það getur dreift sýkingunni.
+- Ekki nota augnfarða eða augnlinsur á meðan sýkingin gengur yfir.
+
+Ég hef sent lyfseðil fyrir Oftan Chlora augnsmyrsli í lyfjagátt og þú getur leyst hann út í hvaða apóteki sem er.
+- Notaðu smyrslið fimm sinnum á dag, alltaf strax eftir heita baksturinn og nuddið.
+- Dragðu neðra augnlokið varlega niður og berðu um 1 cm af smyrslinu á milli augnloksins og augans. Lokaðu svo auganu í smástund.
+- Gættu þess að stútur túpunnar snerti hvorki augað né augnhárin.
+- Notaðu smyrslið [í fimm til sjö daga].
+- Sjónin getur orðið óskýr í smástund eftir að smyrslið er komið í augað. Ekki aka fyrr en hún er orðin skýr.
+
+[Ég hef líka sent lyfseðil fyrir Spectracillin sýklalyfjatöflum í lyfjagátt.
+- Taktu eina töflu [þrisvar á dag] í [sjö daga], í byrjun máltíðar.
+- Taktu allar töflurnar, líka eftir að þér fer að líða betur.
+- Ef þú færð útbrot, kláða, bólgu í andliti eða öndunarerfiðleika skaltu hætta að taka töflurnar og leita strax til læknis.]
+
+HVENÆR LAGAST ÞETTA?
+Roðinn og eymslin ættu að fara að minnka á tveimur til þremur dögum. Hnúturinn sjálfur getur verið lengur að hverfa, oft nokkrar vikur. Haltu áfram með heitan bakstur tvisvar á dag eftir að sýklalyfjameðferðinni lýkur. Ef hnúturinn er enn til staðar eftir tvo til þrjá mánuði er ráðlegt að fá tíma hjá augnlækni.
+
+LEITAÐU AÐSTOÐAR SAMDÆGURS EF
+- roði og bólga breiðast út yfir allt augnlokið eða í kringum augað
+- augað lokast vegna bólgu eða þú færð hita
+- sjónin versnar, þú sérð tvöfalt eða finnur til þegar þú hreyfir augað
+
+Ef ekkert hefur lagast eftir tvo sólarhringa á meðferð skaltu senda nýtt erindi eða leita til heimilislæknis.
+```
+
+---
+
 ## 6. Hvarmabólga
 
 ```text
